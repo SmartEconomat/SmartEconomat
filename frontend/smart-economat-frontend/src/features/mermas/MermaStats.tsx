@@ -13,20 +13,40 @@ import { MermaStats, MotivoMerma } from '../../services/merma.types';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Props for the {@link MermaStatsView} component.
+ */
 interface MermaStatsProps {
+  /** Aggregated merma statistics, or null while loading. */
   stats: MermaStats | null;
+  /** Whether statistics data is currently being fetched. */
   isLoading?: boolean;
 }
 
+/**
+ * Displays aggregated merma (waste/loss) statistics including totals and a
+ * breakdown by motivo (reason) shown as labelled progress bars.
+ *
+ * Renders a loading indicator while data is being fetched and nothing when
+ * stats are null after loading.
+ *
+ * @param {MermaStatsProps} props - Component props.
+ * @returns JSX rendered statistics panel, a progress bar, or null.
+ * @example
+ * <MermaStats stats={mermaStats} isLoading={isLoading} />
+ */
 const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
   const { t } = useTranslation();
 
+  /** Localised labels keyed by MotivoMerma enum value. */
   const MOTIVO_LABELS: Record<string, string> = {
-    [MotivoMerma.ROTURA]: t('mermasTable.motivos.ROTURA'),
-    [MotivoMerma.DETERIORO]: t('mermasTable.motivos.DETERIORO'),
-    [MotivoMerma.HURTO]: t('mermasTable.motivos.HURTO'),
-    [MotivoMerma.ERROR_PREPARACION]: t('mermasTable.motivos.ERROR_PREPARACION'),
-    [MotivoMerma.OTROS]: t('mermasTable.motivos.OTROS'),
+    [MotivoMerma.ROTURA]: t('merma.form.motivoOpciones.roturaEnvase'),
+    [MotivoMerma.DETERIORO]: t('merma.form.motivoOpciones.deterioroCaducidad'),
+    [MotivoMerma.HURTO]: t('merma.form.motivoOpciones.hurto'),
+    [MotivoMerma.ERROR_PREPARACION]: t(
+      'merma.form.motivoOpciones.errorPreparacion'
+    ),
+    [MotivoMerma.OTROS]: t('merma.form.motivoOpciones.otros'),
   };
 
   if (isLoading) return <LinearProgress />;
@@ -65,7 +85,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    {t('mermaStats.totalLosses')}
+                    {t('merma.stats.totalPerdidas')}
                   </Typography>
                   <Typography variant="h4" fontWeight={700}>
                     {totalCantidad.toFixed(2)}
@@ -96,7 +116,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    {t('mermaStats.totalRecords')}
+                    {t('merma.stats.totalRegistros')}
                   </Typography>
                   <Typography variant="h4" fontWeight={700}>
                     {totalRegistros}
@@ -109,7 +129,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
       </Grid>
 
       <Typography variant="h6" fontWeight={600} mb={2}>
-        {t('mermaStats.distribution')}
+        {t('merma.stats.distribucionPorMotivo')}
       </Typography>
       <Paper
         elevation={0}
@@ -147,7 +167,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
               color="text.secondary"
               textAlign="center"
             >
-              {t('mermaStats.noData')}
+              {t('merma.stats.sinDatos')}
             </Typography>
           )}
         </Stack>

@@ -8,7 +8,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Chip,
@@ -19,18 +18,40 @@ import {
   Alert,
   Button,
   Tooltip,
+  CircularProgress,
+  alpha,
+  useTheme,
+  Dialog,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Tabs,
+  Tab,
 } from '@mui/material';
+import { formatDigitsForSR } from '../utils/a11y-format';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from '@mui/icons-material/Close';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DetailModal from '../components/ui/DetailModal';
-import ProductoFormModal from '../features/productos/ProductoFormModal';
+// Importación dinámica para optimización de rendimiento (Code Splitting)
+const ProductoFormModal = React.lazy(
+  () => import('../features/productos/ProductoFormModal')
+);
 import { buildProductoPayload } from '../features/productos/productoForm.helpers';
 import {
   Producto,
@@ -43,6 +64,7 @@ import {
   fetchProductos,
   createProducto,
   updateProducto,
+  restoreProducto,
   fetchHistorialPrecios,
 } from '../services/producto.service';
 import { deleteResource, resolveStoredFileUrl } from '../services/api.service';
@@ -50,17 +72,6 @@ import { DownloadService } from '../services/download.service';
 import { HistorialPrecio } from '../services/producto.types';
 import { getProductoByBarcode } from '../services/producto.service';
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
 // Utilidad para construir query string de filtros actuales
 function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
   const params = new URLSearchParams();
@@ -76,6 +87,8 @@ import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import ProductCard from '../features/productos/ProductCard';
+import { useSidebar } from '../store/sidebar.hooks';
+import { useBreakpoints } from '../utils/useBreakpoints';
 import ProductFilters, {
   ProductFiltersState,
 } from '../features/productos/ProductFilters';
@@ -84,8 +97,40 @@ import { getCategoryIcon } from '../features/productos/utils/getCategoryIcon';
 import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import BarcodeScanner from '../components/ui/BarcodeScanner';
+const BarcodeScanner = React.lazy(
+  () => import('../components/ui/BarcodeScanner')
+);
 import { searchByBarcode } from '../services/openfoodfacts.service';
+import LinearLoader from '../components/ui/LinearLoader';
+import { Suspense } from 'react';
+
+/**
+ * Interfaz para los valores del formulario de producto.
+ * Define la estructura exacta que maneja el componente ProductoFormModal,
+ * evitando el uso de Record<string, unknown> y proporcionando tipado estricto.
+ */
+interface ProductoFormValues {
+  [key: string]: unknown;
+  id?: string;
+  nombre?: string;
+  marca?: string;
+  descripcion?: string;
+  tipo?: CategoriaProducto;
+  unidad?: UnidadMedida;
+  contenido?: number;
+  codigoBarras?: string;
+  alergenos?: string[];
+  imagen?: string;
+  pathImg?: string;
+  proveedores?: {
+    proveedorId: string;
+    nombre: string;
+    marca?: string;
+    codigoBarras?: string;
+    precioUnitario?: string | number;
+  }[];
+  pmp?: number;
+}
 
 const initialFilters: ProductFiltersState = {
   categorias: [],
@@ -96,7 +141,6 @@ const resolveProveedorId = (proveedor: ProductoProveedor): string | undefined =>
   proveedor.proveedor?.id ?? proveedor.proveedorId;
 
 const Productos: React.FC = () => {
-  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
@@ -106,17 +150,19 @@ const Productos: React.FC = () => {
   const [sortBy, setSortBy] = useState<string | undefined>('nombre');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
+  const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [data, setData] = useState<Producto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<Producto | null>(null);
-  const [productToEdit, setProductToEdit] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
+  const [productToEdit, setProductToEdit] = useState<ProductoFormValues | null>(
+    null
+  );
   const [productToView, setProductToView] = useState<Producto | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const theme = useTheme();
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
   const [priceHistory, setPriceHistory] = useState<HistorialPrecio[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -124,6 +170,25 @@ const Productos: React.FC = () => {
     useState<string>('all');
   const historySectionRef = useRef<HTMLDivElement | null>(null);
   const toast = useToast();
+  const { isExpanded: sidebarExpanded } = useSidebar();
+  const { screenWidth } = useBreakpoints();
+
+  // Estado con retraso para la aparición de columnas y evitar parpadeos/solapamientos durante la animación del sidebar
+  const [isSidebarActuallyExpanded, setIsSidebarActuallyExpanded] =
+    useState(sidebarExpanded);
+
+  useEffect(() => {
+    if (sidebarExpanded) {
+      // Si se expande, ocultamos la columna Marca inmediatamente para evitar solapamiento
+      setIsSidebarActuallyExpanded(true);
+    } else {
+      // Si se contrae, esperamos a que termine la animación (~200ms) antes de mostrar Marca
+      const timer = setTimeout(() => {
+        setIsSidebarActuallyExpanded(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [sidebarExpanded]);
 
   // Exportar productos a PDF
   const handleExportPdf = async () => {
@@ -165,7 +230,8 @@ const Productos: React.FC = () => {
       searchTerm,
       filters.categorias,
       sortBy,
-      sortOrder
+      sortOrder,
+      activeTab === 'deleted'
     )
       .then((productosData) => {
         setData(productosData.data);
@@ -174,11 +240,21 @@ const Productos: React.FC = () => {
       })
       .catch((err: unknown) => {
         const message =
-          err instanceof Error ? err.message : t('productos.toast.loadError');
+          err instanceof Error
+            ? err.message
+            : 'Error desconocido al cargar datos.';
         setError(message);
       })
       .finally(() => setIsLoading(false));
-  }, [page, pageSize, searchTerm, filters.categorias, sortBy, sortOrder]);
+  }, [
+    page,
+    pageSize,
+    searchTerm,
+    filters.categorias,
+    sortBy,
+    sortOrder,
+    activeTab,
+  ]);
 
   useEffect(() => {
     loadData();
@@ -186,7 +262,7 @@ const Productos: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, filters.categorias, filters.alergenos]);
+  }, [searchTerm, filters.categorias, filters.alergenos, activeTab]);
 
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
@@ -195,7 +271,7 @@ const Productos: React.FC = () => {
       await deleteResource(`/productos/${productToDelete.id}`);
       setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
       toast.success(
-        t('productos.toast.deleted', { name: productToDelete.nombre }),
+        `Producto "${productToDelete.nombre}" eliminado correctamente.`,
         undefined,
         {
           productCategory: productToDelete.tipo,
@@ -203,7 +279,7 @@ const Productos: React.FC = () => {
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('productos.toast.deleteError');
+        err instanceof Error ? err.message : 'Error al eliminar el producto.';
       toast.error(message, undefined, {
         productCategory: productToDelete.tipo,
       });
@@ -213,22 +289,25 @@ const Productos: React.FC = () => {
     }
   };
 
-  const handleSaveProduct = async (formData: Record<string, unknown>) => {
+  const handleSaveProduct = async (formData: ProductoFormValues) => {
     setIsSaving(true);
+    console.log('[DEBUG] Guardando producto:', formData);
     try {
-      const payload = await buildProductoPayload(formData);
-      const category = (formData as { tipo?: CategoriaProducto }).tipo;
+      const payload = await buildProductoPayload(
+        formData as Record<string, unknown>
+      );
+      const category = formData.tipo;
 
       if (formData.id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await updateProducto(formData.id as string, payload as any);
-        toast.success(t('productos.toast.updated'), undefined, {
+        console.log('[DEBUG] Actualizando producto con ID:', formData.id);
+        await updateProducto(formData.id, payload);
+        toast.success('Producto actualizado correctamente.', undefined, {
           productCategory: category,
         });
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await createProducto(payload as any);
-        toast.success(t('productos.toast.created'), undefined, {
+        console.log('[DEBUG] Creando nuevo producto');
+        await createProducto(payload);
+        toast.success('Producto creado correctamente.', undefined, {
           productCategory: category,
         });
       }
@@ -236,8 +315,9 @@ const Productos: React.FC = () => {
       await loadData();
       setProductToEdit(null);
     } catch (err: unknown) {
+      console.error('[DEBUG] Error al guardar producto:', err);
       const message =
-        err instanceof Error ? err.message : t('productos.toast.saveError');
+        err instanceof Error ? err.message : 'Error al guardar el producto.';
       toast.error(message, undefined, {
         productCategory: (formData as { tipo?: CategoriaProducto }).tipo,
       });
@@ -246,38 +326,108 @@ const Productos: React.FC = () => {
     }
   };
 
-  const columns: Column<Producto>[] = [
-    { id: 'nombre', label: t('productos.columns.nombre'), sortable: true },
-    {
-      id: 'marca',
-      label: t('productos.columns.marca'),
-      render: (row) => row.marca ?? '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-    {
-      id: 'tipo',
-      label: t('productos.columns.tipo'),
-      render: (row) =>
-        row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-    {
-      id: 'contenido',
-      label: t('productos.columns.contenido'),
-      align: 'right',
-      render: (row) =>
-        row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
-    },
-    {
-      id: 'codigoBarras',
-      label: t('productos.columns.codigoBarras'),
-      render: (row) => row.codigoBarras ?? '—',
-      hideOnMobile: true,
-      sortable: true,
-    },
-  ];
+  const handleRestoreProduct = async (product: Producto) => {
+    try {
+      await restoreProducto(product.id);
+      toast.success(`Producto "${product.nombre}" restaurado correctamente.`);
+      await loadData();
+    } catch (error) {
+      console.error('Error restaurando producto:', error);
+      toast.error('No se pudo restaurar el producto.');
+    }
+  };
+
+  const columns = React.useMemo<Column<Producto>[]>(() => {
+    const allColumns: Column<Producto>[] = [
+      {
+        id: 'nombre',
+        label: 'Nombre',
+        sortable: true,
+        minWidth: 280,
+        render: (row) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {row.nombre}
+            </Typography>
+            {(!row.proveedores || row.proveedores.length === 0) && (
+              <Tooltip title="Producto sin proveedores asignados">
+                <Chip
+                  label="Sin Prov."
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                  sx={{ height: 20, fontSize: '0.65rem' }}
+                />
+              </Tooltip>
+            )}
+          </Stack>
+        ),
+      },
+      {
+        id: 'marca',
+        label: 'Marca',
+        render: (row) => row.marca ?? '—',
+        hideOnMobile: true,
+        sortable: true,
+        minWidth: 140,
+        width: 160,
+      },
+      {
+        id: 'tipo',
+        label: 'Tipo',
+        render: (row) =>
+          row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
+        hideOnMobile: true,
+        sortable: true,
+        width: 140,
+      },
+      {
+        id: 'contenido',
+        label: 'Contenido',
+        align: 'right',
+        render: (row) =>
+          row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
+        width: 120,
+      },
+      {
+        id: 'codigoBarras',
+        label: 'Cód. Barras',
+        render: (row) => (
+          <Typography
+            variant="body2"
+            aria-label={`Código de barras: ${formatDigitsForSR(row.codigoBarras || '')}`}
+          >
+            {row.codigoBarras ?? '—'}
+          </Typography>
+        ),
+        responsiveDisplay: { xs: 'none', lg: 'table-cell' },
+        sortable: true,
+        width: 160,
+      },
+      {
+        id: 'createdAt',
+        label: 'Alta',
+        render: (row) =>
+          new Date(row.createdAt).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          }),
+        hideOnMobile: true,
+        sortable: true,
+        width: 120,
+      },
+    ];
+
+    // Lógica de ocultación dinámica: si el sidebar está expandido y la pantalla es < 1400px,
+    // ocultamos "Marca" para evitar solapamientos con "Nombre".
+    // Usamos isSidebarActuallyExpanded (con delay al cerrar) para dar tiempo a la animación.
+    if (isSidebarActuallyExpanded && screenWidth < 1400) {
+      return allColumns.filter((col) => col.id !== 'marca');
+    }
+
+    return allColumns;
+  }, [isSidebarActuallyExpanded, screenWidth]);
 
   const handleSort = (key: string | keyof Producto) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -285,18 +435,25 @@ const Productos: React.FC = () => {
     setSortBy(key as string);
   };
 
-  const buildEditData = (row: Producto): Record<string, unknown> => {
-    const editData: Record<string, unknown> = { ...row };
+  const buildEditData = (row: Producto): ProductoFormValues => {
+    const editData: ProductoFormValues = {
+      ...row,
+      alergenos: [],
+      proveedores: [],
+      pmp: row.pmp ?? 0,
+    };
     if (row.pathImg) editData.imagen = resolveStoredFileUrl(row.pathImg);
     if (row.alergenos) {
       editData.alergenos = row.alergenos.map((alergeno) =>
-        typeof alergeno === 'string' ? alergeno : alergeno.alergeno || alergeno
+        typeof alergeno === 'string'
+          ? alergeno
+          : (alergeno as ProductoAlergeno).alergeno || ''
       );
     }
     if (row.proveedores) {
       editData.proveedores = row.proveedores.map(
         (proveedor: ProductoProveedor) => ({
-          proveedorId: proveedor.proveedor?.id || proveedor.id,
+          proveedorId: proveedor.proveedor?.id || proveedor.proveedorId || '',
           nombre: proveedor.proveedor?.nombre || '',
           marca: proveedor.marca || '',
           codigoBarras: proveedor.codigoBarras || '',
@@ -332,25 +489,31 @@ const Productos: React.FC = () => {
 
       if (existingProduct) {
         setProductToEdit(buildEditData(existingProduct));
-        toast.success(t('productos.toast.scanFound'));
+        toast.success('Producto localizado. Abriendo su ficha para editar.');
         return;
       }
 
       if (!canCreate) {
-        toast.info(t('productos.toast.scanNotFound'));
+        toast.info(
+          'No se encontró el producto. Se dejó el código en la búsqueda.'
+        );
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.info(t('productos.toast.scanOpenCreate'));
+      toast.info(
+        'Producto no encontrado. Se abrió el formulario para crearlo.'
+      );
     } catch {
       if (!canCreate) {
-        toast.error(t('productos.toast.scanValidateError'));
+        toast.error('No se pudo validar el código escaneado.');
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.warning(t('productos.toast.scanCatalogError'));
+      toast.warning(
+        'No se pudo comprobar el catálogo, pero se abrió el alta del producto.'
+      );
     }
   };
 
@@ -400,42 +563,44 @@ const Productos: React.FC = () => {
 
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title={t('productos.actions.view')}>
-        <IconButton
-          color="primary"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            handleViewClick(row);
-          }}
-          size="small"
-          aria-label={t('productos.actions.view')}
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      {canEdit && (
-        <Tooltip title={t('productos.actions.edit')}>
+      {activeTab === 'active' && canEdit && (
+        <Tooltip title="Editar">
           <IconButton
             color="secondary"
             onClick={() => {
               setProductToEdit(buildEditData(row));
             }}
             size="small"
-            aria-label={t('productos.actions.edit')}
+            aria-label="Editar"
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
-      {canDelete && (
-        <Tooltip title={t('productos.actions.delete')}>
+      {activeTab === 'active' && canDelete && (
+        <Tooltip title="Eliminar">
           <IconButton
             color="error"
             onClick={() => setProductToDelete(row)}
             size="small"
-            aria-label={t('productos.actions.delete')}
+            aria-label="Borrar"
           >
             <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {activeTab === 'deleted' && (
+        <Tooltip title="Restaurar Producto">
+          <IconButton
+            color="success"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRestoreProduct(row);
+            }}
+            size="small"
+            aria-label="Restaurar"
+          >
+            <RestoreFromTrashIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
@@ -449,22 +614,23 @@ const Productos: React.FC = () => {
 
   return (
     <Box>
+      {(isLoading || isSaving) && <LinearLoader fixed />}
       <PageToolbar
-        title={t('productos.pageTitle')}
+        title="Gestión de Productos"
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder={t('productos.searchPlaceholder')}
+        searchPlaceholder="Buscar por nombre, marca, código de barras..."
         searchId="search-productos"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel={t('productos.totalItemsLabel')}
+        totalItemsLabel="productos"
         primaryAction={
           canCreate
             ? {
-                label: t('productos.newProduct'),
+                label: 'Nuevo Producto',
                 onClick: () => {
                   setProductToEdit({});
                 },
@@ -476,7 +642,7 @@ const Productos: React.FC = () => {
         onViewModeChange={setViewMode}
         extraActions={[
           {
-            label: t('productos.exportPdf'),
+            label: 'Exportar PDF',
             onClick: () => {
               void handleExportPdf();
             },
@@ -486,7 +652,7 @@ const Productos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: t('productos.exportExcel'),
+            label: 'Exportar Excel',
             onClick: () => {
               void handleExportExcel();
             },
@@ -497,7 +663,13 @@ const Productos: React.FC = () => {
           },
         ]}
         filters={
-          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+          <Box
+            id="filter-productos"
+            display="flex"
+            gap={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <ProductFilters
               filters={filters}
               onChange={(newFilters) => {
@@ -515,614 +687,860 @@ const Productos: React.FC = () => {
         onScanBarcode={() => setIsSearchScannerOpen(true)}
       />
 
-      <BarcodeScanner
-        open={isSearchScannerOpen}
-        onClose={() => setIsSearchScannerOpen(false)}
-        onScan={(code) => {
-          void handleSearchScannerResult(code);
+      <Suspense fallback={<LinearLoader />}>
+        <BarcodeScanner
+          open={isSearchScannerOpen}
+          onClose={() => setIsSearchScannerOpen(false)}
+          onScan={(code) => {
+            void handleSearchScannerResult(code);
+          }}
+          title="Escanear Producto para Buscar"
+        />
+      </Suspense>
+
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
         }}
-        title={t('productos.scannerTitle')}
-      />
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(
+              _e: React.SyntheticEvent,
+              newValue: 'active' | 'deleted'
+            ) => setActiveTab(newValue)}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label="pestañas de catálogo"
+          >
+            <Tab
+              icon={<Inventory2OutlinedIcon />}
+              label="Activos"
+              value="active"
+            />
+            <Tab
+              icon={<DeleteSweepOutlinedIcon />}
+              label="Eliminados"
+              value="deleted"
+            />
+          </Tabs>
+        </Box>
 
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          hideTopBar={true}
-          viewMode={viewMode}
-          defaultViewMode={viewMode}
-          onSort={handleSort}
-          sortConfig={{ key: sortBy || '', direction: sortOrder }}
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <ShoppingBasketOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {hasSearchOrFilters
-                  ? t('productos.empty.withFilters')
-                  : t('productos.empty.noProducts')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {hasSearchOrFilters
-                  ? t('productos.empty.withFiltersHint')
-                  : t('productos.empty.noProductsHint')}
-              </Typography>
-              {!hasSearchOrFilters && canCreate && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setProductToEdit({});
-                  }}
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            hideTopBar={true}
+            viewMode={viewMode}
+            defaultViewMode={viewMode}
+            onSort={handleSort}
+            sortConfig={{ key: sortBy || '', direction: sortOrder }}
+            actionsWidth={120}
+            getRowAriaLabel={(row) =>
+              `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`
+            }
+            emptyStateMessage={
+              <Box
+                sx={{
+                  py: { xs: 6, md: 10 },
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  maxWidth: 450,
+                  mx: 'auto',
+                }}
+              >
+                <Box
                   sx={{
-                    borderRadius: 2,
-                    px: 3,
+                    width: 80,
+                    height: 80,
+                    borderRadius: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    color: 'primary.main',
+                    mb: 3,
+                    boxShadow: (theme) =>
+                      `0 8px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
                   }}
                 >
-                  {t('productos.empty.addProduct')}
-                </Button>
-              )}
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, newPage) => setPage(newPage),
-            pageSize: pageSize,
-            pageSizeOptions: [4, 8, 12, 24],
-            onPageSizeChange: (e: SelectChangeEvent<number>) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
-          }}
-          renderGridItem={(producto) => (
-            <ProductCard
-              producto={producto}
-              onEdit={handleEditClick}
-              onDelete={setProductToDelete}
-              onView={handleViewClick}
-            />
-          )}
-          renderActions={renderActions}
-        />
+                  {activeTab === 'deleted' ? (
+                    <DeleteSweepOutlinedIcon sx={{ fontSize: 40 }} />
+                  ) : (
+                    <ShoppingBasketOutlinedIcon sx={{ fontSize: 40 }} />
+                  )}
+                </Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
+                >
+                  {hasSearchOrFilters
+                    ? 'Sin coincidencias'
+                    : activeTab === 'deleted'
+                      ? 'Sin productos eliminados'
+                      : 'Catálogo vacío'}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 4 }}
+                >
+                  {hasSearchOrFilters
+                    ? 'Prueba a ajustar tus filtros o el término de búsqueda para encontrar lo que necesitas.'
+                    : activeTab === 'deleted'
+                      ? 'No hay registros de productos que hayan sido borrados anteriormente.'
+                      : 'Empieza a digitalizar tu inventario añadiendo tu primer producto hoy mismo.'}
+                </Typography>
+                {!hasSearchOrFilters && canCreate && activeTab === 'active' && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setProductToEdit({});
+                    }}
+                    sx={{
+                      borderRadius: 3,
+                      px: 4,
+                      py: 1.2,
+                      boxShadow: (theme) =>
+                        `0 8px 20px ${alpha(theme.palette.primary.main, 0.25)}`,
+                    }}
+                  >
+                    Nuevo Producto
+                  </Button>
+                )}
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, newPage) => setPage(newPage),
+              pageSize: pageSize,
+              pageSizeOptions: [4, 8, 12, 24],
+              onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+            renderGridItem={(producto) => (
+              <ProductCard
+                producto={producto}
+                onEdit={handleEditClick}
+                onDelete={setProductToDelete}
+                onView={handleViewClick}
+                isDeleted={activeTab === 'deleted'}
+                onRestore={
+                  activeTab === 'deleted' ? handleRestoreProduct : undefined
+                }
+              />
+            )}
+            renderActions={renderActions}
+            onRowClick={handleViewClick}
+          />
+        </Box>
+      </Paper>
 
-        <ConfirmDialog
-          isOpen={!!productToDelete}
-          onClose={() => !isDeleting && setProductToDelete(null)}
-          onConfirm={() => void handleDeleteConfirm()}
-          title={t('productos.deleteDialog.title')}
-          message={
-            <>
-              {t('productos.deleteDialog.messagePre')}{' '}
-              <strong>{productToDelete?.nombre}</strong>
-              {t('productos.deleteDialog.messagePost')}
-            </>
-          }
-          confirmText={t('productos.deleteDialog.confirm')}
-          cancelText={t('productos.deleteDialog.cancel')}
-          isLoading={isDeleting}
-        />
+      <ConfirmDialog
+        isOpen={!!productToDelete}
+        onClose={() => !isDeleting && setProductToDelete(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+        title="Eliminar producto"
+        message={
+          <>
+            ¿Estás seguro de que deseas eliminar el producto{' '}
+            <strong>{productToDelete?.nombre}</strong>? Esta acción no se puede
+            deshacer.
+          </>
+        }
+        confirmText="Sí, eliminar"
+        cancelText="Cancelar"
+        isLoading={isDeleting}
+      />
 
+      <React.Suspense fallback={<LinearLoader />}>
         <ProductoFormModal
           isOpen={!!productToEdit}
           onClose={() => setProductToEdit(null)}
           initialData={productToEdit || {}}
-          onSubmit={handleSaveProduct}
+          onSubmit={(data) =>
+            void handleSaveProduct(data as ProductoFormValues)
+          }
           isSubmitting={isSaving}
         />
+      </React.Suspense>
 
-        {/* ── Modal de DETALLE ── */}
-        {productToView &&
-          (() => {
-            const p = productToView;
-            const alergenoIds =
-              p.alergenos?.map((a: ProductoAlergeno) => a.alergeno) ?? [];
-            const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
-              alergenoIds.includes(a.id)
-            );
-            const proveedoresAsociados = p.proveedores ?? [];
-            const imageUrl = resolveStoredFileUrl(p.pathImg);
+      {/* ── Modal de DETALLE ── */}
+      {productToView &&
+        (() => {
+          const p = productToView;
+          const alergenoIds =
+            p.alergenos?.map((a: ProductoAlergeno) => a.alergeno) ?? [];
+          const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
+            alergenoIds.includes(a.id)
+          );
+          const proveedoresAsociados = p.proveedores ?? [];
+          const imageUrl = resolveStoredFileUrl(p.pathImg);
 
-            return (
-              <DetailModal
-                isOpen={true}
-                onClose={() => setProductToView(null)}
-                title={p.nombre}
-                subtitle={p.marca || undefined}
-                size="md"
-                editLabel={
-                  canEdit ? t('productos.detail.editLabel') : undefined
-                }
-                onEdit={
-                  canEdit
-                    ? () => {
-                        setProductToEdit(buildEditData(p));
-                        setProductToView(null);
-                      }
-                    : undefined
-                }
-                headerMedia={
-                  imageUrl ? (
-                    <img
+          return (
+            <DetailModal
+              isOpen={true}
+              onClose={() => setProductToView(null)}
+              title={p.nombre}
+              subtitle={p.marca || undefined}
+              size="md"
+              editLabel={
+                canEdit && activeTab === 'active'
+                  ? 'Editar producto'
+                  : undefined
+              }
+              onEdit={
+                canEdit && activeTab === 'active'
+                  ? () => {
+                      setProductToEdit(buildEditData(p));
+                      setProductToView(null);
+                    }
+                  : undefined
+              }
+              headerMedia={
+                imageUrl ? (
+                  <Tooltip title="Click para ampliar" arrow>
+                    <Box
+                      component="img"
                       src={imageUrl}
                       alt={p.nombre}
-                      style={{ height: 160, objectFit: 'cover', width: '100%' }}
+                      onClick={() => setZoomedImage(imageUrl)}
+                      sx={{
+                        height: 160,
+                        objectFit: 'cover',
+                        width: '100%',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s ease-in-out',
+                        '&:hover': {
+                          transform: 'scale(1.02)',
+                          filter: 'brightness(0.9)',
+                        },
+                      }}
                     />
-                  ) : (
-                    getCategoryIcon(p.tipo, {
-                      sx: {
-                        fontSize: 80,
-                        color: 'text.secondary',
-                        opacity: 0.6,
-                      },
-                    })
-                  )
-                }
-                sections={[
-                  {
-                    title: t('productos.detail.sectionGeneral'),
-                    columns: 3,
-                    fields: [
+                  </Tooltip>
+                ) : (
+                  getCategoryIcon(p.tipo, {
+                    sx: {
+                      fontSize: 80,
+                      color: 'text.secondary',
+                      opacity: 0.6,
+                    },
+                  })
+                )
+              }
+              sections={[
+                {
+                  title: 'Información general',
+                  columns: 3,
+                  fields: [
+                    {
+                      label: 'Tipo',
+                      value: p.tipo ? (
+                        <StatusChip
+                          status={p.tipo}
+                          size="small"
+                          variant="outlined"
+                        />
+                      ) : undefined,
+                    },
+                    {
+                      label: 'Contenido',
+                      value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
+                    },
+                    {
+                      label: 'Código de barras',
+                      value: p.codigoBarras ?? undefined,
+                    },
+                    {
+                      label: 'PMP Actual',
+                      value: (
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          color="primary.main"
+                        >
+                          {(p.pmp ?? 0).toFixed(2)} €
+                        </Typography>
+                      ),
+                    },
+                    {
+                      label: 'Descripción',
+                      value: p.descripcion
+                        ? p.descripcion
+                            .replace(
+                              /\n?\[MIGRACION_CATALOGO_ECONOMATO_20260402\].*$/gm,
+                              ''
+                            )
+                            .trim()
+                        : undefined,
+                      fullWidth: true,
+                    },
+                  ],
+                },
+                ...(alergenosActivos.length > 0
+                  ? [
                       {
-                        label: t('productos.detail.fieldTipo'),
-                        value: p.tipo ? (
-                          <StatusChip
-                            status={p.tipo}
-                            size="small"
-                            variant="outlined"
-                          />
-                        ) : undefined,
-                      },
-                      {
-                        label: t('productos.detail.fieldContenido'),
-                        value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
-                      },
-                      {
-                        label: t('productos.detail.fieldCodBarras'),
-                        value: p.codigoBarras ?? undefined,
-                      },
-                      {
-                        label: t('productos.detail.fieldPmp'),
-                        value:
-                          p.pmp != null ? (
-                            <Typography
-                              variant="body2"
-                              fontWeight={700}
-                              color="primary.main"
-                            >
-                              {Number(p.pmp).toFixed(4)} €
-                            </Typography>
-                          ) : undefined,
-                      },
-                      {
-                        label: t('productos.detail.fieldDescripcion'),
-                        value: p.descripcion ?? undefined,
-                        fullWidth: true,
-                      },
-                    ],
-                  },
-                  ...(alergenosActivos.length > 0
-                    ? [
-                        {
-                          title: t('productos.detail.sectionAlergenos'),
-                          content: (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: 1.5,
-                              }}
-                            >
-                              {alergenosActivos.map((a: Allergen) => (
-                                <Box
-                                  key={a.id}
+                        title: 'Alérgenos',
+                        content: (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 1.5,
+                            }}
+                          >
+                            {alergenosActivos.map((a: Allergen) => (
+                              <Box
+                                key={a.id}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  bgcolor: 'action.hover',
+                                  px: 1.5,
+                                  py: 0.75,
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  color: 'text.secondary',
+                                  '& svg': { fontSize: 20 },
+                                }}
+                              >
+                                {a.icon}
+                                <Typography
+                                  variant="body2"
                                   sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                    bgcolor: 'action.hover',
-                                    px: 1.5,
-                                    py: 0.75,
-                                    borderRadius: 2,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    color: 'text.secondary',
-                                    '& svg': { fontSize: 20 },
+                                    fontWeight: 500,
+                                    color: 'text.primary',
                                   }}
                                 >
-                                  {a.icon}
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontWeight: 500,
-                                      color: 'text.primary',
-                                    }}
-                                  >
-                                    {a.label}
-                                  </Typography>
-                                </Box>
-                              ))}
-                            </Box>
-                          ),
-                        },
-                      ]
-                    : []),
-                  ...(proveedoresAsociados.length > 0
-                    ? [
-                        {
-                          title: t('productos.detail.sectionProveedores'),
-                          content: (
-                            <Stack spacing={1.5}>
-                              {proveedoresAsociados.map((pv, idx: number) => {
-                                const providerId = resolveProveedorId(pv);
-                                const providerName =
-                                  pv.proveedor?.nombre ??
-                                  pv.nombre ??
-                                  t('productos.detail.proveedorFallback', {
-                                    n: idx + 1,
-                                  });
+                                  {a.label}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proveedoresAsociados.length > 0
+                  ? [
+                      {
+                        title: 'Proveedores asociados',
+                        content: (
+                          <Stack spacing={1.5}>
+                            {proveedoresAsociados.map((pv, idx: number) => {
+                              const providerId = resolveProveedorId(pv);
+                              const providerName =
+                                pv.proveedor?.nombre ??
+                                pv.nombre ??
+                                `Proveedor ${idx + 1}`;
 
-                                return (
-                                  <Paper
-                                    key={pv.id || idx}
-                                    variant="outlined"
+                              return (
+                                <Paper
+                                  key={pv.id || idx}
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    borderColor: pv.esOptimo
+                                      ? 'success.main'
+                                      : 'divider',
+                                    bgcolor: pv.esOptimo
+                                      ? 'rgba(46, 125, 50, 0.06)'
+                                      : 'transparent',
+                                  }}
+                                >
+                                  <Box
                                     sx={{
-                                      p: 2,
-                                      borderColor: pv.esOptimo
-                                        ? 'success.main'
-                                        : 'divider',
-                                      bgcolor: pv.esOptimo
-                                        ? 'rgba(46, 125, 50, 0.06)'
-                                        : 'transparent',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      mb: 1.5,
                                     }}
                                   >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        mb: 1.5,
-                                      }}
+                                    <Typography
+                                      variant="subtitle2"
+                                      fontWeight={600}
                                     >
-                                      <Typography
-                                        variant="subtitle2"
-                                        fontWeight={600}
-                                      >
-                                        {providerName}
-                                      </Typography>
-                                      <Stack
-                                        direction="row"
-                                        spacing={1}
-                                        alignItems="center"
-                                      >
-                                        {pv.esOptimo && (
-                                          <Chip
-                                            label={
-                                              pv.ahorroAbsolutoPct != null
-                                                ? t(
-                                                    'productos.detail.mejorOpcionConAhorro',
-                                                    {
-                                                      pct: pv.ahorroAbsolutoPct.toFixed(
-                                                        1
-                                                      ),
-                                                    }
-                                                  )
-                                                : t(
-                                                    'productos.detail.mejorOpcion'
-                                                  )
-                                            }
+                                      {providerName}
+                                    </Typography>
+                                    <Stack
+                                      direction="row"
+                                      spacing={1}
+                                      alignItems="center"
+                                    >
+                                      {pv.esOptimo && (
+                                        <Chip
+                                          label={
+                                            pv.ahorroAbsolutoPct != null
+                                              ? `Mejor Opción · -${pv.ahorroAbsolutoPct.toFixed(1)}%`
+                                              : 'Mejor Opción'
+                                          }
+                                          size="small"
+                                          color="success"
+                                        />
+                                      )}
+                                      <Tooltip title="Ver histórico de este proveedor">
+                                        <span>
+                                          <IconButton
                                             size="small"
-                                            color="success"
-                                          />
-                                        )}
-                                        <Tooltip
-                                          title={t(
-                                            'productos.detail.verHistoricoProveedor'
-                                          )}
+                                            color="primary"
+                                            onClick={() => {
+                                              handleProviderHistoryClick(
+                                                providerId
+                                              );
+                                            }}
+                                            aria-label={`Ver histórico de ${providerName}`}
+                                            disabled={!providerId}
+                                          >
+                                            <HistoryOutlinedIcon fontSize="small" />
+                                          </IconButton>
+                                        </span>
+                                      </Tooltip>
+                                    </Stack>
+                                  </Box>
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: 'repeat(3, 1fr)',
+                                      gap: 1.5,
+                                    }}
+                                  >
+                                    {pv.precioUnitario != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
                                         >
-                                          <span>
-                                            <IconButton
-                                              size="small"
-                                              color="primary"
-                                              onClick={() => {
-                                                handleProviderHistoryClick(
-                                                  providerId
-                                                );
-                                              }}
-                                              aria-label={t(
-                                                'productos.detail.verHistoricoAriaLabel',
-                                                { name: providerName }
-                                              )}
-                                              disabled={!providerId}
-                                            >
-                                              <HistoryOutlinedIcon fontSize="small" />
-                                            </IconButton>
-                                          </span>
-                                        </Tooltip>
-                                      </Stack>
-                                    </Box>
-                                    <Box
-                                      sx={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(3, 1fr)',
-                                        gap: 1.5,
-                                      }}
+                                          Precio
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {pv.precioUnitario.toFixed(2)} €
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    {pv.mermaEsperada != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
+                                        >
+                                          Merma
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {pv.mermaEsperada.toFixed(1)} %
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                    {pv.costeEfectivoUnitario != null && (
+                                      <Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          display="block"
+                                          sx={{
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.5,
+                                            mb: 0.25,
+                                          }}
+                                        >
+                                          Coste Real
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            fontWeight: 700,
+                                            color: pv.esOptimo
+                                              ? 'success.main'
+                                              : 'text.primary',
+                                          }}
+                                        >
+                                          {pv.costeEfectivoUnitario.toFixed(2)}{' '}
+                                          €
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Box>
+                                  {(pv.marca || pv.codigoBarras) && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ mt: 1, display: 'block' }}
                                     >
-                                      {pv.precioUnitario != null && (
-                                        <Box>
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            display="block"
-                                            sx={{
-                                              fontWeight: 600,
-                                              textTransform: 'uppercase',
-                                              letterSpacing: 0.5,
-                                              mb: 0.25,
-                                            }}
-                                          >
-                                            {t('productos.detail.fieldPrecio')}
-                                          </Typography>
-                                          <Typography variant="body2">
-                                            {pv.precioUnitario.toFixed(2)} €
-                                          </Typography>
-                                        </Box>
-                                      )}
-                                      {pv.mermaEsperada != null && (
-                                        <Box>
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            display="block"
-                                            sx={{
-                                              fontWeight: 600,
-                                              textTransform: 'uppercase',
-                                              letterSpacing: 0.5,
-                                              mb: 0.25,
-                                            }}
-                                          >
-                                            {t('productos.detail.fieldMerma')}
-                                          </Typography>
-                                          <Typography variant="body2">
-                                            {pv.mermaEsperada.toFixed(1)} %
-                                          </Typography>
-                                        </Box>
-                                      )}
-                                      {pv.costeEfectivoUnitario != null && (
-                                        <Box>
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            display="block"
-                                            sx={{
-                                              fontWeight: 600,
-                                              textTransform: 'uppercase',
-                                              letterSpacing: 0.5,
-                                              mb: 0.25,
-                                            }}
-                                          >
-                                            {t(
-                                              'productos.detail.fieldCosteReal'
-                                            )}
-                                          </Typography>
-                                          <Typography
-                                            variant="body2"
-                                            sx={{
-                                              fontWeight: 700,
-                                              color: pv.esOptimo
-                                                ? 'success.main'
-                                                : 'text.primary',
-                                            }}
-                                          >
-                                            {pv.costeEfectivoUnitario.toFixed(
-                                              2
-                                            )}{' '}
-                                            €
-                                          </Typography>
-                                        </Box>
-                                      )}
-                                    </Box>
-                                    {(pv.marca || pv.codigoBarras) && (
+                                      {[
+                                        pv.marca && `Marca: ${pv.marca}`,
+                                        pv.codigoBarras &&
+                                          `Cód. Barras: ${pv.codigoBarras}`,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              );
+                            })}
+                          </Stack>
+                        ),
+                      },
+                    ]
+                  : []),
+                {
+                  title: 'Histórico de precios',
+                  content: (
+                    <Box ref={historySectionRef}>
+                      <Box
+                        sx={{
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                        }}
+                      >
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                          <InputLabel id="history-provider-filter-label">
+                            Filtro por Proveedor
+                          </InputLabel>
+                          <Select
+                            labelId="history-provider-filter-label"
+                            id="history-provider-filter"
+                            value={historyProviderFilter}
+                            label="Filtro por Proveedor"
+                            onChange={(e) =>
+                              setHistoryProviderFilter(e.target.value)
+                            }
+                          >
+                            <MenuItem value="all">
+                              Todos los proveedores
+                            </MenuItem>
+                            {p.proveedores?.map((pp) => {
+                              const providerId = resolveProveedorId(pp);
+                              if (!providerId) return null;
+
+                              return (
+                                <MenuItem
+                                  key={`${pp.id}-${providerId}`}
+                                  value={providerId}
+                                >
+                                  {pp.proveedor?.nombre ??
+                                    pp.nombre ??
+                                    'Proveedor'}
+                                </MenuItem>
+                              );
+                            })}
+                          </Select>
+                        </FormControl>
+                      </Box>
+
+                      {isLoadingHistory ? (
+                        <Box
+                          sx={{
+                            py: 6,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 2,
+                          }}
+                        >
+                          <CircularProgress
+                            size={32}
+                            thickness={5}
+                            sx={{
+                              color: alpha(theme.palette.primary.main, 0.4),
+                            }}
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            Consultando evolución de precios...
+                          </Typography>
+                        </Box>
+                      ) : priceHistory.length > 0 ? (
+                        <Box
+                          sx={{
+                            overflowX: 'auto',
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: alpha(theme.palette.background.paper, 0.4),
+                          }}
+                        >
+                          <Table
+                            size="small"
+                            aria-label="Histórico de precios del producto"
+                          >
+                            <TableHead>
+                              <TableRow
+                                sx={{
+                                  bgcolor: alpha(
+                                    theme.palette.action.hover,
+                                    0.5
+                                  ),
+                                }}
+                              >
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5,
+                                  }}
+                                >
+                                  Fecha
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5,
+                                  }}
+                                >
+                                  Proveedor
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5,
+                                  }}
+                                >
+                                  Cantidad
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5,
+                                  }}
+                                >
+                                  Precio Unit.
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {priceHistory.map((h) => (
+                                <TableRow
+                                  key={h.id}
+                                  sx={{
+                                    '&:last-child td': { border: 0 },
+                                    '&:hover': {
+                                      bgcolor: alpha(
+                                        theme.palette.primary.main,
+                                        0.02
+                                      ),
+                                    },
+                                  }}
+                                >
+                                  <TableCell
+                                    sx={{
+                                      py: 1.5,
+                                      whiteSpace: 'nowrap',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {new Date(h.fecha).toLocaleDateString(
+                                      undefined,
+                                      {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                      }
+                                    )}
+                                  </TableCell>
+                                  <TableCell sx={{ py: 1.5 }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontWeight: 600 }}
+                                    >
+                                      {h.productoProveedor?.proveedor?.nombre ||
+                                        '—'}
+                                    </Typography>
+                                    {h.documentoOrigen && (
                                       <Typography
                                         variant="caption"
                                         color="text.secondary"
-                                        sx={{ mt: 1, display: 'block' }}
+                                        display="block"
                                       >
-                                        {[
-                                          pv.marca &&
-                                            t('productos.detail.marcaLabel', {
-                                              value: pv.marca,
-                                            }),
-                                          pv.codigoBarras &&
-                                            t(
-                                              'productos.detail.codBarrasLabel',
-                                              { value: pv.codigoBarras }
-                                            ),
-                                        ]
-                                          .filter(Boolean)
-                                          .join(' · ')}
+                                        Doc: {h.documentoOrigen}
                                       </Typography>
                                     )}
-                                  </Paper>
-                                );
-                              })}
-                            </Stack>
-                          ),
-                        },
-                      ]
-                    : []),
-                  {
-                    title: t('productos.detail.sectionHistorico'),
-                    content: (
-                      <Box ref={historySectionRef}>
-                        <Box
-                          sx={{
-                            mb: 2,
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                          }}
-                        >
-                          <FormControl size="small" sx={{ minWidth: 200 }}>
-                            <InputLabel id="history-provider-filter-label">
-                              {t('productos.detail.filtroProveedor')}
-                            </InputLabel>
-                            <Select
-                              labelId="history-provider-filter-label"
-                              id="history-provider-filter"
-                              value={historyProviderFilter}
-                              label={t('productos.detail.filtroProveedor')}
-                              onChange={(e) =>
-                                setHistoryProviderFilter(e.target.value)
-                              }
-                            >
-                              <MenuItem value="all">
-                                {t('productos.detail.todosProveedores')}
-                              </MenuItem>
-                              {p.proveedores?.map((pp) => {
-                                const providerId = resolveProveedorId(pp);
-                                if (!providerId) return null;
-
-                                return (
-                                  <MenuItem
-                                    key={`${pp.id}-${providerId}`}
-                                    value={providerId}
-                                  >
-                                    {pp.proveedor?.nombre ??
-                                      pp.nombre ??
-                                      t('productos.detail.proveedorFallback', {
-                                        n: '',
-                                      })}
-                                  </MenuItem>
-                                );
-                              })}
-                            </Select>
-                          </FormControl>
-                        </Box>
-
-                        {isLoadingHistory ? (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            align="center"
-                            sx={{ py: 3 }}
-                          >
-                            {t('productos.detail.cargandoHistorial')}
-                          </Typography>
-                        ) : priceHistory.length > 0 ? (
-                          <Box sx={{ overflowX: 'auto' }}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 600 }}>
-                                    {t('productos.detail.historialColFecha')}
                                   </TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }}>
-                                    {t(
-                                      'productos.detail.historialColProveedor'
-                                    )}
+                                  <TableCell align="right" sx={{ py: 1.5 }}>
+                                    <Typography variant="body2">
+                                      {h.cantidad != null
+                                        ? Number(h.cantidad).toLocaleString()
+                                        : '—'}
+                                    </Typography>
                                   </TableCell>
-                                  <TableCell
-                                    sx={{ fontWeight: 600 }}
-                                    align="right"
-                                  >
-                                    {t('productos.detail.historialColCantidad')}
-                                  </TableCell>
-                                  <TableCell
-                                    sx={{ fontWeight: 600 }}
-                                    align="right"
-                                  >
-                                    {t('productos.detail.historialColPrecio')}
-                                  </TableCell>
-                                  <TableCell
-                                    sx={{ fontWeight: 600 }}
-                                    align="center"
-                                  >
-                                    {t('productos.detail.historialColDoc')}
+                                  <TableCell align="right" sx={{ py: 1.5 }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 700,
+                                        color: 'primary.main',
+                                        bgcolor: alpha(
+                                          theme.palette.primary.main,
+                                          0.05
+                                        ),
+                                        display: 'inline-block',
+                                        px: 1,
+                                        py: 0.5,
+                                        borderRadius: 1,
+                                      }}
+                                    >
+                                      {Number(h.precio).toFixed(2)} €
+                                    </Typography>
                                   </TableCell>
                                 </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {priceHistory.map((h) => (
-                                  <TableRow key={h.id}>
-                                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                      {new Date(h.fecha).toLocaleDateString()}
-                                    </TableCell>
-                                    <TableCell>
-                                      {h.productoProveedor?.proveedor?.nombre ||
-                                        '—'}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {h.cantidad != null
-                                        ? Number(h.cantidad).toFixed(2)
-                                        : '—'}
-                                    </TableCell>
-                                    <TableCell
-                                      align="right"
-                                      sx={{ fontWeight: 500 }}
-                                    >
-                                      {Number(h.precio).toFixed(4)} €
-                                    </TableCell>
-                                    <TableCell align="center">
-                                      {h.documentoOrigen || '—'}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </Box>
-                        ) : (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            align="center"
-                            sx={{
-                              py: 3,
-                              bgcolor: 'action.hover',
-                              borderRadius: 1,
-                            }}
-                          >
-                            {t('productos.detail.historialVacio')}
-                          </Typography>
-                        )}
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          align="center"
+                          sx={{
+                            py: 3,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                          }}
+                        >
+                          No hay registros históricos para este producto.
+                        </Typography>
+                      )}
 
-                        {/* Placeholder para gráfico de evolución */}
-                        {priceHistory.length > 1 && (
-                          <Box
-                            sx={{
-                              mt: 3,
-                              p: 2,
-                              border: '1px dashed',
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                              textAlign: 'center',
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {t(
-                                'productos.detail.historialGraficoPlaceholder'
-                              )}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    ),
-                  },
-                ]}
-              />
-            );
-          })()}
-      </Paper>
+                      {/* Placeholder para gráfico de evolución */}
+                      {priceHistory.length > 1 && (
+                        <Box
+                          sx={{
+                            mt: 3,
+                            p: 2,
+                            border: '1px dashed',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            textAlign: 'center',
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            Estructura preparada para gráfico de evolución de
+                            precios
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  ),
+                },
+              ]}
+            />
+          );
+        })()}
+
+      {/* Modal para visualizar imagen ampliada (Zoom) */}
+      <Dialog
+        open={!!zoomedImage}
+        onClose={() => setZoomedImage(null)}
+        maxWidth="lg"
+        PaperProps={{
+          sx: {
+            bgcolor: 'transparent',
+            boxShadow: 'none',
+            overflow: 'visible',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <IconButton
+            onClick={() => setZoomedImage(null)}
+            sx={{
+              position: 'absolute',
+              right: -16,
+              top: -16,
+              bgcolor: 'background.paper',
+              color: 'text.primary',
+              boxShadow: 3,
+              '&:hover': { bgcolor: 'action.hover' },
+              zIndex: 1,
+            }}
+            size="medium"
+          >
+            <CloseIcon />
+          </IconButton>
+          {zoomedImage && (
+            <Box
+              component="img"
+              src={zoomedImage ?? undefined}
+              alt="Vista ampliada del producto"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '85vh',
+                borderRadius: 2,
+                boxShadow: (theme) =>
+                  `0 24px 48px ${alpha(theme.palette.common.black, 0.4)}`,
+                display: 'block',
+              }}
+            />
+          )}
+        </Box>
+      </Dialog>
     </Box>
   );
 };

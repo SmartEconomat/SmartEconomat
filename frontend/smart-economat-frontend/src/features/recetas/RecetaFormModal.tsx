@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import DynamicFormModal, {
   DynamicField,
   DynamicFormModalProps,
@@ -8,7 +9,6 @@ import {
   TiempoReceta,
   UnidadIngrediente,
 } from '../../services/receta.types';
-import { useTranslation } from 'react-i18next';
 
 type RecetaFormModalProps = Pick<
   DynamicFormModalProps,
@@ -17,6 +17,27 @@ type RecetaFormModalProps = Pick<
   title?: DynamicFormModalProps['title'];
 };
 
+/**
+ * Modal de formulario para crear o editar una receta.
+ *
+ * Renderiza un `DynamicFormModal` con el esquema de campos internacionalizado.
+ * Detecta automáticamente si está en modo edición comprobando `initialData.id`.
+ *
+ * @param {RecetaFormModalProps} props - Props del modal.
+ * @param {boolean} props.isOpen - Controla la visibilidad del modal.
+ * @param {() => void} props.onClose - Callback al cerrar el modal.
+ * @param {object} [props.initialData] - Datos iniciales del formulario (edición).
+ * @param {(data: unknown) => void} props.onSubmit - Callback al enviar el formulario.
+ * @param {boolean} [props.isSubmitting] - Desactiva el botón de envío mientras se procesa.
+ * @param {string} [props.title] - Título del modal (por defecto se genera desde i18n).
+ * @returns {JSX.Element} Modal con el formulario de receta.
+ * @example
+ * <RecetaFormModal
+ *   isOpen={open}
+ *   onClose={() => setOpen(false)}
+ *   onSubmit={handleSubmit}
+ * />
+ */
 const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
   isOpen,
   onClose,
@@ -31,61 +52,61 @@ const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
   const recetaFormSchema: DynamicField[] = [
     {
       name: 'nombre',
-      label: t('recetaFormModal.fields.nombre'),
+      label: t('receta.form.nombre'),
       required: true,
       width: 12,
     },
     {
       name: 'tiempoPreparacion',
-      label: t('recetaFormModal.fields.tiempoPreparacion'),
+      label: t('receta.form.tiempoPreparacion'),
       type: 'select',
       required: true,
       width: 6,
       options: [
-        { value: TiempoReceta.MIN_10, label: '10 min' },
-        { value: TiempoReceta.MIN_20, label: '20 min' },
-        { value: TiempoReceta.MIN_30, label: '30 min' },
-        { value: TiempoReceta.MIN_45, label: '45 min' },
-        { value: TiempoReceta.MIN_60, label: '60 min' },
+        { value: TiempoReceta.MIN_10, label: t('receta.form.tiempo.10min') },
+        { value: TiempoReceta.MIN_20, label: t('receta.form.tiempo.20min') },
+        { value: TiempoReceta.MIN_30, label: t('receta.form.tiempo.30min') },
+        { value: TiempoReceta.MIN_45, label: t('receta.form.tiempo.45min') },
+        { value: TiempoReceta.MIN_60, label: t('receta.form.tiempo.60min') },
       ],
     },
     {
       name: 'dificultad',
-      label: t('recetaFormModal.fields.dificultad'),
+      label: t('receta.form.dificultad'),
       type: 'select',
       required: true,
       width: 6,
       options: [
         {
           value: DificultadReceta.FACIL,
-          label: t('recetaFormModal.difficulty.FACIL'),
+          label: t('receta.form.dificultadFacil'),
         },
         {
           value: DificultadReceta.MEDIA,
-          label: t('recetaFormModal.difficulty.MEDIA'),
+          label: t('receta.form.dificultadMedia'),
         },
         {
           value: DificultadReceta.DIFICIL,
-          label: t('recetaFormModal.difficulty.DIFICIL'),
+          label: t('receta.form.dificultadDificil'),
         },
       ],
     },
     {
       name: 'instrucciones',
-      label: t('recetaFormModal.fields.instrucciones'),
+      label: t('receta.form.instrucciones'),
       type: 'textarea',
       required: true,
       width: 12,
     },
     {
       name: 'rendimiento',
-      label: t('recetaFormModal.fields.rendimiento'),
+      label: t('receta.form.rendimiento'),
       type: 'number',
       width: 6,
     },
     {
       name: 'unidadResultado',
-      label: t('recetaFormModal.fields.unidadResultado'),
+      label: t('receta.form.unidadResultado'),
       type: 'select',
       width: 6,
       options: Object.values(UnidadIngrediente).map((unidad) => ({
@@ -95,38 +116,38 @@ const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
     },
     {
       name: 'diasCaducidad',
-      label: t('recetaFormModal.fields.diasCaducidad'),
+      label: t('receta.form.diasCaducidad'),
       type: 'number',
       width: 3,
     },
     {
       name: 'costeUnitarioEstimado',
-      label: t('recetaFormModal.fields.costeUnitarioEstimado'),
+      label: t('receta.form.costeUnitarioEstimado'),
       type: 'number',
       width: 3,
       disabled: true,
     },
     {
       name: 'raciones',
-      label: t('recetaFormModal.fields.raciones'),
+      label: t('receta.form.raciones'),
       type: 'number',
       width: 3,
     },
     {
       name: 'tamanioRacion',
-      label: t('recetaFormModal.fields.tamanioRacion'),
+      label: t('receta.form.tamanioRacion'),
       type: 'number',
       width: 3,
     },
     {
       name: 'ingredientes',
-      label: t('recetaFormModal.fields.ingredientes'),
+      label: t('receta.form.ingredientes'),
       type: 'recipeIngredients',
       position: 'bottom',
     },
     {
       name: 'imagen',
-      label: t('recetaFormModal.fields.imagen'),
+      label: t('receta.form.imagen'),
       type: 'image',
       required: false,
       width: 12,
@@ -141,10 +162,10 @@ const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
       title={
         title ??
         (isEditing
-          ? t('recetaFormModal.editTitle', {
-              name: String(initialData.nombre || ''),
+          ? t('receta.form.tituloEditar', {
+              nombre: String(initialData.nombre || ''),
             })
-          : t('recetaFormModal.createTitle'))
+          : t('receta.form.tituloNueva'))
       }
       size="lg"
       fields={recetaFormSchema}
@@ -154,8 +175,8 @@ const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
       requireConfirmation={true}
       confirmationMessage={
         isEditing
-          ? t('recetaFormModal.confirmEdit')
-          : t('recetaFormModal.confirmCreate')
+          ? t('receta.form.confirmarEdicion')
+          : t('receta.form.confirmarCreacion')
       }
     />
   );

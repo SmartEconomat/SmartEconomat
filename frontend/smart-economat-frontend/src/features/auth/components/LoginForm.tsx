@@ -12,12 +12,12 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import Checkbox from '../../../components/ui/Checkbox';
-import Logo from '../../../assets/images/SVG/logo-smat-economato.svg';
+import AuthLogo from './AuthLogo';
+import SecondaryActionButton from './SecondaryActionButton';
 import { User } from '../../../store/auth.types';
 import { authService } from '../../../services/auth.service';
 import { getPasswordChangeError } from '../../../utils/passwordValidation';
 import { getAuthErrorMessage } from '../../../utils/authErrorMessages';
-import { useTranslation } from 'react-i18next';
 
 const visuallyHidden = {
   border: 0,
@@ -53,7 +53,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
   onToggleForm,
   onLoginSuccess,
 }) => {
-  const { t } = useTranslation();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -154,13 +153,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
     const emailOrUser = formData.email.trim();
     if (!emailOrUser) {
-      setErrorMsg(t('auth.forgotPassword.errors.enterEmail'));
+      setErrorMsg('Por favor ingresa tu usuario o correo electrónico.');
       return;
     }
 
     // Si no contiene @, asumimos que es un nombre de usuario (probablemente alumno)
     if (!emailOrUser.includes('@')) {
-      setErrorMsg(t('auth.forgotPassword.errors.studentRestriction'));
+      setErrorMsg(
+        'Los alumnos deben solicitar el restablecimiento de contraseña a su profesor asignado directamente.'
+      );
       return;
     }
 
@@ -261,17 +262,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
       }}
     >
       <Typography component="h1" sx={visuallyHidden}>
-        {t('auth.login.pageTitle')}
+        Iniciar Sesión en Smart Economat
       </Typography>
 
-      {/* Logo responsivo: más pequeño en móvil, más grande en desktop */}
-      <Box sx={{ mb: 1, mt: { xs: 0, md: 1 } }}>
-        <img
-          src={Logo}
-          alt="SmartEconomat"
-          style={{ height: 'clamp(90px, 15vw, 130px)', width: 'auto' }}
-        />
-      </Box>
+      <AuthLogo />
 
       {errorMsg && (
         <Alert severity="error" sx={{ width: '100%', maxWidth: 400, mt: 2 }}>
@@ -301,17 +295,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
               fontWeight: 'bold',
             }}
           >
-            {t('auth.changePassword.title')}
+            Cambio de contraseña obligatorio
           </Typography>
           <Typography
             variant="body2"
             sx={{ textAlign: 'center', mb: 3, color: 'text.secondary' }}
           >
-            {t('auth.changePassword.description')}
+            Su administrador ha restablecido su contraseña. Por seguridad, debe
+            elegir una nueva antes de continuar.
           </Typography>
 
           <Input
-            label={t('auth.changePassword.newPassword')}
+            label="Nueva Contraseña"
             name="newPassword"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
@@ -322,7 +317,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={t('auth.login.showNewPassword')}
+                    aria-label="mostrar nueva contraseña"
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -341,7 +336,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }
           />
           <Input
-            label={t('auth.changePassword.confirmNewPassword')}
+            label="Confirmar Nueva Contraseña"
             name="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
@@ -352,7 +347,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={t('auth.login.showConfirmPassword')}
+                    aria-label="mostrar confirmación de contraseña"
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -378,7 +373,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isForcedPasswordChangeDisabled}
             sx={{ mt: 3, mb: 0 }}
           >
-            {t('auth.changePassword.submit')}
+            Actualizar y Acceder
           </Button>
 
           <Button
@@ -391,7 +386,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }}
             sx={{ mt: 1 }}
           >
-            {t('auth.changePassword.cancel')}
+            Cancelar
           </Button>
         </Box>
       ) : isForgotPassword ? (
@@ -405,10 +400,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
             variant="body1"
             sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}
           >
-            {t('auth.forgotPassword.description')}
+            Introduce la dirección de correo electrónico vinculada a tu cuenta
+            para recibir un enlace temporal de reestablecimiento.
           </Typography>
           <Input
-            label={t('auth.forgotPassword.emailLabel')}
+            label="Correo Electrónico"
             name="email"
             autoComplete="email"
             autoFocus
@@ -421,7 +417,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isForgotSubmitDisabled}
             sx={{ mt: 2, mb: 0 }}
           >
-            {t('auth.forgotPassword.submit')}
+            Restablecer Contraseña
           </Button>
 
           <Box
@@ -433,18 +429,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
               mt: 1,
             }}
           >
-            <Button
-              variant="outlined"
-              color="primary"
+            <SecondaryActionButton
               onClick={() => {
                 setIsForgotPassword(false);
                 setForgotSuccess('');
                 setErrorMsg('');
               }}
-              sx={{ mt: 1 }}
             >
-              {t('auth.forgotPassword.backToLogin')}
-            </Button>
+              Volver al inicio de sesión
+            </SecondaryActionButton>
             <Link
               href="#"
               variant="body2"
@@ -453,7 +446,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onToggleForm();
               }}
             >
-              {t('auth.forgotPassword.registerLink')}
+              ¿No tienes cuenta? Regístrate aquí.
             </Link>
           </Box>
         </Box>
@@ -465,7 +458,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           sx={{ mt: 1, width: '100%', maxWidth: 400 }}
         >
           <Input
-            label={t('auth.login.usernameOrEmail')}
+            label="Usuario o Email"
             name="email"
             autoComplete="username"
             autoFocus
@@ -473,7 +466,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={handleChange}
           />
           <Input
-            label={t('auth.login.password')}
+            label="Contraseña"
             name="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
@@ -483,7 +476,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={t('auth.login.showPassword')}
+                    aria-label="revelar contraseña"
                     onClick={togglePasswordVisibility}
                     edge="end"
                   >
@@ -496,7 +489,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <Checkbox
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            label={t('auth.login.rememberMe')}
+            label="Recordarme"
           />
           <Button
             type="submit"
@@ -504,7 +497,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             disabled={isLoginSubmitDisabled}
             sx={{ mt: 2, mb: 0 }}
           >
-            {t('auth.login.submit')}
+            Acceder
           </Button>
 
           <Box
@@ -516,14 +509,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
               mt: 1,
             }}
           >
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => onToggleForm()}
-              sx={{ mt: 1 }}
-            >
-              {t('auth.login.registerLink')}
-            </Button>
+            <SecondaryActionButton onClick={() => onToggleForm()}>
+              ¿No tienes cuenta? Regístrate aquí.
+            </SecondaryActionButton>
             <Link
               href="#"
               variant="body2"
@@ -534,7 +522,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 setForgotSuccess('');
               }}
             >
-              {t('auth.login.forgotPassword')}
+              ¿Olvidaste tu contraseña?
             </Link>
           </Box>
         </Box>

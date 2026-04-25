@@ -1,20 +1,38 @@
+/**
+ * @module StringToDateTransformer
+ * class-transformer compatible transformer that coerces string or numeric values to `Date` objects.
+ * Supports ISO 8601 strings, UNIX timestamps (ms), and native `Date` instances.
+ * Handles `null` and `undefined` gracefully.
+ */
+
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
+/** Subset of `TransformFnParams` that this transformer requires. */
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
 /**
- * StringToDateTransformer
+ * Transformer that converts string or numeric values to `Date` objects.
  *
- * Transformador para convertir strings a objetos Date.
- * Soporta múltiples formatos: ISO 8601, timestamps, fechas en string.
- * Maneja valores null/undefined de forma segura.
+ * Use with the `@Transform` decorator from `class-transformer`:
  *
  * @example
+ * import { Transform } from 'class-transformer';
+ * import { StringToDateTransformer } from '../transformers';
  *
- * @Transform(StringToDateTransformer.transform)
- * fechaCaducidad: Date;
+ * export class CreateInventarioDto {
+ *   \@Transform(StringToDateTransformer.transform)
+ *   fechaCaducidad: Date;
+ * }
  */
 export class StringToDateTransformer {
+  /**
+   * Coerces a value to a `Date` (or `null` / `undefined`).
+   *
+   * @param {TransformValueParams} params - Transform parameters provided by `class-transformer`.
+   * @returns {Date | null | undefined} The parsed `Date`, `null` if the input was `null`,
+   *   or `undefined` if the input was `undefined` or an empty string.
+   * @throws {Error} If the string or number cannot be parsed into a valid date.
+   */
   static transform(params: TransformValueParams): Date | null | undefined {
     const value = params.value;
     if (value === null) return null;

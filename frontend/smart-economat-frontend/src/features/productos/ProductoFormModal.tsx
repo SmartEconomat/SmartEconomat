@@ -16,7 +16,100 @@ import { getCategoryIcon } from './utils/getCategoryIcon';
 import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 import { useToast } from '../../store/toast.hooks';
-import { useTranslation } from 'react-i18next';
+
+// ── Base schema ────────────────────────────────────────────────────────
+
+// Estructura de campos para el formulario de producto
+const productoBaseSchema: DynamicField[] = [
+  // --- Bloque Superior (Junto a Imagen) ---
+  { name: 'nombre', label: 'Nombre Comercial', required: true, width: 8 },
+  { name: 'marca', label: 'Fabricante / Marca Genérica', width: 4 },
+  {
+    name: 'descripcion',
+    label: 'Descripción',
+    type: 'textarea',
+    width: 12,
+    maxLength: 500,
+  },
+
+  // --- Bloque Técnico (Fila de Datos) ---
+  {
+    name: 'contenido',
+    label: 'Contenido Numérico',
+    type: 'number',
+    required: true,
+    width: 4,
+    defaultValue: 1,
+    position: 'bottom',
+  },
+  {
+    name: 'unidad',
+    label: 'Unidad de Medida',
+    type: 'select',
+    required: true,
+    options: [
+      { value: UnidadMedida.KG, label: 'Kg' },
+      { value: UnidadMedida.G, label: 'Gramo' },
+      { value: UnidadMedida.L, label: 'Litro' },
+      { value: UnidadMedida.ML, label: 'Mililitro' },
+      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
+      { value: UnidadMedida.PAQ, label: 'Paquete' },
+    ],
+    width: 4,
+    defaultValue: UnidadMedida.UNIDAD,
+    position: 'bottom',
+  },
+  {
+    name: 'tipo',
+    label: 'Categoría',
+    type: 'select',
+    width: 4,
+    options: [
+      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
+      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
+      { value: CategoriaProducto.CARNE, label: 'Carne' },
+      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
+      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
+      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
+      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
+      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
+      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
+      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
+      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
+      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
+      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
+      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
+      { value: CategoriaProducto.OTRO, label: 'Otro' },
+    ],
+    position: 'bottom',
+  },
+
+  // --- Bloque Código de Barras (Línea Sola) ---
+  {
+    name: 'codigoBarras',
+    label: 'EAN Maestro / Global',
+    type: 'barcode',
+    width: 12,
+    position: 'bottom',
+  },
+
+  // --- Media y Otros ---
+  {
+    name: 'imagen',
+    label: 'Cargar Imagen',
+    type: 'image',
+    getFallbackIcon: (formData) =>
+      getCategoryIcon(formData.tipo as CategoriaProducto, {
+        sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
+      }),
+  },
+  {
+    name: 'alergenos',
+    label: 'Alérgenos Presentes',
+    type: 'allergens',
+    position: 'bottom',
+  },
+];
 
 // ── OFF helpers ────────────────────────────────────────────────────────
 
@@ -41,6 +134,18 @@ export type ProductoFormModalProps = Pick<
   title?: DynamicFormModalProps['title'];
 };
 
+/**
+ * @description Dynamic form modal for creating or editing a Producto.
+ * Loads available proveedores on mount, fetches OpenFoodFacts product data when a barcode is entered,
+ * supports EAN-13 generation (permission-gated), and builds a category-aware dynamic field schema.
+ * @param props.isOpen - Whether the modal should be visible
+ * @param props.onClose - Callback invoked when the user closes the modal
+ * @param props.initialData - Pre-populated form values for editing mode; empty object for creation
+ * @param props.onSubmit - Callback invoked with validated form data when the user submits
+ * @param props.isSubmitting - Whether a submit operation is in progress
+ * @param props.title - Optional modal title (defaults to 'Nuevo Producto' or 'Editar Producto')
+ * @returns DynamicFormModal configured for the producto domain
+ */
 const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isOpen,
   onClose,
@@ -49,115 +154,35 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isSubmitting = false,
   title,
 }) => {
-  const { t } = useTranslation();
   const isEditing = Boolean(initialData.id);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
   const toast = useToast();
 
-  useEffect(() => {
-    if (!isOpen) return;
-    fetchProveedores(1, 50)
+  const loadProveedores = useCallback(() => {
+    fetchProveedores(1, 100) // Aumentamos un poco el límite para asegurarnos de que el nuevo aparezca
       .then((resp) => setProveedores(resp.data))
       .catch(() => setProveedores([]));
-  }, [isOpen]);
+  }, []);
 
-  const productoBaseSchema: DynamicField[] = [
-    {
-      name: 'nombre',
-      label: t('productoFormModal.fields.nombre'),
-      required: true,
-    },
-    { name: 'marca', label: t('productoFormModal.fields.marca') },
-    { name: 'descripcion', label: t('productoFormModal.fields.descripcion') },
-    {
-      name: 'contenido',
-      label: t('productoFormModal.fields.contenido'),
-      type: 'number',
-      required: true,
-    },
-    {
-      name: 'unidad',
-      label: t('productoFormModal.fields.unidad'),
-      type: 'select',
-      options: [
-        { value: UnidadMedida.KG, label: t('productoFormModal.units.kg') },
-        { value: UnidadMedida.G, label: t('productoFormModal.units.g') },
-        { value: UnidadMedida.L, label: t('productoFormModal.units.l') },
-        { value: UnidadMedida.ML, label: t('productoFormModal.units.ml') },
-        {
-          value: UnidadMedida.UNIDAD,
-          label: t('productoFormModal.units.unidad'),
-        },
-        { value: UnidadMedida.PAQ, label: t('productoFormModal.units.paq') },
-      ],
-      required: true,
-      width: 4,
-    },
-    {
-      name: 'tipo',
-      label: t('productoFormModal.fields.categoria'),
-      type: 'select',
-      width: 4,
-      options: [
-        { value: CategoriaProducto.VERDURA, label: t('categoria.VERDURA') },
-        { value: CategoriaProducto.FRUTA, label: t('categoria.FRUTA') },
-        { value: CategoriaProducto.CARNE, label: t('categoria.CARNE') },
-        { value: CategoriaProducto.PESCADO, label: t('categoria.PESCADO') },
-        { value: CategoriaProducto.MARISCO, label: t('categoria.MARISCO') },
-        { value: CategoriaProducto.LACTEO, label: t('categoria.LACTEO') },
-        { value: CategoriaProducto.HUEVO, label: t('categoria.HUEVO') },
-        { value: CategoriaProducto.CEREAL, label: t('categoria.CEREAL') },
-        { value: CategoriaProducto.LEGUMBRE, label: t('categoria.LEGUMBRE') },
-        {
-          value: CategoriaProducto.FRUTO_SECO,
-          label: t('categoria.FRUTO_SECO'),
-        },
-        {
-          value: CategoriaProducto.CONDIMENTO,
-          label: t('categoria.CONDIMENTO'),
-        },
-        { value: CategoriaProducto.ACEITE, label: t('categoria.ACEITE') },
-        { value: CategoriaProducto.AZUCAR, label: t('categoria.AZUCAR') },
-        { value: CategoriaProducto.BEBIDA, label: t('categoria.BEBIDA') },
-        { value: CategoriaProducto.OTRO, label: t('categoria.OTRO') },
-      ],
-    },
-    {
-      name: 'codigoBarras',
-      label: t('productoFormModal.fields.codigoBarras'),
-      type: 'barcode',
-    },
-    {
-      name: 'imagen',
-      label: t('productoFormModal.fields.imagen'),
-      type: 'image',
-      getFallbackIcon: (formData) =>
-        getCategoryIcon(formData.tipo as CategoriaProducto, {
-          sx: { fontSize: 80, color: 'text.secondary', opacity: 0.5 },
-        }),
-    },
-    {
-      name: 'alergenos',
-      label: t('productoFormModal.fields.alergenos'),
-      type: 'allergens',
-      position: 'bottom',
-    },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      loadProveedores();
+    }
+  }, [isOpen, loadProveedores]);
 
   const dynamicSchema = React.useMemo(() => {
     const schema = [...productoBaseSchema];
     schema.push({
       name: 'proveedores',
-      label: t('productoFormModal.fields.proveedores'),
+      label: 'Proveedores Asociados',
       type: 'proveedores',
       position: 'bottom',
       defaultValue: [],
       options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     });
     return schema;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proveedores, t]);
+  }, [proveedores]);
 
   const handleBarcodeFetch = useCallback(async (code: string) => {
     const product = await searchByBarcode(code);
@@ -197,12 +222,11 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       title={
         title ??
         (isEditing
-          ? t('productoFormModal.editTitle', {
-              name: String(initialData.nombre || ''),
-            })
-          : t('productoFormModal.createTitle'))
+          ? `Editar: ${String(initialData.nombre || '')}`
+          : 'Crear Nuevo Producto')
       }
       size="lg"
+      submitLabel={isEditing ? 'Guardar Cambios' : 'Crear Producto'}
       fields={dynamicSchema}
       initialData={initialData}
       onSubmit={onSubmit}
@@ -213,8 +237,8 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       onOFFSearch={handleOFFSearch}
       confirmationMessage={
         isEditing
-          ? t('productoFormModal.confirmEdit')
-          : t('productoFormModal.confirmCreate')
+          ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
+          : '¿Estás seguro de que deseas añadir este nuevo producto al inventario?'
       }
     />
   );

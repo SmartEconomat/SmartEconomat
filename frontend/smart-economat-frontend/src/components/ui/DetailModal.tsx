@@ -5,19 +5,19 @@
  */
 
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
-  Divider,
-  IconButton,
-  Tooltip,
-  Typography,
   Dialog,
-  DialogTitle,
   DialogContent,
+  IconButton,
+  Typography,
+  Tooltip,
+  Divider,
+  DialogTitle,
   DialogActions,
 } from '@mui/material';
+import { extractA11yText } from '../../utils/a11y-format';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import DynamicFormModal, {
@@ -25,28 +25,30 @@ import DynamicFormModal, {
   DynamicFormModalProps,
 } from './DynamicFormModal';
 import { ModalSize } from './Modal';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────────────────
-//  Tipos públicos
+//  Public types
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Represents a single key-value field in a detail section.
+ */
 export interface DetailField {
+  /** Caption displayed above the value. */
   label: string;
-  /** Texto, número o cualquier ReactNode (chip, icono…). */
+  /** Text, number or any ReactNode (chip, icon, …). */
   value: React.ReactNode;
-  /** Si true, ocupa todo el ancho de la fila (1 / -1). */
+  /** If `true`, the field spans the full row width (grid column `1 / -1`). */
   fullWidth?: boolean;
-  /** Cuantas columnas ocupa en pantallas medianas/grandes. Por defecto 1. */
+  /** Number of grid columns the field occupies on medium/large screens. Defaults to 1. */
   colSpan?: number;
 }
 
 export interface DetailSection {
   title?: string;
-  /** Opcional: Número de columnas que componen el grid de esta sección. Por defecto: 2 */
   columns?: number;
-  /** Matriz de campos clásicos conformados por clave: valor */
   fields?: DetailField[];
-  /** Módulo inyectable personalizado en lugar del sistema tradicional de campos rígidos */
   content?: React.ReactNode;
 }
 
@@ -58,7 +60,6 @@ export interface DetailModalProps {
   headerMedia?: React.ReactNode;
   sections: DetailSection[];
   size?: ModalSize;
-  /** Callback para abrir el modal de edición desde el padre. */
   onEdit?: () => void;
   editConfig?: {
     title?: string;
@@ -73,7 +74,6 @@ export interface DetailModalProps {
     size?: ModalSize;
   };
   editLabel?: string;
-  /** Botones de acción adicionales para el footer. */
   actions?: React.ReactNode;
 }
 
@@ -90,7 +90,7 @@ const SIZE_MAP: Record<ModalSize, string> = {
 };
 
 // ─────────────────────────────────────────────────────────
-//  Componente
+//  Component
 // ─────────────────────────────────────────────────────────
 
 const DetailModal: React.FC<DetailModalProps> = ({
@@ -103,19 +103,16 @@ const DetailModal: React.FC<DetailModalProps> = ({
   size = 'md',
   onEdit,
   editConfig,
-  editLabel,
+  editLabel = 'Editar',
   actions,
 }) => {
   const { t } = useTranslation();
-  const resolvedEditLabel = editLabel ?? t('detailModal.edit');
   const [editOpen, setEditOpen] = useState(false);
 
   const handleOpenEdit = () => {
     if (onEdit) {
-      // El padre gestiona la apertura del editor
       onEdit();
     } else {
-      // Gestión interna: cierra detalle y abre editor
       onClose();
       setEditOpen(true);
     }
@@ -127,7 +124,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
   return (
     <>
-      {/* ─── FICHA DE DETALLE ─── */}
+      {/* ─── DETAIL SHEET ─── */}
       <Dialog
         open={isOpen}
         onClose={onClose}
@@ -178,9 +175,9 @@ const DetailModal: React.FC<DetailModalProps> = ({
             )}
           </Box>
 
-          <Tooltip title={t('detailModal.close')}>
+          <Tooltip title={t('comun.cerrar')}>
             <IconButton
-              aria-label={t('detailModal.close')}
+              aria-label={t('comun.cerrar')}
               onClick={onClose}
               size="small"
               sx={{
@@ -211,7 +208,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           </Box>
         )}
 
-        {/* Secciones */}
+        {/* Sections */}
         <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
           {sections.map((section, sIdx) => (
             <Box
@@ -284,7 +281,10 @@ const DetailModal: React.FC<DetailModalProps> = ({
                         {field.value != null && field.value !== '' ? (
                           typeof field.value === 'string' ||
                           typeof field.value === 'number' ? (
-                            <Typography variant="body2">
+                            <Typography
+                              variant="body2"
+                              aria-label={`${field.label}: ${extractA11yText(field.value)}`}
+                            >
                               {field.value}
                             </Typography>
                           ) : (
@@ -333,19 +333,19 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 onClick={handleOpenEdit}
                 disableElevation
               >
-                {resolvedEditLabel}
+                {editLabel}
               </Button>
             )}
           </DialogActions>
         )}
       </Dialog>
 
-      {/* ─── MODAL DE EDICIÓN ─── */}
+      {/* ─── EDIT MODAL ─── */}
       {editConfig && (
         <DynamicFormModal
           isOpen={editOpen}
           onClose={handleCloseEdit}
-          title={editConfig.title ?? t('detailModal.editTitle', { title })}
+          title={editConfig.title ?? t('comun.editarItem', { item: title })}
           size={editConfig.size ?? 'lg'}
           fields={editConfig.fields}
           initialData={editConfig.initialData}

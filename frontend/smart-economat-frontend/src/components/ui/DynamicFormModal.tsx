@@ -5,8 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Box, Stack } from '@mui/material';
+import { Box, Stack, Grid } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import Modal, { ModalCloseReason, ModalProps, ModalSize } from './Modal';
@@ -32,6 +31,7 @@ import {
   ListItemText,
   Paper,
   CircularProgress,
+  Typography,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
@@ -49,10 +49,13 @@ export type FieldType =
   | 'image'
   | 'allergens'
   | 'proveedores'
+  | 'email'
   | 'orderLines'
   | 'recipeIngredients'
   | 'batchViewer'
   | 'barcode';
+
+export type FormDataRecord = Record<string, unknown>;
 
 export interface DynamicField {
   name: string;
@@ -60,23 +63,22 @@ export interface DynamicField {
   type?: FieldType;
   required?: boolean;
   options?: SelectOption[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue?: any;
+  defaultValue?: unknown;
   disabled?: boolean;
   position?: 'left' | 'right' | 'bottom';
   multiple?: boolean;
-  /** Opcional: Define el ancho del campo en una cuadrícula de 1-12 (Por defecto 12). Se aplica a partir del breakpoint 'sm'. */
   width?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getFallbackIcon?: (formData: Record<string, any>) => React.ReactNode;
+  getFallbackIcon?: (formData: FormDataRecord) => React.ReactNode;
+  pattern?: string;
+  patternMessage?: string;
+  maxLength?: number;
+  minLength?: number;
 }
 
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   fields?: DynamicField[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialData?: Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (data: Record<string, any>) => void | Promise<void>;
+  initialData?: FormDataRecord;
+  onSubmit: (data: FormDataRecord) => void | Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
   cancelLabel?: string;
@@ -110,8 +112,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   initialData = {},
   onSubmit,
   onCancel,
-  submitLabel,
-  cancelLabel,
+  submitLabel = 'Aceptar',
+  cancelLabel = 'Cancelar',
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
@@ -124,11 +126,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
-  const { t } = useTranslation();
-  const resolvedSubmitLabel = submitLabel ?? t('dynamicForm.submit');
-  const resolvedCancelLabel = cancelLabel ?? t('dynamicForm.cancel');
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
-  const formDataRef = useRef<Record<string, unknown>>({});
+  const [formData, setFormData] = useState<FormDataRecord>({});
+  const formDataRef = useRef<FormDataRecord>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
@@ -154,11 +153,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         : undefined;
 
   const updateFormData = useCallback(
-    (
-      updater:
-        | Record<string, unknown>
-        | ((prev: Record<string, unknown>) => Record<string, unknown>)
-    ) => {
+    (updater: FormDataRecord | ((prev: FormDataRecord) => FormDataRecord)) => {
       setFormData((prev) => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
         formDataRef.current = next;
@@ -187,14 +182,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       setOffResults([]);
       if (onValuesChange) onValuesChange(dataToSet);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialData, fields]);
+  }, [isOpen, initialData, fields, onValuesChange]);
 
-  // Handle external value updates (e.g., from real-time calculations)
   useEffect(() => {
     if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {
       updateFormData((prev) => {
-        const next = { ...prev };
+        const next: FormDataRecord = { ...prev };
         let changed = false;
         Object.keys(valueUpdates).forEach((key) => {
           if (next[key] !== valueUpdates[key]) {
@@ -225,7 +218,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    // Bloquear números negativos en tiempo real
+    if (value.startsWith('-')) return;
+
     const parsedValue = parseLocalizedNumber(value);
+    if (parsedValue !== null && parsedValue < 0) return;
 
     updateFormData((prev) => ({
       ...prev,
@@ -237,6 +235,63 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     updateFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const validateField = (
+    field: DynamicField,
+    value: unknown
+  ): string | null => {
+    const { required, label, pattern, patternMessage, maxLength, minLength } =
+      field;
+
+    const stringValue = value != null ? String(value).trim() : '';
+
+    if (required && !stringValue) {
+      return `${label} es obligatorio`;
+    }
+
+    if (stringValue) {
+      if (maxLength && stringValue.length > maxLength) {
+        return `${label} no puede superar los ${maxLength} caracteres`;
+      }
+      if (minLength && stringValue.length < minLength) {
+        return `${label} debe tener al menos ${minLength} caracteres`;
+      }
+      if (pattern) {
+        try {
+          const regex = new RegExp(pattern);
+          if (!regex.test(stringValue)) {
+            return patternMessage || `${label} no tiene un formato válido`;
+          }
+        } catch {
+          console.error(`Invalid regex for field ${field.name}:`, pattern);
+        }
+      }
+      if (field.type === 'email') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(stringValue)) {
+          return 'Formato de correo electrónico no válido';
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    fields.forEach((field) => {
+      const error = validateField(field, formData[field.name]);
+      if (error) {
+        newErrors[field.name] = error;
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleDateChange = (name: string, value: string) => {
@@ -286,41 +341,16 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       }
     };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Basic validation for required fields
-    const newErrors: Record<string, string> = {};
-    fields.forEach((field) => {
-      if (field.required) {
-        const val = formDataRef.current[field.name];
-        const isEmpty =
-          val === undefined ||
-          val === null ||
-          val === '' ||
-          (Array.isArray(val) && val.length === 0);
-        if (isEmpty) {
-          newErrors[field.name] = t('dynamicForm.required');
-        }
-      }
-      // Specific validation: proveedorId must be UUID v4
-      if (field.name === 'proveedorId' && formDataRef.current[field.name]) {
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(String(formDataRef.current[field.name]))) {
-          newErrors[field.name] = t('dynamicForm.invalidUuid');
-        }
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!validateForm()) {
       return;
     }
 
     if (requireConfirmation) {
       setIsConfirmOpen(true);
     } else {
-      await onSubmit(formDataRef.current);
+      onSubmit(formData);
     }
   };
 
@@ -349,6 +379,28 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     onClose(reason);
   };
 
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (name: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      updateFormData((prev) => ({ ...prev, [name]: file }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
   const formFields =
     fields.length > 0
       ? fields
@@ -360,7 +412,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           if (typeOfVal === 'number') type = 'number';
           if (typeOfVal === 'boolean') type = 'boolean';
           if (
-            typeOfVal === 'string' &&
+            typeof val === 'string' &&
             !isNaN(Date.parse(val)) &&
             val.includes('-')
           )
@@ -380,14 +432,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const nonImageFields = formFields.filter((f) => f.type !== 'image');
 
   const imageFieldName = mainImageField?.name;
-  const imageRawValue = useMemo(
-    () => (imageFieldName !== undefined ? formData[imageFieldName] : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      imageFieldName,
-      imageFieldName !== undefined ? formData[imageFieldName] : undefined,
-    ]
-  );
+  const imageFieldValue =
+    imageFieldName !== undefined ? formData[imageFieldName] : undefined;
+  const imageRawValue = useMemo(() => imageFieldValue, [imageFieldValue]);
   const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -416,6 +463,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       options,
       disabled,
       multiple,
+      maxLength,
     } = field;
     const value = formData[name];
 
@@ -464,7 +512,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             onChange={handleNumberChange}
             required={required}
             disabled={disabled}
-            inputProps={{ step: 'any', inputMode: 'decimal' }}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            inputProps={{ step: 'any', inputMode: 'decimal', min: 0 }}
           />
         );
 
@@ -503,7 +556,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             required={required}
             disabled={disabled}
             multiline
-            rows={4}
+            rows={3}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            inputProps={maxLength ? { maxLength } : undefined}
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
           />
         );
 
@@ -523,6 +584,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 nifNie: '',
               })) || []
             }
+            masterMarca={formData.marca as string | undefined}
+            masterBarcode={formData.codigoBarras as string | undefined}
             disabled={disabled}
           />
         );
@@ -568,119 +631,117 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               type="text"
               value={value ?? ''}
               onChange={handleTextChange}
-              onBlur={async (e) => {
-                const code = (e.target as HTMLInputElement).value;
-                if (code && onBarcodeFetch && code !== initialData?.[name]) {
-                  const newData = await onBarcodeFetch(code);
-                  if (newData) {
-                    setFormData((prev) => ({ ...prev, ...newData }));
-                  }
-                }
-              }}
-              required={required}
-              disabled={disabled}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Tooltip title={t('dynamicForm.scanWithCamera')}>
-                      <IconButton
-                        size="small"
-                        onClick={() => setActiveBarcodeField(name)}
-                        disabled={disabled}
-                        color="primary"
-                        sx={{
-                          '&:hover': {
-                            bgcolor: 'rgba(216, 27, 96, 0.1)',
-                            borderRadius: 1,
-                          },
-                          p: 0.5,
-                          ml: -0.5,
-                        }}
-                      >
-                        <BarcodeIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-                endAdornment: (onBarcodeGenerate || onOFFSearch) && (
-                  <InputAdornment position="end">
-                    <Stack direction="row" spacing={0.5}>
-                      {onBarcodeGenerate && (
-                        <Tooltip title={t('dynamicForm.generateEAN')}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={
-                                disabled || Boolean(generatingBarcodeField)
-                              }
-                              onClick={() => {
-                                void handleBarcodeGenerate(name);
-                              }}
-                              sx={{
-                                bgcolor: 'success.main',
-                                color: 'common.white',
-                                '&:hover': {
-                                  bgcolor: 'success.dark',
-                                },
-                                borderRadius: 1,
-                                p: 0.5,
-                              }}
-                            >
-                              {generatingBarcodeField === name ? (
-                                <CircularProgress size={20} color="inherit" />
-                              ) : (
-                                <AutoFixHighOutlinedIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                      {onOFFSearch && (
-                        <Tooltip title={t('dynamicForm.searchOpenFoodFacts')}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={disabled || isOFFSearching || !value}
-                              onClick={async () => {
-                                if (!value || isOFFSearching) return;
-                                setIsOFFSearching(true);
-                                setShowOFFResults(false);
-                                const results = await onOFFSearch(
-                                  String(value)
-                                );
-                                setIsOFFSearching(false);
-                                if (results.length === 1) {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    ...results[0],
-                                  }));
-                                } else if (results.length > 1) {
-                                  setOffResults(results);
-                                  setShowOFFResults(true);
+              error={Boolean(errors[name])}
+              helperText={errors[name]}
+              inputProps={maxLength ? { maxLength } : undefined}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Tooltip title="Escanear con cámara">
+                        <IconButton
+                          size="small"
+                          onClick={() => setActiveBarcodeField(name)}
+                          disabled={disabled}
+                          color="primary"
+                          sx={{
+                            '&:hover': {
+                              bgcolor: 'rgba(216, 27, 96, 0.1)',
+                              borderRadius: 1,
+                            },
+                            p: 0.5,
+                            ml: -0.5,
+                          }}
+                        >
+                          <BarcodeIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                  endAdornment: (onBarcodeGenerate || onOFFSearch) && (
+                    <InputAdornment position="end">
+                      <Stack direction="row" spacing={0.5}>
+                        {onBarcodeGenerate && (
+                          <Tooltip title="Generar codigo EAN-13">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={
+                                  disabled || Boolean(generatingBarcodeField)
                                 }
-                              }}
-                              sx={{
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': {
-                                  bgcolor: 'primary.dark',
-                                },
-                                borderRadius: 1,
-                                p: 0.5,
-                              }}
-                            >
-                              {isOFFSearching ? (
-                                <CircularProgress size={20} />
-                              ) : (
-                                <SearchIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  </InputAdornment>
-                ),
+                                onClick={() => {
+                                  void handleBarcodeGenerate(name);
+                                }}
+                                sx={{
+                                  bgcolor: 'success.main',
+                                  color: 'common.white',
+                                  '&:hover': {
+                                    bgcolor: 'success.dark',
+                                  },
+                                  borderRadius: 1,
+                                  p: 0.5,
+                                }}
+                              >
+                                {generatingBarcodeField === name ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  <AutoFixHighOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                        {onOFFSearch && (
+                          <Tooltip title="Buscar en OpenFoodFacts">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={disabled || isOFFSearching || !value}
+                                onClick={async () => {
+                                  if (!value || isOFFSearching) return;
+                                  setIsOFFSearching(true);
+                                  setShowOFFResults(false);
+                                  const results = await onOFFSearch(
+                                    String(value)
+                                  );
+                                  setIsOFFSearching(false);
+                                  if (results.length === 1) {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      ...results[0],
+                                      ...results[0],
+                                    }));
+                                  } else if (results.length > 1) {
+                                    setOffResults(results);
+                                    setShowOFFResults(true);
+                                  }
+                                }}
+                                sx={{
+                                  bgcolor: 'primary.main',
+                                  color: 'white',
+                                  '&:hover': {
+                                    bgcolor: 'primary.dark',
+                                  },
+                                  borderRadius: 1,
+                                  p: 0.5,
+                                }}
+                              >
+                                {isOFFSearching ? (
+                                  <CircularProgress size={20} />
+                                ) : (
+                                  <SearchIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             {showOFFResults && offResults.length > 0 && (
@@ -688,12 +749,24 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 elevation={8}
                 sx={{
                   position: 'absolute',
-                  top: '100%',
+                  top: 'calc(100% + 4px)',
                   left: 0,
                   right: 0,
                   zIndex: 1300,
-                  maxHeight: 260,
+                  maxHeight: 280,
                   overflowY: 'auto',
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'divider',
+                    borderRadius: '3px',
+                  },
                 }}
               >
                 <List dense disablePadding>
@@ -704,6 +777,13 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                         setFormData((prev) => ({ ...prev, ...result }));
                         setShowOFFResults(false);
                         setOffResults([]);
+                      }}
+                      sx={{
+                        py: 1,
+                        '&:hover': {
+                          bgcolor:
+                            'rgba(var(--mui-palette-primary-mainChannel), 0.04)',
+                        },
                       }}
                     >
                       <ListItemText
@@ -717,6 +797,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                           (result['brand'] as string) ||
                           undefined
                         }
+                        primaryTypographyProps={{ fontWeight: 500 }}
                       />
                     </ListItemButton>
                   ))}
@@ -737,7 +818,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   }
                 }
               }}
-              title={t('dynamicForm.scanField', { field: label })}
+              title={`Escanear ${label}`}
             />
           </Box>
         );
@@ -749,11 +830,19 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             key={name}
             name={name}
             label={label}
-            type="text"
+            type={field.type === 'email' ? 'email' : 'text'}
             value={value ?? ''}
             onChange={handleTextChange}
             required={required}
             disabled={disabled}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            inputProps={maxLength ? { maxLength } : undefined}
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
           />
         );
     }
@@ -767,128 +856,192 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       size={size || 'md'}
     >
       <form onSubmit={handleSubmit}>
-        {/* Image at the top - full width */}
-        {mainImageField && (
-          <Box sx={{ width: '100%', mb: 3 }}>
-            {(() => {
-              const { name, label, disabled, getFallbackIcon } = mainImageField;
-              const value = formData[name];
-              const previewUrl =
-                value instanceof File
-                  ? imageBlobUrl
-                  : typeof value === 'string'
-                    ? resolveStoredFileUrl(value)
-                    : null;
-              const Fallback = getFallbackIcon ? (
-                getFallbackIcon(formData)
-              ) : (
-                <PhotoCameraIcon
-                  sx={{ fontSize: 60, color: 'text.secondary' }}
-                />
-              );
-
-              return (
-                <Box
-                  key={name}
-                  sx={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: '100%',
-                      maxWidth: 280,
-                      aspectRatio: '1',
-                      border: '1px dashed grey',
-                      borderRadius: 1,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      overflow: 'hidden',
-                      mb: 1,
-                      bgcolor: 'background.default',
-                    }}
-                  >
-                    {previewUrl ? (
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      Fallback
-                    )}
-                  </Box>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    disabled={disabled}
-                    startIcon={<CloudUploadOutlinedIcon />}
-                    size="small"
-                    sx={{ mt: 0, py: 1 }}
-                  >
-                    {label || t('dynamicForm.uploadImage')}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageChange(name)}
-                    />
-                  </Button>
-                </Box>
-              );
-            })()}
-          </Box>
-        )}
-
-        {/* Main Fields Grid */}
-        <Box
-          display="grid"
-          gridTemplateColumns="repeat(12, 1fr)"
-          gap={1.5}
-          sx={{ mt: 1 }}
+        <Grid
+          container
+          spacing={3}
+          sx={{ mt: 0, alignItems: { md: 'center' } }}
         >
-          {rightFields.map((field) => {
-            const { name, width = 12 } = field;
+          {/* Image Sidebar Layout - Left on MD+ */}
+          {mainImageField && (
+            <Grid
+              size={{ xs: 12, md: 3, lg: 3 }}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                pt: { xs: 0, sm: 0 }, // Alineación superior pura
+              }}
+            >
+              {(() => {
+                const { name, disabled, getFallbackIcon } = mainImageField;
+                const value = formData[name];
+                const previewUrl =
+                  value instanceof File
+                    ? imageBlobUrl
+                    : typeof value === 'string'
+                      ? resolveStoredFileUrl(value)
+                      : null;
+                const Fallback = getFallbackIcon ? (
+                  getFallbackIcon(formData)
+                ) : (
+                  <PhotoCameraIcon
+                    sx={{ fontSize: 60, color: 'text.secondary' }}
+                  />
+                );
 
-            return (
-              <Box key={name} sx={{ gridColumn: { xs: `span ${width}` } }}>
-                {renderFieldContent(field)}
-              </Box>
-            );
-          })}
-        </Box>
+                return (
+                  <Box sx={{ width: '100%', mt: 0, mb: 0 }} key={name}>
+                    <Box
+                      component="label"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop(name)}
+                      sx={{
+                        width: '100%',
+                        height: { md: 190 },
+                        border: '2px dashed',
+                        borderColor: isDragOver ? 'primary.main' : 'divider',
+                        borderRadius: 2,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        cursor: disabled ? 'default' : 'pointer',
+                        bgcolor: isDragOver
+                          ? 'rgba(216, 27, 96, 0.05)'
+                          : 'background.default',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: disabled ? 'divider' : 'primary.main',
+                          '& .upload-overlay': {
+                            opacity: 1,
+                          },
+                        },
+                      }}
+                    >
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        disabled={disabled}
+                        onChange={handleImageChange(name)}
+                      />
+                      {previewUrl ? (
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <Stack alignItems="center" spacing={1} sx={{ p: 2 }}>
+                          {Fallback}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            textAlign="center"
+                          >
+                            Haga clic o arrastre
+                          </Typography>
+                        </Stack>
+                      )}
+
+                      {/* Hover Overlay */}
+                      {!disabled && (
+                        <Box
+                          className="upload-overlay"
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            bgcolor: 'rgba(0, 0, 0, 0.4)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          <CloudUploadOutlinedIcon
+                            sx={{ fontSize: 40, mb: 1 }}
+                          />
+                          <Typography variant="button">
+                            {previewUrl ? 'Cambiar Imagen' : 'Cargar Imagen'}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                );
+              })()}
+            </Grid>
+          )}
+
+          {/* Right Side - Grid for Fields */}
+          <Grid size={mainImageField ? { xs: 12, md: 9, lg: 9 } : { xs: 12 }}>
+            <Box
+              display="grid"
+              gridTemplateColumns="repeat(12, 1fr)"
+              gap={2} // Restaurado el espaciado original
+            >
+              {rightFields.map((field) => {
+                const { name, width = 12 } = field;
+
+                return (
+                  <Box
+                    key={name}
+                    sx={{ gridColumn: { xs: 'span 12', sm: `span ${width}` } }}
+                  >
+                    {renderFieldContent(field)}
+                  </Box>
+                );
+              })}
+            </Box>
+          </Grid>
+        </Grid>
 
         {/* Bottom Row Fields */}
         {bottomFields.length > 0 && (
-          <Box sx={{ mt: 2, width: '100%' }}>
-            <Stack spacing={1.5}>
-              {bottomFields.map((field) => (
-                <Box key={field.name}>{renderFieldContent(field)}</Box>
-              ))}
-            </Stack>
+          <Box
+            sx={{
+              mt: 2,
+              width: '100%',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(12, 1fr)',
+              gap: 2,
+            }}
+          >
+            {bottomFields.map((field) => {
+              const { name, width = 12 } = field;
+              return (
+                <Box
+                  key={name}
+                  sx={{ gridColumn: { xs: 'span 12', sm: `span ${width}` } }}
+                >
+                  {renderFieldContent(field)}
+                </Box>
+              );
+            })}
           </Box>
         )}
 
         <Box
           sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
         >
-          {Boolean(resolvedCancelLabel) && (
+          {Boolean(cancelLabel) && (
             <Button
               onClick={handleCancel}
               variant="outlined"
               fullWidth={false}
               sx={{ mt: 0, mb: 0 }}
             >
-              {resolvedCancelLabel}
+              {cancelLabel}
             </Button>
           )}
           {secondarySubmitLabel && onSecondarySubmit && (
@@ -910,7 +1063,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             fullWidth={false}
             sx={{ mt: 0, mb: 0 }}
           >
-            {resolvedSubmitLabel}
+            {submitLabel}
           </Button>
         </Box>
       </form>
@@ -919,10 +1072,13 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmSubmit}
-        title={t('confirmDialog.title')}
-        message={confirmationMessage || t('dynamicForm.confirmSave')}
-        confirmText={t('dynamicForm.save')}
-        cancelText={t('confirmDialog.cancel')}
+        title="Confirmar acción"
+        message={
+          confirmationMessage ||
+          '¿Estás seguro de que deseas guardar estos datos?'
+        }
+        confirmText="Guardar"
+        cancelText="Cerrar"
         confirmColor="primary"
       />
     </Modal>

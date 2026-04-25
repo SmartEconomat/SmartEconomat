@@ -1,867 +1,296 @@
 {
-  "language": {
-    "es": "Español",
-    "en": "English",
-    "select": "Seleccionar idioma"
-  },
-  "layout": {
-    "expandMenu": "Expandir menú",
-    "collapseMenu": "Minimizar menú",
-    "mainNavigation": "Navegación principal",
-    "systemOptions": "Opciones del sistema",
-    "myProfile": "Mi Perfil",
-    "logout": "Cerrar Sesión"
-  },
-  "menuGroups": {
-    "inicio": "Inicio",
-    "catalogo": "Catálogo",
-    "operaciones": "Operaciones",
-    "control": "Control",
-    "gestion": "Gestión"
-  },
-  "menu": {
-    "inicio": {
-      "title": "Inicio",
-      "description": "Ver resumen general y métricas del economato"
-    },
-    "productos": {
-      "title": "Productos",
-      "description": "Gestionar catálogo de productos y precios"
-    },
-    "proveedores": {
-      "title": "Proveedores",
-      "description": "Gestionar información de proveedores externos"
-    },
-    "recetas": {
-      "title": "Recetas",
-      "description": "Catálogo de recetas y escandallos"
-    },
-    "pedidos": {
-      "title": "Pedidos",
-      "description": "Administrar pedidos de usuarios y proveedores"
-    },
-    "recepcion": {
-      "title": "Recepción",
-      "description": "Registrar entrada de mercancía al almacén"
-    },
-    "distribucion": {
-      "title": "Distribución",
-      "description": "Gestionar salidas y distribución de productos"
-    },
-    "preparaciones": {
-      "title": "Preparaciones",
-      "description": "Historial de producción de recetas"
-    },
-    "albaranes": {
-      "title": "Albaranes",
-      "description": "Gestionar y digitalizar albaranes de recepción"
-    },
-    "inventario": {
-      "title": "Inventario",
-      "description": "Controlar stock y realizar ajustes de inventario"
-    },
-    "movimientos": {
-      "title": "Movimientos",
-      "description": "Consultar historial de movimientos de stock"
-    },
-    "mermas": {
-      "title": "Mermas",
-      "description": "Gestión de pérdidas y roturas de productos"
-    },
-    "incidencias": {
-      "title": "Incidencias",
-      "description": "Reportar y gestionar problemas o devoluciones"
-    },
-    "administracion": {
-      "title": "Administración",
-      "description": "Gestión de clases, alumnos y configuración académica"
-    },
-    "miPerfil": {
-      "title": "Mi Perfil",
-      "description": "Configurar datos personales y seguridad"
-    }
+  "errors": {
+    "CANNOT_RENAME_SYSTEM_BASE_TEMPLATE": "No se puede renombrar una plantilla base del sistema",
+    "ADMIN_SUPER_ADMIN_PERMISSIONS_IMMUTABLE": "No se pueden modificar los permisos de ADMIN o SUPER_ADMIN",
+    "CANNOT_DELETE_SYSTEM_TEMPLATE": "No se puede eliminar una plantilla de sistema",
+    "CANNOT_DELETE_SYSTEM_BASE_ROLE_TEMPLATES": "No se pueden eliminar las plantillas base del sistema",
+    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "No se puede eliminar la plantilla porque está vinculada a {count} rol(es)",
+    "TEMPLATE_HIERARCHY_CIRCULAR_REFERENCE": "Referencia circular detectada en la jerarquía de plantillas",
+    "TEMPLATE_NAME_ALREADY_EXISTS": "Ya existe una plantilla con el nombre \"{nombre}\"",
+    "PARENT_TEMPLATE_CIRCULAR_REFERENCE": "No se puede asignar la plantilla padre porque genera una referencia circular",
+    "CANNOT_GENERATE_UNIQUE_TEMPLATE_NAME": "No se pudo generar un nombre único para la plantilla duplicada",
+    "INVENTARIO_DELETED_CANNOT_ADJUST": "No se puede ajustar un inventario eliminado",
+    "INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE": "El ajuste dejaría la cantidad en negativo"
   },
   "auth": {
     "login": {
+      "title": "Iniciar sesión",
+      "username": "Usuario",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "success": "¡Inicio de sesión correcto!",
+      "welcome": "¡Bienvenido!",
+      "loading": "Cargando tu aplicación…"
+    },
+    "register": {
+      "successTitle": "¡Registro exitoso!",
+      "successWait": "Debes esperar a que tu usuario esté activo."
+    },
+    "errors": {
+      "invalidCredentials": "Usuario o contraseña inválidos.",
+      "accountPending": "Tu cuenta aún está pendiente de activación.",
+      "accountBlocked": "Tu cuenta está bloqueada. Contacta al administrador.",
+      "invalidEmail": "Introduce un correo electrónico válido para recuperar tu contraseña.",
+      "invalidOrExpiredToken": "El enlace para restablecer la contraseña no es válido o ha expirado.",
+      "invalidCurrentPassword": "La contraseña actual no es correcta.",
+      "invalidClassCode": "El código de la clase no es válido o ya no está disponible.",
+      "classFull": "Esta clase ya no tiene plazas disponibles.",
+      "usernameTaken": "Ese nombre de usuario ya está en uso.",
+      "invalidCial": "El CIAL ingresado ya existe o no es válido.",
+      "userOrEmailTaken": "El usuario o correo ya están registrados."
+    },
+    "resetPassword": {
+      "titulo": "Restablecer Contraseña",
+      "descripcion": "Por favor, introduce tu nueva contraseña a continuación.",
+      "nuevaContrasena": "Nueva Contraseña",
+      "confirmarContrasena": "Confirmar Contraseña",
+      "guardando": "Guardando...",
+      "guardar": "Guardar Nueva Contraseña",
+      "volver": "Volver al inicio de sesión",
+      "exito": "Tu contraseña ha sido restablecida correctamente. Serás redirigido al inicio de sesión.",
+      "errors": {
+        "tokenInvalido": "El enlace de recuperación no es válido o no contiene token.",
+        "contrasenasNoCoinciden": "Las contraseñas no coinciden.",
+        "noSePudo": "No se pudo restablecer la contraseña.",
+        "conexion": "Error de conexión con el servidor."
+      }
+    },
+    "slide": {
+      "navAriaLabel": "Navegación de slides informativos",
+      "dotAriaLabel": "Slide {{current}} de {{total}}",
+      "login": {
+        "slide1": {
+          "title": "Bienvenido a SmartEconomat",
+          "description": "Gestiona tu economat de forma eficiente, rápida y desde cualquier dispositivo."
+        },
+        "slide2": {
+          "title": "Control en tiempo real",
+          "description": "Consulta el stock, movimientos y pedidos al momento, sin retrasos ni sorpresas."
+        },
+        "slide3": {
+          "title": "Siempre disponible",
+          "description": "Tu economat accesible 24/7 con un sistema seguro y fiable."
+        }
+      },
+      "register": {
+        "slide1": {
+          "title": "Únete a SmartEconomat",
+          "description": "Regístrate en segundos y empieza a gestionar tu economat hoy mismo."
+        },
+        "slide2": {
+          "title": "Todo en un lugar",
+          "description": "Productos, recetas, pedidos, incidencias y más, todo integrado en una sola plataforma."
+        },
+        "slide3": {
+          "title": "Interfaz moderna y sencilla",
+          "description": "Diseño intuitivo para que puedas centrarte en lo que realmente importa."
+        }
+      }
+    },
+    "loginForm": {
       "pageTitle": "Iniciar Sesión en Smart Economat",
       "usernameOrEmail": "Usuario o Email",
       "password": "Contraseña",
       "rememberMe": "Recordarme",
       "submit": "Acceder",
-      "registerLink": "¿No tienes cuenta? Regístrate aquí.",
-      "forgotPassword": "¿Olvidaste tu contraseña?",
-      "showPassword": "revelar contraseña",
-      "showNewPassword": "mostrar nueva contraseña",
-      "showConfirmPassword": "mostrar confirmación de contraseña"
-    },
-    "forgotPassword": {
-      "description": "Introduce la dirección de correo electrónico vinculada a tu cuenta para recibir un enlace temporal de reestablecimiento.",
-      "emailLabel": "Correo Electrónico",
-      "submit": "Restablecer Contraseña",
-      "backToLogin": "Volver al inicio de sesión",
-      "registerLink": "¿No tienes cuenta? Regístrate aquí.",
+      "noAccount": "¿No tienes cuenta? Regístrate aquí.",
+      "ariaRevealPassword": "revelar contraseña",
+      "ariaShowNewPassword": "mostrar nueva contraseña",
+      "ariaShowConfirmPassword": "mostrar confirmación de contraseña",
+      "forgotPassword": {
+        "link": "¿Olvidaste tu contraseña?",
+        "description": "Introduce la dirección de correo electrónico vinculada a tu cuenta para recibir un enlace temporal de reestablecimiento.",
+        "emailLabel": "Correo Electrónico",
+        "submit": "Restablecer Contraseña",
+        "backToLogin": "Volver al inicio de sesión",
+        "errorEmpty": "Por favor ingresa tu usuario o correo electrónico.",
+        "errorAlumno": "Los alumnos deben solicitar el restablecimiento de contraseña a su profesor asignado directamente.",
+        "errorNoSePudo": "No se pudo procesar la solicitud de recuperación.",
+        "successDefault": "Si el correo electrónico figura en nuestro sistema, recibirás instrucciones próximamente."
+      },
+      "changePassword": {
+        "title": "Cambio de contraseña obligatorio",
+        "description": "Su administrador ha restablecido su contraseña. Por seguridad, debe elegir una nueva antes de continuar.",
+        "newPassword": "Nueva Contraseña",
+        "confirmPassword": "Confirmar Nueva Contraseña",
+        "submit": "Actualizar y Acceder",
+        "errorNoSePudo": "No se pudo cambiar la contraseña."
+      },
       "errors": {
-        "enterEmail": "Por favor ingresa tu usuario o correo electrónico.",
-        "studentRestriction": "Los alumnos deben solicitar el restablecimiento de contraseña a su profesor asignado directamente.",
-        "requestFailed": "No se pudo procesar la solicitud de recuperación.",
-        "connectionError": "Error de conexión al servidor.",
-        "successMessage": "Si el correo electrónico figura en nuestro sistema, recibirás instrucciones próximamente."
+        "loginFailed": "No se pudo iniciar sesión con las credenciales ingresadas.",
+        "conexion": "Error de conexión al servidor."
       }
     },
-    "changePassword": {
-      "title": "Cambio de contraseña obligatorio",
-      "description": "Su administrador ha restablecido su contraseña. Por seguridad, debe elegir una nueva antes de continuar.",
-      "newPassword": "Nueva Contraseña",
-      "confirmNewPassword": "Confirmar Nueva Contraseña",
-      "submit": "Actualizar y Acceder",
-      "cancel": "Cancelar",
-      "errors": {
-        "changeFailed": "No se pudo cambiar la contraseña.",
-        "connectionError": "Error de conexión al servidor."
-      }
-    },
-    "errors": {
-      "loginFailed": "No se pudo iniciar sesión con las credenciales ingresadas.",
-      "connectionError": "Error de conexión al servidor."
-    },
-    "register": {
-      "title": "Crear una cuenta",
-      "roleLabel": "Rol de usuario",
+    "registerForm": {
+      "createAccount": "Crear una cuenta",
+      "roleAriaLabel": "Rol de usuario",
       "roleAlumno": "Alumno",
       "roleProfesor": "Profesor",
       "username": "Nombre de Usuario",
       "email": "Correo Electrónico",
-      "classCode": "Código de la clase",
-      "verifyingCode": "Verificando el código de la clase…",
-      "codeValid": "Código válido.",
+      "codigoClase": "Código de la clase",
       "cial": "CIAL (DNI o Identificador)",
       "password": "Contraseña",
       "confirmPassword": "Confirmar Contraseña",
-      "passwordMismatch": "Las contraseñas no coinciden.",
-      "classcodeRequired": "Por favor escribe el código de la clase.",
-      "classcodeInvalid": "Debes ingresar un código de clase válido para completar el registro.",
-      "registeringInClass": "Te estás registrando en la clase {{aula}} - Clase {{numeroClase}} del profesor {{profesor}}.",
-      "codeVerified": "Código verificado correctamente.",
-      "codeHelperDefault": "Escribe el código de la clase para confirmar que corresponde a tu grupo.",
-      "submitAsAlumno": "Registrarse como Alumno",
-      "submitAsProfesor": "Registrarse como Profesor",
-      "alreadyHaveAccount": "¿Ya tienes cuenta? Inicia sesión aquí"
-    },
-    "resetPassword": {
-      "title": "Restablecer Contraseña",
-      "subtitle": "Por favor, introduce tu nueva contraseña a continuación.",
-      "invalidToken": "El enlace de recuperación no es válido o no contiene token.",
-      "passwordMismatch": "Las contraseñas no coinciden.",
-      "successMessage": "Tu contraseña ha sido restablecida correctamente. Serás redirigido al inicio de sesión.",
-      "newPassword": "Nueva Contraseña",
-      "confirmPassword": "Confirmar Contraseña",
-      "saving": "Guardando...",
-      "submit": "Guardar Nueva Contraseña",
-      "backToLogin": "Volver al inicio de sesión"
-    },
-    "overlay": {
-      "registerSuccess": "¡Registro exitoso!",
-      "waitForActivation": "debes esperar a que tu usuario esté activo.",
-      "welcome": "¡Bienvenido!",
-      "loadingApp": "Cargando tu aplicación…"
-    },
-    "slides": {
-      "login": {
-        "slide1Title": "Bienvenido a SmartEconomat",
-        "slide1Desc": "Gestiona tu economat de forma eficiente, rápida y desde cualquier dispositivo.",
-        "slide2Title": "Control en tiempo real",
-        "slide2Desc": "Consulta el stock, movimientos y pedidos al momento, sin retrasos ni sorpresas.",
-        "slide3Title": "Siempre disponible",
-        "slide3Desc": "Tu economat accesible 24/7 con un sistema seguro y fiable."
-      },
-      "register": {
-        "slide1Title": "Únete a SmartEconomat",
-        "slide1Desc": "Regístrate en segundos y empieza a gestionar tu economat hoy mismo.",
-        "slide2Title": "Todo en un lugar",
-        "slide2Desc": "Productos, recetas, pedidos, incidencias y más, todo integrado en una sola plataforma.",
-        "slide3Title": "Interfaz moderna y sencilla",
-        "slide3Desc": "Diseño intuitivo para que puedas centrarte en lo que realmente importa."
-      },
-      "navAriaLabel": "Navegación de slides informativos",
-      "slideAriaLabel": "Slide {{num}} de {{total}}"
+      "submitAlumno": "Registrarse como Alumno",
+      "submitProfesor": "Registrarse como Profesor",
+      "alreadyHaveAccount": "¿Ya tienes cuenta? Inicia sesión aquí",
+      "ariaRevealPassword": "revelar contraseña",
+      "slotReferenceMessage": "Te estás registrando en la clase {{aula}} - Clase {{numeroClase}} del profesor {{profesor}}.",
+      "codigoVerificado": "Código verificado correctamente.",
+      "codigoHelper": "Escribe el código de la clase para confirmar que corresponde a tu grupo.",
+      "verificandoCodigo": "Verificando el código de la clase…",
+      "codigoValido": "Código válido.",
+      "errorPasswordMismatch": "Las contraseñas no coinciden.",
+      "errorCodigoRequerido": "Por favor escribe el código de la clase.",
+      "errorCodigoInvalido": "Debes ingresar un código de clase válido para completar el registro.",
+      "errorNoSePudo": "No se pudo completar el registro.",
+      "errorConexion": "Error de conexión con el servidor.",
+      "errorValidarCodigo": "No se pudo validar el código de la clase."
     }
   },
-  "settings": {
-    "title": "Configuración",
-    "titleTooltip": "Configuración de tema y apariencia",
-    "theme": {
-      "label": "Tema",
-      "light": "Claro",
-      "dark": "Oscuro",
-      "highContrastLight": "Alto Contraste (Claro)",
-      "highContrastDark": "Alto Contraste (Oscuro)"
-    },
-    "fontSize": {
-      "label": "Tamaño de Fuente",
-      "small": "Pequeño",
-      "medium": "Mediano",
-      "large": "Grande"
-    }
-  },
-  "learning": {
-    "activate": "Activar modo aprendizaje (Mostrar descripciones detalladas)",
-    "deactivate": "Desactivar modo aprendizaje (Ocultar descripciones detalladas)",
-    "on": "Aprendizaje: ON",
-    "off": "Aprendizaje: OFF"
-  },
-  "notifications": {
-    "title": "Notificaciones",
-    "subtitle": "Tareas y alertas que requieren tu atención.",
-    "urgent": "Urgente",
-    "pending": "Pendiente",
-    "loading": "Buscando actualizaciones...",
-    "errorTitle": "Hubo un problema",
-    "errorMessage": "No se pudieron cargar las notificaciones.",
-    "loadError": "No se pudieron cargar las notificaciones.",
-    "emptyTitle": "¡Todo bajo control!",
-    "emptyMessage": "No tienes acciones urgentes pendientes.",
-    "allClear": "¡Todo bajo control!",
-    "allClearDesc": "No tienes acciones urgentes ni tareas pendientes en este momento. Buen trabajo.",
-    "totalPending": "Total pendientes: {{count}}",
-    "openCenter": "Abrir centro de notificaciones",
-    "refresh": "Actualizar",
-    "priority": {
-      "urgent": "Urgente",
-      "pending": "Pendiente"
-    }
-  },
-  "tutorial": {
-    "close": "Cerrar",
-    "help": "Ayuda",
-    "viewGuide": "Ver guía de ayuda de esta página",
-    "viewGuideShort": "Ver guía de ayuda",
-    "showTutorial": "Mostrar tutorial",
-    "home": {
-      "step1Title": "Panel de Inicio",
-      "step1Desc": "Este es tu centro de control principal. Aquí tendrás una vista rápida del estado de tu economato.",
-      "step2Title": "Accesos Rápidos",
-      "step2Desc": "Usa las tarjetas de acceso rápido para crear nuevos pedidos o registrar artículos en segundos.",
-      "step3Title": "Resumen de Actividad",
-      "step3Desc": "Mantente al día con las últimas notificaciones y alertas de stock bajo."
-    },
-    "recepciones": {
-      "step1Title": "Recepción de Mercancía",
-      "step1Desc": "Gestiona la entrada de productos al almacén de manera eficiente.",
-      "step2Title": "Escaneo de Códigos",
-      "step2Desc": "Usa el lector de códigos de barras para identificar productos rápidamente y evitar errores."
-    },
-    "inventario": {
-      "step1Title": "Gestión de Inventario",
-      "step1Desc": "Consulta el stock actual de todos tus productos en tiempo real.",
-      "step2Title": "Ajustes y Filtros",
-      "step2Desc": "Realiza ajustes manuales y filtra por categorías para encontrar lo que buscas."
-    },
-    "perfilProfesor": {
-      "step1Title": "Perfil de usuario",
-      "step1Desc": "Desde esta tarjeta puedes revisar y editar tus datos personales básicos.",
-      "step2Title": "Seguridad y contraseña",
-      "step2Desc": "Puedes cambiar tu nombre de usuario y contraseña. El cambio de email requiere autorización de un rol superior.",
-      "step3Title": "Administración de aulas",
-      "step3Desc": "Como profesor puedes gestionar clases, cupos y ubicaciones académicas.",
-      "step4Title": "Gestión de alumnos",
-      "step4Desc": "Puedes consultar alumnos, activar su estado y realizar acciones docentes permitidas."
-    },
-    "perfilAlumno": {
-      "step1Title": "Perfil de usuario",
-      "step1Desc": "Aquí puedes consultar tu información personal.",
-      "step2Title": "Seguridad y contraseña",
-      "step2Desc": "Como alumno puedes editar tu nombre de usuario y cambiar tu contraseña.",
-      "step3Title": "Cambio de email",
-      "step3Desc": "El email no se modifica directamente. Debes enviar una solicitud y esperar la aprobación de un rol superior."
-    },
-    "default": {
-      "step1Title": "Ayuda General",
-      "step1Desc": "Navega por el menú lateral para acceder a las diferentes secciones de la aplicación.",
-      "step2Title": "Configuración",
-      "step2Desc": "Personaliza tu experiencia, cambia el tema o gestiona tu perfil desde el menú superior."
+  "toast": {
+    "success": "¡Operación completada correctamente!",
+    "error": "Ocurrió un error.",
+    "info": "Mensaje informativo.",
+    "warning": "Mensaje de advertencia.",
+    "errors": {
+      "mustBeUsedInProvider": "useToast debe ser usado dentro de un ToastProvider."
     }
   },
   "dashboard": {
-    "customize": "Personalizar Panel",
-    "customizeDescription": "Selecciona las tarjetas de métricas que deseas ver en tu Dashboard. Al menos una debe estar activa.",
-    "saveChanges": "Guardar cambios"
-  },
-  "dataTable": {
-    "empty": "No hay datos disponibles.",
-    "loading": "Cargando datos...",
-    "actions": "Acciones",
-    "rowsPerPage": "Por página:",
-    "displayedRows": "{{from}}–{{to}} de {{count}}"
-  },
-  "confirmDialog": {
-    "title": "Confirmar acción",
-    "confirm": "Confirmar",
-    "cancel": "Cancelar"
-  },
-  "scanner": {
-    "title": "Escanear Código de Barras",
-    "cameraPermissionDenied": "Permiso de cámara denegado",
-    "cameraPermissionDeniedDesc": "Para usar el escáner, permite el acceso a la cámara en la configuración de tu navegador y recarga la página.",
-    "noCameraDetected": "No se detectó ninguna cámara",
-    "noCameraDetectedDesc": "Este dispositivo no tiene cámara disponible o no es accesible. Introduce el código de barras manualmente.",
-    "cameraError": "Error al iniciar la cámara",
-    "cameraErrorDesc": "No se pudo iniciar el escáner. Verifica que no haya otra aplicación usando la cámara e inténtalo de nuevo.",
-    "retry": "Reintentar",
-    "requestingCamera": "Solicitando acceso a la cámara…",
-    "closeScanner": "Cerrar escáner",
-    "camera": "Cámara",
-    "lastCodeRead": "Último código leído",
-    "scanHint": "Acerca el código al recuadro. Se priorizan cámaras traseras, enfoque continuo y formatos EAN, UPC y Code 128.",
-    "restartCamera": "Reiniciar cámara",
-    "torchOff": "Apagar luz",
-    "torchOn": "Encender luz",
-    "cancel": "Cancelar"
-  },
-  "status": {
-    "PENDIENTE": "Pendiente",
-    "PENDIENTE_DE_APROBACION": "Pend. Aprobación",
-    "EN_PROCESO": "En Proceso",
-    "COMPLETADO": "Completado",
-    "CANCELADO": "Cancelado",
-    "ACTIVO": "Activo",
-    "INACTIVO": "Inactivo",
-    "OK": "OK",
-    "PARCIAL": "Parcial",
-    "EXCESO": "Exceso",
-    "NO_ENTREGADO": "No Entregado",
-    "NUEVO": "Nuevo",
-    "APROBADO": "Aprobado",
-    "RECHAZADO": "Rechazado",
-    "BORRADOR": "Borrador",
-    "EMITIDA": "Emitida",
-    "PAGADA": "Pagada",
-    "ANULADA": "Anulada",
-    "FACTURADO": "Facturado",
-    "EN_TRANSITO": "En Tránsito",
-    "ENTREGADO": "Entregado",
-    "DEVUELTO": "Devuelto",
-    "FACIL": "Fácil",
-    "MEDIO": "Medio",
-    "DIFICIL": "Difícil",
-    "EXPERTO": "Experto",
-    "BAJA": "Baja",
-    "MEDIA": "Media",
-    "ALTA": "Alta",
-    "CRITICA": "Crítica",
-    "nueva": "Nueva",
-    "en_ajuste": "En ajuste",
-    "pendiente_validacion": "Pend. Validación",
-    "resuelta": "Resuelta",
-    "cancelada": "Cancelada",
-    "invalida": "Inválida"
-  },
-  "categoria": {
-    "VERDURA": "Verdura",
-    "FRUTA": "Fruta",
-    "CARNE": "Carne",
-    "PESCADO": "Pescado",
-    "MARISCO": "Marisco",
-    "LACTEO": "Lácteo",
-    "HUEVO": "Huevo",
-    "CEREAL": "Cereal",
-    "LEGUMBRE": "Legumbre",
-    "FRUTO_SECO": "Fruto Seco",
-    "CONDIMENTO": "Condimento",
-    "ACEITE": "Aceite",
-    "AZUCAR": "Azúcar",
-    "BEBIDA": "Bebida",
-    "OTRO": "Otro"
-  },
-  "pageToolbar": {
-    "searchPlaceholder": "Buscar...",
-    "hideFilters": "Ocultar filtros",
-    "showFilters": "Mostrar filtros",
-    "scanCamera": "Escanear con cámara",
-    "scanCode": "Escanear código",
-    "clearSearch": "Limpiar búsqueda",
-    "totalItems": "Total de {{label}}: {{count}}"
-  },
-  "allergens": {
-    "gluten": "Gluten",
-    "crustaceos": "Crustáceos",
-    "huevos": "Huevos",
-    "pescado": "Pescado",
-    "cacahuetes": "Cacahuetes",
-    "soja": "Soja",
-    "lacteos": "Lácteos",
-    "frutosCascara": "Frutos de cáscara",
-    "apio": "Apio",
-    "mostaza": "Mostaza",
-    "sesamo": "Sésamo",
-    "sulfitos": "Sulfitos",
-    "altramuces": "Altramuces",
-    "moluscos": "Moluscos",
-    "sectionTitle": "Información de Alérgenos",
-    "GLUTEN": "Gluten",
-    "CRUSTACEOS": "Crustáceos",
-    "HUEVOS": "Huevos",
-    "PESCADO": "Pescado",
-    "CACAHUETES": "Cacahuetes",
-    "SOJA": "Soja",
-    "LACTEOS": "Lácteos",
-    "FRUTOS_CON_CASCARA": "Frutos de cáscara",
-    "APIO": "Apio",
-    "MOSTAZA": "Mostaza",
-    "SESAMO": "Sésamo",
-    "SULFITO": "Sulfitos",
-    "ALTRAMUCES": "Altramuces",
-    "MOLUSCOS": "Moluscos"
-  },
-  "inventoryDetail": {
-    "auditTitle": "Auditar Stock por Ajuste",
-    "detailTitle": "Detalles de Lotes",
-    "auditReadOnlyHint": "Solo lectura: stock actual y stock total en unidades de envase. Editable: ajuste de stock (+/-).",
-    "productConstruction": "Construcción del producto: {{value}}",
-    "auditSummary": "Resumen de auditoria",
-    "currentStock": "Stock total actual (solo lectura)",
-    "pendingAdjustment": "Ajuste total pendiente",
-    "projectedStock": "Stock total proyectado (solo lectura)",
-    "noBatches": "No se encontraron lotes para este producto.",
-    "columns": {
-      "batchId": "Lote ID",
-      "supplier": "Proveedor",
-      "location": "Ubicación",
-      "expiry": "Caducidad",
-      "currentStockUnits": "Stock actual (uds)",
-      "adjustment": "Ajuste de stock (uds +/-)",
-      "resultingStock": "Stock resultante (uds)",
-      "action": "Acción",
-      "currentQty": "Cantidad actual (uds)"
-    },
-    "adjustmentHelperText": "Ajuste en unidades de envase (+/-)",
-    "errorRequireValue": "Introduce un ajuste distinto de 0.",
-    "errorInvalidNumber": "Introduce un numero valido.",
-    "errorZeroAdjustment": "El ajuste no puede ser 0.",
-    "errorNegativeStock": "El ajuste no puede dejar el stock en negativo.",
-    "errorParseAdjustment": "No se pudo interpretar el ajuste de stock.",
-    "adjustSuccessful": "Ajuste de stock aplicado correctamente.",
-    "batchNotFound": "El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.",
-    "reportWaste": "Reportar Merma",
-    "closeAudit": "Cerrar Auditoría",
-    "close": "Cerrar",
-    "registerWaste": "Registrar Merma",
-    "wasteSuccess": "Merma registrada correctamente",
-    "wasteError": "Error al registrar merma",
-    "wasteWarning": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
-  },
-  "quickLocation": {
-    "title": "Nueva Ubicación de Almacén",
-    "nameLabel": "Nombre de la Ubicación",
-    "namePlaceholder": "Ej: Estantería A, Almacén Central...",
-    "cancel": "Cancelar",
-    "save": "Guardar",
-    "nameRequired": "El nombre de la ubicación es obligatorio",
-    "createSuccess": "Ubicación creada con éxito",
-    "duplicateError": "Ya existe una ubicación con este nombre",
-    "createError": "Error al crear la ubicación"
-  },
-  "ubicacionesModal": {
-    "title": "Gestionar Ubicaciones",
-    "newLocation": "Nueva ubicación",
-    "add": "Añadir",
-    "loading": "Cargando...",
-    "noLocations": "No hay ubicaciones registradas.",
-    "close": "Cerrar",
-    "loadError": "Error al cargar ubicaciones",
-    "addSuccess": "Ubicación añadida",
-    "createError": "Error al crear ubicación",
-    "deleteSuccess": "Ubicación eliminada",
-    "deleteError": "Error al eliminar ubicación"
-  },
-  "recepcionDetail": {
-    "movementsRegistered": "Se registraron {{count}} movimientos de almacén de tipo Entrada.",
-    "movementsNote": "* El detalle individual de cada movimiento está consolidado en el historial general del módulo de Inventario.",
-    "viewHistory": "Ver Historial de Movimientos",
-    "entriesRegistered": "Se registraron {{count}} nuevas entradas en el inventario físico.",
-    "entriesNote": "* Las nuevas unidades ya están disponibles para su consumo y asignación en órdenes de trabajo.",
-    "viewInventory": "Ver Inventario",
-    "unknownProductsAdded": "{{count}} Productos Desconocidos Añadidos",
-    "noCode": "Sin código asignado",
-    "movementsTitle": "Detalles de Movimientos",
-    "entriesTitle": "Entradas de Inventario",
-    "createdTitle": "Productos Creados (Espontáneos)",
-    "detailTitle": "Detalle de Recepción",
-    "close": "Cerrar"
-  },
-  "newProduct": {
-    "titleKnown": "Añadir Producto Encontrado",
-    "titleUnknown": "Añadir Producto Desconocido",
-    "descKnown": "Hemos auto-completado los datos usando una base de datos global. Revisa la información antes de añadir el producto a tu catálogo.",
-    "descUnknown": "Este producto no figura en el catálogo ni en los pedidos seleccionados. Por favor, introduce sus datos básicos.",
-    "nameLabel": "Nombre del Producto",
-    "barcodeLabel": "Código de Barras",
-    "brandLabel": "Marca",
-    "unitLabel": "Unidad",
-    "categoryLabel": "Categoría",
-    "contentLabel": "Contenido (Neto)",
-    "cancel": "Cancelar",
-    "confirm": "Confirmar y Añadir"
-  },
-  "pasoEscaneo": {
-    "title": "Escanear Código de Barras o ID",
-    "placeholder": "EAN-13 o ID de bulto...",
-    "scaleOptions": "Opciones de báscula",
-    "changePort": "Cambiar puerto",
-    "linkScale": "Vincular",
-    "useScale": "Usar báscula",
-    "scanProduct": "Escanear Producto",
-    "scanCamera": "Escanear con cámara",
-    "optimo": "Óptimo",
-    "roto": "Roto",
-    "defecto": "Defecto",
-    "special": "Especial / Fuera de Pedido 🆕",
-    "noCode": "Sin código",
-    "itemsReceived": "ítems recibidos",
-    "columns": {
-      "product": "Producto",
-      "unit": "Unidad",
-      "ordered": "Pedida",
-      "albaran": "Albarán",
-      "received": "Recibida",
-      "status": "Estado",
-      "physical": "Físico",
-      "action": "Acción"
-    }
-  },
-  "pasoResultado": {
-    "successTitle": "¡Recepción Registrada con éxito!",
-    "idLabel": "ID Registro:",
-    "stats": {
-      "registros": "Registros Realizados",
-      "registrosAuto": "registrados autom.",
-      "productos": "Productos en Almacén",
-      "disponibles": "disponibles ahora",
-      "nuevos": "Productos Nuevos",
-      "anadidos": "añadidos al catálogo"
-    },
-    "discrepanciesAlert": "Se han detectado discrepancias en la recepción",
-    "orderRef": "Pedido Ref:",
-    "missing": "Faltan",
-    "excess": "Sobran",
-    "units": "unidades",
-    "savedMessage": "La recepción se ha guardado correctamente y el inventario ha sido actualizado.",
-    "downloading": "Descargando...",
-    "downloadPdf": "Descargar Detalles (PDF)",
-    "distribute": "Distribuir ahora",
-    "finish": "Finalizar y Volver"
-  },
-  "pasoRevision": {
-    "albaranAlert": "Revisa los totales. Si no indicas el Nº de Albarán, se generará uno automáticamente.",
-    "albaranLabel": "Nº Albarán",
-    "albaranPlaceholder": "Auto-generado si vacío",
-    "noCode": "Sin código",
-    "optimo": "Óptimo",
-    "roto": "Roto",
-    "defectuoso": "Defectuoso",
-    "basicula": "Báscula",
-    "manual": "Manual",
-    "justificanteRequired": "Justificante Obligatorio*",
-    "justificanteOptional": "Opcional...",
-    "signatureLabel": "Firma / Observaciones generales",
-    "signaturePlaceholder": "Añade aquí cualquier nota general de la entrega o firma...",
-    "special": "Especial / Fuera de Pedido 🆕",
-    "columns": {
-      "item": "Item",
-      "unit": "Unidad",
-      "expected": "Exp.",
-      "albaran": "Alb.",
-      "actual": "Real",
-      "weightSource": "Origen peso",
-      "physicalStatus": "Estado Físico",
-      "notes": "Notas"
-    }
-  },
-  "pasoSeleccion": {
-    "title": "Selecciona los pedidos que estás recibiendo",
-    "selectAll": "Seleccionar Todos",
-    "deselectAll": "Deseleccionar Todos",
-    "addByProvider": "Añadir por Proveedor",
-    "deselectByProvider": "Deseleccionar por Prov.",
-    "selectProvider": "Selecciona un proveedor"
-  },
-  "recepcionConflict": {
-    "title": "Conflicto de borrador detectado",
-    "description": "Este formulario fue actualizado desde otro dispositivo o sesión.",
-    "serverVersion": "Última versión del servidor:",
-    "unknown": "desconocida",
-    "hint": "Puedes cargar el borrador remoto o continuar con tu versión local.",
-    "useRemote": "Usar versión remota",
-    "overwrite": "Sobrescribir con mi versión"
-  },
-  "weightScale": {
-    "title": "Báscula de Recepción",
-    "weighing": "Pesando:",
-    "communicating": "Comunicando con la báscula...",
-    "cancel": "Cancelar",
-    "recalculate": "Recalcular",
-    "confirmWeight": "Confirmar Peso"
-  },
-  "home": {
-    "greeting": "Hola, {{name}} 👋",
-    "subtitle": "Aquí tienes un resumen del estado actual del economato.",
+    "greeting": "Hola, {{name}}",
+    "admin": "Administrador",
+    "intro": "Aquí tienes un resumen del estado actual del economato.",
     "statsTitle": "Estadísticas del Economato",
-    "quickActions": {
-      "nuevoPedido": "Nuevo Pedido",
-      "anadirProducto": "Añadir Producto",
-      "registrarRecepcion": "Registrar Recepción",
-      "nuevaReceta": "Nueva Receta"
-    },
-    "recentActivity": "Actividad Reciente",
-    "viewAllHistory": "Ver todo el historial",
-    "noActivity": "No hay actividad reciente...",
-    "retry": "Reintentar",
-    "noPermissions": "No tienes permisos para ver esta información.",
     "metrics": {
       "totalProductos": "Total Productos",
       "pedidosPendientes": "Pedidos Pendientes",
       "incidencias": "Incidencias",
       "alertasStock": "Alertas de Stock",
       "proveedores": "Proveedores",
-      "notificaciones": "Notificaciones"
+      "notificaciones": "Notificaciones",
+      "productosEsteMes": "+{{count}} agregado{{count, plural, one {} other {s}}} este mes",
+      "sinNuevosProductos": "Sin nuevos productos este mes",
+      "pedidosHoy": "{{count}} recibido{{count, plural, one {} other {s}}} hoy",
+      "sinRecepcionesHoy": "Sin recepciones hoy",
+      "pedidosConIncidencias": "{{count}} pedido{{count, plural, one {} other {s}}} con incidencias",
+      "sinIncidencias": "Sin incidencias",
+      "itemsBajoMinimo": "{{count}} ítem{{count, plural, one {} other {s}}} bajo mínimo",
+      "stockCorrecto": "Stock correcto",
+      "catalogoActualizado": "Catálogo actualizado",
+      "accionesPendientes": "{{count}} acción{{count, plural, one {} other {es}}} pendiente{{count, plural, one {} other {s}}}",
+      "sinNotificaciones": "Sin notificaciones"
     },
-    "time": {
-      "now": "ahora",
-      "yesterday": "ayer"
-    },
-    "defaultName": "Administrador",
-    "loadError": "Error desconocido al cargar el dashboard.",
-    "toast": {
-      "productAdded": "Producto añadido correctamente.",
-      "recipeCreated": "Receta creada correctamente.",
-      "saveError": "Error al guardar la acción rápida."
-    },
-    "activity": {
-      "entrada": "Se ha registrado una entrada de stock",
-      "salida": "Se ha registrado una salida de stock",
-      "ajuste": "Se ha realizado un ajuste de inventario",
-      "pedido": "Se ha registrado un pedido",
-      "entrada_compra": "Se ha registrado una recepción de compra",
-      "default": "Se ha registrado actividad ({{tipo}})"
-    },
-    "summaryTitles": {
+    "summary": {
       "productos": "Listado de Productos",
       "pedidos": "Pedidos Pendientes",
       "incidencias": "Listado de Incidencias",
       "stock": "Productos Bajo Mínimo",
       "proveedores": "Nuestros Proveedores"
     },
-    "metricSubtitles": {
-      "productosAdded": "+{{count}} agregado(s) este mes",
-      "productosNone": "Sin nuevos productos este mes",
-      "pedidosReceived": "{{count}} recibido(s) hoy",
-      "pedidosNone": "Sin recepciones hoy",
-      "incidenciasCount": "{{count}} pedido(s) con incidencias",
-      "incidenciasNone": "Sin incidencias",
-      "stockCount": "{{count}} ítem(s) bajo mínimo",
-      "stockOk": "Stock correcto",
-      "catalogueUpdated": "Catálogo actualizado",
-      "pendingActions": "{{count}} acción(es) pendiente(s)",
-      "noNotifications": "Sin notificaciones"
+    "retry": "Reintentar",
+    "quickActions": {
+      "nuevoPedido": "Nuevo Pedido",
+      "anadirProducto": "Añadir Producto",
+      "registrarRecepcion": "Registrar Recepción",
+      "nuevaReceta": "Nueva Receta",
+      "anadirNuevoProducto": "Añadir Nuevo Producto",
+      "crearNuevoPedido": "Crear Nuevo Pedido",
+      "confirmarNuevoPedido": "¿Estás seguro de que deseas registrar este nuevo pedido?"
     },
-    "newProduct": "Añadir Nuevo Producto",
-    "newOrder": "Crear Nuevo Pedido",
-    "newOrderConfirm": "¿Estás seguro de que deseas registrar este nuevo pedido?",
-    "quickActionsTitle": "Acciones Rápidas"
-  },
-  "productos": {
-    "pageTitle": "Gestión de Productos",
-    "searchPlaceholder": "Buscar por nombre, marca, código de barras...",
-    "newProduct": "Nuevo Producto",
-    "exportPdf": "Exportar PDF",
-    "exportExcel": "Exportar Excel",
-    "scanProduct": "Escanear Producto para Buscar",
-    "columns": {
-      "nombre": "Nombre",
-      "marca": "Marca",
-      "tipo": "Tipo",
-      "contenido": "Contenido",
-      "codigoBarras": "Cód. Barras"
-    },
-    "empty": {
-      "noMatch": "No hay productos que coincidan con tu búsqueda o filtros",
-      "noProducts": "No se encontraron productos",
-      "tryOther": "Prueba con otros términos o limpia los filtros.",
-      "addFirst": "Empieza añadiendo el primer producto a tu inventario.",
-      "addButton": "Añadir Producto"
-    },
-    "deleteDialog": {
-      "title": "Eliminar producto",
-      "confirm": "Sí, eliminar",
-      "cancel": "Cancelar"
-    },
-    "detail": {
-      "generalInfo": "Información general",
-      "tipo": "Tipo",
-      "contenido": "Contenido",
-      "codigoBarras": "Código de Barras",
-      "pmp": "PMP Actual",
-      "descripcion": "Descripción",
-      "alergenos": "Alérgenos",
-      "providers": "Proveedores asociados",
-      "priceHistory": "Histórico de precios",
-      "bestOption": "Mejor Opción",
-      "precio": "Precio",
-      "merma": "Merma",
-      "costeReal": "Coste Real",
-      "filterByProvider": "Filtro por Proveedor",
-      "allProviders": "Todos los proveedores",
-      "loadingHistory": "Cargando historial...",
-      "noHistory": "No hay registros históricos para este producto.",
-      "historyChartPlaceholder": "Estructura preparada para gráfico de evolución de precios",
-      "fecha": "Fecha",
-      "proveedor": "Proveedor",
-      "cant": "Cant.",
-      "precioCol": "Precio",
-      "doc": "Doc.",
-      "viewHistoric": "Ver histórico de este proveedor",
-      "editLabel": "Editar producto"
-    },
-    "actions": {
-      "viewDetail": "Ver detalle",
-      "edit": "Editar",
-      "delete": "Eliminar"
+    "recentActivity": "Actividad Reciente",
+    "noRecentActivity": "No hay actividad reciente registrada.",
+    "viewAllHistory": "Ver todo el historial",
+    "errors": {
+      "sinPermisos": "No tienes permisos para ver el dashboard.",
+      "desconocido": "Error desconocido al cargar el dashboard."
     },
     "toast": {
-      "deleted": "Producto \"{{name}}\" eliminado correctamente.",
-      "deleteError": "Error al eliminar el producto.",
-      "updated": "Producto actualizado correctamente.",
-      "created": "Producto creado correctamente.",
-      "saveError": "Error al guardar el producto.",
-      "located": "Producto localizado. Abriendo su ficha para editar.",
-      "notFoundCode": "No se encontró el producto. Se dejó el código en la búsqueda.",
-      "notFoundCreate": "Producto no encontrado. Se abrió el formulario para crearlo.",
-      "scanError": "No se pudo validar el código escaneado.",
-      "scanWarning": "No se pudo comprobar el catálogo, pero se abrió el alta del producto."
+      "productoAniadido": "Producto añadido correctamente.",
+      "recetaCreada": "Receta creada correctamente.",
+      "errorQuickAction": "Error al guardar la acción rápida."
     },
-    "totalItemsLabel": "productos"
+    "time": {
+      "ahora": "ahora",
+      "min": "{{count}}min",
+      "hora": "{{count}}h",
+      "ayer": "ayer",
+      "dias": "{{count}}d"
+    },
+    "activity": {
+      "entrada": "Se ha registrado una entrada de stock",
+      "salida": "Se ha registrado una salida de stock",
+      "ajuste": "Se ha realizado un ajuste de inventario",
+      "pedido": "Se ha registrado un pedido",
+      "entradaCompra": "Se ha registrado una recepción de compra",
+      "desconocido": "Se ha registrado actividad ({{tipo}})"
+    },
+    "customizer": {
+      "titulo": "Personalizar Panel",
+      "descripcion": "Selecciona las tarjetas de métricas que deseas ver en tu Dashboard. Al menos una debe estar activa."
+    }
   },
-  "proveedores": {
-    "pageTitle": "Gestión de Proveedores",
-    "searchPlaceholder": "Buscar por nombre, NIF, contacto, email...",
-    "newProvider": "Nuevo Proveedor",
-    "totalItemsLabel": "proveedores",
-    "columns": {
-      "nombre": "Nombre",
-      "nif": "NIF",
-      "contacto": "Contacto",
-      "telefono": "Teléfono",
-      "email": "Email"
-    },
-    "empty": {
-      "noMatch": "No hay proveedores que coincidan con tu búsqueda",
-      "noProviders": "No se encontraron proveedores",
-      "tryOther": "Prueba con otros términos o limpia el filtro.",
-      "addFirst": "Empieza añadiendo el primer proveedor a tu catálogo.",
-      "addButton": "Añadir Proveedor"
-    },
+  "layout": {
+    "menu": {
+      "inicio": "Inicio",
+      "catalogo": "Catálogo",
+      "operaciones": "Operaciones",
+      "control": "Control",
+      "gestion": "Gestión",
+      "minimizar": "Minimizar menú",
+      "expandir": "Expandir menú",
+      "navegacionPrincipal": "Navegación principal"
+    }
+  },
+  "receta": {
     "form": {
-      "nif": "NIF / CUIT",
-      "nombre": "Razón Social",
-      "contacto": "Persona de Contacto",
-      "telefono": "Teléfono",
-      "email": "Email",
-      "direccion": "Dirección"
+      "nombre": "Nombre de la Receta",
+      "tiempoPreparacion": "Tiempo de preparación",
+      "tiempo": {
+        "10min": "10 min",
+        "20min": "20 min",
+        "30min": "30 min",
+        "45min": "45 min",
+        "60min": "60 min"
+      },
+      "dificultad": "Dificultad",
+      "dificultadFacil": "Fácil",
+      "dificultadMedia": "Media",
+      "dificultadDificil": "Difícil",
+      "instrucciones": "Instrucciones de elaboración",
+      "rendimiento": "Rendimiento estimado",
+      "unidadResultado": "Unidad",
+      "diasCaducidad": "Días de caducidad",
+      "costeUnitarioEstimado": "Coste est. (info)",
+      "raciones": "Raciones (base)",
+      "tamanioRacion": "Tamaño ración",
+      "ingredientes": "Ingredientes de la receta",
+      "imagen": "Imagen de la receta",
+      "tituloEditar": "Editar: {{nombre}}",
+      "tituloNueva": "Nueva Receta",
+      "confirmarEdicion": "¿Estás seguro de que deseas guardar los cambios realizados en esta receta?",
+      "confirmarCreacion": "¿Estás seguro de que deseas añadir esta nueva receta al sistema?"
     },
-    "createTitle": "Crear Nuevo Proveedor",
-    "editTitle": "Editar:",
-    "deleteDialog": {
-      "title": "Eliminar proveedor",
-      "confirm": "Sí, eliminar",
-      "cancel": "Cancelar"
+    "cocinar": {
+      "configuracionLote": "Configuración del Lote",
+      "ubicacionDestino": "Ubicación de destino",
+      "fechaCaducidadManual": "Fecha de caducidad (manual)"
     },
-    "detail": {
-      "fiscalInfo": "Información Fiscal",
-      "razonSocial": "Razón Social",
-      "nifCuit": "NIF / CUIT",
-      "contactInfo": "Contacto",
-      "contactPerson": "Persona de Contacto",
-      "telefono": "Teléfono",
-      "email": "Email",
-      "location": "Ubicación",
-      "direccion": "Dirección",
-      "editLabel": "Editar proveedor",
-      "downloadSheet": "Descargar Ficha"
-    },
-    "actions": {
-      "viewDetail": "Ver detalle",
-      "edit": "Editar",
-      "delete": "Eliminar"
-    },
-    "toast": {
-      "deleted": "Proveedor \"{{name}}\" eliminado correctamente.",
-      "deleteError": "Error al eliminar el proveedor.",
-      "updated": "Proveedor actualizado correctamente.",
-      "created": "Proveedor creado correctamente.",
-      "saveError": "Error al guardar el proveedor."
-    },
-    "loadError": "Error desconocido al cargar proveedores.",
-    "exportLabel": "proveedores filtrados",
-    "deleteMessage": "¿Estás seguro de que deseas eliminar el proveedor \"{{name}}\"? Esta acción no se puede deshacer.",
-    "confirmEdit": "¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?",
-    "confirmCreate": "¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?"
+    "ingredientes": {
+      "titulo": "Ingredientes de la Receta",
+      "anadir": "Añadir Ingrediente",
+      "alergenos": "Alérgenos en esta receta:",
+      "proveedorFav": "Proveedor fav.",
+      "vacio": "No hay ingredientes añadidos a la receta",
+      "sinProveedor": "Sin proveedor disponible",
+      "masBarato": "Seleccionar automáticamente el más barato",
+      "masBaratoLabel": "Más barato"
+    }
   },
   "recetas": {
-    "pageTitle": "Gestión de Recetas",
-    "searchPlaceholder": "Buscar por nombre, instrucciones, ingredientes...",
-    "newRecipe": "Nueva Receta",
-    "totalItemsLabel": "recetas",
-    "columns": {
-      "nombre": "Nombre",
-      "dificultad": "Dificultad",
-      "tiempo": "Tiempo",
-      "ingredientes": "Ingredientes"
-    },
-    "actions": {
-      "viewDetails": "Ver detalles",
-      "prepare": "Preparar ahora",
-      "createOrder": "Crear pedido",
-      "exportPdf": "Exportar PDF",
-      "exportExcel": "Exportar Excel",
-      "prepareBatch": "Preparar ({{count}})",
-      "prepareRecipes": "Preparar recetas",
-      "exportPdfSelected": "Exportar PDF ({{count}})",
-      "createOrderSelected": "Crear pedido ({{count}})"
-    },
-    "empty": {
-      "noMatch": "No hay recetas que coincidan con tu búsqueda",
-      "noRecipes": "No hay recetas registradas",
-      "tryOther": "Prueba con otros términos o limpia el filtro.",
-      "addFirst": "Crea la primera receta del economato para comenzar.",
-      "addButton": "Añadir Receta"
-    },
-    "deleteDialog": {
-      "title": "Eliminar receta",
-      "confirm": "Sí, eliminar",
-      "cancel": "Cancelar"
-    },
-    "detail": {
-      "info": "Información",
-      "dificultad": "Dificultad",
-      "franjaTime": "Franja de tiempo",
-      "prepTime": "Tiempo de preparación",
-      "instructions": "Instrucciones",
-      "steps": "Pasos de elaboración",
-      "produccion": "Producción",
-      "rendimiento": "Rendimiento",
-      "diasCaducidad": "Días de Caducidad",
-      "costeEst": "Coste Est. por unidad",
-      "raciones": "Raciones (base)",
-      "tamanoRacion": "Tamaño ración",
-      "ingredientesTitle": "Ingredientes",
-      "alergenos": "Alérgenos detectados",
-      "prepare": "Preparar",
-      "order": "Pedido",
-      "pdfSheet": "Ficha PDF",
-      "editLabel": "Editar receta",
-      "ingredientes": "ingredientes"
-    },
-    "ingredientesView": {
-      "noIngredients": "Sin ingredientes registrados.",
+    "ingredientes": {
+      "empty": "Sin ingredientes registrados.",
       "producto": "Producto",
       "cantidad": "Cantidad",
       "unidad": "Unidad",
@@ -869,228 +298,580 @@
       "auto": "Auto",
       "automatico": "Automático"
     },
-    "exportDialog": {
-      "title": "Exportar recetas a PDF",
-      "oneRecipe": "Vas a exportar 1 receta.",
-      "multipleRecipes": "Vas a exportar {{count}} recetas.",
-      "includeImage": "Incluir imagen de la receta",
-      "noImageNote": "Si la imagen no existe, el PDF se generará igualmente sin ella.",
-      "cancel": "Cancelar",
-      "exporting": "Exportando...",
-      "exportPdf": "Exportar PDF"
-    },
-    "cookModal": {
-      "batchTitle": "Producción en Lote ({{count}} recetas)",
-      "singleTitle": "Preparar Receta: {{name}}",
-      "subtitle": "Configura las cantidades y valida el stock antes de iniciar.",
-      "recipesToProcess": "Recetas a procesar",
-      "recipeCol": "Receta",
-      "quantityCol": "Cantidad",
-      "racionesCol": "Raciones",
-      "unitCol": "Und.",
-      "baseYield": "Rendimiento base:",
-      "batchConfig": "Configuración del Lote",
-      "destinationLocation": "Ubicación de destino",
-      "expiryDate": "Fecha de caducidad (manual)",
-      "stockVerification": "Verificación de Stock",
-      "validating": "Garantizando stock...",
-      "insufficientTitle": "INGREDIENTES INSUFICIENTES",
-      "missing": "Faltan",
-      "providerLabel": "Prov:",
-      "launchOrder": "Lanzar Pedido de Faltantes",
-      "stockOk": "Todo en orden. Stock suficiente para procesar este lote.",
-      "cancel": "Cancelar",
-      "startBatch": "Iniciar Producción de Lote",
-      "startSingle": "Iniciar Preparación",
-      "createMissingOrder": "Crear pedido de faltantes"
-    },
     "toast": {
-      "deleted": "Receta \"{{name}}\" eliminada correctamente.",
-      "deleteError": "Error al eliminar la receta.",
-      "updated": "Receta actualizada correctamente.",
-      "created": "Receta creada correctamente.",
-      "saveError": "Error al guardar la receta.",
-      "selectAtLeastOne": "Selecciona al menos una receta para exportar a PDF.",
-      "orderGenerated": "Pedido #{{num}} generado correctamente desde {{count}} receta(s).",
-      "orderError": "Error al generar el pedido desde recetas.",
-      "productionsSuccess": "Producciones lanzadas con éxito",
-      "partialProductions": "Se procesaron {{success}} de {{total}} producciones.",
-      "cookError": "Error al iniciar la preparación.",
-      "missingOrderCreated": "Se ha generado el pedido #{{num}} con {{count}} pedido(s) interno(s) para cubrir los faltantes.",
-      "missingOrderError": "Error al generar pedidos: {{error}}",
-      "noMissingProviders": "No se encontraron proveedores válidos para los ingredientes faltantes.",
-      "needLocation": "Debes seleccionar una ubicación de destino."
+      "eliminada": "Receta \"{{nombre}}\" eliminada correctamente.",
+      "errorEliminar": "Error al eliminar la receta.",
+      "actualizada": "Receta actualizada correctamente.",
+      "creada": "Receta creada correctamente.",
+      "errorGuardar": "Error al guardar la receta.",
+      "seleccionaParaExportar": "Selecciona al menos una receta para exportar a PDF.",
+      "noProveedoresFaltantes": "No se encontraron proveedores válidos para los ingredientes faltantes.",
+      "pedidoGeneradoConInternos": "Se ha generado el pedido #{{numero}} con {{total}} pedido(s) interno(s) para cubrir los faltantes.",
+      "pedidoGenerado": "Se ha generado el pedido #{{numero}} para cubrir los faltantes.",
+      "errorGenerarPedidos": "Error al generar pedidos: {{error}}",
+      "seleccionaUbicacion": "Debes seleccionar una ubicación de destino."
+    },
+    "prepararAhora": "Preparar ahora",
+    "preparar": "Preparar",
+    "crearPedido": "Crear pedido",
+    "exportarPdf": "Exportar PDF",
+    "verDetalles": "Ver detalles",
+    "gestionTitulo": "Gestión de Recetas",
+    "eliminarReceta": "Eliminar receta",
+    "sinGluten": "Sin Gluten",
+    "sinLacteos": "Sin Lácteos",
+    "incluirImagenReceta": "Incluir imagen de la receta",
+    "buscarMinLetras": "Escribe al menos 2 letras para buscar productos."
+  },
+  "usuarios": {
+    "empty": {
+      "noUsuariosRol": "No hay usuarios encontrados para este rol y búsqueda."
+    },
+    "buscarPlaceholder": "Buscar por nombre o email...",
+    "resetPassword": "Restablecer Contraseña",
+    "editarUsuario": "Editar usuario",
+    "eliminarUsuario": "Eliminar usuario",
+    "gestionTitulo": "Gestión de Usuarios",
+    "roles": {
+      "administradores": "Administradores",
+      "profesores": "Profesores",
+      "alumnos": "Alumnos"
+    },
+    "campoNombreUsuario": "Nombre de Usuario",
+    "campoNombreApellidos": "Nombre y Apellidos",
+    "campoCorreoElectronico": "Correo Electrónico",
+    "campoRol": "Rol",
+    "campoEstadoInicial": "Estado Inicial",
+    "campoAulaSlot": "Aula / Slot Asignado",
+    "campoUbicacionAlmacen": "Ubicación Almacén",
+    "cargandoRoles": "Cargando roles...",
+    "toast": {
+      "actualizado": "Usuario actualizado",
+      "creado": "Usuario creado",
+      "eliminado": "Usuario eliminado",
+      "errorCargarRoles": "Error al cargar los roles disponibles",
+      "errorCargar": "Error al cargar los usuarios",
+      "errorEliminar": "Error al eliminar",
+      "errorReset": "Error al resetear la contraseña",
+      "errorGuardar": "Error al guardar"
     }
   },
-  "pedidos": {
-    "pageTitle": "Gestión de Pedidos",
-    "searchPlaceholder": "Buscar por proveedor, estado, usuario...",
-    "newOrder": "Nuevo Pedido",
-    "continueDraft": "Continuar Pedido",
-    "totalItemsLabel": "pedidos",
-    "totalItemsLabelBatch": "compras",
+  "incidencias": {
+    "titulo": "Centro de Incidencias",
+    "totalItemsLabel": "incidencias",
+    "buscar": "Buscar por proveedor u observaciones...",
+    "estados": {
+      "nueva": "Nueva",
+      "enAjuste": "En ajuste",
+      "pendienteValidacion": "Pendiente validación",
+      "resuelta": "Resuelta",
+      "cancelada": "Cancelada",
+      "invalida": "Inválida"
+    },
     "tabs": {
-      "myOrders": "MIS PEDIDOS",
-      "orders": "PEDIDOS",
-      "purchases": "COMPRAS"
+      "abiertas": "Abiertas",
+      "cerradas": "Cerradas",
+      "todas": "Todas"
     },
-    "statusTabs": {
-      "pending": "PENDIENTES",
-      "active": "EN PROCESO",
-      "finished": "FINALIZADOS"
+    "filters": {
+      "desde": "Desde",
+      "hasta": "Hasta"
     },
-    "columns": {
-      "numeroPedido": "Nº de pedido",
-      "fechaPedido": "Fecha Pedido",
-      "fechaEntrega": "Fecha Entrega",
-      "costeTotal": "Coste Total",
-      "estado": "Estado",
-      "creadoPor": "Creado Por",
-      "numeroPedidos": "Nº Pedidos",
-      "costeTotalEstimado": "Coste Total Estimado"
+    "toast": {
+      "marcadaCancelada": "Incidencia marcada como cancelada",
+      "marcadaInvalida": "Incidencia marcada como inválida",
+      "marcadaResuelta": "Incidencia marcada como resuelta",
+      "actualizada": "Incidencia actualizada correctamente",
+      "eliminada": "Incidencia eliminada correctamente"
     },
     "actions": {
-      "approve": "Aprobar pedido",
-      "cancel": "Cancelar pedido",
-      "edit": "Editar pedido",
-      "startReception": "Iniciar Recepción"
-    },
-    "chips": {
-      "pedido": "Pedido",
-      "interno": "Interno"
+      "ajustarCantidades": "Ajustar cantidades",
+      "resolverIncidencia": "Resolver incidencia"
     },
     "empty": {
-      "noOrders": "No se encontraron pedidos",
-      "startFirst": "Empieza registrando un nuevo pedido al catálogo de proveedores.",
-      "register": "Registrar Pedido"
+      "noCerradas": "No hay incidencias cerradas",
+      "mensajeCerradas": "Las incidencias cerradas incluyen resueltas, canceladas e inválidas.",
+      "noPendientes": "¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes."
     },
-    "card": {
-      "orderPrefix": "Pedido #",
-      "estimatedCost": "Coste Estimado"
+    "modal": {
+      "detalle": "Detalle de Incidencia",
+      "resolverTitulo": "Resolver incidencia",
+      "ajustarTitulo": "Ajustar cantidades de incidencia",
+      "descripcion": "Se muestran todas las líneas de la incidencia. Solo las líneas con discrepancia permiten ajuste, manteniendo la cantidad recibida como solo lectura.",
+      "proveedor": "Proveedor",
+      "sinLineas": "Esta incidencia no tiene productos asociados. No se puede ajustar ni resolver hasta que tenga al menos una línea válida.",
+      "marcarResuelta": "Marcar incidencia como resuelta",
+      "estadoFinal": "Estado final",
+      "buscarProducto": "Buscar producto",
+      "ajustables": "Ajustables",
+      "sinAjuste": "Sin ajuste",
+      "total": "Total",
+      "sinDiscrepancias": "Esta incidencia tiene productos, pero no hay discrepancias activas para ajustar. Puedes cerrar la incidencia si procede.",
+      "tabla": {
+        "producto": "Producto",
+        "pedida": "Pedida",
+        "recibida": "Recibida",
+        "ajuste": "Ajuste",
+        "trasAjuste": "Tras ajuste",
+        "balance": "Balance",
+        "estado": "Estado",
+        "nota": "Nota"
+      },
+      "ajusteLabel": "Ajuste",
+      "rangoPermitidoMax": "Rango permitido: {{min}} a 0",
+      "rangoPermitidoMin": "Rango permitido: 0 a {{max}}",
+      "ajusteManual": "Ajuste manual",
+      "noRequiereAjuste": "No requiere ajuste",
+      "chipPendiente": "Pendiente ajuste",
+      "chipBalanceado": "Balanceado",
+      "chipSinAjuste": "Sin ajuste",
+      "filasPorPagina": "Filas",
+      "sinResultadosFiltro": "No hay productos que coincidan con el filtro actual.",
+      "notasResolucion": "Notas de resolución (opcional)",
+      "notasResolucionPlaceholder": "Ej: Ajuste parcial recibido hoy, queda pendiente 1 unidad para mañana.",
+      "guardarYResolver": "Guardar y resolver",
+      "guardarAjustes": "Guardar ajustes"
     },
-    "drawer": {
-      "summary": "Resumen",
-      "lines": "Líneas del pedido",
-      "observations": "Observaciones",
-      "providerLabel": "Proveedor",
-      "statusLabel": "Estado",
-      "createdBy": "Creado por",
-      "totalCost": "Coste total",
-      "orderDate": "Fecha del pedido",
-      "deliveryDate": "Fecha estimada de entrega",
-      "downloadPdf": "Descargar PDF",
-      "printPdf": "Imprimir PDF",
-      "downloading": "Descargando...",
-      "preparing": "Preparando impresión...",
-      "editOrder": "Editar pedido",
-      "title": "Detalle del pedido",
-      "noLines": "No hay líneas disponibles...",
-      "noNotes": "Sin observaciones registradas.",
-      "deliveryNote": "La fecha de entrega se calcula automáticamente.",
-      "orderPrefix": "Pedido #",
-      "colProduct": "Producto",
-      "colQuantity": "Cantidad",
-      "colPrice": "Precio",
-      "colSubtotal": "Subtotal",
-      "noProduct": "Producto no disponible",
-      "brandPrefix": "Marca:",
-      "downloadError": "No se pudo descargar el PDF del pedido.",
-      "printError": "No se pudo abrir la impresión del PDF del pedido."
+    "confirm": {
+      "titulo": "Eliminar Incidencia",
+      "mensaje": "¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia.",
+      "eliminar": "Eliminar"
+    }
+  },
+  "movimientos": {
+    "titulo": "Historial de Movimientos",
+    "totalItemsLabel": "movimientos",
+    "filtros": {
+      "tipos": "Tipos",
+      "placeholder": "Filtrar por tipo...",
+      "desde": "Desde",
+      "hasta": "Hasta"
     },
-    "draft": {
-      "pending": "Hay un pedido pendiente de finalizar.",
-      "recover": "Recuperar",
-      "discard": "Descartar",
-      "lastUpdate": "Última actualización:",
-      "noDate": "fecha no disponible"
+    "columns": {
+      "fecha": "Fecha",
+      "tipo": "Tipo",
+      "cantidad": "Cant.",
+      "descripcion": "Descripción",
+      "usuario": "Usuario"
     },
-    "batchCard": {
-      "batchPrefix": "Lote #",
-      "ref": "Ref:",
-      "providerOrders": "Pedidos Proveedor",
-      "createdAt": "Creado el",
-      "estimatedInvestment": "Inversión Estimada"
+    "tipos": {
+      "ENTRADA": "Entrada",
+      "ENTRADA_COMPRA": "Entrada por compra",
+      "ENTRADA_DISTRIBUCION": "Entrada por distribución",
+      "SALIDA": "Salida",
+      "SALIDA_ELABORACION": "Salida por elaboración",
+      "SALIDA_DISTRIBUCION": "Salida por distribución",
+      "AJUSTE": "Ajuste",
+      "PEDIDO": "Pedido"
     },
-    "batchDetail": {
-      "orderTitle": "Detalle del pedido",
-      "purchaseTitle": "Detalle de la compra",
-      "orderPrefix": "Pedido #",
-      "batchPrefix": "Lote #",
-      "downloading": "Descargando...",
-      "downloadPdf": "Descargar PDF",
-      "preparing": "Preparando impresión...",
-      "printPdf": "Imprimir PDF",
-      "approvePedido": "Aprobar pedido",
-      "cancelPedido": "Cancelar pedido",
-      "editPedido": "Editar pedido",
-      "editCompra": "Editar compra",
-      "recepcion": "Recepción",
-      "downloadError": "No se pudo descargar el PDF del lote.",
-      "printError": "No se pudo abrir la impresión del PDF del lote."
+    "verDetalle": "Ver detalle",
+    "verDistribucion": "Ver Distribución",
+    "detalle": {
+      "titulo": "Detalle del Movimiento",
+      "id": "ID: {{id}}",
+      "general": "Información General",
+      "contexto": "Contexto",
+      "seguimiento": "Seguimiento",
+      "productoDescripcion": "Producto / Descripción",
+      "lote": "Lote",
+      "origenEntidad": "Origen (Entidad)",
+      "idEntidad": "ID Entidad"
     },
-    "weeklyBoard": {
-      "consolidate": "Consolidar semana",
-      "totalEstimated": "Total estimado {{amount}}",
-      "invalidWeek": "Semana sin fecha válida",
-      "batches": "lote(s) de compra",
-      "weeklyInvestment": "Inversión semanal {{amount}}",
-      "weekLabel": "Semana {{start}} - {{end}}",
-      "unknownUser": "Usuario sin identificar",
-      "infoMessage": "Vista operativa para revisar los pedidos pendientes agrupados por semana y por usuario antes de consolidarlos por proveedor.",
-      "emptyMessage": "No hay pedidos pendientes que coincidan con los filtros actuales.",
-      "warningMessage": "Se muestran los primeros {{count}} pedidos. Si necesitas trabajar con más volumen en una sola vista, el siguiente paso lógico es añadir paginación o filtro de semana específico.",
-      "usersAndOrders": "{{users}} usuario(s) · {{orders}} pedido(s)",
-      "batchesCount": "{{count}} lote(s) de compra",
-      "ordersCount": "{{count}} pedido(s)",
-      "selectUserOrders": "Seleccionar pedidos del usuario",
-      "selectOrder": "Seleccionar pedido {{id}}"
+    "empty": {
+      "noMovimientos": "No hay movimientos",
+      "noResultados": "No se encontraron movimientos que coincidan con los filtros seleccionados.",
+      "noRegistros": "Aún no se han registrado alteraciones de inventario en el sistema."
+    }
+  },
+  "albaran": {
+    "titulo": "Albaranes",
+    "totalItemsLabel": "albaranes",
+    "buscar": "Buscar por número de albarán...",
+    "nuevo": "Nuevo Albarán",
+    "filters": {
+      "placeholder": "Filtrar por concordancia...",
+      "desde": "Desde",
+      "hasta": "Hasta"
     },
-    "purchasesWeeklyBoard": {
-      "infoMessage": "Vista de compras consolidadas por proveedor, agrupadas por la semana de creación. Desde aquí puedes revisar los lotes y comenzar la recepción de mercancía.",
-      "emptyMessage": "No hay compras registradas para los filtros actuales.",
-      "invalidWeek": "Semana sin fecha válida",
-      "weekLabel": "Semana {{start}} - {{end}}",
-      "batchesCount": "{{count}} lote(s) de compra",
-      "weeklyInvestment": "Inversión semanal {{amount}}",
-      "openDetail": "Abrir detalle de la compra {{id}}"
+    "upload": {
+      "titulo": "Subir Documento de Albarán",
+      "numeroReferencia": "Número de Referencia del Albarán",
+      "numeroReferenciaHelper": "Número identificativo del albarán físico",
+      "seleccionarArchivo": "Seleccionar archivo",
+      "cambiarArchivo": "Cambiar archivo",
+      "formatosAceptados": "Formatos aceptados: JPG, PNG, GIF, PDF · Máximo {{max}} MB",
+      "recepcionId": "ID de Recepción (opcional)",
+      "recepcionIdPlaceholder": "UUID de la recepción a vincular...",
+      "recepcionIdHelper": "Si se indica, vincula el albarán a esa recepción",
+      "observaciones": "Observaciones (opcional)",
+      "observacionesPlaceholder": "Notas sobre el documento...",
+      "botonSubir": "Subir Documento",
+      "errorTamano": "El archivo excede el tamaño máximo de {{max}} MB.",
+      "errorSinArchivo": "Debes seleccionar un archivo."
     },
-    "deliveryDialog": {
-      "title": "Fecha estimada de entrega",
-      "message": "La fecha prevista para este pedido es {{date}}. Este valor se calcula automáticamente por el sistema y no admite edición manual.",
-      "understood": "Entendido"
+    "form": {
+      "nAlbaran": "Número de Albarán",
+      "concordancia": "Concordancia",
+      "concordanciaVacio": "— Sin definir —",
+      "conforme": "Conforme",
+      "noConforme": "No conforme",
+      "fecha": "Fecha del Albarán"
     },
-    "confirmDialogs": {
-      "deleteTitle": "Eliminar pedido",
-      "deleteConfirm": "Sí, eliminar",
-      "deleteCancelBtn": "Cancelar",
-      "approveTitle": "Aprobar Pedido",
-      "approveConfirm": "Sí, Aprobar",
-      "approveCancelBtn": "Cancelar",
-      "recoverTitle": "Recuperar Pedido Pendiente",
-      "recoverConfirm": "Sí, Recuperar",
-      "recoverDiscard": "No, Descartar",
-      "newPedidoTitle": "Ya tienes un pedido pendiente",
-      "newPedidoConfirm": "Crear nuevo pedido",
-      "newPedidoContinue": "Continuar borrador",
-      "draftCloseTitle": "¿Qué quieres hacer con este pedido?",
-      "draftCloseMessage": "Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente.",
-      "saveDraft": "Guardar en borrador",
-      "cancelOrder": "Cancelar pedido",
-      "cancelFormTitle": "Cancelar Pedido:",
-      "cancelBatchTitle": "Cancelar Compra:",
-      "cancelMotivo": "Motivo de Cancelación (Opcional)"
+    "columns": {
+      "nAlbaran": "Nº Albarán",
+      "fecha": "Fecha",
+      "concordancia": "Concordancia",
+      "documento": "Documento",
+      "recepciones": "Recepciones"
+    },
+    "actions": {
+      "verDetalle": "Ver detalle",
+      "subirDocumento": "Subir documento",
+      "editar": "Editar",
+      "eliminar": "Eliminar"
+    },
+    "detalle": {
+      "infoTitulo": "Información del Albarán",
+      "nAlbaran": "Nº Albarán",
+      "fecha": "Fecha",
+      "concordancia": "Concordancia",
+      "fechaRegistro": "Fecha de Registro",
+      "documentoAdjunto": "Documento Adjunto",
+      "nombre": "Nombre",
+      "tipo": "Tipo",
+      "tamano": "Tamaño",
+      "verDocumento": "Ver documento",
+      "abrirArchivo": "Abrir archivo",
+      "sinRecepciones": "Sin recepciones vinculadas",
+      "sinLineas": "No hay líneas de producto asociadas a las recepciones de este albarán."
+    },
+    "modal": {
+      "tituloDetalle": "Detalle del Albarán",
+      "tituloEditar": "Editar Albarán",
+      "tituloSubirDoc": "Subir Documento",
+      "guardarCambios": "Guardar Cambios",
+      "crearAlbaran": "Crear Albarán"
+    },
+    "confirm": {
+      "titulo": "Eliminar Albarán",
+      "mensaje": "¿Estás seguro de que deseas eliminar el albarán \"{{nAlbaran}}\"?",
+      "eliminar": "Eliminar"
+    },
+    "empty": {
+      "noAlbaranes": "No hay albaranes registrados",
+      "noResultados": "No se encontraron albaranes que coincidan con tu búsqueda.",
+      "primerAlbaran": "Aún no hay albaranes en el sistema. Crea el primero con el botón \"Nuevo Albarán\"."
+    },
+    "errors": {
+      "cargar": "Error al cargar albaranes",
+      "cargarDetalle": "No se pudo cargar el detalle completo del albarán",
+      "errorGuardar": "Error al guardar el albarán",
+      "errorEliminar": "Error al eliminar el albarán",
+      "errorSubir": "Error al subir el documento"
+    },
+    "toast": {
+      "actualizado": "Albarán actualizado correctamente",
+      "creado": "Albarán creado correctamente",
+      "eliminado": "Albarán eliminado correctamente",
+      "documentoSubido": "Documento subido correctamente"
+    }
+  },
+  "admin": {
+    "titulo": "Administración Académica",
+    "subtitulo": "Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.",
+    "breadcrumb": {
+      "inicio": "Inicio",
+      "administracion": "Administración"
+    },
+    "tabs": {
+      "aulasClases": "Aulas y Clases",
+      "alumnos": "Alumnos",
+      "gestionUsuarios": "Gestión Usuarios",
+      "plantillasRoles": "Plantillas Roles",
+      "ariaLabel": "admin tabs"
+    },
+    "actions": {
+      "finalizarEdicion": "Finalizar Edición",
+      "gestionar": "Gestionar"
+    },
+    "options": {
+      "propio": "-- Mío (Propio) --"
+    },
+    "errors": {
+      "cargarDatos": "Error al cargar los datos de administración",
+      "cargarAlumnos": "Error al cargar los alumnos",
+      "sinProfesorVinculado": "No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.",
+      "eliminar": "No se pudo eliminar",
+      "actualizar": "Error al actualizar",
+      "actualizarAula": "Error al actualizar el aula",
+      "cambiarEstado": "Error al cambiar estado",
+      "resetearContrasena": "Error al resetear la contraseña"
+    },
+    "toast": {
+      "aulaCreada": "Aula/Clase añadida con éxito",
+      "errorCrearClase": "Error al crear la clase",
+      "ubicacionEliminada": "Ubicación eliminada",
+      "ubicacionActualizada": "Ubicación actualizada",
+      "aulaActualizada": "Aula actualizada correctamente",
+      "estadoAlumnoActualizado": "Estado de alumno actualizado",
+      "contrasenaReset": "Contraseña reseteada. Nueva clave: {{clave}}",
+      "alumnoEliminado": "Alumno eliminado"
+    },
+    "confirm": {
+      "eliminarClase": "¿Seguro que quieres eliminar esta clase?",
+      "eliminarAlumno": "¿Seguro que quieres eliminar a este alumno?"
+    }
+  },
+  "recepcion": {
+    "conflicto": {
+      "titulo": "Conflicto de borrador detectado",
+      "descripcion": "Este formulario fue actualizado desde otro dispositivo o pestaña.",
+      "ultimaVersion": "Última versión del servidor:",
+      "desconocida": "desconocida",
+      "instruccion": "Puedes cargar el borrador remoto o sobrescribirlo con tu versión local.",
+      "usarRemota": "Usar versión remota",
+      "sobrescribir": "Sobrescribir con mi versión"
+    },
+    "estadoLinea": {
+      "ok": "OK",
+      "parcial": "Parcial",
+      "exceso": "Exceso",
+      "noEntregado": "No entregado",
+      "nuevo": "Nuevo"
+    },
+    "nuevoProducto": {
+      "tituloEncontrado": "Añadir Producto Encontrado",
+      "tituloDesconocido": "Añadir Producto Desconocido",
+      "infoEncontrado": "Hemos auto-completado los datos usando una base de datos global. Revisa la información antes de añadir el producto a tu catálogo.",
+      "infoDesconocido": "Este producto no figura en el catálogo ni en los pedidos seleccionados. Por favor, introduce sus datos básicos.",
+      "nombre": "Nombre del Producto",
+      "codigoBarras": "Código de Barras",
+      "marca": "Marca",
+      "categoria": "Categoría",
+      "contenido": "Contenido (Neto)",
+      "confirmar": "Confirmar y Añadir"
+    },
+    "pasos": {
+      "seleccionPedidos": "Selección de Pedidos",
+      "escaneoConteo": "Escaneo y Conteo",
+      "revisionAjuste": "Revisión y Ajuste",
+      "resultado": "Resultado"
+    },
+    "estados": {
+      "noEntregado": "No entregado",
+      "ok": "OK",
+      "parcial": "Parcial",
+      "exceso": "Exceso"
+    },
+    "titulo": "Gestión de Recepción",
+    "recuperandoBorrador": "Recuperando borrador de recepción...",
+    "acciones": {
+      "escanearCamara": "Escanear con cámara",
+      "escanearProducto": "Escanear Producto",
+      "cerrarEscaner": "Cerrar escáner",
+      "descartar": "Descartar",
+      "atras": "Atrás",
+      "siguiente": "Siguiente",
+      "procesando": "Procesando...",
+      "finalizarRecepcion": "Finalizar Recepción"
+    },
+    "campos": {
+      "autoGenerado": "Auto-generado si vacío",
+      "justificante": "Justificante Obligatorio*",
+      "notasGenerales": "Añade aquí cualquier nota general..."
+    },
+    "escaneo": {
+      "titulo": "Escanear Código de Barras o ID",
+      "placeholder": "EAN-13 o ID de bulto...",
+      "escanearProducto": "Escanear Producto",
+      "opcionesBascula": "Opciones de báscula",
+      "usarBascula": "Usar báscula",
+      "pedida": "Pedida",
+      "albaran": "Albarán",
+      "recibida": "Recibida",
+      "itemsRecibidos": "{{count}} ítems recibidos",
+      "sinCodigo": "Sin código",
+      "estadoOptimo": "Óptimo",
+      "estadoRoto": "Roto",
+      "estadoDefecto": "Defecto",
+      "nuevo": "Nuevo",
+      "fueraDePedido": "Especial / Fuera de Pedido",
+      "fisico": "Físico",
+      "ean": "EAN"
+    },
+    "revision": {
+      "instruccion": "Revisa los totales. Si no indicas el Nº de Albarán, se generará uno automáticamente.",
+      "numAlbaran": "Nº Albarán",
+      "autoGenerado": "Auto-generado si vacío",
+      "exp": "Exp.",
+      "alb": "Alb.",
+      "real": "Real",
+      "origenPeso": "Origen peso",
+      "estadoFisico": "Estado Físico",
+      "bascula": "Báscula",
+      "manual": "Manual",
+      "defectuoso": "Defectuoso",
+      "justificante": "Justificante Obligatorio*",
+      "firma": "Firma / Observaciones generales",
+      "notasPlaceholder": "Añade aquí cualquier nota general..."
+    },
+    "resultado": {
+      "exito": "¡Recepción Registrada con éxito!",
+      "idRegistro": "ID Registro",
+      "registros": "Registros Realizados",
+      "registradosAutom": "registrados autom.",
+      "productosAlmacen": "Productos en Almacén",
+      "disponibles": "disponibles ahora",
+      "productosNuevos": "Productos Nuevos",
+      "anadidosCatalogo": "añadidos al catálogo",
+      "discrepancias": "Se han detectado discrepancias en la recepción",
+      "pedidoRef": "Pedido Ref",
+      "faltan": "Faltan",
+      "sobran": "Sobran",
+      "unidades": "unidades",
+      "guardado": "La recepción se ha guardado correctamente y el inventario ha sido actualizado.",
+      "descargarPdf": "Descargar Detalles (PDF)",
+      "distribuir": "Distribuir ahora",
+      "finalizar": "Finalizar y Volver"
+    },
+    "seleccion": {
+      "titulo": "Selecciona los pedidos que estás recibiendo",
+      "anadirProveedor": "Añadir por Proveedor",
+      "seleccionaProveedor": "Selecciona un proveedor",
+      "deseleccionarProveedor": "Deseleccionar por Prov.",
+      "pedido": "Pedido"
+    },
+    "bascula": {
+      "titulo": "Báscula de Recepción",
+      "pesando": "Pesando",
+      "comunicando": "Comunicando con la báscula...",
+      "recalcular": "Recalcular",
+      "confirmarPeso": "Confirmar Peso",
+      "webSerialNoDisponible": "Web Serial no disponible",
+      "sinBasculaAutorizada": "Sin báscula autorizada",
+      "guardadaListaParaConectar": "Báscula guardada, lista para conectar",
+      "conectada": "Báscula conectada",
+      "desconectada": "Báscula desconectada",
+      "desactivada": "Báscula desactivada",
+      "seleccionCancelada": "Selección de puerto cancelada",
+      "noSePudoConectar": "No se pudo conectar la báscula",
+      "leyendoPeso": "Leyendo peso en tiempo real",
+      "pesoRecibido": "Peso recibido desde báscula",
+      "errorLectura": "Error de lectura en báscula",
+      "noSePudoLeer": "No se pudo leer la báscula",
+      "estadoTooltip": "Estado de báscula: {{estado}}",
+      "vincular": "Vincular",
+      "cambiarPuerto": "Cambiar puerto"
+    },
+    "sync": {
+      "guardando": "Guardando...",
+      "guardandoTooltip": "Sincronizando borrador con el servidor",
+      "sincronizado": "Sincronizado",
+      "sincronizadoTooltip": "Borrador sincronizado de forma segura",
+      "error": "Error de sync",
+      "errorTooltip": "Error al sincronizar el borrador",
+      "conflicto": "Conflicto",
+      "conflictoTooltip": "El borrador cambió en otro dispositivo"
+    },
+    "recovery": {
+      "titulo": "Recuperar recepción pendiente",
+      "mensaje": "Has dejado una recepción a medias. ¿Deseas recuperarla y continuar donde lo dejaste?",
+      "ultimaActualizacion": "Última actualización:",
+      "fechaDesconocida": "desconocida",
+      "confirmar": "Sí, recuperar",
+      "cancelar": "No, descartar"
+    },
+    "descartar": {
+      "titulo": "Descartar recepción",
+      "mensaje": "¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado.",
+      "confirmar": "Sí, descartar",
+      "cancelar": "Cancelar"
+    },
+    "procesando": {
+      "titulo": "Procesando Recepción Masiva...",
+      "descripcion": "Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador."
+    },
+    "errors": {
+      "webSerialNoSoportado": "Este navegador no soporta Web Serial para conectar la báscula.",
+      "noPudoAbrirPuerto": "No se pudo abrir el puerto serie de la báscula.",
+      "cargarPedidos": "Error al cargar pedidos compatibles.",
+      "minProducto": "Debes recepcionar al menos un producto.",
+      "discrepanciaObservaciones": "Falla Validativa: El producto \"{{nombre}}\" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.",
+      "espontaneoObservaciones": "Falla Validativa: El producto espontáneo \"{{nombre}}\" requiere obligatoriamente una nota justificativa.",
+      "pedidoNoEncontrado": "Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.",
+      "errorTransaccion": "Error crítico en la transacción: {{detalle}}. Los datos siguen sincronizados en el servidor; puedes intentar enviarlos de nuevo.",
+      "basculaNoActiva": "La báscula no está activa. Vincúlala o introduce el peso manualmente.",
+      "sinBasculaDisponible": "No hay una báscula autorizada disponible.",
+      "perdidaComunicacion": "Se perdió la comunicación con la báscula.",
+      "noSePudoIniciarLectura": "No se pudo iniciar la lectura de la báscula."
     }
   },
   "inventario": {
-    "pageTitle": "Inventario por Producto",
-    "searchPlaceholder": "Buscar por producto, tipo, proveedor o ubicación...",
-    "addToInventory": "Añadir al inventario",
-    "manageLocations": "Gestionar Ubicaciones",
-    "scanProduct": "Escanear Producto para Buscar",
+    "acciones": {
+      "escanear": "Escanear Producto para Buscar",
+      "añadir": "Añadir al inventario",
+      "gestionarUbicaciones": "Gestionar Ubicaciones",
+      "registrarMerma": "Registrar Merma"
+    },
+    "detalle": {
+      "auditarTitulo": "Auditar Stock por Ajuste",
+      "detalleLotesTitulo": "Detalles de Lotes",
+      "instruccion": "Solo lectura: stock actual y stock total en unidades de envase. Editable: ajuste de stock (+/-).",
+      "sinLotes": "No se encontraron lotes para este producto.",
+      "resumen": "Resumen de auditoria",
+      "stockActual": "Stock total actual (solo lectura)",
+      "ajustePendiente": "Ajuste total pendiente",
+      "stockProyectado": "Stock total proyectado (solo lectura)",
+      "loteId": "Lote ID",
+      "caducidad": "Caducidad",
+      "stockActualUds": "Stock actual (uds)",
+      "ajusteUds": "Ajuste de stock (uds +/-)",
+      "stockResultante": "Stock resultante (uds)",
+      "reportarMerma": "Reportar Merma",
+      "cerrarAuditoria": "Cerrar Auditoría",
+      "registrarMerma": "Registrar Merma",
+      "confirmarMerma": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?",
+      "toast": {
+        "ajusteAplicado": "Ajuste de stock aplicado correctamente.",
+        "errorAjuste": "Error al aplicar ajuste de stock.",
+        "loteNoExiste": "El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.",
+        "mermaRegistrada": "Merma registrada correctamente",
+        "errorMerma": "Error al registrar merma"
+      },
+      "errors": {
+        "interpretarAjuste": "No se pudo interpretar el ajuste de stock."
+      },
+      "placeholderAjuste": "+2 / -1",
+      "helperAjuste": "Ajuste en unidades de envase (+/-)"
+    },
+    "ubicaciones": {
+      "titulo": "Gestionar Ubicaciones",
+      "nueva": "Nueva ubicación",
+      "sinUbicaciones": "No hay ubicaciones registradas.",
+      "toast": {
+        "creada": "Ubicación añadida",
+        "eliminada": "Ubicación eliminada"
+      },
+      "errors": {
+        "crear": "Error al crear ubicación",
+        "eliminar": "Error al eliminar ubicación"
+      }
+    },
+    "nuevaUbicacion": {
+      "titulo": "Nueva Ubicación de Almacén",
+      "nombre": "Nombre de la Ubicación",
+      "placeholder": "Ej: Estantería A, Almacén Central...",
+      "nombreObligatorio": "El nombre de la ubicación es obligatorio",
+      "creada": "Ubicación creada con éxito",
+      "yaExiste": "Ya existe una ubicación con este nombre",
+      "error": "Error al crear la ubicación"
+    },
+    "titulo": "Inventario por Producto",
     "totalItemsLabel": "productos",
+    "searchPlaceholder": "Buscar por producto, tipo, proveedor o ubicación...",
     "tabs": {
-      "myLocations": "Mis Ubicaciones",
-      "general": "Inventario General"
+      "misUbicaciones": "Mis Ubicaciones",
+      "inventarioGeneral": "Inventario General"
     },
     "columns": {
       "producto": "Producto",
@@ -1099,120 +880,108 @@
       "minimo": "Mínimo",
       "estado": "Estado",
       "proveedores": "Proveedores",
-      "ubicaciones": "Ubicaciones"
+      "ubicaciones": "Ubicaciones",
+      "acciones": "Acciones"
     },
-    "stockStatus": {
-      "lowStock": "Bajo stock",
+    "estado": {
+      "bajoStock": "Bajo stock",
       "ok": "OK"
     },
     "actions": {
-      "viewDetails": "Ver Detalles y Lotes",
-      "audit": "Auditar stock por ajuste (+/-)"
+      "verDetalles": "Ver Detalles y Lotes",
+      "auditarStock": "Auditar stock por ajuste (+/-)"
+    },
+    "dialogs": {
+      "añadirTitulo": "Añadir producto al inventario",
+      "productoProveedor": "Producto / Proveedor",
+      "buscarProducto": "Buscar producto o proveedor…",
+      "debeSeleccionar": "Debes seleccionar una opción válida",
+      "escribeMas": "Escribe al menos 2 caracteres para buscar…",
+      "sinResultados": "Sin resultados",
+      "cantidadActual": "Cantidad actual",
+      "cantidadMinima": "Cantidad mínima",
+      "cantidadMaxima": "Cantidad máxima (opcional)",
+      "ubicacion": "Ubicación de almacén",
+      "fechaCaducidad": "Fecha de caducidad (opcional)",
+      "debeNumero": "Debe ser un número ≥ 0",
+      "maxMenorMin": "No puede ser menor que la mínima",
+      "guardando": "Guardando...",
+      "guardar": "Guardar",
+      "cancelar": "Cancelar",
+      "crearProductoTitulo": "Crear Nuevo Producto",
+      "crearProductoConfirm": "¿Deseas crear este producto y dejarlo listo para inventario?",
+      "cantidadAñadirTitulo": "Cantidad a añadir",
+      "cantidadAñadirLabel": "Cantidad a añadir",
+      "cantidadAñadirDesc": "Indica la cantidad que quieres añadir para \"{{nombre}}\".",
+      "cantidadAñadirDescGeneric": "Indica la cantidad que quieres añadir al inventario.",
+      "debeMayorQueCero": "Debe ser un número mayor que 0",
+      "añadiendo": "Añadiendo...",
+      "añadirAlInventario": "Añadir al inventario",
+      "escanearProducto": "Escanear Producto para Buscar",
+      "añadirAlInventarioBtn": "Añadir al inventario",
+      "gestionarUbicaciones": "Gestionar Ubicaciones"
+    },
+    "confirm": {
+      "productoNoEncontradoTitulo": "Producto no encontrado",
+      "productoNoEncontradoMsg": "Este producto ({{codigo}}) no existe en inventario. ¿Deseas crearlo en el catálogo?",
+      "productoNoEncontradoMsgGeneric": "Este producto no existe en inventario. ¿Deseas crearlo en el catálogo?",
+      "siCrear": "Sí, crear producto",
+      "no": "No"
+    },
+    "toast": {
+      "errorCargarUbicaciones": "Error al cargar ubicaciones",
+      "errorBuscarProductoProveedor": "Error al buscar producto/proveedor.",
+      "stockAñadido": "Stock añadido correctamente para {{nombre}}.",
+      "inventarioCreado": "Entrada de inventario creada correctamente.",
+      "productoCreado": "Producto creado correctamente en catálogo.",
+      "sinPermisosInventario": "Producto creado, pero no tienes permisos para añadirlo al inventario.",
+      "productLocalizadoInventario": "Producto localizado en inventario.",
+      "productoEnCatalogo": "Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.",
+      "productoEnCatalogoSinPermisos": "Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.",
+      "codigoNoExisteSinPermisos": "Este código no existe en inventario y no tienes permisos para crear productos.",
+      "relacionNoExiste": "No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.",
+      "variasRelaciones": "Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.",
+      "errorAltaInventario": "Error al cargar opciones de producto/proveedor.",
+      "cantidadInvalida": "La cantidad a añadir debe ser un número mayor que 0.",
+      "sinPermisos": "No tienes permisos para añadir inventario.",
+      "sinUbicaciones": "No hay ubicaciones disponibles para registrar el inventario.",
+      "errorCrearProducto": "Error al crear el producto.",
+      "errorInventario": "No se pudo añadir el producto al inventario.",
+      "seleccionaProducto": "Selecciona un producto/proveedor.",
+      "cantActualInvalida": "La cantidad actual debe ser un número válido mayor o igual a 0.",
+      "cantMinInvalida": "La cantidad mínima debe ser un número válido mayor o igual a 0.",
+      "cantMaxInvalida": "La cantidad máxima debe ser un número válido mayor o igual a 0.",
+      "cantMaxMenorMin": "La cantidad máxima no puede ser menor que la mínima.",
+      "errorCrearInventario": "Error al crear la entrada de inventario."
     },
     "empty": {
-      "noMatch": "No hay productos que coincidan con tu búsqueda o filtros",
-      "noLocations": "No tienes ubicaciones asignadas",
-      "noStockInLocation": "No hay stock en {{locations}}",
-      "noStock": "No hay stock en inventario",
-      "tryOther": "Prueba con otros términos o limpia los filtros.",
-      "noLocationsHint": "Contacta con tu profesor o administrador para que te asigne un slot.",
-      "noStockHint": "Registra recepciones o crea entradas de inventario para ver el stock."
+      "sinResultados": "No hay productos que coincidan con tu búsqueda o filtros",
+      "sinUbicacionesAsignadas": "No tienes ubicaciones asignadas",
+      "sinStockUbicaciones": "No hay stock en {{ubicaciones}}",
+      "sinStockGeneral": "No hay stock en inventario",
+      "prueba": "Prueba con otros términos o limpia los filtros.",
+      "contactaProfesor": "Contacta con tu profesor o administrador para que te asigne un slot.",
+      "registraStock": "Registra recepciones o crea entradas de inventario para ver el stock."
     },
-    "createDialog": {
-      "title": "Añadir producto al inventario",
-      "productProvider": "Producto / Proveedor",
-      "searchPlaceholder": "Buscar producto o proveedor…",
-      "typeToSearch": "Escribe al menos 2 caracteres para buscar…",
-      "noResults": "Sin resultados",
-      "selectValid": "Debes seleccionar una opción válida",
-      "currentQuantity": "Cantidad actual",
-      "minQuantity": "Cantidad mínima",
-      "maxQuantity": "Cantidad máxima (opcional)",
-      "location": "Ubicación de almacén",
-      "expiryDate": "Fecha de caducidad (opcional)",
-      "mustBePositive": "Debe ser un número ≥ 0",
-      "maxLessThanMin": "No puede ser menor que la mínima",
-      "cancel": "Cancelar",
-      "saving": "Guardando...",
-      "save": "Guardar"
-    },
-    "quantityDialog": {
-      "title": "Cantidad a añadir",
-      "label": "Cantidad a añadir",
-      "descriptionWithName": "Indica la cantidad que quieres añadir para \"{{name}}\".",
-      "description": "Indica la cantidad que quieres añadir al inventario.",
-      "mustBeGreaterThanZero": "Debe ser un número mayor que 0",
-      "cancel": "Cancelar",
-      "adding": "Añadiendo...",
-      "add": "Añadir al inventario"
-    },
-    "productNotFound": {
-      "title": "Producto no encontrado",
-      "withBarcode": "Este producto ({{barcode}}) no existe en inventario. ¿Deseas crearlo en el catálogo?",
-      "withoutBarcode": "Este producto no existe en inventario. ¿Deseas crearlo en el catálogo?",
-      "confirmCreate": "Sí, crear producto",
-      "cancel": "No"
-    },
-    "createProductTitle": "Crear Nuevo Producto",
-    "createProductConfirm": "¿Deseas crear este producto y dejarlo listo para inventario?",
-    "toast": {
-      "errorLoadingLocations": "Error al cargar ubicaciones",
-      "productCreated": "Producto creado correctamente en catálogo.",
-      "noPermissionInventory": "Producto creado, pero no tienes permisos para añadirlo al inventario.",
-      "productLocated": "Producto localizado en inventario.",
-      "foundInCatalog": "Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.",
-      "noPermissionAdd": "Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.",
-      "noPermissionCreate": "Este código no existe en inventario y no tienes permisos para crear productos.",
-      "noProviderRelation": "No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.",
-      "multipleRelations": "Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.",
-      "stockAdded": "Stock añadido correctamente para {{name}}.",
-      "addError": "No se pudo añadir el producto al inventario.",
-      "inventoryCreated": "Entrada de inventario creada correctamente.",
-      "inventoryError": "Error al crear la entrada de inventario."
-    },
-    "productForm": {
-      "nombre": "Nombre Comercial",
+    "productoCreateFields": {
+      "nombreComercial": "Nombre Comercial",
       "marca": "Marca",
       "descripcion": "Descripción",
-      "contenido": "Contenido Numérico",
-      "unidad": "Unidad de Medida",
+      "contenidoNumerico": "Contenido Numérico",
+      "unidadMedida": "Unidad de Medida",
       "categoria": "Categoría",
       "codigoBarras": "Código de Barras",
-      "unidades": {
-        "kg": "Kg",
-        "g": "Gramo",
-        "l": "Litro",
-        "ml": "Mililitro",
-        "unidad": "Unidad",
-        "paq": "Paquete"
-      }
+      "proveedoresAsociados": "Proveedores Asociados"
     },
-    "proveedoresAsociados": "Proveedores Asociados",
-    "validation": {
-      "nameRequired": "El nombre del producto es obligatorio.",
-      "contenidoInvalid": "El contenido debe ser un número mayor que 0.",
-      "unidadInvalid": "Selecciona una unidad de medida válida.",
-      "proveedorRequired": "Debes asociar al menos un proveedor para poder añadir este producto al inventario.",
-      "precioInvalid": "Cada proveedor debe tener un precio de compra válido (número mayor o igual a 0).",
-      "selectProductProvider": "Selecciona un producto/proveedor.",
-      "cantidadActualInvalid": "La cantidad actual debe ser un número válido mayor o igual a 0.",
-      "cantidadMinimaInvalid": "La cantidad mínima debe ser un número válido mayor o igual a 0.",
-      "cantidadMaximaInvalid": "La cantidad máxima debe ser un número válido mayor o igual a 0.",
-      "maxLessThanMin": "La cantidad máxima no puede ser menor que la mínima.",
-      "noLocations": "No hay ubicaciones disponibles para registrar el inventario."
+    "unidades": {
+      "kg": "Kg",
+      "g": "Gramo",
+      "l": "Litro",
+      "ml": "Mililitro",
+      "unidad": "Unidad",
+      "paquete": "Paquete"
     },
-    "card": {
-      "noBrand": "Sin marca",
-      "viewDetail": "Ver detalle",
-      "edit": "Editar",
-      "delete": "Eliminar"
-    },
-    "filters": {
-      "placeholder": "Filtrar categoría...",
-      "noOptions": "Sin resultados",
-      "clearFilters": "Limpiar filtros",
-      "openCategories": "Ver categorías",
-      "close": "Cerrar",
+    "categorias": {
       "verdura": "Verdura",
       "fruta": "Fruta",
       "carne": "Carne",
@@ -1228,420 +997,17 @@
       "azucar": "Azúcar",
       "bebida": "Bebida",
       "otro": "Otro"
-    }
-  },
-  "movimientos": {
-    "pageTitle": "Historial de Movimientos",
-    "totalItemsLabel": "movimientos",
-    "loadError": "Error desconocido al cargar movimientos.",
-    "columns": {
-      "fecha": "Fecha",
-      "tipo": "Tipo",
-      "cant": "Cant.",
-      "descripcion": "Descripción",
-      "usuario": "Usuario"
     },
-    "empty": {
-      "noMovements": "No hay movimientos",
-      "noMatchFilters": "No se encontraron movimientos que coincidan con los filtros seleccionados.",
-      "noRecords": "Aún no se han registrado alteraciones de inventario en el sistema."
-    },
-    "detail": {
-      "title": "Detalle del Movimiento",
-      "generalInfo": "Información General",
-      "tipo": "Tipo",
-      "cantidad": "Cantidad",
-      "fecha": "Fecha",
-      "context": "Contexto",
-      "productDescription": "Producto / Descripción",
-      "usuario": "Usuario",
-      "tracking": "Seguimiento",
-      "lote": "Lote",
-      "origin": "Origen (Entidad)",
-      "entityId": "ID Entidad",
-      "viewDistribution": "Ver Distribución"
-    },
-    "actions": {
-      "viewDetail": "Ver detalle"
-    }
-  },
-  "mermas": {
-    "pageTitle": "Gestión de Mermas",
-    "historialTitle": "Historial de Mermas",
-    "reportar": "Reportar Merma",
-    "totalItemsLabel": "registros",
-    "registerTitle": "Registrar Merma de Producto",
-    "registerConfirm": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?",
-    "toast": {
-      "registered": "Merma registrada correctamente",
-      "error": "Error al registrar merma"
-    }
-  },
-  "productCard": {
-    "sinMarca": "Sin marca",
-    "tooltips": {
-      "viewDetail": "Ver detalle",
-      "edit": "Editar",
-      "delete": "Eliminar"
-    }
-  },
-  "productFilters": {
-    "filterPlaceholder": "Filtrar categoría...",
-    "noResults": "Sin resultados",
-    "clearFilters": "Limpiar filtros",
-    "viewCategories": "Ver categorías",
-    "close": "Cerrar"
-  },
-  "dynamicForm": {
-    "submit": "Aceptar",
-    "cancel": "Cancelar",
-    "required": "Este campo es obligatorio",
-    "invalidUuid": "El ID del proveedor debe ser un UUID válido",
-    "scanWithCamera": "Escanear con cámara",
-    "generateEAN": "Generar código EAN-13",
-    "searchOpenFoodFacts": "Buscar en OpenFoodFacts",
-    "uploadImage": "Cargar Imagen",
-    "scanField": "Escanear {{field}}",
-    "confirmSave": "¿Estás seguro de que deseas guardar estos datos?",
-    "save": "Guardar"
-  },
-  "detailModal": {
-    "close": "Cerrar",
-    "edit": "Editar",
-    "editTitle": "Editar {{title}}"
-  },
-  "recetaAlergenos": {
-    "sinGluten": "Sin Gluten",
-    "sinLacteos": "Sin Lácteos",
-    "noAllergens": "No se han detectado alérgenos en los ingredientes de esta receta.",
-    "contains": "Contiene {{allergen}}",
-    "free": "Sin {{allergen}}"
-  },
-  "recetaIngredientes": {
-    "title": "Ingredientes de la Receta",
-    "addIngredient": "Añadir Ingrediente",
-    "allergenWarning": "Alérgenos en esta receta:",
-    "columns": {
-      "product": "Producto",
-      "quantity": "Cantidad",
-      "unit": "Unidad",
-      "favoriteSupplier": "Proveedor fav."
-    },
-    "empty": "No hay ingredientes añadidos a la receta",
-    "searchProduct": "Buscar producto...",
-    "searchHint": "Escribe al menos 2 letras para buscar productos.",
-    "noProducts": "No hay productos disponibles",
-    "noSupplier": "Sin proveedor disponible",
-    "autoSelectCheapest": "Seleccionar automáticamente el más barato",
-    "unknownSupplier": "Proveedor desconocido",
-    "cheapest": "Más barato",
-    "remove": "Quitar"
-  },
-  "proveedorSelector": {
-    "title": "Proveedores y Condiciones",
-    "addSupplier": "Añadir Proveedor",
-    "searchPlaceholder": "Buscar proveedor...",
-    "unknownSupplier": "Proveedor Desconocido",
-    "removeSupplier": "Eliminar proveedor {{name}}",
-    "brand": "Marca",
-    "barcode": "Código Barras Prov.",
-    "purchasePrice": "Precio Compra"
-  },
-  "pedidoLineas": {
-    "title": "Líneas del Pedido",
-    "multiSupplier": "Multi-Proveedor Habilitado",
-    "newProducts": "Nuevos Productos (Selecciona uno)",
-    "orderLines": "Líneas del pedido",
-    "columns": {
-      "product": "Producto",
-      "supplier": "Proveedor",
-      "quantity": "Cantidad",
-      "unitPrice": "Precio Unid.",
-      "subtotal": "Subtotal"
-    },
-    "supplier": "Proveedor",
-    "autoSupplier": "Proveedor automático",
-    "selectProduct": "Selecciona un producto",
-    "selectSupplier": "Selecciona proveedor",
-    "supplierSubtotal": "Subtotal Proveedor",
-    "emptyCart": "Aún no hay ningún producto en la cesta. Usa el botón \"Añadir Producto\" para comenzar.",
-    "addProduct": "Añadir Producto",
-    "totalEstimated": "TOTAL ESTIMADO"
-  },
-  "reporteSelector": {
-    "titles": {
-      "pedido": {
-        "pdf": "Reporte de Pedidos (PDF)",
-        "excel": "Reporte de Pedidos (PDF)"
-      },
-      "incidencias": {
-        "pdf": "Reporte de Incidencias (PDF)",
-        "excel": "Reporte de Incidencias (Excel)"
-      }
-    },
-    "startDate": "Fecha de inicio",
-    "endDate": "Fecha de fin",
-    "startDateRequired": "La fecha de inicio es obligatoria",
-    "endDateRequired": "La fecha de fin es obligatoria",
-    "endDateBeforeStart": "La fecha de fin debe ser posterior a la de inicio",
-    "supplierOptional": "Proveedor (opcional)",
-    "allSuppliers": "Todos los proveedores",
-    "loadingSuppliers": "Cargando proveedores...",
-    "noSuppliers": "No se encontraron proveedores",
-    "includeCancelled": "Incluir pedidos cancelados",
-    "pagePerSupplier": "Una página por proveedor",
-    "onlyUnresolved": "Solo incidencias no resueltas",
-    "cancel": "Cancelar",
-    "generating": "Generando...",
-    "generateExcel": "Generar Excel",
-    "generatePdf": "Generar PDF",
-    "excelSuccess": "Excel generado correctamente.",
-    "reportSuccess": "Reporte generado correctamente.",
-    "excelError": "Error al generar el Excel.",
-    "reportError": "Error al generar el reporte.",
-    "loadSuppliersError": "No se pudieron cargar los proveedores para el reporte."
-  },
-  "summaryModal": {
-    "loadError": "No se pudo cargar la información detallada.",
-    "noCategory": "Sin categoría",
-    "order": "Pedido",
-    "resolved": "Resuelta",
-    "pending": "Pendiente",
-    "hideDetails": "Ocultar resumen",
-    "showDetails": "Ver resumen",
-    "supplier": "Proveedor",
-    "noSupplier": "Sin proveedor",
-    "receptionObservations": "Observaciones de recepción",
-    "noObservations": "Sin observaciones registradas.",
-    "incidenciaDetail": "Detalle de la incidencia",
-    "tipoDiferencia": {
-      "FALTANTE": "Faltante",
-      "EXCESO": "Exceso",
-      "DEFECTUOSO": "Defectuoso"
-    },
-    "expected": "Esperado",
-    "received": "Recibido",
-    "difference": "Diferencia",
-    "claim": "Reclamación",
-    "estadoReclamacion": {
-      "PENDIENTE": "Pendiente",
-      "RECLAMADO": "Reclamado",
-      "ABONADO": "Abonado",
-      "REENVIADO": "Reenviado"
-    },
-    "note": "Nota",
-    "noContact": "Sin contacto",
-    "empty": "No hay elementos para mostrar.",
-    "close": "Cerrar"
-  },
-  "batchLineas": {
-    "downloadError": "Error al descargar el PDF",
-    "noLines": "No hay líneas asociadas a este pedido.",
-    "noPedidos": "No hay pedidos en este lote.",
-    "observations": "Observaciones",
-    "unknownSupplier": "Proveedor Desconocido",
-    "consolidatedOrders": "{{count}} pedido(s) consolidado(s) para este proveedor",
-    "subtotal": "Subtotal",
-    "columns": {
-      "productBrand": "Producto / Marca",
-      "orderedBy": "Pedido por",
-      "quantity": "Cantidad",
-      "unitPrice": "Precio Unid.",
-      "subtotal": "Subtotal"
-    },
-    "unknown": "Desconocido",
-    "brand": "Marca",
-    "supplierOrders": "Pedidos proveedor",
-    "visibleRef": "Ref. pedido visible",
-    "involvedOrders": "Pedidos involucrados en la compra",
-    "involvedColumns": {
-      "supplierOrderNo": "Nº Pedido Proveedor",
-      "supplier": "Proveedor",
-      "visibleRef": "Ref. Pedido Visible",
-      "user": "Usuario",
-      "date": "Fecha",
-      "status": "Estado"
-    },
-    "printOptions": "Opciones de impresión / Reporte",
-    "includeCancelled": "Incluir cancelados",
-    "pagePerSupplier": "Pág. por proveedor",
-    "downloadPdf": "Descargar PDF",
-    "total": "TOTAL",
-    "totalPurchase": "TOTAL COMPRA"
-  },
-  "perfil": {
-    "pageTitle": "Perfil de Usuario",
-    "subtitleAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de correo con aprobación de un superior.",
-    "subtitleStaff": "Consulta y edita tus datos personales y opciones de seguridad.",
-    "breadcrumbHome": "Inicio",
-    "breadcrumbProfile": "Mi Perfil",
-    "sectionTitle": "Perfil y Seguridad",
-    "sectionDescAlumno": "Puedes editar tu nombre de usuario y contraseña. Los cambios de correo requieren aprobación de un rol superior.",
-    "sectionDescStaff": "Gestiona tu información personal y tu contraseña.",
-    "editProfile": "Editar Perfil",
-    "cancel": "Cancelar",
-    "saveChanges": "Guardar cambios",
-    "saving": "Guardando...",
-    "emailDialog": {
-      "title": "Solicitar cambio de correo",
-      "body": "El cambio de correo no es inmediato. La solicitud será revisada por un rol superior y solo se aplicará tras su aprobación.",
-      "newEmail": "Nuevo correo electrónico",
-      "confirmEmail": "Confirmar nuevo correo",
-      "justification": "Justificación",
-      "cancel": "Cancelar",
-      "submit": "Enviar solicitud"
-    },
-    "toast": {
-      "updated": "Perfil actualizado correctamente",
-      "updateError": "Error al actualizar el perfil",
-      "emailRequired": "Introduce y confirma el nuevo correo",
-      "emailInvalid": "El formato del correo no es válido",
-      "emailMismatch": "Los correos no coinciden",
-      "emailSame": "El nuevo correo debe ser distinto al actual",
-      "justificationRequired": "Introduce una justificación válida (mínimo 10 caracteres)",
-      "emailRequestSent": "Solicitud enviada. El cambio de correo quedará pendiente de aprobación por un rol superior."
-    },
-    "errors": {
-      "passwordMismatch": "Las contraseñas no coinciden.",
-      "saveFailed": "Error al guardar los cambios"
-    }
-  },
-  "usuario": {
-    "profileConfigPage": "Esta es la página de configuración del perfil de usuario."
-  },
-  "albaranes": {
-    "pageTitle": "Albaranes",
-    "totalItemsLabel": "albaranes",
-    "searchPlaceholder": "Buscar por número de albarán...",
-    "newAlbaran": "Nuevo Albarán",
-    "columns": {
-      "nAlbaran": "Nº Albarán",
-      "fecha": "Fecha",
-      "concordancia": "Concordancia",
-      "documento": "Documento",
-      "recepciones": "Recepciones"
-    },
-    "concordancia": {
-      "conforme": "Conforme",
-      "noConforme": "No conforme",
-      "sinDefinir": "— Sin definir —"
-    },
-    "document": {
-      "view": "Ver documento",
-      "open": "Abrir archivo",
-      "nombre": "Nombre",
-      "tipo": "Tipo",
-      "tamano": "Tamaño"
-    },
-    "actions": {
-      "viewDetail": "Ver detalle",
-      "upload": "Subir documento",
-      "edit": "Editar",
-      "delete": "Eliminar"
-    },
-    "empty": {
-      "noAlbaranes": "No hay albaranes registrados",
-      "noMatch": "No se encontraron albaranes que coincidan con tu búsqueda.",
-      "noAlbaranesHint": "Aún no hay albaranes en el sistema. Crea el primero con el botón Nuevo Albarán."
-    },
-    "detail": {
-      "title": "Detalle del Albarán",
-      "infoTitle": "Información del Albarán",
-      "nAlbaran": "Nº Albarán",
-      "fecha": "Fecha",
-      "concordancia": "Concordancia",
-      "fechaRegistro": "Fecha de Registro",
-      "conforme": "Conforme",
-      "noConforme": "No conforme",
-      "documentoTitle": "Documento Adjunto",
-      "viewDoc": "Ver documento",
-      "recepcionesTitle": "Recepciones Vinculadas ({{count}})",
-      "recepcion": "Recepción {{num}}",
-      "noRecepciones": "Sin recepciones vinculadas",
-      "productosTitle": "Productos Vinculados ({{count}})",
-      "producto": "Producto {{num}}",
-      "noProductos": "Sin productos vinculados",
-      "noProductosDesc": "No hay líneas de producto asociadas a las recepciones de este albarán.",
-      "productDetail": "{{nombre}} · Cantidad recibida: {{cantidad}} {{unidad}} · Proveedor: {{proveedor}} · Estado: {{estado}} · Recepción: {{recepcionId}}",
-      "editLabel": "Editar Albarán",
-      "uploadDoc": "Subir Documento"
-    },
-    "form": {
-      "nAlbaran": "Número de Albarán",
-      "concordancia": "Concordancia",
-      "fecha": "Fecha del Albarán",
-      "editTitle": "Editar Albarán",
-      "createTitle": "Nuevo Albarán",
-      "saveChanges": "Guardar Cambios",
-      "create": "Crear Albarán"
-    },
-    "toast": {
-      "updated": "Albarán actualizado correctamente",
-      "created": "Albarán creado correctamente",
-      "saveError": "Error al guardar el albarán",
-      "deleted": "Albarán eliminado correctamente",
-      "deleteError": "Error al eliminar el albarán",
-      "loadError": "Error al cargar albaranes",
-      "detailError": "No se pudo cargar el detalle completo del albarán",
-      "detailErrorSuffix": ". Se mostrará la información disponible.",
-      "uploadSuccess": "Documento subido correctamente",
-      "uploadError": "Error al subir el documento"
-    },
-    "deleteDialog": {
-      "title": "Eliminar Albarán",
-      "message": "Estás seguro de que deseas eliminar el albarán {{nAlbaran}}? Esta acción no se puede deshacer.",
-      "confirm": "Eliminar"
-    },
-    "productoSinNombre": "Producto sin nombre"
-  },
-  "administracion": {
-    "pageTitle": "Administración Académica",
-    "pageSubtitle": "Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.",
-    "breadcrumbHome": "Inicio",
-    "breadcrumbAdmin": "Administración",
-    "tabs": {
-      "slots": "Aulas y Clases",
-      "alumnos": "Alumnos",
-      "usuarios": "Gestión Usuarios",
-      "plantillas": "Plantillas Roles"
-    },
-    "buttons": {
-      "finishEditing": "Finalizar Edición",
-      "manage": "Gestionar"
-    },
-    "errors": {
-      "loadData": "Error al cargar los datos de administración",
-      "loadStudents": "Error al cargar los alumnos"
-    },
-    "toast": {
-      "slotCreated": "Aula/Clase añadida con éxito",
-      "slotCreateError": "Error al crear la clase",
-      "slotDeleted": "Ubicación eliminada",
-      "slotDeleteError": "No se pudo eliminar",
-      "slotDeleteErrorMsg": "Error al eliminar",
-      "slotUpdated": "Ubicación actualizada",
-      "slotUpdateError": "Error al actualizar",
-      "aulaUpdated": "Aula actualizada correctamente",
-      "aulaUpdateError": "Error al actualizar el aula",
-      "studentStatusUpdated": "Estado de alumno actualizado",
-      "studentStatusError": "Error al cambiar estado",
-      "studentDeleted": "Alumno eliminado",
-      "studentDeleteError": "No se pudo eliminar",
-      "passwordReset": "Contraseña reseteada. Nueva clave: {{password}}",
-      "passwordResetError": "Error al resetear contraseña",
-      "noProfesorProfile": "No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.",
-      "permissionsComingSoon": "Funcionalidad de permisos para {{username}} próximamente"
-    },
-    "confirm": {
-      "deleteSlot": "¿Seguro que quieres eliminar esta clase?",
-      "deleteStudent": "¿Seguro que quieres eliminar a este alumno?"
+    "tabsLabel": "Pestañas de inventario",
+    "filtros": {
+      "placeholderUbicacion": "Ubicación..."
     }
   },
   "distribucion": {
-    "pageTitle": "Distribución Interna",
+    "titulo": "Distribución Interna",
     "searchPlaceholder": "Buscar por pedido, usuario o aula...",
-    "totalItemsLabelDisponibles": "pedidos distribuibles",
-    "totalItemsLabelHistorial": "distribuciones",
+    "totalItemsDisponibles": "pedidos distribuibles",
+    "totalItemsHistorial": "distribuciones",
     "tabs": {
       "disponibles": "Disponibles",
       "historial": "Historial"
@@ -1659,194 +1025,75 @@
       "fechaEntrega": "Fecha Entrega",
       "lineas": "Líneas"
     },
-    "sinAula": "Sin aula",
-    "lineaCount": "{{count}} línea(s) · {{total}}",
-    "sinSugerencia": "Sin sugerencia",
     "actions": {
-      "distribute": "Distribuir productos",
-      "actions": "Acciones",
-      "confirmOnly": "Solo el destinatario puede confirmar la recepción",
-      "confirm": "Confirmar recepción",
-      "cancel": "Cancelar entrega"
-    },
-    "empty": {
-      "noDisponibles": "No hay pedidos listos para distribuir.",
-      "noHistorial": "No hay distribuciones registradas."
+      "distribuir": "Distribuir productos",
+      "confirmarRecepcion": "Confirmar recepción",
+      "soloDestinatario": "Solo el destinatario puede confirmar la recepción",
+      "cancelarEntrega": "Cancelar entrega"
     },
     "dialog": {
-      "newDeliveryTitle": "Nueva Entrega",
-      "detailTitle": "Detalle de distribución",
-      "originLabel": "Ubicación origen",
-      "destinationLabel": "Ubicación destino",
-      "observacionesLabel": "Observaciones",
-      "lineasTitle": "Líneas a entregar",
+      "nuevaEntrega": "Nueva Entrega",
+      "ubicacionOrigen": "Ubicación origen",
+      "ubicacionDestino": "Ubicación destino",
+      "observaciones": "Observaciones",
+      "lineasEntregar": "Líneas a entregar",
       "cantidadPendiente": "Cantidad pendiente",
-      "cantidadAEntregar": "Cantidad a entregar",
-      "lineasDetail": "Líneas",
-      "estadoLabel": "Estado",
-      "origenLabel": "Origen",
-      "destinoLabel": "Destino",
-      "lineasLineLabel": "Pedido: {{pedida}} · Recepcionado: {{recepcionada}} · Ya distribuido: {{yaDistribuida}} · Preparado: {{aDistribuir}} · Entregado: {{entregada}}",
-      "confirmReception": "Confirmar Recepción",
-      "cancelDelivery": "Cancelar Entrega",
-      "viewMovements": "Ver Movimientos",
-      "close": "Cerrar",
-      "cancel": "Cancelar",
-      "distribute": "Distribuir",
-      "userLocationsHeader": "Ubicaciones del usuario",
-      "availableLocationsHeader": "Ubicaciones disponibles",
-      "onlyUserRecipient": "Solo el destinatario puede confirmar la recepción",
-      "defaultProduct": "Producto"
-    },
-    "destinationHelper": {
-      "noOptions": "No hay ubicaciones disponibles del usuario porque el origen actual es {{name}}.",
-      "fallback": "No se detectaron ubicaciones asociadas al pedido; se muestran ubicaciones generales excluyendo {{name}}.",
-      "userOnly": "Solo se muestran las ubicaciones del usuario, excluyendo {{name}} por estar en origen."
-    },
-    "toast": {
-      "created": "Distribución realizada con éxito.",
-      "confirmed": "Distribución confirmada y stock trasladado.",
-      "cancelled": "Distribución cancelada.",
-      "loadError": "Error al cargar distribución",
-      "detailError": "No se pudo cargar el detalle.",
-      "confirmError": "No se pudo confirmar la distribución.",
-      "cancelError": "No se pudo cancelar la distribución.",
-      "createError": "No se pudo realizar la distribución.",
-      "destinationInvalid": "La ubicación destino ya no existe. Se recargaron las ubicaciones; vuelve a intentar con un destino válido.",
-      "noLines": "Debes indicar al menos una línea con cantidad a distribuir.",
-      "invalidLines": "Hay líneas con cantidades inválidas o superiores al pendiente.",
-      "noDestination": "Debes seleccionar una ubicación destino.",
-      "noValidDestination": "No se encontró una ubicación destino válida.",
-      "sameOriginDestination": "La ubicación destino no puede ser la misma que la origen."
-    },
-    "prompt": {
-      "cancelMotivo": "Motivo de cancelación (opcional):"
-    }
-  },
-  "incidencias": {
-    "pageTitle": "Centro de Incidencias",
-    "searchPlaceholder": "Buscar por proveedor u observaciones...",
-    "totalItemsLabel": "incidencias",
-    "reportePdf": "Reporte PDF",
-    "reporteExcel": "Reporte Excel",
-    "columns": {
-      "fecha": "Fecha",
-      "proveedor": "Proveedor",
-      "productos": "Producto(s)",
-      "cantidades": "Cantidades por producto",
-      "estado": "Estado"
-    },
-    "lineCount": "{{count}} línea",
-    "lineCountPlural": "{{count}} líneas",
-    "moreProducts": "+{{count}} producto(s)",
-    "noDetail": "Sin detalle",
-    "actions": {
-      "viewDetail": "Ver detalle",
-      "adjust": "Ajustar cantidades",
-      "resolve": "Resolver incidencia",
-      "delete": "Eliminar"
-    },
-    "empty": {
-      "noClosed": "No hay incidencias cerradas",
-      "noStatus": "No hay incidencias {{status}}",
-      "noOpen": "No hay incidencias abiertas",
-      "searchHint": "No se encontraron incidencias que coincidan con tu búsqueda.",
-      "closedHint": "Las incidencias cerradas incluyen resueltas, canceladas e inválidas.",
-      "openHint": "¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes."
+      "cantidadEntregar": "Cantidad a entregar",
+      "cancelar": "Cancelar",
+      "distribuir": "Distribuir"
     },
     "detail": {
-      "title": "Detalle de Incidencia",
-      "infoTitle": "Información de la Incidencia",
-      "proveedor": "Proveedor",
-      "fechaRegistro": "Fecha de Registro",
+      "titulo": "Detalle de distribución",
       "estado": "Estado",
-      "idRecepcion": "ID Recepción",
-      "motivo": "Motivo",
-      "sinMotivo": "Sin motivo especificado",
-      "notasTitle": "Notas de Incidencia",
-      "notasRecepcion": "Notas de Recepción",
-      "sinObservaciones": "Sin observaciones",
-      "notasResolucion": "Notas de Resolución",
-      "sinNotasResolucion": "Sin notas de resolución",
-      "resolucionTitle": "Resolución",
-      "resueltaLabel": "INCIDENCIA RESUELTA",
-      "fechaResolucion": "Fecha de Resolución",
-      "discrepanciaTitle": "Productos con Discrepancia ({{count}})",
-      "pedida": "Pedida",
-      "recibido": "Recibido",
-      "diferencia": "Diferencia",
-      "pendiente": "Pendiente",
-      "nota": "Nota: {{text}}"
+      "origen": "Origen",
+      "destino": "Destino",
+      "lineas": "Líneas",
+      "pedido": "Pedido",
+      "recepcionado": "Recepcionado",
+      "yaDistribuido": "Ya distribuido",
+      "preparado": "Preparado",
+      "entregado": "Entregado",
+      "confirmarRecepcion": "Confirmar Recepción",
+      "cancelarEntrega": "Cancelar Entrega",
+      "verMovimientos": "Ver Movimientos",
+      "cerrar": "Cerrar"
+    },
+    "helper": {
+      "sinUbicaciones": "No hay ubicaciones disponibles del usuario porque el origen actual es {{nombre}}.",
+      "fallbackUbicaciones": "No se detectaron ubicaciones asociadas al pedido; se muestran ubicaciones generales excluyendo {{nombre}}.",
+      "soloPropias": "Solo se muestran las ubicaciones del usuario, excluyendo {{nombre}} por estar en origen.",
+      "ubicacionesDisponibles": "Ubicaciones disponibles",
+      "ubicacionesUsuario": "Ubicaciones del usuario"
+    },
+    "empty": {
+      "sinPedidos": "No hay pedidos listos para distribuir.",
+      "sinDistribuciones": "No hay distribuciones registradas.",
+      "sinAula": "Sin aula"
     },
     "toast": {
-      "cancelled": "Incidencia marcada como cancelada",
-      "invalida": "Incidencia marcada como inválida",
-      "resolved": "Incidencia marcada como resuelta",
-      "updated": "Incidencia actualizada correctamente",
-      "resolveError": "Error al resolver la incidencia",
-      "deleted": "Incidencia eliminada correctamente",
-      "deleteError": "Error al eliminar la incidencia",
-      "loadError": "Error al cargar incidencias"
+      "distribucionRealizada": "Distribución realizada con éxito.",
+      "distribucionConfirmada": "Distribución confirmada y stock trasladado.",
+      "distribucionCancelada": "Distribución cancelada.",
+      "errorDistribucion": "No se pudo realizar la distribución.",
+      "errorConfirmar": "No se pudo confirmar la distribución.",
+      "errorCancelar": "No se pudo cancelar la distribución.",
+      "errorDetalle": "No se pudo cargar el detalle.",
+      "errorUbicacionDestino": "La ubicación destino ya no existe. Se recargaron las ubicaciones; vuelve a intentar con un destino válido.",
+      "lineaRequerida": "Debes indicar al menos una línea con cantidad a distribuir.",
+      "lineasInvalidas": "Hay líneas con cantidades inválidas o superiores al pendiente.",
+      "destinoRequerido": "Debes seleccionar una ubicación destino.",
+      "destinoNoValido": "No se encontró una ubicación destino válida.",
+      "destinoIgualOrigen": "La ubicación destino no puede ser la misma que la origen."
     },
-    "deleteDialog": {
-      "title": "Eliminar Incidencia",
-      "message": "¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia.",
-      "confirm": "Eliminar"
-    },
-    "adjustButton": "Ajustar cantidades",
-    "resolveButton": "Resolver incidencia"
-  },
-  "recepcion": {
-    "pageTitle": "Gestión de Recepción",
-    "steps": {
-      "seleccion": "Selección de Pedidos",
-      "escaneo": "Escaneo y Conteo",
-      "revision": "Revisión y Ajuste",
-      "resultado": "Resultado"
-    },
-    "sync": {
-      "saving": "Guardando...",
-      "savingTooltip": "Sincronizando borrador con el servidor",
-      "synced": "Sincronizado",
-      "syncedTooltip": "Borrador sincronizado de forma segura",
-      "syncError": "Error de sync",
-      "syncErrorDefault": "Error al sincronizar el borrador",
-      "conflict": "Conflicto",
-      "conflictTooltip": "El borrador cambió en otro dispositivo"
-    },
-    "scaleStatus": {
-      "notSupported": "Web Serial no disponible"
-    },
-    "scaleTooltip": "Estado de báscula: {{label}}",
-    "loading": "Recuperando borrador de recepción...",
-    "buttons": {
-      "discard": "Descartar",
-      "back": "Atrás",
-      "next": "Siguiente",
-      "processing": "Procesando...",
-      "finish": "Finalizar Recepción"
-    },
-    "processing": {
-      "title": "Procesando Recepción Masiva...",
-      "subtitle": "Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador."
-    },
-    "recoveryDialog": {
-      "title": "Recuperar recepción pendiente",
-      "confirm": "Sí, recuperar",
-      "cancel": "No, descartar",
-      "lastUpdate": "Última actualización:"
-    },
-    "discardDialog": {
-      "title": "Descartar recepción",
-      "message": "¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado.",
-      "confirm": "Sí, descartar",
-      "cancel": "Cancelar"
-    }
+    "motivoCancelacion": "Motivo de cancelación (opcional):"
   },
   "preparaciones": {
-    "pageTitle": "Historial de Preparaciones",
-    "searchPlaceholder": "Buscar por receta, usuario...",
+    "titulo": "Bolsa de Preparaciones",
     "totalItemsLabel": "preparaciones",
+    "tabs": {
+      "disponibles": "Disponibles",
+      "agotadas": "Agotadas (Consumidas)"
+    },
     "columns": {
       "fechaCreacion": "Fecha creación",
       "receta": "Receta",
@@ -1855,29 +1102,17 @@
       "cocinero": "Cocinero/a",
       "fechaAgotado": "Fecha agotado",
       "racionesDisponibles": "Raciones disponibles",
-      "racionesPreparadas": "Raciones preparadas",
-      "fecha": "Fecha",
-      "resultado": "Resultado",
-      "usuario": "Usuario"
+      "racionesPreparadas": "Raciones preparadas"
     },
     "actions": {
-      "viewDetail": "Ver detalles",
-      "consume": "Consumir raciones o cantidad",
+      "verDetalles": "Ver detalles",
+      "consumir": "Consumir preparación",
       "merma": "Reportar merma de ingrediente"
     },
-    "empty": {
-      "noMatch": "No hay preparaciones que coincidan",
-      "noPreparaciones": "No hay preparaciones registradas",
-      "hint": "Ejecuta una receta para ver su historial aquí."
-    },
     "detail": {
-      "modalTitle": "Preparación: {{name}}",
-      "modalSubtitle": "Ejecutada el {{date}}",
-      "sectionTitle": "Información General",
-      "title": "Detalle de Preparación",
-      "loteTitle": "Información del Lote",
-      "consumosTitle": "Consumos de Ingredientes",
-      "fecha": "Fecha",
+      "titulo": "Preparación",
+      "subtitulo": "Ejecutada el {{fecha}}",
+      "infoGeneral": "Información General",
       "receta": "Receta",
       "fechaEjecucion": "Fecha de ejecución",
       "fechaCreacion": "Fecha de creación",
@@ -1886,105 +1121,438 @@
       "cantidadProducida": "Cantidad Producida",
       "racionesDisponibles": "Raciones disponibles",
       "racionesPreparadas": "Raciones preparadas",
-      "racionesSuffix": "{{count}} raciones",
+      "raciones": "raciones",
       "costeTotalReal": "Coste Total Real",
       "caducidad": "Caducidad",
-      "caducidadNoDefinida": "No definida",
-      "equivalencia": "Equivalencia",
-      "equivalenciaNoDefinida": "No definida",
-      "cantidad": "Cantidad Producida",
-      "unidad": "Unidad",
-      "ubicacion": "Ubicación Destino",
-      "lote": "Lote",
-      "usuario": "Ejecutado por",
-      "ingrediente": "Ingrediente",
-      "cantidadConsumida": "Cantidad Consumida"
+      "noDefinida": "No definida",
+      "equivalencia": "Equivalencia"
     },
-    "consumo": {
-      "title": "Consumir preparación",
-      "description": "Puedes consumir este lote por raciones o por cantidad/peso total.",
-      "disponibles": "Disponibles: {{count}} raciones",
+    "consumir": {
+      "titulo": "Consumir preparación",
+      "descripcion": "Puedes consumir este lote por raciones o por cantidad/peso total.",
+      "disponibles": "Disponibles:",
+      "raciones": "raciones",
       "cantidadDisponible": "Cantidad disponible:",
-      "toggleRaciones": "Por raciones",
-      "toggleCantidad": "Por cantidad/peso",
-      "labelRaciones": "Cantidad de Raciones",
-      "labelCantidad": "Cantidad a consumir ({{unit}})",
-      "maxRaciones": "Máximo disponible: {{count}} raciones.",
-      "maxCantidad": "Máximo disponible: {{amount}} {{unit}}.",
-      "infoSinEquivalencia": "Esta receta no admite consumo por cantidad o peso.",
-      "infoMultiploInvalido": "La cantidad debe ser múltiplo de {{amount}} {{unit}}.",
-      "infoCantidadAConsumir": "{{amount}} {{unit}} a consumir.",
-      "errorSinEquivalencia": "Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.",
-      "errorMultiplo": "La cantidad debe ser múltiplo de {{amount}} {{unit}}.",
-      "selectLote": "Seleccionar lote de producción",
-      "selectIngrediente": "Seleccionar ingrediente con merma",
-      "cantidad": "Cantidad a consumir",
-      "observaciones": "Observaciones (opcional)",
-      "cancel": "Cancelar",
-      "confirm": "Confirmar Consumo",
-      "noLotes": "No hay lotes disponibles",
-      "noIngredientes": "No hay ingredientes disponibles"
+      "porRaciones": "Por raciones",
+      "porCantidad": "Por cantidad/peso",
+      "cantidadRaciones": "Cantidad de Raciones",
+      "cantidadConsumir": "Cantidad a consumir ({{unidad}})",
+      "maximoDisponibleRaciones": "Máximo disponible: {{max}} raciones.",
+      "maximoDisponibleCantidad": "Máximo disponible: {{max}} {{unidad}}.",
+      "sinEquivalencia": "Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.",
+      "sinEquivalenciaCorto": "Esta receta no admite consumo por cantidad o peso.",
+      "multiploRequerido": "Debe ser múltiplo de {{step}} {{unidad}}.",
+      "cancelar": "Cancelar",
+      "confirmarConsumo": "Confirmar Consumo"
     },
-    "merma": {
-      "title": "Reportar merma de producción",
-      "description": "Registra la merma real de un ingrediente usado en esta preparación sin alterar estados históricos del lote.",
-      "loteLabel": "Lote: {{id}}",
-      "recetaLabel": "Receta: {{name}}",
-      "loadingIngredientes": "Cargando ingredientes de la receta...",
-      "noIngredientes": "No se encontraron ingredientes válidos para reportar merma en este lote.",
-      "noReceta": "No se pudo resolver la receta del lote para cargar ingredientes.",
-      "registradaEn": "Se registrará en {{unit}}.",
-      "ingredienteLabel": "Ingrediente",
-      "motivoLabel": "Motivo",
-      "observacionesLabel": "Observaciones",
-      "cantidadLabelWithUnit": "¿Cuánto se perdió? ({{unit}})",
-      "cantidadLabel": "¿Cuánto se perdió?",
-      "cantidadHelperInvalid": "Introduce un número mayor que 0.",
-      "cantidadHelperWithUnit": "Registra la merma en {{unit}}. Ejemplo: {{example}} {{shortUnit}}.",
-      "cantidadHelperDefault": "Selecciona primero el ingrediente para ver en qué medida registrar la merma.",
+    "mermaDialog": {
+      "titulo": "Reportar merma de producción",
+      "descripcion": "Registra la merma real de un ingrediente usado en esta preparación sin alterar estados históricos del lote.",
+      "lote": "Lote:",
+      "receta": "Receta:",
+      "cargandoIngredientes": "Cargando ingredientes de la receta...",
+      "sinIngredientes": "No se encontraron ingredientes válidos para reportar merma en este lote.",
+      "ingrediente": "Ingrediente",
+      "seRegistraraEn": "Se registrará en {{unidad}}.",
+      "motivo": "Motivo",
       "motivoErrorPreparacion": "Error de preparación",
       "motivoRotura": "Rotura",
-      "motivoDeterio": "Deterioro / Caducidad",
+      "motivoDeterioroCaducidad": "Deterioro / Caducidad",
       "motivoHurto": "Hurto / Pérdida",
       "motivoOtros": "Otros",
-      "selectLote": "Seleccionar lote de producción",
-      "selectIngrediente": "Seleccionar ingrediente con merma",
-      "cantidad": "Cantidad de merma",
-      "cancel": "Cancelar",
-      "confirm": "Registrar merma"
+      "observaciones": "Observaciones",
+      "cancelar": "Cancelar",
+      "registrar": "Registrar merma"
     },
-    "rationInfo": {
-      "single": "Cada ración equivale a {{amount}} {{unit}}.",
-      "multiple": "{{portions}} raciones equivalen a {{total}} {{unit}}."
-    },
-    "exceedMax": {
-      "raciones": "Solo hay {{count}} raciones disponibles en este lote.",
-      "cantidad": "Solo puedes consumir {{amount}} {{unit}}."
-    },
-    "tabs": {
-      "disponibles": "Disponibles",
-      "agotadas": "Agotadas (Consumidas)"
+    "empty": {
+      "noPreparaciones": "No hay preparaciones registradas",
+      "ejecutaReceta": "Ejecuta una receta para ver su historial aquí."
     },
     "toast": {
-      "consumoSuccess": "Consumo registrado correctamente.",
-      "mermaSuccess": "Merma de producción registrada correctamente.",
-      "loadError": "Error al cargar preparaciones",
-      "invalidCantidad": "Introduce una cantidad válida para consumir.",
-      "invalidLote": "Selecciona un lote de producción válido.",
-      "invalidIngrediente": "Selecciona el ingrediente con merma.",
-      "invalidMermaCantidad": "Introduce una cantidad de merma mayor que 0.",
-      "mermaError": "No se pudo registrar la merma de producción.",
-      "consumoError": "Error al consumir la preparación."
+      "consumoRegistrado": "Consumo registrado correctamente.",
+      "errorConsumir": "Error al consumir la preparación.",
+      "mermaRegistrada": "Merma de producción registrada correctamente.",
+      "errorMerma": "No se pudo registrar la merma de producción.",
+      "errorCargar": "Error al cargar preparaciones"
+    },
+    "errors": {
+      "cantidadInvalida": "Introduce una cantidad válida para consumir.",
+      "loteInvalido": "Selecciona un lote de producción válido.",
+      "ingredienteInvalido": "Selecciona el ingrediente con merma.",
+      "mermaCantidadInvalida": "Introduce una cantidad de merma mayor que 0."
+    }
+  },
+  "merma": {
+    "form": {
+      "producto": "Producto",
+      "cantidad": "¿Cuánto se perdió? (según la medida del producto)",
+      "motivo": "Motivo de la merma",
+      "motivoOpciones": {
+        "roturaEnvase": "Rotura de envase",
+        "deterioroCaducidad": "Deterioro / Caducidad",
+        "hurto": "Hurto / Pérdida",
+        "errorPreparacion": "Error de preparación",
+        "otros": "Otros motivos"
+      },
+      "observaciones": "Observaciones / Notas"
+    }
+  },
+  "usuario": {
+    "perfilDescripcion": "Esta es la página de configuración del perfil de usuario."
+  },
+  "perfil": {
+    "titulo": "Perfil de Usuario",
+    "miPerfil": "Mi Perfil",
+    "descripcionAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.",
+    "descripcionOtros": "Consulta y edita tus datos personales y opciones de seguridad.",
+    "seccion": {
+      "titulo": "Perfil y Seguridad",
+      "descripcionAlumno": "Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.",
+      "descripcionOtros": "Gestiona tu información personal y tu contraseña."
+    },
+    "actions": {
+      "editarPerfil": "Editar Perfil",
+      "guardarCambios": "Guardar Cambios"
+    },
+    "errors": {
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "saveFailed": "Error al guardar los cambios"
+    },
+    "toast": {
+      "updated": "Perfil actualizado correctamente",
+      "updateError": "Error al actualizar el perfil"
+    },
+    "emailModal": {
+      "titulo": "Solicitar Cambio de Email",
+      "descripcion": "El cambio de email no es inmediato. La solicitud será revisada por un rol superior y solo se aplicará tras su aprobación.",
+      "nuevoEmail": "Nuevo Email",
+      "confirmarNuevoEmail": "Confirmar Nuevo Email",
+      "justificacion": "Justificación",
+      "enviarSolicitud": "Enviar Solicitud",
+      "errors": {
+        "required": "Introduce y confirma el nuevo email",
+        "invalidFormat": "El formato del email no es válido",
+        "mismatch": "Los emails no coinciden",
+        "sameEmail": "El nuevo email debe ser diferente al actual",
+        "justificationTooShort": "Indica una justificación válida (mínimo 10 caracteres)"
+      },
+      "toast": {
+        "requestSent": "Solicitud enviada. El cambio de email quedará pendiente de aprobación por un rol superior."
+      }
+    },
+    "guardarSlot": "Guardar slot",
+    "cancelarEdicion": "Cancelar edición",
+    "editarSlot": "Editar slot",
+    "eliminarSlot": "Eliminar slot",
+    "copiarCodigo": "Haga clic para copiar el código de clase",
+    "codigoPendiente": "PENDIENTE",
+    "aulaPlaceholder": "Ej: Cocina Básica, Aula 101...",
+    "crearNuevaUbicacion": "Crear nueva Ubicación",
+    "crearNuevaAula": "Crear nueva Aula",
+    "gestionarPermisos": "Gestionar Permisos",
+    "restablecerContrasena": "Restablecer Contraseña",
+    "eliminarAlumno": "Eliminar Alumno",
+    "campoAula": "Aula/Grupo",
+    "campoNumeroClase": "Nº Clase",
+    "campoCapacidad": "Capacidad",
+    "cursoGrupo": "Curso/Grupo (ej: A01)",
+    "numeroClaseEj": "Nº Clase (ej: 1)",
+    "capacidadAlumnos": "Capacidad (Alumnos)",
+    "nombreAulaGrupo": "Nombre del Aula/Grupo",
+    "contrasenaActual": "Contraseña Actual",
+    "nuevaContrasena": "Nueva Contraseña",
+    "confirmarNuevaContrasena": "Confirmar Nueva Contraseña",
+    "nombreUsuario": "Nombre de Usuario",
+    "sinUbicacion": "Sin ubicación",
+    "sinAsignar": "Sin asignar",
+    "campoProfesor": "Profesor",
+    "profesorResponsable": "Profesor Responsable",
+    "ubicacionWarehouse": "Ubicación Warehouse (Opcional)",
+    "slot": {
+      "titulo": "Nueva Aula / Clase (Slot)",
+      "crearAula": "Crear Aula",
+      "toast": {
+        "creado": "Aula/Slot creado con éxito"
+      },
+      "errors": {
+        "camposObligatorios": "Todos los campos marcados son obligatorios",
+        "crear": "Error al crear el slot",
+        "crearAcademico": "Error al crear el slot académico"
+      }
+    },
+    "form": {
+      "helperNombre": "El nombre que verán los demás"
+    }
+  },
+  "comun": {
+    "acciones": "Acciones",
+    "guardar": "Guardar",
+    "cancelar": "Cancelar",
+    "eliminar": "Eliminar",
+    "editar": "Editar",
+    "ver": "Ver",
+    "cerrar": "Cerrar",
+    "aceptar": "Aceptar",
+    "buscar": "Buscar",
+    "filtrar": "Filtrar",
+    "exportar": "Exportar",
+    "importar": "Importar",
+    "nuevo": "Nuevo",
+    "crear": "Crear",
+    "actualizar": "Actualizar",
+    "confirmar": "Confirmar",
+    "si": "Sí",
+    "no": "No",
+    "cargando": "Cargando...",
+    "sinDatos": "No hay datos disponibles.",
+    "porPagina": "Por página:",
+    "ocultarFiltros": "Ocultar filtros",
+    "mostrarFiltros": "Mostrar filtros",
+    "totalDe": "Total de",
+    "escanearCamara": "Escanear con cámara",
+    "escanearCodigo": "Escanear código",
+    "limpiarBusqueda": "Limpiar búsqueda",
+    "cerrarModal": "Cerrar modal",
+    "campoObligatorio": "Este campo es obligatorio",
+    "uuidInvalido": "El ID del proveedor debe ser un UUID válido",
+    "generarEan13": "Generar código EAN-13",
+    "buscarOpenFoodFacts": "Buscar en OpenFoodFacts",
+    "cargarImagen": "Cargar imagen",
+    "confirmarAccion": "Confirmar acción",
+    "confirmarGuardar": "¿Estás seguro de que deseas guardar estos datos?",
+    "error": "Error",
+    "exito": "Éxito",
+    "producto": "Producto",
+    "unidad": "Unidad",
+    "estado": "Estado",
+    "accion": "Acción",
+    "item": "Item",
+    "notas": "Notas",
+    "opcional": "Opcional...",
+    "descargando": "Descargando...",
+    "seleccionarTodos": "Seleccionar Todos",
+    "deseleccionarTodos": "Deseleccionar Todos",
+    "id": "ID: ",
+    "proveedor": "Proveedor",
+    "ubicacion": "Ubicación",
+    "anadir": "Añadir",
+    "reintentar": "Reintentar",
+    "cantidad": "Cantidad",
+    "buscarProducto": "Buscar producto...",
+    "quitar": "Quitar",
+    "proveedorLabel": "Proveedor: ",
+    "pendiente": "Pendiente",
+    "sinElementos": "Sin elementos",
+    "aprobar": "Aprobar",
+    "borrar": "Borrar",
+    "iniciarRecepcion": "Iniciar Recepción",
+    "verDetalle": "Ver detalle",
+    "escanear": "Escanear",
+    "buscarProveedor": "Buscar proveedor...",
+    "buscarNombreEmail": "Buscar por nombre o email...",
+    "editarItem": "Editar {{item}}",
+    "cerrarDialogo": "Cerrar diálogo",
+    "guardarCambios": "Guardar cambios",
+    "expandirMenu": "Expandir menú",
+    "tablaDatos": "Tabla de datos",
+    "opcionesSistema": "Opciones del sistema",
+    "entendido": "Entendido"
+  },
+  "notificaciones": {
+    "abrirCentro": "Abrir centro de notificaciones",
+    "titulo": "Notificaciones",
+    "actualizar": "Actualizar",
+    "buscandoActualizaciones": "Buscando actualizaciones...",
+    "todoControlado": "¡Todo bajo control!",
+    "sinAccionesUrgentes": "No tienes acciones urgentes ni tareas pendientes en este momento. Buen trabajo.",
+    "totalPendientes": "Total pendientes: {{count}}",
+    "tareasYAlertas": "Tareas y alertas que requieren tu atención.",
+    "huboProblem": "Hubo un problema",
+    "urgente": "Urgente",
+    "pendiente": "Pendiente",
+    "errorCarga": "No se pudieron cargar las notificaciones."
+  },
+  "configuracion": {
+    "titulo": "Configuración",
+    "descripcion": "Configuración de tema y apariencia",
+    "temaYApariencia": "Configuración de tema y apariencia",
+    "tema": "Tema",
+    "ajustes": "Ajustes",
+    "tamanoFuente": "Tamaño de Fuente",
+    "claro": "Claro",
+    "oscuro": "Oscuro",
+    "altoContrasteClaro": "Alto Contraste (Claro)",
+    "altoContrasteOscuro": "Alto Contraste (Oscuro)",
+    "pequeno": "Pequeño",
+    "mediano": "Mediano",
+    "grande": "Grande",
+    "temaClaro": "Claro",
+    "temaOscuro": "Oscuro",
+    "temaAltoClaroContraste": "Alto Contraste (Claro)",
+    "temaAltoOscuroContraste": "Alto Contraste (Oscuro)",
+    "fuente": {
+      "pequeno": "Pequeño",
+      "mediano": "Mediano",
+      "grande": "Grande"
+    },
+    "aprendizaje": {
+      "activar": "Activar modo aprendizaje (Mostrar descripciones detalladas)",
+      "desactivar": "Desactivar modo aprendizaje (Ocultar descripciones detalladas)",
+      "on": "Aprendizaje: ON",
+      "off": "Aprendizaje: OFF"
+    }
+  },
+  "tutorial": {
+    "mostrar": "Mostrar tutorial",
+    "ayuda": "Ayuda",
+    "verGuiaAyuda": "Ver guía de ayuda de esta página",
+    "verGuia": "Ver guía de ayuda",
+    "cerrar": "Cerrar"
+  },
+  "aprendizaje": {
+    "activar": "Activar modo aprendizaje (Mostrar descripciones detalladas)",
+    "desactivar": "Desactivar modo aprendizaje (Ocultar descripciones detalladas)",
+    "on": "Aprendizaje: ON",
+    "off": "Aprendizaje: OFF"
+  },
+  "plantillasRoles": {
+    "titulo": "Gestión de Permisos por Plantilla de Rol",
+    "descripcionInfo": "Cada plantilla define los permisos base de un rol. Al modificar los permisos de una plantilla, los cambios se sincronizan automáticamente con todos los roles vinculados.",
+    "columnas": {
+      "plantilla": "Plantilla",
+      "estado": "Estado",
+      "permisos": "Permisos",
+      "rolesVinculados": "Roles vinculados",
+      "acciones": "Acciones"
+    },
+    "activa": "Activa",
+    "inactiva": "Inactiva",
+    "verPermisos": "Ver permisos (todos activos)",
+    "editarPermisos": "Editar permisos",
+    "plantillaSistema": "Plantilla de sistema (no editable)",
+    "dialogTituloVer": "Ver permisos",
+    "dialogTituloEditar": "Editar permisos",
+    "superadminInfo": "La plantilla Superadmin tiene todos los permisos activos automáticamente. No se puede modificar.",
+    "warningGuardar": "Al guardar, los permisos se aplicarán a todos los roles vinculados a esta plantilla",
+    "permisosActivos": "Permisos activos: {{selected}} / {{total}}",
+    "seleccionarTodos": "Seleccionar todos",
+    "deseleccionarTodos": "Deseleccionar todos",
+    "guardando": "Guardando...",
+    "guardarPermisos": "Guardar permisos",
+    "errorCargar": "No se pudieron cargar las plantillas de roles",
+    "errorActualizar": "No se pudieron actualizar los permisos",
+    "actualizadoExito": "Permisos de \"{{nombre}}\" actualizados correctamente.{{sync}}"
+  },
+  "pedido": {
+    "lineas": {
+      "titulo": "Líneas del Pedido",
+      "multiProveedor": "(Multi-Proveedor Habilitado)",
+      "precioUnid": "Precio Unid.",
+      "subtotal": "Subtotal",
+      "anadirProducto": "Añadir Producto",
+      "proveedorAuto": "Proveedor automático",
+      "seleccionaProducto": "Selecciona un producto",
+      "seleccionaProveedor": "Selecciona proveedor",
+      "nuevosProductos": "Nuevos Productos (Selecciona uno)",
+      "cestaVacia": "Aún no hay ningún producto en la cesta. Usa el botón \"Añadir Producto\" para comenzar.",
+      "totalEstimado": "TOTAL ESTIMADO: "
+    }
+  },
+  "escaner": {
+    "permisosDenegados": "Permiso de cámara denegado",
+    "permisosDenegadosDesc": "Para usar el escáner, permite el acceso a la cámara en la configuración de tu navegador y recarga la página.",
+    "sinCamara": "No se detectó ninguna cámara",
+    "sinCamaraDesc": "Este dispositivo no tiene cámara disponible o no es accesible. Introduce el código de barras manualmente.",
+    "errorCamara": "Error al iniciar la cámara",
+    "errorCamaraDesc": "No se pudo iniciar el escáner. Verifica que no haya otra aplicación usando la cámara e inténtalo de nuevo.",
+    "solicitandoAcceso": "Solicitando acceso a la cámara…",
+    "cerrar": "Cerrar escáner",
+    "camara": "Cámara",
+    "ultimoCodigo": "Último código leído: ",
+    "instruccion": "Acerca el código al recuadro. Se priorizan cámaras traseras, enfoque continuo y formatos EAN, UPC y Code 128.",
+    "reiniciar": "Reiniciar cámara",
+    "apagarLuz": "Apagar luz",
+    "encenderLuz": "Encender luz",
+    "cancelar": "Cancelar"
+  },
+  "reporte": {
+    "fechaInicioObligatoria": "La fecha de inicio es obligatoria",
+    "fechaFinObligatoria": "La fecha de fin es obligatoria",
+    "fechaFinInvalida": "La fecha de fin debe ser posterior a la de inicio",
+    "excelGenerado": "Excel generado correctamente.",
+    "reporteGenerado": "Reporte generado correctamente.",
+    "errorExcel": "Error al generar el Excel.",
+    "errorReporte": "Error al generar el reporte.",
+    "fechaInicio": "Fecha de inicio",
+    "fechaFin": "Fecha de fin",
+    "proveedorOpcional": "Proveedor (opcional)",
+    "todosProveedores": "Todos los proveedores",
+    "sinProveedores": "No se encontraron proveedores",
+    "incluirCancelados": "Incluir pedidos cancelados",
+    "paginaPorProveedor": "Una página por proveedor",
+    "soloNoResueltas": "Solo incidencias no resueltas",
+    "generando": "Generando...",
+    "generarExcel": "Generar Excel",
+    "generarPdf": "Generar PDF",
+    "errorCargarProveedores": "No se pudieron cargar los proveedores para el reporte."
+  },
+  "resumen": {
+    "faltante": "Faltante",
+    "exceso": "Exceso",
+    "defectuoso": "Defectuoso",
+    "reclamado": "Reclamado",
+    "abonado": "Abonado",
+    "reenviado": "Reenviado",
+    "pendiente": "Pendiente",
+    "errorCarga": "No se pudo cargar la información detallada.",
+    "ver": "Ver resumen",
+    "ocultar": "Ocultar resumen",
+    "observaciones": "Observaciones de recepción",
+    "sinObservaciones": "Sin observaciones registradas.",
+    "detalleIncidencia": "Detalle de la incidencia"
+  },
+  "mermas": {
+    "titulo": "Gestión de Mermas",
+    "totalItemsLabel": "registros",
+    "acciones": {
+      "registrar": "Reportar Merma",
+      "escanear": "Escanear Producto para Buscar"
+    },
+    "historial": "Historial de Mermas",
+    "columns": {
+      "producto": "Producto",
+      "cantidad": "Cantidad",
+      "motivo": "Motivo",
+      "fecha": "Fecha",
+      "usuario": "Usuario",
+      "notas": "Notas"
+    },
+    "toast": {
+      "registrada": "Merma registrada correctamente",
+      "errorCargar": "Error al cargar datos de mermas",
+      "errorRegistrar": "Error al registrar merma"
+    },
+    "empty": {
+      "noMermas": "No hay registros de mermas",
+      "noResultados": "No se encontraron registros de mermas que coincidan con tu búsqueda o filtros."
+    },
+    "modal": {
+      "titulo": "Registrar Merma de Producto",
+      "confirmacion": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
     }
   },
   "productos": {
-    "pageTitle": "Gestión de Productos",
-    "searchPlaceholder": "Buscar por nombre, marca, código de barras...",
+    "titulo": "Gestión de Productos",
     "totalItemsLabel": "productos",
-    "newProduct": "Nuevo Producto",
-    "exportPdf": "Exportar PDF",
-    "exportExcel": "Exportar Excel",
-    "scannerTitle": "Escanear Producto para Buscar",
+    "acciones": {
+      "escanear": "Escanear Producto para Buscar",
+      "nuevo": "Nuevo Producto",
+      "exportarPdf": "Exportar PDF",
+      "exportarExcel": "Exportar Excel",
+      "anadirProducto": "Añadir Producto",
+      "editarProducto": "Editar producto"
+    },
+    "searchPlaceholder": "Buscar por nombre, marca, código de barras...",
     "columns": {
       "nombre": "Nombre",
       "marca": "Marca",
@@ -1992,578 +1560,230 @@
       "contenido": "Contenido",
       "codigoBarras": "Cód. Barras"
     },
-    "actions": {
-      "view": "Ver detalle",
-      "edit": "Editar",
-      "delete": "Eliminar"
-    },
-    "empty": {
-      "withFilters": "No hay productos que coincidan con tu búsqueda o filtros",
-      "withFiltersHint": "Prueba con otros términos o limpia los filtros.",
-      "noProducts": "No se encontraron productos",
-      "noProductsHint": "Empieza añadiendo el primer producto a tu inventario.",
-      "addProduct": "Añadir Producto"
-    },
-    "deleteDialog": {
-      "title": "Eliminar producto",
-      "messagePre": "¿Estás seguro de que deseas eliminar el producto",
-      "messagePost": "? Esta acción no se puede deshacer.",
-      "confirm": "Sí, eliminar",
-      "cancel": "Cancelar"
-    },
     "detail": {
-      "editLabel": "Editar producto",
-      "sectionGeneral": "Información general",
-      "sectionAlergenos": "Alérgenos",
-      "sectionProveedores": "Proveedores asociados",
-      "sectionHistorico": "Histórico de precios",
-      "fieldTipo": "Tipo",
-      "fieldContenido": "Contenido",
-      "fieldCodBarras": "Código de Barras",
-      "fieldPmp": "PMP Actual",
-      "fieldDescripcion": "Descripción",
+      "infoGeneral": "Información general",
+      "tipo": "Tipo",
+      "contenido": "Contenido",
+      "codigoBarras": "Código de Barras",
+      "pmp": "PMP Actual",
+      "descripcion": "Descripción",
+      "alergenos": "Alérgenos",
+      "proveedores": "Proveedores asociados",
+      "historicoPrecios": "Histórico de precios",
       "mejorOpcion": "Mejor Opción",
       "mejorOpcionConAhorro": "Mejor Opción · -{{pct}}%",
-      "verHistoricoProveedor": "Ver histórico de este proveedor",
-      "verHistoricoAriaLabel": "Ver histórico de {{name}}",
-      "proveedorFallback": "Proveedor {{n}}",
-      "fieldPrecio": "Precio",
-      "fieldMerma": "Merma",
-      "fieldCosteReal": "Coste Real",
-      "marcaLabel": "Marca: {{value}}",
-      "codBarrasLabel": "Cód. Barras: {{value}}",
+      "precio": "Precio",
+      "merma": "Merma",
+      "costeReal": "Coste Real",
       "filtroProveedor": "Filtro por Proveedor",
       "todosProveedores": "Todos los proveedores",
+      "proveedor": "Proveedor",
       "cargandoHistorial": "Cargando historial...",
-      "historialVacio": "No hay registros históricos para este producto.",
-      "historialGraficoPlaceholder": "Estructura preparada para gráfico de evolución de precios",
-      "historialColFecha": "Fecha",
-      "historialColProveedor": "Proveedor",
-      "historialColCantidad": "Cant.",
-      "historialColPrecio": "Precio",
-      "historialColDoc": "Doc."
+      "sinHistorial": "No hay registros históricos para este producto.",
+      "graficoPreciosPlaceholder": "Estructura preparada para gráfico de evolución de precios"
     },
-    "toast": {
-      "deleted": "Producto \"{{name}}\" eliminado correctamente.",
-      "deleteError": "Error al eliminar el producto.",
-      "updated": "Producto actualizado correctamente.",
-      "created": "Producto creado correctamente.",
-      "saveError": "Error al guardar el producto.",
-      "loadError": "Error desconocido al cargar datos.",
-      "scanFound": "Producto localizado. Abriendo su ficha para editar.",
-      "scanNotFound": "No se encontró el producto. Se dejó el código en la búsqueda.",
-      "scanOpenCreate": "Producto no encontrado. Se abrió el formulario para crearlo.",
-      "scanValidateError": "No se pudo validar el código escaneado.",
-      "scanCatalogError": "No se pudo comprobar el catálogo, pero se abrió el alta del producto."
-    }
-  },
-  "recetas": {
-    "pageTitle": "Gestión de Recetas",
-    "searchPlaceholder": "Buscar por nombre, instrucciones, ingredientes...",
-    "totalItemsLabel": "recetas",
-    "newReceta": "Nueva Receta",
-    "exportPdf": "Exportar PDF",
-    "exportExcel": "Exportar Excel",
-    "prepararRecetas": "Preparar recetas",
-    "prepararConCount": "Preparar ({{count}})",
-    "exportPdfConCount": "Exportar PDF ({{count}})",
-    "crearPedido": "Crear pedido",
-    "crearPedidoConCount": "Crear pedido ({{count}})",
-    "ingredientesCount": "{{count}} ingredientes",
-    "ingredientesSuffix": "ingredientes",
-    "columns": {
-      "nombre": "Nombre",
-      "dificultad": "Dificultad",
-      "tiempo": "Tiempo",
-      "ingredientes": "Ingredientes"
+    "historial": {
+      "fecha": "Fecha",
+      "proveedor": "Proveedor",
+      "cantidad": "Cant.",
+      "precio": "Precio",
+      "documento": "Doc."
     },
     "actions": {
-      "view": "Ver detalles",
-      "cook": "Preparar ahora",
-      "createOrder": "Crear pedido",
-      "exportPdf": "Exportar PDF",
-      "edit": "Editar",
-      "delete": "Eliminar"
+      "verDetalle": "Ver detalle",
+      "editar": "Editar",
+      "eliminar": "Eliminar",
+      "verHistorico": "Ver histórico de este proveedor",
+      "ariaVerHistorico": "Ver histórico de {{nombre}}"
+    },
+    "toast": {
+      "eliminado": "Producto eliminado correctamente.",
+      "actualizado": "Producto actualizado correctamente.",
+      "creado": "Producto creado correctamente.",
+      "errorEliminar": "Error al eliminar el producto.",
+      "errorGuardar": "Error al guardar el producto.",
+      "localizado": "Producto localizado. Abriendo su ficha para editar.",
+      "noEncontradoInfo": "No se encontró el producto. Se dejó el código en la búsqueda.",
+      "noEncontradoForm": "Producto no encontrado. Se abrió el formulario para crearlo.",
+      "errorCatalogo": "No se pudo comprobar el catálogo, pero se abrió el alta del producto.",
+      "errorValidar": "No se pudo validar el código escaneado."
     },
     "empty": {
-      "withSearch": "No hay recetas que coincidan con tu búsqueda",
-      "withSearchHint": "Prueba con otros términos o limpia el filtro.",
-      "noRecetas": "No hay recetas registradas",
-      "noRecetasHint": "Crea la primera receta del economato para comenzar.",
-      "addReceta": "Añadir Receta"
+      "sinResultados": "No hay productos que coincidan con tu búsqueda o filtros",
+      "sinProductos": "No se encontraron productos",
+      "prueba": "Prueba con otros términos o limpia los filtros.",
+      "empieza": "Empieza añadiendo el primer producto a tu inventario."
     },
-    "deleteDialog": {
-      "title": "Eliminar receta",
-      "messagePre": "¿Estás seguro de que deseas eliminar la receta",
-      "messagePost": "? Esta acción no se puede deshacer.",
-      "confirm": "Sí, eliminar",
-      "cancel": "Cancelar"
+    "errors": {
+      "errorCargar": "Error desconocido al cargar datos."
+    },
+    "confirm": {
+      "eliminarTitulo": "Eliminar producto",
+      "eliminarMensaje": "¿Estás seguro de que deseas eliminar el producto {{nombre}}? Esta acción no se puede deshacer.",
+      "eliminarConfirm": "Sí, eliminar",
+      "cancelar": "Cancelar"
+    },
+    "sinMarca": "Sin marca",
+    "filtros": {
+      "placeholderCategoria": "Filtrar categoría..."
+    }
+  },
+  "proveedores": {
+    "titulo": "Gestión de Proveedores",
+    "totalItemsLabel": "proveedores",
+    "searchPlaceholder": "Buscar por nombre, NIF, contacto, email...",
+    "exportLabel": "proveedores filtrados",
+    "acciones": {
+      "nuevo": "Nuevo Proveedor",
+      "anadir": "Añadir Proveedor"
+    },
+    "columns": {
+      "nombre": "Nombre",
+      "nif": "NIF",
+      "contacto": "Contacto",
+      "telefono": "Teléfono",
+      "email": "Email"
+    },
+    "actions": {
+      "verDetalle": "Ver detalle",
+      "editarProveedor": "Editar proveedor",
+      "descargarFicha": "Descargar Ficha"
     },
     "detail": {
-      "subtitleIngredientes": "{{count}} ingredientes",
-      "editLabel": "Editar receta",
-      "buttonPreparar": "Preparar",
-      "buttonPedido": "Pedido",
-      "buttonFichaPdf": "Ficha PDF",
-      "sectionInfo": "Información",
-      "sectionInstrucciones": "Instrucciones",
-      "sectionProduccion": "Producción",
-      "sectionIngredientes": "Ingredientes",
-      "sectionAlergenos": "Alérgenos detectados",
-      "fieldDificultad": "Dificultad",
-      "fieldFranjaTiempo": "Franja de tiempo",
-      "fieldTiempoPreparacion": "Tiempo de preparación",
-      "fieldPasosElaboracion": "Pasos de elaboración",
-      "fieldRendimiento": "Rendimiento",
-      "fieldDiasCaducidad": "Días de Caducidad",
-      "fieldCosteEst": "Coste Est. por unidad",
-      "fieldRaciones": "Raciones (base)",
-      "fieldTamanioRacion": "Tamaño ración"
+      "infoFiscal": "Información Fiscal",
+      "razonSocial": "Razón Social",
+      "nifCuit": "NIF / CUIT",
+      "contacto": "Contacto",
+      "personaContacto": "Persona de Contacto",
+      "telefono": "Teléfono",
+      "email": "Email",
+      "ubicacion": "Ubicación",
+      "direccion": "Dirección"
     },
-    "ingredientesView": {
-      "noIngredientes": "Sin ingredientes registrados.",
-      "colProducto": "Producto",
-      "colCantidad": "Cantidad",
-      "colUnidad": "Unidad",
-      "colProveedorFav": "Proveedor fav.",
-      "automatico": "Automático"
+    "modal": {
+      "tituloEditar": "Editar: {{nombre}}",
+      "tituloCrear": "Crear Nuevo Proveedor"
     },
-    "exportDialog": {
-      "title": "Exportar recetas a PDF",
-      "countSingle": "Vas a exportar 1 receta.",
-      "countMultiple": "Vas a exportar {{count}} recetas.",
-      "includeImage": "Incluir imagen de la receta",
-      "imageNote": "Si la imagen no existe, el PDF se generará igualmente sin ella.",
-      "cancel": "Cancelar",
-      "exportButton": "Exportar PDF",
-      "exporting": "Exportando..."
-    },
-    "cookDialog": {
-      "titleSingle": "Preparar Receta: {{name}}",
-      "titleBatch": "Producción en Lote ({{count}} recetas)",
-      "subtitle": "Configura las cantidades y valida el stock antes de iniciar.",
-      "sectionRecetas": "Recetas a procesar",
-      "sectionConfig": "Configuración del Lote",
-      "sectionStock": "Verificación de Stock",
-      "rendimientoBase": "Rendimiento base: {{value}} {{unit}}",
-      "colReceta": "Receta",
-      "colCantidad": "Cantidad",
-      "colRaciones": "Raciones",
-      "colUnidad": "Und.",
-      "ubicacionLabel": "Ubicación de destino",
-      "fechaCaducidadLabel": "Fecha de caducidad (manual)",
-      "stockOk": "Todo en orden. Stock suficiente para procesar este lote.",
-      "stockInsuficiente": "INGREDIENTES INSUFICIENTES",
-      "stockFaltan": "Faltan {{amount}} {{unit}}",
-      "stockProv": "(Prov: {{name}})",
-      "validatingStock": "Garantizando stock...",
-      "cancel": "Cancelar",
-      "iniciarLote": "Iniciar Producción de Lote",
-      "iniciarPreparacion": "Iniciar Preparación",
-      "crearPedidoFaltantes": "Crear pedido de faltantes",
-      "lanzarPedidoFaltantes": "Lanzar Pedido de Faltantes"
+    "confirm": {
+      "eliminarTitulo": "Eliminar proveedor",
+      "eliminarMensaje": "¿Estás seguro de que deseas eliminar el proveedor {{nombre}}? Esta acción no se puede deshacer.",
+      "eliminarConfirm": "Sí, eliminar",
+      "guardarCambios": "¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?",
+      "crearNuevo": "¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?"
     },
     "toast": {
-      "loadError": "Error desconocido al cargar recetas.",
-      "deleted": "Receta \"{{name}}\" eliminada correctamente.",
-      "deleteError": "Error al eliminar la receta.",
-      "updated": "Receta actualizada correctamente.",
-      "created": "Receta creada correctamente.",
-      "saveError": "Error al guardar la receta.",
-      "noSelectionForPdf": "Selecciona al menos una receta para exportar a PDF.",
-      "noProveedoresForOrder": "No se encontraron proveedores válidos para los ingredientes faltantes.",
-      "noUbicacion": "Debes seleccionar una ubicación de destino.",
-      "noRecetasForOrder": "Debes seleccionar al menos una receta.",
-      "allProduccionOk": "Producciones lanzadas con éxito",
-      "produccionPartial": "Se procesaron {{ok}} de {{total}} producciones.",
-      "produccionError": "Error al iniciar la preparación.",
-      "orderFromMissingSuccess": "Se ha generado el pedido #{{num}} con {{count}} pedido interno para cubrir los faltantes.",
-      "orderFromMissingSuccessPlural": "Se ha generado el pedido #{{num}} con {{count}} pedidos internos para cubrir los faltantes.",
-      "orderFromMissingSuccessSimple": "Se ha generado el pedido #{{num}} para cubrir los faltantes.",
-      "orderFromMissingError": "Error al generar pedidos: {{error}}",
-      "orderFromRecipesSuccess": "Pedido #{{num}} generado correctamente desde {{count}} receta.",
-      "orderFromRecipesSuccessPlural": "Pedido #{{num}} generado correctamente desde {{count}} recetas.",
-      "orderFromRecipesError": "Error al generar el pedido desde recetas.",
-      "recipeError": "Error en esta receta"
-    }
-  },
-  "filters": {
-    "from": "Desde",
-    "to": "Hasta",
-    "types": "Tipos",
-    "filterByType": "Filtrar por tipo...",
-    "filterByLocation": "Ubicación...",
-    "filterByConcordancia": "Filtrar por concordancia...",
-    "concordancia": "Concordancia"
-  },
-  "mermasTable": {
-    "filterByMotivo": "Filtrar por Motivo",
-    "allMotivos": "Todos los motivos",
-    "viewNotes": "Ver Notas",
-    "motivos": {
-      "ROTURA": "Rotura de envase",
-      "DETERIORO": "Deterioro / Caducidad",
-      "HURTO": "Hurto / Pérdida",
-      "ERROR_PREPARACION": "Error de preparación",
-      "OTROS": "Otros"
+      "eliminado": "Proveedor eliminado correctamente.",
+      "actualizado": "Proveedor actualizado correctamente.",
+      "creado": "Proveedor creado correctamente."
     },
-    "chips": {
-      "ROTURA": "Rotura",
-      "DETERIORO": "Deterioro",
-      "HURTO": "Hurto",
-      "ERROR_PREPARACION": "Error Prep.",
-      "OTROS": "Otros"
-    }
-  },
-  "mermaStats": {
-    "totalLosses": "Total Pérdidas (Cantidad)",
-    "totalRecords": "Total Registros de Merma",
-    "distribution": "Distribución por Motivo",
-    "noData": "No hay datos registrados."
-  },
-  "albaranUpload": {
-    "title": "Subir Documento de Albarán",
-    "refLabel": "Número de Referencia del Albarán",
-    "refHelper": "Número identificativo del albarán físico",
-    "changeFile": "Cambiar archivo",
-    "selectFile": "Seleccionar archivo",
-    "acceptedFormats": "Formatos aceptados: JPG, PNG, GIF, PDF · Máximo {{max}} MB",
-    "recepcionIdLabel": "ID de Recepción (opcional)",
-    "recepcionIdHelper": "Si se indica, vincula el albarán a esa recepción",
-    "observacionesLabel": "Observaciones (opcional)",
-    "observacionesPlaceholder": "Notas sobre el documento...",
-    "cancel": "Cancelar",
-    "upload": "Subir Documento",
-    "errorNoFile": "Debes seleccionar un archivo.",
-    "errorFileSize": "El archivo excede el tamaño máximo de {{max}} MB."
-  },
-  "incidenciasStatusTabs": {
-    "open": "Abiertas",
-    "closed": "Cerradas",
-    "all": "Todas",
-    "resolved": "Resueltas",
-    "cancelled": "Canceladas",
-    "invalid": "Inválidas"
-  },
-  "resolveIncidencia": {
-    "titleResolve": "Resolver incidencia",
-    "titleAdjust": "Ajustar cantidades de incidencia",
-    "allLinesInfo": "Se muestran todas las líneas de la incidencia. Solo las líneas con discrepancia permiten ajuste, manteniendo la cantidad recibida como solo lectura.",
-    "providerLabel": "Proveedor:",
-    "noProducts": "Esta incidencia no tiene productos asociados. No se puede ajustar ni resolver hasta que tenga al menos una línea válida.",
-    "markAsResolved": "Marcar incidencia como resuelta",
-    "finalStatus": "Estado final",
-    "statusResuelta": "Resuelta",
-    "statusCancelada": "Cancelada",
-    "statusInvalida": "Inválida",
-    "searchProduct": "Buscar producto",
-    "adjustableLabel": "Ajustables:",
-    "noAdjustLabel": "Sin ajuste:",
-    "totalLabel": "Total:",
-    "noDiscrepanciesWarning": "Esta incidencia tiene productos, pero no hay discrepancias activas para ajustar. Puedes cerrar la incidencia si procede.",
-    "columns": {
-      "product": "Producto",
-      "ordered": "Pedida",
-      "received": "Recibida",
-      "adjustment": "Ajuste",
-      "afterAdjust": "Tras ajuste",
-      "balance": "Balance",
-      "status": "Estado",
-      "note": "Nota"
+    "errors": {
+      "errorCargar": "Error desconocido al cargar proveedores.",
+      "errorEliminar": "Error al eliminar el proveedor.",
+      "errorGuardar": "Error al guardar el proveedor."
     },
-    "rangeText": "Rango permitido: {{min}} a {{max}}",
-    "noAdjustNeeded": "No requiere ajuste",
-    "manualAdjust": "Ajuste manual",
-    "pendingAdjust": "Pendiente ajuste",
-    "balanced": "Balanceado",
-    "noAdjust": "Sin ajuste",
-    "noMatchFilter": "No hay productos que coincidan con el filtro actual.",
-    "resolutionNotes": "Notas de resolución (opcional)",
-    "resolutionPlaceholder": "Ej: Ajuste parcial recibido hoy, queda pendiente 1 unidad para mañana.",
-    "cancel": "Cancelar",
-    "saving": "Guardando...",
-    "saveAndResolve": "Guardar y resolver",
-    "saveAdjustments": "Guardar ajustes",
-    "rowsPerPage": "Filas"
-  },
-  "profileForm": {
-    "personalData": "Datos Personales",
-    "username": "Nombre de Usuario",
-    "usernameHelper": "El nombre que verán los demás",
-    "userId": "ID de Usuario",
-    "email": "Correo Electrónico",
-    "notConfigured": "No configurado",
-    "requestChange": "Solicitar cambio"
-  },
-  "changePassword": {
-    "security": "Seguridad",
-    "protectedHint": "La contraseña está protegida. Para cambiarla, activa el modo de edición de la ficha.",
-    "changeTitle": "Cambiar Contraseña",
-    "currentPassword": "Contraseña Actual",
-    "newPassword": "Nueva Contraseña",
-    "confirmPassword": "Confirmar Nueva Contraseña",
-    "strongFormat": "Formato fuerte",
-    "minRequirements": "Mínimo 8 caracteres, mayúsculas, números y símbolos",
-    "passwordMismatch": "Las contraseñas no coinciden"
-  },
-  "professorSlots": {
-    "manageTitle": "Gestión de Aulas y Clases",
-    "noClasses": "No hay clases configuradas para mostrar.",
-    "newClassConfig": "Configurar nueva clase:",
-    "aulaLabel": "Curso/Grupo (ej: A01)",
-    "numeroClaseLabel": "Nº Clase (ej: 1)",
-    "capacidadLabel": "Capacidad (Alumnos)",
-    "ubicacionLabel": "Ubicación",
-    "noLocation": "Sin ubicación",
-    "createNewLocation": "+ CREAR NUEVA UBICACIÓN",
-    "profesorLabel": "Profesor",
-    "ownLabel": "-- Mío (Propio) --",
-    "addButton": "Añadir",
-    "myClassrooms": "MIS AULAS",
-    "allClassrooms": "TODAS LAS AULAS",
-    "courseLabel": "Curso: {{aula}} — Clase {{num}}",
-    "capacity": "Capacidad máx: {{count}} alumnos",
-    "locationAssigned": "Ubicación: {{name}}",
-    "noLocationAssigned": "Ubicación: Sin asignar",
-    "teacherLabel": "Profesor: {{name}}",
-    "codeLabel": "CÓDIGO: {{code}}",
-    "codePending": "PENDIENTE",
-    "clickToCopyCode": "Haga clic para copiar el código de clase",
-    "createNewLocationTooltip": "Crear nueva Ubicación",
-    "perPage": "Por página:",
-    "displayedRows": "{{from}}–{{to}} de {{count}}",
-    "unknown": "Desconocido"
-  },
-  "professorStudents": {
-    "manageTitle": "Gestión de Mis Alumnos",
-    "configureFirst": "Configura tus aulas primero para ver a tus alumnos.",
-    "noStudentsInClass": "No hay alumnos registrados en esta clase todavía.",
-    "studentCount": "{{count}} alumnos de {{capacity}} permitidos",
-    "noCode": "SIN CÓDIGO",
-    "clickToCopyCode": "Click para copiar código de clase",
-    "statusActive": "ACTIVO",
-    "statusPending": "PENDIENTE",
-    "pendingActivation": "Pendiente de activación por el profesor",
-    "alreadyActive": "Alumno ya activado",
-    "activateStudent": "Activar alumno",
-    "tooltipPermissions": "Gestionar Permisos",
-    "tooltipResetPassword": "Restablecer Contraseña",
-    "tooltipDeleteStudent": "Eliminar Alumno",
-    "unknownGroup": "Alumnos sin Curso"
-  },
-  "quickSlotDialog": {
-    "title": "Nueva Aula / Clase (Slot)",
-    "aulaLabel": "Nombre del Aula/Grupo",
-    "aulaPlaceholder": "Ej: Cocina Básica, Aula 101...",
-    "numeroClaseLabel": "Nº Clase",
-    "capacidadLabel": "Capacidad (Alumnos)",
-    "profesorLabel": "Profesor Responsable",
-    "ubicacionLabel": "Ubicación Warehouse (Opcional)",
-    "noLocation": "Sin ubicación física",
-    "cancel": "Cancelar",
-    "create": "Crear Aula",
-    "allRequired": "Todos los campos marcados son obligatorios",
-    "createSuccess": "Aula/Slot creado con éxito",
-    "createError": "Error al crear el slot",
-    "createErrorAcademic": "Error al crear el slot académico"
-  },
-  "plantillasRoles": {
-    "title": "Gestión de Permisos por Plantilla de Rol",
-    "infoAlert": "Cada plantilla define los permisos base de un rol. Al modificar los permisos de una plantilla, los cambios se sincronizan automáticamente con todos los roles vinculados.",
-    "tableColumns": {
-      "template": "Plantilla",
-      "status": "Estado",
-      "permissions": "Permisos",
-      "linkedRoles": "Roles vinculados",
-      "actions": "Acciones"
+    "empty": {
+      "sinResultados": "No hay proveedores que coincidan con tu búsqueda",
+      "sinProveedores": "No se encontraron proveedores",
+      "prueba": "Prueba con otros términos o limpia el filtro.",
+      "empieza": "Empieza añadiendo el primer proveedor a tu catálogo."
     },
-    "chipActive": "Activa",
-    "chipInactive": "Inactiva",
-    "tooltipViewAll": "Ver permisos (todos activos)",
-    "tooltipEdit": "Editar permisos",
-    "tooltipSystem": "Plantilla de sistema (no editable)",
-    "dialogViewTitle": "Ver permisos",
-    "dialogEditTitle": "Editar permisos",
-    "superadminInfo": "La plantilla Superadmin tiene todos los permisos activos automáticamente. No se puede modificar.",
-    "warningSync": "Al guardar, los permisos se aplicarán a todos los roles vinculados a esta plantilla{{roles}}.",
-    "activePermissions": "Permisos activos: {{selected}} / {{total}}",
-    "selectAll": "Seleccionar todos",
-    "deselectAll": "Deseleccionar todos",
-    "cancel": "Cancelar",
-    "close": "Cerrar",
-    "saving": "Guardando...",
-    "savePermissions": "Guardar permisos",
-    "loadError": "No se pudieron cargar las plantillas de roles",
-    "updateError": "No se pudieron actualizar los permisos",
-    "updateSuccess": "Permisos de \"{{name}}\" actualizados correctamente.{{sync}}",
-    "syncedRoles": " Se sincronizaron {{count}} rol(es) vinculado(s)."
+    "condicionesLabel": "Proveedores y Condiciones",
+    "nombreDesconocido": "Proveedor Desconocido",
+    "campoMarca": "Marca",
+    "campoCodigoBarras": "Código Barras Prov.",
+    "campoPrecioCompra": "Precio Compra",
+    "eliminarAria": "Eliminar proveedor {{nombre}}"
   },
-  "usuarioModal": {
-    "editTitle": "Editar Usuario",
-    "newTitle": "Nuevo Usuario",
-    "fieldUsername": "Nombre de Usuario",
-    "fieldNombre": "Nombre y Apellidos",
-    "fieldEmail": "Correo Electrónico",
-    "fieldRol": "Rol",
-    "fieldInitialStatus": "Estado Inicial",
-    "loadingRoles": "Cargando roles...",
-    "noRolesAvailable": "No hay roles disponibles",
-    "loading": "Cargando...",
-    "accountStatus": "Estado de cuenta",
-    "statusActive": "CUENTA ACTIVA",
-    "statusSuspended": "CUENTA SUSPENDIDA",
-    "statusActivo": "Activo",
-    "statusInactivo": "Inactivo",
-    "slotLabel": "Aula / Slot Asignado",
-    "noSlot": "Sin Aula",
-    "classLabel": "{{aula}} - Clase {{num}} ({{teacher}})",
-    "ownTeacher": "Propio",
-    "createNewSlot": "+ CREAR NUEVA AULA",
-    "createNewSlotTooltip": "Crear nueva Aula",
-    "ubicacionLabel": "Ubicación Almacén",
-    "noUbicacion": "Sin Ubicación",
-    "createNewUbicacion": "+ CREAR NUEVA UBICACIÓN",
-    "createNewUbicacionTooltip": "Crear nueva Ubicación",
-    "additionalPermissions": "Permisos Individuales Adicionales",
-    "moduleLabel": "Módulo:",
-    "cancel": "Cancelar",
-    "saving": "Guardando...",
-    "save": "Guardar",
-    "errorUsername": "El usuario es obligatorio",
-    "errorRoleId": "Debes seleccionar un rol",
-    "errorEmail": "El correo es obligatorio",
-    "errorEmailFormat": "Formato de correo inválido",
-    "errorLastAdmin": "No puedes quitar el último administrador activo.",
-    "errorLastAdminDeactivate": "No puedes desactivar el último administrador."
-  },
-  "usuariosView": {
-    "searchPlaceholder": "Buscar por nombre o email...",
-    "refresh": "Refrescar",
-    "newUser": "Nuevo Usuario",
-    "tabAdmins": "Administradores",
-    "tabProfesores": "Profesores",
-    "tabAlumnos": "Alumnos",
-    "suspend": "Suspender",
-    "activate": "Activar",
-    "edit": "Editar",
-    "delete": "Eliminar",
+  "pedidos": {
+    "titulo": "Gestión de Pedidos",
+    "totalItemsLabel": "pedidos",
+    "totalItemsLabelCompras": "compras",
+    "pedidoFallback": "Pedido",
+    "acciones": {
+      "reportePdf": "Reporte PDF",
+      "exportarExcel": "Exportar Excel"
+    },
+    "cancelar": {
+      "tituloCompra": "Cancelar Compra: {{id}}",
+      "tituloPedido": "Cancelar Pedido: {{proveedor}}",
+      "motivoLabel": "Motivo de Cancelación (Opcional)",
+      "motivoPorDefecto": "Cancelado por el usuario"
+    },
+    "editor": {
+      "editarCompra": "Editar Compra {{numero}}",
+      "detallesCompra": "Detalles de la Compra {{numero}} (Solo lectura)",
+      "editarPedidoUsuario": "Editar Pedido {{numero}}",
+      "detallesPedidoUsuario": "Detalles del Pedido {{numero}} (Solo lectura)",
+      "editarPedido": "Editar Pedido",
+      "detallesPedido": "Detalles del Pedido (Solo lectura)",
+      "crearNuevo": "Crear Nuevo Pedido"
+    },
+    "confirm": {
+      "eliminarTitulo": "Eliminar pedido",
+      "eliminarMensaje": "¿Estás seguro de que deseas eliminar el pedido del {{fecha}}? Esta acción no se puede deshacer.",
+      "eliminarConfirm": "Sí, eliminar",
+      "aprobarTitulo": "Aprobar Pedido",
+      "aprobarCompra": "¿Estás seguro de que deseas tramitar la compra {{numero}}({{id}})? La compra avanzará a su siguiente estado operativo.",
+      "aprobarPedido": "¿Estás seguro de que deseas aprobar el pedido {{numero}}({{id}}) al proveedor {{proveedor}}? Pasará a estar «En Proceso» y se considerará tramitado.",
+      "aprobarConfirm": "Sí, Aprobar",
+      "guardarCompra": "¿Estás seguro de que deseas guardar los cambios en esta compra?",
+      "guardarPedido": "¿Estás seguro de que deseas guardar los cambios en este pedido?",
+      "registrarNuevo": "¿Estás seguro de que deseas registrar este nuevo pedido?"
+    },
+    "recovery": {
+      "titulo": "Recuperar Pedido Pendiente",
+      "mensaje": "Tienes un pedido que no llegaste a finalizar el día {{fecha}} a las {{hora}}.\n\n¿Deseas recuperarlo y continuar donde lo dejaste?",
+      "confirmar": "Sí, Recuperar",
+      "cancelar": "No, Descartar"
+    },
+    "borradorExistente": {
+      "titulo": "Ya tienes un pedido pendiente",
+      "mensaje": "Ya existe un borrador de pedido guardado del día {{fecha}}. Si empiezas uno nuevo y se guarda, el borrador pendiente se reemplazará.\n\n¿Qué quieres hacer?",
+      "confirmar": "Crear nuevo pedido",
+      "cancelar": "Continuar borrador"
+    },
+    "cerrarEditor": {
+      "titulo": "¿Qué quieres hacer con este pedido?",
+      "mensaje": "Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente.",
+      "confirmar": "Guardar en borrador",
+      "cancelar": "Cancelar pedido"
+    },
+    "fechaEstimadaEntrega": "Fecha estimada de entrega",
+    "detalleTitulo": "Detalle del pedido",
+    "gestionTitulo": "Gestión de Pedidos",
+    "fechaEntregaDialogMensaje": "La fecha prevista para este pedido es {{fecha}}. Este valor se calcula automáticamente por el sistema y no admite edición manual.",
+    "buscarPlaceholder": "Buscar por proveedor, estado, usuario...",
+    "nuevoPedido": "Nuevo Pedido",
+    "continuarPedido": "Continuar Pedido",
     "toast": {
-      "loadError": "Error al cargar usuarios",
-      "createSuccess": "Usuario creado correctamente",
-      "createError": "Error al crear usuario",
-      "updateSuccess": "Usuario actualizado correctamente",
-      "updateError": "Error al actualizar usuario",
-      "deleteSuccess": "Usuario eliminado correctamente",
-      "deleteError": "Error al eliminar usuario",
-      "statusUpdated": "Estado del usuario actualizado",
-      "statusError": "Error al actualizar estado"
+      "compraActualizada": "Compra actualizada correctamente.",
+      "pedidoActualizado": "Pedido actualizado correctamente.",
+      "pedidoActualizadoDividido": "Pedido actualizado y dividido por proveedor cuando ha sido necesario.",
+      "pedidoRegistrado": "Pedido registrado correctamente.",
+      "pedidoRegistradoMultiproveedor": "Se ha registrado el pedido con {{count}} líneas y separación interna por proveedor.",
+      "pedidoEliminado": "Pedido eliminado correctamente.",
+      "pedidoYaNoExistia": "El pedido ya no existía. Se ha actualizado la lista.",
+      "pedidoAprobado": "El pedido visible ha sido aprobado correctamente.",
+      "compraTramitada": "La compra ha sido tramitada correctamente.",
+      "pedidoCancelado": "El pedido visible ha sido cancelado.",
+      "compraCancelada": "La compra ha sido cancelada.",
+      "loteSemanalGenerado": "Se ha generado el lote semanal correctamente.",
+      "sinPedidosRecepcionar": "Esta compra no tiene pedidos por recepcionar. Gestiona los casos parciales o con incidencia desde Incidencias.",
+      "recepcionIniciada": "Se ha iniciado la recepción con los productos de la compra."
     },
-    "confirmSuspend": "¿Estás seguro de que deseas suspender al usuario \"{{name}}\"?",
-    "confirmActivate": "¿Estás seguro de que deseas activar al usuario \"{{name}}\"?",
-    "confirmDelete": "¿Estás seguro de que deseas eliminar al usuario \"{{name}}\"? Esta acción no se puede deshacer.",
-    "confirmSuspendTitle": "Suspender Usuario",
-    "confirmActivateTitle": "Activar Usuario",
-    "confirmDeleteTitle": "Eliminar Usuario",
-    "confirmYes": "Sí",
-    "confirmNo": "Cancelar",
-    "paginationRowsPerPage": "Por página:",
-    "paginationDisplayedRows": "{{from}}–{{to}} de {{count}}",
-    "noUsersFound": "No hay usuarios encontrados para este rol y búsqueda.",
-    "removeFilter": "Quitar filtro",
-    "pendingActivationFilter": "Mostrando usuarios pendientes de activación abiertos desde notificaciones.",
-    "activeStatusFilter": "Filtro de estado activo: {{status}}.",
-    "colUsername": "Usuario",
-    "colEmail": "Email",
-    "colStatus": "Estado",
-    "toastActivated": "Usuario activado correctamente",
-    "toastSuspended": "Usuario suspendido correctamente",
-    "toastStatusError": "Error al actualizar el estado del usuario",
-    "toastRolesError": "Error al cargar los roles disponibles",
-    "toastLoadUsersError": "Error al cargar los usuarios",
-    "toastUpdated": "Usuario actualizado",
-    "toastCreated": "Usuario creado",
-    "toastSaveError": "Error al guardar",
-    "toastDeleted": "Usuario eliminado",
-    "toastDeleteError": "Error al eliminar",
-    "toastResetError": "Error al resetear contraseña",
-    "deleteDialogTitle": "Eliminar usuario",
-    "deleteDialogMessage": "¿Seguro que quieres eliminar a {{name}}?",
-    "deletingLabel": "Eliminando...",
-    "deleteLabel": "Eliminar",
-    "generatedPasswordTitle": "Contraseña Generada",
-    "resetPasswordTitle": "Resetear Contraseña",
-    "resetPasswordMessage": "¿Deseas resetear la contraseña de {{name}}?",
-    "closeLabel": "Cerrar",
-    "confirmLabel": "Confirmar"
-  },
-  "recipeCarousel": {
-    "items": {
-      "1": {
-        "description": "Una pechuga de pollo veteada con finas hierbas y especias, cocinada a baja temperatura para una jugosidad extrema.",
-        "difficulty": "Media",
-        "category": "Gourmet"
-      },
-      "2": {
-        "description": "Pasta artesanal con tomates cherry confitados, albahaca fresca y lascas de parmesano de 24 meses.",
-        "difficulty": "Fácil",
-        "category": "Italiana"
-      },
-      "3": {
-        "description": "Ensalada vibrante de quinoa con aguacate maduro, garbanzos tostados y semillas de granada.",
-        "difficulty": "Fácil",
-        "category": "Saludable"
-      }
-    }
-  },
-  "productoFormModal": {
-    "createTitle": "Crear Nuevo Producto",
-    "editTitle": "Editar: {{name}}",
-    "confirmCreate": "¿Estás seguro de que deseas añadir este nuevo producto al inventario?",
-    "confirmEdit": "¿Estás seguro de que deseas guardar los cambios realizados en este producto?",
-    "fields": {
-      "nombre": "Nombre Comercial",
-      "marca": "Marca",
-      "descripcion": "Descripción",
-      "contenido": "Contenido Numérico",
-      "unidad": "Unidad de Medida",
-      "categoria": "Categoría",
-      "codigoBarras": "Código de Barras",
-      "imagen": "Cargar Imagen",
-      "alergenos": "Alérgenos Presentes",
-      "proveedores": "Proveedores Asociados"
-    },
-    "units": {
-      "kg": "Kg",
-      "g": "Gramo",
-      "l": "Litro",
-      "ml": "Mililitro",
-      "unidad": "Unidad",
-      "paq": "Paquete"
-    }
-  },
-  "recetaFormModal": {
-    "createTitle": "Nueva Receta",
-    "editTitle": "Editar: {{name}}",
-    "confirmCreate": "¿Estás seguro de que deseas añadir esta nueva receta al sistema?",
-    "confirmEdit": "¿Estás seguro de que deseas guardar los cambios realizados en esta receta?",
-    "fields": {
-      "nombre": "Nombre de la Receta",
-      "tiempoPreparacion": "Tiempo de preparación",
-      "dificultad": "Dificultad",
-      "instrucciones": "Instrucciones de elaboración",
-      "rendimiento": "Rendimiento estimado",
-      "unidadResultado": "Unidad",
-      "diasCaducidad": "Días de caducidad",
-      "costeUnitarioEstimado": "Coste est. (info)",
-      "raciones": "Raciones (base)",
-      "tamanioRacion": "Tamaño ración",
-      "ingredientes": "Ingredientes de la receta",
-      "imagen": "Imagen de la receta"
-    },
-    "difficulty": {
-      "FACIL": "Fácil",
-      "MEDIA": "Media",
-      "DIFICIL": "Difícil"
+    "errors": {
+      "sinProductos": "Cada línea debe tener un producto-proveedor y una cantidad mayor que 0.",
+      "errorIdentificarProveedor": "Ocurrió un error al identificar el proveedor de algunos productos.",
+      "mantenerProductoProveedor": "Debes mantener al menos un producto del proveedor original del pedido.",
+      "errorGuardar": "Error al guardar el pedido.",
+      "errorEliminar": "Error al eliminar el pedido.",
+      "errorAprobar": "Error al aprobar el pedido visible.",
+      "errorAprobarCompra": "Error al aprobar la compra.",
+      "errorCancelar": "Error al cancelar el pedido visible.",
+      "errorCancelarCompra": "Error al cancelar la compra.",
+      "errorCargarLote": "Error al cargar el lote.",
+      "errorConsolidar": "Error al consolidar pedidos en un lote.",
+      "errorIniciarRecepcion": "Error al iniciar la recepción desde la compra."
     }
   }
 }

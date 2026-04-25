@@ -1,54 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, IconButton, Paper, Chip } from '@mui/material';
-import { useTranslation } from 'react-i18next';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
+/**
+ * Represents a single slide in the {@link RecipeCarousel}.
+ */
 interface CarouselItem {
+  /** Unique identifier for the slide. */
   id: string;
+  /** Recipe name displayed as the slide title. */
   title: string;
+  /** Brief description of the recipe. */
   description: string;
+  /** Path to the background image. */
   image: string;
+  /** Estimated preparation time (e.g. `'45 min'`). */
   time: string;
+  /** Difficulty level (e.g. `'Fácil'`, `'Media'`). */
   difficulty: string;
+  /** Cuisine or dietary category badge label. */
   category: string;
 }
 
-const RecipeCarousel: React.FC = () => {
-  const { t } = useTranslation();
-  const [activeIndex, setActiveIndex] = useState(0);
+/** Static demo slides shown in the carousel. */
+const ITEMS: CarouselItem[] = [
+  {
+    id: '1',
+    title: 'Handmade Marble Chicken',
+    description:
+      'Una pechuga de pollo veteada con finas hierbas y especias, cocinada a baja temperatura para una jugosidad extrema.',
+    image: '/assets/images/recetas/chicken.png',
+    time: '45 min',
+    difficulty: 'Media',
+    category: 'Gourmet',
+  },
+  {
+    id: '2',
+    title: 'Fresh Mediterranean Pasta',
+    description:
+      'Pasta artesanal con tomates cherry confitados, albahaca fresca y lascas de parmesano de 24 meses.',
+    image: '/assets/images/recetas/pasta.png',
+    time: '20 min',
+    difficulty: 'Fácil',
+    category: 'Italiana',
+  },
+  {
+    id: '3',
+    title: 'Quinoa & Avocado Power Bowl',
+    description:
+      'Ensalada vibrante de quinoa con aguacate maduro, garbanzos tostados y semillas de granada.',
+    image: '/assets/images/recetas/salad.png',
+    time: '15 min',
+    difficulty: 'Fácil',
+    category: 'Saludable',
+  },
+];
 
-  const ITEMS: CarouselItem[] = [
-    {
-      id: '1',
-      title: 'Handmade Marble Chicken',
-      description: t('recipeCarousel.items.1.description'),
-      image: '/assets/images/recetas/chicken.png',
-      time: '45 min',
-      difficulty: t('recipeCarousel.items.1.difficulty'),
-      category: t('recipeCarousel.items.1.category'),
-    },
-    {
-      id: '2',
-      title: 'Fresh Mediterranean Pasta',
-      description: t('recipeCarousel.items.2.description'),
-      image: '/assets/images/recetas/pasta.png',
-      time: '20 min',
-      difficulty: t('recipeCarousel.items.2.difficulty'),
-      category: t('recipeCarousel.items.2.category'),
-    },
-    {
-      id: '3',
-      title: 'Quinoa & Avocado Power Bowl',
-      description: t('recipeCarousel.items.3.description'),
-      image: '/assets/images/recetas/salad.png',
-      time: '15 min',
-      difficulty: t('recipeCarousel.items.3.difficulty'),
-      category: t('recipeCarousel.items.3.category'),
-    },
-  ];
+/**
+ * Auto-advancing image carousel showcasing featured recipes.
+ *
+ * Cycles through {@link ITEMS} every 5 seconds with a cross-fade transition.
+ * Includes previous/next navigation buttons and dot indicators for manual control.
+ *
+ * @returns JSX element rendering the recipe carousel with animated slides.
+ * @example
+ * <RecipeCarousel />
+ */
+const RecipeCarousel: React.FC = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const nextSlide = () => {
     setActiveIndex((prev) => (prev === ITEMS.length - 1 ? 0 : prev + 1));
@@ -64,7 +86,10 @@ const RecipeCarousel: React.FC = () => {
   }, [activeIndex]);
 
   return (
-    <Box sx={{ width: '100%', mb: 4, position: 'relative' }}>
+    <Box
+      id="recipe-carousel-container"
+      sx={{ width: '100%', mb: 4, position: 'relative' }}
+    >
       <Paper
         elevation={0}
         sx={{
@@ -72,7 +97,7 @@ const RecipeCarousel: React.FC = () => {
           borderRadius: 4,
           overflow: 'hidden',
           position: 'relative',
-          background: '#000',
+          background: (theme) => theme.palette.background.default,
           transition: 'all 0.5s ease-in-out',
         }}
       >
@@ -99,7 +124,7 @@ const RecipeCarousel: React.FC = () => {
                 width: '100%',
                 height: '70%',
                 background:
-                  'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+                  'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%)',
               },
             }}
           >
@@ -109,6 +134,7 @@ const RecipeCarousel: React.FC = () => {
                 bottom: 0,
                 left: 0,
                 p: { xs: 2, md: 3 },
+                pl: { xs: 6, md: 8 },
                 width: { xs: '100%', md: '60%' },
                 zIndex: 2,
                 color: 'white',

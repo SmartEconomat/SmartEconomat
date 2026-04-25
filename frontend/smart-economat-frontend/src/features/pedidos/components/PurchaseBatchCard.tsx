@@ -30,6 +30,14 @@ interface PurchaseBatchCardProps {
   onRowClick?: (batch: PurchaseBatch) => void;
 }
 
+/**
+ * @description Card representation of a PurchaseBatch for the grid view.
+ * Displays batch reference, creation date, pedido count, total cost, status, and creator.
+ * @param props.batch - The PurchaseBatch data to render
+ * @param props.actions - Optional React node with action buttons in the card footer
+ * @param props.onRowClick - Optional click handler; when provided the card becomes interactive
+ * @returns MUI Card component representing a single purchase batch
+ */
 const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
   batch,
   actions,

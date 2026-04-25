@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -42,7 +43,6 @@ import { Ubicacion } from '../../services/ubicacion.types';
 import QuickLocationDialog from '../../components/inventario/QuickLocationDialog';
 import QuickSlotDialog from '../../features/profile/components/QuickSlotDialog';
 import { isElevatedRole } from '../../sherlock-auth/permissions';
-import { useTranslation } from 'react-i18next';
 
 export interface UserModalProps {
   open: boolean;
@@ -287,25 +287,24 @@ const UserModal: React.FC<UserModalProps> = ({
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.username.trim())
-      newErrors.username = t('usuarioModal.errorUsername');
-    if (!formData.roleId.trim())
-      newErrors.roleId = t('usuarioModal.errorRoleId');
+      newErrors.username = 'El usuario es obligatorio';
+    if (!formData.roleId.trim()) newErrors.roleId = 'Debes seleccionar un rol';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.rol !== 'Alumno') {
       if (!formData.email.trim()) {
-        newErrors.email = t('usuarioModal.errorEmail');
+        newErrors.email = 'El correo es obligatorio';
       } else if (!emailRegex.test(formData.email)) {
-        newErrors.email = t('usuarioModal.errorEmailFormat');
+        newErrors.email = 'Formato de correo inválido';
       }
     }
 
     if (isLastAdmin()) {
       if (!isAdminRole(formData.rol)) {
-        newErrors.rol = t('usuarioModal.errorLastAdmin');
+        newErrors.rol = 'No puedes quitar el último administrador activo.';
       }
       if (formData.estado === 'Inactivo') {
-        newErrors.estado = t('usuarioModal.errorLastAdminDeactivate');
+        newErrors.estado = 'No puedes desactivar el último administrador.';
       }
     }
 
@@ -365,9 +364,7 @@ const UserModal: React.FC<UserModalProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {isEditMode || isLoadingContent
-          ? t('usuarioModal.editTitle')
-          : t('usuarioModal.newTitle')}
+        {isEditMode || isLoadingContent ? 'Editar Usuario' : 'Nuevo Usuario'}
       </DialogTitle>
       <DialogContent dividers>
         {shouldShowSkeleton ? (
@@ -424,7 +421,7 @@ const UserModal: React.FC<UserModalProps> = ({
             <InputField
               id="user-username"
               fullWidth
-              label={t('usuarioModal.fieldUsername')}
+              label={t('usuarios.campoNombreUsuario')}
               value={formData.username}
               onChange={handleChange('username')}
               error={!!errors.username}
@@ -435,7 +432,7 @@ const UserModal: React.FC<UserModalProps> = ({
             <InputField
               id="user-nombre"
               fullWidth
-              label={t('usuarioModal.fieldNombre')}
+              label={t('usuarios.campoNombreApellidos')}
               value={formData.nombre}
               onChange={handleChange('nombre')}
               error={!!errors.nombre}
@@ -446,7 +443,7 @@ const UserModal: React.FC<UserModalProps> = ({
               <InputField
                 id="user-email"
                 fullWidth
-                label={t('usuarioModal.fieldEmail')}
+                label={t('usuarios.campoCorreoElectronico')}
                 type="email"
                 value={formData.email}
                 onChange={handleChange('email')}
@@ -467,16 +464,14 @@ const UserModal: React.FC<UserModalProps> = ({
                 <SelectField
                   fullWidth
                   id="user-role-select"
-                  label={t('usuarioModal.fieldRol')}
+                  label={t('usuarios.campoRol')}
                   value={formData.roleId}
                   onChange={handleChange('roleId')}
                   error={!!errors.roleId || !!errors.rol}
                   helperText={
                     errors.roleId ||
                     errors.rol ||
-                    (isLoadingRoles
-                      ? t('usuarioModal.loadingRoles')
-                      : undefined)
+                    (isLoadingRoles ? t('usuarios.cargandoRoles') : undefined)
                   }
                   disabled={
                     isSaving || isLoadingRoles || roleOptions.length === 0
@@ -491,8 +486,8 @@ const UserModal: React.FC<UserModalProps> = ({
                           {
                             value: '',
                             label: isLoadingRoles
-                              ? t('usuarioModal.loading')
-                              : t('usuarioModal.noRolesAvailable'),
+                              ? 'Cargando...'
+                              : 'No hay roles disponibles',
                           },
                         ]
                   }
@@ -506,7 +501,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   gap={0.5}
                 >
                   <Typography variant="caption" color="text.secondary">
-                    {t('usuarioModal.accountStatus')}
+                    Estado de cuenta
                   </Typography>
                   <Button
                     variant={
@@ -523,8 +518,8 @@ const UserModal: React.FC<UserModalProps> = ({
                     }}
                   >
                     {formData.estado === 'Activo'
-                      ? t('usuarioModal.statusActive')
-                      : t('usuarioModal.statusSuspended')}
+                      ? 'CUENTA ACTIVA'
+                      : 'CUENTA SUSPENDIDA'}
                   </Button>
                 </Box>
               )}
@@ -533,19 +528,13 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-status-select"
-                    label={t('usuarioModal.fieldInitialStatus')}
+                    label={t('usuarios.campoEstadoInicial')}
                     value={formData.estado}
                     onChange={handleChange('estado')}
                     disabled={isSaving}
                     options={[
-                      {
-                        value: 'Activo',
-                        label: t('usuarioModal.statusActivo'),
-                      },
-                      {
-                        value: 'Inactivo',
-                        label: t('usuarioModal.statusInactivo'),
-                      },
+                      { value: 'Activo', label: 'Activo' },
+                      { value: 'Inactivo', label: 'Inactivo' },
                     ]}
                   />
                 </Box>
@@ -565,7 +554,7 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-slot-select"
-                    label={t('usuarioModal.slotLabel')}
+                    label={t('usuarios.campoAulaSlot')}
                     value={formData.slotId || ''}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -575,16 +564,10 @@ const UserModal: React.FC<UserModalProps> = ({
                     }
                     disabled={isSaving}
                     options={[
-                      { value: '', label: t('usuarioModal.noSlot') },
+                      { value: '', label: 'Sin Aula' },
                       ...allSlots.map((s) => ({
                         value: s.id,
-                        label: t('usuarioModal.classLabel', {
-                          aula: s.aula,
-                          num: s.numeroClase,
-                          teacher:
-                            s.profesor?.user?.username ||
-                            t('usuarioModal.ownTeacher'),
-                        }),
+                        label: `${s.aula} - Clase ${s.numeroClase} (${s.profesor?.user?.username || 'Propio'})`,
                       })),
                       {
                         value: 'CREATE_NEW_SLOT',
@@ -594,14 +577,14 @@ const UserModal: React.FC<UserModalProps> = ({
                             color="primary"
                             sx={{ fontWeight: 'bold' }}
                           >
-                            {t('usuarioModal.createNewSlot')}
+                            + CREAR NUEVA AULA
                           </Typography>
                         ),
                       },
                     ]}
                   />
                 </Box>
-                <Tooltip title={t('usuarioModal.createNewSlotTooltip')}>
+                <Tooltip title={t('perfil.crearNuevaAula')}>
                   <IconButton
                     color="primary"
                     sx={{ mt: 1 }}
@@ -623,12 +606,12 @@ const UserModal: React.FC<UserModalProps> = ({
                   <SelectField
                     fullWidth
                     id="user-ubicacion-select"
-                    label={t('usuarioModal.ubicacionLabel')}
+                    label={t('usuarios.campoUbicacionAlmacen')}
                     value={formData.ubicacionId || ''}
                     onChange={handleChange('ubicacionId')}
                     disabled={isSaving}
                     options={[
-                      { value: '', label: t('usuarioModal.noUbicacion') },
+                      { value: '', label: 'Sin Ubicación' },
                       ...allUbicaciones.map((u) => ({
                         value: u.id,
                         label: u.nombre,
@@ -641,14 +624,14 @@ const UserModal: React.FC<UserModalProps> = ({
                             color="primary"
                             sx={{ fontWeight: 'bold' }}
                           >
-                            {t('usuarioModal.createNewUbicacion')}
+                            + CREAR NUEVA UBICACIÓN
                           </Typography>
                         ),
                       },
                     ]}
                   />
                 </Box>
-                <Tooltip title={t('usuarioModal.createNewUbicacionTooltip')}>
+                <Tooltip title={t('perfil.crearNuevaUbicacion')}>
                   <IconButton
                     color="primary"
                     sx={{ mt: 1 }}
@@ -662,7 +645,7 @@ const UserModal: React.FC<UserModalProps> = ({
 
             <Divider sx={{ my: 1 }} />
             <Typography variant="subtitle2" color="primary" gutterBottom>
-              {t('usuarioModal.additionalPermissions')}
+              Permisos Individuales Adicionales
             </Typography>
             <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
               {Object.entries(groupedPermissions).map(([module, perms]) => (
@@ -677,7 +660,7 @@ const UserModal: React.FC<UserModalProps> = ({
                       variant="body2"
                       sx={{ fontWeight: 'bold', textTransform: 'capitalize' }}
                     >
-                      {t('usuarioModal.moduleLabel')} {module}
+                      Módulo: {module}
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ py: 0 }}>
@@ -712,7 +695,7 @@ const UserModal: React.FC<UserModalProps> = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isSaving}>
-          {t('usuarioModal.cancel')}
+          Cancelar
         </Button>
         <Button
           onClick={handleSave}
@@ -722,7 +705,7 @@ const UserModal: React.FC<UserModalProps> = ({
             isSaving ? <CircularProgress size={20} color="inherit" /> : null
           }
         >
-          {isSaving ? t('usuarioModal.saving') : t('usuarioModal.save')}
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </DialogActions>
 

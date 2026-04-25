@@ -1,10 +1,16 @@
-import React from 'react';
-import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
+import {
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material';
 import { Tooltip } from '../../ui/Tooltip';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import SchoolIconFilled from '@mui/icons-material/School';
 import { useThemeContext } from '../../../store/theme.hooks';
-import { useTranslation } from 'react-i18next';
 
 interface LearningModeToggleProps {
   mode?: 'icon' | 'listitem';
@@ -15,18 +21,16 @@ export default function LearningModeToggle({
   mode = 'icon',
   isOpen = true,
 }: LearningModeToggleProps) {
+  const theme = useTheme();
   const { isLearningMode, setLearningMode } = useThemeContext();
-  const { t } = useTranslation();
 
   const handleClick = () => {
     setLearningMode(!isLearningMode);
   };
 
   const tooltipText = isLearningMode
-    ? t('learning.deactivate')
-    : t('learning.activate');
-
-  const label = isLearningMode ? t('learning.on') : t('learning.off');
+    ? 'Desactivar tips de uso (Ocultar descripciones de la interfaz)'
+    : 'Activar tips de uso (Mostrar descripciones de botones e iconos)';
 
   if (mode === 'listitem') {
     return (
@@ -50,7 +54,49 @@ export default function LearningModeToggle({
           >
             {isLearningMode ? <SchoolIconFilled /> : <SchoolIcon />}
           </ListItemIcon>
-          <ListItemText primary={label} sx={{ opacity: isOpen ? 1 : 0 }} />
+          <ListItemText
+            primary={
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Tips de uso
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    px: 1,
+                    py: 0.2,
+                    borderRadius: 1,
+                    bgcolor: isLearningMode
+                      ? alpha(theme.palette.primary.main, 0.1)
+                      : 'action.hover',
+                    color: isLearningMode ? 'primary.main' : 'text.disabled',
+                    fontWeight: 700,
+                    fontSize: '0.65rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {isLearningMode ? 'ON' : 'OFF'}
+                </Typography>
+              </Box>
+            }
+            sx={{
+              opacity: isOpen ? 1 : 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              transition: theme.transitions.create('opacity', {
+                easing: theme.transitions.easing.easeInOut,
+                duration: isOpen ? theme.transitions.duration.standard : 100,
+                delay: isOpen ? 150 : 0,
+              }),
+            }}
+          />
         </ListItemButton>
       </Tooltip>
     );

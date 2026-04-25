@@ -15,7 +15,6 @@ import {
 } from '../utils/pedidoColumns';
 import { formatPedidoListNumber } from '../utils/pedidoFormatters';
 import PedidoCard from './PedidoCard';
-import { useTranslation } from 'react-i18next';
 
 interface PedidosTableProps {
   data: PedidoListItem[];
@@ -31,6 +30,25 @@ interface PedidosTableProps {
   onCreateClick: () => void;
 }
 
+const columns = buildPedidoColumns();
+
+/**
+ * @description Table/grid component for the pedidos list page.
+ * Switches between a DataTable (list view) and a responsive card grid (grid view).
+ * Shows an empty state prompt with a create button when no pedidos are found.
+ * @param props.data - Array of pedido rows to display
+ * @param props.isLoading - Whether a data fetch is in progress
+ * @param props.page - Current page index (1-based)
+ * @param props.pageSize - Number of rows per page
+ * @param props.totalPages - Total number of pages for pagination
+ * @param props.viewMode - 'list' or 'grid' display mode
+ * @param props.permissions - Permission flags controlling which actions are shown
+ * @param props.handlers - Action callbacks passed to column renderers and cards
+ * @param props.onPageChange - Callback for page navigation
+ * @param props.onPageSizeChange - Callback for page size changes
+ * @param props.onCreateClick - Callback for the empty-state create button
+ * @returns Table or grid view of pedidos
+ */
 const PedidosTable: React.FC<PedidosTableProps> = ({
   data,
   isLoading,
@@ -44,8 +62,6 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
   onPageSizeChange,
   onCreateClick,
 }) => {
-  const { t } = useTranslation();
-  const columns = buildPedidoColumns(t);
   return (
     <DataTable
       columns={columns}
@@ -57,7 +73,7 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       renderGridItem={(row) => (
         <PedidoCard
           pedido={row}
-          actions={renderPedidoActions(row, permissions, handlers, t)}
+          actions={renderPedidoActions(row, permissions, handlers)}
           onRowClick={handlers.onView}
         />
       )}
@@ -67,10 +83,10 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
             sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
           />
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            {t('pedidos.empty.noOrders')}
+            No se encontraron pedidos
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {t('pedidos.empty.startFirst')}
+            Empieza registrando un nuevo pedido al catálogo de proveedores.
           </Typography>
           {permissions.canCreate && (
             <Button
@@ -78,7 +94,7 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
               startIcon={<AddIcon />}
               onClick={onCreateClick}
             >
-              {t('pedidos.empty.register')}
+              Registrar Pedido
             </Button>
           )}
         </Box>
@@ -94,11 +110,9 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       }}
       onRowClick={handlers.onView}
       getRowAriaLabel={(row) =>
-        t('pedidos.drawer.title') + ` ${formatPedidoListNumber(row)}`
+        `Ver detalle del pedido ${formatPedidoListNumber(row)}`
       }
-      renderActions={(row) =>
-        renderPedidoActions(row, permissions, handlers, t)
-      }
+      renderActions={(row) => renderPedidoActions(row, permissions, handlers)}
     />
   );
 };

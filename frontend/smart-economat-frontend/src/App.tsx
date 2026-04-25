@@ -1,3 +1,4 @@
+import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeContextProvider } from './store/ThemeContext';
@@ -10,30 +11,20 @@ import ToastContainer from './components/common/Notification/ToastContainer';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/es';
-import 'dayjs/locale/en';
-import dayjs from 'dayjs';
 
 import { Provider } from 'react-redux';
 import { store } from './store';
-import { useTranslation } from 'react-i18next';
-import { useEffect } from 'react';
+import { SidebarProvider } from './store/SidebarContext';
+import { TutorialProvider } from './store/TutorialContext';
 
 function App() {
-  const { i18n } = useTranslation();
-  const dayjsLocale = i18n.language?.startsWith('en') ? 'en' : 'es';
-
-  useEffect(() => {
-    dayjs.locale(dayjsLocale);
-  }, [dayjsLocale]);
-
   return (
     <Provider store={store}>
-      <LocalizationProvider
-        dateAdapter={AdapterDayjs}
-        adapterLocale={dayjsLocale}
-      >
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <ThemeContextProvider>
-          <Main />
+          <SidebarProvider>
+            <Main />
+          </SidebarProvider>
         </ThemeContextProvider>
       </LocalizationProvider>
     </Provider>
@@ -47,9 +38,13 @@ function Main() {
     <ThemeProvider theme={siteTheme}>
       <CssBaseline />
       <ToastProvider>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <TutorialProvider>
+              <AppRouter />
+            </TutorialProvider>
+          </AuthProvider>
+        </BrowserRouter>
         <ToastContainer />
       </ToastProvider>
     </ThemeProvider>

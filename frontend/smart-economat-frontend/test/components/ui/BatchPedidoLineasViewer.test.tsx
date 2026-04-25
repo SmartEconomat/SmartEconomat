@@ -75,7 +75,9 @@ describe('BatchPedidoLineasViewer', () => {
 
     expect(screen.getByText('Lote de prueba')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Proveedor A' })).toBeDefined();
-    expect(screen.getByText('TOTAL COMPRA: 150.00 €')).toBeDefined();
+    expect(
+      screen.getByText('batchLineas.totalPurchase: 150.00 €')
+    ).toBeDefined();
   });
 
   it('debería filtrar pedidos cancelados al desmarcar el checkbox', () => {
@@ -87,13 +89,17 @@ describe('BatchPedidoLineasViewer', () => {
     );
 
     // Por defecto están incluidos. Total 150.
-    expect(screen.getByText('TOTAL COMPRA: 150.00 €')).toBeDefined();
+    expect(
+      screen.getByText('batchLineas.totalPurchase: 150.00 €')
+    ).toBeDefined();
 
-    const checkbox = screen.getByLabelText('Incluir cancelados');
+    const checkbox = screen.getByLabelText('batchLineas.includeCancelled');
     fireEvent.click(checkbox);
 
     // Ahora excluidos. Solo queda ped-1 (100).
-    expect(screen.getByText('TOTAL COMPRA: 100.00 €')).toBeDefined();
+    expect(
+      screen.getByText('batchLineas.totalPurchase: 100.00 €')
+    ).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Proveedor B' })).toBeNull();
   });
 
@@ -131,7 +137,7 @@ describe('BatchPedidoLineasViewer', () => {
 
     render(<BatchPedidoLineasViewer batch={pedidoVisible} mode="pedido" />);
 
-    expect(screen.getByText('TOTAL: 150.00 €')).toBeDefined();
+    expect(screen.getByText('batchLineas.total: 150.00 €')).toBeDefined();
 
     const pdfButton = screen.getByTestId('PictureAsPdfIcon').parentElement!;
 
@@ -188,7 +194,7 @@ describe('BatchPedidoLineasViewer', () => {
       />
     );
 
-    expect(screen.getByText('Pedidos involucrados en la compra')).toBeDefined();
+    expect(screen.getByText('batchLineas.involvedOrders')).toBeDefined();
     expect(screen.getByText('#200001')).toBeDefined();
     expect(screen.getByText('#200002')).toBeDefined();
     expect(screen.getAllByText('PU-42').length).toBe(2);

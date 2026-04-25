@@ -8,6 +8,7 @@ import {
   Typography,
   Divider,
   ListItemButton,
+  useTheme,
 } from '@mui/material';
 import { Tooltip } from '../../ui/Tooltip';
 import { getTooltipContent } from '../../../utils/tooltipUtils';
@@ -18,7 +19,6 @@ import ContrastIcon from '@mui/icons-material/ContrastOutlined';
 import InvertColorsIcon from '@mui/icons-material/InvertColorsOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import { useThemeContext } from '../../../store/theme.hooks';
-import { useTranslation } from 'react-i18next';
 
 interface SettingsMenuProps {
   mode?: 'icon' | 'listitem';
@@ -30,9 +30,9 @@ export default function SettingsMenu({
   isOpen = true,
 }: SettingsMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const theme = useTheme();
   const { currentThemeName, setTheme, fontSize, setFontSize, isLearningMode } =
     useThemeContext();
-  const { t } = useTranslation();
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -50,122 +50,6 @@ export default function SettingsMenu({
     handleClose();
   };
 
-  const menuContent = (
-    <>
-      <MenuItem disabled>
-        <Typography variant="subtitle2" color="text.secondary">
-          {t('settings.theme.label')}
-        </Typography>
-      </MenuItem>
-      <Divider />
-      <MenuItem onClick={() => handleThemeChange('light')}>
-        <ListItemIcon>
-          <LightModeIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>{t('settings.theme.light')}</ListItemText>
-        {currentThemeName === 'light' && (
-          <Typography variant="body2" color="text.secondary">
-            <CheckIcon fontSize="small" />
-          </Typography>
-        )}
-      </MenuItem>
-      <MenuItem onClick={() => handleThemeChange('dark')}>
-        <ListItemIcon>
-          <DarkModeIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>{t('settings.theme.dark')}</ListItemText>
-        {currentThemeName === 'dark' && (
-          <Typography variant="body2" color="text.secondary">
-            <CheckIcon fontSize="small" />
-          </Typography>
-        )}
-      </MenuItem>
-      <MenuItem onClick={() => handleThemeChange('highContrastLight')}>
-        <ListItemIcon>
-          <ContrastIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>{t('settings.theme.highContrastLight')}</ListItemText>
-        {currentThemeName === 'highContrastLight' && (
-          <Typography variant="body2" color="text.secondary">
-            <CheckIcon fontSize="small" />
-          </Typography>
-        )}
-      </MenuItem>
-      <MenuItem onClick={() => handleThemeChange('highContrastDark')}>
-        <ListItemIcon>
-          <InvertColorsIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>{t('settings.theme.highContrastDark')}</ListItemText>
-        {currentThemeName === 'highContrastDark' && (
-          <Typography variant="body2" color="text.secondary">
-            <CheckIcon fontSize="small" />
-          </Typography>
-        )}
-      </MenuItem>
-      <Divider />
-      <MenuItem disabled>
-        <Typography variant="subtitle2" color="text.secondary">
-          {t('settings.fontSize.label')}
-        </Typography>
-      </MenuItem>
-      <Divider />
-      <MenuItem
-        onClick={() => {
-          setFontSize('small');
-          handleClose();
-        }}
-      >
-        <ListItemIcon>
-          <Typography variant="body2" sx={{ fontSize: 12 }}>
-            A
-          </Typography>
-        </ListItemIcon>
-        <ListItemText primaryTypographyProps={{ fontSize: 12 }}>
-          {t('settings.fontSize.small')}
-        </ListItemText>
-        {fontSize === 'small' && (
-          <CheckIcon fontSize="small" sx={{ ml: 2, color: 'text.secondary' }} />
-        )}
-      </MenuItem>
-      <MenuItem
-        onClick={() => {
-          setFontSize('medium');
-          handleClose();
-        }}
-      >
-        <ListItemIcon>
-          <Typography variant="body2" sx={{ fontSize: 14 }}>
-            A
-          </Typography>
-        </ListItemIcon>
-        <ListItemText primaryTypographyProps={{ fontSize: 14 }}>
-          {t('settings.fontSize.medium')}
-        </ListItemText>
-        {fontSize === 'medium' && (
-          <CheckIcon fontSize="small" sx={{ ml: 2, color: 'text.secondary' }} />
-        )}
-      </MenuItem>
-      <MenuItem
-        onClick={() => {
-          setFontSize('large');
-          handleClose();
-        }}
-      >
-        <ListItemIcon>
-          <Typography variant="body2" sx={{ fontSize: 16 }}>
-            A
-          </Typography>
-        </ListItemIcon>
-        <ListItemText primaryTypographyProps={{ fontSize: 16 }}>
-          {t('settings.fontSize.large')}
-        </ListItemText>
-        {fontSize === 'large' && (
-          <CheckIcon fontSize="small" sx={{ ml: 2, color: 'text.secondary' }} />
-        )}
-      </MenuItem>
-    </>
-  );
-
   if (mode === 'listitem') {
     return (
       <>
@@ -173,8 +57,8 @@ export default function SettingsMenu({
           title={getTooltipContent(
             isOpen,
             isLearningMode,
-            t('settings.title'),
-            t('settings.titleTooltip')
+            'Configuración',
+            'Configuración de tema y apariencia'
           )}
         >
           <ListItemButton
@@ -198,8 +82,17 @@ export default function SettingsMenu({
               <SettingsIcon />
             </ListItemIcon>
             <ListItemText
-              primary={t('settings.title')}
-              sx={{ opacity: isOpen ? 1 : 0 }}
+              primary="Configuración"
+              sx={{
+                opacity: isOpen ? 1 : 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                transition: theme.transitions.create('opacity', {
+                  easing: theme.transitions.easing.easeInOut,
+                  duration: isOpen ? theme.transitions.duration.standard : 100,
+                  delay: isOpen ? 150 : 0,
+                }),
+              }}
             />
           </ListItemButton>
         </Tooltip>
@@ -215,7 +108,7 @@ export default function SettingsMenu({
               overflow: 'visible',
               filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
               mt: 1.5,
-              ml: 6,
+              ml: 6, // Ajuste para sidebar
               '& .MuiAvatar-root': {
                 width: 32,
                 height: 32,
@@ -227,7 +120,7 @@ export default function SettingsMenu({
                 display: 'block',
                 position: 'absolute',
                 top: 0,
-                left: 14,
+                left: 14, // Arrow left for sidebar
                 width: 10,
                 height: 10,
                 bgcolor: 'background.paper',
@@ -236,10 +129,130 @@ export default function SettingsMenu({
               },
             },
           }}
-          transformOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: 'left', vertical: 'bottom' }} // Open to right/bottom
           anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
         >
-          {menuContent}
+          {/* Menu Items (Same) */}
+          <MenuItem disabled>
+            <Typography variant="subtitle2" color="text.secondary">
+              Tema
+            </Typography>
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={() => handleThemeChange('light')}>
+            <ListItemIcon>
+              <LightModeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Claro</ListItemText>
+            {currentThemeName === 'light' && (
+              <Typography variant="body2" color="text.secondary">
+                <CheckIcon fontSize="small" />
+              </Typography>
+            )}
+          </MenuItem>
+          <MenuItem onClick={() => handleThemeChange('dark')}>
+            <ListItemIcon>
+              <DarkModeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Oscuro</ListItemText>
+            {currentThemeName === 'dark' && (
+              <Typography variant="body2" color="text.secondary">
+                <CheckIcon fontSize="small" />
+              </Typography>
+            )}
+          </MenuItem>
+          <MenuItem onClick={() => handleThemeChange('highContrastLight')}>
+            <ListItemIcon>
+              <ContrastIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Alto Contraste (Claro)</ListItemText>
+            {currentThemeName === 'highContrastLight' && (
+              <Typography variant="body2" color="text.secondary">
+                <CheckIcon fontSize="small" />
+              </Typography>
+            )}
+          </MenuItem>
+          <MenuItem onClick={() => handleThemeChange('highContrastDark')}>
+            <ListItemIcon>
+              <InvertColorsIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Alto Contraste (Oscuro)</ListItemText>
+            {currentThemeName === 'highContrastDark' && (
+              <Typography variant="body2" color="text.secondary">
+                <CheckIcon fontSize="small" />
+              </Typography>
+            )}
+          </MenuItem>
+          <Divider />
+          <MenuItem disabled>
+            <Typography variant="subtitle2" color="text.secondary">
+              Tamaño de Fuente
+            </Typography>
+          </MenuItem>
+          <Divider />
+          <MenuItem
+            onClick={() => {
+              setFontSize('small');
+              handleClose();
+            }}
+          >
+            <ListItemIcon>
+              <Typography variant="body2" sx={{ fontSize: 12 }}>
+                A
+              </Typography>
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: 12 }}>
+              Pequeño
+            </ListItemText>
+            {fontSize === 'small' && (
+              <CheckIcon
+                fontSize="small"
+                sx={{ ml: 2, color: 'text.secondary' }}
+              />
+            )}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setFontSize('medium');
+              handleClose();
+            }}
+          >
+            <ListItemIcon>
+              <Typography variant="body2" sx={{ fontSize: 14 }}>
+                A
+              </Typography>
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: 14 }}>
+              Mediano
+            </ListItemText>
+            {fontSize === 'medium' && (
+              <CheckIcon
+                fontSize="small"
+                sx={{ ml: 2, color: 'text.secondary' }}
+              />
+            )}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setFontSize('large');
+              handleClose();
+            }}
+          >
+            <ListItemIcon>
+              <Typography variant="body2" sx={{ fontSize: 16 }}>
+                A
+              </Typography>
+            </ListItemIcon>
+            <ListItemText primaryTypographyProps={{ fontSize: 16 }}>
+              Grande
+            </ListItemText>
+            {fontSize === 'large' && (
+              <CheckIcon
+                fontSize="small"
+                sx={{ ml: 2, color: 'text.secondary' }}
+              />
+            )}
+          </MenuItem>
         </Menu>
       </>
     );
@@ -251,8 +264,8 @@ export default function SettingsMenu({
         title={getTooltipContent(
           false,
           isLearningMode,
-          t('settings.title'),
-          t('settings.titleTooltip')
+          'Ajustes',
+          'Configuración'
         )}
         placement="bottom"
       >
@@ -302,7 +315,126 @@ export default function SettingsMenu({
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        {menuContent}
+        <MenuItem disabled>
+          <Typography variant="subtitle2" color="text.secondary">
+            Tema
+          </Typography>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={() => handleThemeChange('light')}>
+          <ListItemIcon>
+            <LightModeIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Claro</ListItemText>
+          {currentThemeName === 'light' && (
+            <Typography variant="body2" color="text.secondary">
+              <CheckIcon fontSize="small" />
+            </Typography>
+          )}
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange('dark')}>
+          <ListItemIcon>
+            <DarkModeIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Oscuro</ListItemText>
+          {currentThemeName === 'dark' && (
+            <Typography variant="body2" color="text.secondary">
+              <CheckIcon fontSize="small" />
+            </Typography>
+          )}
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange('highContrastLight')}>
+          <ListItemIcon>
+            <ContrastIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Alto Contraste (Claro)</ListItemText>
+          {currentThemeName === 'highContrastLight' && (
+            <Typography variant="body2" color="text.secondary">
+              <CheckIcon fontSize="small" />
+            </Typography>
+          )}
+        </MenuItem>
+        <MenuItem onClick={() => handleThemeChange('highContrastDark')}>
+          <ListItemIcon>
+            <InvertColorsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Alto Contraste (Oscuro)</ListItemText>
+          {currentThemeName === 'highContrastDark' && (
+            <Typography variant="body2" color="text.secondary">
+              <CheckIcon fontSize="small" />
+            </Typography>
+          )}
+        </MenuItem>
+        <Divider />
+        <MenuItem disabled>
+          <Typography variant="subtitle2" color="text.secondary">
+            Tamaño de Fuente
+          </Typography>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            setFontSize('small');
+            handleClose();
+          }}
+        >
+          <ListItemIcon>
+            <Typography variant="body2" sx={{ fontSize: 12 }}>
+              A
+            </Typography>
+          </ListItemIcon>
+          <ListItemText primaryTypographyProps={{ fontSize: 12 }}>
+            Pequeño
+          </ListItemText>
+          {fontSize === 'small' && (
+            <CheckIcon
+              fontSize="small"
+              sx={{ ml: 2, color: 'text.secondary' }}
+            />
+          )}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setFontSize('medium');
+            handleClose();
+          }}
+        >
+          <ListItemIcon>
+            <Typography variant="body2" sx={{ fontSize: 14 }}>
+              A
+            </Typography>
+          </ListItemIcon>
+          <ListItemText primaryTypographyProps={{ fontSize: 14 }}>
+            Mediano
+          </ListItemText>
+          {fontSize === 'medium' && (
+            <CheckIcon
+              fontSize="small"
+              sx={{ ml: 2, color: 'text.secondary' }}
+            />
+          )}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setFontSize('large');
+            handleClose();
+          }}
+        >
+          <ListItemIcon>
+            <Typography variant="body2" sx={{ fontSize: 16 }}>
+              A
+            </Typography>
+          </ListItemIcon>
+          <ListItemText primaryTypographyProps={{ fontSize: 16 }}>
+            Grande
+          </ListItemText>
+          {fontSize === 'large' && (
+            <CheckIcon
+              fontSize="small"
+              sx={{ ml: 2, color: 'text.secondary' }}
+            />
+          )}
+        </MenuItem>
       </Menu>
     </>
   );

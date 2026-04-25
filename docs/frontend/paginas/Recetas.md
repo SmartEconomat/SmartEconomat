@@ -16,8 +16,18 @@ La pantalla de recetas cubre el ciclo operativo de definición, visualización y
 - `DetailModal` para detalle funcional
 - `ConfirmDialog` para borrado
 - `RecipeCarousel` como apoyo visual en la cabecera de la vista
+- **[InteractiveTour](../componentes/InteractiveTour.md)**: Guía paso a paso por el flujo de cocina.
 
-La página ya no depende de `DynamicFormModal` para editar recetas.
+## Ayuda e Inspiración Culinaria ✅
+
+La página de Recetas integra un sistema de asistencia para optimizar el trabajo en cocina:
+
+### Tour de Recetario (5 pasos)
+1. **Inspiración Culinaria**: Uso del carrusel visual superior.
+2. **Buscador**: Localización por ingredientes o elaboración.
+3. **Ordenado**: Gestión por dificultad o tiempo.
+4. **Creación**: Registro de nuevas recetas y escandallos.
+5. **¡A Cocinar!**: Lanzamiento de producciones y ficha técnica.
 
 ## Funcionalidades principales
 

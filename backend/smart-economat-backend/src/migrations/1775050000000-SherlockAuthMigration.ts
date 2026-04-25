@@ -106,6 +106,10 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
   public name = 'sherlockAuthMigration1775050000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "rol" ADD COLUMN IF NOT EXISTS "plantilla_rol_id" uuid`
+    );
+
     const permissionCodes = [...ALL_PERMISSION_CODES].sort();
     const permissionIdByCode = await this.ensurePermissions(
       queryRunner,

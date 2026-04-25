@@ -6,10 +6,28 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { RecetaIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
 
+/**
+ * Props for the {@link RecetaAlergenos} component.
+ */
 interface RecetaAlergenosProps {
+  /** List of recipe ingredients whose products are scanned for allergens. */
   ingredientes?: RecetaIngrediente[];
 }
 
+/**
+ * Allergen panel for a recipe.
+ *
+ * Derives the complete set of allergens present in the recipe by inspecting
+ * each ingredient's product allergen list. Renders:
+ * - Quick gluten-free / dairy-free badge chips.
+ * - A success alert when no allergens are detected.
+ * - A responsive grid of all 14 EU allergen tiles (highlighted if present).
+ *
+ * @param props - See {@link RecetaAlergenosProps}.
+ * @returns JSX element with allergen summary chips and an allergen grid.
+ * @example
+ * <RecetaAlergenos ingredientes={receta.ingredientes} />
+ */
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],
 }) => {
@@ -33,7 +51,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isGlutenFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label={t('recetaAlergenos.sinGluten')}
+          label={t('recetas.sinGluten')}
           color={isGlutenFree ? 'success' : 'error'}
           variant={isGlutenFree ? 'filled' : 'outlined'}
         />
@@ -42,14 +60,16 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isLacteosFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label={t('recetaAlergenos.sinLacteos')}
+          label={t('recetas.sinLacteos')}
           color={isLacteosFree ? 'success' : 'error'}
           variant={isLacteosFree ? 'filled' : 'outlined'}
         />
       </Box>
 
       {presentIds.size === 0 ? (
-        <Alert severity="success">{t('recetaAlergenos.noAllergens')}</Alert>
+        <Alert severity="success">
+          No se han detectado alérgenos en los ingredientes de esta receta.
+        </Alert>
       ) : (
         <Box
           sx={{
@@ -65,16 +85,8 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                 key={allergen.id}
                 title={
                   isPresent
-                    ? t('recetaAlergenos.contains', {
-                        allergen: t(`allergens.${allergen.id}`, {
-                          defaultValue: allergen.label,
-                        }),
-                      })
-                    : t('recetaAlergenos.free', {
-                        allergen: t(`allergens.${allergen.id}`, {
-                          defaultValue: allergen.label,
-                        }),
-                      })
+                    ? `Contiene ${allergen.label}`
+                    : `Sin ${allergen.label}`
                 }
               >
                 <Box
@@ -113,9 +125,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                       color: isPresent ? 'warning.dark' : 'text.disabled',
                     }}
                   >
-                    {t(`allergens.${allergen.id}`, {
-                      defaultValue: allergen.label,
-                    })}
+                    {allergen.label}
                   </Typography>
                 </Box>
               </Tooltip>

@@ -20,7 +20,7 @@ Este documento resume las variables soportadas por el proyecto y diferencia clar
 | Variable | Uso | Valor por defecto o ejemplo |
 | --- | --- | --- |
 | `BACKEND_PORT` | Puerto de escucha del backend | `3000` |
-| `BACKEND_API_URL` | URL pública o interna del backend | `http://localhost:3000` |
+| `URL_BACKEND_DERIVADA` | URL pública o interna del backend | `http://localhost:3000` |
 | `JWT_SECRET` | Secreto de firma JWT | `changeme` en el ejemplo |
 | `JWT_EXPIRATION` | Vida útil del token | `7d` |
 | `SEED_DEFAULT_ADMIN_TEMP_PASSWORD` | Password temporal exigida por la migracion de admins por defecto en `NODE_ENV=production` | sin default recomendado |
@@ -32,12 +32,12 @@ Este documento resume las variables soportadas por el proyecto y diferencia clar
 | --- | --- | --- |
 | `POSTGRES_USER` | Usuario del contenedor PostgreSQL | `postgres` |
 | `POSTGRES_PASSWORD` | Contraseña del contenedor PostgreSQL | `postgres` |
-| `POSTGRES_DB` | Base de datos inicial del contenedor | `app_db` |
+| `POSTGRES_DB` | Variable derivada por Docker desde `POSTGRES_DB` para inicializar contenedor | `POSTGRES_DB` |
 | `DB_HOST` | Host usado por TypeORM | `localhost` en local, `db` en Compose |
-| `DB_PORT` | Puerto de PostgreSQL | `5432` |
-| `DB_USERNAME` | Usuario efectivo para TypeORM | `postgres` |
-| `DB_PASSWORD` | Contraseña efectiva para TypeORM | `postgres` |
-| `DB_DATABASE` | Nombre de la base de datos usada por la app | `app_db` |
+| `POSTGRES_PORT` | Puerto de PostgreSQL | `5432` |
+| `POSTGRES_USER` | Usuario efectivo para TypeORM | `postgres` |
+| `POSTGRES_PASSWORD` | Contraseña efectiva para TypeORM | `postgres` |
+| `POSTGRES_DB` | Nombre de la base de datos usada por la app (fuente de verdad) | `app_db` |
 | `DB_SYNC` | Fuerza sincronización automática del esquema | no aparece en `.env.example`, pero el backend la soporta |
 
 ### Nota sobre `DB_SYNC`
@@ -49,8 +49,8 @@ Si `DB_SYNC=true`, el backend sincroniza el esquema automáticamente. En desarro
 | Variable | Uso | Valor por defecto o ejemplo |
 | --- | --- | --- |
 | `FRONTEND_PORT` | Puerto local del frontend | `5173` |
-| `FRONTEND_API_URL` | Origen del frontend y base para CORS y enlaces de recuperación | `http://localhost:5173` |
-| `VITE_API_PROXY_TARGET` | Destino del proxy de Vite | `http://localhost:3000` |
+| `URL_FRONTEND_DERIVADA` | Origen del frontend y base para CORS y enlaces de recuperación | `http://localhost:5173` |
+| `VITE_PROXY_DERIVADO` | Destino del proxy de Vite | `http://localhost:3000` |
 | `VITE_SENTRY_DSN` | DSN de Sentry para frontend | vacío |
 
 ## Email y recuperación de contraseña
@@ -61,7 +61,7 @@ Si `DB_SYNC=true`, el backend sincroniza el esquema automáticamente. En desarro
 | `MAIL_PORT` | Puerto SMTP | `587` |
 | `MAIL_USER` | Usuario SMTP | vacío |
 | `MAIL_PASS` | Contraseña SMTP | vacío |
-| `MAIL_FROM` | Remitente de emails | `noreply@smarteconomat.com` |
+| `EMAIL_DERIVADO` | Remitente de emails | `noreply@smarteconomat.com` |
 
 Si `MAIL_HOST` o `MAIL_USER` no están configurados, el backend entra en modo simulación y registra los intentos de envío en logs.
 
@@ -76,13 +76,13 @@ Estas variables son relevantes cuando se usa [scripts/deploy.sh](../../scripts/d
 | `LETSENCRYPT_EMAIL` | Email para emisión Let's Encrypt (solo si `TLS_PROVIDER=letsencrypt`) |
 | `LETSENCRYPT_DIRECTORY_URL` | Endpoint ACME de Let's Encrypt (`https://acme-v02.api.letsencrypt.org/directory` o staging) |
 | `DOMAIN` | Dominio para certificados y enlaces públicos |
-| `BACKEND_API_URL` | URL que se escribe en `.env.prod` |
-| `FRONTEND_API_URL` | URL que se escribe en `.env.prod` |
-| `VITE_API_PROXY_TARGET` | Destino del proxy frontend en producción |
+| `URL_BACKEND_DERIVADA` | URL que se escribe en `.env.prod` |
+| `URL_FRONTEND_DERIVADA` | URL que se escribe en `.env.prod` |
+| `VITE_PROXY_DERIVADO` | Destino del proxy frontend en producción |
 
 ## Recomendaciones
 
 - No reutilizar los valores de ejemplo en producción.
 - Gestionar secretos fuera del repositorio.
-- Mantener alineados `FRONTEND_API_URL`, CORS y las URLs de recuperación de contraseña.
+- Mantener alineados `URL_FRONTEND_DERIVADA`, CORS y las URLs de recuperación de contraseña.
 - Si cambias `DOMAIN` en producción, revisa también certificados, Nginx y variables del frontend.

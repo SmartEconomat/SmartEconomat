@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -52,7 +51,6 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 };
 
 const Movimientos: React.FC = () => {
-  const { t } = useTranslation();
   const theme = useTheme();
   const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
@@ -121,7 +119,9 @@ const Movimientos: React.FC = () => {
       setTotalPages(dataLoad.totalPages);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('movimientos.loadError');
+        err instanceof Error
+          ? err.message
+          : 'Error desconocido al cargar movimientos.';
       setError(message);
     } finally {
       setIsLoading(false);
@@ -155,7 +155,7 @@ const Movimientos: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: t('movimientos.columns.fecha'),
+        label: 'Fecha',
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -173,7 +173,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: t('movimientos.columns.tipo'),
+        label: 'Tipo',
         render: (row: Movimiento) => (
           <Tooltip title={capitalize(row.tipo)}>
             <StatusChip
@@ -193,7 +193,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'cantidad',
-        label: t('movimientos.columns.cant'),
+        label: 'Cant.',
         render: (row: Movimiento) => {
           const isNegative =
             row.tipo === TipoMovimiento.SALIDA ||
@@ -216,7 +216,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'producto',
-        label: t('movimientos.columns.descripcion'),
+        label: 'Descripción',
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -242,7 +242,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'usuario',
-        label: t('movimientos.columns.usuario'),
+        label: 'Usuario',
         render: (row: Movimiento) => {
           const displayName = getMovimientoUsuarioDisplayName(row.usuario);
 
@@ -271,7 +271,7 @@ const Movimientos: React.FC = () => {
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
-    [theme, t]
+    [theme]
   );
 
   const handleViewClick = (row: Movimiento) => {
@@ -280,11 +280,12 @@ const Movimientos: React.FC = () => {
 
   const renderActions = (row: Movimiento) => (
     <Stack direction="row" spacing={0.5} justifyContent="center">
-      <Tooltip title={t('movimientos.actions.viewDetail')}>
+      <Tooltip title="Ver detalle">
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
-          aria-label={t('movimientos.actions.viewDetail')}
+          aria-label="Ver detalle"
+          id="btn-ver-detalle-movimiento"
           sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
@@ -298,30 +299,27 @@ const Movimientos: React.FC = () => {
 
     return [
       {
-        title: t('movimientos.detail.generalInfo'),
+        title: 'Información General',
         fields: [
+          { label: 'Tipo', value: capitalize(itemToView.tipo) },
           {
-            label: t('movimientos.detail.tipo'),
-            value: capitalize(itemToView.tipo),
-          },
-          {
-            label: t('movimientos.detail.cantidad'),
+            label: 'Cantidad',
             value:
               itemToView.cantidad > 0
                 ? `+${itemToView.cantidad}`
                 : itemToView.cantidad.toString(),
           },
           {
-            label: t('movimientos.detail.fecha'),
+            label: 'Fecha',
             value: new Date(itemToView.createdAt).toLocaleString(),
           },
         ],
       },
       {
-        title: t('movimientos.detail.context'),
+        title: 'Contexto',
         fields: [
           {
-            label: t('movimientos.detail.productDescription'),
+            label: 'Producto / Descripción',
             value:
               getMovimientoNombreProducto(itemToView) ||
               itemToView.descripcion ||
@@ -329,31 +327,25 @@ const Movimientos: React.FC = () => {
             fullWidth: true,
           },
           {
-            label: t('movimientos.detail.usuario'),
+            label: 'Usuario',
             value: getMovimientoUsuarioDisplayName(itemToView.usuario),
           },
         ],
       },
       {
-        title: t('movimientos.detail.tracking'),
+        title: 'Seguimiento',
         fields: [
+          { label: 'Lote', value: itemToView.inventario?.lote || '—' },
+          { label: 'Origen (Entidad)', value: itemToView.entidad || '—' },
           {
-            label: t('movimientos.detail.lote'),
-            value: itemToView.inventario?.lote || '—',
-          },
-          {
-            label: t('movimientos.detail.origin'),
-            value: itemToView.entidad || '—',
-          },
-          {
-            label: t('movimientos.detail.entityId'),
+            label: 'ID Entidad',
             value: itemToView.entidadId || '—',
             fullWidth: true,
           },
         ],
       },
     ];
-  }, [itemToView, t]);
+  }, [itemToView]);
 
   const detailActions = useMemo(() => {
     if (!itemToView?.entidadId) {
@@ -374,33 +366,36 @@ const Movimientos: React.FC = () => {
             setItemToView(null);
           }}
         >
-          {t('movimientos.detail.viewDistribution')}
+          Ver Distribución
         </Button>
       );
     }
 
     return null;
-  }, [itemToView, navigate, t]);
+  }, [itemToView, navigate]);
 
   return (
     <Box>
       <PageToolbar
-        title={t('movimientos.pageTitle')}
+        id="movimientos-toolbar"
+        title="Historial de Movimientos"
         totalItems={totalItems}
-        totalItemsLabel={t('movimientos.totalItemsLabel')}
+        totalItemsLabel="movimientos"
         searchValue={searchTerm}
         onSearchChange={(val) => {
           setSearchTerm(val);
           setPage(1);
         }}
         filters={
-          <MovimientoFilters
-            filters={filters}
-            onChange={(newFilters) => {
-              setFilters(newFilters);
-              setPage(1);
-            }}
-          />
+          <Box id="movimientos-filters">
+            <MovimientoFilters
+              filters={filters}
+              onChange={(newFilters) => {
+                setFilters(newFilters);
+                setPage(1);
+              }}
+            />
+          </Box>
         }
       />
 
@@ -411,6 +406,7 @@ const Movimientos: React.FC = () => {
       )}
 
       <DataTable
+        id="movimientos-table"
         columns={columns}
         data={data}
         isLoading={isLoading}
@@ -419,7 +415,7 @@ const Movimientos: React.FC = () => {
           <Box sx={{ py: 8, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              {t('movimientos.empty.noMovements')}
+              No hay movimientos
             </Typography>
             <Typography
               variant="body2"
@@ -430,8 +426,8 @@ const Movimientos: React.FC = () => {
               filters.types.length > 0 ||
               filters.startDate ||
               filters.endDate
-                ? t('movimientos.empty.noMatchFilters')
-                : t('movimientos.empty.noRecords')}
+                ? 'No se encontraron movimientos que coincidan con los filtros seleccionados.'
+                : 'Aún no se han registrado alteraciones de inventario en el sistema.'}
             </Typography>
           </Box>
         }
@@ -449,7 +445,7 @@ const Movimientos: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title={t('movimientos.detail.title')}
+        title="Detalle del Movimiento"
         subtitle={`ID: ${itemToView?.id || ''}`}
         size="md"
         sections={detailSections}

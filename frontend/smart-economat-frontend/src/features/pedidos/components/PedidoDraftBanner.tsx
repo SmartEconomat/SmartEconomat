@@ -10,6 +10,15 @@ interface PedidoDraftBannerProps {
   onDiscard: () => void;
 }
 
+/**
+ * @description Banner alert shown when there is an unsaved pedido draft in local storage.
+ * Provides "Recuperar" and "Descartar" actions and shows the last-updated timestamp.
+ * Renders nothing when draft is null.
+ * @param props.draft - The draft record to display info about, or null to hide the banner
+ * @param props.onRecover - Callback invoked when the user clicks "Recuperar"
+ * @param props.onDiscard - Callback invoked when the user clicks "Descartar"
+ * @returns Alert banner with recovery actions, or null
+ */
 const PedidoDraftBanner: React.FC<PedidoDraftBannerProps> = ({
   draft,
   onRecover,

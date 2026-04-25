@@ -4,38 +4,43 @@ import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurned
 import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBulletedOutlined';
 import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
 import { PedidosTabValue } from '../types/pedidos-ui.types';
-import { useTranslation } from 'react-i18next';
 
 interface PedidosTabsProps {
   value: PedidosTabValue;
   onChange: (value: PedidosTabValue) => void;
 }
 
+const tabOptions: Array<{
+  value: PedidosTabValue;
+  label: string;
+  icon: React.ReactElement;
+}> = [
+  {
+    value: 0,
+    label: 'MIS PEDIDOS',
+    icon: <AssignmentTurnedInOutlinedIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    value: 1,
+    label: 'PEDIDOS',
+    icon: <FormatListBulletedOutlinedIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    value: 2,
+    label: 'COMPRAS',
+    icon: <ShoppingCartCheckoutOutlinedIcon sx={{ fontSize: 20 }} />,
+  },
+];
+
+/**
+ * @description Primary navigation tab bar for the pedidos page.
+ * Renders three tabs: "Mis Pedidos" (own orders), "Pedidos" (all orders), and "Compras" (batches).
+ * @param props.value - Index of the currently active tab (0 | 1 | 2)
+ * @param props.onChange - Callback invoked with the new tab value when the user switches tabs
+ * @returns Styled MUI Tabs component with icons for each section
+ */
 const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
   const theme = useTheme();
-  const { t } = useTranslation();
-
-  const tabOptions: Array<{
-    value: PedidosTabValue;
-    label: string;
-    icon: React.ReactElement;
-  }> = [
-    {
-      value: 0,
-      label: t('pedidos.tabs.myOrders'),
-      icon: <AssignmentTurnedInOutlinedIcon sx={{ fontSize: 20 }} />,
-    },
-    {
-      value: 1,
-      label: t('pedidos.tabs.orders'),
-      icon: <FormatListBulletedOutlinedIcon sx={{ fontSize: 20 }} />,
-    },
-    {
-      value: 2,
-      label: t('pedidos.tabs.purchases'),
-      icon: <ShoppingCartCheckoutOutlinedIcon sx={{ fontSize: 20 }} />,
-    },
-  ];
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -73,7 +78,6 @@ const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
               key={tab.value}
               value={tab.value}
               icon={tab.icon}
-              iconPosition="start"
               label={tab.label}
               disableRipple
               sx={{

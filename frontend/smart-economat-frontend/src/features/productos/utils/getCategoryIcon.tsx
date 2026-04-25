@@ -1,8 +1,13 @@
 import React from 'react';
-import FastfoodOutlinedIcon from '@mui/icons-material/FastfoodOutlined';
-import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrinkOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
-import ShoppingBasketOutlinedIcon from '@mui/icons-material/ShoppingBasketOutlined';
+import LocalDrinkOutlinedIcon from '@mui/icons-material/LocalDrink';
+import GrainOutlinedIcon from '@mui/icons-material/Grain';
+import SetMealIcon from '@mui/icons-material/SetMeal';
+import EggIcon from '@mui/icons-material/Egg';
+import AppleIcon from '@mui/icons-material/Apple';
+import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import VignetteIcon from '@mui/icons-material/Vignette';
 import { CategoriaProducto } from '../../../services/producto.types';
 
 const defaultIconProps = {
@@ -20,26 +25,33 @@ export function getCategoryIcon(
   > = defaultIconProps
 ): React.ReactElement {
   const props = { ...defaultIconProps, ...iconProps };
+
   if (!tipo) return <CategoryOutlinedIcon {...props} />;
-  if (tipo === CategoriaProducto.LACTEO || tipo === CategoriaProducto.BEBIDA) {
-    return <LocalDrinkOutlinedIcon {...props} />;
+
+  switch (tipo) {
+    case CategoriaProducto.VERDURA:
+      return <LocalFloristIcon {...props} />;
+    case CategoriaProducto.FRUTA:
+      return <AppleIcon {...props} />;
+    case CategoriaProducto.CARNE:
+      return <RestaurantIcon {...props} />;
+    case CategoriaProducto.PESCADO:
+    case CategoriaProducto.MARISCO:
+      return <SetMealIcon {...props} />;
+    case CategoriaProducto.LACTEO:
+    case CategoriaProducto.BEBIDA:
+    case CategoriaProducto.ACEITE:
+      return <LocalDrinkOutlinedIcon {...props} />;
+    case CategoriaProducto.HUEVO:
+      return <EggIcon {...props} />;
+    case CategoriaProducto.CEREAL:
+    case CategoriaProducto.LEGUMBRE:
+    case CategoriaProducto.AZUCAR:
+      return <GrainOutlinedIcon {...props} />;
+    case CategoriaProducto.CONDIMENTO:
+      return <VignetteIcon {...props} />;
+    case CategoriaProducto.OTRO:
+    default:
+      return <CategoryOutlinedIcon {...props} />;
   }
-  if (
-    tipo === CategoriaProducto.CARNE ||
-    tipo === CategoriaProducto.PESCADO ||
-    tipo === CategoriaProducto.MARISCO ||
-    tipo === CategoriaProducto.HUEVO
-  ) {
-    return <FastfoodOutlinedIcon {...props} />;
-  }
-  if (
-    tipo === CategoriaProducto.VERDURA ||
-    tipo === CategoriaProducto.FRUTA ||
-    tipo === CategoriaProducto.CEREAL ||
-    tipo === CategoriaProducto.LEGUMBRE ||
-    tipo === CategoriaProducto.FRUTO_SECO
-  ) {
-    return <ShoppingBasketOutlinedIcon {...props} />;
-  }
-  return <CategoryOutlinedIcon {...props} />;
 }

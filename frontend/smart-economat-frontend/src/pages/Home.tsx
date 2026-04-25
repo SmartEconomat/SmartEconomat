@@ -1,23 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Typography,
   Box,
   Paper,
-  Card,
-  CardContent,
   Stack,
   Button,
   Alert,
   IconButton,
+  Skeleton,
 } from '@mui/material';
 import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useNavigate } from 'react-router-dom';
-import DynamicFormModal from '../components/ui/DynamicFormModal';
-import RecetaFormModal from '../features/recetas/RecetaFormModal';
+// Modales cargados perezosamente para optimizar bundle inicial y LCP/FCP
+const DynamicFormModal = lazy(
+  () => import('../components/ui/DynamicFormModal')
+);
+const RecetaFormModal = lazy(
+  () => import('../features/recetas/RecetaFormModal')
+);
+const ProductoFormModal = lazy(
+  () => import('../features/productos/ProductoFormModal')
+);
+
 import { buildRecetaPayload } from '../features/recetas/recetaForm.helpers';
-import ProductoFormModal from '../features/productos/ProductoFormModal';
 import { buildProductoPayload } from '../features/productos/productoForm.helpers';
 import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
 import { usePedidoActions } from '../features/pedidos/hooks/usePedidoActions';
@@ -48,13 +54,15 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 
-import Spinner from '../components/ui/Spinner';
 import SummaryModal, { SummaryModalType } from '../components/ui/SummaryModal';
+import LinearLoader from '../components/ui/LinearLoader';
 import {
   fetchDashboardStats,
   DashboardStats,
   DashboardMovimiento,
 } from '../services/dashboard.service';
+import DashboardMetricCard from '../features/dashboard/components/DashboardMetricCard';
+import DashboardQuickAction from '../features/dashboard/components/DashboardQuickAction';
 import MetricsCustomizer, {
   MetricDefinition,
 } from '../components/dashboard/MetricsCustomizer';
@@ -83,148 +91,9 @@ interface QuickActionFormData {
   [key: string]: unknown;
 }
 
-// ─── MetricCard ─────────────────────────────────────────────────────────────
-
-const MetricCard = ({
-  title,
-  value,
-  icon,
-  color,
-  subtitle,
-  onClick,
-}: {
-  title: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
-  color: string;
-  subtitle?: React.ReactNode;
-  onClick?: () => void;
-}) => (
-  <Card
-    elevation={0}
-    onClick={onClick}
-    sx={{
-      height: '100%',
-      border: '1px solid',
-      borderColor: 'divider',
-      borderRadius: 2,
-      cursor: onClick ? 'pointer' : 'default',
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      '&:hover': onClick
-        ? {
-            borderColor: `${color}.main`,
-            transform: 'translateY(-4px)',
-            boxShadow: `0 4px 20px -4px ${color === 'primary' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.05)'}`,
-            '& .metric-icon-box': {
-              transform: 'scale(1.1)',
-            },
-          }
-        : {},
-    }}
-  >
-    <CardContent>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="flex-start"
-      >
-        <Box>
-          <Typography
-            color="text.secondary"
-            variant="subtitle2"
-            fontWeight={600}
-            gutterBottom
-          >
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight={700} color="text.primary">
-            {value}
-          </Typography>
-        </Box>
-        <Box
-          className="metric-icon-box"
-          sx={{
-            p: 1,
-            borderRadius: 1.5,
-            bgcolor: `${color}.light`,
-            color: 'common.white',
-            display: 'flex',
-            transition: 'transform 0.2s',
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-      {subtitle && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}
-        >
-          {subtitle}
-        </Typography>
-      )}
-    </CardContent>
-  </Card>
-);
-
-// ─── QuickAction ─────────────────────────────────────────────────────────────
-
-const QuickAction = ({
-  title,
-  icon,
-  color,
-  onClick,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  color: string;
-  onClick: () => void;
-}) => (
-  <Paper
-    elevation={0}
-    onClick={onClick}
-    sx={{
-      p: 2,
-      border: '1px solid',
-      borderColor: 'divider',
-      borderRadius: 2,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-      '&:hover': {
-        borderColor: `${color}.main`,
-        bgcolor: `${color}.50`,
-        transform: 'translateY(-2px)',
-      },
-    }}
-  >
-    <Box
-      sx={{
-        display: 'flex',
-        p: 1,
-        borderRadius: 1,
-        bgcolor: `${color}.main`,
-        color: 'white',
-      }}
-    >
-      {icon}
-    </Box>
-    <Typography variant="subtitle2" fontWeight={600}>
-      {title}
-    </Typography>
-  </Paper>
-);
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function tiempoRelativoCorto(
-  fechaStr: string,
-  tNow: string,
-  tYesterday: string
-): string {
+function tiempoRelativoCorto(fechaStr: string): string {
   const fecha = new Date(fechaStr);
   const ahora = new Date();
   const diffMs = ahora.getTime() - fecha.getTime();
@@ -232,15 +101,26 @@ function tiempoRelativoCorto(
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return tNow;
+  if (diffMin < 1) return 'ahora';
   if (diffMin < 60) return `${diffMin}min`;
   if (diffH < 24) return `${diffH}h`;
-  if (diffD === 1) return tYesterday;
+  if (diffD === 1) return 'ayer';
   if (diffD < 7) return `${diffD}d`;
-  return fecha.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-  });
+  return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+function tipoActividadLabel(mov: DashboardMovimiento): string {
+  const labels: Record<string, string> = {
+    entrada: 'Se ha registrado una entrada de stock',
+    salida: 'Se ha registrado una salida de stock',
+    ajuste: 'Se ha realizado un ajuste de inventario',
+    pedido: 'Se ha registrado un pedido',
+    entrada_compra: 'Se ha registrado una recepción de compra',
+  };
+  const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
+  if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
+  if (mov.descripcion) return `${base}: ${mov.descripcion}`;
+  return base;
 }
 
 const TIPO_ACTIVIDAD_CONFIG: Record<
@@ -264,36 +144,20 @@ function getActividadColor(tipo: string): string {
   return TIPO_ACTIVIDAD_CONFIG[tipo]?.color ?? 'info';
 }
 
+const AVAILABLE_METRICS: MetricDefinition[] = [
+  { id: 'productos', label: 'Total Productos' },
+  { id: 'pedidos', label: 'Pedidos Pendientes' },
+  { id: 'incidencias', label: 'Incidencias' },
+  { id: 'stock', label: 'Alertas de Stock' },
+  { id: 'proveedores', label: 'Proveedores' },
+  { id: 'notificaciones', label: 'Notificaciones' },
+];
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 const Home: React.FC = () => {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const tipoActividadLabel = (mov: DashboardMovimiento): string => {
-    const labels: Record<string, string> = {
-      entrada: t('home.activity.entrada'),
-      salida: t('home.activity.salida'),
-      ajuste: t('home.activity.ajuste'),
-      pedido: t('home.activity.pedido'),
-      entrada_compra: t('home.activity.entrada_compra'),
-    };
-    const base =
-      labels[mov.tipo] ?? t('home.activity.default', { tipo: mov.tipo });
-    if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
-    if (mov.descripcion) return `${base}: ${mov.descripcion}`;
-    return base;
-  };
-
-  const AVAILABLE_METRICS: MetricDefinition[] = [
-    { id: 'productos', label: t('home.metrics.totalProductos') },
-    { id: 'pedidos', label: t('home.metrics.pedidosPendientes') },
-    { id: 'incidencias', label: t('home.metrics.incidencias') },
-    { id: 'stock', label: t('home.metrics.alertasStock') },
-    { id: 'proveedores', label: t('home.metrics.proveedores') },
-    { id: 'notificaciones', label: t('home.metrics.notificaciones') },
-  ];
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -362,7 +226,7 @@ const Home: React.FC = () => {
     if (!canViewDashboard) {
       setStats(null);
       setIsLoading(false);
-      setError(t('home.noPermissions'));
+      setError('No tienes permisos para ver el dashboard.');
       return;
     }
 
@@ -393,7 +257,11 @@ const Home: React.FC = () => {
       }
     } catch (err: unknown) {
       console.error('Error cargando datos del dashboard:', err);
-      setError(err instanceof Error ? err.message : t('home.loadError'));
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Error desconocido al cargar el dashboard.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -429,17 +297,19 @@ const Home: React.FC = () => {
         const payload = await buildProductoPayload(formData as any);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createProducto(payload as any);
-        toast.success(t('home.toast.productAdded'));
+        toast.success('Producto añadido correctamente.');
       } else if (quickActionTask === 'recipe') {
         const payload = await buildRecetaPayload(formData);
         await createReceta(payload);
-        toast.success(t('home.toast.recipeCreated'));
+        toast.success('Receta creada correctamente.');
       }
       setQuickActionTask(null);
       loadStats();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('home.toast.saveError');
+        err instanceof Error
+          ? err.message
+          : 'Error al guardar la acción rápida.';
       toast.error(message);
     } finally {
       setIsSavingQuickAction(false);
@@ -459,17 +329,39 @@ const Home: React.FC = () => {
   const alertasStock = stats?.inventario?.itemsBajoStock ?? 0;
   const movimientos = stats?.movimientosRecientes ?? [];
 
+  const renderActivitySkeleton = () => (
+    <Stack spacing={3}>
+      {[1, 2, 3, 4].map((i) => (
+        <Box key={i} display="flex" gap={2} alignItems="flex-start">
+          <Skeleton
+            variant="circular"
+            width={24}
+            height={24}
+            sx={{ flexShrink: 0 }}
+          />
+          <Box sx={{ flexGrow: 1 }}>
+            <Skeleton variant="text" width="90%" height={20} sx={{ mb: 0.5 }} />
+            <Skeleton variant="text" width="40%" height={16} />
+          </Box>
+        </Box>
+      ))}
+    </Stack>
+  );
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
     <Box>
       {/* Header */}
-      <Box mb={4}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
-          {t('home.greeting', { name: user?.name || t('home.defaultName') })}
+      <Box id="dashboard-welcome" mb={4}>
+        <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
+          Hola, {user?.name || 'Administrador'}{' '}
+          <span role="img" aria-label="emoji saludo">
+            👋
+          </span>
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          {t('home.subtitle')}
+          Aquí tienes un resumen del estado actual del economato.
         </Typography>
       </Box>
 
@@ -480,7 +372,7 @@ const Home: React.FC = () => {
           icon={<ErrorOutlineIcon />}
           action={
             <Button color="inherit" size="small" onClick={loadStats}>
-              {t('home.retry')}
+              Reintentar
             </Button>
           }
           sx={{ mb: 3, borderRadius: 2 }}
@@ -490,466 +382,495 @@ const Home: React.FC = () => {
       )}
 
       {/* Main Layout Grid: Main Content | Sidebar */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
-          gap: 3,
-        }}
-      >
-        {/* Main Column: Stats + Quick Actions */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Estadísticas del Economato */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-            }}
-          >
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={3}
+      <Box sx={{ position: 'relative' }}>
+        {isLoading && <LinearLoader />}
+
+        <Box
+          sx={{
+            display: 'grid',
+            // Optimización de responsividad: en tablets (md-lg) y mobile (xs) usamos 1 columna.
+            // Solo en pantallas grandes (xl) o laptops estándar (lg) mantenemos las 2 columnas.
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: '1fr', // Cambio: Forzamos 1 columna en tablets para evitar que la sidebar sea demasiado estrecha
+              lg: '2.2fr 0.8fr',
+            },
+            gap: { xs: 2.5, md: 3 },
+            alignItems: { lg: 'stretch' },
+          }}
+        >
+          {/* Main Column: Stats + Quick Actions */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Estadísticas del Economato */}
+            <Paper
+              elevation={0}
+              id="dashboard-stats"
+              sx={{
+                p: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+              }}
             >
-              <Typography variant="h6" fontWeight={600}>
-                {t('home.statsTitle')}
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => setIsCustomizerOpen(true)}
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={3}
+              >
+                <Typography component="h2" variant="h6" fontWeight={600}>
+                  Estadísticas del Economato
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setIsCustomizerOpen(true)}
+                  aria-label="Personalizar métricas visibles"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  <SettingsIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              {/* Metrics Grid (KPIs) */}
+              <Box
                 sx={{
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main' },
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, 1fr)',
+                    md: 'repeat(3, 1fr)',
+                  },
+                  gap: 2.5,
                 }}
               >
-                <SettingsIcon fontSize="small" />
-              </IconButton>
-            </Box>
+                {/* Total Productos */}
+                {visibleMetrics.includes('productos') && canListProductos && (
+                  <DashboardMetricCard
+                    title="Total Productos"
+                    value={isLoading ? null : totalProductos}
+                    isLoading={isLoading}
+                    icon={<InventoryIcon />}
+                    color="primary"
+                    onClick={() =>
+                      openSummary('productos', 'Listado de Productos')
+                    }
+                    subtitle={
+                      isLoading ? undefined : (
+                        <>
+                          {productosEsteMes > 0 ? (
+                            <TrendingUpIcon fontSize="small" color="success" />
+                          ) : (
+                            <TrendingFlatIcon
+                              fontSize="small"
+                              color="disabled"
+                            />
+                          )}
+                          {productosEsteMes > 0
+                            ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
+                            : 'Sin nuevos productos este mes'}
+                        </>
+                      )
+                    }
+                  />
+                )}
 
-            {/* Metrics Grid (KPIs) */}
-            <Box
+                {/* Pedidos Pendientes */}
+                {visibleMetrics.includes('pedidos') && canListPedidos && (
+                  <DashboardMetricCard
+                    title="Pedidos Pendientes"
+                    value={isLoading ? null : pedidosPendientes}
+                    isLoading={isLoading}
+                    icon={<ShoppingCartIcon />}
+                    color="warning"
+                    onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
+                    subtitle={
+                      isLoading ? undefined : (
+                        <>
+                          <CalendarTodayIcon fontSize="small" />
+                          {pedidosProcesarHoy > 0
+                            ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
+                            : 'Sin recepciones hoy'}
+                        </>
+                      )
+                    }
+                  />
+                )}
+
+                {/* Incidencias */}
+                {visibleMetrics.includes('incidencias') &&
+                  canListIncidencias && (
+                    <DashboardMetricCard
+                      title="Incidencias"
+                      value={isLoading ? null : incidenciasCount}
+                      isLoading={isLoading}
+                      icon={<ErrorOutlineIcon />}
+                      color="error"
+                      onClick={() =>
+                        openSummary('incidencias', 'Listado de Incidencias')
+                      }
+                      subtitle={
+                        isLoading ? undefined : (
+                          <>
+                            <ErrorOutlineIcon fontSize="small" />
+                            {incidenciasCount > 0
+                              ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
+                              : 'Sin incidencias'}
+                          </>
+                        )
+                      }
+                    />
+                  )}
+
+                {/* Alertas de Stock */}
+                {visibleMetrics.includes('stock') && canListInventario && (
+                  <DashboardMetricCard
+                    title="Alertas de Stock"
+                    value={isLoading ? null : alertasStock}
+                    isLoading={isLoading}
+                    icon={<WarningAmberIcon />}
+                    color="error"
+                    onClick={() =>
+                      openSummary('stock', 'Productos Bajo Mínimo')
+                    }
+                    subtitle={
+                      isLoading ? undefined : (
+                        <>
+                          <WarningAmberIcon
+                            fontSize="small"
+                            color={alertasStock > 0 ? 'error' : 'disabled'}
+                          />
+                          {alertasStock > 0
+                            ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
+                            : 'Stock correcto'}
+                        </>
+                      )
+                    }
+                  />
+                )}
+
+                {/* Proveedores */}
+                {visibleMetrics.includes('proveedores') &&
+                  canListProveedores && (
+                    <DashboardMetricCard
+                      title="Proveedores"
+                      value={isLoading ? null : totalProveedores}
+                      isLoading={isLoading}
+                      icon={<LocalShippingIcon />}
+                      color="info"
+                      onClick={() =>
+                        openSummary('proveedores', 'Nuestros Proveedores')
+                      }
+                      subtitle={
+                        isLoading ? undefined : (
+                          <>
+                            <CheckCircleOutlineIcon
+                              fontSize="small"
+                              color="success"
+                            />
+                            Catálogo actualizado
+                          </>
+                        )
+                      }
+                    />
+                  )}
+
+                {/* Card de Notificaciones */}
+                {visibleMetrics.includes('notificaciones') && (
+                  <DashboardMetricCard
+                    title="Notificaciones"
+                    value={
+                      isLoading
+                        ? null
+                        : notifications.reduce(
+                            (acc, curr) => acc + curr.count,
+                            0
+                          )
+                    }
+                    isLoading={isLoading}
+                    icon={<NotificationsIcon />}
+                    color={
+                      notifications.some((n) => n.priority === 'urgent')
+                        ? 'error'
+                        : 'primary'
+                    }
+                    onClick={() =>
+                      eventBus.emit(UI_EVENTS.OPEN_NOTIFICATION_CENTER)
+                    }
+                    subtitle={
+                      isLoading ? undefined : (
+                        <>
+                          <NotificationsIcon fontSize="small" />
+                          {notifications.length > 0
+                            ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
+                            : 'Sin notificaciones'}
+                        </>
+                      )
+                    }
+                  />
+                )}
+              </Box>
+            </Paper>
+
+            {/* Acciones Rápidas */}
+            <Paper
+              elevation={0}
+              id="dashboard-quick-actions"
               sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)',
-                },
-                gap: 3,
+                p: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
               }}
             >
-              {/* Total Productos */}
-              {visibleMetrics.includes('productos') && canListProductos && (
-                <MetricCard
-                  title={t('home.metrics.totalProductos')}
-                  value={isLoading ? <Spinner size="sm" /> : totalProductos}
-                  icon={<InventoryIcon />}
-                  color="primary"
-                  onClick={() =>
-                    openSummary('productos', t('home.summaryTitles.productos'))
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        {productosEsteMes > 0 ? (
-                          <TrendingUpIcon fontSize="small" color="success" />
-                        ) : (
-                          <TrendingFlatIcon fontSize="small" color="disabled" />
-                        )}
-                        {productosEsteMes > 0
-                          ? t('home.metricSubtitles.productosAdded', {
-                              count: productosEsteMes,
-                            })
-                          : t('home.metricSubtitles.productosNone')}
-                      </>
-                    )
-                  }
-                />
-              )}
+              <Typography component="h2" variant="h6" fontWeight={600} mb={3}>
+                Acciones Rápidas
+              </Typography>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 2,
+                }}
+              >
+                {canCreatePedido && (
+                  <DashboardQuickAction
+                    title="Nuevo Pedido"
+                    description="Registra una nueva solicitud"
+                    icon={<ShoppingCartIcon fontSize="small" />}
+                    color="primary"
+                    onClick={() => setQuickActionTask('order')}
+                  />
+                )}
+                {canCreateProducto && (
+                  <DashboardQuickAction
+                    title="Añadir Producto"
+                    description="Registra un ítem en el catálogo"
+                    icon={<InventoryIcon fontSize="small" />}
+                    color="secondary"
+                    onClick={() => setQuickActionTask('product')}
+                  />
+                )}
+                {canCreateRecepcion && (
+                  <DashboardQuickAction
+                    title="Registrar Recepción"
+                    description="Confirmar entrada de mercancía"
+                    icon={<AddCircleOutlineIcon fontSize="small" />}
+                    color="success"
+                    onClick={() => navigate('/recepciones')}
+                  />
+                )}
+                {canCreateReceta && (
+                  <DashboardQuickAction
+                    title="Nueva Receta"
+                    description="Crear fórmula de producción"
+                    icon={<AssignmentIcon fontSize="small" />}
+                    color="warning"
+                    onClick={() => setQuickActionTask('recipe')}
+                  />
+                )}
+              </Box>
+            </Paper>
+          </Box>
 
-              {/* Pedidos Pendientes */}
-              {visibleMetrics.includes('pedidos') && canListPedidos && (
-                <MetricCard
-                  title={t('home.metrics.pedidosPendientes')}
-                  value={isLoading ? <Spinner size="sm" /> : pedidosPendientes}
-                  icon={<ShoppingCartIcon />}
-                  color="warning"
-                  onClick={() =>
-                    openSummary('pedidos', t('home.summaryTitles.pedidos'))
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        <CalendarTodayIcon fontSize="small" />
-                        {pedidosProcesarHoy > 0
-                          ? t('home.metricSubtitles.pedidosReceived', {
-                              count: pedidosProcesarHoy,
-                            })
-                          : t('home.metricSubtitles.pedidosNone')}
-                      </>
-                    )
-                  }
-                />
-              )}
-
-              {/* Incidencias */}
-              {visibleMetrics.includes('incidencias') && canListIncidencias && (
-                <MetricCard
-                  title={t('home.metrics.incidencias')}
-                  value={isLoading ? <Spinner size="sm" /> : incidenciasCount}
-                  icon={<ErrorOutlineIcon />}
-                  color="error"
-                  onClick={() =>
-                    openSummary(
-                      'incidencias',
-                      t('home.summaryTitles.incidencias')
-                    )
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        <ErrorOutlineIcon fontSize="small" />
-                        {incidenciasCount > 0
-                          ? t('home.metricSubtitles.incidenciasCount', {
-                              count: incidenciasCount,
-                            })
-                          : t('home.metricSubtitles.incidenciasNone')}
-                      </>
-                    )
-                  }
-                />
-              )}
-
-              {/* Alertas de Stock */}
-              {visibleMetrics.includes('stock') && canListInventario && (
-                <MetricCard
-                  title={t('home.metrics.alertasStock')}
-                  value={isLoading ? <Spinner size="sm" /> : alertasStock}
-                  icon={<WarningAmberIcon />}
-                  color="error"
-                  onClick={() =>
-                    openSummary('stock', t('home.summaryTitles.stock'))
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        <WarningAmberIcon
-                          fontSize="small"
-                          color={alertasStock > 0 ? 'error' : 'disabled'}
-                        />
-                        {alertasStock > 0
-                          ? t('home.metricSubtitles.stockCount', {
-                              count: alertasStock,
-                            })
-                          : t('home.metricSubtitles.stockOk')}
-                      </>
-                    )
-                  }
-                />
-              )}
-
-              {/* Proveedores */}
-              {visibleMetrics.includes('proveedores') && canListProveedores && (
-                <MetricCard
-                  title={t('home.metrics.proveedores')}
-                  value={isLoading ? <Spinner size="sm" /> : totalProveedores}
-                  icon={<LocalShippingIcon />}
-                  color="info"
-                  onClick={() =>
-                    openSummary(
-                      'proveedores',
-                      t('home.summaryTitles.proveedores')
-                    )
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        <CheckCircleOutlineIcon
-                          fontSize="small"
-                          color="success"
-                        />
-                        {t('home.metricSubtitles.catalogueUpdated')}
-                      </>
-                    )
-                  }
-                />
-              )}
-
-              {/* Card de Notificaciones */}
-              {visibleMetrics.includes('notificaciones') && (
-                <MetricCard
-                  title={t('home.metrics.notificaciones')}
-                  value={
-                    isLoading ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      notifications.reduce((acc, curr) => acc + curr.count, 0)
-                    )
-                  }
-                  icon={<NotificationsIcon />}
-                  color={
-                    notifications.some((n) => n.priority === 'urgent')
-                      ? 'error'
-                      : 'primary'
-                  }
-                  onClick={() =>
-                    eventBus.emit(UI_EVENTS.OPEN_NOTIFICATION_CENTER)
-                  }
-                  subtitle={
-                    isLoading ? undefined : (
-                      <>
-                        <NotificationsIcon fontSize="small" />
-                        {notifications.length > 0
-                          ? t('home.metricSubtitles.pendingActions', {
-                              count: notifications.reduce(
-                                (acc, curr) => acc + curr.count,
-                                0
-                              ),
-                            })
-                          : t('home.metricSubtitles.noNotifications')}
-                      </>
-                    )
-                  }
-                />
-              )}
-            </Box>
-          </Paper>
-
-          {/* Acciones Rápidas */}
-          <Paper
-            elevation={0}
+          {/* Sidebar Column: Recent Activity */}
+          <Box
             sx={{
-              p: 3,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              {t('home.quickActionsTitle')}
-            </Typography>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2,
-              }}
-            >
-              {canCreatePedido && (
-                <QuickAction
-                  title={t('home.quickActions.nuevoPedido')}
-                  icon={<ShoppingCartIcon fontSize="small" />}
-                  color="primary"
-                  onClick={() => setQuickActionTask('order')}
-                />
-              )}
-              {canCreateProducto && (
-                <QuickAction
-                  title={t('home.quickActions.anadirProducto')}
-                  icon={<InventoryIcon fontSize="small" />}
-                  color="secondary"
-                  onClick={() => setQuickActionTask('product')}
-                />
-              )}
-              {canCreateRecepcion && (
-                <QuickAction
-                  title={t('home.quickActions.registrarRecepcion')}
-                  icon={<AddCircleOutlineIcon fontSize="small" />}
-                  color="success"
-                  onClick={() => navigate('/recepciones')}
-                />
-              )}
-              {canCreateReceta && (
-                <QuickAction
-                  title={t('home.quickActions.nuevaReceta')}
-                  icon={<AssignmentIcon fontSize="small" />}
-                  color="warning"
-                  onClick={() => setQuickActionTask('recipe')}
-                />
-              )}
-            </Box>
-          </Paper>
-        </Box>
-
-        {/* Sidebar Column: Recent Activity */}
-        <Box>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
               height: '100%',
+              minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
             }}
           >
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              {t('home.recentActivity')}
-            </Typography>
+            <Paper
+              elevation={0}
+              id="dashboard-activity"
+              sx={{
+                p: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              <Typography component="h2" variant="h6" fontWeight={600} mb={3}>
+                Actividad Reciente
+              </Typography>
 
-            <Box sx={{ flexGrow: 1 }}>
-              {isLoading ? (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  minHeight={120}
-                >
-                  <Spinner size="sm" />
-                </Box>
-              ) : movimientos.length === 0 ? (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  minHeight={120}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {t('home.noActivity')}
-                  </Typography>
-                </Box>
-              ) : (
-                <Stack spacing={3}>
-                  {movimientos.map((mov) => (
-                    <Box
-                      key={mov.id}
-                      display="flex"
-                      gap={2}
-                      alignItems="flex-start"
-                    >
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  height: 0,
+                  minHeight: '100%',
+                  overflowY: 'auto',
+                  pr: 1,
+                  // Estética del scrollbar para mantener el look premium
+                  '&::-webkit-scrollbar': { width: 6 },
+                  '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'action.hover',
+                    borderRadius: 3,
+                    '&:hover': { bgcolor: 'action.selected' },
+                  },
+                }}
+              >
+                {isLoading ? (
+                  renderActivitySkeleton()
+                ) : movimientos.length === 0 ? (
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    minHeight={120}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      No hay actividad reciente registrada.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Stack spacing={3}>
+                    {movimientos.map((mov) => (
                       <Box
-                        sx={{
-                          color: `${getActividadColor(mov.tipo)}.main`,
-                          display: 'flex',
-                          flexShrink: 0,
-                          mt: 0.25,
-                        }}
+                        key={mov.id}
+                        display="flex"
+                        gap={2}
+                        alignItems="flex-start"
                       >
-                        {getActividadIcon(mov.tipo)}
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          fontWeight={500}
-                          sx={{ mb: 0.5, lineHeight: 1.2 }}
+                        <Box
+                          sx={{
+                            color: `${getActividadColor(mov.tipo)}.main`,
+                            display: 'flex',
+                            flexShrink: 0,
+                            mt: 0.25,
+                          }}
                         >
-                          {tipoActividadLabel(mov)}
-                        </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                          {getActividadIcon(mov.tipo)}
+                        </Box>
+                        <Box>
                           <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.secondary',
-                              fontWeight: 600,
-                              bgcolor: 'action.hover',
-                              px: 1,
-                              py: 0.2,
-                              borderRadius: 1,
-                            }}
+                            variant="body2"
+                            fontWeight={500}
+                            sx={{ mb: 0.5, lineHeight: 1.2 }}
                           >
-                            {tiempoRelativoCorto(
-                              mov.createdAt,
-                              t('home.time.now'),
-                              t('home.time.yesterday')
-                            )}
+                            {tipoActividadLabel(mov)}
                           </Typography>
-                          {mov.usuario && (
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
                             <Typography
                               variant="caption"
-                              color="text.secondary"
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.75,
+                                color: 'text.secondary',
+                                fontWeight: 600,
+                                bgcolor: 'action.hover',
+                                px: 1,
+                                py: 0.2,
+                                borderRadius: 1,
                               }}
                             >
-                              <Box
-                                component="span"
-                                sx={{
-                                  width: 3,
-                                  height: 3,
-                                  borderRadius: '50%',
-                                  bgcolor: 'text.disabled',
-                                }}
-                              />
-                              {mov.usuario.nombre || mov.usuario.username}
+                              {tiempoRelativoCorto(mov.createdAt)}
                             </Typography>
-                          )}
-                        </Stack>
+                            {mov.usuario && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    width: 3,
+                                    height: 3,
+                                    borderRadius: '50%',
+                                    bgcolor: 'text.disabled',
+                                  }}
+                                />
+                                {mov.usuario.nombre || mov.usuario.username}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Box>
                       </Box>
-                    </Box>
-                  ))}
-                </Stack>
-              )}
-            </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
 
-            <Box mt={3} textAlign="center">
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate('/movimientos')}
-                fullWidth
-              >
-                {t('home.viewAllHistory')}
-              </Button>
-            </Box>
-          </Paper>
+              <Box mt={3} textAlign="center">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate('/movimientos')}
+                  fullWidth
+                >
+                  Ver todo el historial
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
         </Box>
+
+        {/* Summary Modal */}
+        <SummaryModal
+          isOpen={summaryModal.isOpen}
+          type={summaryModal.type}
+          title={summaryModal.title}
+          onClose={() => setSummaryModal({ ...summaryModal, isOpen: false })}
+        />
+
+        {/* Metrics Customizer */}
+        <MetricsCustomizer
+          isOpen={isCustomizerOpen}
+          onClose={() => setIsCustomizerOpen(false)}
+          availableMetrics={AVAILABLE_METRICS}
+          visibleMetrics={visibleMetrics}
+          onUpdate={handleUpdateVisibleMetrics}
+        />
+
+        {/* Quick Action Modals (Lazy Loaded) */}
+        <Suspense fallback={null}>
+          <ProductoFormModal
+            isOpen={quickActionTask === 'product'}
+            onClose={() => setQuickActionTask(null)}
+            title="Añadir Nuevo Producto"
+            initialData={EMPTY_INITIAL_DATA}
+            onSubmit={handleSaveQuickAction}
+            isSubmitting={isSavingQuickAction}
+          />
+
+          <DynamicFormModal
+            isOpen={quickActionTask === 'order'}
+            onClose={() => setQuickActionTask(null)}
+            title="Crear Nuevo Pedido"
+            size="lg"
+            fields={pedidoSchema}
+            initialData={PEDIDO_NEW_INITIAL_DATA}
+            onSubmit={handleSavePedidoQuickAction}
+            isSubmitting={isSavingPedido}
+            requireConfirmation
+            confirmationMessage="¿Estás seguro de que deseas registrar este nuevo pedido?"
+          />
+
+          <RecetaFormModal
+            isOpen={quickActionTask === 'recipe'}
+            onClose={() => setQuickActionTask(null)}
+            initialData={EMPTY_INITIAL_DATA}
+            onSubmit={handleSaveQuickAction}
+            isSubmitting={isSavingQuickAction}
+          />
+        </Suspense>
       </Box>
-
-      {/* Summary Modal */}
-      <SummaryModal
-        isOpen={summaryModal.isOpen}
-        type={summaryModal.type}
-        title={summaryModal.title}
-        onClose={() => setSummaryModal({ ...summaryModal, isOpen: false })}
-      />
-
-      {/* Metrics Customizer */}
-      <MetricsCustomizer
-        isOpen={isCustomizerOpen}
-        onClose={() => setIsCustomizerOpen(false)}
-        availableMetrics={AVAILABLE_METRICS}
-        visibleMetrics={visibleMetrics}
-        onUpdate={handleUpdateVisibleMetrics}
-      />
-
-      {/* Quick Action Modals */}
-      <ProductoFormModal
-        isOpen={quickActionTask === 'product'}
-        onClose={() => setQuickActionTask(null)}
-        title={t('home.newProduct')}
-        initialData={EMPTY_INITIAL_DATA}
-        onSubmit={handleSaveQuickAction}
-        isSubmitting={isSavingQuickAction}
-      />
-
-      <DynamicFormModal
-        isOpen={quickActionTask === 'order'}
-        onClose={() => setQuickActionTask(null)}
-        title={t('home.newOrder')}
-        size="lg"
-        fields={pedidoSchema}
-        initialData={PEDIDO_NEW_INITIAL_DATA}
-        onSubmit={handleSavePedidoQuickAction}
-        isSubmitting={isSavingPedido}
-        requireConfirmation
-        confirmationMessage={t('home.newOrderConfirm')}
-      />
-
-      <RecetaFormModal
-        isOpen={quickActionTask === 'recipe'}
-        onClose={() => setQuickActionTask(null)}
-        initialData={EMPTY_INITIAL_DATA}
-        onSubmit={handleSaveQuickAction}
-        isSubmitting={isSavingQuickAction}
-      />
     </Box>
   );
 };

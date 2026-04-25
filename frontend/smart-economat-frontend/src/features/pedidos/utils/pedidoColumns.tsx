@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconButton, Stack, Tooltip, Chip, Typography } from '@mui/material';
+import i18n from '../../../i18n';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -25,89 +26,104 @@ import {
   getPedidoCreatorName,
 } from './pedidoFormatters';
 import { isPedidoUsuarioRow } from './pedidoOwnOrders';
-import type { TFunction } from 'i18next';
 
-export const buildPedidoColumns = (t: TFunction): Column<PedidoListItem>[] => [
+/**
+ * @description Builds the column definitions for the main pedidos DataTable.
+ * @returns Array of Column<PedidoListItem> objects with render functions for each column
+ */
+export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
   {
     id: 'pedidoId',
-    label: t('pedidos.columns.numeroPedido'),
+    label: 'Nº de pedido',
     render: (row) => formatPedidoListNumber(row),
   },
   {
     id: 'fechaPedido',
-    label: t('pedidos.columns.fechaPedido'),
+    label: 'Fecha Pedido',
     render: (row) => formatPedidoDate(row.fechaPedido),
   },
   {
     id: 'fechaEntrega',
-    label: t('pedidos.columns.fechaEntrega'),
+    label: 'Fecha Entrega',
     render: (row) => formatPedidoDate(row.fechaEntrega),
     hideOnMobile: true,
   },
   {
     id: 'costeTotal',
-    label: t('pedidos.columns.costeTotal'),
+    label: 'Coste Total',
     align: 'right',
     render: (row) => formatCurrency(row.costeTotal),
   },
   {
     id: 'estado',
-    label: t('pedidos.columns.estado'),
+    label: 'Estado',
     render: (row) => <StatusChip status={row.estado} />,
   },
   {
     id: 'usuario',
-    label: t('pedidos.columns.creadoPor'),
+    label: 'Creado Por',
     render: (row) => getPedidoCreatorName(row),
     hideOnMobile: true,
   },
 ];
 
-export const buildBatchColumns = (t: TFunction): Column<PurchaseBatch>[] => [
+/**
+ * @description Builds the column definitions for the purchase batches DataTable.
+ * @returns Array of Column<PurchaseBatch> objects with render functions for each column
+ */
+export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   {
     id: 'createdAt',
-    label: t('pedidos.columns.fechaPedido'),
+    label: 'Fecha Creación',
     render: (row) => formatPedidoDate(row.createdAt, 'datetime'),
   },
   {
     id: 'pedidos',
-    label: t('pedidos.columns.numeroPedidos'),
+    label: 'Nº Pedidos',
     render: (row) => getBatchPedidosCount(row),
   },
   {
     id: 'costeTotal',
-    label: t('pedidos.columns.costeTotalEstimado'),
+    label: 'Coste Total Estimado',
     align: 'right',
     render: (row) => formatCurrency(getBatchTotal(row)),
   },
   {
     id: 'estado',
-    label: t('pedidos.columns.estado'),
+    label: 'Estado',
     render: (row) => <StatusChip status={String(row.estado)} />,
   },
   {
     id: 'usuario',
-    label: t('pedidos.columns.creadoPor'),
+    label: 'Creado Por',
     render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
   },
 ];
 
+/**
+ * @description Renders the inline action buttons for a pedido row.
+ * Approve, cancel, and edit buttons are shown conditionally based on permissions and order status.
+ * For non-user (internal) orders a read-only chip is shown instead.
+ * @param row - The pedido row to render actions for
+ * @param permissions - Permission flags controlling which buttons are visible
+ * @param handlers - Callbacks invoked when action buttons are clicked
+ * @returns React node containing the action buttons or status chip
+ */
 export const renderPedidoActions = (
   row: PedidoListItem,
   permissions: PedidoPermissions,
-  handlers: PedidoActionHandlers,
-  t: TFunction
+  handlers: PedidoActionHandlers
 ): React.ReactNode =>
   isPedidoUsuarioRow(row) ? (
     <Stack direction="row" spacing={1} justifyContent="center">
       {permissions.canApprove &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title={t('pedidos.actions.approve')}>
+          <Tooltip title={i18n.t('comun.aprobar')}>
             <IconButton
               color="success"
               onClick={() => handlers.onApprove(row)}
               size="small"
-              aria-label={t('pedidos.actions.approve')}
+              aria-label={i18n.t('comun.aprobar')}
             >
               <CheckIcon fontSize="small" />
             </IconButton>
@@ -116,12 +132,12 @@ export const renderPedidoActions = (
 
       {permissions.canCancel &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title={t('pedidos.actions.cancel')}>
+          <Tooltip title={i18n.t('comun.cancelar')}>
             <IconButton
               color="warning"
               onClick={() => handlers.onCancel(row)}
               size="small"
-              aria-label={t('pedidos.actions.cancel')}
+              aria-label={i18n.t('comun.cancelar')}
             >
               <CancelIcon fontSize="small" />
             </IconButton>
@@ -130,12 +146,12 @@ export const renderPedidoActions = (
 
       {permissions.canEdit &&
         isPendingPedidoUsuarioStatus(String(row.estado)) && (
-          <Tooltip title={t('pedidos.actions.edit')}>
+          <Tooltip title={i18n.t('comun.editar')}>
             <IconButton
               color="secondary"
               onClick={() => handlers.onEdit(row)}
               size="small"
-              aria-label={t('pedidos.actions.edit')}
+              aria-label={i18n.t('comun.editar')}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -147,11 +163,7 @@ export const renderPedidoActions = (
           size="small"
           color="default"
           variant="outlined"
-          label={
-            <Typography variant="caption">
-              {t('pedidos.chips.pedido')}
-            </Typography>
-          }
+          label={<Typography variant="caption">Pedido</Typography>}
         />
       )}
     </Stack>
@@ -161,22 +173,23 @@ export const renderPedidoActions = (
         size="small"
         color="default"
         variant="outlined"
-        label={
-          <Typography variant="caption">
-            {t('pedidos.chips.interno')}
-          </Typography>
-        }
+        label={<Typography variant="caption">Interno</Typography>}
       />
     </Stack>
   );
 
+/**
+ * @description Renders the inline action button for a purchase batch row (initiate reception).
+ * @param row - The PurchaseBatch to render the action for
+ * @param handlers - Callbacks invoked when action buttons are clicked
+ * @returns React node containing the reception action button
+ */
 export const renderBatchActions = (
   row: PurchaseBatch,
-  handlers: PurchaseBatchActionHandlers,
-  t: TFunction
+  handlers: PurchaseBatchActionHandlers
 ): React.ReactNode => (
   <Stack direction="row" spacing={1} justifyContent="center">
-    <Tooltip title={t('pedidos.actions.startReception')}>
+    <Tooltip title={i18n.t('comun.iniciarRecepcion')}>
       <IconButton
         color="success"
         onClick={(e) => {
@@ -184,7 +197,7 @@ export const renderBatchActions = (
           handlers.onRecepcion(row);
         }}
         size="small"
-        aria-label={t('pedidos.actions.startReception')}
+        aria-label={i18n.t('comun.iniciarRecepcion')}
       >
         <LoginOutlinedIcon fontSize="small" />
       </IconButton>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Tab,
+  Tabs,
   Typography,
   Alert,
   IconButton,
@@ -17,6 +19,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -37,10 +43,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
-import IncidenciasStatusTabs, {
-  IncidenciasCerradasTab,
-  IncidenciasResolucionTab,
-} from '../features/incidencias/IncidenciasStatusTabs';
+import { type IncidenciasResolucionTab } from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
@@ -51,45 +54,31 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  nueva: 'Nueva',
-  en_ajuste: 'En ajuste',
-  pendiente_validacion: 'Pendiente validación',
-  resuelta: 'Resuelta',
-  cancelada: 'Cancelada',
-  invalida: 'Inválida',
+  [EstadoIncidencia.NUEVA]: 'Nueva',
+  [EstadoIncidencia.EN_AJUSTE]: 'En ajuste',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'Pendiente validación',
+  [EstadoIncidencia.RESUELTA]: 'Resuelta',
+  [EstadoIncidencia.CANCELADA]: 'Cancelada',
+  [EstadoIncidencia.INVALIDA]: 'Inválida',
 };
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
-  nueva: 'pending',
-  en_ajuste: 'warning',
-  pendiente_validacion: 'review',
-  resuelta: 'completed',
-  cancelada: 'cancelled',
-  invalida: 'error',
-};
-
-const CLOSED_INCIDENCIA_STATES = new Set<EstadoIncidencia>([
-  EstadoIncidencia.RESUELTA,
-  EstadoIncidencia.CANCELADA,
-  EstadoIncidencia.INVALIDA,
-]);
-
-const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
-  [EstadoIncidencia.CANCELADA]: 0,
-  [EstadoIncidencia.INVALIDA]: 1,
-  [EstadoIncidencia.RESUELTA]: 2,
-  [EstadoIncidencia.EN_AJUSTE]: 3,
-  [EstadoIncidencia.PENDIENTE_VALIDACION]: 4,
-  [EstadoIncidencia.NUEVA]: 5,
+  [EstadoIncidencia.NUEVA]: 'pending',
+  [EstadoIncidencia.EN_AJUSTE]: 'review',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'warning',
+  [EstadoIncidencia.RESUELTA]: 'completed',
+  [EstadoIncidencia.CANCELADA]: 'cancelled',
+  [EstadoIncidencia.INVALIDA]: 'error',
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';
 
 const Incidencias: React.FC = () => {
-  const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('resolucion') === 'por_resolver';
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -99,13 +88,23 @@ const Incidencias: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [resolucionTab, setResolucionTab] =
-    useState<IncidenciasResolucionTab>('abiertas');
-  const [cerradasTab, setCerradasTab] =
-    useState<IncidenciasCerradasTab>('todas');
+    useState<IncidenciasResolucionTab>('por_resolver');
   const [filters, setFilters] = useState<IncidenciaFiltersState>({
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    if (hasDashboardFilter) {
+      setResolucionTab('por_resolver');
+    }
+  }, [hasDashboardFilter]);
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('resolucion');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [itemToView, setItemToView] = useState<Incidencia | null>(null);
   const [itemToResolve, setItemToResolve] = useState<Incidencia | null>(null);
   const [resolveDialogMode, setResolveDialogMode] =
@@ -119,77 +118,22 @@ const Incidencias: React.FC = () => {
   const canResolve = usePermission(PERMISSIONS.incidencias.resolver);
   const canDelete = usePermission(PERMISSIONS.incidencias.eliminar);
 
-  const isCerradasTab = resolucionTab === 'cerradas';
-
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      if (isCerradasTab) {
-        const limit = 50;
-        const baseParams: IncidenciasQueryParams = {
-          limit,
-          searchTerm: searchTerm || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-
-        const firstPage = await fetchIncidencias({
-          ...baseParams,
-          page: 1,
-        });
-
-        let mergedData = [...firstPage.data];
-        if (firstPage.totalPages > 1) {
-          const restPages = await Promise.all(
-            Array.from({ length: firstPage.totalPages - 1 }, (_, idx) =>
-              fetchIncidencias({
-                ...baseParams,
-                page: idx + 2,
-              })
-            )
-          );
-
-          mergedData = mergedData.concat(
-            ...restPages.map((result) => result.data)
-          );
-        }
-
-        const mergedClosedData = mergedData.filter((item) =>
-          CLOSED_INCIDENCIA_STATES.has(item.estado)
-        );
-
-        mergedClosedData.sort((a, b) => {
-          const stateDiff =
-            (CLOSED_STATE_PRIORITY[a.estado] ?? 99) -
-            (CLOSED_STATE_PRIORITY[b.estado] ?? 99);
-
-          if (stateDiff !== 0) {
-            return stateDiff;
-          }
-
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        });
-
-        setData(mergedClosedData);
-        setTotalItems(mergedClosedData.length);
-        setTotalPages(1);
-      } else {
-        const params: IncidenciasQueryParams = {
-          page,
-          limit: pageSize,
-          searchTerm: searchTerm || undefined,
-          resuelta: false,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-        const result = await fetchIncidencias(params);
-        setData(result.data);
-        setTotalItems(result.total);
-        setTotalPages(result.totalPages);
-      }
+      const params: IncidenciasQueryParams = {
+        page,
+        limit: pageSize,
+        searchTerm: searchTerm || undefined,
+        resuelta: resolucionTab === 'resueltas',
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+      };
+      const result = await fetchIncidencias(params);
+      setData(result.data);
+      setTotalItems(result.total);
+      setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar incidencias';
@@ -197,7 +141,7 @@ const Incidencias: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, isCerradasTab, filters]);
+  }, [page, pageSize, searchTerm, resolucionTab, filters]);
 
   useEffect(() => {
     loadData();
@@ -214,21 +158,11 @@ const Incidencias: React.FC = () => {
         usuarioId:
           payload.usuarioId || (user?.id ? String(user.id) : undefined),
       });
-      if (payload.marcarComoResuelta) {
-        switch (payload.estadoFinal) {
-          case EstadoIncidencia.CANCELADA:
-            toast.success(t('incidencias.toast.cancelled'));
-            break;
-          case EstadoIncidencia.INVALIDA:
-            toast.success(t('incidencias.toast.invalida'));
-            break;
-          default:
-            toast.success(t('incidencias.toast.resolved'));
-            break;
-        }
-      } else {
-        toast.success(t('incidencias.toast.updated'));
-      }
+      toast.success(
+        payload.marcarComoResuelta
+          ? 'Incidencia marcada como resuelta'
+          : 'Incidencia actualizada correctamente'
+      );
       setItemToResolve(null);
       if (itemToView?.id === id) {
         setItemToView(null);
@@ -236,9 +170,7 @@ const Incidencias: React.FC = () => {
       await loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('incidencias.toast.resolveError');
+        err instanceof Error ? err.message : 'Error al resolver la incidencia';
       toast.error(message);
     } finally {
       setIsResolving(false);
@@ -250,12 +182,12 @@ const Incidencias: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeIncidencia(itemToDelete.id);
-      toast.success(t('incidencias.toast.deleted'));
+      toast.success('Incidencia eliminada correctamente');
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('incidencias.toast.deleteError');
+        err instanceof Error ? err.message : 'Error al eliminar la incidencia';
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -277,74 +209,45 @@ const Incidencias: React.FC = () => {
 
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
-    if (nextTab !== 'cerradas') {
-      setCerradasTab('todas');
-    }
     setPage(1);
   };
-
-  const dataFiltrada = useMemo(() => {
-    if (!isCerradasTab || cerradasTab === 'todas') {
-      return data;
-    }
-
-    return data.filter((item) => item.estado === cerradasTab);
-  }, [data, isCerradasTab, cerradasTab]);
-
-  const dataPaginada = useMemo(() => {
-    if (!isCerradasTab) {
-      return data;
-    }
-
-    const start = (page - 1) * pageSize;
-    return dataFiltrada.slice(start, start + pageSize);
-  }, [data, dataFiltrada, isCerradasTab, page, pageSize]);
-
-  const totalItemsVista = isCerradasTab ? dataFiltrada.length : totalItems;
-  const totalPagesVista = isCerradasTab
-    ? Math.max(1, Math.ceil(totalItemsVista / pageSize))
-    : totalPages;
 
   const columns: Column<Incidencia>[] = useMemo(
     () => [
       {
         id: 'createdAt',
-        label: t('incidencias.columns.fecha'),
+        label: 'Fecha',
         render: (row) => new Date(row.createdAt).toLocaleDateString(),
         sortable: true,
       },
       {
         id: 'proveedorNombre',
-        label: t('incidencias.columns.proveedor'),
+        label: 'Proveedor',
         render: (row) => row.proveedorNombre || '—',
         sortable: true,
       },
       {
         id: 'productos',
-        label: t('incidencias.columns.productos'),
-        render: (row) => {
-          const count = row.lineas?.length || 0;
-          return (
-            <Stack spacing={0.35}>
-              <Typography variant="body2" fontWeight={600}>
-                {(row.lineas || [])
-                  .map((linea) => linea.nombreProducto)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join(', ') || t('incidencias.noDetail')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {count !== 1
-                  ? t('incidencias.lineCountPlural', { count })
-                  : t('incidencias.lineCount', { count })}
-              </Typography>
-            </Stack>
-          );
-        },
+        label: 'Producto(s)',
+        render: (row) => (
+          <Stack spacing={0.35}>
+            <Typography variant="body2" fontWeight={600}>
+              {(row.lineas || [])
+                .map((linea) => linea.nombreProducto)
+                .filter(Boolean)
+                .slice(0, 2)
+                .join(', ') || 'Sin detalle'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {row.lineas?.length || 0} línea
+              {(row.lineas?.length || 0) !== 1 ? 's' : ''}
+            </Typography>
+          </Stack>
+        ),
       },
       {
         id: 'cantidades',
-        label: t('incidencias.columns.cantidades'),
+        label: 'Cantidades por producto',
         render: (row) => (
           <Stack spacing={0.35}>
             {(row.lineas || []).slice(0, 3).map((linea) => (
@@ -368,9 +271,7 @@ const Incidencias: React.FC = () => {
             ))}
             {(row.lineas?.length || 0) > 3 && (
               <Typography variant="caption" color="text.secondary">
-                {t('incidencias.moreProducts', {
-                  count: (row.lineas?.length || 0) - 3,
-                })}
+                +{(row.lineas?.length || 0) - 3} producto(s)
               </Typography>
             )}
           </Stack>
@@ -378,7 +279,7 @@ const Incidencias: React.FC = () => {
       },
       {
         id: 'estado',
-        label: t('incidencias.columns.estado'),
+        label: 'Estado',
         render: (row) => (
           <StatusChip
             status={INCIDENCIA_STATUS_CHIP[row.estado]}
@@ -390,123 +291,110 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    [t]
+    []
   );
 
-  const renderActions = (row: Incidencia) => {
-    const hasLineas = (row.lineas?.length ?? 0) > 0;
-    const canOperate = !row.resuelta && hasLineas;
-
-    return (
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{ minWidth: 160, justifyContent: 'flex-start' }}
-      >
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title={t('incidencias.actions.viewDetail')}>
+  const renderActions = (row: Incidencia) => (
+    <Stack
+      direction="row"
+      spacing={0.5}
+      sx={{ minWidth: 160, justifyContent: 'flex-start' }}
+    >
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        <Tooltip title="Ver detalle">
+          <IconButton
+            color="primary"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setItemToView(row);
+            }}
+            size="small"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Ajustar cantidades">
             <IconButton
-              color="primary"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setItemToView(row);
-              }}
+              onClick={() => openResolveModal(row, 'adjust')}
               size="small"
+              color="warning"
+              id="btn-ajustar-incidencia"
+              aria-label="Ajustar cantidades"
             >
-              <VisibilityIcon fontSize="small" />
+              <TuneIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title={t('incidencias.actions.adjust')}>
-              <IconButton
-                onClick={() => openResolveModal(row, 'adjust')}
-                size="small"
-                color="warning"
-                aria-label={t('incidencias.actions.adjust')}
-              >
-                <TuneIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title={t('incidencias.actions.resolve')}>
-              <IconButton
-                onClick={() => openResolveModal(row, 'resolve')}
-                size="small"
-                color="success"
-                aria-label={t('incidencias.actions.resolve')}
-              >
-                <CheckCircleIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canDelete && (
-            <Tooltip title={t('incidencias.actions.delete')}>
-              <IconButton
-                onClick={() => setItemToDelete(row)}
-                size="small"
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Stack>
-    );
-  };
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Resolver incidencia">
+            <IconButton
+              onClick={() => openResolveModal(row, 'resolve')}
+              size="small"
+              color="success"
+              id="btn-resolver-incidencia"
+              aria-label="Resolver incidencia"
+            >
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {canDelete && (
+          <Tooltip title="Eliminar">
+            <IconButton
+              onClick={() => setItemToDelete(row)}
+              size="small"
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Stack>
+  );
 
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
     return [
       {
-        title: t('incidencias.detail.infoTitle'),
+        title: 'Información de la Incidencia',
         fields: [
+          { label: 'Proveedor', value: itemToView.proveedorNombre || '—' },
           {
-            label: t('incidencias.detail.proveedor'),
-            value: itemToView.proveedorNombre || '—',
-          },
-          {
-            label: t('incidencias.detail.fechaRegistro'),
+            label: 'Fecha de Registro',
             value: new Date(itemToView.createdAt).toLocaleString(),
           },
           {
-            label: t('incidencias.detail.estado'),
+            label: 'Estado',
             value: INCIDENCIA_STATUS_LABEL[itemToView.estado],
           },
+          { label: 'ID Recepción', value: itemToView.recepcionId || '—' },
           {
-            label: t('incidencias.detail.idRecepcion'),
-            value: itemToView.recepcionId || '—',
-          },
-          {
-            label: t('incidencias.detail.motivo'),
-            value:
-              itemToView.motivoIncidencia || t('incidencias.detail.sinMotivo'),
+            label: 'Motivo',
+            value: itemToView.motivoIncidencia || 'Sin motivo especificado',
             fullWidth: true,
           },
         ],
       },
       {
-        title: t('incidencias.detail.notasTitle'),
+        title: 'Notas de Incidencia',
         fields: [
           {
-            label: t('incidencias.detail.notasRecepcion'),
-            value:
-              itemToView.observacionesRecepcion ||
-              t('incidencias.detail.sinObservaciones'),
+            label: 'Notas de Recepción',
+            value: itemToView.observacionesRecepcion || 'Sin observaciones',
             fullWidth: true,
           },
           {
-            label: t('incidencias.detail.notasResolucion'),
+            label: 'Notas de Resolución',
             value:
-              itemToView.observacionesResolucion ||
-              t('incidencias.detail.sinNotasResolucion'),
+              itemToView.observacionesResolucion || 'Sin notas de resolución',
             fullWidth: true,
           },
         ],
@@ -514,7 +402,7 @@ const Incidencias: React.FC = () => {
       ...(itemToView.resuelta
         ? [
             {
-              title: t('incidencias.detail.resolucionTitle'),
+              title: 'Resolución',
               fullWidth: true,
               content: (
                 <Box
@@ -538,7 +426,7 @@ const Incidencias: React.FC = () => {
                       color="success.main"
                       fontWeight={700}
                     >
-                      {t('incidencias.detail.resueltaLabel')}
+                      INCIDENCIA RESUELTA
                     </Typography>
                   </Stack>
                   <Stack spacing={2}>
@@ -548,7 +436,7 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('incidencias.detail.fechaResolucion')}
+                        Fecha de Resolución
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
                         {itemToView.fechaResolucion
@@ -564,7 +452,7 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('incidencias.detail.notasResolucion')}
+                        Notas de Resolución
                       </Typography>
                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                         {itemToView.observacionesResolucion || '—'}
@@ -577,9 +465,7 @@ const Incidencias: React.FC = () => {
           ]
         : []),
       {
-        title: t('incidencias.detail.discrepanciaTitle', {
-          count: itemToView.lineas?.length || 0,
-        }),
+        title: `Productos con Discrepancia (${itemToView.lineas?.length || 0})`,
         fullWidth: true,
         content: (
           <Box sx={{ mt: 1 }}>
@@ -624,7 +510,7 @@ const Incidencias: React.FC = () => {
                 <Stack direction="row" spacing={3}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('incidencias.detail.pedida')}
+                      Pedida
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {linea.cantidadEsperada} {linea.unidad || 'ud'}
@@ -632,7 +518,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('incidencias.detail.recibido')}
+                      Recibido
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {linea.cantidadRecibida} {linea.unidad || 'ud'}
@@ -640,7 +526,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('incidencias.detail.diferencia')}
+                      Diferencia
                     </Typography>
                     <Typography
                       variant="body2"
@@ -656,7 +542,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('incidencias.detail.pendiente')}
+                      Pendiente
                     </Typography>
                     <Typography
                       variant="body2"
@@ -676,9 +562,7 @@ const Incidencias: React.FC = () => {
                     variant="caption"
                     sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}
                   >
-                    {t('incidencias.detail.nota', {
-                      text: linea.observaciones,
-                    })}
+                    Nota: {linea.observaciones}
                   </Typography>
                 )}
               </Box>
@@ -687,23 +571,24 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-  }, [itemToView, theme, t]);
+  }, [itemToView, theme]);
 
   return (
     <Box>
       <PageToolbar
-        title={t('incidencias.pageTitle')}
-        totalItems={totalItemsVista}
-        totalItemsLabel={t('incidencias.totalItemsLabel')}
+        id="incidencias-toolbar"
+        title="Centro de Incidencias"
+        totalItems={totalItems}
+        totalItemsLabel="incidencias"
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder={t('incidencias.searchPlaceholder')}
+        searchPlaceholder="Buscar por proveedor u observaciones..."
         extraActions={[
           {
-            label: t('incidencias.reportePdf'),
+            label: 'Reporte PDF',
             onClick: () => openReporteModal('pdf'),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-incidencias-pdf',
@@ -711,7 +596,7 @@ const Incidencias: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: t('incidencias.reporteExcel'),
+            label: 'Reporte Excel',
             onClick: () => openReporteModal('excel'),
             icon: <FileDownloadOutlinedIcon />,
             id: 'btn-reporte-incidencias-excel',
@@ -730,72 +615,128 @@ const Incidencias: React.FC = () => {
         }
       />
 
-      <IncidenciasStatusTabs
-        value={resolucionTab}
-        onChange={handleResolucionTabChange}
-        closedValue={cerradasTab}
-        onClosedChange={(nextTab) => {
-          setCerradasTab(nextTab);
-          setPage(1);
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
         }}
-      />
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={dataPaginada}
-          isLoading={isLoading}
-          renderActions={renderActions}
-          emptyStateMessage={
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <ReportProblemOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {isCerradasTab
-                  ? cerradasTab === 'todas'
-                    ? t('incidencias.empty.noClosed')
-                    : t('incidencias.empty.noStatus', {
-                        status: INCIDENCIA_STATUS_LABEL[cerradasTab],
-                      })
-                  : t('incidencias.empty.noOpen')}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ maxWidth: 400, mx: 'auto' }}
-              >
-                {searchTerm
-                  ? t('incidencias.empty.searchHint')
-                  : isCerradasTab
-                    ? t('incidencias.empty.closedHint')
-                    : t('incidencias.empty.openHint')}
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPagesVista,
-            onPageChange: (_, p) => setPage(p),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
+        >
+          <Tabs
+            id="incidencias-tabs"
+            value={resolucionTab}
+            onChange={(_, newValue: IncidenciasResolucionTab) =>
+              handleResolucionTabChange(newValue)
+            }
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="por_resolver"
+              label="Por resolver"
+              icon={<PendingActionsIcon />}
+            />
+            <Tab
+              value="resueltas"
+              label="Resueltas"
+              icon={<CheckCircleOutlineIcon />}
+            />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="info"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.info.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.info.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando las incidencias pendientes filtradas desde el
+              Dashboard.
+            </Alert>
+          )}
+
+          <DataTable
+            id="incidencias-table"
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            renderActions={renderActions}
+            emptyStateMessage={
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <ReportProblemOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {resolucionTab === 'resueltas'
+                    ? 'No hay incidencias resueltas'
+                    : 'No hay incidencias por resolver'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                >
+                  {searchTerm
+                    ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                    : resolucionTab === 'resueltas'
+                      ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                      : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                </Typography>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, p) => setPage(p),
+              pageSize: pageSize,
+              onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+          />
+        </Box>
       </Paper>
 
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title={t('incidencias.detail.title')}
+        title="Detalle de Incidencia"
         subtitle={itemToView?.proveedorNombre}
         sections={detailSections}
         size="md"
@@ -812,7 +753,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                {t('incidencias.adjustButton')}
+                Ajustar cantidades
               </Button>
               <Button
                 variant="contained"
@@ -824,7 +765,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                {t('incidencias.resolveButton')}
+                Resolver incidencia
               </Button>
             </Stack>
           ) : undefined
@@ -835,9 +776,9 @@ const Incidencias: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title={t('incidencias.deleteDialog.title')}
-        message={t('incidencias.deleteDialog.message')}
-        confirmText={t('incidencias.deleteDialog.confirm')}
+        title="Eliminar Incidencia"
+        message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
+        confirmText="Eliminar"
         isLoading={isDeleting}
       />
 

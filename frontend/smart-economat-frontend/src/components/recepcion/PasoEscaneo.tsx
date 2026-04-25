@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -36,43 +35,88 @@ import BarcodeIcon from '../ui/BarcodeIcon';
 import StatusChip from './StatusChip';
 import BarcodeScanner from '../ui/BarcodeScanner';
 import { Tooltip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   RecepcionDraft,
   EstadoVisualProducto,
 } from '../../services/recepcion.types';
 
+/**
+ * Props for the PasoEscaneo step component.
+ */
 interface PasoEscaneoProps {
+  /** Ref to the search input element for auto-focus management. */
   searchInputRef: React.RefObject<HTMLInputElement | null>;
+  /** Current value of the barcode/ID search field. */
   searchQuery: string;
+  /** Setter for the search query string. */
   setSearchQuery: (query: string) => void;
+  /** Callback to trigger a product search, optionally with a specific query. */
   onSearch: (query?: string | unknown) => void;
+  /** Whether a search is currently in progress. */
   searching: boolean;
+  /** Whether the Web Serial scale API is supported in this browser. */
   isScaleSupported: boolean;
+  /** Whether a serial scale device is currently connected. */
   isScaleConnected: boolean;
+  /** Whether the scale integration is enabled by the user. */
   isScaleEnabled: boolean;
+  /** Setter to enable or disable scale integration. */
   setIsScaleEnabled: (enabled: boolean) => void;
+  /** Whether the scale is currently performing a weighing operation. */
   isScaleBusy: boolean;
+  /** Callback to request serial port access to connect the scale. */
   onRequestScaleAccess: () => void;
+  /** Current reception draft state. */
   draft: RecepcionDraft;
+  /** Setter for the reception draft state. */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
+  /** ID of the currently expanded accordion panel, or false if none. */
   expandedPanel: string | false;
+  /** Setter for the expanded accordion panel. */
   setExpandedPanel: (panel: string | false) => void;
+  /**
+   * Callback to update a single field on a reception line.
+   * @param pIdx - Index of the pedido (null for spontaneous products).
+   * @param lIdx - Index of the line within the pedido or spontaneous list.
+   * @param field - Name of the field to update.
+   * @param value - New value for the field.
+   */
   onUpdateLinea: (
     pIdx: number | null,
     lIdx: number,
     field: string,
     value: string | number | boolean | undefined
   ) => void;
+  /**
+   * Returns true if the given unit of measure requires weighing (e.g. KG, G).
+   * @param u - Unit of measure string.
+   */
   isWeightUnit: (u: string | undefined) => boolean;
+  /**
+   * Opens the weight scale modal for a specific line.
+   * @param pIdx - Index of the pedido (null for spontaneous products).
+   * @param lIdx - Index of the line.
+   */
   onOpenWeightScale: (pIdx: number | null, lIdx: number) => void;
 }
 
+/**
+ * Prevents typing invalid characters (e, E, +, -) in numeric input fields.
+ * @param e - Keyboard event from the number input.
+ */
 const handleNumberInputKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
   if (['e', 'E', '+', '-'].includes(e.key)) {
     e.preventDefault();
   }
 };
 
+/**
+ * Normalises a raw number string entered by the user.
+ * Strips negatives (pasted) and removes redundant leading zeros.
+ * @param value - Raw string value from the input.
+ * @returns Cleaned numeric string.
+ */
 const formatNumberInput = (value: string) => {
   let val = value.replace(/-/g, ''); // Fix against pasting negative numbers
   if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) {
@@ -82,6 +126,14 @@ const formatNumberInput = (value: string) => {
   return val;
 };
 
+/**
+ * Step 2 of the reception wizard: scanning and quantity entry.
+ *
+ * Renders a sticky search bar with optional camera barcode scanner and scale
+ * controls. Below the toolbar, ordered-pedido lines are shown in collapsible
+ * accordions, and spontaneous (out-of-order) products are listed in a
+ * separate table at the bottom.
+ */
 const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   searchInputRef,
   searchQuery,
@@ -105,6 +157,11 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   const { t } = useTranslation();
   const [scannerOpen, setScannerOpen] = React.useState(false);
 
+  /**
+   * Handles a barcode scan result from the camera scanner.
+   * Sets the search query and immediately triggers a product search.
+   * @param code - Scanned barcode string.
+   */
   const handleBarcodeScan = (code: string) => {
     setSearchQuery(code);
     onSearch(code);
@@ -125,6 +182,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
         }}
       >
         <Box
+          id="search-recepcion-productos"
           sx={{
             display: 'flex',
             flex: 1,
@@ -137,15 +195,15 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             inputRef={searchInputRef}
             fullWidth
             autoFocus
-            label={t('pasoEscaneo.title')}
+            label={t('recepcion.escaneo.titulo')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && onSearch()}
-            placeholder={t('pasoEscaneo.placeholder')}
+            placeholder={t('recepcion.escaneo.placeholder')}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Tooltip title={t('pasoEscaneo.scanCamera')}>
+                  <Tooltip title={t('recepcion.acciones.escanearCamara')}>
                     <IconButton
                       onClick={() => setScannerOpen(true)}
                       size="small"
@@ -197,12 +255,13 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             open={scannerOpen}
             onClose={() => setScannerOpen(false)}
             onScan={handleBarcodeScan}
-            title={t('pasoEscaneo.scanProduct')}
+            title={t('recepcion.escaneo.escanearProducto')}
             continuous={true}
           />
         </Box>
 
         <Box
+          id="scale-options-container"
           sx={{
             position: 'relative',
             width: { xs: '100%', sm: '44%', md: '380px' },
@@ -237,7 +296,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
               letterSpacing: '0.00938em',
             }}
           >
-            {t('pasoEscaneo.scaleOptions')}
+            {t('recepcion.escaneo.opcionesBascula')}
           </Typography>
 
           <Stack
@@ -262,8 +321,8 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 }}
               >
                 {isScaleConnected
-                  ? t('pasoEscaneo.changePort')
-                  : t('pasoEscaneo.linkScale')}
+                  ? t('recepcion.bascula.cambiarPuerto')
+                  : t('recepcion.bascula.vincular')}
               </Button>
             </Stack>
 
@@ -296,7 +355,7 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                     fontWeight: isScaleEnabled && isScaleConnected ? 600 : 500,
                   }}
                 >
-                  {t('pasoEscaneo.useScale')}
+                  {t('recepcion.escaneo.usarBascula')}
                 </Typography>
               }
               sx={{
@@ -335,8 +394,12 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 variant="caption"
                 sx={{ ml: 1, color: 'text.secondary' }}
               >
-                ({p.lineas.filter((l) => Number(l.cantidadRecibida) > 0).length}{' '}
-                {t('pasoEscaneo.itemsReceived')})
+                (
+                {t('recepcion.escaneo.itemsRecibidos', {
+                  count: p.lineas.filter((l) => Number(l.cantidadRecibida) > 0)
+                    .length,
+                })}
+                )
               </Typography>
             </Typography>
           </AccordionSummary>
@@ -346,22 +409,22 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: '25%' }}>
-                      {t('pasoEscaneo.columns.product')}
+                      {t('comun.producto')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '7%' }}>
-                      {t('pasoEscaneo.columns.unit')}
+                      {t('comun.unidad')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '8%' }}>
-                      {t('pasoEscaneo.columns.ordered')}
+                      {t('recepcion.escaneo.pedida')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}>
-                      {t('pasoEscaneo.columns.albaran')}
+                      {t('recepcion.escaneo.albaran')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}>
-                      {t('pasoEscaneo.columns.received')}
+                      {t('recepcion.escaneo.recibida')}
                     </TableCell>
                     <TableCell sx={{ width: '15%' }}>
-                      {t('pasoEscaneo.columns.status')}
+                      {t('comun.estado')}
                     </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}></TableCell>
                   </TableRow>
@@ -388,8 +451,8 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                           sx={{ color: 'text.secondary', display: 'block' }}
                         >
                           {l.codigoBarras
-                            ? `EAN: ${l.codigoBarras}`
-                            : t('pasoEscaneo.noCode')}
+                            ? `${t('recepcion.escaneo.ean')}: ${l.codigoBarras}`
+                            : t('recepcion.escaneo.sinCodigo')}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -577,13 +640,13 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             sx={{ fontSize: '0.8rem' }}
                           >
                             <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                              {t('pasoEscaneo.optimo')}
+                              {t('recepcion.escaneo.estadoOptimo')}
                             </MenuItem>
                             <MenuItem value={EstadoVisualProducto.ROTO}>
-                              {t('pasoEscaneo.roto')}
+                              {t('recepcion.escaneo.estadoRoto')}
                             </MenuItem>
                             <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                              {t('pasoEscaneo.defecto')}
+                              {t('recepcion.escaneo.estadoDefecto')}
                             </MenuItem>
                           </Select>
                         </FormControl>
@@ -603,29 +666,29 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
       {draft.productosEspontaneos.length > 0 && (
         <Paper sx={{ p: 2, bgcolor: 'background.default' }} elevation={0}>
           <Typography variant="subtitle2" color="secondary">
-            {t('pasoEscaneo.special')}
+            {t('recepcion.escaneo.fueraDePedido')} 🆕
           </Typography>
           <TableContainer sx={{ overflowX: 'auto' }}>
             <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '25%' }}>
-                    {t('pasoEscaneo.columns.product')}
+                    {t('comun.producto')}
                   </TableCell>
                   <TableCell align="center" sx={{ width: '8%' }}>
-                    {t('pasoEscaneo.columns.unit')}
+                    {t('comun.unidad')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '17%' }}>
-                    {t('pasoEscaneo.columns.albaran')}
+                    {t('recepcion.escaneo.albaran')}
                   </TableCell>
                   <TableCell align="right" sx={{ width: '20%' }}>
-                    {t('pasoEscaneo.columns.received')}
+                    {t('recepcion.escaneo.recibida')}
                   </TableCell>
                   <TableCell sx={{ width: '15%' }}>
-                    {t('pasoEscaneo.columns.physical')}
+                    {t('recepcion.escaneo.fisico')}
                   </TableCell>
                   <TableCell align="center" sx={{ width: '15%' }}>
-                    {t('pasoEscaneo.columns.action')}
+                    {t('comun.accion')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -651,8 +714,8 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                         sx={{ color: 'text.secondary', display: 'block' }}
                       >
                         {l.codigoBarras
-                          ? `EAN: ${l.codigoBarras}`
-                          : t('pasoEscaneo.noCode')}
+                          ? `${t('recepcion.escaneo.ean')}: ${l.codigoBarras}`
+                          : t('recepcion.escaneo.sinCodigo')}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -818,19 +881,19 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                           sx={{ fontSize: '0.8rem' }}
                         >
                           <MenuItem value={EstadoVisualProducto.OPTIMO}>
-                            {t('pasoEscaneo.optimo')}
+                            Óptimo
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.ROTO}>
-                            {t('pasoEscaneo.roto')}
+                            Roto
                           </MenuItem>
                           <MenuItem value={EstadoVisualProducto.DEFECTUOSO}>
-                            {t('pasoEscaneo.defecto')}
+                            Defecto
                           </MenuItem>
                         </Select>
                       </FormControl>
                     </TableCell>
                     <TableCell align="center">
-                      <StatusChip status="Nuevo" />
+                      <StatusChip status={t('recepcion.escaneo.nuevo')} />
                       <IconButton
                         size="small"
                         onClick={() => {

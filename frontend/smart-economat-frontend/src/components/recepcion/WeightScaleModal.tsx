@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +9,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface WeightScaleModalProps {
   open: boolean;
@@ -43,11 +43,11 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
       PaperProps={{ sx: { borderRadius: 3, textAlign: 'center', py: 2 } }}
     >
       <DialogTitle sx={{ fontWeight: 'bold' }}>
-        {t('weightScale.title')}
+        {t('recepcion.bascula.titulo')}
       </DialogTitle>
       {productName && (
         <Typography variant="subtitle2" color="primary" sx={{ px: 3, mt: -1 }}>
-          {t('weightScale.weighing')} {productName}
+          {t('recepcion.bascula.pesando')}: {productName}
         </Typography>
       )}
       <DialogContent
@@ -70,13 +70,13 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           >
             <CircularProgress size={50} color="primary" />
             <Typography variant="h6" color="text.secondary">
-              {statusText || t('weightScale.communicating')}
+              {statusText || t('recepcion.bascula.comunicando')}
             </Typography>
           </Box>
         ) : (
           <Box
             sx={{
-              bgcolor: '#000',
+              bgcolor: 'background.default',
               color: '#0f0',
               fontFamily: 'monospace',
               px: 4,
@@ -102,7 +102,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', px: 3, pb: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isWeighing}>
-          {t('weightScale.cancel')}
+          {t('comun.cancelar')}
         </Button>
         <Button
           onClick={onStartWeighing}
@@ -110,7 +110,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           color="secondary"
           disabled={isWeighing}
         >
-          {t('weightScale.recalculate')}
+          {t('recepcion.bascula.recalcular')}
         </Button>
         <Button
           onClick={onConfirmWeight}
@@ -118,7 +118,7 @@ const WeightScaleModal: React.FC<WeightScaleModalProps> = ({
           color="success"
           disabled={isWeighing || capturedWeight === null}
         >
-          {t('weightScale.confirmWeight')}
+          {t('recepcion.bascula.confirmarPeso')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -121,9 +121,21 @@ ensure_seed_temp_password() {
     return
   fi
 
+  printf "SEED_DEFAULT_ADMIN_TEMP_PASSWORD=%s\n" "SmartEconomat2026!" >> "$ENV_FILE"
+}
+
+ensure_redis_password() {
+  if [ ! -f "$ENV_FILE" ]; then
+    cp "${ROOT_DIR}/.env.example" "$ENV_FILE"
+  fi
+
+  if grep -q '^REDIS_PASSWORD=' "$ENV_FILE"; then
+    return
+  fi
+
   local generated_password
   generated_password="$(openssl rand -hex 16)"
-  printf "SEED_DEFAULT_ADMIN_TEMP_PASSWORD=%s\n" "$generated_password" >> "$ENV_FILE"
+  printf "REDIS_PASSWORD=%s\n" "$generated_password" >> "$ENV_FILE"
 }
 
 ensure_network_ip_env() {
@@ -197,12 +209,11 @@ ln -sfn "live/local-${DOMAIN}/privkey.pem" "${ROOT_DIR}/certs/privkey.pem"
 rm -f "$SERVER_CSR" "$EXT_FILE"
 
 upsert_env "DOMAIN" "$DOMAIN"
-upsert_env "BACKEND_API_URL" "https://${DOMAIN}/api/v1"
-upsert_env "FRONTEND_API_URL" "https://${DOMAIN}"
 upsert_env "DB_SYNC" "false"
 upsert_env "TLS_PROVIDER" "selfsigned"
 ensure_network_ip_env
 ensure_seed_temp_password
+ensure_redis_password
 
 if [ "$with_hosts" = true ]; then
   ensure_hosts_entry

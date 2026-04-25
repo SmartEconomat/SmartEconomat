@@ -2,9 +2,22 @@ import React from 'react';
 import { Snackbar, Alert, Stack, Box, Typography } from '@mui/material';
 import { useToastList } from '../../../store/toast.hooks';
 import { getCategoryIconFilled } from '../../../features/productos/utils/getCategoryIconFilled';
+import NearMeIcon from '@mui/icons-material/NearMeOutlined';
 
+/** Fixed width for each toast card in pixels. */
 const TOAST_WIDTH = 360;
 
+/**
+ * Global toast notification container.
+ *
+ * Reads the current list of toasts from the toast store and renders each one
+ * as a stacked MUI `Snackbar`/`Alert` in the top-right corner of the viewport.
+ * Each toast can be dismissed by clicking its close button, which calls
+ * `removeToast` from the store.
+ *
+ * The component is intended to be mounted once at the application root level
+ * (e.g. inside `App.tsx`) so it is always present.
+ */
 export default function ToastContainer() {
   const { toasts, removeToast } = useToastList();
 
@@ -14,8 +27,8 @@ export default function ToastContainer() {
       sx={{
         position: 'fixed',
         top: { xs: 16, sm: 24 },
-        right: { xs: '50%', sm: 24 },
-        transform: { xs: 'translateX(50%)', sm: 'none' },
+        left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 9999,
         width: { xs: 'calc(100% - 32px)', sm: TOAST_WIDTH },
         maxWidth: TOAST_WIDTH,
@@ -26,7 +39,7 @@ export default function ToastContainer() {
         <Snackbar
           key={toast.id}
           open={true}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           sx={{ position: 'relative', width: 'auto' }}
         >
           <Alert
@@ -61,7 +74,7 @@ export default function ToastContainer() {
               },
             }}
           >
-            {/* Icono de categoría de producto (siempre visible) */}
+            {/* Icono de categoría o navegación */}
             <Box
               component="span"
               sx={{
@@ -71,16 +84,20 @@ export default function ToastContainer() {
                 flexShrink: 0,
               }}
             >
-              {getCategoryIconFilled(toast.productCategory, {
-                sx: { fontSize: 20 },
-              })}
+              {toast.iconType === 'navigation' ? (
+                <NearMeIcon sx={{ fontSize: 20 }} />
+              ) : (
+                getCategoryIconFilled(toast.productCategory, {
+                  sx: { fontSize: 20 },
+                })
+              )}
             </Box>
 
             {/* Mensaje */}
             <Typography
               component="span"
               variant="body2"
-              sx={{ color: 'inherit', lineHeight: 1.4 }}
+              sx={{ color: 'inherit', lineHeight: 1.4, whiteSpace: 'pre-line' }}
             >
               {toast.message}
             </Typography>

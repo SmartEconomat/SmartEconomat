@@ -4,29 +4,64 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { TipoMovimiento } from '../../services/movimiento.types';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Represents the current state of the movimiento filter controls.
+ */
 export interface MovimientoFiltersState {
+  /** Array of movement types to filter by (empty means show all types). */
   types: TipoMovimiento[];
+  /** ISO date string for the start of the date range, or null if not set. */
   startDate: string | null;
+  /** ISO date string for the end of the date range, or null if not set. */
   endDate: string | null;
 }
 
+/**
+ * Props for the {@link MovimientoFilters} component.
+ */
 interface MovimientoFiltersProps {
+  /** Current filter values. */
   filters: MovimientoFiltersState;
+  /** Callback invoked whenever any filter value changes. */
   onChange: (filters: MovimientoFiltersState) => void;
 }
 
+/** All available movement type values derived from the TipoMovimiento enum. */
 const MOVIMIENTO_TYPES = Object.values(TipoMovimiento);
 
+/**
+ * Filter toolbar for the movimientos list.
+ * Provides a multi-select autocomplete for movement types and two date
+ * pickers for the date range.
+ *
+ * @param {MovimientoFiltersProps} props - Component props.
+ * @returns JSX rendered filter toolbar.
+ * @example
+ * <MovimientoFilters filters={filters} onChange={setFilters} />
+ */
 const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   filters,
   onChange,
 }) => {
   const { t } = useTranslation();
+
+  /**
+   * Handles changes to the movement-type multi-select autocomplete.
+   *
+   * @param _ - Unused synthetic event.
+   * @param newValue - The updated array of selected movement types.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTypeChange = (_: any, newValue: TipoMovimiento[]) => {
     onChange({ ...filters, types: newValue });
   };
 
+  /**
+   * Returns a change handler for a date field.
+   *
+   * @param field - Which date field to update ('startDate' or 'endDate').
+   * @returns An input change handler that updates the specified date field.
+   */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,8 +90,8 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label={t('filters.types')}
-            placeholder={t('filters.filterByType')}
+            label={t('movimientos.filtros.tipos')}
+            placeholder={t('movimientos.filtros.placeholder')}
             size="small"
             InputProps={{
               ...params.InputProps,
@@ -99,7 +134,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 
       <TextField
         id="start-date"
-        label={t('filters.from')}
+        label={t('movimientos.filtros.desde')}
         type="date"
         size="small"
         value={filters.startDate || ''}
@@ -116,7 +151,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 
       <TextField
         id="end-date"
-        label={t('filters.to')}
+        label={t('movimientos.filtros.hasta')}
         type="date"
         size="small"
         value={filters.endDate || ''}

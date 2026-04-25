@@ -7,6 +7,14 @@ CERT_DIR="/etc/nginx/certs"
 FULLCHAIN="$CERT_DIR/fullchain.pem"
 PRIVKEY="$CERT_DIR/privkey.pem"
 FILES="$FULLCHAIN $PRIVKEY $CERT_DIR/.reloaded"
+TLS_PROVIDER="${TLS_PROVIDER:-selfsigned}"
+
+if [ "$TLS_PROVIDER" = "none" ]; then
+  echo "[nginx-cert-watcher] TLS_PROVIDER=none; removing any stale certificates and skipping watcher."
+  rm -rf "$CERT_DIR"
+  mkdir -p "$CERT_DIR"
+  exit 0
+fi
 
 if ! command -v inotifywait >/dev/null 2>&1; then
   echo "[nginx-cert-watcher] inotifywait not found; skipping auto-reload" >&2
@@ -14,14 +22,6 @@ if ! command -v inotifywait >/dev/null 2>&1; then
 fi
 
 mkdir -p "$CERT_DIR"
-
-# Bootstrap: if certs are missing, generate temporary self-signed so Nginx can start on 443
-if [ ! -s "$FULLCHAIN" ] || [ ! -s "$PRIVKEY" ]; then
-  echo "[nginx-cert-watcher] No certificates found. Generating temporary self-signed cert..."
-  openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-    -keyout "$PRIVKEY" -out "$FULLCHAIN" \
-    -subj "/CN=localhost" >/dev/null 2>&1 || true
-fi
 
 echo "[nginx-cert-watcher] Watching cert updates in $CERT_DIR ..."
 

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -13,36 +12,54 @@ import {
 import { UbicacionService } from '../../services/ubicacion.service';
 import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
+/** Props for the {@link QuickLocationDialog} component. */
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Called with the newly created location object after a successful save. */
   onSuccess: (newLocation: Ubicacion) => void;
 }
 
+/**
+ * Compact dialog that lets the user quickly create a new warehouse location
+ * without leaving their current workflow.
+ *
+ * On successful creation the `onSuccess` callback receives the new location
+ * so the parent can immediately select or use it.
+ *
+ * @param props - {@link QuickLocationDialogProps}
+ */
 const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   open,
   onClose,
   onSuccess,
 }) => {
-  const { t } = useTranslation();
   const [nombre, setNombre] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
 
+  /**
+   * Validates the name, calls the API to create the location, and handles
+   * success/error feedback via toasts.
+   *
+   * @param e - Optional form submit event (prevents default if provided).
+   */
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     const trimmedNombre = nombre.trim();
     if (!trimmedNombre) {
-      toast.error(t('quickLocation.nameRequired'));
+      toast.error(t('inventario.nuevaUbicacion.nombreObligatorio'));
       return;
     }
 
     setIsSaving(true);
     try {
       const newLoc = await UbicacionService.create({ nombre: trimmedNombre });
-      toast.success(t('quickLocation.createSuccess'));
+      toast.success(t('inventario.nuevaUbicacion.creada'));
       onSuccess(newLoc);
       setNombre('');
       onClose();
@@ -54,9 +71,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         msg.includes('already exists') ||
         msg.includes('400')
       ) {
-        toast.error(t('quickLocation.duplicateError'));
+        toast.error(t('inventario.nuevaUbicacion.yaExiste'));
       } else {
-        toast.error(t('quickLocation.createError'));
+        toast.error(t('inventario.nuevaUbicacion.error'));
       }
     } finally {
       setIsSaving(false);
@@ -65,15 +82,15 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>{t('quickLocation.title')}</DialogTitle>
+      <DialogTitle>{t('inventario.nuevaUbicacion.titulo')}</DialogTitle>
       <form onSubmit={handleSave}>
         <DialogContent dividers>
           <Box sx={{ pt: 1 }}>
             <TextField
               autoFocus
               fullWidth
-              label={t('quickLocation.nameLabel')}
-              placeholder={t('quickLocation.namePlaceholder')}
+              label={t('inventario.nuevaUbicacion.nombre')}
+              placeholder={t('inventario.nuevaUbicacion.placeholder')}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               disabled={isSaving}
@@ -83,7 +100,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={onClose} color="inherit" disabled={isSaving}>
-            {t('quickLocation.cancel')}
+            {t('comun.cancelar')}
           </Button>
           <Button
             type="submit"
@@ -91,7 +108,7 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
             disabled={isSaving || !nombre.trim()}
             startIcon={isSaving ? <CircularProgress size={20} /> : null}
           >
-            {t('quickLocation.save')}
+            {t('comun.guardar')}
           </Button>
         </DialogActions>
       </form>

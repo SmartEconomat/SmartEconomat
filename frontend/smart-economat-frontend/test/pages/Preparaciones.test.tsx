@@ -197,7 +197,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir raciones o cantidad/i,
+      name: /consumir preparación/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -236,7 +236,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir raciones o cantidad/i,
+      name: /consumir preparación/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -247,9 +247,10 @@ describe('Preparaciones page', () => {
     const amountInput = screen.getByLabelText(/cantidad a consumir/i);
     fireEvent.change(amountInput, { target: { value: '1,2' } });
 
+    // The message appears as both a hint label and a form field helper text — use getAllByText
     expect(
-      screen.getAllByText('La cantidad debe ser múltiplo de 0,25 kg.')[0]
-    ).toBeInTheDocument();
+      screen.getAllByText('Debe ser múltiplo de 0,25 kg.').length
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole('button', { name: /confirmar consumo/i })
     ).toBeDisabled();
@@ -282,7 +283,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir raciones o cantidad/i,
+      name: /consumir preparación/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -327,7 +328,7 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir raciones o cantidad/i,
+      name: /consumir preparación/i,
     });
 
     fireEvent.click(consumeButton[0]);
@@ -415,7 +416,7 @@ describe('Preparaciones page', () => {
     });
 
     expect(
-      screen.queryByRole('button', { name: /consumir raciones o cantidad/i })
+      screen.queryByRole('button', { name: /consumir preparación/i })
     ).not.toBeInTheDocument();
   });
 

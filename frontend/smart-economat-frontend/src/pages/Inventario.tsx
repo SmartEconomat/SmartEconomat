@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -18,6 +18,8 @@ import {
   Stack,
   Tabs,
   Tab,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
@@ -61,12 +63,16 @@ import {
 } from '../services/productoProveedor.service';
 import { searchByBarcode } from '../services/openfoodfacts.service';
 
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
-import AddIcon from '@mui/icons-material/Add';
-import SettingsIcon from '@mui/icons-material/Settings';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import SettingsIcon from '@mui/icons-material/Settings';
+import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 
 import PageToolbar from '../components/ui/PageToolbar';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
@@ -138,8 +144,59 @@ interface ProductoFormData extends Record<string, unknown> {
   proveedores?: ProductoFormProveedor[];
 }
 
+const PRODUCTO_CREATE_FIELDS_BASE: DynamicField[] = [
+  { name: 'nombre', label: 'Nombre Comercial', required: true },
+  { name: 'marca', label: 'Marca' },
+  { name: 'descripcion', label: 'Descripción' },
+  {
+    name: 'contenido',
+    label: 'Contenido Numérico',
+    type: 'number',
+    required: true,
+  },
+  {
+    name: 'unidad',
+    label: 'Unidad de Medida',
+    type: 'select',
+    required: true,
+    options: [
+      { value: UnidadMedida.KG, label: 'Kg' },
+      { value: UnidadMedida.G, label: 'Gramo' },
+      { value: UnidadMedida.L, label: 'Litro' },
+      { value: UnidadMedida.ML, label: 'Mililitro' },
+      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
+      { value: UnidadMedida.PAQ, label: 'Paquete' },
+    ],
+    width: 6,
+  },
+  {
+    name: 'tipo',
+    label: 'Categoría',
+    type: 'select',
+    required: true,
+    width: 6,
+    options: [
+      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
+      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
+      { value: CategoriaProducto.CARNE, label: 'Carne' },
+      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
+      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
+      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
+      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
+      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
+      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
+      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
+      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
+      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
+      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
+      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
+      { value: CategoriaProducto.OTRO, label: 'Otro' },
+    ],
+  },
+  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+];
+
 const Inventario: React.FC = () => {
-  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -200,8 +257,17 @@ const Inventario: React.FC = () => {
   const [isCantidadDialogOpen, setIsCantidadDialogOpen] = useState(false);
   const [isAddingFromScanner, setIsAddingFromScanner] = useState(false);
 
+  const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('filter') === 'stockBajo';
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('filter');
+    setSearchParams(nextParams, { replace: true });
+  };
   const isAdmin = isElevatedRole(user?.rol);
   const canSeeGeneral =
     isAdmin || user?.permisos?.includes(PERMISSIONS.inventario.listar);
@@ -226,7 +292,7 @@ const Inventario: React.FC = () => {
       }
       return ubicacionesList;
     } catch {
-      toast.error(t('inventario.toast.errorLoadingLocations'));
+      toast.error('Error al cargar ubicaciones');
       return [];
     }
   }, [toast]);
@@ -291,14 +357,14 @@ const Inventario: React.FC = () => {
     let cancelled = false;
     setIsSearchingProductoProveedor(true);
 
-    const timeoutId = window.setTimeout(() => {
+    const t = window.setTimeout(() => {
       searchProductoProveedor(term, 20, 0)
         .then((opts) => {
           if (!cancelled) setProductoProveedorOptions(opts);
         })
         .catch((err: unknown) => {
           console.error('Error buscando producto/proveedor:', err);
-          if (!cancelled) toast.error(t('inventario.toast.inventoryError'));
+          if (!cancelled) toast.error('Error al buscar producto/proveedor.');
         })
         .finally(() => {
           if (!cancelled) setIsSearchingProductoProveedor(false);
@@ -307,7 +373,7 @@ const Inventario: React.FC = () => {
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
+      window.clearTimeout(t);
     };
   }, [isCreateOpen, productoProveedorInput, toast]);
 
@@ -344,118 +410,42 @@ const Inventario: React.FC = () => {
           : items;
 
       const agregado = agregarInventarioPorProducto(itemsToGroup);
-      setData(agregado);
-      setTotalItems(agregado.length);
+
+      // Aplicar filtro de dashboard si está activo
+      const finalData = hasDashboardFilter
+        ? agregado.filter((p) => p.bajoStock)
+        : agregado;
+
+      setData(finalData);
+      setTotalItems(finalData.length);
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
-          : t('inventario.toast.inventoryError');
+          : 'Error desconocido al cargar inventario.';
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [tabIndex, assignedLocations]);
+  }, [tabIndex, assignedLocations, hasDashboardFilter]);
 
   useEffect(() => {
     void reloadInventario();
   }, [tabIndex, assignedLocations, canSeeGeneral, reloadInventario]);
 
   const productoCreateSchema = useMemo<DynamicField[]>(() => {
-    const schema: DynamicField[] = [
-      {
-        name: 'nombre',
-        label: t('inventario.productForm.nombre'),
-        required: true,
-      },
-      { name: 'marca', label: t('inventario.productForm.marca') },
-      { name: 'descripcion', label: t('inventario.productForm.descripcion') },
-      {
-        name: 'contenido',
-        label: t('inventario.productForm.contenido'),
-        type: 'number',
-        required: true,
-      },
-      {
-        name: 'unidad',
-        label: t('inventario.productForm.unidad'),
-        type: 'select',
-        required: true,
-        options: [
-          {
-            value: UnidadMedida.KG,
-            label: t('inventario.productForm.unidades.kg'),
-          },
-          {
-            value: UnidadMedida.G,
-            label: t('inventario.productForm.unidades.g'),
-          },
-          {
-            value: UnidadMedida.L,
-            label: t('inventario.productForm.unidades.l'),
-          },
-          {
-            value: UnidadMedida.ML,
-            label: t('inventario.productForm.unidades.ml'),
-          },
-          {
-            value: UnidadMedida.UNIDAD,
-            label: t('inventario.productForm.unidades.unidad'),
-          },
-          {
-            value: UnidadMedida.PAQ,
-            label: t('inventario.productForm.unidades.paq'),
-          },
-        ],
-        width: 6,
-      },
-      {
-        name: 'tipo',
-        label: t('inventario.productForm.categoria'),
-        type: 'select',
-        required: true,
-        width: 6,
-        options: [
-          { value: CategoriaProducto.VERDURA, label: t('categoria.VERDURA') },
-          { value: CategoriaProducto.FRUTA, label: t('categoria.FRUTA') },
-          { value: CategoriaProducto.CARNE, label: t('categoria.CARNE') },
-          { value: CategoriaProducto.PESCADO, label: t('categoria.PESCADO') },
-          { value: CategoriaProducto.MARISCO, label: t('categoria.MARISCO') },
-          { value: CategoriaProducto.LACTEO, label: t('categoria.LACTEO') },
-          { value: CategoriaProducto.HUEVO, label: t('categoria.HUEVO') },
-          { value: CategoriaProducto.CEREAL, label: t('categoria.CEREAL') },
-          { value: CategoriaProducto.LEGUMBRE, label: t('categoria.LEGUMBRE') },
-          {
-            value: CategoriaProducto.FRUTO_SECO,
-            label: t('categoria.FRUTO_SECO'),
-          },
-          {
-            value: CategoriaProducto.CONDIMENTO,
-            label: t('categoria.CONDIMENTO'),
-          },
-          { value: CategoriaProducto.ACEITE, label: t('categoria.ACEITE') },
-          { value: CategoriaProducto.AZUCAR, label: t('categoria.AZUCAR') },
-          { value: CategoriaProducto.BEBIDA, label: t('categoria.BEBIDA') },
-          { value: CategoriaProducto.OTRO, label: t('categoria.OTRO') },
-        ],
-      },
-      {
-        name: 'codigoBarras',
-        label: t('inventario.productForm.codigoBarras'),
-        type: 'barcode',
-      },
-      {
-        name: 'proveedores',
-        label: t('inventario.proveedoresAsociados'),
-        type: 'proveedores',
-        position: 'bottom',
-        required: true,
-        defaultValue: [],
-        options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
-      },
-    ];
+    const schema = [...PRODUCTO_CREATE_FIELDS_BASE];
+    schema.push({
+      name: 'proveedores',
+      label: 'Proveedores Asociados',
+      type: 'proveedores',
+      position: 'bottom',
+      required: true,
+      defaultValue: [],
+      options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
+    });
     return schema;
-  }, [proveedores, t]);
+  }, [proveedores]);
 
   const ensureProveedoresLoaded = useCallback(async (): Promise<void> => {
     if (proveedores.length > 0) return;
@@ -534,7 +524,9 @@ const Inventario: React.FC = () => {
         return true;
       } catch (err: unknown) {
         const message =
-          err instanceof Error ? err.message : t('inventario.toast.addError');
+          err instanceof Error
+            ? err.message
+            : 'No se pudo preparar el formulario de alta de producto.';
         toast.error(message);
         return false;
       }
@@ -612,11 +604,13 @@ const Inventario: React.FC = () => {
         }
 
         if (options.length === 0) {
-          toast.info(t('inventario.toast.noProviderRelation'));
+          toast.info(
+            'No se encontró relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
+          );
         }
       } catch (err: unknown) {
         console.error('Error preparando alta en inventario:', err);
-        toast.error(t('inventario.toast.addError'));
+        toast.error('Error al cargar opciones de producto/proveedor.');
       } finally {
         setIsSearchingProductoProveedor(false);
       }
@@ -639,19 +633,19 @@ const Inventario: React.FC = () => {
 
       const nombre = toOptionalString(typedFormData.nombre);
       if (!nombre) {
-        throw new Error(t('inventario.validation.nameRequired'));
+        throw new Error('El nombre del producto es obligatorio.');
       }
 
       const contenido = Number(typedFormData.contenido);
       if (Number.isNaN(contenido) || contenido <= 0) {
-        throw new Error(t('inventario.validation.contenidoInvalid'));
+        throw new Error('El contenido debe ser un número mayor que 0.');
       }
 
       const unidad = normalizeUnidadMedida(
         toOptionalString(typedFormData.unidad)
       );
       if (!unidad) {
-        throw new Error(t('inventario.validation.unidadInvalid'));
+        throw new Error('Selecciona una unidad de medida válida.');
       }
 
       const proveedoresForm = Array.isArray(typedFormData.proveedores)
@@ -675,7 +669,9 @@ const Inventario: React.FC = () => {
         });
 
       if (proveedoresPayload.length === 0) {
-        throw new Error(t('inventario.validation.proveedorRequired'));
+        throw new Error(
+          'Debes asociar al menos un proveedor para poder añadir este producto al inventario.'
+        );
       }
 
       if (
@@ -685,7 +681,9 @@ const Inventario: React.FC = () => {
             proveedor.precioUnitario < 0
         )
       ) {
-        throw new Error(t('inventario.validation.precioInvalid'));
+        throw new Error(
+          'Cada proveedor debe tener un precio de compra válido (número mayor o igual a 0).'
+        );
       }
 
       const tipo =
@@ -708,7 +706,7 @@ const Inventario: React.FC = () => {
 
       setIsCreateProductoModalOpen(false);
       setCreateProductoInitialData({});
-      toast.success(t('inventario.toast.productCreated'));
+      toast.success('Producto creado correctamente en catálogo.');
 
       if (canCrear) {
         openCantidadDialogForProduct({
@@ -716,11 +714,13 @@ const Inventario: React.FC = () => {
           nombre: creado.nombre,
         });
       } else {
-        toast.info(t('inventario.toast.noPermissionInventory'));
+        toast.info(
+          'Producto creado, pero no tienes permisos para añadirlo al inventario.'
+        );
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventario.toast.addError');
+        err instanceof Error ? err.message : 'Error al crear el producto.';
       toast.error(message);
     } finally {
       setIsSavingProducto(false);
@@ -740,7 +740,7 @@ const Inventario: React.FC = () => {
       );
 
       if (existsInInventory) {
-        toast.success(t('inventario.toast.productLocated'));
+        toast.success('Producto localizado en inventario.');
         return;
       }
 
@@ -753,9 +753,13 @@ const Inventario: React.FC = () => {
               barcode: code,
               nombre: existingProduct.nombre,
             });
-            toast.info(t('inventario.toast.foundInCatalog'));
+            toast.info(
+              'Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.'
+            );
           } else {
-            toast.info(t('inventario.toast.noPermissionAdd'));
+            toast.info(
+              'Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.'
+            );
           }
           return;
         }
@@ -764,7 +768,9 @@ const Inventario: React.FC = () => {
       }
 
       if (!canCrearProducto) {
-        toast.info(t('inventario.toast.noPermissionCreate'));
+        toast.info(
+          'Este código no existe en inventario y no tienes permisos para crear productos.'
+        );
         return;
       }
 
@@ -779,12 +785,12 @@ const Inventario: React.FC = () => {
 
     const cantidad = Number(cantidadEscaneo);
     if (Number.isNaN(cantidad) || cantidad <= 0) {
-      toast.error(t('inventario.quantityDialog.mustBeGreaterThanZero'));
+      toast.error('La cantidad a añadir debe ser un número mayor que 0.');
       return;
     }
 
     if (!canCrear) {
-      toast.info(t('inventario.toast.noPermissionAdd'));
+      toast.info('No tienes permisos para añadir inventario.');
       setIsCantidadDialogOpen(false);
       setProductoPendienteCantidadInventario(null);
       setCantidadEscaneo('1');
@@ -798,7 +804,9 @@ const Inventario: React.FC = () => {
       const ubicacionDestinoId = ubicacionId || ubicacionesDisponibles[0]?.id;
 
       if (!ubicacionDestinoId) {
-        throw new Error(t('inventario.validation.noLocations'));
+        throw new Error(
+          'No hay ubicaciones disponibles para registrar el inventario.'
+        );
       }
 
       const query = (producto.barcode || producto.nombre).trim();
@@ -817,11 +825,15 @@ const Inventario: React.FC = () => {
         setCantidadEscaneo('1');
 
         if (options.length === 0) {
-          toast.error(t('inventario.toast.noProviderRelation'));
+          toast.error(
+            'No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
+          );
           return;
         }
 
-        toast.info(t('inventario.toast.multipleRelations'));
+        toast.info(
+          'Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.'
+        );
         void openInventarioCreateForProduct(producto, cantidad, options);
         return;
       }
@@ -833,16 +845,16 @@ const Inventario: React.FC = () => {
         ubicacionId: ubicacionDestinoId,
       });
 
-      toast.success(
-        t('inventario.toast.stockAdded', { name: producto.nombre })
-      );
+      toast.success(`Stock añadido correctamente para ${producto.nombre}.`);
       setIsCantidadDialogOpen(false);
       setProductoPendienteCantidadInventario(null);
       setCantidadEscaneo('1');
       await reloadInventario();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventario.toast.addError');
+        err instanceof Error
+          ? err.message
+          : 'No se pudo añadir el producto al inventario.';
       toast.error(message);
     } finally {
       setIsAddingFromScanner(false);
@@ -851,28 +863,34 @@ const Inventario: React.FC = () => {
 
   const handleCreateInventario = async () => {
     if (!productoProveedorValue?.id) {
-      toast.error(t('inventario.validation.selectProductProvider'));
+      toast.error('Selecciona un producto/proveedor.');
       return;
     }
     const cantActual = Number(cantidadActual);
     const cantMin = Number(cantidadMinima);
     const cantMax = cantidadMaxima ? Number(cantidadMaxima) : undefined;
     if (Number.isNaN(cantActual) || cantActual < 0) {
-      toast.error(t('inventario.validation.cantidadActualInvalid'));
+      toast.error(
+        'La cantidad actual debe ser un número válido mayor o igual a 0.'
+      );
       return;
     }
     if (Number.isNaN(cantMin) || cantMin < 0) {
-      toast.error(t('inventario.validation.cantidadMinimaInvalid'));
+      toast.error(
+        'La cantidad mínima debe ser un número válido mayor o igual a 0.'
+      );
       return;
     }
     if (cantMax !== undefined && (Number.isNaN(cantMax) || cantMax < 0)) {
-      toast.error(t('inventario.validation.cantidadMaximaInvalid'));
+      toast.error(
+        'La cantidad máxima debe ser un número válido mayor o igual a 0.'
+      );
       return;
     }
 
     // max must be >= min when provided
     if (cantMax !== undefined && cantMax < cantMin) {
-      toast.error(t('inventario.validation.maxLessThanMin'));
+      toast.error('La cantidad máxima no puede ser menor que la mínima.');
       return;
     }
 
@@ -886,7 +904,7 @@ const Inventario: React.FC = () => {
         ubicacionId,
         fechaCaducidad: fechaCaducidad || undefined,
       });
-      toast.success(t('inventario.toast.inventoryCreated'));
+      toast.success('Entrada de inventario creada correctamente.');
       setIsCreateOpen(false);
       setProductoProveedorValue(null);
       setProductoProveedorInput('');
@@ -901,7 +919,7 @@ const Inventario: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : t('inventario.toast.inventoryError');
+          : 'Error al crear la entrada de inventario.';
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -975,10 +993,10 @@ const Inventario: React.FC = () => {
   }, [searchTerm, filters]);
 
   const columns: Column<InventarioPorProducto>[] = [
-    { id: 'nombre', label: t('inventario.columns.producto') },
+    { id: 'nombre', label: 'Producto' },
     {
       id: 'tipo',
-      label: t('inventario.columns.tipo'),
+      label: 'Tipo',
       render: (row) =>
         row.tipo ? (
           <StatusChip status={row.tipo} variant="outlined" size="small" />
@@ -989,7 +1007,7 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'cantidadTotal',
-      label: t('inventario.columns.stockTotal'),
+      label: 'Stock Total',
       align: 'right',
       render: (row) => {
         const equivalente = formatEquivalentByConstruction(
@@ -1014,7 +1032,7 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'cantidadMinima',
-      label: t('inventario.columns.minimo'),
+      label: 'Mínimo',
       align: 'right',
       render: (row) => {
         const equivalente = formatEquivalentByConstruction(
@@ -1040,43 +1058,44 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'bajoStock',
-      label: t('inventario.columns.estado'),
+      label: 'Estado',
       render: (row) =>
         row.bajoStock ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <WarningAmberOutlinedIcon color="warning" fontSize="small" />
             <Typography variant="body2" color="warning.main">
-              {t('inventario.stockStatus.lowStock')}
+              Bajo stock
             </Typography>
           </Box>
         ) : (
           <Typography variant="body2" color="text.secondary">
-            {t('inventario.stockStatus.ok')}
+            OK
           </Typography>
         ),
     },
     {
       id: 'proveedores',
-      label: t('inventario.columns.proveedores'),
+      label: 'Proveedores',
       render: (row) => row.proveedores?.join(', ') ?? '—',
       hideOnMobile: true,
     },
     {
       id: 'ubicaciones',
-      label: t('inventario.columns.ubicaciones'),
+      label: 'Ubicaciones',
       render: (row) => row.ubicaciones?.join(', ') ?? '—',
       hideOnMobile: true,
     },
     {
       id: 'acciones',
-      label: t('dataTable.actions'),
+      label: 'Acciones',
       align: 'right',
       render: (row) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title={t('inventario.actions.viewDetails')}>
+          <Tooltip title="Ver Detalles y Lotes">
             <IconButton
               size="small"
               color="primary"
+              id="btn-ver-detalle-stock"
               onClick={() => {
                 setSelectedProductId(row.productoId);
                 setDetailMode('view');
@@ -1087,10 +1106,11 @@ const Inventario: React.FC = () => {
             </IconButton>
           </Tooltip>
           {canAjustar && (
-            <Tooltip title={t('inventario.actions.audit')}>
+            <Tooltip title="Auditar stock por ajuste (+/-)">
               <IconButton
                 size="small"
                 color="secondary"
+                id="btn-ajustar-stock"
                 onClick={() => {
                   setSelectedProductId(row.productoId);
                   setDetailMode('audit');
@@ -1109,21 +1129,22 @@ const Inventario: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title={t('inventario.pageTitle')}
+        id="inventario-toolbar"
+        title="Inventario por Producto"
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder={t('inventario.searchPlaceholder')}
+        searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
         searchId="search-inventario"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel={t('inventario.totalItemsLabel')}
+        totalItemsLabel="productos"
         primaryAction={
           canCrear
             ? {
-                label: t('inventario.addToInventory'),
+                label: 'Añadir al inventario',
                 onClick: handleOpenCreate,
                 icon: <AddIcon />,
                 id: 'btn-add-inventario',
@@ -1133,7 +1154,7 @@ const Inventario: React.FC = () => {
         secondaryAction={
           canGestionarUbicaciones
             ? {
-                label: t('inventario.manageLocations'),
+                label: 'Gestionar Ubicaciones',
                 onClick: () => setIsUbicacionesModalOpen(true),
                 icon: <SettingsIcon />,
                 id: 'btn-manage-locations',
@@ -1142,7 +1163,7 @@ const Inventario: React.FC = () => {
         }
         onViewModeChange={undefined}
         filters={
-          <Box width="100%">
+          <Box width="100%" id="inventario-filters">
             <InventarioFilters
               filters={filters}
               onChange={(newFilters) => {
@@ -1162,353 +1183,402 @@ const Inventario: React.FC = () => {
         onScan={(code) => {
           void handleSearchScannerResult(code);
         }}
-        title={t('inventario.scanProduct')}
+        title="Escanear Producto para Buscar"
       />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={tabIndex}
-          onChange={(_, v) => {
-            setTabIndex(v);
-            setPage(1);
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-          aria-label="inventory tabs"
         >
-          <Tab label={t('inventario.tabs.myLocations')} />
-          {canSeeGeneral && <Tab label={t('inventario.tabs.general')} />}
-        </Tabs>
-      </Box>
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
-          isLoading={isLoading || isLocationsLoading}
-          hideTopBar
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <InventoryOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchTerm.trim() ||
-                filters.categorias.length > 0 ||
-                filters.ubicaciones.length > 0
-                  ? t('inventario.empty.noMatch')
-                  : tabIndex === 0
-                    ? assignedLocations.length === 0
-                      ? t('inventario.empty.noLocations')
-                      : t('inventario.empty.noStockInLocation', {
-                          locations: assignedLocations
-                            .map((l) => l.nombre)
-                            .join(', '),
-                        })
-                    : t('inventario.empty.noStock')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm.trim() ||
-                filters.categorias.length > 0 ||
-                filters.ubicaciones.length > 0
-                  ? t('inventario.empty.tryOther')
-                  : tabIndex === 0 && assignedLocations.length === 0
-                    ? t('inventario.empty.noLocationsHint')
-                    : t('inventario.empty.noStockHint')}
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: Math.ceil(filteredData.length / pageSize) || 1,
-            onPageChange: (_, newPage) => setPage(newPage),
-            pageSize: pageSize,
-            pageSizeOptions: [5, 10, 25, 50],
-            onPageSizeChange: (e: SelectChangeEvent<number>) => {
-              setPageSize(Number(e.target.value));
+          <Tabs
+            id="inventario-tabs"
+            value={tabIndex}
+            onChange={(_, v) => {
+              setTabIndex(v);
               setPage(1);
-            },
-          }}
-        />
+            }}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label="inventory tabs"
+          >
+            <Tab icon={<HomeWorkOutlinedIcon />} label="Mis Ubicaciones" />
+            {canSeeGeneral && (
+              <Tab
+                icon={<Inventory2OutlinedIcon />}
+                label="Inventario General"
+              />
+            )}
+          </Tabs>
+        </Box>
 
-        <Dialog
-          open={isCreateOpen}
-          onClose={handleCloseCreate}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>{t('inventario.createDialog.title')}</DialogTitle>
-          <DialogContent dividers>
-            <Box display="flex" flexDirection="column" gap={2} mt={1}>
-              <Autocomplete
-                options={productoProveedorOptions}
-                value={productoProveedorValue}
-                inputValue={productoProveedorInput}
-                onInputChange={(_, newInput) =>
-                  setProductoProveedorInput(newInput)
-                }
-                onChange={(_, newValue) => setProductoProveedorValue(newValue)}
-                getOptionLabel={(o) => o.label}
-                loading={isSearchingProductoProveedor}
-                filterOptions={(x) => x} // sin filtrado local
-                noOptionsText={
-                  productoProveedorInput.trim().length < 2
-                    ? t('inventario.createDialog.typeToSearch')
-                    : t('inventario.createDialog.noResults')
-                }
-                renderInput={(params) => (
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="warning"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.warning.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando el inventario filtrado por productos con stock
+              bajo el mínimo.
+            </Alert>
+          )}
+
+          <DataTable
+            id="inventario-table"
+            columns={columns}
+            data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
+            isLoading={isLoading || isLocationsLoading}
+            hideTopBar
+            emptyStateMessage={
+              <Box sx={{ py: 4, textAlign: 'center' }}>
+                <InventoryOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm.trim() ||
+                  filters.categorias.length > 0 ||
+                  filters.ubicaciones.length > 0
+                    ? 'No hay productos que coincidan con tu búsqueda o filtros'
+                    : tabIndex === 0
+                      ? assignedLocations.length === 0
+                        ? 'No tienes ubicaciones asignadas'
+                        : `No hay stock en ${assignedLocations.map((l) => l.nombre).join(', ')}`
+                      : 'No hay stock en inventario'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3 }}
+                >
+                  {searchTerm.trim() ||
+                  filters.categorias.length > 0 ||
+                  filters.ubicaciones.length > 0
+                    ? 'Prueba con otros términos o limpia los filtros.'
+                    : tabIndex === 0 && assignedLocations.length === 0
+                      ? 'Contacta con tu profesor o administrador para que te asigne un slot.'
+                      : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
+                </Typography>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: Math.ceil(filteredData.length / pageSize) || 1,
+              onPageChange: (_, newPage) => setPage(newPage),
+              pageSize: pageSize,
+              pageSizeOptions: [5, 10, 25, 50],
+              onPageSizeChange: (e: SelectChangeEvent<number>) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+          />
+
+          <Dialog
+            open={isCreateOpen}
+            onClose={handleCloseCreate}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>Añadir producto al inventario</DialogTitle>
+            <DialogContent dividers>
+              <Box display="flex" flexDirection="column" gap={2} mt={1}>
+                <Autocomplete
+                  options={productoProveedorOptions}
+                  value={productoProveedorValue}
+                  inputValue={productoProveedorInput}
+                  onInputChange={(_, newInput) =>
+                    setProductoProveedorInput(newInput)
+                  }
+                  onChange={(_, newValue) =>
+                    setProductoProveedorValue(newValue)
+                  }
+                  getOptionLabel={(o) => o.label}
+                  loading={isSearchingProductoProveedor}
+                  filterOptions={(x) => x} // sin filtrado local
+                  noOptionsText={
+                    productoProveedorInput.trim().length < 2
+                      ? 'Escribe al menos 2 caracteres para buscar…'
+                      : 'Sin resultados'
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Producto / Proveedor"
+                      placeholder="Buscar producto o proveedor…"
+                      fullWidth
+                      required
+                      error={
+                        !productoProveedorValue &&
+                        productoProveedorInput.length > 0
+                      }
+                      helperText={
+                        !productoProveedorValue &&
+                        productoProveedorInput.length > 0
+                          ? 'Debes seleccionar una opción válida'
+                          : undefined
+                      }
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {isSearchingProductoProveedor ? (
+                              <CircularProgress color="inherit" size={18} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+
+                <Box display="flex" gap={2} flexWrap="wrap">
                   <TextField
-                    {...params}
-                    label={t('inventario.createDialog.productProvider')}
-                    placeholder={t('inventario.createDialog.searchPlaceholder')}
-                    fullWidth
+                    label="Cantidad actual"
+                    type="number"
+                    value={cantidadActual}
+                    onChange={(e) => setCantidadActual(e.target.value)}
+                    inputProps={{ min: 0, step: 'any' }}
                     required
                     error={
-                      !productoProveedorValue &&
-                      productoProveedorInput.length > 0
+                      cantidadActual !== '' &&
+                      (Number.isNaN(cantActualNum) || cantActualNum < 0)
                     }
                     helperText={
-                      !productoProveedorValue &&
-                      productoProveedorInput.length > 0
-                        ? t('inventario.createDialog.selectValid')
+                      cantidadActual !== '' &&
+                      (Number.isNaN(cantActualNum) || cantActualNum < 0)
+                        ? 'Debe ser un número ≥ 0'
                         : undefined
                     }
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <>
-                          {isSearchingProductoProveedor ? (
-                            <CircularProgress color="inherit" size={18} />
-                          ) : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
-                    }}
+                    fullWidth
                   />
-                )}
-              />
+                  <TextField
+                    label="Cantidad mínima"
+                    type="number"
+                    value={cantidadMinima}
+                    onChange={(e) => setCantidadMinima(e.target.value)}
+                    inputProps={{ min: 0, step: 'any' }}
+                    required
+                    error={
+                      cantidadMinima !== '' &&
+                      (Number.isNaN(cantMinNum) || cantMinNum < 0)
+                    }
+                    helperText={
+                      cantidadMinima !== '' &&
+                      (Number.isNaN(cantMinNum) || cantMinNum < 0)
+                        ? 'Debe ser un número ≥ 0'
+                        : undefined
+                    }
+                    fullWidth
+                  />
+                </Box>
 
-              <Box display="flex" gap={2} flexWrap="wrap">
+                <Box display="flex" gap={2} flexWrap="wrap">
+                  <TextField
+                    label="Cantidad máxima (opcional)"
+                    type="number"
+                    value={cantidadMaxima}
+                    onChange={(e) => setCantidadMaxima(e.target.value)}
+                    inputProps={{ min: 0, step: 'any' }}
+                    error={
+                      cantidadMaxima !== '' &&
+                      cantMaxNum !== undefined &&
+                      (Number.isNaN(cantMaxNum) ||
+                        cantMaxNum < 0 ||
+                        (cantMinNum !== undefined && cantMaxNum < cantMinNum))
+                    }
+                    helperText={
+                      cantidadMaxima !== '' &&
+                      cantMaxNum !== undefined &&
+                      (Number.isNaN(cantMaxNum) || cantMaxNum < 0
+                        ? 'Debe ser un número ≥ 0'
+                        : cantMaxNum < cantMinNum
+                          ? 'No puede ser menor que la mínima'
+                          : undefined)
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    select
+                    label="Ubicación de almacén"
+                    value={ubicacionId}
+                    onChange={(e) => setUbicacionId(e.target.value)}
+                    fullWidth
+                    required
+                  >
+                    {ubicaciones.map((loc) => (
+                      <MenuItem key={loc.id} value={loc.id}>
+                        {loc.nombre}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+
                 <TextField
-                  label={t('inventario.createDialog.currentQuantity')}
-                  type="number"
-                  value={cantidadActual}
-                  onChange={(e) => setCantidadActual(e.target.value)}
-                  inputProps={{ min: 0, step: 'any' }}
-                  required
-                  error={
-                    cantidadActual !== '' &&
-                    (Number.isNaN(cantActualNum) || cantActualNum < 0)
-                  }
-                  helperText={
-                    cantidadActual !== '' &&
-                    (Number.isNaN(cantActualNum) || cantActualNum < 0)
-                      ? t('inventario.createDialog.mustBePositive')
-                      : undefined
-                  }
-                  fullWidth
-                />
-                <TextField
-                  label={t('inventario.createDialog.minQuantity')}
-                  type="number"
-                  value={cantidadMinima}
-                  onChange={(e) => setCantidadMinima(e.target.value)}
-                  inputProps={{ min: 0, step: 'any' }}
-                  required
-                  error={
-                    cantidadMinima !== '' &&
-                    (Number.isNaN(cantMinNum) || cantMinNum < 0)
-                  }
-                  helperText={
-                    cantidadMinima !== '' &&
-                    (Number.isNaN(cantMinNum) || cantMinNum < 0)
-                      ? t('inventario.createDialog.mustBePositive')
-                      : undefined
-                  }
+                  label="Fecha de caducidad (opcional)"
+                  type="date"
+                  value={fechaCaducidad}
+                  onChange={(e) => setFechaCaducidad(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
                   fullWidth
                 />
               </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseCreate} disabled={isSaving}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateInventario}
+                variant="contained"
+                disabled={isSaving || !isFormValid}
+              >
+                {isSaving ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-              <Box display="flex" gap={2} flexWrap="wrap">
-                <TextField
-                  label={t('inventario.createDialog.maxQuantity')}
-                  type="number"
-                  value={cantidadMaxima}
-                  onChange={(e) => setCantidadMaxima(e.target.value)}
-                  inputProps={{ min: 0, step: 'any' }}
-                  error={
-                    cantidadMaxima !== '' &&
-                    cantMaxNum !== undefined &&
-                    (Number.isNaN(cantMaxNum) ||
-                      cantMaxNum < 0 ||
-                      (cantMinNum !== undefined && cantMaxNum < cantMinNum))
-                  }
-                  helperText={
-                    cantidadMaxima !== '' &&
-                    cantMaxNum !== undefined &&
-                    (Number.isNaN(cantMaxNum) || cantMaxNum < 0
-                      ? t('inventario.createDialog.mustBePositive')
-                      : cantMaxNum < cantMinNum
-                        ? t('inventario.createDialog.maxLessThanMin')
-                        : undefined)
-                  }
-                  fullWidth
-                />
-                <TextField
-                  select
-                  label={t('inventario.createDialog.location')}
-                  value={ubicacionId}
-                  onChange={(e) => setUbicacionId(e.target.value)}
-                  fullWidth
-                  required
-                >
-                  {ubicaciones.map((loc) => (
-                    <MenuItem key={loc.id} value={loc.id}>
-                      {loc.nombre}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
-
-              <TextField
-                label={t('inventario.createDialog.expiryDate')}
-                type="date"
-                value={fechaCaducidad}
-                onChange={(e) => setFechaCaducidad(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseCreate} disabled={isSaving}>
-              {t('inventario.createDialog.cancel')}
-            </Button>
-            <Button
-              onClick={handleCreateInventario}
-              variant="contained"
-              disabled={isSaving || !isFormValid}
-            >
-              {isSaving
-                ? t('inventario.createDialog.saving')
-                : t('inventario.createDialog.save')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <DynamicFormModal
-          isOpen={isCreateProductoModalOpen}
-          onClose={() => {
-            if (!isSavingProducto) {
-              setIsCreateProductoModalOpen(false);
-            }
-          }}
-          title={t('inventario.createProductTitle')}
-          size="lg"
-          fields={productoCreateSchema}
-          initialData={createProductoInitialData}
-          onSubmit={handleCreateProductoDesdeInventario}
-          isSubmitting={isSavingProducto}
-          requireConfirmation={true}
-          confirmationMessage={t('inventario.createProductConfirm')}
-          onBarcodeFetch={handleBarcodeFetch}
-        />
-
-        <ConfirmDialog
-          isOpen={!!barcodePendienteCrearProducto}
-          onClose={() => {
-            if (!isPreparingCreateProducto) {
-              setBarcodePendienteCrearProducto(null);
-            }
-          }}
-          onConfirm={() => {
-            void handleConfirmCreateProductoFromScanner();
-          }}
-          onCancel={() => {
-            if (!isPreparingCreateProducto) {
-              setBarcodePendienteCrearProducto(null);
-            }
-          }}
-          title={t('inventario.productNotFound.title')}
-          message={
-            barcodePendienteCrearProducto
-              ? t('inventario.productNotFound.withBarcode', {
-                  barcode: barcodePendienteCrearProducto,
-                })
-              : t('inventario.productNotFound.withoutBarcode')
-          }
-          confirmText={t('inventario.productNotFound.confirmCreate')}
-          cancelText={t('inventario.productNotFound.cancel')}
-          confirmColor="primary"
-          confirmVariant="contained"
-          isLoading={isPreparingCreateProducto}
-        />
-
-        <Dialog
-          open={isCantidadDialogOpen}
-          onClose={() => {
-            if (!isAddingFromScanner) {
-              setIsCantidadDialogOpen(false);
-              setProductoPendienteCantidadInventario(null);
-              setCantidadEscaneo('1');
-            }
-          }}
-          fullWidth
-          maxWidth="xs"
-        >
-          <DialogTitle>{t('inventario.quantityDialog.title')}</DialogTitle>
-          <DialogContent dividers>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {productoPendienteCantidadInventario
-                ? t('inventario.quantityDialog.descriptionWithName', {
-                    name: productoPendienteCantidadInventario.nombre,
-                  })
-                : t('inventario.quantityDialog.description')}
-            </Typography>
-            <TextField
-              autoFocus
-              fullWidth
-              label={t('inventario.quantityDialog.label')}
-              type="number"
-              value={cantidadEscaneo}
-              onChange={(e) => setCantidadEscaneo(e.target.value)}
-              inputProps={{ min: 0.01, step: 'any' }}
-              error={cantidadEscaneo !== '' && !isCantidadEscaneoValida}
-              helperText={
-                cantidadEscaneo !== '' && !isCantidadEscaneoValida
-                  ? t('inventario.quantityDialog.mustBeGreaterThanZero')
-                  : undefined
+          <DynamicFormModal
+            isOpen={isCreateProductoModalOpen}
+            onClose={() => {
+              if (!isSavingProducto) {
+                setIsCreateProductoModalOpen(false);
               }
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
+            }}
+            title="Crear Nuevo Producto"
+            size="lg"
+            fields={productoCreateSchema}
+            initialData={createProductoInitialData}
+            onSubmit={handleCreateProductoDesdeInventario}
+            isSubmitting={isSavingProducto}
+            requireConfirmation={true}
+            confirmationMessage="¿Deseas crear este producto y dejarlo listo para inventario?"
+            onBarcodeFetch={handleBarcodeFetch}
+          />
+
+          <ConfirmDialog
+            isOpen={!!barcodePendienteCrearProducto}
+            onClose={() => {
+              if (!isPreparingCreateProducto) {
+                setBarcodePendienteCrearProducto(null);
+              }
+            }}
+            onConfirm={() => {
+              void handleConfirmCreateProductoFromScanner();
+            }}
+            onCancel={() => {
+              if (!isPreparingCreateProducto) {
+                setBarcodePendienteCrearProducto(null);
+              }
+            }}
+            title="Producto no encontrado"
+            message={
+              barcodePendienteCrearProducto
+                ? `Este producto (${barcodePendienteCrearProducto}) no existe en inventario. ¿Deseas crearlo en el catálogo?`
+                : 'Este producto no existe en inventario. ¿Deseas crearlo en el catálogo?'
+            }
+            confirmText="Sí, crear producto"
+            cancelText="No"
+            confirmColor="primary"
+            confirmVariant="contained"
+            isLoading={isPreparingCreateProducto}
+          />
+
+          <Dialog
+            open={isCantidadDialogOpen}
+            onClose={() => {
+              if (!isAddingFromScanner) {
                 setIsCantidadDialogOpen(false);
                 setProductoPendienteCantidadInventario(null);
                 setCantidadEscaneo('1');
-              }}
-              disabled={isAddingFromScanner}
-            >
-              {t('inventario.quantityDialog.cancel')}
-            </Button>
-            <Button
-              onClick={() => {
-                void handleConfirmCantidadScanner();
-              }}
-              variant="contained"
-              disabled={isAddingFromScanner || !isCantidadEscaneoValida}
-            >
-              {isAddingFromScanner
-                ? t('inventario.quantityDialog.adding')
-                : t('inventario.quantityDialog.add')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              }
+            }}
+            fullWidth
+            maxWidth="xs"
+          >
+            <DialogTitle>Cantidad a añadir</DialogTitle>
+            <DialogContent dividers>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {productoPendienteCantidadInventario
+                  ? `Indica la cantidad que quieres añadir para "${productoPendienteCantidadInventario.nombre}".`
+                  : 'Indica la cantidad que quieres añadir al inventario.'}
+              </Typography>
+              <TextField
+                autoFocus
+                fullWidth
+                label="Cantidad a añadir"
+                type="number"
+                value={cantidadEscaneo}
+                onChange={(e) => setCantidadEscaneo(e.target.value)}
+                inputProps={{ min: 0.01, step: 'any' }}
+                error={cantidadEscaneo !== '' && !isCantidadEscaneoValida}
+                helperText={
+                  cantidadEscaneo !== '' && !isCantidadEscaneoValida
+                    ? 'Debe ser un número mayor que 0'
+                    : undefined
+                }
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setIsCantidadDialogOpen(false);
+                  setProductoPendienteCantidadInventario(null);
+                  setCantidadEscaneo('1');
+                }}
+                disabled={isAddingFromScanner}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  void handleConfirmCantidadScanner();
+                }}
+                variant="contained"
+                disabled={isAddingFromScanner || !isCantidadEscaneoValida}
+              >
+                {isAddingFromScanner ? 'Añadiendo...' : 'Añadir al inventario'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
       </Paper>
       <UbicacionesModal
         open={isUbicacionesModalOpen}

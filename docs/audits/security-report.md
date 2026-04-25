@@ -38,17 +38,17 @@ La superficie de ataque del backend SmartEconomat es **moderada**. El sistema im
 
 ```ts
 app.enableCors({
-  origin: process.env.FRONTEND_API_URL || '*',
+  origin: process.env.URL_FRONTEND_DERIVADA || '*',
   credentials: true,
 });
 ```
 
 **Riesgo:**  
-- En producción, si `FRONTEND_API_URL` no está definida, el backend arranca con `origin: '*'` y `credentials: true`.
+- En producción, si `URL_FRONTEND_DERIVADA` no está definida, el backend arranca con `origin: '*'` y `credentials: true`.
 - La spec CORS prohíbe el uso de `*` con credenciales, por lo que las peticiones autenticadas del frontend pueden fallar silenciosamente o quedar en un estado ambiguo según el navegador.
 
 **Recomendación:**  
-Lanzar error al arranque si `FRONTEND_API_URL` no está definida en `NODE_ENV=production`.
+Lanzar error al arranque si `URL_FRONTEND_DERIVADA` no está definida en `NODE_ENV=production`.
 
 ---
 
@@ -118,9 +118,9 @@ Migrar a `@nestjs/throttler-storage-redis` o equivalente antes de escalar horizo
 
 **Severidad:** Medium  
 **Archivos:**
-- `src/main.ts` — `FRONTEND_API_URL`
+- `src/main.ts` — `URL_FRONTEND_DERIVADA`
 - `src/instrument.ts` — `SENTRY_DSN`
-- `src/modules/auth/mail.service.ts` — `FRONTEND_API_URL`
+- `src/modules/auth/mail.service.ts` — `URL_FRONTEND_DERIVADA`
 
 **Riesgo:**  
 Si las variables de entorno críticas no están definidas, la aplicación arranca con fallbacks inseguros o incorrectos (`localhost:5173`, `*`, DSN undefined).
@@ -128,9 +128,9 @@ Si las variables de entorno críticas no están definidas, la aplicación arranc
 **Recomendación:**  
 Añadir validación de entorno centralizada usando `ConfigModule.forRoot({ validate })` con Joi o Zod para requerir:
 - `JWT_SECRET`
-- `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`
-- `FRONTEND_API_URL` en producción
-- `BACKEND_API_URL` en producción
+- `DB_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `URL_FRONTEND_DERIVADA` en producción
+- `URL_BACKEND_DERIVADA` en producción
 - `SENTRY_DSN` opcional pero validado si se proporciona
 
 ---
@@ -186,7 +186,7 @@ Añadir validación de entorno centralizada usando `ConfigModule.forRoot({ valid
 
 ### Nivel 1 — Bloqueantes para producción
 
-- [ ] Forzar `FRONTEND_API_URL` explícita en producción
+- [ ] Forzar `URL_FRONTEND_DERIVADA` explícita en producción
 - [ ] Eliminar fallback `origin: '*'`
 - [ ] Eliminar `synchronize` implícito por ausencia de `NODE_ENV`
 - [ ] Sustituir `console.*` por `Logger`

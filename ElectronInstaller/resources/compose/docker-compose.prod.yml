@@ -1,0 +1,207 @@
+name: smarteconomat-prod
+
+services:
+  db:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    image: smarteconomat-db:prod
+    restart: unless-stopped
+    stop_grace_period: 30s
+    init: true
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_DB=${POSTGRES_DB:-}
+    volumes:
+      - database_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    stop_grace_period: 10s
+    init: true
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:?REDIS_PASSWORD is required}",
+      ]
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_prod:/data
+    networks:
+      - backend-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep -q PONG',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  backend:
+    build:
+      context: ./backend/smart-economat-backend
+      dockerfile: ../Dockerfile.prod
+    image: smarteconomat-backend:prod
+    restart: unless-stopped
+    stop_grace_period: 20s
+    init: true
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      - DOMAIN=${DOMAIN:-smarteconomat.app}
+      - DB_SYNC=${DB_SYNC:-false}
+      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
+      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+      - frontend-network
+    volumes:
+      - uploads_prod:/app/uploads
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3000/api/v1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "1"
+          memory: 1G
+
+  frontend:
+    build:
+      context: ./frontend/smart-economat-frontend
+      dockerfile: ../Dockerfile.prod
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
+    image: smarteconomat-frontend:prod
+    restart: unless-stopped
+    stop_grace_period: 15s
+    init: true
+    ports:
+      - "${FRONTEND_HTTP_PORT:-80}:80"
+      - "${FRONTEND_HTTPS_PORT:-443}:443"
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    environment:
+      - TLS_PROVIDER=${TLS_PROVIDER:-selfsigned}
+      - DOMAIN=${DOMAIN:-smarteconomat.app}
+    networks:
+      - frontend-network
+    volumes:
+      - ${CERTS_DIR:-./certs}:/etc/nginx/certs:ro
+      - ${CERTS_WEBROOT_DIR:-./certs-webroot}:/var/www/acme-challenge:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'if [ "$${TLS_PROVIDER}" = "none" ]; then wget --quiet --tries=1 --spider http://127.0.0.1/; else wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/; fi',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+volumes:
+  database_prod:
+  redis_prod:
+  uploads_prod:
+
+networks:
+  backend-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+  frontend-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

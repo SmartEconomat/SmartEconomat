@@ -107,7 +107,7 @@ Busca una salida tipo:
 ## Notas operativas
 
 - Si necesitas reset previo, ejecuta antes [db-reset-produccion.md](db-reset-produccion.md).
-- `SEED_API_BASE_URL` es clave en produccion dentro de Docker: evita que el seeder use `FRONTEND_API_URL` (por ejemplo `https://smarteconomat.app`) y falle esperando respuesta HTTP desde el propio contenedor.
+- `SEED_API_BASE_URL` es clave en produccion dentro de Docker: evita que el seeder use `URL_FRONTEND_DERIVADA` (por ejemplo `https://smarteconomat.app`) y falle esperando respuesta HTTP desde el propio contenedor.
 - Valor recomendado dentro del contenedor backend: `http://localhost:3000`.
 - El backend en produccion ya es plug and play para esquema: al iniciar ejecuta `scripts/prod-bootstrap-runner.js`, que aplica migraciones pendientes automaticamente cuando `STARTUP_RUN_MIGRATIONS=true` (valor por defecto en compose prod).
 - Esto elimina la dependencia de correr `migration:run` manualmente antes de seed, siempre que la imagen desplegada incluya las migraciones nuevas.

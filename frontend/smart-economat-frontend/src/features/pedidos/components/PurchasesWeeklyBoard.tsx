@@ -54,6 +54,16 @@ const getWeekRangeLabel = (
   return weekLabel(start.format('DD/MM'), end.format('DD/MM'));
 };
 
+/**
+ * @description Weekly accordion board for displaying purchase batches grouped by ISO week.
+ * Supports list and grid view modes; shows an empty message when no batches are present.
+ * @param props.batches - Array of PurchaseBatch objects to display
+ * @param props.isLoading - Whether data is being fetched
+ * @param props.viewMode - 'list' or 'grid' display mode
+ * @param props.handlers - Action callbacks for each batch row
+ * @param props.emptyMessage - Optional message shown when there are no batches
+ * @returns Accordion-based weekly board for purchase batches
+ */
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   batches,
   isLoading,
@@ -63,7 +73,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const columns = useMemo(() => buildBatchColumns(t), [t]);
+  const columns = useMemo(() => buildBatchColumns(), []);
 
   const resolvedEmptyMessage =
     emptyMessage ?? t('pedidos.purchasesWeeklyBoard.emptyMessage');
@@ -160,7 +170,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                 renderGridItem={(row) => (
                   <PurchaseBatchCard
                     batch={row}
-                    actions={renderBatchActions(row, handlers, t)}
+                    actions={renderBatchActions(row, handlers)}
                     onRowClick={handlers.onView}
                   />
                 )}
@@ -170,7 +180,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
                     id: row.id.substring(0, 8),
                   })
                 }
-                renderActions={(row) => renderBatchActions(row, handlers, t)}
+                renderActions={(row) => renderBatchActions(row, handlers)}
               />
             </AccordionDetails>
           </Accordion>

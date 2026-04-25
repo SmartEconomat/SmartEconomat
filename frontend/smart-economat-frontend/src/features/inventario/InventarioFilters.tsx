@@ -25,6 +25,24 @@ export interface InventarioFiltersProps {
   ubicacionesDisponibles: Ubicacion[];
 }
 
+const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
+  { value: CategoriaProducto.VERDURA, label: 'Verdura' },
+  { value: CategoriaProducto.FRUTA, label: 'Fruta' },
+  { value: CategoriaProducto.CARNE, label: 'Carne' },
+  { value: CategoriaProducto.PESCADO, label: 'Pescado' },
+  { value: CategoriaProducto.MARISCO, label: 'Marisco' },
+  { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
+  { value: CategoriaProducto.HUEVO, label: 'Huevo' },
+  { value: CategoriaProducto.CEREAL, label: 'Cereal' },
+  { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
+  { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
+  { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
+  { value: CategoriaProducto.ACEITE, label: 'Aceite' },
+  { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
+  { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
+  { value: CategoriaProducto.OTRO, label: 'Otro' },
+];
+
 /**
  * Filtros avanzados para la página de Inventario.
  * Permite filtrar por tipo de producto (Categoría) y ubicación física.
@@ -36,24 +54,6 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isMobileOrTablet } = useBreakpoints();
-
-  const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
-    { value: CategoriaProducto.VERDURA, label: t('categoria.VERDURA') },
-    { value: CategoriaProducto.FRUTA, label: t('categoria.FRUTA') },
-    { value: CategoriaProducto.CARNE, label: t('categoria.CARNE') },
-    { value: CategoriaProducto.PESCADO, label: t('categoria.PESCADO') },
-    { value: CategoriaProducto.MARISCO, label: t('categoria.MARISCO') },
-    { value: CategoriaProducto.LACTEO, label: t('categoria.LACTEO') },
-    { value: CategoriaProducto.HUEVO, label: t('categoria.HUEVO') },
-    { value: CategoriaProducto.CEREAL, label: t('categoria.CEREAL') },
-    { value: CategoriaProducto.LEGUMBRE, label: t('categoria.LEGUMBRE') },
-    { value: CategoriaProducto.FRUTO_SECO, label: t('categoria.FRUTO_SECO') },
-    { value: CategoriaProducto.CONDIMENTO, label: t('categoria.CONDIMENTO') },
-    { value: CategoriaProducto.ACEITE, label: t('categoria.ACEITE') },
-    { value: CategoriaProducto.AZUCAR, label: t('categoria.AZUCAR') },
-    { value: CategoriaProducto.BEBIDA, label: t('categoria.BEBIDA') },
-    { value: CategoriaProducto.OTRO, label: t('categoria.OTRO') },
-  ];
 
   const selectedCategorias = CATEGORIA_OPTIONS.filter((opt) =>
     filters.categorias.includes(opt.value)
@@ -126,9 +126,7 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
           <TextField
             {...params}
             placeholder={
-              selectedCategorias.length === 0
-                ? t('productFilters.filterPlaceholder')
-                : ''
+              selectedCategorias.length === 0 ? 'Filtrar categoría...' : ''
             }
             InputProps={{
               ...params.InputProps,
@@ -195,7 +193,7 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
             {...params}
             placeholder={
               selectedUbicaciones.length === 0
-                ? t('filters.filterByLocation')
+                ? t('inventario.filtros.placeholderUbicacion')
                 : ''
             }
             InputProps={{

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────
 // Datos del carrusel informativo
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 /**
  * Estructura de cada slide del carrusel informativo.
+ *
  * @interface SlideData
  */
 interface SlideData {
@@ -23,6 +24,7 @@ interface SlideData {
 
 /**
  * Propiedades del componente AuthSlide.
+ *
  * @interface AuthSlideProps
  * @property {boolean} isLogin - Indica si se muestra el modo de inicio de sesión o de registro.
  */
@@ -43,41 +45,44 @@ interface AuthSlideProps {
  * - Muestra un carrusel de 3 slides informativos con dots de navegación fijados al fondo del panel.
  * - El icono (candado / agregar usuario) cambia con una animación de spin suave y llega
  *   siempre en posición vertical (0 deg).
+ * - Los textos de los slides se obtienen del sistema i18n.
  *
  * @param {AuthSlideProps} props - Propiedades del componente.
  * @returns {JSX.Element} Panel lateral de autenticación.
  */
 const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
+  const { t } = useTranslation();
 
+  /** Slides que se muestran en modo inicio de sesión. */
   const LOGIN_SLIDES: SlideData[] = [
     {
-      title: t('auth.slides.login.slide1Title'),
-      description: t('auth.slides.login.slide1Desc'),
+      title: t('auth.slide.login.slide1.title'),
+      description: t('auth.slide.login.slide1.description'),
     },
     {
-      title: t('auth.slides.login.slide2Title'),
-      description: t('auth.slides.login.slide2Desc'),
+      title: t('auth.slide.login.slide2.title'),
+      description: t('auth.slide.login.slide2.description'),
     },
     {
-      title: t('auth.slides.login.slide3Title'),
-      description: t('auth.slides.login.slide3Desc'),
+      title: t('auth.slide.login.slide3.title'),
+      description: t('auth.slide.login.slide3.description'),
     },
   ];
 
+  /** Slides que se muestran en modo registro. */
   const REGISTER_SLIDES: SlideData[] = [
     {
-      title: t('auth.slides.register.slide1Title'),
-      description: t('auth.slides.register.slide1Desc'),
+      title: t('auth.slide.register.slide1.title'),
+      description: t('auth.slide.register.slide1.description'),
     },
     {
-      title: t('auth.slides.register.slide2Title'),
-      description: t('auth.slides.register.slide2Desc'),
+      title: t('auth.slide.register.slide2.title'),
+      description: t('auth.slide.register.slide2.description'),
     },
     {
-      title: t('auth.slides.register.slide3Title'),
-      description: t('auth.slides.register.slide3Desc'),
+      title: t('auth.slide.register.slide3.title'),
+      description: t('auth.slide.register.slide3.description'),
     },
   ];
 
@@ -87,7 +92,11 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   /** slideKey es incrementado para disparar la animación del texto en cada cambio. */
   const [slideKey, setSlideKey] = useState(0);
 
-  /** Navega a un slide concreto y dispara la animación de texto. */
+  /**
+   * Navega a un slide concreto y dispara la animación de texto.
+   *
+   * @param {number} index - Índice del slide al que navegar.
+   */
   const goToSlide = useCallback((index: number) => {
     setActiveSlide(index);
     setSlideKey((k) => k + 1);
@@ -174,11 +183,11 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           justifyContent: 'center',
           alignItems: 'center',
           textAlign: 'center',
-          px: 5,
+          px: { xs: 3, md: 5 },
           color: 'white',
           // En móvil damos más pb para que los dots (48px) no tapen el texto
-          pb: { xs: 7, md: 8 },
-          pt: { xs: 3, md: 0 },
+          pb: { xs: 5, md: 8 },
+          pt: { xs: 2, md: 0 },
         }}
       >
         {/* Icono — oculto en móvil para ahorrar espacio vertical */}
@@ -266,7 +275,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
           zIndex: 3,
         }}
         role="tablist"
-        aria-label={t('auth.slides.navAriaLabel')}
+        aria-label={t('auth.slide.navAriaLabel')}
       >
         {slides.map((_, idx) => (
           <Box
@@ -274,8 +283,8 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
             component="button"
             role="tab"
             aria-selected={idx === activeSlide}
-            aria-label={t('auth.slides.slideAriaLabel', {
-              num: idx + 1,
+            aria-label={t('auth.slide.dotAriaLabel', {
+              current: idx + 1,
               total: slides.length,
             })}
             onClick={() => goToSlide(idx)}

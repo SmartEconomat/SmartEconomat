@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartEconomat - Memoria tecnica TFG</title>
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #4a5568;
+      --line: #d2dae4;
+      --line-strong: #9fb3c8;
+      --paper: #ffffff;
+      --paper-alt: #f4f6f5;
+      --accent: #0a6151;
+      --accent-soft: #dff0ec;
+      --accent-dark: #064238;
+      --code-bg: #f5f7fa;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --page-width: 210mm;
+      --page-min-height: 297mm;
+      --body-font: Georgia, "Times New Roman", serif;
+      --mono-font: "Courier New", Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: #e4e7ea;
+      color: var(--ink);
+      font-size: 11pt;
+      line-height: 1.5;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--body-font);
+      background:
+        radial-gradient(circle at top left, rgba(10, 97, 81, 0.05), transparent 30%),
+        linear-gradient(180deg, #eaecee 0%, #e5e8ea 16%, #e1e4e6 100%);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(calc(100vw - 2rem), var(--page-width));
+      margin: 18mm auto 20mm;
+      padding-bottom: 12mm;
+    }
+
+    section {
+      width: 100%;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      min-height: var(--page-min-height);
+      margin: 0 auto 14mm;
+      padding: 20mm 17mm 20mm;
+      position: relative;
+    }
+
+    section.chapter,
+    section.appendix {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    section.cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background:
+        linear-gradient(145deg, rgba(10, 97, 81, 0.06), rgba(10, 97, 81, 0.01)),
+        linear-gradient(180deg, #ffffff 0%, #f7f9f8 100%);
+      overflow: hidden;
+    }
+
+    section.cover::before,
+    section.cover::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(10, 97, 81, 0.05);
+      filter: blur(4px);
+    }
+
+    section.cover::before {
+      width: 120mm;
+      height: 120mm;
+      top: -32mm;
+      right: -30mm;
+    }
+
+    section.cover::after {
+      width: 88mm;
+      height: 88mm;
+      bottom: -20mm;
+      left: -18mm;
+    }
+
+    .cover-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 125mm;
+    }
+
+    .eyebrow {
+      margin: 0 0 8mm;
+      text-transform: uppercase;
+      letter-spacing: 0.24em;
+      color: var(--accent);
+      font-size: 10pt;
+    }
+
+    .cover h1 {
+      margin: 0;
+      font-size: 28pt;
+      line-height: 1.1;
+      color: #1a2332;
+    }
+
+    .cover-meta {
+      width: 100%;
+      border-top: 0.6mm solid rgba(10, 97, 81, 0.18);
+      border-bottom: 0.6mm solid rgba(10, 97, 81, 0.18);
+      padding: 7mm 0;
+      margin: 0;
+    }
+
+    .cover-meta p {
+      margin: 2mm 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-weight: 700;
+      color: #1b1410;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .section-title {
+      font-size: 19pt;
+      margin: 0 0 7mm;
+      padding-bottom: 4mm;
+      border-bottom: 0.7mm solid var(--line);
+    }
+
+    h2 {
+      font-size: 14pt;
+      margin: 9mm 0 4mm;
+      color: var(--accent-dark);
+    }
+
+    h3 {
+      font-size: 12pt;
+      margin: 6mm 0 3mm;
+    }
+
+    p {
+      margin: 0 0 4mm;
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    .lead {
+      font-size: 12pt;
+      color: #2d3748;
+    }
+
+    .facts,
+    .two-col {
+      display: grid;
+      gap: 5mm;
+    }
+
+    .facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 5mm 0 8mm;
+    }
+
+    .two-col {
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: start;
+      margin: 6mm 0;
+    }
+
+    .note,
+    .metric,
+    .toc-shell {
+      background: linear-gradient(180deg, #ffffff 0%, #f4f6f5 100%);
+      border: 0.35mm solid var(--line);
+      border-radius: 4mm;
+      padding: 5mm;
+    }
+
+    .metric strong,
+    .note strong {
+      display: block;
+      margin-bottom: 1.5mm;
+      color: var(--accent-dark);
+    }
+
+    .note {
+      border-left: 1.2mm solid var(--accent);
+      background: linear-gradient(180deg, #f0f9f7 0%, #f7fbfa 100%);
+    }
+
+    ul,
+    ol {
+      margin: 0 0 4mm 5mm;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 2mm;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4mm 0 7mm;
+      font-size: 9.2pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    caption {
+      caption-side: top;
+      text-align: left;
+      font-weight: 700;
+      margin-bottom: 2mm;
+      color: var(--accent-dark);
+    }
+
+    th,
+    td {
+      border: 0.28mm solid var(--line);
+      padding: 2.2mm 2.4mm;
+      vertical-align: top;
+    }
+
+    thead th {
+      background: var(--paper-alt);
+      color: #172026;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fcfcfb;
+    }
+
+    .small {
+      font-size: 8.6pt;
+      color: var(--muted);
+    }
+
+    pre,
+    code,
+    samp {
+      font-family: var(--mono-font);
+    }
+
+    pre {
+      margin: 4mm 0 6mm;
+      padding: 4mm;
+      border-radius: 3mm;
+      overflow-x: auto;
+      background: var(--code-bg);
+      border: 0.3mm solid var(--line);
+      font-size: 8.8pt;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .toc-shell {
+      background: linear-gradient(180deg, #fafcfb 0%, #f2f5f4 100%);
+    }
+
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .toc-item {
+      padding: 1.6mm 0;
+      border-bottom: 0.25mm dotted var(--line);
+      font-size: 9.7pt;
+    }
+
+    .toc-item.level-2 {
+      padding-left: 6mm;
+    }
+
+    .toc-item.level-3 {
+      padding-left: 12mm;
+    }
+
+    .toc-link {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 3mm;
+      align-items: baseline;
+      width: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .toc-dots {
+      border-bottom: 0.25mm dotted var(--line-strong);
+      transform: translateY(-1mm);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1mm 2.4mm;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      margin-right: 2mm;
+    }
+
+    .diagram {
+      margin: 5mm 0 7mm;
+      border: 0.3mm solid var(--line);
+      border-radius: 4mm;
+      padding: 4mm;
+      background: linear-gradient(180deg, #fafcfb 0%, #f4f6f5 100%);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .diagram figcaption {
+      font-weight: 700;
+      margin-bottom: 3mm;
+      color: var(--accent-dark);
+    }
+
+    details {
+      margin-top: 3mm;
+      border-top: 0.2mm dashed var(--line-strong);
+      padding-top: 2mm;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 9pt;
+    }
+
+    .tree {
+      background: #f8faf9;
+    }
+
+    .status-ok {
+      color: #1f7a1f;
+      font-weight: 700;
+    }
+
+    .status-gap {
+      color: #92400e;
+      font-weight: 700;
+    }
+
+    .page-anchor {
+      position: absolute;
+      top: 0;
+    }
+
+    h1[id],
+    h2[id],
+    h3[id] {
+      scroll-margin-top: 10mm;
+    }
+
+    @media screen {
+      body {
+        padding: 1rem 0;
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+
+    @media print {
+      body {
+        background: var(--paper);
+      }
+
+      main {
+        width: auto;
+        margin: 0;
+        padding: 0;
+      }
+
+      section {
+        box-shadow: none;
+        margin: 0;
+        min-height: auto;
+        width: auto;
+        padding: 16mm 0 14mm;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .toc-link::after {
+        content: "";
+      }
+    }
+    /* Mermaid diagram containers */
+    .mermaid-wrap {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.2rem 0.8rem;
+      margin: 1.4rem 0;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    .mermaid-wrap figcaption {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 0.8rem;
+      text-align: center;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .er-domain-intro {
+      margin: 1rem 0 0.5rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      er: { fontSize: 12, useMaxWidth: true },
+      securityLevel: 'loose'
+    });
+  </script>
+</head>
+<body>
+  <main>
+    <section class="cover" id="portada">
+      <div class="cover-inner">
+        <p class="eyebrow">Trabajo Fin de Grado</p>
+        <h1>SmartEconomat</h1>
+        <div class="cover-meta">
+          <p><strong>Autores:</strong> Alexis, Darel, Sergio, Mauricio, Guillermo</p>
+          <p><strong>Titulacion:</strong> DAW</p>
+          <p><strong>Fecha:</strong> 18 de abril de 2026</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter" id="indice">
+      <span class="page-anchor" id="indice-anchor"></span>
+      <h1 class="section-title" data-unnumbered="true">Indice</h1>
+      <div class="toc-shell">
+        <div id="toc" class="toc-list"></div>
+      </div>
+    </section>
+
+    <section class="chapter" id="introduccion">
+      <h1 class="section-title">Introduccion</h1>
+      <p class="lead">SmartEconomat es una aplicacion web para la gestion integral del economato escolar. El sistema cubre catalogo, compras, recepciones, inventario, produccion, seguridad y exportacion documental desde una arquitectura cliente-servidor basada en React, NestJS, PostgreSQL, Redis y Docker.</p>
+
+      <h2>Objetivo</h2>
+      <p>El objetivo principal del sistema es automatizar el control del inventario escolar, reducir errores humanos, mejorar la trazabilidad del stock y facilitar la gestion de pedidos, recepciones y elaboraciones culinarias. El objetivo de esta memoria es describir ese sistema con la precision necesaria para defensa academica, mantenimiento tecnico y continuidad del proyecto.</p>
+
+      <h2>Alcance</h2>
+      <p>La memoria cubre el sistema principal SmartEconomat: frontend web, backend NestJS, base de datos PostgreSQL, cache Redis, despliegue Docker y estrategia de testing. Se excluye del cuerpo principal <em>ElectronInstaller</em>, que aparece en el repositorio como una capa administrativa complementaria todavia no integrada al mismo nivel funcional que el sistema core.</p>
+
+      <h2>Definiciones clave</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Termino</th>
+            <th>Definicion tecnica</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FIFO</td>
+            <td>Metodo operativo que prioriza el uso del lote mas antiguo disponible para evitar caducidades y sobrecostes.</td>
+          </tr>
+          <tr>
+            <td>LIFO</td>
+            <td>Metodo alternativo mencionado en requisitos, aunque el sistema enfatiza FIFO para control de inventario perecedero.</td>
+          </tr>
+          <tr>
+            <td>PMP</td>
+            <td>Precio medio ponderado calculado a partir del historico de compra y de la relacion producto-proveedor.</td>
+          </tr>
+          <tr>
+            <td>PedidoUsuario</td>
+            <td>Agregado de negocio que representa la necesidad del usuario o del centro antes de su separacion por proveedor.</td>
+          </tr>
+          <tr>
+            <td>PurchaseBatch</td>
+            <td>Lote administrativo que agrupa varios pedidos internos para tratarlos como una unidad operativa de compra.</td>
+          </tr>
+          <tr>
+            <td>Envelope API</td>
+            <td>Estructura estandar de respuesta basada en <code>success</code>, <code>message</code>, <code>data</code> y <code>meta</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="chapter" id="descripcion-general">
+      <h1 class="section-title">Descripcion general</h1>
+      <p class="lead">SmartEconomat funciona como una plataforma de gestion de economato para centros educativos. El sistema combina operaciones de compra y almacen con un modulo docente para profesores y alumnos, ademas de un modelo de seguridad basado en JWT, roles y permisos granulares.</p>
+
+      <div class="facts">
+        <div class="metric">
+          <strong>Stack principal</strong>
+          <p>React 19, Vite 6, NestJS 11, TypeORM 0.3, PostgreSQL, Redis 7 y Docker Compose.</p>
+        </div>
+        <div class="metric">
+          <strong>Tipo de arquitectura</strong>
+          <p>Cliente-servidor con API REST versionada en <code>/api/v1</code> y servicios de apoyo para cache, ficheros y exportacion.</p>
+        </div>
+        <div class="metric">
+          <strong>Dominio de negocio</strong>
+          <p>Catalogo, proveedores, pedidos, recepciones, incidencias, inventario, recetas, produccion y gestion educativa.</p>
+        </div>
+      </div>
+
+      <h2>Vision del sistema</h2>
+      <p>El sistema digitaliza el ciclo completo del economato. La informacion fluye desde la interfaz web hacia servicios frontend centralizados, continua por la API REST del backend y se persiste en PostgreSQL con apoyo de Redis para cache de permisos y ciertos comportamientos operativos. El resultado es una plataforma modular que integra gestion de stock, trazabilidad de movimientos, resolucion de incidencias y generacion de documentos PDF o XLSX.</p>
+
+      <h2>Usuarios</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Perfil</th>
+            <th>Responsabilidad principal</th>
+            <th>Capacidades observables</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Administrador</td>
+            <td>Gobierno del sistema, usuarios, roles, plantillas y operaciones privilegiadas.</td>
+            <td>CRUD de usuarios, catalogo de permisos, activacion de cuentas, gestion de profesores y reportes.</td>
+          </tr>
+          <tr>
+            <td>Profesor</td>
+            <td>Reserva o solicitud de producto, gestion de slots y alumnos asociados.</td>
+            <td>Registro docente, alta de slots, visualizacion de alumnado y flujos vinculados al modulo educativo.</td>
+          </tr>
+          <tr>
+            <td>Alumno</td>
+            <td>Registro y vinculacion al contexto docente.</td>
+            <td>Alta en el sistema, cambio de profesor y acceso restringido segun permisos efectivos.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Restricciones</h2>
+      <ul>
+        <li>La memoria y el propio sistema no cubren facturacion, nomina ni gestion contable.</li>
+        <li>El proxy de produccion publica la SPA y la API, pero no expone Swagger al exterior salvo configuracion adicional.</li>
+        <li>El backend rechaza payloads fuera de contrato mediante validacion estricta.</li>
+        <li>Las rutas heredadas en singular, como <code>/proveedor</code> o <code>/inventario</code>, se mantienen por compatibilidad contractual.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="requisitos">
+      <h1 class="section-title">Requisitos</h1>
+      <p class="lead">Esta seccion adapta la informacion del documento de requisitos tecnicos al formato IEEE 830. Se diferencian requisitos funcionales y no funcionales, y se anade una tabla de trazabilidad que conecta cada requisito funcional con modulo, endpoint y tabla de persistencia.</p>
+
+      <h2>Requisitos funcionales</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Descripcion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>RF-01</td><td>Registro de usuarios por parte del administrador.</td></tr>
+          <tr><td>RF-02</td><td>Gestion de productos perecederos y no perecederos.</td></tr>
+          <tr><td>RF-03</td><td>Registro y CRUD de pedidos a proveedores con fechas, historico de precios y codigo de barras.</td></tr>
+          <tr><td>RF-04</td><td>Generacion de reportes de inventario, pedidos y caducidades.</td></tr>
+          <tr><td>RF-05</td><td>Exportacion de reportes en PDF.</td></tr>
+          <tr><td>RF-06</td><td>CRUD de albaranes.</td></tr>
+          <tr><td>RF-07</td><td>CRUD de bajas o mermas.</td></tr>
+          <tr><td>RF-08</td><td>Conjunto predefinido de unidades de medida seleccionables.</td></tr>
+          <tr><td>RF-09</td><td>Visualizacion de productos proximos a caducidad.</td></tr>
+          <tr><td>RF-10</td><td>Historial de movimientos de inventario realizados por usuarios.</td></tr>
+          <tr><td>RF-11</td><td>Control de stock y conservacion segun FIFO.</td></tr>
+          <tr><td>RF-12</td><td>Reserva o solicitud de producto por parte del profesorado.</td></tr>
+          <tr><td>RF-13</td><td>Registro de llegada de mercancia, albaran y revision de datos.</td></tr>
+          <tr><td>RF-14</td><td>Gestion de usuarios y roles.</td></tr>
+          <tr><td>RF-15</td><td>Registro de peso de productos y control fisico mediante etiquetas.</td></tr>
+          <tr><td>RF-16</td><td>Aplicacion de impuestos a cada detalle de albaran.</td></tr>
+          <tr><td>RF-17</td><td>Modificacion del estado de los pedidos.</td></tr>
+          <tr><td>RF-18</td><td>CRUD de recetas.</td></tr>
+          <tr><td>RF-19</td><td>Registro de alimentos y sus alergenos.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Requisitos no funcionales</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Descripcion</th>
+            <th>Evidencia en el repositorio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>RNF-01</td><td>Interfaz intuitiva y accesible desde navegadores modernos.</td><td>Frontend React 19 + Vite + MUI 7. La accesibilidad formal no esta cuantificada en el codigo.</td></tr>
+          <tr><td>RNF-02</td><td>Disponibilidad del 99% en horario escolar.</td><td>Health checks, reinicio <code>unless-stopped</code> y despliegue contenedorizado. No especificado en el codigo un SLA medido.</td></tr>
+          <tr><td>RNF-03</td><td>Almacenamiento seguro con respaldo diario.</td><td>Persistencia en volumanes Docker y procedimientos de exportacion/backup. La politica diaria exacta no esta automatizada en el codigo.</td></tr>
+          <tr><td>RNF-04</td><td>Tiempo de respuesta inferior a 2 segundos por consulta.</td><td>Hay optimizaciones de arquitectura y testing rapido, pero no un benchmark de produccion verificable dentro del repositorio.</td></tr>
+          <tr><td>RNF-05</td><td>Solo usuarios autorizados pueden modificar o retirar productos.</td><td>JWT, <code>RolesGuard</code>, <code>PermisosGuard</code>, RBAC y validacion de permisos por endpoint.</td></tr>
+          <tr><td>RNF-06</td><td>Funcionamiento en tablets e importacion/exportacion con Excel.</td><td>Frontend web responsive y bloque de exportaciones XLSX. No hay una bateria especifica de pruebas de tablet publicada.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Tabla de trazabilidad RF &rarr; modulo &rarr; endpoint &rarr; tabla</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>RF</th>
+            <th>Modulo principal</th>
+            <th>Endpoint de referencia</th>
+            <th>Tabla o agregado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>RF-01</td><td>usuario / admin</td><td>POST /usuarios, POST /usuarios/admin</td><td>usuario</td></tr>
+          <tr><td>RF-02</td><td>producto / inventario</td><td>POST /productos, GET /inventario</td><td>producto, inventario</td></tr>
+          <tr><td>RF-03</td><td>pedido / proveedor / historial-precio</td><td>POST /pedidos, GET /historial-precio, POST /producto-proveedor</td><td>pedido, pedido_producto, proveedor, historial_precio</td></tr>
+          <tr><td>RF-04</td><td>export / recepcion / alertas</td><td>GET /export/inventario/pdf, GET /recepciones/reporte-pdf, GET /alertas/caducidad</td><td>inventario, pedido, recepcion</td></tr>
+          <tr><td>RF-05</td><td>export</td><td>GET /export/productos/pdf, GET /export/pedidos/pdf</td><td>Agregados de lectura; no aplica una sola tabla</td></tr>
+          <tr><td>RF-06</td><td>albaran</td><td>POST /albaranes, GET /albaranes, PATCH /albaranes/:id</td><td>albaran, albaran_pedido_recepcion</td></tr>
+          <tr><td>RF-07</td><td>merma</td><td>POST /merma, GET /merma, GET /merma/kpis</td><td>merma</td></tr>
+          <tr><td>RF-08</td><td>producto / receta</td><td>POST /productos, POST /recetas</td><td>producto, receta_ingrediente</td></tr>
+          <tr><td>RF-09</td><td>alertas / inventario</td><td>GET /alertas/caducidad</td><td>inventario</td></tr>
+          <tr><td>RF-10</td><td>movimiento</td><td>GET /movimientos/historial</td><td>movimiento</td></tr>
+          <tr><td>RF-11</td><td>inventario / recepcion</td><td>GET /inventario/stock, POST /recepciones</td><td>inventario, recepcion_producto</td></tr>
+          <tr><td>RF-12</td><td>pedido-usuarios / profesor</td><td>POST /pedido-usuarios</td><td>pedido_usuario, pedido_usuario_linea</td></tr>
+          <tr><td>RF-13</td><td>recepcion / albaran</td><td>POST /recepciones, POST /albaranes/upload-documento</td><td>recepcion, recepcion_producto, albaran</td></tr>
+          <tr><td>RF-14</td><td>usuario / roles / permisos / plantillas-roles</td><td>GET /usuarios, GET /admin/roles, GET /admin/permissions</td><td>usuario, rol, permiso, plantilla_rol</td></tr>
+          <tr><td>RF-15</td><td>producto</td><td>POST /productos, GET /productos/generar-ean13</td><td>producto, producto_proveedor</td></tr>
+          <tr><td>RF-16</td><td>albaran</td><td>No especificado en el codigo</td><td>No especificado en el codigo</td></tr>
+          <tr><td>RF-17</td><td>pedido / purchase-batches</td><td>PATCH /pedidos/:id/aceptar, PATCH /pedidos/:id/cancelar</td><td>pedido</td></tr>
+          <tr><td>RF-18</td><td>receta</td><td>POST /recetas, GET /recetas, PATCH /recetas/:id, DELETE /recetas/:id</td><td>receta, receta_ingrediente</td></tr>
+          <tr><td>RF-19</td><td>producto</td><td>POST /producto-alergenos, PATCH /producto-alergenos/:id</td><td>producto_alergeno</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="chapter" id="arquitectura">
+      <h1 class="section-title">Arquitectura</h1>
+      <p class="lead">La solucion adopta una arquitectura cliente-servidor con API REST centralizada. El frontend delega todo el transporte HTTP en servicios propios, mientras que el backend concentra validacion, reglas de negocio, seguridad y persistencia a traves de modulos por dominio.</p>
+
+      <h2>Estilo arquitectonico</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Aspecto</th>
+            <th>Decision aplicada</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Frontend</td><td>SPA React 19 con Vite y Material UI</td><td>Rapidez de desarrollo, modularidad y compatibilidad con un cliente web rico.</td></tr>
+          <tr><td>Backend</td><td>NestJS modular por dominio</td><td>Separacion controller-service-repository y facilidad para RBAC, validacion e i18n.</td></tr>
+          <tr><td>Persistencia</td><td>PostgreSQL + TypeORM + UUID v7</td><td>Integridad relacional, orden temporal de identificadores y soporte fuerte para consultas.</td></tr>
+          <tr><td>Cache</td><td>Redis 7</td><td>Cache de permisos y apoyo al runtime con baja latencia.</td></tr>
+          <tr><td>Despliegue</td><td>Docker Compose dev/prod</td><td>Reproducibilidad, aislamiento y menor friccion operativa.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Componentes principales</h2>
+      <div class="two-col">
+        <div>
+          <p>El frontend funciona como capa de presentacion y orquestacion de usuario. La logica de negocio se encapsula en servicios NestJS distribuidos por modulo. TypeORM y PostgreSQL gestionan el almacenamiento transaccional, mientras Redis optimiza cache y estados de apoyo. La exposicion publica se realiza mediante Nginx en produccion, con proxy hacia la API interna.</p>
+          <p>Los componentes transversales mas relevantes son <code>I18nValidationPipe</code>, <code>GlobalExceptionFilter</code>, <code>TransformInterceptor</code>, <code>JwtAuthGuard</code>, <code>RolesGuard</code>, <code>PermisosGuard</code> y el sistema de throttling.</p>
+        </div>
+        <div class="card">
+          <strong>Modulos backend visibles</strong>
+          <p>auth, usuario, roles, permisos, plantillas-roles, admin, dashboard, producto, proveedor, inventario, movimiento, merma, ubicacion, openfoodfacts, pedido, pedido-draft, recepcion, recepcion-draft, incidencia, albaran, distribucion, receta, preparacion, profesor, alumno, archivo y export.</p>
+        </div>
+      </div>
+
+      <figure class="diagram">
+        <figcaption>Diagrama de flujo de datos del sistema</figcaption>
+        <svg viewBox="0 0 980 360" xmlns="http://www.w3.org/2000/svg" aria-label="Flujo de datos SmartEconomat">
+          <defs>
+            <marker id="arrow-a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="20" y="118" width="150" height="70" rx="18" fill="#e8f5f1" stroke="#0a6151" stroke-width="2"/>
+          <text x="95" y="150" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">UI / React</text>
+          <text x="95" y="173" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">Paginas, hooks y servicios</text>
+
+          <rect x="220" y="118" width="170" height="70" rx="18" fill="#f0f9f7" stroke="#0a6151" stroke-width="2"/>
+          <text x="305" y="150" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">API /api/v1</text>
+          <text x="305" y="173" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">Controllers + DTOs</text>
+
+          <rect x="445" y="62" width="190" height="70" rx="18" fill="#f5faf8" stroke="#0a6151" stroke-width="2"/>
+          <text x="540" y="93" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">Servicios de dominio</text>
+          <text x="540" y="116" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">Pedidos, inventario, recepcion</text>
+
+          <rect x="445" y="204" width="190" height="70" rx="18" fill="#f5faf8" stroke="#0a6151" stroke-width="2"/>
+          <text x="540" y="235" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">Capa transversal</text>
+          <text x="540" y="258" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">Guards, pipes, filtros, i18n</text>
+
+          <rect x="705" y="60" width="120" height="72" rx="18" fill="#eef6ff" stroke="#25518c" stroke-width="2"/>
+          <text x="765" y="92" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#19365d">PostgreSQL</text>
+          <text x="765" y="115" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#4b5563">Datos y relaciones</text>
+
+          <rect x="705" y="205" width="120" height="72" rx="18" fill="#eefcf1" stroke="#1f7a1f" stroke-width="2"/>
+          <text x="765" y="237" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#14532d">Redis</text>
+          <text x="765" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#4b5563">Cache de permisos</text>
+
+          <path d="M170 153 L220 153" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-a)"/>
+          <path d="M390 153 L445 98" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-a)"/>
+          <path d="M390 153 L445 239" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-a)"/>
+          <path d="M635 98 L705 98" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-a)"/>
+          <path d="M635 239 L705 239" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-a)"/>
+          <path d="M705 132 C665 150, 665 200, 705 205" stroke="#0a6151" stroke-width="2" fill="none" stroke-dasharray="8 6"/>
+          <text x="645" y="182" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">envelope y trazabilidad</text>
+        </svg>
+        <details>
+          <summary>Fuente Mermaid utilizada</summary>
+          <pre><code class="language-mermaid">flowchart LR
+  UI[UI / React] --> API[API /api/v1]
+  API --> SVC[Servicios de dominio]
+  API --> X[Guards, pipes, filtros e i18n]
+  SVC --> DB[(PostgreSQL)]
+  X --> REDIS[(Redis)]
+  DB -. meta y datos .-&gt; API
+  API --> UI</code></pre>
+        </details>
+      </figure>
+
+      <figure class="diagram">
+        <figcaption>Diagrama de componentes de alto nivel</figcaption>
+        <svg viewBox="0 0 980 400" xmlns="http://www.w3.org/2000/svg" aria-label="Componentes SmartEconomat">
+          <defs>
+            <marker id="arrow-b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="40" y="50" width="250" height="290" rx="18" fill="#e8f5f1" stroke="#0a6151" stroke-width="2.2"/>
+          <text x="165" y="84" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#064238">Cliente Web</text>
+          <rect x="76" y="112" width="178" height="58" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="165" y="145" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">React 19 + Vite</text>
+          <rect x="76" y="188" width="178" height="58" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="165" y="221" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Servicios HTTP</text>
+          <rect x="76" y="264" width="178" height="48" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="165" y="294" text-anchor="middle" font-family="Georgia, serif" font-size="15" fill="#064238">Contextos y rutas</text>
+
+          <rect x="356" y="50" width="295" height="290" rx="18" fill="#f0f9f7" stroke="#0a6151" stroke-width="2.2"/>
+          <text x="504" y="84" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#0a6151">Backend NestJS</text>
+          <rect x="392" y="112" width="223" height="52" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="504" y="143" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Controllers + DTOs</text>
+          <rect x="392" y="181" width="223" height="52" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="504" y="212" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Services + transacciones</text>
+          <rect x="392" y="250" width="223" height="52" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.6"/>
+          <text x="504" y="281" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Guards, pipes, filtros</text>
+
+          <rect x="714" y="50" width="220" height="290" rx="18" fill="#f6fbff" stroke="#25518c" stroke-width="2.2"/>
+          <text x="824" y="84" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#25518c">Infraestructura</text>
+          <rect x="747" y="112" width="154" height="52" rx="12" fill="#ffffff" stroke="#25518c" stroke-width="1.6"/>
+          <text x="824" y="143" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#19365d">PostgreSQL</text>
+          <rect x="747" y="181" width="154" height="52" rx="12" fill="#ffffff" stroke="#25518c" stroke-width="1.6"/>
+          <text x="824" y="212" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#19365d">Redis</text>
+          <rect x="747" y="250" width="154" height="52" rx="12" fill="#ffffff" stroke="#25518c" stroke-width="1.6"/>
+          <text x="824" y="281" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#19365d">Nginx + Docker</text>
+
+          <path d="M290 220 L356 220" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-b)"/>
+          <path d="M651 140 L714 140" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-b)"/>
+          <path d="M651 207 L714 207" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-b)"/>
+          <path d="M651 276 L714 276" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-b)"/>
+        </svg>
+        <details>
+          <summary>Fuente Mermaid utilizada</summary>
+          <pre><code class="language-mermaid">graph LR
+  subgraph FE[Cliente Web]
+    UI[React 19 + Vite]
+    SRV[Servicios HTTP]
+    CTX[Contextos y rutas]
+  end
+  subgraph BE[Backend NestJS]
+    CTR[Controllers + DTOs]
+    SVC[Services + transacciones]
+    X[Guards, pipes, filtros]
+  end
+  subgraph INF[Infraestructura]
+    DB[(PostgreSQL)]
+    REDIS[(Redis)]
+    NGINX[Nginx + Docker]
+  end
+  FE --> BE --> INF</code></pre>
+        </details>
+      </figure>
+
+      <h2>Flujo de datos</h2>
+      <ol>
+        <li>El usuario opera desde la SPA, que centraliza las llamadas HTTP en servicios frontend.</li>
+        <li>La API recibe la peticion bajo el prefijo <code>/api/v1</code> y aplica guards, pipes y filtros globales.</li>
+        <li>El controlador delega la logica a un servicio de dominio que puede abrir transacciones con <code>DataSource</code> o <code>QueryRunner</code>.</li>
+        <li>TypeORM persiste o consulta la informacion en PostgreSQL y, cuando aplica, Redis participa como cache de permisos.</li>
+        <li>La respuesta sale envuelta por el interceptor en el formato comun de API, salvo streams binarios como PDF, XLSX o archivos.</li>
+      </ol>
+    </section>
+
+    <section class="chapter" id="frontend">
+      <h1 class="section-title">Frontend</h1>
+      <p class="lead">El cliente web se construye con React 19, Vite 6, Material UI 7 y React Router 7. La aplicacion funciona como SPA, centralizando toda la comunicacion HTTP en una capa de servicios que opera sobre <code>fetch</code> nativo con cookies <code>httpOnly</code>. El estado global se gestiona con Context API (sesion, tema, notificaciones) y Redux Toolkit (permisos efectivos).</p>
+
+      <h2>Stack y dependencias principales</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Libreria</th>
+            <th>Version</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>React</td><td>19.2</td><td>Framework de interfaz y renderizado.</td></tr>
+          <tr><td>Vite + SWC</td><td>6.1</td><td>Build tool y transpilador ultra-rapido.</td></tr>
+          <tr><td>Material UI</td><td>7.3</td><td>Sistema de diseno, componentes y tematizacion.</td></tr>
+          <tr><td>React Router DOM</td><td>7.13</td><td>Enrutado SPA y guardas de ruta.</td></tr>
+          <tr><td>Redux Toolkit</td><td>2.11</td><td>Slice unico para permisos efectivos del usuario.</td></tr>
+          <tr><td>Day.js</td><td>1.11</td><td>Manejo de fechas y formato.</td></tr>
+          <tr><td>Sentry</td><td>10.43</td><td>Captura de errores en produccion.</td></tr>
+          <tr><td>@zxing/browser</td><td>0.1</td><td>Lectura de codigos de barras desde camara.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Estructura del codigo</h2>
+      <pre class="tree"><code>frontend/smart-economat-frontend/src/
+├── assets/            Recursos estaticos (imagenes, estilos globales)
+├── components/
+│   ├── ui/            Componentes puros sin logica de negocio
+│   ├── common/        Componentes de negocio compartidos
+│   ├── dashboard/     Componentes del panel principal
+│   ├── inventario/    Componentes de inventario
+│   └── recepcion/     Componentes de recepcion
+├── features/          Modulos de funcionalidad (Auth)
+├── hooks/             Hooks custom (usePermission, usePedidoDraft)
+├── layouts/           Estructuras de pagina (MainLayout, AuthLayout)
+├── pages/             16 paginas principales
+├── routes/            AppRouter, ProtectedRoute, PublicRoute
+├── services/          ~32 servicios de comunicacion API
+├── sherlock-auth/     Sistema de autenticacion propio
+├── store/             Context API + Redux slices
+├── types/             Tipos globales TypeScript
+└── utils/             Configuracion, temas y utilidades</code></pre>
+
+      <h2>Paginas y permisos requeridos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Pagina</th>
+            <th>Ruta</th>
+            <th>Permiso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Dashboard</td><td>/</td><td><code>dashboard:ver_estadisticas</code></td></tr>
+          <tr><td>Productos</td><td>/productos</td><td><code>productos:listar</code></td></tr>
+          <tr><td>Proveedores</td><td>/proveedores</td><td><code>proveedores:listar</code></td></tr>
+          <tr><td>Recetas</td><td>/recetas</td><td><code>recetas:listar</code></td></tr>
+          <tr><td>Pedidos</td><td>/pedidos</td><td><code>pedidos:listar</code></td></tr>
+          <tr><td>Recepciones</td><td>/recepciones</td><td><code>recepciones:listar</code></td></tr>
+          <tr><td>Distribucion</td><td>/distribucion</td><td><code>distribuciones:listar</code></td></tr>
+          <tr><td>Preparaciones</td><td>/preparaciones</td><td><code>recetas:listar</code></td></tr>
+          <tr><td>Albaranes</td><td>/albaranes</td><td><code>albaranes:listar</code></td></tr>
+          <tr><td>Inventario</td><td>/inventario</td><td><code>inventario:listar</code></td></tr>
+          <tr><td>Movimientos</td><td>/movimientos</td><td><code>movimientos:listar</code></td></tr>
+          <tr><td>Mermas</td><td>/mermas</td><td><code>merma:listar</code></td></tr>
+          <tr><td>Incidencias</td><td>/incidencias</td><td><code>incidencias:listar</code></td></tr>
+          <tr><td>Administracion</td><td>/administracion</td><td>Multiples permisos</td></tr>
+          <tr><td>Perfil</td><td>/perfil</td><td>Sesion activa</td></tr>
+          <tr><td>Usuarios</td><td>/usuarios</td><td><code>usuarios:listar</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Patrones de diseno</h2>
+      <div class="two-col">
+        <div>
+          <h3>Diseno atomico y co-locacion</h3>
+          <p>Los componentes se organizan en tres niveles: componentes UI puros en <code>components/ui/</code>, componentes de negocio en <code>components/common/</code> y paginas completas en <code>pages/</code>. Los tipos, helpers y estilos se co-localizan junto al archivo que los consume (<code>.types.ts</code>, <code>.helpers.ts</code>).</p>
+
+          <h3>Composicion sobre prop drilling</h3>
+          <p>Se prioriza el patron <code>children</code> y Context API para evitar el paso excesivo de propiedades. La sesion, el tema y las notificaciones se proveen globalmente; los permisos efectivos se almacenan en un slice Redux para actualizacion reactiva.</p>
+        </div>
+        <div class="card">
+          <strong>Gestion de estado</strong>
+          <ul>
+            <li><strong>AuthContext:</strong> sesion, usuario, login/logout, refresco periodico.</li>
+            <li><strong>ThemeContext:</strong> modo claro/oscuro.</li>
+            <li><strong>ToastContext:</strong> notificaciones globales.</li>
+            <li><strong>Redux (permissionsSlice):</strong> permisos efectivos del usuario.</li>
+            <li><strong>localStorage:</strong> solo preferencias UI (metricas dashboard, hint de sesion).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Capa de servicios HTTP</h2>
+      <p>La comunicacion con el backend se centraliza en <code>services/api.service.ts</code>, que encapsula <code>fetch</code> nativo con <code>credentials: 'include'</code> para enviar la cookie <code>httpOnly</code> en cada peticion. Existe un listener global de <code>401</code> que emite un evento <code>AUTH_UNAUTHORIZED</code> para disparar el cierre de sesion automatico.</p>
+      <p>Cada modulo de negocio expone un servicio especifico (~32 servicios) con sus tipos asociados en archivos <code>.types.ts</code>. Los servicios encapsulan endpoints, payloads y transformaciones de datos, impidiendo que los componentes dependan directamente de la forma de la API.</p>
+
+      <h2>Enrutado y proteccion de rutas</h2>
+      <p>El enrutado se gestiona con React Router v7 desde <code>AppRouter.tsx</code>. Cada ruta protegida se envuelve en un componente <code>ProtectedRoute</code> que espera a que <code>isAuthResolved</code> sea verdadero antes de evaluar permisos. Las rutas publicas (<code>/login</code>, <code>/reset-password</code>) usan <code>PublicRoute</code> para redirigir usuarios autenticados.</p>
+      <pre><code>&lt;ProtectedRoute
+  requiredPermission="productos:listar"
+  requiredAnyPermissions={["usuarios:listar", "profesor:gestionar_slots"]}
+&gt;
+  &lt;Administracion /&gt;
+&lt;/ProtectedRoute&gt;</code></pre>
+
+      <figure class="diagram">
+        <figcaption>Diagrama de componentes del frontend</figcaption>
+        <svg viewBox="0 0 980 420" xmlns="http://www.w3.org/2000/svg" aria-label="Componentes frontend SmartEconomat">
+          <defs>
+            <marker id="arrow-fe" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="30" y="50" width="920" height="340" rx="20" fill="#f5faf8" stroke="#0a6151" stroke-width="2.2"/>
+          <text x="490" y="84" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#064238">React 19 + Vite + MUI 7</text>
+
+          <rect x="60" y="110" width="200" height="70" rx="14" fill="#e8f5f1" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="160" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Pages (16)</text>
+          <text x="160" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Pedidos, Inventario, Recetas...</text>
+
+          <rect x="290" y="110" width="200" height="70" rx="14" fill="#e8f5f1" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="390" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Components</text>
+          <text x="390" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">UI puros + negocio</text>
+
+          <rect x="520" y="110" width="190" height="70" rx="14" fill="#e8f5f1" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="615" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Hooks</text>
+          <text x="615" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">usePermission, useDraft</text>
+
+          <rect x="740" y="110" width="180" height="70" rx="14" fill="#e8f5f1" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="830" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Routes</text>
+          <text x="830" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">ProtectedRoute, guards</text>
+
+          <rect x="60" y="215" width="250" height="70" rx="14" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="185" y="247" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Services (~32)</text>
+          <text x="185" y="270" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">api.service + modulo.service</text>
+
+          <rect x="340" y="215" width="260" height="70" rx="14" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="470" y="247" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">Store (Context + Redux)</text>
+          <text x="470" y="270" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Auth, Theme, Toast, Permisos</text>
+
+          <rect x="630" y="215" width="290" height="70" rx="14" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="775" y="247" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#064238">sherlock-auth</text>
+          <text x="775" y="270" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">AuthContext, permisos, roles</text>
+
+          <rect x="60" y="315" width="860" height="50" rx="14" fill="#eef6ff" stroke="#25518c" stroke-width="1.8"/>
+          <text x="490" y="346" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#19365d">fetch nativo + credentials: 'include' &#8594; API /api/v1 (cookie httpOnly)</text>
+
+          <path d="M160 180 L185 215" stroke="#0a6151" stroke-width="2" fill="none" marker-end="url(#arrow-fe)"/>
+          <path d="M615 180 L470 215" stroke="#0a6151" stroke-width="2" fill="none" marker-end="url(#arrow-fe)"/>
+          <path d="M830 180 L775 215" stroke="#0a6151" stroke-width="2" fill="none" marker-end="url(#arrow-fe)"/>
+          <path d="M185 285 L490 315" stroke="#0a6151" stroke-width="2" fill="none" marker-end="url(#arrow-fe)"/>
+        </svg>
+      </figure>
+
+      <h2>Decisiones arquitectonicas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Vite + SWC en lugar de CRA</td><td>Servidor de desarrollo instantaneo y build mas rapido.</td></tr>
+          <tr><td>MUI 7 en lugar de CSS propio</td><td>Sistema de diseno consistente con accesibilidad incluida y soporte de tematizacion.</td></tr>
+          <tr><td>fetch nativo en lugar de Axios</td><td>API REST sencilla; menor tamano de bundle y control directo de cookies.</td></tr>
+          <tr><td>Cookie-first para sesion</td><td>Cookie <code>httpOnly</code> protege el token frente a XSS; la sesion se valida siempre en backend.</td></tr>
+          <tr><td>Redux solo para permisos</td><td>Estado minimo en store global; sesion y tema resueltos con Context API mas simple.</td></tr>
+          <tr><td>Co-locacion de tipos</td><td>Archivos <code>.types.ts</code> junto al servicio reducen la friccion al refactorizar.</td></tr>
+          <tr><td>Capa de servicios centralizada</td><td>Desacopla componentes de la forma de la API; facilita mocking en tests.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="chapter" id="base-datos">
+      <h1 class="section-title">Base de datos</h1>
+      <p class="lead">El almacenamiento principal se apoya en PostgreSQL 16 con 41 entidades TypeORM distribuidas en 8 dominios funcionales. Casi todas las tablas heredan una <code>BaseEntity</code> comun con UUID v7, marcas temporales, soft delete y control de version, lo que proporciona trazabilidad, orden temporal y seguridad ante concurrencia.</p>
+
+      <h2>Descripcion general</h2>
+      <p>La base de datos se organiza por dominios de negocio. Dado el tamano del esquema (41 tablas, mas de 300 columnas y decenas de relaciones), los diagramas entidad-relacion se presentan particionados por dominio para facilitar la legibilidad. Cada diagrama muestra las columnas clave y las relaciones con cardinalidad real extraida del codigo fuente.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Elemento</th>
+            <th>Implementacion</th>
+            <th>Observacion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Clave primaria</td><td>UUID v7</td><td>Ordenable temporalmente y adecuado para indices B-tree. Generado via <code>uuid_generate_v7()</code>.</td></tr>
+          <tr><td>Borrado</td><td>Soft delete</td><td>Campo <code>deleted_at</code> + trazabilidad con <code>deleted_by</code>.</td></tr>
+          <tr><td>Control de concurrencia</td><td>Versionado optimista</td><td>Campo <code>version</code> en <code>BaseEntity</code>.</td></tr>
+          <tr><td>Campos numericos</td><td><code>numeric</code> con <code>ColumnNumericTransformer</code></td><td>Evita errores de precision en importes, cantidades y PMP.</td></tr>
+          <tr><td>Relaciones</td><td>TypeORM <code>Relation&lt;T&gt;</code></td><td>Asociaciones 1:N, N:M y tablas puente con PK compuesta.</td></tr>
+          <tr><td>Tablas puente</td><td>PK compuesta, sin BaseEntity</td><td><code>producto_alergeno</code>, <code>usuario_rol</code>, <code>rol_permiso</code>, <code>plantilla_rol_permiso</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Resumen de tablas por dominio</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Dominio</th>
+            <th>Tablas</th>
+            <th>Cantidad</th>
+            <th>Funcion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Catalogo y stock</td><td>producto, proveedor, producto_proveedor, producto_alergeno, inventario, ubicacion, historial_precio, movimiento, merma</td><td>9</td><td>Catalogo maestro, abastecimiento, stock fisico, alertas y trazabilidad economica.</td></tr>
+          <tr><td>Compras</td><td>pedido_usuario, pedido_usuario_linea, purchase_batch, pedido, pedido_producto</td><td>5</td><td>Necesidad de compra, separacion por proveedor y consolidacion en lotes.</td></tr>
+          <tr><td>Recepcion e incidencias</td><td>recepcion, recepcion_pedido, recepcion_producto, incidencia, incidencia_linea, incidencia_resuelta, albaran, albaran_pedido_recepcion</td><td>8</td><td>Entrada de mercancia, verificacion, enlace documental y resolucion de discrepancias.</td></tr>
+          <tr><td>Produccion</td><td>receta, receta_ingrediente, preparacion, produccion_lote</td><td>4</td><td>Recetas, escandallos, ejecucion de produccion y consumo de porciones.</td></tr>
+          <tr><td>Seguridad</td><td>usuario, rol, permiso, usuario_rol, rol_permiso, plantilla_rol, plantilla_rol_permiso, archivo</td><td>8</td><td>Autenticacion JWT, RBAC dinamico, plantillas de permisos y almacenamiento de archivos.</td></tr>
+          <tr><td>Educativo</td><td>profesor, alumno, alumno_slot</td><td>3</td><td>Vinculacion docente, slots de clase y organizacion por aulas.</td></tr>
+          <tr><td>Distribucion</td><td>distribucion, distribucion_linea</td><td>2</td><td>Preparacion y entrega de pedidos a ubicaciones destino.</td></tr>
+          <tr><td>Borradores</td><td>pedido_draft, recepcion_draft</td><td>2</td><td>Persistencia temporal de formularios complejos con TTL.</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ER DOMINIO 1: Catalogo y Stock -->
+      <h2>ER - Catalogo y stock</h2>
+      <p class="er-domain-intro">Nucleo del catalogo maestro: productos, proveedores, relacion de abastecimiento, stock por ubicacion, historial de precios, movimientos de inventario y mermas. La tabla pivote <code>producto_proveedor</code> es el centro de todas las operaciones de stock y compras.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Catalogo y stock (9 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    PRODUCTO {
+        uuid id PK
+        varchar nombre
+        numeric contenido
+        numeric pmp
+        enum unidad_medida
+        enum tipo_producto
+        varchar codigo_barras UK
+    }
+    PROVEEDOR {
+        uuid id PK
+        varchar nombre
+        varchar nif UK
+        varchar email
+        varchar telefono
+    }
+    PRODUCTO_PROVEEDOR {
+        uuid id PK
+        uuid producto_id FK
+        uuid proveedor_id FK
+        numeric precio_unitario
+        numeric merma_esperada
+        numeric pmp
+        varchar marca
+    }
+    PRODUCTO_ALERGENO {
+        uuid producto_id PK
+        enum alergeno PK
+    }
+    UBICACION {
+        uuid id PK
+        varchar nombre UK
+        varchar descripcion
+    }
+    INVENTARIO {
+        uuid id PK
+        uuid producto_proveedor_id FK
+        uuid ubicacion_id FK
+        numeric cantidad_actual
+        numeric cantidad_minima
+        numeric cantidad_maxima
+        timestamptz fecha_caducidad
+    }
+    HISTORIAL_PRECIO {
+        uuid id PK
+        uuid producto_proveedor_id FK
+        numeric precio
+        numeric cantidad
+        timestamptz fecha
+    }
+    MOVIMIENTO {
+        uuid id PK
+        uuid inventario_id FK
+        uuid producto_proveedor_id FK
+        uuid usuario_id FK
+        enum tipo_movimiento
+        numeric cantidad
+        varchar entidad_tipo
+        uuid entidad_id
+    }
+    MERMA {
+        uuid id PK
+        uuid producto_id FK
+        uuid usuario_id FK
+        numeric cantidad
+        enum motivo_merma
+        enum tipo_merma
+        uuid idempotency_key UK
+    }
+
+    PRODUCTO ||--o{ PRODUCTO_PROVEEDOR : "abastecido por"
+    PROVEEDOR ||--o{ PRODUCTO_PROVEEDOR : "suministra"
+    PRODUCTO ||--o{ PRODUCTO_ALERGENO : "contiene"
+    PRODUCTO ||--o{ MERMA : "registra perdida"
+    PRODUCTO_PROVEEDOR ||--o{ INVENTARIO : "stock en"
+    PRODUCTO_PROVEEDOR ||--o{ HISTORIAL_PRECIO : "historial"
+    PRODUCTO_PROVEEDOR ||--o{ MOVIMIENTO : "trazabilidad"
+    UBICACION ||--o{ INVENTARIO : "almacena"
+    INVENTARIO ||--o{ MOVIMIENTO : "genera"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 2: Compras -->
+      <h2>ER - Compras</h2>
+      <p class="er-domain-intro">Flujo de compras en tres niveles: el usuario crea un <code>pedido_usuario</code> con lineas, que se descompone en pedidos individuales por proveedor. Los pedidos pueden agruparse en un <code>purchase_batch</code> para tramitacion conjunta.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Compras (5 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    PEDIDO_USUARIO {
+        uuid id PK
+        uuid usuario_id FK
+        bigint numero_global UK
+        timestamptz fecha_pedido
+        numeric coste_total
+        enum estado
+        uuid ubicacion_entrega_sugerida_id FK
+    }
+    PEDIDO_USUARIO_LINEA {
+        uuid id PK
+        uuid pedido_usuario_id FK
+        uuid producto_proveedor_id FK
+        numeric cantidad
+        numeric precio_unitario
+        text observaciones
+    }
+    PURCHASE_BATCH {
+        uuid id PK
+        bigint numero_global UK
+        varchar referencia UK
+        uuid usuario_id FK
+        boolean is_aprobado
+        enum estado_lote
+    }
+    PEDIDO {
+        uuid id PK
+        bigint numero_global UK
+        uuid usuario_id FK
+        uuid proveedor_id FK
+        uuid batch_id FK
+        uuid pedido_usuario_id FK
+        timestamptz fecha_pedido
+        numeric coste_total
+        enum estado_pedido
+        text motivo_cancelacion
+    }
+    PEDIDO_PRODUCTO {
+        uuid id PK
+        uuid pedido_id FK
+        uuid producto_proveedor_id FK
+        uuid pedido_usuario_linea_id FK
+        numeric cantidad
+        numeric precio_unitario
+    }
+
+    PEDIDO_USUARIO ||--o{ PEDIDO_USUARIO_LINEA : "contiene"
+    PEDIDO_USUARIO ||--o{ PEDIDO : "descompone en"
+    PURCHASE_BATCH ||--o{ PEDIDO : "agrupa"
+    PEDIDO ||--o{ PEDIDO_PRODUCTO : "incluye"
+    PEDIDO_USUARIO_LINEA ||--o{ PEDIDO_PRODUCTO : "origina"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 3: Recepcion e incidencias -->
+      <h2>ER - Recepcion e incidencias</h2>
+      <p class="er-domain-intro">Registro de entrada fisica de mercancia con trazabilidad documental. La tabla <code>recepcion_pedido</code> enlaza recepciones con pedidos; <code>recepcion_producto</code> detalla cada linea recibida. Las incidencias se detectan por diferencias de cantidad o estado y se resuelven trazablemente. Los albaranes enlazan recepciones con documentos de proveedor.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Recepcion e incidencias (8 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    RECEPCION {
+        uuid id PK
+        uuid usuario_id FK
+        timestamptz fecha_recepcion
+        enum estado_recepcion
+        boolean incidencia
+        text observaciones
+    }
+    RECEPCION_PEDIDO {
+        uuid id PK
+        uuid recepcion_id FK
+        uuid pedido_id FK
+        timestamptz fecha_vinculacion
+    }
+    RECEPCION_PRODUCTO {
+        uuid id PK
+        uuid recepcion_id FK
+        uuid pedido_producto_id FK
+        uuid incidencia_id FK
+        numeric cantidad_recibida
+        enum estado_producto
+        boolean is_weighed_with_scale
+    }
+    INCIDENCIA {
+        uuid id PK
+        uuid recepcion_id FK
+        uuid pedido_id FK
+        uuid usuario_resolutor_id FK
+        text observaciones_recepcion
+        text observaciones_resolucion
+        timestamptz fecha_resolucion
+    }
+    INCIDENCIA_LINEA {
+        uuid id PK
+        uuid incidencia_id FK
+        uuid pedido_producto_id FK
+        numeric cantidad_esperada
+        numeric cantidad_recibida
+        numeric diferencia
+        enum tipo_diferencia
+        enum estado_reclamacion
+    }
+    INCIDENCIA_RESUELTA {
+        uuid id PK
+        uuid incidencia_id FK
+        uuid usuario_resolutor_id FK
+        enum tipo_resolucion
+        timestamptz fecha_resolucion
+    }
+    ALBARAN {
+        uuid id PK
+        varchar n_albaran UK
+        boolean es_automatico
+        boolean concordancia
+        timestamptz fecha
+        varchar documento_url
+    }
+    ALBARAN_PEDIDO_RECEPCION {
+        uuid id PK
+        uuid albaran_id FK
+        uuid recepcion_pedido_id FK
+    }
+
+    RECEPCION ||--o{ RECEPCION_PEDIDO : "vincula pedidos"
+    RECEPCION ||--o{ RECEPCION_PRODUCTO : "detalla lineas"
+    RECEPCION_PRODUCTO ||--o| INCIDENCIA : "detecta"
+    INCIDENCIA ||--o{ INCIDENCIA_LINEA : "detalla diferencias"
+    INCIDENCIA ||--o{ INCIDENCIA_RESUELTA : "se resuelve"
+    ALBARAN ||--o{ ALBARAN_PEDIDO_RECEPCION : "documenta"
+    RECEPCION_PEDIDO ||--o{ ALBARAN_PEDIDO_RECEPCION : "enlaza"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 4: Produccion -->
+      <h2>ER - Produccion y recetas</h2>
+      <p class="er-domain-intro">Modela la transformacion de materias primas en productos elaborados. Una receta define ingredientes con cantidades y mermas; la preparacion planifica la ejecucion; el lote de produccion registra costes reales y porciones disponibles para consumo posterior.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Produccion (4 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    RECETA {
+        uuid id PK
+        varchar nombre
+        text instrucciones
+        int tiempo_estimado_minutos
+        enum dificultad
+        numeric rendimiento
+        enum unidad_resultado
+        int dias_caducidad
+        numeric coste_unitario_estimado
+        numeric raciones
+    }
+    RECETA_INGREDIENTE {
+        uuid id PK
+        uuid receta_id FK
+        uuid producto_id FK
+        numeric cantidad
+        enum unidad
+        numeric merma_aplicada
+        uuid proveedor_favorito_id FK
+    }
+    PREPARACION {
+        uuid id PK
+        uuid receta_id FK
+        uuid usuario_id FK
+        uuid ubicacion_destino_id FK
+        numeric cantidad_a_producir
+        enum estado
+        timestamptz fecha_programada
+        timestamptz fecha_inicio
+        timestamptz fecha_finalizacion
+    }
+    PRODUCCION_LOTE {
+        uuid id PK
+        uuid receta_id FK
+        uuid usuario_id FK
+        uuid preparacion_id FK
+        numeric cantidad_producida
+        numeric coste_total_real
+        numeric porciones_producidas
+        numeric porciones_restantes
+        enum estado_lote
+        timestamptz fecha_produccion
+    }
+
+    RECETA ||--o{ RECETA_INGREDIENTE : "formula"
+    RECETA ||--o{ PREPARACION : "planifica"
+    RECETA ||--o{ PRODUCCION_LOTE : "produce"
+    PREPARACION ||--o| PRODUCCION_LOTE : "genera lote"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 5: Seguridad -->
+      <h2>ER - Seguridad y usuarios</h2>
+      <p class="er-domain-intro">Sistema RBAC dinamico con tres niveles: plantillas de rol predefinidas, roles asignables a usuarios, y permisos granulares por modulo y accion. Cada usuario puede tener permisos adicionales o excluidos independientes de sus roles. Los archivos se vinculan al usuario que los sube.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Seguridad y usuarios (8 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    USUARIO {
+        uuid id PK
+        varchar username UK
+        varchar password
+        varchar nombre
+        varchar email UK
+        enum rol_usuario
+        enum user_status
+        boolean activo
+        boolean must_change_password
+    }
+    ROL {
+        uuid id PK
+        varchar nombre UK
+        text descripcion
+        boolean es_sistema
+        boolean activo
+        uuid plantilla_rol_id FK
+    }
+    PERMISO {
+        uuid id PK
+        varchar codigo UK
+        varchar nombre
+        varchar modulo
+        varchar accion
+        boolean activo
+    }
+    USUARIO_ROL {
+        uuid usuario_id PK
+        uuid rol_id PK
+        timestamptz asignado_en
+        uuid asignado_por
+        boolean activo
+    }
+    ROL_PERMISO {
+        uuid rol_id PK
+        uuid permiso_id PK
+        timestamptz asignado_en
+    }
+    PLANTILLA_ROL {
+        uuid id PK
+        varchar nombre UK
+        text descripcion
+        boolean es_editable
+        boolean activo
+        uuid plantilla_padre_id FK
+    }
+    PLANTILLA_ROL_PERMISO {
+        uuid plantilla_rol_id PK
+        uuid permiso_id PK
+        timestamptz asignado_en
+    }
+    ARCHIVO {
+        uuid id PK
+        uuid usuario_id FK
+        varchar nombre
+        varchar url
+        int tamano
+        varchar mime_type
+        varchar url_optimized
+    }
+
+    USUARIO ||--o{ USUARIO_ROL : "tiene roles"
+    ROL ||--o{ USUARIO_ROL : "asignado a"
+    ROL ||--o{ ROL_PERMISO : "otorga"
+    PERMISO ||--o{ ROL_PERMISO : "pertenece a"
+    PLANTILLA_ROL ||--o{ PLANTILLA_ROL_PERMISO : "define"
+    PERMISO ||--o{ PLANTILLA_ROL_PERMISO : "incluido en"
+    PLANTILLA_ROL ||--o{ ROL : "instancia"
+    PLANTILLA_ROL ||--o{ PLANTILLA_ROL : "hereda de"
+    USUARIO ||--o{ ARCHIVO : "sube"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 6: Educativo y distribucion -->
+      <h2>ER - Educativo y distribucion</h2>
+      <p class="er-domain-intro">Extension educativa: profesores con CIAL vinculados 1:1 a usuarios, slots de clase por aula y numero, y alumnos asignados a profesor y slot. La distribucion prepara y entrega pedidos de usuario a ubicaciones destino, opcionalmente vinculados a un slot de clase.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Educativo y distribucion (5 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    PROFESOR {
+        uuid id PK
+        uuid user_id FK
+        varchar cial UK
+    }
+    ALUMNO_SLOT {
+        uuid id PK
+        uuid profesor_id FK
+        varchar aula
+        int numero_clase
+        int capacidad
+        uuid ubicacion_id FK
+        varchar codigo_slot UK
+    }
+    ALUMNO {
+        uuid id PK
+        uuid user_id FK
+        uuid slot_id FK
+        uuid profesor_id FK
+    }
+    DISTRIBUCION {
+        uuid id PK
+        uuid usuario_responsable_id FK
+        uuid pedido_usuario_id FK
+        uuid ubicacion_origen_id FK
+        uuid ubicacion_destino_id FK
+        uuid alumno_slot_id FK
+        enum estado
+        timestamptz fecha_preparacion
+        timestamptz fecha_entrega
+    }
+    DISTRIBUCION_LINEA {
+        uuid id PK
+        uuid distribucion_id FK
+        uuid pedido_usuario_linea_id FK
+        uuid producto_proveedor_id FK
+        numeric cantidad_a_distribuir
+        numeric cantidad_entregada
+        enum estado
+    }
+
+    PROFESOR ||--o{ ALUMNO_SLOT : "gestiona"
+    PROFESOR ||--o{ ALUMNO : "tutoriza"
+    ALUMNO_SLOT ||--o{ ALUMNO : "inscrito en"
+    DISTRIBUCION ||--o{ DISTRIBUCION_LINEA : "detalla"
+        </pre>
+      </figure>
+
+      <!-- ER DOMINIO 7: Borradores -->
+      <h2>ER - Borradores temporales</h2>
+      <p class="er-domain-intro">Persistencia del lado servidor para formularios complejos en curso. Ambos borradores almacenan el payload completo en JSONB con versionado y TTL opcional, permitiendo recuperar formularios incompletos entre sesiones.</p>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama ER &mdash; Borradores (2 entidades)</figcaption>
+        <pre class="mermaid">
+erDiagram
+    PEDIDO_DRAFT {
+        uuid id PK
+        uuid usuario_id FK
+        int draft_version
+        jsonb payload
+        timestamptz expires_at
+    }
+    RECEPCION_DRAFT {
+        uuid id PK
+        uuid usuario_id FK
+        int draft_version
+        jsonb payload
+        timestamptz expires_at
+    }
+        </pre>
+      </figure>
+
+      <!-- Enums -->
+      <h2>Taxonomias (enums)</h2>
+      <p>El esquema define 22 enums que tipan las columnas de estado, clasificacion y comportamiento. Algunos nombres se repiten en distintos dominios (<code>EstadoLote</code> existe en compras y en recetas con valores diferentes).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Dominio</th>
+            <th>Enum</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Producto</td><td><code>UnidadMedida</code>, <code>TipoProducto</code>, <code>Alergeno</code></td><td>Clasificacion y unidades del catalogo.</td></tr>
+          <tr><td>Inventario</td><td><code>TipoMovimiento</code>, <code>MotivoMerma</code>, <code>TipoMerma</code></td><td>Trazabilidad de entradas, salidas y perdidas.</td></tr>
+          <tr><td>Compras</td><td><code>EstadoPedidoUsuario</code>, <code>EstadoPedido</code>, <code>EstadoLote</code> (compra)</td><td>Ciclo de vida de pedidos y lotes de compra.</td></tr>
+          <tr><td>Recepcion</td><td><code>EstadoRecepcion</code>, <code>EstadoProductoRecepcion</code></td><td>Estado de la recepcion y calidad del producto.</td></tr>
+          <tr><td>Incidencias</td><td><code>TipoDiferencia</code>, <code>EstadoReclamacion</code>, <code>TipoResolucion</code></td><td>Clasificacion y resolucion de discrepancias.</td></tr>
+          <tr><td>Produccion</td><td><code>DificultadReceta</code>, <code>UnidadIngrediente</code>, <code>PreparacionEstado</code>, <code>EstadoLote</code> (receta)</td><td>Nivel de receta, unidades y ciclo de preparacion.</td></tr>
+          <tr><td>Distribucion</td><td><code>EstadoDistribucion</code>, <code>EstadoDistribucionLinea</code></td><td>Estado de preparacion y entrega.</td></tr>
+          <tr><td>Usuario</td><td><code>rolUsuario</code>, <code>UserStatus</code></td><td>Roles del sistema y estado de la cuenta.</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Relaciones cross-domain -->
+      <h2>Relaciones entre dominios</h2>
+      <p>Los diagramas anteriores muestran las relaciones internas de cada dominio. Las conexiones mas importantes entre dominios son:</p>
+      <ul>
+        <li><strong>Producto &rarr; ProductoProveedor &rarr; PedidoProducto:</strong> el catalogo alimenta directamente las lineas de pedido.</li>
+        <li><strong>PedidoProducto &rarr; RecepcionProducto:</strong> cada linea de pedido se verifica en la recepcion.</li>
+        <li><strong>RecepcionProducto &harr; Incidencia:</strong> relacion 1:1 opcional para discrepancias detectadas.</li>
+        <li><strong>Recepcion &rarr; Movimiento &rarr; Inventario:</strong> la recepcion completada genera movimientos que actualizan stock.</li>
+        <li><strong>RecetaIngrediente &rarr; Producto:</strong> los ingredientes referencian productos del catalogo maestro.</li>
+        <li><strong>Usuario &rarr; Profesor (1:1) y Usuario &rarr; Alumno (1:1):</strong> extension educativa del modelo de usuario.</li>
+        <li><strong>PedidoUsuario &rarr; Distribucion:</strong> los pedidos de usuario se distribuyen a ubicaciones destino.</li>
+        <li><strong>AlumnoSlot &rarr; Ubicacion:</strong> los slots de clase pueden tener una ubicacion de entrega asociada.</li>
+      </ul>
+    </section>
+
+    <section class="chapter" id="api">
+      <h1 class="section-title">API</h1>
+      <p class="lead">La API REST del backend expone <strong>238 endpoints</strong> distribuidos en <strong>37 controladores</strong>, todos bajo el prefijo <code>/api/v1</code>. El proyecto utiliza <code>@nestjs/swagger</code> para generar documentacion OpenAPI interactiva en tiempo real, accesible en la ruta <code>/docs</code> del servidor. Esta seccion resume la estructura, convenciones y rutas mas representativas; para el detalle exhaustivo de cada endpoint (parametros, DTOs, schemas de respuesta y codigos de error) se recomienda consultar directamente la interfaz Swagger del proyecto en ejecucion.</p>
+
+      <div class="note">
+        <strong>Documentacion interactiva con Swagger</strong>
+        <p>Al levantar el backend en desarrollo (<code>npm run start:dev</code>), la documentacion OpenAPI completa se genera automaticamente en <code>http://localhost:3000/docs</code>. Alli se puede explorar cada endpoint, ver los DTOs de entrada/salida, probar peticiones en vivo y descargar la especificacion en formato JSON. En produccion, Swagger no se expone por defecto por seguridad.</p>
+      </div>
+
+      <h2>Cifras clave</h2>
+      <table>
+        <thead>
+          <tr><th>Metrica</th><th>Valor</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Controladores</td><td>37</td></tr>
+          <tr><td>Endpoints totales</td><td>238</td></tr>
+          <tr><td>Endpoints publicos (sin autenticacion)</td><td>~10</td></tr>
+          <tr><td>Endpoints protegidos (JWT + permisos)</td><td>~228</td></tr>
+          <tr><td>Formatos de exportacion binaria</td><td>XLSX, PDF</td></tr>
+          <tr><td>Prefijo global</td><td><code>/api/v1</code></td></tr>
+          <tr><td>Documentacion OpenAPI</td><td><code>/docs</code> (solo desarrollo)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Endpoints por controlador</h2>
+      <p>La siguiente tabla muestra cada controlador con su ruta base, numero de endpoints y operaciones principales. Todos los endpoints protegidos requieren un token JWT valido y, en la mayoria de casos, permisos granulares verificados mediante <code>PermisosGuard</code>.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Controlador</th>
+            <th>Ruta base</th>
+            <th>Endpoints</th>
+            <th>Operaciones principales</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Auth</td><td><code>/auth</code></td><td>7</td><td>register, login, logout, profile, change-password, forgot/reset-password</td></tr>
+          <tr><td>Usuarios</td><td><code>/usuarios</code></td><td>14</td><td>CRUD, perfil, cambio de rol, activar/desactivar, reset password admin</td></tr>
+          <tr><td>Productos</td><td><code>/productos</code></td><td>7</td><td>CRUD, generar EAN-13, historial de precios</td></tr>
+          <tr><td>Producto-Proveedor</td><td><code>/producto-proveedor</code></td><td>4</td><td>Actualizar precio, actualizar merma, buscar (autocomplete), comparar proveedores</td></tr>
+          <tr><td>Producto-Alergenos</td><td><code>/producto-alergenos</code></td><td>5</td><td>CRUD asociaciones producto-alergeno</td></tr>
+          <tr><td>Historial Precio</td><td><code>/historial-precio</code></td><td>5</td><td>CRUD historico de precios</td></tr>
+          <tr><td>Proveedor</td><td><code>/proveedor</code></td><td>6</td><td>CRUD, listar con pedidos activos</td></tr>
+          <tr><td>Pedidos</td><td><code>/pedidos</code></td><td>10</td><td>CRUD, crear desde recetas, aceptar, cancelar, restaurar, fecha entrega</td></tr>
+          <tr><td>Pedido Usuarios</td><td><code>/pedido-usuarios</code></td><td>8</td><td>CRUD, crear desde stock faltante, crear desde recetas, aceptar, cancelar</td></tr>
+          <tr><td>Purchase Batches</td><td><code>/purchase-batches</code></td><td>11</td><td>CRUD, consolidar, tramitar, aceptar, cancelar, restaurar, desde stock/recetas</td></tr>
+          <tr><td>Pedido Draft</td><td><code>/pedido/draft</code></td><td>4</td><td>Guardar, obtener, eliminar borrador; finalizar pedido</td></tr>
+          <tr><td>Recepciones</td><td><code>/recepciones</code></td><td>6</td><td>CRUD, reporte PDF de recepciones</td></tr>
+          <tr><td>Recepcion Productos</td><td><code>/recepcion-productos</code></td><td>5</td><td>CRUD lineas de recepcion</td></tr>
+          <tr><td>Recepcion Draft</td><td><code>/recepcion/draft</code></td><td>3</td><td>Guardar, obtener, eliminar borrador</td></tr>
+          <tr><td>Incidencias</td><td><code>/incidencias</code></td><td>8</td><td>CRUD, reportar, resolver (simple y transaccional)</td></tr>
+          <tr><td>Incidencias Resueltas</td><td><code>/incidencias-resueltas</code></td><td>5</td><td>CRUD resoluciones de incidencias</td></tr>
+          <tr><td>Inventario</td><td><code>/inventario</code></td><td>7</td><td>CRUD, consulta stock consolidado, ajuste manual con auditoria</td></tr>
+          <tr><td>Alertas</td><td><code>/alertas</code></td><td>2</td><td>Alertas de caducidad y de stock bajo minimos</td></tr>
+          <tr><td>Movimientos</td><td><code>/movimientos</code></td><td>4</td><td>Crear, listar, detalle, historial/trazabilidad</td></tr>
+          <tr><td>Merma</td><td><code>/merma</code></td><td>6</td><td>Registrar merma, merma desde produccion, KPIs, estadisticas</td></tr>
+          <tr><td>Recetas</td><td><code>/recetas</code></td><td>9</td><td>CRUD, duplicar, detalle con costes, escandallo, cocinar, preview coste, export PDF</td></tr>
+          <tr><td>Produccion</td><td><code>/produccion</code></td><td>5</td><td>Ejecutar produccion, validar stock, listar lotes, consumir porciones</td></tr>
+          <tr><td>Preparaciones</td><td><code>/preparaciones</code></td><td>7</td><td>CRUD, iniciar, finalizar, cancelar preparacion</td></tr>
+          <tr><td>Ubicaciones</td><td><code>/ubicacion</code></td><td>6</td><td>CRUD, restaurar ubicacion eliminada</td></tr>
+          <tr><td>Roles</td><td><code>/roles</code></td><td>10</td><td>CRUD, asignar/revocar rol a usuario, asignar permisos a rol</td></tr>
+          <tr><td>Plantillas Roles</td><td><code>/plantillas-roles</code></td><td>9</td><td>CRUD, duplicar, permisos efectivos, activar/desactivar</td></tr>
+          <tr><td>Permisos</td><td><code>/permisos</code></td><td>7</td><td>CRUD, listar agrupados por modulo</td></tr>
+          <tr><td>Admin</td><td><code>/admin</code></td><td>6</td><td>Roles, permisos, crear profesor, cambiar rol, activar, force-reset</td></tr>
+          <tr><td>Alumnos</td><td><code>/alumnos</code></td><td>6</td><td>Registro publico, resolver slot, listar aulas/clases/profesores, cambiar profesor</td></tr>
+          <tr><td>Profesores</td><td><code>/profesores</code></td><td>13</td><td>Registro, gestionar slots, listar alumnos, activar/desactivar, force-reset</td></tr>
+          <tr><td>Archivos</td><td><code>/archivos</code></td><td>5</td><td>Upload, listar, metadatos, servir binario, eliminar</td></tr>
+          <tr><td>Dashboard</td><td><code>/dashboard</code></td><td>1</td><td>KPIs del panel (cache 60s)</td></tr>
+          <tr><td>Export</td><td><code>/export</code></td><td>13</td><td>Exportar 11 entidades a XLSX + 2 a PDF</td></tr>
+          <tr><td>Albaranes</td><td><code>/albaranes</code></td><td>7</td><td>CRUD, upload documento, servir documento</td></tr>
+          <tr><td>Distribuciones</td><td><code>/distribuciones</code></td><td>6</td><td>Listar, disponibles, detalle, preparar, confirmar, cancelar</td></tr>
+          <tr><td>OpenFoodFacts</td><td><code>/openfoodfacts</code></td><td>2</td><td>Buscar producto por codigo de barras o por nombre</td></tr>
+          <tr><td>App (raiz)</td><td><code>/</code></td><td>1</td><td>Health check</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Contrato transversal (envelope)</h2>
+      <p>Todas las respuestas JSON del backend se envuelven en un formato estandar mediante un interceptor global. Las unicas excepciones son las descargas binarias (PDF, XLSX, archivos).</p>
+      <pre><code class="language-json">{
+  "success": true,
+  "message": "Operacion exitosa",
+  "data": { ... },
+  "meta": {
+    "app": "SmartEconomat",
+    "version": "1.0.0",
+    "timestamp": "2026-04-18T10:00:00.000Z",
+    "environment": "development",
+    "requestId": "019682ab-..."
+  }
+}</code></pre>
+      <p>Las respuestas paginadas incluyen ademas un objeto <code>meta.pagination</code> con <code>page</code>, <code>limit</code>, <code>total</code> y <code>totalPages</code>.</p>
+
+      <h3>Codigos de error mas frecuentes</h3>
+      <table>
+        <thead>
+          <tr><th>Codigo</th><th>Causa</th><th>Ejemplo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>400</td><td>DTO invalido (<code>ValidationPipe</code>)</td><td>Campo requerido ausente o tipo incorrecto.</td></tr>
+          <tr><td>401</td><td>Token JWT ausente o expirado</td><td>Peticion sin cookie <code>access_token</code>.</td></tr>
+          <tr><td>403</td><td>Permiso insuficiente</td><td>Usuario sin <code>productos.crear</code> intentando POST /productos.</td></tr>
+          <tr><td>404</td><td>Recurso no encontrado</td><td>UUID inexistente o soft-deleted.</td></tr>
+          <tr><td>409</td><td>Conflicto de negocio</td><td>Producto con codigo de barras duplicado, pedido ya cancelado.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Autenticacion y autorizacion</h2>
+      <p>El sistema implementa autenticacion JWT con cookies httpOnly y autorizacion en dos niveles:</p>
+      <ul>
+        <li><strong>JwtAuthGuard:</strong> valida el token JWT en cada peticion protegida. Los endpoints publicos se marcan con <code>@Public()</code>.</li>
+        <li><strong>PermisosGuard + @RequirePermissions:</strong> verifica que el usuario tenga los permisos granulares necesarios (ej: <code>productos.crear</code>, <code>inventario.ajustar_stock</code>). Los permisos se resuelven combinando roles, plantillas, permisos adicionales y excluidos.</li>
+        <li><strong>AdminGuard:</strong> restriccion adicional para endpoints exclusivos de administracion del sistema (roles, permisos, plantillas).</li>
+      </ul>
+
+      <h2>Ejemplos representativos de peticiones</h2>
+      <p>A continuacion se muestran ejemplos reales de peticiones y respuestas para ilustrar los patrones mas comunes de la API. El detalle completo de cada DTO se encuentra en la documentacion Swagger.</p>
+
+      <h3>Ejemplo 1: Crear un producto (POST /productos)</h3>
+      <pre><code class="language-json">// REQUEST
+POST /api/v1/productos
+Content-Type: application/json
+Cookie: access_token=eyJhbGciOi...
+
+{
+  "nombre": "Aceite de oliva virgen extra",
+  "contenido": 5,
+  "unidad": "LITRO",
+  "tipo": "PERECEDERO",
+  "codigoBarras": "8410128430016",
+  "proveedores": [
+    {
+      "proveedorId": "019682ab-...",
+      "precioUnitario": 24.50,
+      "mermaEsperada": 2.0,
+      "marca": "Carbonell"
+    }
+  ],
+  "alergenos": []
+}</code></pre>
+      <pre><code class="language-json">// RESPONSE 201
+{
+  "success": true,
+  "message": "Producto creado correctamente",
+  "data": {
+    "id": "019682ac-...",
+    "nombre": "Aceite de oliva virgen extra",
+    "contenido": 5,
+    "pmp": 24.50,
+    "unidad": "LITRO",
+    "tipo": "PERECEDERO",
+    "codigoBarras": "8410128430016",
+    "proveedores": [ ... ],
+    "createdAt": "2026-04-18T10:00:00.000Z"
+  },
+  "meta": { ... }
+}</code></pre>
+
+      <h3>Ejemplo 2: Login (POST /auth/login)</h3>
+      <pre><code class="language-json">// REQUEST
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123!"
+}</code></pre>
+      <pre><code class="language-json">// RESPONSE 200 (+ Set-Cookie: access_token=...; HttpOnly; Secure)
+{
+  "success": true,
+  "message": "Login exitoso",
+  "data": {
+    "access_token": "eyJhbGciOi...",
+    "mustChangePassword": false,
+    "user": {
+      "id": "019682a0-...",
+      "username": "admin",
+      "nombre": "Administrador",
+      "rol": "ADMIN",
+      "status": "ACTIVE"
+    }
+  },
+  "meta": { ... }
+}</code></pre>
+
+      <h3>Ejemplo 3: Listar inventario con paginacion (GET /inventario)</h3>
+      <pre><code class="language-json">// REQUEST
+GET /api/v1/inventario?page=1&amp;limit=10&amp;ubicacionId=019682ab-...
+Cookie: access_token=eyJhbGciOi...
+
+// RESPONSE 200
+{
+  "success": true,
+  "data": [ ... ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 47,
+      "totalPages": 5
+    },
+    ...
+  }
+}</code></pre>
+
+      <h3>Ejemplo 4: Ejecutar produccion (POST /produccion/ejecutar)</h3>
+      <pre><code class="language-json">// REQUEST
+POST /api/v1/produccion/ejecutar
+Content-Type: application/json
+
+{
+  "recetaId": "019682ab-...",
+  "cantidadAProducir": 10,
+  "ubicacionDestinoId": "019682ac-..."
+}</code></pre>
+      <pre><code class="language-json">// RESPONSE 201
+{
+  "success": true,
+  "data": {
+    "lote": {
+      "id": "019682ad-...",
+      "cantidadProducida": 10,
+      "costeTotalReal": 48.75,
+      "porcionesProducidas": 10,
+      "porcionesRestantes": 10,
+      "estado": "DISPONIBLE"
+    },
+    "movimientos": [ ... ]
+  },
+  "meta": { ... }
+}</code></pre>
+
+      <h3>Ejemplo 5: Exportar a Excel (GET /export/productos/xlsx)</h3>
+      <pre><code class="language-text">// REQUEST
+GET /api/v1/export/productos/xlsx?tipo=PERECEDERO
+Cookie: access_token=eyJhbGciOi...
+
+// RESPONSE 200
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename="productos.xlsx"
+(binary stream)</code></pre>
+
+      <h2>Patrones de API destacados</h2>
+      <table>
+        <thead>
+          <tr><th>Patron</th><th>Implementacion</th><th>Ejemplo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Transiciones de estado explicitas</td><td>Rutas PATCH dedicadas en vez de PATCH generico</td><td><code>/pedidos/:id/aceptar</code>, <code>/pedidos/:id/cancelar</code></td></tr>
+          <tr><td>Generacion desde negocio</td><td>Endpoints que crean entidades derivadas</td><td><code>/pedidos/from-recipes</code>, <code>/pedido-usuarios/from-missing-stock</code></td></tr>
+          <tr><td>Borradores persistentes</td><td>CRUD de drafts con TTL y finalizacion</td><td><code>/pedido/draft</code>, <code>/recepcion/draft</code></td></tr>
+          <tr><td>Exportacion binaria</td><td>Endpoints dedicados para PDF/XLSX</td><td><code>/export/productos/xlsx</code>, <code>/recepciones/reporte-pdf</code></td></tr>
+          <tr><td>Integracion externa</td><td>Proxy a API de terceros</td><td><code>/openfoodfacts/producto/:codigoBarras</code></td></tr>
+          <tr><td>Cache con TTL</td><td>Respuestas cacheadas en Redis</td><td><code>/dashboard/stats</code> (60s)</td></tr>
+          <tr><td>Soft delete + restore</td><td>DELETE marca <code>deletedAt</code>; POST restore</td><td><code>/ubicacion/:id</code> + <code>/ubicacion/:id/restore</code></td></tr>
+          <tr><td>Paginacion estandar</td><td>Query params <code>page</code> y <code>limit</code></td><td>Todos los endpoints GET de listado</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Referencia rapida de endpoints por dominio</h2>
+      <p>Las siguientes tablas muestran los endpoints mas representativos de cada dominio. Para la lista exhaustiva de los 238 endpoints con sus DTOs, parametros y schemas de respuesta, consultar la interfaz Swagger en <code>/docs</code>.</p>
+
+      <h3>Autenticacion y usuarios (28 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/auth/register</td><td>Registro publico de usuario</td><td>@Public</td></tr>
+          <tr><td>POST</td><td>/auth/login</td><td>Inicio de sesion (cookie-first)</td><td>@Public</td></tr>
+          <tr><td>POST</td><td>/auth/logout</td><td>Cierre de sesion</td><td>@Public</td></tr>
+          <tr><td>GET</td><td>/auth/profile</td><td>Payload JWT del usuario autenticado</td><td>JWT</td></tr>
+          <tr><td>PATCH</td><td>/auth/change-password</td><td>Cambio de contrasena autenticado</td><td>JWT</td></tr>
+          <tr><td>POST</td><td>/auth/forgot-password</td><td>Solicitar recuperacion con OTP</td><td>@Public</td></tr>
+          <tr><td>POST</td><td>/auth/reset-password</td><td>Aplicar reset con token OTP</td><td>@Public</td></tr>
+          <tr><td>POST</td><td>/usuarios</td><td>Crear usuario estandar</td><td>usuarios.crear</td></tr>
+          <tr><td>POST</td><td>/usuarios/admin</td><td>Crear usuario con privilegios admin</td><td>usuarios.crear (ADMIN)</td></tr>
+          <tr><td>GET</td><td>/usuarios/perfil</td><td>Perfil completo con permisos efectivos</td><td>JWT</td></tr>
+          <tr><td>GET</td><td>/usuarios</td><td>Listar usuarios (paginado)</td><td>usuarios.listar</td></tr>
+          <tr><td>PATCH</td><td>/usuarios/:id</td><td>Editar usuario</td><td>usuarios.editar</td></tr>
+          <tr><td>PATCH</td><td>/usuarios/:id/activar</td><td>Activar/desactivar usuario</td><td>usuarios.editar</td></tr>
+          <tr><td>DELETE</td><td>/usuarios/:id</td><td>Eliminar usuario (soft delete)</td><td>usuarios.eliminar</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Catalogo, inventario y stock (52 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/productos</td><td>Crear producto con proveedores y alergenos</td><td>productos.crear</td></tr>
+          <tr><td>GET</td><td>/productos</td><td>Listar catalogo (paginado, filtrable)</td><td>productos.listar</td></tr>
+          <tr><td>GET</td><td>/productos/generar-ean13</td><td>Generar codigo EAN-13 unico</td><td>productos.generar_ean13</td></tr>
+          <tr><td>GET</td><td>/productos/:id/historial-precios</td><td>Historico de precios de un producto</td><td>productos.ver</td></tr>
+          <tr><td>PATCH</td><td>/producto-proveedor/:id/precio</td><td>Actualizar precio y registrar historial</td><td>productos.editar</td></tr>
+          <tr><td>GET</td><td>/producto-proveedor/comparar/:productoId</td><td>Comparar proveedores por coste efectivo</td><td>productos.listar</td></tr>
+          <tr><td>POST</td><td>/proveedor</td><td>Crear proveedor</td><td>proveedores.crear</td></tr>
+          <tr><td>GET</td><td>/proveedor/con-pedidos</td><td>Listar proveedores con pedidos activos</td><td>proveedores.listar</td></tr>
+          <tr><td>GET</td><td>/inventario/stock</td><td>Stock consolidado o por ubicacion</td><td>inventario.listar</td></tr>
+          <tr><td>POST</td><td>/inventario/ajustes-manuales</td><td>Ajuste manual con auditoria completa</td><td>inventario.ajustar_stock</td></tr>
+          <tr><td>GET</td><td>/alertas/caducidad</td><td>Lotes proximos a caducar</td><td>inventario.ver</td></tr>
+          <tr><td>GET</td><td>/alertas/stock</td><td>Stock bajo minimos</td><td>inventario.ver</td></tr>
+          <tr><td>GET</td><td>/movimientos/historial</td><td>Trazabilidad filtrable por entidad, fecha, usuario</td><td>movimientos.listar</td></tr>
+          <tr><td>POST</td><td>/merma</td><td>Registrar merma y descontar stock</td><td>merma.crear</td></tr>
+          <tr><td>GET</td><td>/merma/kpis</td><td>KPIs agregados de merma</td><td>merma.stats</td></tr>
+          <tr><td>GET</td><td>/openfoodfacts/producto/:codigoBarras</td><td>Buscar producto externo por codigo</td><td>Multiples</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Compras, recepciones e incidencias (66 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/pedido-usuarios</td><td>Crear pedido agregado de usuario</td><td>pedidos.crear</td></tr>
+          <tr><td>POST</td><td>/pedido-usuarios/from-missing-stock</td><td>Crear desde stock faltante</td><td>pedidos.crear</td></tr>
+          <tr><td>POST</td><td>/pedido-usuarios/from-recipes</td><td>Crear desde recetas</td><td>pedidos.crear</td></tr>
+          <tr><td>PATCH</td><td>/pedido-usuarios/:id/aceptar</td><td>Aceptar y descomponer en pedidos</td><td>pedidos.editar</td></tr>
+          <tr><td>POST</td><td>/purchase-batches/consolidate</td><td>Consolidar pedidos existentes en lote</td><td>pedidos.crear</td></tr>
+          <tr><td>PATCH</td><td>/purchase-batches/:id/tramitar</td><td>Marcar lote como tramitado</td><td>pedidos.editar</td></tr>
+          <tr><td>POST</td><td>/pedidos</td><td>Crear pedido de compra directo</td><td>pedidos.crear</td></tr>
+          <tr><td>PATCH</td><td>/pedidos/:id/aceptar</td><td>Aceptar pedido</td><td>pedidos.editar</td></tr>
+          <tr><td>PATCH</td><td>/pedidos/:id/cancelar</td><td>Cancelar con motivo obligatorio</td><td>pedidos.cancelar</td></tr>
+          <tr><td>POST</td><td>/pedido/draft</td><td>Guardar/actualizar borrador</td><td>pedidos.crear</td></tr>
+          <tr><td>POST</td><td>/pedido/draft/finalize</td><td>Finalizar borrador como pedido real</td><td>pedidos.crear</td></tr>
+          <tr><td>POST</td><td>/recepciones</td><td>Procesar recepcion completa</td><td>recepciones.crear</td></tr>
+          <tr><td>GET</td><td>/recepciones/reporte-pdf</td><td>Generar reporte PDF de recepciones</td><td>recepciones.listar</td></tr>
+          <tr><td>POST</td><td>/incidencias/reportar</td><td>Reportar incidencia operativa</td><td>incidencias.crear</td></tr>
+          <tr><td>POST</td><td>/incidencias/:id/resolver</td><td>Resolver incidencia transaccionalmente</td><td>incidencias.resolver</td></tr>
+          <tr><td>POST</td><td>/albaranes</td><td>Crear albaran de entrega</td><td>albaranes.crear</td></tr>
+          <tr><td>POST</td><td>/albaranes/upload-documento</td><td>Subir imagen/PDF del albaran</td><td>albaranes.crear</td></tr>
+          <tr><td>POST</td><td>/distribuciones</td><td>Preparar distribucion</td><td>distribuciones.crear</td></tr>
+          <tr><td>PATCH</td><td>/distribuciones/:id/confirmar</td><td>Confirmar distribucion y mover stock</td><td>distribuciones.confirmar</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Produccion y recetas (21 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/recetas</td><td>Crear receta con ingredientes</td><td>recetas.crear</td></tr>
+          <tr><td>POST</td><td>/recetas/duplicate</td><td>Duplicar receta existente</td><td>recetas.duplicar</td></tr>
+          <tr><td>GET</td><td>/recetas/:id/detalle</td><td>Receta enriquecida con costes</td><td>recetas.ver</td></tr>
+          <tr><td>GET</td><td>/recetas/:id/escandallo</td><td>Calculo de coste (escandallo)</td><td>recetas.ver</td></tr>
+          <tr><td>POST</td><td>/recetas/calculate-preview</td><td>Preview de coste sin persistir</td><td>recetas.ver</td></tr>
+          <tr><td>POST</td><td>/recetas/:id/cocinar</td><td>Ejecutar receta (descontar stock)</td><td>recetas.cocinar</td></tr>
+          <tr><td>GET</td><td>/recetas/export/pdf</td><td>Exportar multiples recetas a PDF</td><td>recetas.ver</td></tr>
+          <tr><td>POST</td><td>/produccion/ejecutar</td><td>Ejecutar produccion y generar lote</td><td>recetas.cocinar</td></tr>
+          <tr><td>POST</td><td>/produccion/validar</td><td>Validar stock disponible</td><td>recetas.cocinar</td></tr>
+          <tr><td>PATCH</td><td>/produccion/lote/:id/consumir</td><td>Consumir porciones del lote</td><td>recetas.cocinar</td></tr>
+          <tr><td>POST</td><td>/preparaciones</td><td>Crear preparacion programada</td><td>recetas.cocinar</td></tr>
+          <tr><td>PATCH</td><td>/preparaciones/:id/iniciar</td><td>Iniciar preparacion</td><td>recetas.cocinar</td></tr>
+          <tr><td>PATCH</td><td>/preparaciones/:id/finalizar</td><td>Finalizar y registrar resultado</td><td>recetas.cocinar</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Educativo, archivos y exportacion (50 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>POST</td><td>/profesores/register</td><td>Registro publico de profesor</td><td>@Public</td></tr>
+          <tr><td>POST</td><td>/profesores/slots</td><td>Crear slot de clase</td><td>profesor.gestionar_slots</td></tr>
+          <tr><td>GET</td><td>/profesores/alumnos</td><td>Listar alumnos asignados</td><td>profesor.ver_alumnos</td></tr>
+          <tr><td>POST</td><td>/alumnos/register</td><td>Registro publico de alumno</td><td>@Public</td></tr>
+          <tr><td>GET</td><td>/alumnos/aulas</td><td>Listar aulas disponibles</td><td>@Public</td></tr>
+          <tr><td>PATCH</td><td>/alumnos/change-profesor</td><td>Cambiar profesor asignado</td><td>alumno.cambiar_profesor</td></tr>
+          <tr><td>POST</td><td>/archivos/upload</td><td>Subir archivo con optimizacion</td><td>archivos.subir</td></tr>
+          <tr><td>GET</td><td>/archivos/content/:filename</td><td>Servir binario del archivo</td><td>@Public</td></tr>
+          <tr><td>GET</td><td>/export/productos/xlsx</td><td>Exportar productos a Excel</td><td>productos.listar</td></tr>
+          <tr><td>GET</td><td>/export/pedidos/xlsx</td><td>Exportar pedidos a Excel</td><td>pedidos.listar</td></tr>
+          <tr><td>GET</td><td>/export/inventario/xlsx</td><td>Exportar inventario a Excel</td><td>inventario.listar</td></tr>
+          <tr><td>GET</td><td>/export/recetas/xlsx</td><td>Exportar recetas a Excel</td><td>recetas.listar</td></tr>
+          <tr><td>GET</td><td>/export/productos/pdf</td><td>Exportar productos a PDF</td><td>productos.listar</td></tr>
+          <tr><td>GET</td><td>/dashboard/stats</td><td>KPIs del dashboard (cache 60s)</td><td>dashboard.ver_estadisticas</td></tr>
+        </tbody>
+      </table>
+
+      <h3>RBAC: Roles, permisos y plantillas (26 endpoints)</h3>
+      <table>
+        <thead>
+          <tr><th>Metodo</th><th>Ruta</th><th>Descripcion</th><th>Permisos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GET</td><td>/roles</td><td>Listar roles (paginado)</td><td>roles.listar (ADMIN)</td></tr>
+          <tr><td>POST</td><td>/roles</td><td>Crear rol</td><td>roles.crear (ADMIN)</td></tr>
+          <tr><td>POST</td><td>/roles/assign-user</td><td>Asignar rol a usuario</td><td>roles.editar (ADMIN)</td></tr>
+          <tr><td>PATCH</td><td>/roles/:id/permisos</td><td>Asignar permisos al rol</td><td>roles.editar (ADMIN)</td></tr>
+          <tr><td>GET</td><td>/permisos/grouped</td><td>Permisos agrupados por modulo</td><td>permisos.listar (ADMIN)</td></tr>
+          <tr><td>GET</td><td>/plantillas-roles</td><td>Listar plantillas de rol</td><td>roles.listar (ADMIN)</td></tr>
+          <tr><td>POST</td><td>/plantillas-roles/:id/duplicar</td><td>Duplicar plantilla</td><td>roles.crear (ADMIN)</td></tr>
+          <tr><td>GET</td><td>/plantillas-roles/:id/permisos-efectivos</td><td>Permisos efectivos de plantilla</td><td>roles.listar (ADMIN)</td></tr>
+          <tr><td>PATCH</td><td>/plantillas-roles/:id/permisos</td><td>Actualizar permisos de plantilla</td><td>roles.editar (ADMIN)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    <section class="chapter" id="infraestructura">
+      <h1 class="section-title">Infraestructura</h1>
+      <p class="lead">La infraestructura se basa en Docker Compose con cuatro servicios principales en produccion: PostgreSQL, Redis, backend NestJS y frontend Nginx. El despliegue se automatiza mediante <code>scripts/deploy.sh</code>, con soporte para certificados autofirmados y, opcionalmente, Let's Encrypt.</p>
+
+      <h2>Servicios y responsabilidades</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Funcion</th>
+            <th>Exposicion</th>
+            <th>Detalles tecnicos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>db</td><td>Persistencia principal</td><td>Interna</td><td>PostgreSQL con volumen persistente <code>database_prod</code> y healthcheck <code>pg_isready</code>.</td></tr>
+          <tr><td>redis</td><td>Cache y soporte runtime</td><td>Interna</td><td>Redis 7 con AOF y password obligatoria en produccion.</td></tr>
+          <tr><td>backend</td><td>API NestJS</td><td>Interna</td><td>No publica el puerto 3000 al host; depende de db y redis.</td></tr>
+          <tr><td>frontend</td><td>SPA compilada + proxy HTTPS</td><td>80 y 443</td><td>Nginx sirve la SPA y proxya <code>/api/</code> hacia backend.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Variables de entorno principales</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Grupo</th>
+            <th>Variables</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>General</td><td>NODE_ENV, DOMAIN</td><td>Contexto de entorno y dominio publico.</td></tr>
+          <tr><td>Backend</td><td>BACKEND_PORT, BACKEND_API_URL</td><td>Configuracion de escucha y URL base expuesta.</td></tr>
+          <tr><td>Base de datos</td><td>POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SYNC</td><td>Conexion de TypeORM y politicas de sincronizacion.</td></tr>
+          <tr><td>Frontend</td><td>FRONTEND_PORT, FRONTEND_API_URL, VITE_API_PROXY_TARGET</td><td>Construccion de la SPA y proxy local.</td></tr>
+          <tr><td>JWT</td><td>JWT_SECRET, JWT_EXPIRATION</td><td>Firma y vigencia de sesion.</td></tr>
+          <tr><td>Redis</td><td>REDIS_PASSWORD</td><td>Proteccion del servicio de cache.</td></tr>
+          <tr><td>Observabilidad</td><td>SENTRY_DSN, VITE_SENTRY_DSN</td><td>Captura de errores frontend y backend.</td></tr>
+          <tr><td>TLS y despliegue</td><td>TLS_PROVIDER, TLS_SELF_SIGNED_DAYS, LETSENCRYPT_EMAIL, LETSENCRYPT_DIRECTORY_URL</td><td>Gestion de certificados y automatizacion de despliegue.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Fragmento representativo del despliegue</h2>
+      <pre><code class="language-yaml">services:
+  backend:
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    ports:
+      - "80:80"
+      - "443:443"</code></pre>
+
+      <figure class="diagram">
+        <figcaption>Diagrama de despliegue simplificado</figcaption>
+        <svg viewBox="0 0 980 420" xmlns="http://www.w3.org/2000/svg" aria-label="Despliegue Docker SmartEconomat">
+          <defs>
+            <marker id="arrow-d" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="30" y="160" width="160" height="80" rx="18" fill="#e8f5f1" stroke="#0a6151" stroke-width="2"/>
+          <text x="110" y="196" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#064238">Navegador</text>
+          <text x="110" y="220" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#6b7280">HTTPS</text>
+
+          <rect x="260" y="72" width="620" height="260" rx="20" fill="#f5faf8" stroke="#0a6151" stroke-width="2.2"/>
+          <text x="570" y="108" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#0a6151">docker-compose.prod.yml</text>
+
+          <rect x="305" y="146" width="180" height="68" rx="14" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="395" y="177" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">frontend / Nginx</text>
+          <text x="395" y="199" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">80 / 443 y proxy /api/</text>
+
+          <rect x="544" y="146" width="140" height="68" rx="14" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="614" y="177" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">backend</text>
+          <text x="614" y="199" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">NestJS interno</text>
+
+          <rect x="725" y="126" width="110" height="56" rx="14" fill="#eef6ff" stroke="#25518c" stroke-width="1.8"/>
+          <text x="780" y="159" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#19365d">db</text>
+
+          <rect x="725" y="218" width="110" height="56" rx="14" fill="#eefcf1" stroke="#1f7a1f" stroke-width="1.8"/>
+          <text x="780" y="251" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#14532d">redis</text>
+
+          <path d="M190 200 L260 180" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-d)"/>
+          <path d="M485 180 L544 180" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-d)"/>
+          <path d="M684 172 L725 156" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-d)"/>
+          <path d="M684 190 L725 246" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-d)"/>
+        </svg>
+        <details>
+          <summary>Fuente Mermaid utilizada</summary>
+          <pre><code class="language-mermaid">flowchart LR
+  USER[Navegador] --> FE[frontend / Nginx]
+  FE --> BE[backend / NestJS]
+  BE --> DB[(db / PostgreSQL)]
+  BE --> REDIS[(redis)]</code></pre>
+        </details>
+      </figure>
+
+      <h2>Redis</h2>
+      <p>Redis se usa como cache y servicio auxiliar. En desarrollo puede ejecutarse sin password; en produccion exige <code>REDIS_PASSWORD</code> y se arranca con <code>--appendonly yes</code>. La documentacion de arquitectura y auditoria lo vincula expresamente al cacheo de permisos efectivos, con el objetivo de reducir consultas repetidas a PostgreSQL.</p>
+    </section>
+
+    <section class="chapter" id="implementacion">
+      <h1 class="section-title">Implementacion</h1>
+      <p class="lead">La implementacion sigue una organizacion por dominios, con separacion explicita entre borde HTTP, logica de negocio, persistencia y componentes transversales. El proyecto prioriza validacion fuerte, respuestas uniformes y transacciones seguras cuando intervienen varias entidades.</p>
+
+      <h2>Estructura del codigo</h2>
+      <pre class="tree"><code>backend/smart-economat-backend/src/
+├── main.ts
+├── app.module.ts
+├── common/
+│   ├── dto/
+│   ├── decorators/
+│   ├── filters/
+│   ├── guards/
+│   ├── interceptors/
+│   ├── pipes/
+│   └── transformers/
+├── config/
+├── migrations/
+├── modules/
+│   ├── producto/
+│   ├── pedido/
+│   ├── recepcion/
+│   ├── incidencia/
+│   ├── inventario/
+│   ├── receta/
+│   ├── usuario/
+│   └── ...
+└── seeders/</code></pre>
+
+      <h2>Decisiones tecnicas en formato ADR breve</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ADR</th>
+            <th>Decision</th>
+            <th>Motivo</th>
+            <th>Consecuencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>ADR-01</td><td>Backend modular por dominio con NestJS</td><td>Separar responsabilidades y facilitar escalado del equipo.</td><td>Mayor numero de modulos y wiring, pero mejor cohesion funcional.</td></tr>
+          <tr><td>ADR-02</td><td>DTOs con validacion estricta global</td><td>Evitar payloads ambiguos y errores ocultos entre frontend y backend.</td><td>Los clientes deben ajustarse exactamente al contrato.</td></tr>
+          <tr><td>ADR-03</td><td>UUID v7 como PK principal</td><td>Mejor orden temporal y rendimiento de indices frente a UUID aleatorio.</td><td>Necesidad de soporte especifico en la base de datos y testing.</td></tr>
+          <tr><td>ADR-04</td><td>Soft delete y versionado optimista</td><td>Trazabilidad funcional y proteccion frente a cambios concurrentes.</td><td>Mayor complejidad en consultas y restauracion de registros.</td></tr>
+          <tr><td>ADR-05</td><td>Redis para cache de permisos</td><td>Reducir coste de autorizacion repetitiva.</td><td>Hay que invalidar cache cuando cambian rol o permiso.</td></tr>
+          <tr><td>ADR-06</td><td>Transiciones de estado con rutas dedicadas</td><td>Proteger invariantes de negocio.</td><td>Mas endpoints, pero menos ambiguedad que un PATCH generico.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Problemas y soluciones relevantes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Problema</th>
+            <th>Solucion aplicada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Desalineacion entre frontend y backend</td><td>Cliente HTTP centralizado, DTOs estrictos y contrato global documentado.</td></tr>
+          <tr><td>Necesidad de trazabilidad fuerte de stock</td><td>Movimiento como agregado de auditoria y mermas como flujo especifico.</td></tr>
+          <tr><td>Operaciones multi-entidad delicadas</td><td>Uso de <code>dataSource.transaction()</code> y <code>QueryRunner</code> cuando la recepcion o la produccion afectan varios agregados.</td></tr>
+          <tr><td>Reutilizacion de permisos complejos</td><td>Plantillas de roles, permisos adicionales y excluidos por usuario.</td></tr>
+          <tr><td>Generacion de documentos de negocio</td><td>Endpoints binarios dedicados para PDF y XLSX en vez de adaptar respuestas JSON genericas.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Secuencia representativa del login web</h2>
+      <figure class="diagram">
+        <figcaption>Secuencia operativa de sesion y carga de perfil</figcaption>
+        <svg viewBox="0 0 980 390" xmlns="http://www.w3.org/2000/svg" aria-label="Secuencia de login web SmartEconomat">
+          <defs>
+            <marker id="arrow-e" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <g font-family="Georgia, serif" fill="#1a2332">
+            <text x="120" y="42" text-anchor="middle" font-size="18">Usuario</text>
+            <text x="330" y="42" text-anchor="middle" font-size="18">Frontend</text>
+            <text x="575" y="42" text-anchor="middle" font-size="18">API /auth</text>
+            <text x="825" y="42" text-anchor="middle" font-size="18">/usuarios/perfil</text>
+            <line x1="120" y1="58" x2="120" y2="340" stroke="#cbd2d9" stroke-width="2" stroke-dasharray="6 6"/>
+            <line x1="330" y1="58" x2="330" y2="340" stroke="#cbd2d9" stroke-width="2" stroke-dasharray="6 6"/>
+            <line x1="575" y1="58" x2="575" y2="340" stroke="#cbd2d9" stroke-width="2" stroke-dasharray="6 6"/>
+            <line x1="825" y1="58" x2="825" y2="340" stroke="#cbd2d9" stroke-width="2" stroke-dasharray="6 6"/>
+            <path d="M130 96 L320 96" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="226" y="84" text-anchor="middle" font-size="13">Credenciales</text>
+            <path d="M340 136 L565 136" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="453" y="124" text-anchor="middle" font-size="13">POST /auth/login</text>
+            <path d="M575 174 L340 174" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="458" y="162" text-anchor="middle" font-size="13">Cookie access_token + flags</text>
+            <path d="M340 224 L815 224" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="578" y="212" text-anchor="middle" font-size="13">GET /usuarios/perfil</text>
+            <path d="M825 264 L340 264" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="582" y="252" text-anchor="middle" font-size="13">Usuario + roles + permisos</text>
+            <path d="M340 306 L130 306" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arrow-e)"/>
+            <text x="235" y="294" text-anchor="middle" font-size="13">Sesion operativa</text>
+          </g>
+        </svg>
+        <details>
+          <summary>Fuente Mermaid utilizada</summary>
+          <pre><code class="language-mermaid">sequenceDiagram
+  actor U as Usuario
+  participant FE as Frontend
+  participant AUTH as API /auth
+  participant PERF as /usuarios/perfil
+  U-&gt;&gt;FE: Credenciales
+  FE-&gt;&gt;AUTH: POST /auth/login
+  AUTH--&gt;&gt;FE: Cookie access_token + flags
+  FE-&gt;&gt;PERF: GET /usuarios/perfil
+  PERF--&gt;&gt;FE: Usuario + roles + permisos
+  FE--&gt;&gt;U: Sesion operativa</code></pre>
+        </details>
+      </figure>
+    </section>
+
+    <section class="chapter" id="seguridad">
+      <h1 class="section-title">Seguridad</h1>
+      <p class="lead">SmartEconomat implementa un modelo de seguridad por capas: autenticacion JWT en cookie <code>httpOnly</code>, control de acceso RBAC con 88 permisos granulares sobre 19 modulos, proteccion CSRF mediante Double Submit Cookie y limitacion de peticiones inteligente. Cada peticion atraviesa hasta cuatro guards globales antes de alcanzar la logica de negocio.</p>
+
+      <h2>Autenticacion JWT</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Aspecto</th>
+            <th>Implementacion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Almacenamiento del token</td><td>Cookie <code>httpOnly</code> llamada <code>access_token</code>; flag <code>secure</code> activado en produccion.</td></tr>
+          <tr><td>Payload JWT</td><td><code>{ sub: userId }</code>. No se incluyen permisos en el token.</td></tr>
+          <tr><td>Extraccion</td><td><code>JwtStrategy</code> busca primero en la cabecera <code>Authorization: Bearer</code> y luego en la cookie como fallback.</td></tr>
+          <tr><td>Expiracion</td><td>Configurable via <code>JWT_EXPIRATION</code>; validada en cada peticion.</td></tr>
+          <tr><td>Password</td><td>Almacenado con bcrypt. Soporte de <code>mustChangePassword</code> para forzar cambio en siguiente login.</td></tr>
+          <tr><td>Validacion adicional</td><td>El usuario debe estar en estado <code>ACTIVE</code>; un usuario bloqueado o inactivo se rechaza aunque el token sea valido.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Modelo RBAC</h2>
+      <p>El sistema define cuatro roles base con permisos preasignados y permite personalizacion mediante permisos adicionales y excluidos por usuario. La formula de resolucion efectiva es:</p>
+      <pre><code>Permisos efectivos =
+  (Permisos de plantilla del rol) +
+  (Permisos persistentes del rol) +
+  (Permisos adicionales del usuario) -
+  (Permisos excluidos del usuario)</code></pre>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Rol</th>
+            <th>Permisos activos</th>
+            <th>Nivel</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>SUPER_ADMIN</td><td>88 / 88</td><td>Elevado</td></tr>
+          <tr><td>ADMIN</td><td>84 / 88</td><td>Elevado</td></tr>
+          <tr><td>PROFESOR</td><td>39 / 88</td><td>Estandar</td></tr>
+          <tr><td>ALUMNO</td><td>11 / 88</td><td>Estandar</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Distribucion de permisos por modulo</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Modulo</th>
+            <th>N.&ordm; permisos</th>
+            <th>Modulo</th>
+            <th>N.&ordm; permisos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>usuarios</td><td>7</td><td>pedidos</td><td>7</td></tr>
+          <tr><td>productos</td><td>6</td><td>recepciones</td><td>5</td></tr>
+          <tr><td>recetas</td><td>7</td><td>incidencias</td><td>6</td></tr>
+          <tr><td>inventario</td><td>6</td><td>ubicaciones</td><td>6</td></tr>
+          <tr><td>albaranes</td><td>5</td><td>distribuciones</td><td>5</td></tr>
+          <tr><td>roles</td><td>5</td><td>permisos</td><td>5</td></tr>
+          <tr><td>proveedores</td><td>4</td><td>merma</td><td>4</td></tr>
+          <tr><td>archivos</td><td>4</td><td>profesor</td><td>3</td></tr>
+          <tr><td>movimientos</td><td>1</td><td>dashboard</td><td>1</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Pipeline de guards</h2>
+      <p>Cada peticion HTTP pasa por una cadena de guards registrados globalmente como <code>APP_GUARD</code>. Un decorador <code>@Public()</code> permite eximir endpoints concretos (login, registro, forgot-password).</p>
+      <ol>
+        <li><strong>JwtAuthGuard</strong> &mdash; Valida el JWT y extrae el usuario. Si la ruta es publica, se omite.</li>
+        <li><strong>RolesGuard</strong> &mdash; Si el controlador declara <code>@Roles(...)</code>, verifica que el usuario pertenezca a la familia de roles requerida.</li>
+        <li><strong>PermisosGuard</strong> &mdash; Combina permisos declarados a nivel de controlador y metodo con <code>@RequirePermissions</code> (AND) o <code>@RequireAnyPermission</code> (OR). Los roles elevados (ADMIN, SUPER_ADMIN) pasan automaticamente.</li>
+        <li><strong>SmartAuthThrottlerGuard</strong> &mdash; Aplica limites de tasa por identidad del usuario.</li>
+      </ol>
+
+      <figure class="diagram">
+        <figcaption>Pipeline de seguridad por peticion</figcaption>
+        <svg viewBox="0 0 980 180" xmlns="http://www.w3.org/2000/svg" aria-label="Pipeline de seguridad SmartEconomat">
+          <defs>
+            <marker id="arrow-sec" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="20" y="55" width="130" height="60" rx="12" fill="#e8f5f1" stroke="#0a6151" stroke-width="2"/>
+          <text x="85" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">Request</text>
+          <text x="85" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">HTTP</text>
+
+          <rect x="180" y="55" width="150" height="60" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="255" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">JwtAuthGuard</text>
+          <text x="255" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">Token + estado usuario</text>
+
+          <rect x="360" y="55" width="130" height="60" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="425" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">RolesGuard</text>
+          <text x="425" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">Familia de rol</text>
+
+          <rect x="520" y="55" width="155" height="60" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="598" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">PermisosGuard</text>
+          <text x="598" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">AND / OR permisos</text>
+
+          <rect x="705" y="55" width="130" height="60" rx="12" fill="#ffffff" stroke="#0a6151" stroke-width="1.8"/>
+          <text x="770" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">Throttler</text>
+          <text x="770" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">Limite de tasa</text>
+
+          <rect x="865" y="55" width="100" height="60" rx="12" fill="#e8f5f1" stroke="#0a6151" stroke-width="2"/>
+          <text x="915" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#064238">Controller</text>
+          <text x="915" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#6b7280">Logica</text>
+
+          <path d="M150 85 L180 85" stroke="#0a6151" stroke-width="2.5" fill="none" marker-end="url(#arrow-sec)"/>
+          <path d="M330 85 L360 85" stroke="#0a6151" stroke-width="2.5" fill="none" marker-end="url(#arrow-sec)"/>
+          <path d="M490 85 L520 85" stroke="#0a6151" stroke-width="2.5" fill="none" marker-end="url(#arrow-sec)"/>
+          <path d="M675 85 L705 85" stroke="#0a6151" stroke-width="2.5" fill="none" marker-end="url(#arrow-sec)"/>
+          <path d="M835 85 L865 85" stroke="#0a6151" stroke-width="2.5" fill="none" marker-end="url(#arrow-sec)"/>
+        </svg>
+      </figure>
+
+      <h2>Proteccion CSRF</h2>
+      <p>Se implementa el patron <strong>Double Submit Cookie</strong> (sin estado en servidor). Al iniciar sesion, el backend genera un token aleatorio fuerte y lo envia como cookie <code>XSRF-TOKEN</code> (<code>httpOnly: false</code>). En cada peticion mutante (POST, PUT, DELETE, PATCH), el frontend lee la cookie y la reenvia en la cabecera <code>X-XSRF-TOKEN</code>. El middleware <code>CsrfMiddleware</code> valida que ambos valores coincidan.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Propiedad de la cookie</th>
+            <th>Valor</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>httpOnly</code></td><td>false</td><td>El frontend necesita leer el valor para incluirlo en la cabecera.</td></tr>
+          <tr><td><code>sameSite</code></td><td>strict</td><td>Maxima proteccion contra envio automatico entre origenes.</td></tr>
+          <tr><td><code>secure</code></td><td>true (produccion)</td><td>Solo se transmite por HTTPS.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Limitacion de tasa (throttling)</h2>
+      <p>El <code>SmartAuthThrottlerGuard</code> aplica tres niveles de limite de forma inteligente: prioriza la identidad del usuario autenticado o el email/username de login sobre la IP, evitando penalizar a usuarios legitimos detras de NAT compartido.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Nivel</th>
+            <th>Ventana</th>
+            <th>Limite</th>
+            <th>Aplicacion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>auth</td><td>60 s</td><td>500 peticiones</td><td>Endpoints de autenticacion.</td></tr>
+          <tr><td>write</td><td>60 s</td><td>1 000 peticiones</td><td>POST, PUT, DELETE.</td></tr>
+          <tr><td>read</td><td>60 s</td><td>5 000 peticiones</td><td>GET y consultas.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Cache de permisos</h2>
+      <p>Los permisos efectivos de cada usuario se almacenan en Redis con clave <code>user:permissions:{userId}</code> y TTL de 300 segundos. Esto reduce el coste de autorizacion repetitiva: la primera peticion calcula los permisos (formula descrita arriba) y las siguientes los leen directamente de cache. La invalidacion se puede realizar por usuario, en lote o globalmente.</p>
+    </section>
+
+    <section class="chapter" id="pruebas">
+      <h1 class="section-title">Pruebas</h1>
+      <p class="lead">El proyecto adopta una estrategia de testing orientada a velocidad, aislamiento y validacion de contratos. La pieza mas distintiva es el uso de <code>pg-mem</code> como base de datos en memoria, con snapshots de dos niveles para restauracion instantanea del estado.</p>
+
+      <h2>Tipos de pruebas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Herramienta</th>
+            <th>Objetivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Unitarias</td><td>Jest</td><td>Validar DTOs, pipes y logica aislada.</td></tr>
+          <tr><td>E2E backend</td><td>Jest + Supertest + pg-mem</td><td>Probar contratos HTTP reales sin depender de PostgreSQL fisico.</td></tr>
+          <tr><td>Frontend</td><td>Vitest</td><td>Comprobar componentes y servicios de interfaz.</td></tr>
+          <tr><td>Contrato frontend-backend</td><td>Documentacion y suites E2E</td><td>Evitar regresiones de payload y respuestas.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Casos relevantes observables</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Suite o caso</th>
+            <th>Finalidad</th>
+            <th>Estado documental</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>admin-usuarios.e2e-spec.ts</td><td>CRUD y gobierno de usuarios.</td><td class="status-ok">Evidencia de codigo</td></tr>
+          <tr><td>rbac.e2e-spec.ts</td><td>Verificar control de acceso por rol y permiso.</td><td class="status-ok">Evidencia de codigo</td></tr>
+          <tr><td>incidencias.e2e-spec.ts</td><td>Comprobar el flujo de incidencias de recepcion.</td><td class="status-ok">Evidencia de codigo</td></tr>
+          <tr><td>ubicaciones.e2e-spec.ts</td><td>Validar modulo de ubicaciones.</td><td class="status-ok">Evidencia de codigo</td></tr>
+          <tr><td>frontend-backend-contracts-e2e</td><td>Alinear DTOs y envelopes.</td><td class="status-ok">Evidencia documental</td></tr>
+          <tr><td>Pruebas de tablet o accesibilidad formal</td><td>Comprobar RNF-01 y RNF-06</td><td class="status-gap">No especificado en el codigo</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Resultados resumidos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metrica</th>
+            <th>Antes</th>
+            <th>Despues</th>
+            <th>Lectura</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Inicializacion de worker</td><td>~10 s</td><td>~5 s</td><td>Mejora x2 gracias a pg-mem y bootstrap reutilizable.</td></tr>
+          <tr><td>Primer test del worker</td><td>~5 s</td><td>~2 s</td><td>Reduccion por snapshots y app singleton.</td></tr>
+          <tr><td>Tests subsecuentes</td><td>~2 s</td><td>~50 ms</td><td>Restauracion instantanea del estado.</td></tr>
+          <tr><td>Restore de base de datos</td><td>~1 s</td><td>&lt;1 ms</td><td>Salto de varias ordenes de magnitud.</td></tr>
+          <tr><td>Suite de 100 tests</td><td>~200 s</td><td>~20 s</td><td>Mejora global aproximada x10.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Arquitectura de pruebas</h2>
+      <ol>
+        <li>Cada worker inicializa una instancia propia de <code>pg-mem</code> y una app NestJS reutilizable.</li>
+        <li>Los seeders se ejecutan una sola vez por worker y se encapsulan en un <em>seed snapshot</em>.</li>
+        <li>Cada archivo de pruebas puede capturar un segundo snapshot para restauracion por test.</li>
+        <li>bcrypt se reduce a un coste minimo en test mediante mock para eliminar latencia artificial.</li>
+      </ol>
+    </section>
+
+    <section class="chapter" id="conclusiones">
+      <h1 class="section-title">Conclusiones</h1>
+      <p class="lead">SmartEconomat presenta una base tecnica coherente para un TFG DAW: arquitectura modular en backend y frontend, contratos API explicitados, persistencia relacional robusta, seguridad multicapa basada en roles y 88 permisos granulares, y una infraestructura de despliegue reproducible con Docker Compose. La documentacion del repositorio es amplia y permite reconstruir con precision tanto la intencion funcional como la implementacion real.</p>
+
+      <h2>Evaluacion</h2>
+      <p>Desde el punto de vista academico, el proyecto destaca por la trazabilidad entre requisitos, modulos y persistencia; por la separacion clara entre presentacion (React 19 + MUI 7), logica de negocio (NestJS modular) y almacenamiento (PostgreSQL + TypeORM); por un modelo de seguridad completo (JWT cookie-first, RBAC dinamico, CSRF y throttling inteligente); y por una estrategia de testing poco habitual en proyectos de este nivel, basada en <code>pg-mem</code> y snapshots.</p>
+      <p>Desde el punto de vista operativo, el sistema resuelve el flujo central de economato: catalogo, pedidos de usuario, compras consolidadas, recepcion con incidencias, inventario FIFO, mermas, produccion desde recetas y exportacion documental en PDF y XLSX.</p>
+      <p>Los puntos donde el repositorio muestra margen de mejora estan mas ligados a formalizacion que a carencias estructurales: faltan evidencias cuantitativas publicadas para algunos RNF, Swagger no queda expuesto en produccion por defecto y ciertos objetivos del documento de requisitos original, como la aplicacion de impuestos en detalle de albaran, no aparecen explicitados en los contratos visibles.</p>
+
+      <h2>Mejoras futuras</h2>
+      <ul>
+        <li>Publicar una matriz formal de permisos por rol y por modulo, util para auditoria y soporte.</li>
+        <li>Instrumentar metricas de rendimiento reales en produccion para respaldar los RNF con datos.</li>
+        <li>Ampliar la evidencia de pruebas en frontend y accesibilidad, especialmente en dispositivos tablet.</li>
+        <li>Decidir si Swagger debe exponerse de forma controlada en produccion o mantenerse solo para entornos internos.</li>
+        <li>Integrar o descartar definitivamente ElectronInstaller como componente de entrega del producto.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const tocRoot = document.getElementById('toc');
+      const headings = document.querySelectorAll('section.chapter h1, section.chapter h2, section.chapter h3, section.appendix h1');
+      const counters = [0, 0, 0];
+
+      function slugify(text) {
+        return text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+
+      headings.forEach((heading) => {
+        if (heading.dataset.unnumbered === 'true') {
+          return;
+        }
+
+        const level = heading.tagName === 'H1' ? 1 : heading.tagName === 'H2' ? 2 : 3;
+        if (heading.closest('section').classList.contains('appendix')) {
+          heading.dataset.number = 'A';
+        } else if (level === 1) {
+          counters[0] += 1;
+          counters[1] = 0;
+          counters[2] = 0;
+          heading.dataset.number = String(counters[0]);
+        } else if (level === 2) {
+          counters[1] += 1;
+          counters[2] = 0;
+          heading.dataset.number = counters[0] + '.' + counters[1];
+        } else {
+          counters[2] += 1;
+          heading.dataset.number = counters[0] + '.' + counters[1] + '.' + counters[2];
+        }
+
+        const section = heading.closest('section');
+        if (!heading.id) {
+          heading.id = section.id + '-' + slugify(heading.textContent.trim());
+        }
+
+        const number = heading.closest('section').classList.contains('appendix') ? 'A' : heading.dataset.number;
+        if (!heading.querySelector('.heading-number')) {
+          const prefix = document.createElement('span');
+          prefix.className = 'heading-number';
+          prefix.textContent = number + ' ';
+          heading.prepend(prefix);
+        }
+
+        const item = document.createElement('div');
+        item.className = 'toc-item level-' + level;
+        const link = document.createElement('a');
+        link.className = 'toc-link';
+        link.href = '#' + heading.id;
+        const numberNode = document.createElement('span');
+        numberNode.textContent = number;
+        const titleNode = document.createElement('span');
+        titleNode.textContent = heading.textContent.replace(/^([A0-9]+(\.[0-9]+)*)\s+/, '');
+        const dots = document.createElement('span');
+        dots.className = 'toc-dots';
+        link.appendChild(numberNode);
+        link.appendChild(titleNode);
+        link.appendChild(dots);
+        item.appendChild(link);
+        tocRoot.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

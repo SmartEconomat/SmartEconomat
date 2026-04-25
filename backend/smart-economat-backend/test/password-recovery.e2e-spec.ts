@@ -104,9 +104,9 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
 
       const user = await dataSource.getRepository(Usuario).findOne({
         where: { email: 'admin@smarteconomat.com' },
-        select: ['passwordResetToken'],
+        select: ['resetPasswordOtp'],
       });
-      expect(user?.passwordResetToken).toBeDefined();
+      expect(user?.resetPasswordOtp).toBeDefined();
     });
 
     it('Profesor (con email) debe recibir token de recuperación', async () => {
@@ -117,9 +117,9 @@ describe('User Lifecycle & Password Recovery (e2e)', () => {
 
       const user = await dataSource.getRepository(Usuario).findOne({
         where: { email: 'profesor1@smarteconomat.com' },
-        select: ['passwordResetToken'],
+        select: ['resetPasswordOtp'],
       });
-      expect(user?.passwordResetToken).toBeDefined();
+      expect(user?.resetPasswordOtp).toBeDefined();
     });
   });
 

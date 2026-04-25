@@ -1,22 +1,54 @@
 import React from 'react';
 import { Box, CircularProgress, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
+/** Available size tokens for {@link Spinner}. */
 type SpinnerSize = 'sm' | 'md' | 'lg';
+
+/** Available colour tokens for {@link Spinner}. */
 type SpinnerColor = 'primary' | 'white' | 'gray' | 'inherit';
 
+/**
+ * Props for the {@link Spinner} component.
+ */
 export interface SpinnerProps {
+  /** Size of the spinner. Defaults to `'md'`. */
   size?: SpinnerSize;
+  /** Colour of the spinner. Defaults to `'primary'`. */
   color?: SpinnerColor;
+  /**
+   * When set, the spinner is wrapped in a semi-transparent overlay.
+   * `'container'` uses `position: absolute` (relative to the nearest positioned ancestor);
+   * `'screen'` uses `position: fixed` to cover the entire viewport.
+   * Defaults to `false`.
+   */
   overlay?: boolean | 'container' | 'screen';
+  /** Additional CSS class applied to the outermost element. */
   className?: string;
 }
 
+/** Maps size tokens to pixel dimensions for `CircularProgress`. */
 const sizeMap: Record<SpinnerSize, number> = {
   sm: 24,
   md: 40,
   lg: 56,
 };
 
+/**
+ * Animated circular loading indicator.
+ *
+ * Can be rendered inline or as a semi-transparent overlay over a container
+ * or the full screen. Supports themed colour tokens and three size presets.
+ *
+ * @param props - See {@link SpinnerProps}.
+ * @returns JSX element rendering a `CircularProgress`, optionally wrapped in an overlay box.
+ * @example
+ * // Inline spinner
+ * <Spinner size="sm" color="inherit" />
+ *
+ * // Full-screen overlay spinner
+ * <Spinner overlay="screen" />
+ */
 const Spinner: React.FC<SpinnerProps> = ({
   size = 'md',
   color = 'primary',
@@ -24,6 +56,7 @@ const Spinner: React.FC<SpinnerProps> = ({
   className,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const getColorValue = (): string => {
     switch (color) {
@@ -46,7 +79,7 @@ const Spinner: React.FC<SpinnerProps> = ({
     <CircularProgress
       size={spinnerSize}
       role="status"
-      aria-label="Cargando"
+      aria-label={t('comun.cargando')}
       sx={{ color: spinnerColor }}
       className={!overlay ? className : undefined}
     />

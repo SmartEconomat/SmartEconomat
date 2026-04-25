@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -48,7 +49,6 @@ import { useAuth, usePermission } from '../../store/auth.hooks';
 import { isElevatedRole } from '../../sherlock-auth/permissions';
 import { SYSTEM_ROLES } from '../../sherlock-auth/system-roles.constants';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
-import { useTranslation } from 'react-i18next';
 
 // Eliminada función isAdminRole en favor de hasPermission
 
@@ -91,7 +91,7 @@ const UserAccordion = React.memo(
       }>
     >;
   }) => {
-    const { t: tAccordion } = useTranslation();
+    const { t } = useTranslation();
     return (
       <Accordion
         defaultExpanded={data.length > 0}
@@ -112,7 +112,7 @@ const UserAccordion = React.memo(
               {icon}
             </Avatar>
             <Typography fontWeight={700}>
-              {title} ({rolePagination.total})
+              {t(title)} ({rolePagination.total})
             </Typography>
           </Box>
         </AccordionSummary>
@@ -127,7 +127,7 @@ const UserAccordion = React.memo(
                 color: 'text.secondary',
               }}
             >
-              {tAccordion('usuariosView.noUsersFound')}
+              {t('usuarios.empty.noUsuariosRol')}
             </Typography>
           ) : (
             <DataTable
@@ -169,7 +169,19 @@ const UserAccordion = React.memo(
 
 UserAccordion.displayName = 'UserAccordion';
 
+/**
+ * Vista principal de gestión de usuarios del sistema.
+ *
+ * Muestra los usuarios agrupados por rol en acordeones expandibles.
+ * Permite buscar, crear, editar, bloquear/desbloquear y eliminar usuarios,
+ * así como cambiar contraseñas. Las acciones se protegen por permisos.
+ *
+ * @returns {JSX.Element} Vista completa de gestión de usuarios.
+ * @example
+ * <Route path="/usuarios" element={<UsuariosView />} />
+ */
 export const UsuariosView: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Estados para datos por rol
@@ -206,7 +218,6 @@ export const UsuariosView: React.FC = () => {
   const focus = searchParams.get('focus');
 
   const toast = useToast();
-  const { t } = useTranslation();
   const { user: currentUser, refreshUser } = useAuth();
 
   const canList = usePermission(PERMISSIONS.usuarios.listar);
@@ -248,7 +259,7 @@ export const UsuariosView: React.FC = () => {
         return prevSerialized === nextSerialized ? prev : response.data;
       });
     } catch {
-      toast.error(t('usuariosView.toastRolesError'));
+      toast.error(t('usuarios.toast.errorCargarRoles'));
     } finally {
       setIsLoadingRoles(false);
     }
@@ -298,7 +309,7 @@ export const UsuariosView: React.FC = () => {
         student: updatePaginationTotal(prev.student, studentRes.total),
       }));
     } catch {
-      toast.error(t('usuariosView.toastLoadUsersError'));
+      toast.error(t('usuarios.toast.errorCargar'));
     } finally {
       setIsLoading(false);
     }
@@ -445,10 +456,10 @@ export const UsuariosView: React.FC = () => {
           }
         }
 
-        toast.success(t('usuariosView.toastUpdated'));
+        toast.success(t('usuarios.toast.actualizado'));
       } else {
         await usuarioService.crearUsuario(data as CrearUsuarioDTO);
-        toast.success(t('usuariosView.toastCreated'));
+        toast.success(t('usuarios.toast.creado'));
       }
       setIsModalOpen(false);
       fetchAllData();
@@ -456,7 +467,7 @@ export const UsuariosView: React.FC = () => {
       const message =
         error instanceof Error
           ? error.message
-          : t('usuariosView.toastSaveError');
+          : t('usuarios.toast.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -468,10 +479,10 @@ export const UsuariosView: React.FC = () => {
     setIsDeleting(true);
     try {
       await usuarioService.eliminarUsuario(userToDelete.id);
-      toast.success(t('usuariosView.toastDeleted'));
+      toast.success(t('usuarios.toast.eliminado'));
       fetchAllData();
     } catch {
-      toast.error(t('usuariosView.toastDeleteError'));
+      toast.error(t('usuarios.toast.errorEliminar'));
     } finally {
       setIsDeleting(false);
       setUserToDelete(null);
@@ -485,7 +496,7 @@ export const UsuariosView: React.FC = () => {
       const res = await usuarioService.resetPassword(userToReset.id);
       setGeneratedPassword(res.data);
     } catch {
-      toast.error(t('usuariosView.toastResetError'));
+      toast.error(t('usuarios.toast.errorReset'));
       setUserToReset(null);
     } finally {
       setIsResetting(false);
@@ -509,16 +520,11 @@ export const UsuariosView: React.FC = () => {
 
   const columns = useMemo<Column<Usuario>[]>(
     () => [
-      { id: 'username', label: t('usuariosView.colUsername'), sortable: true },
-      {
-        id: 'email',
-        label: t('usuariosView.colEmail'),
-        sortable: true,
-        hideOnMobile: true,
-      },
+      { id: 'username', label: 'Usuario', sortable: true },
+      { id: 'email', label: 'Email', sortable: true, hideOnMobile: true },
       {
         id: 'estado',
-        label: t('usuariosView.colStatus'),
+        label: 'Estado',
         align: 'center',
         render: (row) => (
           <StatusChip
@@ -528,7 +534,7 @@ export const UsuariosView: React.FC = () => {
         ),
       },
     ],
-    [t]
+    []
   );
 
   const renderActions = useCallback(
@@ -543,24 +549,20 @@ export const UsuariosView: React.FC = () => {
                 await usuarioService.setUserActivation(row.id, shouldActivate);
                 toast.success(
                   shouldActivate
-                    ? t('usuariosView.toastActivated')
-                    : t('usuariosView.toastSuspended')
+                    ? 'Usuario activado correctamente'
+                    : 'Usuario suspendido correctamente'
                 );
                 fetchAllData();
               } catch (error) {
                 const message =
                   error instanceof Error
                     ? error.message
-                    : t('usuariosView.toastStatusError');
+                    : 'Error al actualizar el estado del usuario';
                 toast.error(message);
               }
             }}
             size="small"
-            title={
-              row.estado === 'Activo'
-                ? t('usuariosView.suspend')
-                : t('usuariosView.activate')
-            }
+            title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
           >
             {row.estado === 'Activo' ? (
               <BlockIcon fontSize="small" />
@@ -574,7 +576,7 @@ export const UsuariosView: React.FC = () => {
             color="primary"
             onClick={() => setUserToReset(row)}
             size="small"
-            title="Reset Password"
+            title={t('usuarios.resetPassword')}
           >
             <VpnKeyIcon fontSize="small" />
           </IconButton>
@@ -585,7 +587,7 @@ export const UsuariosView: React.FC = () => {
             onClick={() => void handleEditUser(row)}
             disabled={isLoadingUserDetail}
             size="small"
-            title={t('usuariosView.edit')}
+            title={t('comun.editar')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -595,7 +597,7 @@ export const UsuariosView: React.FC = () => {
             color="error"
             onClick={() => setUserToDelete(row)}
             size="small"
-            title={t('usuariosView.delete')}
+            title={t('comun.eliminar')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -642,13 +644,13 @@ export const UsuariosView: React.FC = () => {
                 size="small"
                 onClick={clearNotificationFilters}
               >
-                {t('usuariosView.removeFilter')}
+                Quitar filtro
               </Button>
             }
           >
             {focus === 'pending-activation'
-              ? t('usuariosView.pendingActivationFilter')
-              : t('usuariosView.activeStatusFilter', { status: statusFilter })}
+              ? 'Mostrando usuarios pendientes de activación abiertos desde notificaciones.'
+              : `Filtro de estado activo: ${statusFilter}.`}
           </Alert>
         ) : null}
 
@@ -661,7 +663,7 @@ export const UsuariosView: React.FC = () => {
         >
           <Box display="flex" alignItems="center" gap={2} flex={1}>
             <TextField
-              placeholder={t('usuariosView.searchPlaceholder')}
+              placeholder={t('usuarios.buscarPlaceholder')}
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -683,7 +685,7 @@ export const UsuariosView: React.FC = () => {
               disabled={isLoading}
               sx={{ borderRadius: 2 }}
             >
-              {t('usuariosView.refresh')}
+              Refrescar
             </Button>
             {canCreate && (
               <Button
@@ -696,7 +698,7 @@ export const UsuariosView: React.FC = () => {
                 }}
                 sx={{ px: 3, borderRadius: 2 }}
               >
-                {t('usuariosView.newUser')}
+                Nuevo Usuario
               </Button>
             )}
           </Stack>
@@ -710,7 +712,7 @@ export const UsuariosView: React.FC = () => {
       ) : (
         <Box>
           <UserAccordion
-            title={t('usuariosView.tabAdmins')}
+            title={t('usuarios.roles.administradores')}
             icon={<AdminPanelSettingsIcon sx={{ fontSize: 20 }} />}
             data={admins}
             role="admin"
@@ -721,7 +723,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title={t('usuariosView.tabProfesores')}
+            title={t('usuarios.roles.profesores')}
             icon={<SupervisorAccountIcon sx={{ fontSize: 20 }} />}
             data={professors}
             role="professor"
@@ -732,7 +734,7 @@ export const UsuariosView: React.FC = () => {
             setPagination={setPagination}
           />
           <UserAccordion
-            title={t('usuariosView.tabAlumnos')}
+            title={t('usuarios.roles.alumnos')}
             icon={<SchoolIcon sx={{ fontSize: 20 }} />}
             data={students}
             role="student"
@@ -761,15 +763,14 @@ export const UsuariosView: React.FC = () => {
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title={t('usuariosView.deleteDialogTitle')}
-        message={t('usuariosView.deleteDialogMessage', {
-          name: userToDelete?.username ?? '',
-        })}
-        confirmText={
-          isDeleting
-            ? t('usuariosView.deletingLabel')
-            : t('usuariosView.deleteLabel')
+        title={t('usuarios.eliminarUsuario')}
+        message={
+          <>
+            ¿Seguro que quieres eliminar a{' '}
+            <strong>{userToDelete?.username}</strong>?
+          </>
         }
+        confirmText={isDeleting ? 'Eliminando...' : 'Eliminar'}
         isLoading={isDeleting}
       />
 
@@ -788,9 +789,7 @@ export const UsuariosView: React.FC = () => {
             : handlePasswordReset
         }
         title={
-          generatedPassword
-            ? t('usuariosView.generatedPasswordTitle')
-            : t('usuariosView.resetPasswordTitle')
+          generatedPassword ? 'Contraseña Generada' : 'Resetear Contraseña'
         }
         message={
           generatedPassword ? (
@@ -815,16 +814,13 @@ export const UsuariosView: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            t('usuariosView.resetPasswordMessage', {
-              name: userToReset?.username ?? '',
-            })
+            <>
+              ¿Deseas resetear la contraseña de{' '}
+              <strong>{userToReset?.username}</strong>?
+            </>
           )
         }
-        confirmText={
-          generatedPassword
-            ? t('usuariosView.closeLabel')
-            : t('usuariosView.confirmLabel')
-        }
+        confirmText={generatedPassword ? 'Cerrar' : 'Confirmar'}
         isLoading={isResetting}
       />
     </Box>

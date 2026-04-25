@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Button,
   Dialog,
@@ -8,6 +7,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { RecepcionDraftEnvelope } from '../../services/recepcion.types';
 
 interface RecepcionDraftConflictDialogProps {
@@ -24,31 +24,31 @@ const RecepcionDraftConflictDialog: React.FC<
 
   return (
     <Dialog open={open} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('recepcionConflict.title')}</DialogTitle>
+      <DialogTitle>{t('recepcion.conflicto.titulo')}</DialogTitle>
       <DialogContent>
         <Typography sx={{ mb: 2 }}>
-          {t('recepcionConflict.description')}
+          {t('recepcion.conflicto.descripcion')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {t('recepcionConflict.serverVersion')}{' '}
+          {t('recepcion.conflicto.ultimaVersion')}{' '}
           {remoteDraft?.updatedAt
             ? new Date(remoteDraft.updatedAt).toLocaleString('es-ES')
-            : t('recepcionConflict.unknown')}
+            : t('recepcion.conflicto.desconocida')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {t('recepcionConflict.hint')}
+          {t('recepcion.conflicto.instruccion')}
         </Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onUseRemote}>
-          {t('recepcionConflict.useRemote')}
+          {t('recepcion.conflicto.usarRemota')}
         </Button>
         <Button
           variant="contained"
           color="warning"
           onClick={() => void onKeepLocal()}
         >
-          {t('recepcionConflict.overwrite')}
+          {t('recepcion.conflicto.sobrescribir')}
         </Button>
       </DialogActions>
     </Dialog>
