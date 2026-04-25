@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Logo from '../../assets/images/SVG/logo-smat-economato.svg';
+import AuthLogo from './components/AuthLogo';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { authService } from '../../services/auth.service';
@@ -134,9 +134,7 @@ const ResetPassword: React.FC = () => {
           borderRadius: 2,
         }}
       >
-        <Box sx={{ mb: 3 }}>
-          <img src={Logo} alt="SmartEconomat" style={{ height: 80 }} />
-        </Box>
+        <AuthLogo />
         <Typography
           variant="h5"
           component="h1"

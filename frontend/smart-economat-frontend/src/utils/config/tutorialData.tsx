@@ -79,6 +79,18 @@ export interface TutorialConfigItem {
   roles?: Record<string, TutorialStep[]>;
 }
 
+/**
+ * Paso común para finalizar todos los tutoriales indicando dónde encontrar ayuda.
+ */
+const helpTutorialStep: TutorialStep = {
+  target: '#help-tutorial-button',
+  placement: 'right',
+  icon: <HelpOutlineIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+  title: 'Tutorial de Página',
+  description:
+    '¿Necesitas ayuda? Haz clic aquí en cualquier momento para iniciar un tutorial interactivo que te explicará paso a paso cómo usar la página actual.',
+};
+
 export const tutorialConfig: Record<string, TutorialConfigItem> = {
   '/': {
     steps: [
@@ -138,6 +150,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Gestiona tus datos personales y notificaciones. Aquí también podrás encontrar esta ayuda cuando la necesites.',
       },
+      helpTutorialStep,
     ],
   },
   '/productos': {
@@ -206,14 +219,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Desde aquí puedes editar, eliminar o restaurar productos de forma individual.',
       },
-      {
-        target: '#help-tutorial-button',
-        placement: 'right',
-        icon: <HelpOutlineIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Tutorial de Página',
-        description:
-          '¿Necesitas ayuda? Haz clic aquí en cualquier momento para iniciar un tutorial interactivo que te explicará paso a paso cómo usar la página actual.',
-      },
+      helpTutorialStep,
     ],
   },
   '/proveedores': {
@@ -274,6 +280,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Consulta fichas detalladas, edita información o elimina proveedores directamente desde la fila.',
       },
+      helpTutorialStep,
     ],
   },
   '/recetas': {
@@ -320,6 +327,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Usa el botón de preparación para lanzar producciones al instante. También puedes ver fichas técnicas completas.',
       },
+      helpTutorialStep,
     ],
   },
   '/pedidos': {
@@ -386,6 +394,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Descarga toda la información detallada para trabajarla en hojas de cálculo externas.',
       },
+      helpTutorialStep,
     ],
   },
   '/recepciones': {
@@ -432,6 +441,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Usa los botones de navegación para avanzar entre la selección de pedidos, el conteo y la revisión final.',
       },
+      helpTutorialStep,
     ],
   },
   '/distribucion': {
@@ -478,6 +488,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Una vez entregada la mercancía, el destinatario debe confirmar la recepción desde el historial para formalizar el movimiento de stock.',
       },
+      helpTutorialStep,
     ],
   },
   '/preparaciones': {
@@ -524,6 +535,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Consulta la ficha técnica de la preparación, incluyendo costes reales y fechas de caducidad.',
       },
+      helpTutorialStep,
     ],
   },
   '/albaranes': {
@@ -576,6 +588,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Accede al detalle completo para ver qué productos específicos venían en este envío.',
       },
+      helpTutorialStep,
     ],
   },
   '/inventario': {
@@ -638,6 +651,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Desde la tabla podrás ajustar el stock por mermas o auditar los lotes y fechas de caducidad de cada producto.',
       },
+      helpTutorialStep,
     ],
   },
   '/movimientos': {
@@ -675,6 +689,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Accede al detalle completo para ver el lote afectado y, si el movimiento viene de un pedido o distribución, ir directo a su origen.',
       },
+      helpTutorialStep,
     ],
   },
   '/mermas': {
@@ -715,6 +730,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Toda merma queda auditada. Revisa el historial para ver quién reportó la pérdida y el motivo detallado.',
       },
+      helpTutorialStep,
     ],
   },
   '/incidencias': {
@@ -769,6 +785,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Al resolver, el sistema ajustará automáticamente el inventario y cerrará el ciclo de la discrepancia.',
       },
+      helpTutorialStep,
     ],
   },
   '/administracion': {
@@ -805,6 +822,7 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         description:
           'Activa este modo para editar nombres de aulas, capacidades o asignar profesores a clases específicas.',
       },
+      helpTutorialStep,
     ],
   },
   '/perfil': {

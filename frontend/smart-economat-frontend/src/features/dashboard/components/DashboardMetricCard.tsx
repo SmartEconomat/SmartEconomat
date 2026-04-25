@@ -8,6 +8,7 @@ import {
   useTheme,
   Skeleton,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardMetricCardProps {
   title: string;
@@ -29,6 +30,7 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
   isLoading = false,
 }) => {
   const theme = useTheme();
+  const { i18n } = useTranslation();
 
   // Manejador de teclado para accesibilidad
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -80,21 +82,20 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
       }}
     >
       <CardContent sx={{ p: 3 }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          gap={2}
-        >
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ position: 'relative', minHeight: 64 }}>
+          <Box sx={{ pr: 7, minWidth: 0 }}>
             <Typography
               variant="subtitle2"
               color="text.secondary"
               fontWeight={600}
+              lang={i18n.language}
               sx={{
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.02em',
                 mb: 0.5,
+                lineHeight: 1.2,
+                hyphens: 'auto',
+                overflowWrap: 'break-word',
               }}
             >
               {title}
@@ -110,13 +111,14 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
           <Box
             className="metric-icon-box"
             sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
               p: 1.5,
               borderRadius: 2,
-              // Usamos alpha para asegurar contraste y un diseño más premium
               bgcolor: alpha(theme.palette[color].main, 0.1),
               color: `${color}.main`,
               display: 'flex',
-              flexShrink: 0,
               transition: 'all 0.3s ease',
             }}
           >
