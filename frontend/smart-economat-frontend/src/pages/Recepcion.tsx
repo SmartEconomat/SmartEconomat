@@ -20,6 +20,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { useTranslation } from 'react-i18next';
 
 import {
   RecepcionDraft,
@@ -58,6 +59,17 @@ import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 import { delay, serialService } from '../services/serial.service';
 import { formatPedidoListNumber } from '../features/pedidos/utils/pedidoFormatters';
 
+/**
+ * Computes the reception state for a line based on received vs. ordered quantities.
+ *
+ * These return values are state-machine tokens used throughout the app's logic
+ * (comparisons, API payloads, etc.) and must NOT be translated. Display
+ * translations are handled separately via `recepcion.estados.*` i18n keys.
+ *
+ * @param rec - Quantity actually received.
+ * @param ped - Quantity originally ordered.
+ * @returns One of the `LineaDraft['estado']` discriminated-union literals.
+ */
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
   if (rec === ped) return 'OK';
@@ -65,18 +77,47 @@ const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   return 'Exceso';
 };
 
+/**
+ * Returns `true` when the given unit of measure represents a weight-based unit
+ * (kilograms, grams or milligrams), which requires the scale workflow instead
+ * of integer counting.
+ *
+ * @param unidad - The unit-of-measure string to test, e.g. `'kg'`, `'uds'`.
+ */
 const isWeightUnit = (unidad: string | undefined): boolean => {
   if (!unidad) return false;
   const u = unidad.toLowerCase();
   return u === 'kg' || u === 'g' || u === 'mg';
 };
 
+/**
+ * Returns `true` when `value` is a non-empty, non-whitespace-only string.
+ * Used to check whether free-text draft fields (observations, dates, etc.)
+ * actually contain meaningful user input.
+ *
+ * @param value - Optional string to test.
+ */
 const hasDraftText = (value?: string): boolean =>
   typeof value === 'string' && value.trim().length > 0;
 
+/**
+ * Returns `true` when the draft line has a non-empty `cantidadAlbaran` field,
+ * meaning the user has entered a delivery-note quantity for this product line.
+ *
+ * @param linea - The `LineaDraft` to inspect.
+ */
 const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
   linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
 
+/**
+ * Returns `true` when a draft line is considered "active" — i.e. the user has
+ * touched it in some way that must be serialised and validated before submission.
+ * A line is active if it has been manually intervened, has a positive received
+ * quantity, has an albaran quantity, has free-text fields filled in, or has a
+ * non-optimal visual state.
+ *
+ * @param linea - The `LineaDraft` to inspect.
+ */
 const isLineaDraftActiva = (linea: LineaDraft): boolean =>
   Boolean(
     linea.intervenida ||
@@ -86,13 +127,6 @@ const isLineaDraftActiva = (linea: LineaDraft): boolean =>
     hasDraftText(linea.fechaCaducidad) ||
     linea.estadoVisual !== EstadoVisualProducto.OPTIMO
   );
-
-const steps = [
-  'Selección de Pedidos',
-  'Escaneo y Conteo',
-  'Revisión y Ajuste',
-  'Resultado',
-];
 
 type SerialNavigator = Navigator & {
   serial: {
@@ -136,7 +170,7 @@ const getScaleHeaderChipConfig = (
   if (!isScaleSupported) {
     return {
       icon: <WarningAmberIcon />,
-      label: 'Web Serial no disponible',
+      label: scaleStatusText,
       color: 'warning' as const,
     };
   }
@@ -172,7 +206,30 @@ const getScaleHeaderChipConfig = (
   };
 };
 
+/**
+ * Wizard page that guides the user through the goods-reception process in four
+ * sequential steps:
+ *
+ * 1. **Order Selection** — choose which pending purchase orders to receive.
+ * 2. **Scanning & Counting** — scan barcodes or search by name to log received
+ *    quantities, optionally using a Web Serial weight scale.
+ * 3. **Review & Adjustment** — verify quantities, enter observations and expiry
+ *    dates, validate business rules before submission.
+ * 4. **Result** — displays the outcome of the completed reception transaction.
+ *
+ * The component persists a draft to the server in real time and can recover an
+ * interrupted reception from a previous session via the recovery dialog.
+ */
 const Recepcion: React.FC = () => {
+  const { t } = useTranslation();
+
+  const steps = [
+    t('recepcion.pasos.seleccionPedidos'),
+    t('recepcion.pasos.escaneoConteo'),
+    t('recepcion.pasos.revisionAjuste'),
+    t('recepcion.pasos.resultado'),
+  ];
+
   const [activeStep, setActiveStep] = useState(0);
   const [resultado, setResultado] = useState<RecepcionResultado | null>(null);
 
@@ -199,7 +256,7 @@ const Recepcion: React.FC = () => {
   const [isScaleEnabled, setIsScaleEnabled] = useState(false);
   const [isScaleBusy, setIsScaleBusy] = useState(false);
   const [scaleStatusText, setScaleStatusText] = useState(
-    'Sin báscula autorizada'
+    t('recepcion.bascula.sinBasculaAutorizada')
   );
   const scaleManuallyDisabledRef = useRef(false);
 
@@ -266,13 +323,17 @@ const Recepcion: React.FC = () => {
     setIsScaleSupported(supported);
 
     if (!supported) {
-      setScaleStatusText('Web Serial no disponible');
+      setScaleStatusText(t('recepcion.bascula.webSerialNoDisponible'));
       return;
     }
 
     let cancelled = false;
     const serialNavigator = navigator as SerialNavigator;
 
+    /**
+     * Checks whether the browser already has an authorized serial port saved
+     * from a previous session and updates scale-status state accordingly.
+     */
     const checkAuthorizedScale = async () => {
       setIsScaleBusy(true);
 
@@ -283,10 +344,10 @@ const Recepcion: React.FC = () => {
         if (ports.length > 0) {
           setIsScaleConnected(false);
           setIsScaleEnabled(false);
-          setScaleStatusText('Báscula guardada, lista para conectar');
+          setScaleStatusText(t('recepcion.bascula.guardadaListaParaConectar'));
         } else {
           setIsScaleConnected(false);
-          setScaleStatusText('Sin báscula autorizada');
+          setScaleStatusText(t('recepcion.bascula.sinBasculaAutorizada'));
         }
       } catch {
         if (!cancelled) {
@@ -300,12 +361,14 @@ const Recepcion: React.FC = () => {
       }
     };
 
+    /** Handles the Web Serial `connect` event — marks the scale as active. */
     const handleConnect = () => {
       setIsScaleConnected(true);
       setIsScaleEnabled(true);
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.conectada'));
     };
 
+    /** Handles the Web Serial `disconnect` event — stops reading and resets state. */
     const handleDisconnect = () => {
       serialService.stopContinuousRead();
       setIsScaleConnected(false);
@@ -334,15 +397,26 @@ const Recepcion: React.FC = () => {
       serialService.stopContinuousRead();
       void serialService.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Sets the scale status chip to "disconnected" text.
+   * Only disables the scale toggle if the user did not manually disable it.
+   */
   const setIsScaleStatusDisconnected = () => {
-    setScaleStatusText('Báscula desconectada');
+    setScaleStatusText(t('recepcion.bascula.desconectada'));
     if (!scaleManuallyDisabledRef.current) {
       setIsScaleEnabled(false);
     }
   };
 
+  /**
+   * Handles the user toggling the scale on or off from the UI switch.
+   * When disabled, stops any ongoing continuous read and resets weighing state.
+   *
+   * @param enabled - Whether the user is enabling (`true`) or disabling (`false`) the scale.
+   */
   const handleScaleToggle = (enabled: boolean) => {
     scaleManuallyDisabledRef.current = !enabled;
     setIsScaleEnabled(enabled);
@@ -352,21 +426,26 @@ const Recepcion: React.FC = () => {
       setIsWeighing(false);
       setCapturedWeight(null);
       setScaleStatusText(
-        isScaleConnected ? 'Báscula desactivada' : 'Báscula desconectada'
+        isScaleConnected
+          ? t('recepcion.bascula.desactivada')
+          : t('recepcion.bascula.desconectada')
       );
       return;
     }
 
     if (isScaleConnected) {
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.conectada'));
     }
   };
 
+  /**
+   * Triggers the browser's native Web Serial port-selection dialog so the user
+   * can authorise a new scale device. On success, opens the serial connection
+   * and enables the scale. On failure, sets an error message.
+   */
   const requestScaleAccess = async () => {
     if (!isScaleSupported) {
-      setError(
-        'Este navegador no soporta Web Serial para conectar la báscula.'
-      );
+      setError(t('recepcion.errors.webSerialNoSoportado'));
       return;
     }
 
@@ -377,7 +456,7 @@ const Recepcion: React.FC = () => {
       // Forzamos el diálogo nativo siempre que den a Vincular, según petición
       const selected = await serialService.requestPort();
       if (!selected) {
-        setScaleStatusText('Selección de puerto cancelada');
+        setScaleStatusText(t('recepcion.bascula.seleccionCancelada'));
         return;
       }
 
@@ -385,11 +464,11 @@ const Recepcion: React.FC = () => {
       setIsScaleConnected(true);
       setIsScaleEnabled(true);
       scaleManuallyDisabledRef.current = false;
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.conectada'));
     } catch {
       setIsScaleConnected(false);
-      setScaleStatusText('No se pudo conectar la báscula');
-      setError('No se pudo abrir el puerto serie de la báscula.');
+      setScaleStatusText(t('recepcion.bascula.noSePudoConectar'));
+      setError(t('recepcion.errors.noPudoAbrirPuerto'));
     } finally {
       setIsScaleBusy(false);
     }
@@ -411,6 +490,11 @@ const Recepcion: React.FC = () => {
 
   // --- 2. Acciones del Backend ---
 
+  /**
+   * Fetches all purchase orders in `POR_RECEPCIONAR` state from the backend,
+   * paginating automatically until all pages are retrieved (up to 50 pages of
+   * 50 items). Deduplicates results by ID and stores them in state.
+   */
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
@@ -445,12 +529,18 @@ const Recepcion: React.FC = () => {
 
       setPedidosDisponibles(pedidos);
     } catch {
-      setError('Error al cargar pedidos compatibles.');
+      setError(t('recepcion.errors.cargarPedidos'));
     } finally {
       setLoadingPedidos(false);
     }
   };
 
+  /**
+   * Maps a `Pedido` (purchase order) into an array of `LineaDraft` objects with
+   * zero received quantities, ready to be populated during the scanning step.
+   *
+   * @param pedido - The purchase order to convert.
+   */
   const mapPedidoToDraft = (pedido: Pedido): LineaDraft[] =>
     (pedido.pedidoProductos || []).map((pp: PedidoProducto) => ({
       pedidoProductoId: pp.id,
@@ -469,7 +559,13 @@ const Recepcion: React.FC = () => {
       unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
     }));
 
-  // Helper para crear el objeto del pedido en el draft
+  /**
+   * Creates the draft representation of a pedido (with its lines) to store in
+   * the wizard draft state. Builds the human-readable description from the order
+   * number and supplier name.
+   *
+   * @param pedido - The purchase order to wrap.
+   */
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
     descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${pedido.proveedor?.nombre}`,
@@ -477,6 +573,9 @@ const Recepcion: React.FC = () => {
     lineas: mapPedidoToDraft(pedido),
   });
 
+  /**
+   * Selects all available purchase orders that are not already in the draft.
+   */
   const handleSelectAll = () => {
     setDraft((prevDraft) => {
       const newDraftPedidos = [...prevDraft.pedidosSeleccionados];
@@ -489,10 +588,20 @@ const Recepcion: React.FC = () => {
     });
   };
 
+  /**
+   * Removes all selected purchase orders from the draft.
+   */
   const handleDeselectAll = () => {
     setDraft((prevDraft) => ({ ...prevDraft, pedidosSeleccionados: [] }));
   };
 
+  /**
+   * Selects all orders from the given supplier (by provider name) that are not
+   * already in the draft.
+   *
+   * @param e - The change event from a select/dropdown control whose `value` is
+   *   the provider name string.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSelectProvider = (e: any) => {
     const providerName = e.target.value as string;
@@ -513,6 +622,12 @@ const Recepcion: React.FC = () => {
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
+  /**
+   * Removes all draft orders that belong to the given supplier.
+   *
+   * @param e - The change event from a select/dropdown control whose `value` is
+   *   the provider name string.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeselectProvider = (e: any) => {
     const providerName = e.target.value as string;
@@ -526,6 +641,11 @@ const Recepcion: React.FC = () => {
     });
   };
 
+  /**
+   * Toggles a single purchase order in/out of the draft selection.
+   *
+   * @param pedido - The purchase order to toggle.
+   */
   const handleTogglePedido = (pedido: Pedido) => {
     setDraft((prevDraft) => {
       const isSelected = prevDraft.pedidosSeleccionados.some(
@@ -545,6 +665,20 @@ const Recepcion: React.FC = () => {
 
   // --- 3. Lógica de Escaneo (Paso 2) ---
 
+  /**
+   * Performs a product lookup for the current `searchQuery` (or an overriding
+   * query string). The lookup sequence is:
+   * 1. Local draft (already scanned lines).
+   * 2. Backend product database by barcode.
+   * 3. OpenFoodFacts (if the query looks like a barcode).
+   * 4. Backend product database by name.
+   * 5. New-product creation modal (fallback).
+   *
+   * Concurrent calls are debounced via `isSearchingRef`.
+   *
+   * @param overrideQuery - Optional query to use instead of `searchQuery`
+   *   (useful when called programmatically, e.g. from a barcode scanner event).
+   */
   const handleSearch = async (overrideQuery?: string | unknown) => {
     // Si ya estamos buscando o hay un modal abierto, ignoramos la nueva petición
     if (isSearchingRef.current || searching || openModal || weightModalOpen)
@@ -663,6 +797,13 @@ const Recepcion: React.FC = () => {
     }
   };
 
+  /**
+   * Processes a successfully resolved product: increments its received quantity
+   * in the matching draft line (or spontaneous-product list), handling the weight
+   * scale flow for weight-based units.
+   *
+   * @param prod - Minimal product descriptor returned by the lookup functions.
+   */
   const processProductFound = (prod: {
     id: string;
     codigoBarras?: string;
@@ -797,6 +938,17 @@ const Recepcion: React.FC = () => {
     });
   };
 
+  /**
+   * Updates a single field on a draft line (either in a selected pedido or in
+   * the spontaneous-products list). Recalculates the line's `estado` and
+   * `intervenida` flag as needed.
+   *
+   * @param pIdx - Index of the parent pedido in `pedidosSeleccionados`, or
+   *   `null` for spontaneous products.
+   * @param lIdx - Index of the line within the pedido (or spontaneous list).
+   * @param field - Name of the `LineaDraft` field to update.
+   * @param value - New value for the field.
+   */
   const handleUpdateLinea = (
     pIdx: number | null,
     lIdx: number,
@@ -880,6 +1032,13 @@ const Recepcion: React.FC = () => {
     });
   };
 
+  /**
+   * Opens the weight-scale modal for the specified draft line.
+   * Does nothing if the scale is not currently connected.
+   *
+   * @param pIdx - Parent pedido index, or `null` for spontaneous products.
+   * @param lIdx - Line index within the pedido or spontaneous list.
+   */
   const openWeightScale = (pIdx: number | null, lIdx: number) => {
     // Si la báscula no está conectada, no abrimos el modal (opcional, pero ayuda a la fluidez)
     if (!isScaleConnected) return;
@@ -889,25 +1048,28 @@ const Recepcion: React.FC = () => {
     void startWeighing();
   };
 
+  /**
+   * Starts a continuous weight read from the connected serial scale.
+   * Updates `capturedWeight` as new readings arrive and sets `isWeighing` state
+   * during the read loop. On error or disconnection, cleans up all related state.
+   */
   const startWeighing = async () => {
     if (!isScaleConnected || !isScaleEnabled) {
-      setError(
-        'La báscula no está activa. Vincúlala o introduce el peso manualmente.'
-      );
+      setError(t('recepcion.errors.basculaNoActiva'));
       return;
     }
 
     setIsWeighing(true);
     setCapturedWeight(null);
-    setScaleStatusText('Leyendo peso en tiempo real');
+    setScaleStatusText(t('recepcion.bascula.leyendoPeso'));
 
     try {
       const connected = await serialService.ensureConnection();
       if (!connected) {
         setIsWeighing(false);
         setIsScaleConnected(false);
-        setScaleStatusText('Sin báscula autorizada');
-        setError('No hay una báscula autorizada disponible.');
+        setScaleStatusText(t('recepcion.bascula.sinBasculaAutorizada'));
+        setError(t('recepcion.errors.sinBasculaDisponible'));
         return;
       }
 
@@ -917,23 +1079,27 @@ const Recepcion: React.FC = () => {
         (weight) => {
           setCapturedWeight(weight);
           setIsWeighing(false);
-          setScaleStatusText('Peso recibido desde báscula');
+          setScaleStatusText(t('recepcion.bascula.pesoRecibido'));
         },
         () => {
           setIsWeighing(false);
           setIsScaleConnected(false);
-          setScaleStatusText('Error de lectura en báscula');
-          setError('Se perdió la comunicación con la báscula.');
+          setScaleStatusText(t('recepcion.bascula.errorLectura'));
+          setError(t('recepcion.errors.perdidaComunicacion'));
         }
       );
     } catch {
       setIsWeighing(false);
       setIsScaleConnected(false);
-      setScaleStatusText('No se pudo leer la báscula');
-      setError('No se pudo iniciar la lectura de la báscula.');
+      setScaleStatusText(t('recepcion.bascula.noSePudoLeer'));
+      setError(t('recepcion.errors.noSePudoIniciarLectura'));
     }
   };
 
+  /**
+   * Commits the current `capturedWeight` to the target draft line and closes the
+   * weight-scale modal. No-op if `capturedWeight` or `weightTarget` is null.
+   */
   const confirmWeight = () => {
     if (capturedWeight !== null && weightTarget) {
       const { pIdx, lIdx } = weightTarget;
@@ -943,6 +1109,10 @@ const Recepcion: React.FC = () => {
     closeWeightScale();
   };
 
+  /**
+   * Stops any ongoing serial read and closes the weight-scale modal, resetting
+   * all weighing-related state.
+   */
   const closeWeightScale = () => {
     serialService.stopContinuousRead();
     setWeightModalOpen(false);
@@ -950,12 +1120,22 @@ const Recepcion: React.FC = () => {
     setIsWeighing(false);
     setCapturedWeight(null);
     if (isScaleConnected && isScaleEnabled) {
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.conectada'));
     }
   };
 
   // --- 5. Validación y Envío (Paso 3) ---
 
+  /**
+   * Validates the current draft state before submission. Checks:
+   * - At least one product has a positive received quantity.
+   * - All active lines with discrepancies have mandatory observations filled in.
+   * - All spontaneous (unplanned) products have observations filled in.
+   *
+   * Sets `error` state and returns `false` on validation failure.
+   *
+   * @returns `true` if the draft is valid and ready to submit; `false` otherwise.
+   */
   const validarDraft = (): boolean => {
     const errores: Record<string, string[]> = {};
     const isValid = true;
@@ -967,7 +1147,7 @@ const Recepcion: React.FC = () => {
     const hasReception = totalItems.some((l) => Number(l.cantidadRecibida) > 0);
 
     if (!hasReception) {
-      setError('Debes recepcionar al menos un producto.');
+      setError(t('recepcion.errors.minProducto'));
       return false;
     }
 
@@ -985,7 +1165,9 @@ const Recepcion: React.FC = () => {
 
       if (hasDiscrepancy && !hasDraftText(l.observaciones)) {
         setError(
-          `Falla Validativa: El producto "${l.nombreProducto}" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.`
+          t('recepcion.errors.discrepanciaObservaciones', {
+            nombre: l.nombreProducto,
+          })
         );
         return false;
       }
@@ -999,7 +1181,9 @@ const Recepcion: React.FC = () => {
       // Los productos espontáneos siempre son discrepancias (exceso no planificado)
       if (!hasDraftText(esp.observaciones)) {
         setError(
-          `Falla Validativa: El producto espontáneo "${esp.nombreProducto || esp.productoNuevo?.nombre}" requiere obligatoriamente una nota justificativa.`
+          t('recepcion.errors.espontaneoObservaciones', {
+            nombre: esp.nombreProducto || esp.productoNuevo?.nombre,
+          })
         );
         return false;
       }
@@ -1009,6 +1193,12 @@ const Recepcion: React.FC = () => {
     return isValid;
   };
 
+  /**
+   * Validates the draft and submits it to the backend via `createRecepcion`.
+   * On success, advances to the result step and clears the remote draft.
+   * On failure, sets a descriptive error message. Handles the special case
+   * where the referenced order no longer exists (ORDER_NOT_FOUND).
+   */
   const handleSubmit = async () => {
     if (!validarDraft()) return;
 
@@ -1078,12 +1268,10 @@ const Recepcion: React.FC = () => {
       ) {
         await clearRemoteDraft();
         setActiveStep(0);
-        setError(
-          `Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.`
-        );
+        setError(t('recepcion.errors.pedidoNoEncontrado'));
       } else {
         setError(
-          `Error crítico en la transacción: ${errorMessage}. Los datos siguen sincronizados en el servidor; puedes intentar enviarlos de nuevo.`
+          t('recepcion.errors.errorTransaccion', { detalle: errorMessage })
         );
       }
     } finally {
@@ -1093,6 +1281,11 @@ const Recepcion: React.FC = () => {
 
   // --- 5. Render Helpers ---
 
+  /**
+   * Returns the JSX content for the currently active wizard step.
+   *
+   * @param step - Zero-based step index.
+   */
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -1112,6 +1305,7 @@ const Recepcion: React.FC = () => {
     new Set(pedidosDisponibles.map((p) => p.proveedor?.nombre).filter(Boolean))
   ) as string[];
 
+  /** Renders Step 1 — Order Selection. */
   const renderStep1 = () => (
     <PasoSeleccionPedidos
       loadingPedidos={loadingPedidos}
@@ -1126,6 +1320,7 @@ const Recepcion: React.FC = () => {
     />
   );
 
+  /** Renders Step 2 — Scanning & Counting. */
   const renderStep2 = () => (
     <PasoEscaneo
       searchInputRef={searchInputRef}
@@ -1148,6 +1343,8 @@ const Recepcion: React.FC = () => {
       onOpenWeightScale={openWeightScale}
     />
   );
+
+  /** Renders Step 3 — Review & Adjustment. */
   const renderStep3 = () => (
     <PasoRevision
       draft={draft}
@@ -1158,10 +1355,15 @@ const Recepcion: React.FC = () => {
     />
   );
 
+  /** Renders Step 4 — Result. */
   const renderStep4 = () => (
     <PasoResultado resultado={resultado} onResetWizard={resetWizard} />
   );
 
+  /**
+   * Resets the entire wizard back to step 0: clears the remote draft, resets
+   * local result/error state and reloads the available purchase orders.
+   */
   const resetWizard = async () => {
     await clearRemoteDraft();
     setActiveStep(0);
@@ -1170,17 +1372,28 @@ const Recepcion: React.FC = () => {
     await loadPedidos();
   };
 
+  /**
+   * Applies the pending recovery draft and closes the recovery dialog.
+   */
   const handleRecoverDraft = () => {
     applyPendingRecoveryDraft();
     setIsRecoveryDialogOpen(false);
   };
 
+  /**
+   * Discards the pending recovery draft and resets the wizard to a clean state.
+   */
   const handleDiscardRecoveredDraft = () => {
     setIsRecoveryDialogOpen(false);
     recoveryHandledRef.current = true;
     void resetWizard();
   };
 
+  /**
+   * Advances the wizard to the next step.
+   * If on the last editable step (step 2), triggers form submission instead.
+   * Guards against advancing from step 0 when no orders are selected.
+   */
   const handleNext = () => {
     if (activeStep === 0 && draft.pedidosSeleccionados.length === 0) return;
     if (activeStep === 2) {
@@ -1200,6 +1413,10 @@ const Recepcion: React.FC = () => {
     }
   };
 
+  /**
+   * Returns the wizard to the previous step and updates the draft's `paso`
+   * field accordingly.
+   */
   const handleBack = () => {
     const prevStep = activeStep - 1;
     setActiveStep(prevStep);
@@ -1225,6 +1442,12 @@ const Recepcion: React.FC = () => {
     codigoBarras: '',
   });
 
+  /**
+   * Handles confirmation from the new-product modal: creates a new spontaneous
+   * `LineaDraft` and appends it to `productosEspontaneos`. If the product is
+   * weight-based and the scale is active, opens the weighing modal after a short
+   * delay to allow the modal to close first.
+   */
   const handleConfirmNewProduct = () => {
     const isWeight = isWeightUnit(modalData.unidad);
     const newLinea: LineaDraft = {
@@ -1292,19 +1515,26 @@ const Recepcion: React.FC = () => {
           }}
         >
           <Typography variant="h4" component="h1">
-            Gestión de Recepción
+            {t('recepcion.titulo')}
           </Typography>
           <Box
+            id="recepcion-sync-status"
             sx={{
               display: 'flex',
               alignItems: 'center',
               gap: 1,
               flexWrap: 'wrap',
               justifyContent: { xs: 'flex-start', md: 'flex-end' },
+              minWidth: 120,
+              minHeight: 32,
             }}
           >
             {activeStep === 1 && (
-              <Tooltip title={`Estado de báscula: ${scaleHeaderChip.label}`}>
+              <Tooltip
+                title={t('recepcion.bascula.estadoTooltip', {
+                  estado: scaleHeaderChip.label,
+                })}
+              >
                 <Chip
                   icon={scaleHeaderChip.icon}
                   label={scaleHeaderChip.label}
@@ -1315,10 +1545,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'saving' && (
-              <Tooltip title="Sincronizando borrador con el servidor">
+              <Tooltip title={t('recepcion.sync.guardandoTooltip')}>
                 <Chip
                   icon={<SaveIcon />}
-                  label="Guardando..."
+                  label={t('recepcion.sync.guardando')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -1326,10 +1556,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'synced' && (
-              <Tooltip title="Borrador sincronizado de forma segura">
+              <Tooltip title={t('recepcion.sync.sincronizadoTooltip')}>
                 <Chip
                   icon={<CheckCircleIcon />}
-                  label="Sincronizado"
+                  label={t('recepcion.sync.sincronizado')}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -1337,10 +1567,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'error' && (
-              <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
+              <Tooltip title={syncError || t('recepcion.sync.errorTooltip')}>
                 <Chip
                   icon={<ErrorOutlineIcon />}
-                  label="Error de sync"
+                  label={t('recepcion.sync.error')}
                   size="small"
                   color="error"
                   variant="outlined"
@@ -1348,10 +1578,10 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'conflict' && (
-              <Tooltip title="El borrador cambió en otro dispositivo">
+              <Tooltip title={t('recepcion.sync.conflictoTooltip')}>
                 <Chip
                   icon={<WarningAmberIcon />}
-                  label="Conflicto"
+                  label={t('recepcion.sync.conflicto')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -1374,12 +1604,16 @@ const Recepcion: React.FC = () => {
           >
             <CircularProgress size={40} />
             <Typography variant="body2" color="text.secondary">
-              Recuperando borrador de recepción...
+              {t('recepcion.recuperandoBorrador')}
             </Typography>
           </Box>
         ) : (
           <>
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+            <Stepper
+              id="recepcion-stepper"
+              activeStep={activeStep}
+              sx={{ mb: 4 }}
+            >
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -1420,22 +1654,25 @@ const Recepcion: React.FC = () => {
             }}
           >
             <Button
+              id="btn-discard-recepcion"
               variant="outlined"
               onClick={() => setIsDiscardDialogOpen(true)}
               color="secondary"
             >
-              Descartar
+              {t('recepcion.acciones.descartar')}
             </Button>
 
             <Box>
               <Button
+                id="btn-back-step"
                 disabled={activeStep === 0 || isSubmitting}
                 onClick={handleBack}
                 sx={{ mr: 1 }}
               >
-                Atrás
+                {t('recepcion.acciones.atras')}
               </Button>
               <Button
+                id="btn-next-step"
                 variant="contained"
                 onClick={handleNext}
                 disabled={
@@ -1453,9 +1690,9 @@ const Recepcion: React.FC = () => {
               >
                 {activeStep === 2
                   ? isSubmitting
-                    ? 'Procesando...'
-                    : 'Finalizar Recepción'
-                  : 'Siguiente'}
+                    ? t('recepcion.acciones.procesando')
+                    : t('recepcion.acciones.finalizarRecepcion')
+                  : t('recepcion.acciones.siguiente')}
               </Button>
             </Box>
           </Box>
@@ -1504,14 +1741,13 @@ const Recepcion: React.FC = () => {
         isOpen={isRecoveryDialogOpen && !!pendingRecoveryDraft}
         onClose={handleRecoverDraft}
         onConfirm={handleRecoverDraft}
-        title="Recuperar recepción pendiente"
+        title={t('recepcion.recovery.titulo')}
         message={
           <>
-            Has dejado una recepción a medias. ¿Deseas recuperarla y continuar
-            donde lo dejaste?
+            {t('recepcion.recovery.mensaje')}
             <br />
             <br />
-            Última actualización:{' '}
+            {t('recepcion.recovery.ultimaActualizacion')}{' '}
             <strong>
               {(() => {
                 const updatedAt =
@@ -1519,12 +1755,12 @@ const Recepcion: React.FC = () => {
                   draft.serverUpdatedAt ??
                   draft.modificadoEn;
                 if (!updatedAt) {
-                  return 'desconocida';
+                  return t('recepcion.recovery.fechaDesconocida');
                 }
 
                 const parsed = new Date(updatedAt);
                 if (Number.isNaN(parsed.getTime())) {
-                  return 'desconocida';
+                  return t('recepcion.recovery.fechaDesconocida');
                 }
 
                 return parsed.toLocaleString('es-ES');
@@ -1532,8 +1768,8 @@ const Recepcion: React.FC = () => {
             </strong>
           </>
         }
-        confirmText="Sí, recuperar"
-        cancelText="No, descartar"
+        confirmText={t('recepcion.recovery.confirmar')}
+        cancelText={t('recepcion.recovery.cancelar')}
         confirmColor="primary"
         onCancel={handleDiscardRecoveredDraft}
       />
@@ -1545,10 +1781,10 @@ const Recepcion: React.FC = () => {
           setIsDiscardDialogOpen(false);
           void resetWizard();
         }}
-        title="Descartar recepción"
-        message="¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado."
-        confirmText="Sí, descartar"
-        cancelText="Cancelar"
+        title={t('recepcion.descartar.titulo')}
+        message={t('recepcion.descartar.mensaje')}
+        confirmText={t('recepcion.descartar.confirmar')}
+        cancelText={t('recepcion.descartar.cancelar')}
       />
 
       <Snackbar
@@ -1571,10 +1807,9 @@ const Recepcion: React.FC = () => {
         open={isSubmitting}
       >
         <CircularProgress color="inherit" />
-        <Typography variant="h6">Procesando Recepción Masiva...</Typography>
+        <Typography variant="h6">{t('recepcion.procesando.titulo')}</Typography>
         <Typography variant="body2">
-          Garantizando integridad transaccional (ACID). Por favor, no cierres el
-          navegador.
+          {t('recepcion.procesando.descripcion')}
         </Typography>
       </Backdrop>
     </Box>

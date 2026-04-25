@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   IconButton,
   Typography,
   Box,
@@ -142,6 +144,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   type,
   title,
 }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -303,6 +306,46 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     return byStatus;
   }, [data, type]);
+
+  const getButtonLabel = () => {
+    if (!type) return `Ver todos los ${title.toLowerCase()}`;
+
+    const labels: Record<SummaryModalType, string> = {
+      productos: 'Ver todos los productos',
+      pedidos: 'Ver todos los pedidos',
+      incidencias: 'Ver todas las incidencias',
+      stock: 'Ver todo el inventario',
+      proveedores: 'Ver todos los proveedores',
+    };
+
+    return labels[type] || `Ver todos los ${title.toLowerCase()}`;
+  };
+
+  const handleSeeAll = () => {
+    onClose();
+    switch (type) {
+      case 'productos':
+        navigate('/productos');
+        break;
+      case 'pedidos':
+        // Redirigir a mis pedidos pendientes
+        navigate('/pedidos?tab=0&ownStatus=pendientes');
+        break;
+      case 'incidencias':
+        // Redirigir a incidencias por resolver
+        navigate('/incidencias?resolucion=por_resolver');
+        break;
+      case 'stock':
+        // Redirigir a inventario con filtro de stock bajo
+        navigate('/inventario?filter=stockBajo');
+        break;
+      case 'proveedores':
+        navigate('/proveedores');
+        break;
+      default:
+        break;
+    }
+  };
 
   const handleToggleIncidencia = (incidenciaId: string) => {
     setExpandedIncidenciaId((current) =>
@@ -644,18 +687,31 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             ) : null}
 
             <List disablePadding>
-              {data.map((item, index) => (
+              {data.slice(0, 10).map((item, index) => (
                 <React.Fragment key={'id' in item ? item.id : index}>
                   {renderItem(item)}
-                  {type !== 'incidencias' && index < data.length - 1 && (
-                    <Divider component="li" />
-                  )}
+                  {type !== 'incidencias' &&
+                    index < Math.min(data.length, 10) - 1 && (
+                      <Divider component="li" />
+                    )}
                 </React.Fragment>
               ))}
             </List>
           </>
         )}
       </DialogContent>
+      {data.length > 0 && !loading && (
+        <DialogActions sx={{ p: 2, justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSeeAll}
+            sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}
+          >
+            {getButtonLabel()}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

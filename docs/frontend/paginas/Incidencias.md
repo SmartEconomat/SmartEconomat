@@ -15,6 +15,19 @@ La página de Incidencias es el panel central para gestionar discrepancias detec
 - **[StatusChip](../componentes/StatusChip.md)**: Visualización semántica del estado (Pendiente en amarillo, Resuelta en verde con icono de check).
 - **[ResolveIncidenciaModal](../../../frontend/smart-economat-frontend/src/features/incidencias/ResolveIncidenciaModal.tsx)**: Formulario modal para capturar las observaciones de cómo se solucionó la incidencia.
 - **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Validación para la eliminación de registros de incidencia.
+- **[InteractiveTour](../componentes/InteractiveTour.md)**: Proporciona la guía paso a paso por el flujo de resolución.
+
+## Resolución Asistida de Discrepancias ✅
+
+El módulo de Incidencias incluye un sistema de ayuda para gestionar el flujo de reclamaciones:
+
+### Tour de Incidencias (6 pasos)
+1. **Centro de Incidencias**: Punto central de gestión de discrepancias.
+2. **Reportes y Exportación**: Generación de PDFs para reclamaciones.
+3. **Filtrado por Estado**: Organización de tareas pendientes y resueltas.
+4. **Trazabilidad de Problemas**: Análisis de faltas y excesos en pedidos.
+5. **Ajuste de Discrepancias**: Corrección manual de cantidades.
+6. **Resolución Final**: Cierre del ciclo y ajuste de inventario.
 
 ## Funcionalidades Clave
 

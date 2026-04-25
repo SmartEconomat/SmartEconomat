@@ -41,9 +41,9 @@ function buildProductoProveedorPayload(
   }
 
   const precioUnitario = toFiniteNumberOrUndefined(proveedor.precioUnitario);
-  if (precioUnitario == null || precioUnitario < 0) {
+  if (precioUnitario == null || precioUnitario < 0.01) {
     throw new Error(
-      `El precio unitario del proveedor ${index + 1} es obligatorio y debe ser un numero mayor o igual que 0.`
+      `El precio unitario del proveedor ${index + 1} es obligatorio y debe ser mayor que 0 (mínimo 0.01).`
     );
   }
 
@@ -69,6 +69,14 @@ function buildProductoProveedorPayload(
   };
 }
 
+/**
+ * @description Validates and transforms raw producto form data into the API create/update payload.
+ * Uploads an image file when provided, normalises allergens and unit of measure,
+ * and validates each provider entry (price, brand length, barcode length).
+ * @param formData - Raw values from the producto form
+ * @returns Promise resolving to a validated payload ready to be sent to the API
+ * @throws {Error} When required fields are missing, values are out of range, or image upload fails
+ */
 export async function buildProductoPayload(formData: Record<string, unknown>) {
   const typedFormData = formData as ProductoFormData;
   const nombre = toOptionalTrimmedString(typedFormData.nombre);

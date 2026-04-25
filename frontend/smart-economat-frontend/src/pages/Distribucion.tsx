@@ -10,6 +10,7 @@ import {
   IconButton,
   ListSubheader,
   MenuItem,
+  Paper,
   Stack,
   Tab,
   Tabs,
@@ -22,6 +23,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import HistoryIcon from '@mui/icons-material/History';
 import StatusChip from '../components/ui/StatusChip';
 import {
   cancelDistribucion,
@@ -832,6 +835,7 @@ const DistribucionPage: React.FC = () => {
     <Tooltip title="Distribuir productos">
       <span>
         <IconButton
+          id="btn-distribuir-stock"
           size="small"
           color="primary"
           disabled={!canCreate}
@@ -859,6 +863,7 @@ const DistribucionPage: React.FC = () => {
           >
             <span>
               <IconButton
+                id="btn-confirmar-entrega"
                 size="small"
                 color="success"
                 disabled={!canConfirmAction}
@@ -901,25 +906,18 @@ const DistribucionPage: React.FC = () => {
     return ubicaciones.filter((ubicacion) => ownIds.has(ubicacion.id));
   }, [preferredUbicacionIds, ubicaciones]);
 
-  const ownUserDestinationUbicaciones = useMemo(
-    () => ownUserUbicaciones.filter((ubicacion) => ubicacion.id !== originId),
-    [originId, ownUserUbicaciones]
-  );
-
   const usingFallbackDestinationOptions = useMemo(
-    () =>
-      ownUserDestinationUbicaciones.length === 0 &&
-      ubicaciones.some((ubicacion) => ubicacion.id !== originId),
-    [originId, ownUserDestinationUbicaciones, ubicaciones]
+    () => ownUserUbicaciones.length === 0 && ubicaciones.length > 0,
+    [ownUserUbicaciones, ubicaciones]
   );
 
   const userUbicaciones = useMemo(() => {
-    if (ownUserDestinationUbicaciones.length > 0) {
+    if (ownUserUbicaciones.length > 0) {
       return ownUserUbicaciones;
     }
 
     return ubicaciones;
-  }, [ownUserDestinationUbicaciones, ownUserUbicaciones, ubicaciones]);
+  }, [ownUserUbicaciones, ubicaciones]);
 
   const selectedOriginUbicacion = useMemo(
     () => ubicaciones.find((ubicacion) => ubicacion.id === originId) || null,
@@ -962,9 +960,7 @@ const DistribucionPage: React.FC = () => {
     if (visibleUserUbicaciones.length > 0) {
       items.push(
         <ListSubheader key="user-locations-header" disableSticky>
-          {usingFallbackDestinationOptions
-            ? 'Ubicaciones disponibles'
-            : 'Ubicaciones del usuario'}
+          Ubicaciones del usuario
         </ListSubheader>
       );
     }
@@ -978,7 +974,7 @@ const DistribucionPage: React.FC = () => {
     });
 
     return items;
-  }, [usingFallbackDestinationOptions, visibleUserUbicaciones]);
+  }, [visibleUserUbicaciones]);
 
   useEffect(() => {
     if (!distributeOpen || !selectedDisponible) {
@@ -1000,6 +996,7 @@ const DistribucionPage: React.FC = () => {
         title="Distribución Interna"
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
+        searchId="search-distribucion"
         searchPlaceholder="Buscar por pedido, usuario o aula..."
         totalItems={
           activeTab === 'disponibles' ? disponibles.length : totalItems
@@ -1011,55 +1008,82 @@ const DistribucionPage: React.FC = () => {
         }
       />
 
-      <Tabs
-        value={activeTab}
-        onChange={(_event, value: DistribucionTab) => setActiveTab(value)}
-        sx={{ mb: 2 }}
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
       >
-        <Tab value="disponibles" label="Disponibles" />
-        <Tab value="historial" label="Historial" />
-      </Tabs>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {activeTab === 'disponibles' ? (
-        <DataTable
-          columns={disponiblesColumns}
-          data={sortedDisponibles}
-          isLoading={loading}
-          emptyStateMessage="No hay pedidos listos para distribuir."
-          renderActions={renderDisponiblesActions}
-          onRowClick={openDistributeDialog}
-          actionsLabel="Distribuir"
-          hideTopBar
-          sortConfig={sortConfigDisponibles || undefined}
-          onSort={handleSortDisponibles}
-        />
-      ) : (
-        <DataTable
-          columns={historialColumns}
-          data={sortedHistorial}
-          isLoading={loading}
-          emptyStateMessage="No hay distribuciones registradas."
-          renderActions={renderHistorialActions}
-          onRowClick={(row) => void handleViewDetail(row.id)}
-          actionsLabel="Acciones"
-          hideTopBar
-          sortConfig={sortConfigHistorial || undefined}
-          onSort={handleSortHistorial}
-          pagination={{
-            currentPage: page,
-            totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
-            totalItems,
-            pageSize,
-            onPageChange: (_event, nextPage) => setPage(nextPage),
+        <Box
+          id="distribucion-tabs"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
-      )}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_event, value: DistribucionTab) => setActiveTab(value)}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="disponibles"
+              label="Disponibles"
+              icon={<LocalShippingOutlinedIcon />}
+            />
+            <Tab value="historial" label="Historial" icon={<HistoryIcon />} />
+          </Tabs>
+        </Box>
+
+        <Box id="distribucion-content-area" sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {activeTab === 'disponibles' ? (
+            <DataTable
+              columns={disponiblesColumns}
+              data={sortedDisponibles}
+              isLoading={loading}
+              emptyStateMessage="No hay pedidos listos para distribuir."
+              renderActions={renderDisponiblesActions}
+              onRowClick={openDistributeDialog}
+              actionsLabel="Distribuir"
+              hideTopBar
+              sortConfig={sortConfigDisponibles || undefined}
+              onSort={handleSortDisponibles}
+            />
+          ) : (
+            <DataTable
+              columns={historialColumns}
+              data={sortedHistorial}
+              isLoading={loading}
+              emptyStateMessage="No hay distribuciones registradas."
+              renderActions={renderHistorialActions}
+              onRowClick={(row) => void handleViewDetail(row.id)}
+              actionsLabel="Acciones"
+              hideTopBar
+              sortConfig={sortConfigHistorial || undefined}
+              onSort={handleSortHistorial}
+              pagination={{
+                currentPage: page,
+                totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
+                totalItems,
+                pageSize,
+                onPageChange: (_event, nextPage) => setPage(nextPage),
+              }}
+            />
+          )}
+        </Box>
+      </Paper>
 
       <Dialog
         open={distributeOpen}

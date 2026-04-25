@@ -1,5 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  Unstable_TrapFocus as FocusTrap,
+  ThemeProvider,
+} from '@mui/material';
+import { getTheme } from '../../utils/theme/themes';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
 import AuthSlide from './components/AuthSlide';
@@ -90,6 +97,10 @@ const peelKeyframes = {
     from: { opacity: 0, transform: 'translateY(18px)' },
     to: { opacity: 1, transform: 'translateY(0)' },
   },
+  '@keyframes fadeInSimple': {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
 };
 
 const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
@@ -119,6 +130,9 @@ const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
  */
 export default function Login() {
   const { login } = useAuth();
+
+  // Forzamos el tema claro para esta página específica
+  const lightTheme = getTheme('light', 'medium');
 
   const [isLogin, setIsLogin] = useState(true);
   const [phase, setPhase] = useState<AuthPhase>('idle');
@@ -217,7 +231,7 @@ export default function Login() {
     phase === 'register-exit' || phase === 'register-return';
 
   return (
-    <>
+    <ThemeProvider theme={lightTheme}>
       {/* ── Layout principal (paneles deslizantes) ── */}
       <Box
         component="main"
@@ -229,7 +243,8 @@ export default function Login() {
           overflow: 'hidden',
           display: { xs: 'flex', md: 'block' },
           flexDirection: { xs: 'column', md: undefined },
-          animation: { xs: 'none', md: layoutAnim },
+          animation: { xs: 'fadeInSimple 0.6s ease-out', md: layoutAnim },
+          bgcolor: 'background.default', // Asegura el fondo claro si el body global es oscuro
         }}
       >
         {/* Panel Slide */}
@@ -239,10 +254,13 @@ export default function Login() {
             top: 0,
             left: { xs: 'unset', md: slideLeft },
             width: { xs: '100%', md: `${SLIDE_W}%` },
-            height: { xs: '260px', md: '100%' },
+            height: { xs: '140px', md: '100%' },
             minHeight: { md: '100vh' },
             zIndex: 1,
-            animation: { xs: 'none', md: peelCss(slideAnim) },
+            animation: {
+              xs: 'fadeInSimple 0.8s ease-out',
+              md: peelCss(slideAnim),
+            },
           }}
         >
           <AuthSlide isLogin={isLogin} />
@@ -262,35 +280,46 @@ export default function Login() {
             flexGrow: { xs: 1, md: 0 },
             display: 'flex',
             flexDirection: 'column',
-            // En móvil: alineamos desde arriba para que el scroll sea natural.
-            // En desktop: centramos verticalmente (el panel tiene 100vh).
-            justifyContent: { xs: 'flex-start', md: 'center' },
+            // Cambiamos de center a flex-start en pantallas bajas para evitar recortes en el logo
+            justifyContent: { xs: 'flex-start', md: 'flex-start' },
+            // Añadimos padding vertical para que en escritorio no esté pegado arriba si hay espacio
+            py: { md: 4, lg: 0 },
+            alignItems: 'center',
             // En móvil habilitamos scroll para formularios largos (registro).
             // En desktop ocultamos overflow para que la animación de peel no se vea fuera.
             overflow: 'auto',
             zIndex: 2,
-            animation: { xs: 'none', md: peelCss(formAnim) },
+            animation: {
+              xs: 'fadeSlideUp 0.5s ease-out 0.2s both',
+              md: peelCss(formAnim),
+            },
           }}
         >
-          <Box
-            key={String(isLogin)}
-            sx={{
-              animation: `fadeSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) ${Math.round(PEEL_DURATION * 0.65)}ms both`,
-              width: '100%',
-            }}
-          >
-            {isLogin ? (
-              <LoginForm
-                onToggleForm={toggleForm}
-                onLoginSuccess={handleLoginSuccess}
-              />
-            ) : (
-              <RegisterForm
-                onToggleForm={toggleForm}
-                onRegisterSuccess={handleRegisterSuccess}
-              />
-            )}
-          </Box>
+          <FocusTrap open={phase === 'idle'}>
+            <Box
+              key={String(isLogin)}
+              sx={{
+                animation: `fadeSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) ${Math.round(PEEL_DURATION * 0.65)}ms both`,
+                width: '100%',
+                // En pantallas con poca altura, el centrado vertical de flexbox corta el contenido superior.
+                // Forzamos un margen mínimo arriba para el logo.
+                my: 'auto',
+                py: { xs: 2, md: 4 },
+              }}
+            >
+              {isLogin ? (
+                <LoginForm
+                  onToggleForm={toggleForm}
+                  onLoginSuccess={handleLoginSuccess}
+                />
+              ) : (
+                <RegisterForm
+                  onToggleForm={toggleForm}
+                  onRegisterSuccess={handleRegisterSuccess}
+                />
+              )}
+            </Box>
+          </FocusTrap>
         </Box>
       </Box>
 
@@ -347,6 +376,6 @@ export default function Login() {
           </Box>
         </Box>
       )}
-    </>
+    </ThemeProvider>
   );
 }

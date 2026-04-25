@@ -28,18 +28,48 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Alergeno } from '../../producto/enums/producto.enums';
 
+/**
+ * Service that manages recipes (recetas), including CRUD operations, cost calculation (escandallo),
+ * ingredient stock checking, cooking (stock consumption), and PDF export support.
+ *
+ * @class RecetaService
+ */
 @Injectable()
 export class RecetaService {
+  /**
+   * Creates an instance of RecetaService.
+   *
+   * @param {RecetaRepository} recetaRepository - Custom repository for receta persistence and queries.
+   * @param {DataSource} dataSource - TypeORM DataSource used for transactional operations and raw queries.
+   */
   constructor(
     private readonly recetaRepository: RecetaRepository,
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Creates a new recipe and immediately recalculates its estimated unit cost.
+   *
+   * @param {CreateRecetaDto} createRecetaDto - Data transfer object with the recipe details and ingredients.
+   * @returns {Promise<Receta>} The created recipe with the computed cost saved to the database.
+   * @throws {BadRequestException} When the DTO fails validation.
+   * @example
+   * const receta = await recetaService.create(createRecetaDto);
+   */
   async create(createRecetaDto: CreateRecetaDto): Promise<Receta> {
     const receta = await this.recetaRepository.create(createRecetaDto);
     return this.recalcularCostes(receta.id);
   }
 
+  /**
+   * Returns a paginated list of recipes, optionally filtered by the caller's role.
+   *
+   * @param {PaginationQueryDto} query - Pagination, sorting, and search parameters.
+   * @param {string} [userRole] - Optional role of the requesting user for role-based filtering.
+   * @returns {Promise<PaginatedResponseDto<Receta>>} Paginated collection of recipes.
+   * @example
+   * const result = await recetaService.findAll({ page: 1, limit: 20 }, 'ADMIN');
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -47,6 +77,16 @@ export class RecetaService {
     return this.recetaRepository.findAllPaginated(query, userRole);
   }
 
+  /**
+   * Retrieves a single recipe by its UUID, optionally applying role-based visibility rules.
+   *
+   * @param {string} id - UUID v7 of the recipe.
+   * @param {string} [userRole] - Optional role of the requesting user.
+   * @returns {Promise<Receta>} The found recipe with its ingredients and relations.
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * const receta = await recetaService.findOne('019c9b4f-74f8-7a6e-8b5b-96191c30c1e5');
+   */
   async findOne(id: string, userRole?: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id, userRole);
 
@@ -57,17 +97,45 @@ export class RecetaService {
     return receta;
   }
 
+  /**
+   * Updates an existing recipe and recalculates its estimated unit cost after the update.
+   *
+   * @param {string} id - UUID v7 of the recipe to update.
+   * @param {UpdateRecetaDto} updateRecetaDto - Partial data to update on the recipe.
+   * @returns {Promise<Receta>} The updated recipe with recomputed cost.
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * const receta = await recetaService.update(id, updateRecetaDto);
+   */
   async update(id: string, updateRecetaDto: UpdateRecetaDto): Promise<Receta> {
     await this.findOne(id);
     await this.recetaRepository.update(id, updateRecetaDto);
     return this.recalcularCostes(id);
   }
 
+  /**
+   * Soft-deletes a recipe from the system.
+   *
+   * @param {string} id - UUID v7 of the recipe to remove.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * await recetaService.remove(id);
+   */
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.recetaRepository.remove(id);
   }
 
+  /**
+   * Creates a duplicate of an existing recipe under a new name.
+   *
+   * @param {DuplicateRecetaDto} duplicateRecetaDto - DTO containing the source recipe ID and the new name.
+   * @returns {Promise<Receta>} The newly created duplicate recipe.
+   * @throws {NotFoundException} When the source recipe does not exist.
+   * @example
+   * const copy = await recetaService.duplicate({ sourceId: id, newName: 'Copia de Gazpacho' });
+   */
   async duplicate(duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
     return this.recetaRepository.duplicate(
       duplicateRecetaDto.sourceId,
@@ -75,6 +143,16 @@ export class RecetaService {
     );
   }
 
+  /**
+   * Retrieves detailed information for a recipe including per-ingredient stock levels,
+   * quantity deficits, and consolidated allergen list.
+   *
+   * @param {string} id - UUID v7 of the recipe.
+   * @returns {Promise<DetalleRecetaDto>} Object containing the recipe, ingredient details with stock, and allergen list.
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * const detalle = await recetaService.getDetalle(id);
+   */
   async getDetalle(id: string): Promise<DetalleRecetaDto> {
     const receta = await this.recetaRepository.findById(id);
 
@@ -137,6 +215,16 @@ export class RecetaService {
     };
   }
 
+  /**
+   * Calculates the full cost breakdown (escandallo) for a recipe based on its saved ingredients.
+   * Uses the preferred supplier price, the PMP, or an average of available prices for each ingredient.
+   *
+   * @param {string} id - UUID v7 of the recipe.
+   * @returns {Promise<RecetaCostResponseDto>} Cost summary with total cost and per-ingredient breakdown.
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * const escandallo = await recetaService.calcularEscandallo(id);
+   */
   async calcularEscandallo(id: string): Promise<RecetaCostResponseDto> {
     const receta = await this.recetaRepository.findById(id);
 
@@ -173,6 +261,16 @@ export class RecetaService {
     };
   }
 
+  /**
+   * Calculates a cost preview for an arbitrary list of ingredients without requiring a saved recipe.
+   * Useful for cost estimation before creating or editing a recipe.
+   * Applies the waste factor (merma) to compute the real quantity needed per ingredient.
+   *
+   * @param {RecetaPreviewCostDto} dto - DTO with ingredient list (productoId, cantidad, mermaAplicada) and optional rendimiento.
+   * @returns {Promise<RecetaCostResponseDto>} Preview cost summary with total and per-ingredient breakdown.
+   * @example
+   * const preview = await recetaService.calculatePreviewCost({ ingredientes: [...], rendimiento: 10 });
+   */
   async calculatePreviewCost(
     dto: RecetaPreviewCostDto
   ): Promise<RecetaCostResponseDto> {
@@ -267,6 +365,19 @@ export class RecetaService {
     };
   }
 
+  /**
+   * Consumes stock from inventory to "cook" a recipe the specified number of times.
+   * Uses FEFO ordering (earliest expiry / earliest entry first) with a pessimistic write lock.
+   * Creates SALIDA_ELABORACION movement records for each inventory lot consumed.
+   *
+   * @param {string} id - UUID v7 of the recipe to cook.
+   * @param {CocinarRecetaDto} dto - DTO with the number of recipe units to cook (defaults to 1).
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @throws {BadRequestException} When there is insufficient stock for any ingredient.
+   * @example
+   * await recetaService.cocinar(id, { cantidad: 2 });
+   */
   async cocinar(id: string, dto: CocinarRecetaDto): Promise<void> {
     const cantidadRecetas = dto.cantidad || 1;
     const receta = await this.recetaRepository.findById(id);
@@ -342,6 +453,16 @@ export class RecetaService {
     });
   }
 
+  /**
+   * Recalculates and persists the estimated unit cost for a recipe based on its current ingredients and rendimiento.
+   * Handles non-finite values gracefully by defaulting them to zero.
+   *
+   * @param {string} id - UUID v7 of the recipe whose costs must be recalculated.
+   * @returns {Promise<Receta>} The updated recipe with the new costeUnitarioEstimado value.
+   * @throws {NotFoundException} When no recipe exists with the given ID.
+   * @example
+   * const receta = await recetaService.recalcularCostes(id);
+   */
   async recalcularCostes(id: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id);
 

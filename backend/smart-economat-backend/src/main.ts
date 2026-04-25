@@ -25,7 +25,6 @@ function deriveFrontendOrigin(): string {
 
   return `https://${domain}`;
 }
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

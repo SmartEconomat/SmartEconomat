@@ -5,8 +5,23 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { Box, Alert, Paper } from '@mui/material';
+import {
+  Box,
+  Alert,
+  Paper,
+  Tab,
+  Tabs,
+  Button,
+  useTheme,
+  alpha,
+} from '@mui/material';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
+import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBulletedOutlined';
+import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -36,7 +51,7 @@ import PedidoDetailDrawer from '../features/pedidos/components/PedidoDetailDrawe
 import PedidoDraftBanner from '../features/pedidos/components/PedidoDraftBanner';
 import PedidosPageHeader from '../features/pedidos/components/PedidosPageHeader';
 import PedidosTable from '../features/pedidos/components/PedidosTable';
-import PedidosTabs from '../features/pedidos/components/PedidosTabs';
+
 import PedidosWeeklyBoard from '../features/pedidos/components/PedidosWeeklyBoard';
 import PurchaseBatchDetailModal from '../features/pedidos/components/PurchaseBatchDetailModal';
 import PurchasesWeeklyBoard from '../features/pedidos/components/PurchasesWeeklyBoard';
@@ -47,6 +62,7 @@ import { usePedidosFilters } from '../features/pedidos/hooks/usePedidosFilters';
 import {
   PedidoFormValues,
   PedidoPermissions,
+  PedidosTabValue,
 } from '../features/pedidos/types/pedidos-ui.types';
 import { buildPedidoPermissions } from '../features/pedidos/utils/pedidoPermissions';
 import { isPedidoUsuarioRow } from '../features/pedidos/utils/pedidoOwnOrders';
@@ -86,6 +102,18 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
 };
 
 const Pedidos: React.FC = () => {
+  const theme = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter =
+    searchParams.get('tab') === '0' &&
+    searchParams.get('ownStatus') === 'pendientes';
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('tab');
+    nextParams.delete('ownStatus');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
@@ -585,312 +613,373 @@ const Pedidos: React.FC = () => {
         ]}
       />
 
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {draft && !isRecoveryOpen && !itemToEdit && (
-          <PedidoDraftBanner
-            draft={draft}
-            onRecover={handleRecoverDraft}
-            onDiscard={handleDiscardDraft}
-          />
-        )}
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <PedidosTabs
-          value={tabIndex}
-          onChange={(value) => {
-            setTabIndex(value);
-            setPage(1);
+      <Paper
+        id="pedidos-content-area"
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
-
-        {isOwnOrdersTab && (
-          <MisPedidosStatusTabs
-            value={misPedidosStatus}
-            onChange={(value) => {
-              setMisPedidosStatus(value);
+        >
+          <Tabs
+            id="pedidos-tabs"
+            value={tabIndex}
+            onChange={(_, newValue: PedidosTabValue) => {
+              setTabIndex(newValue);
               setPage(1);
             }}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label="pestañas de pedidos"
+          >
+            <Tab
+              icon={<AssignmentTurnedInOutlinedIcon />}
+              label="Mis Pedidos"
+            />
+            <Tab icon={<FormatListBulletedOutlinedIcon />} label="Pedidos" />
+            <Tab icon={<ShoppingCartCheckoutOutlinedIcon />} label="Compras" />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {draft && !isRecoveryOpen && !itemToEdit && (
+            <PedidoDraftBanner
+              draft={draft}
+              onRecover={handleRecoverDraft}
+              onDiscard={handleDiscardDraft}
+            />
+          )}
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="info"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.info.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.info.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando tus pedidos pendientes filtrados desde el
+              Dashboard.
+            </Alert>
+          )}
+
+          {isOwnOrdersTab && (
+            <MisPedidosStatusTabs
+              value={misPedidosStatus}
+              onChange={(value) => {
+                setMisPedidosStatus(value);
+                setPage(1);
+              }}
+            />
+          )}
+
+          {isBatchTab ? (
+            <PurchasesWeeklyBoard
+              batches={batches}
+              isLoading={isLoading}
+              viewMode={viewMode}
+              handlers={{
+                onView: (batch) =>
+                  void handleViewBatch(batch.id, 'purchase_batch'),
+                onRecepcion: (batch) => void startRecepcionFromBatch(batch),
+              }}
+            />
+          ) : isWeeklyTab ? (
+            <PedidosWeeklyBoard
+              data={data}
+              isLoading={isLoading}
+              viewMode={viewMode}
+              permissions={permissions}
+              handlers={handlers}
+              totalItems={totalItems}
+              isConsolidating={isConsolidatingBatch}
+              onConsolidateWeek={handleConsolidateWeek}
+            />
+          ) : (
+            <PedidosTable
+              data={ownOrdersData}
+              isLoading={isLoading}
+              page={isOwnOrdersTab ? 1 : page}
+              pageSize={pageSize}
+              totalPages={ownOrdersTotalPages}
+              viewMode={viewMode}
+              permissions={permissions}
+              handlers={handlers}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize: number) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              }}
+              onCreateClick={handleCreateClick}
+            />
+          )}
+
+          <ConfirmDialog
+            isOpen={!!itemToDelete}
+            onClose={() => !isDeleting && setItemToDelete(null)}
+            onConfirm={() => void handleDeleteConfirm()}
+            title="Eliminar pedido"
+            message={
+              <>
+                ¿Estás seguro de que deseas eliminar el pedido del{' '}
+                <strong>
+                  {itemToDelete?.fechaPedido
+                    ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
+                    : ''}
+                </strong>
+                ? Esta acción no se puede deshacer.
+              </>
+            }
+            confirmText="Sí, eliminar"
+            cancelText="Cancelar"
+            isLoading={isDeleting}
           />
-        )}
 
-        {isBatchTab ? (
-          <PurchasesWeeklyBoard
-            batches={batches}
-            isLoading={isLoading}
-            viewMode={viewMode}
-            handlers={{
-              onView: (batch) =>
-                void handleViewBatch(batch.id, 'purchase_batch'),
-              onRecepcion: (batch) => void startRecepcionFromBatch(batch),
-            }}
+          <ConfirmDialog
+            isOpen={!!itemToAceptar}
+            onClose={() => !isAceptando && setItemToAceptar(null)}
+            onConfirm={() => void handleAceptarConfirm()}
+            title="Aprobar Pedido"
+            message={
+              <>
+                {itemToAceptar?.targetType === 'purchase_batch' ? (
+                  <>
+                    ¿Estás seguro de que deseas tramitar la compra{' '}
+                    <strong>
+                      {itemToAceptar?.numeroGlobal
+                        ? `#${itemToAceptar.numeroGlobal} `
+                        : ''}
+                    </strong>
+                    ({formatPedidoId(itemToAceptar?.id)})? La compra avanzará a
+                    su siguiente estado operativo.
+                  </>
+                ) : (
+                  <>
+                    ¿Estás seguro de que deseas aprobar el pedido{' '}
+                    <strong>
+                      {itemToAceptar?.numeroGlobal
+                        ? `#${itemToAceptar.numeroGlobal} `
+                        : ''}
+                      ({formatPedidoId(itemToAceptar?.id)})
+                    </strong>{' '}
+                    al proveedor{' '}
+                    <strong>{itemToAceptar?.proveedorNombre}</strong>? Pasará a
+                    estar "En Proceso" y se considerará tramitado.
+                  </>
+                )}
+              </>
+            }
+            confirmText="Sí, Aprobar"
+            cancelText="Cancelar"
+            isLoading={isAceptando}
+            confirmColor="success"
           />
-        ) : isWeeklyTab ? (
-          <PedidosWeeklyBoard
-            data={data}
-            isLoading={isLoading}
-            viewMode={viewMode}
-            permissions={permissions}
-            handlers={handlers}
-            totalItems={totalItems}
-            isConsolidating={isConsolidatingBatch}
-            onConsolidateWeek={handleConsolidateWeek}
+
+          <DynamicFormModal
+            isOpen={!!itemToCancelar}
+            onClose={() => !isCancelando && setItemToCancelar(null)}
+            title={
+              itemToCancelar?.targetType === 'purchase_batch'
+                ? `Cancelar Compra: ${formatPedidoId(itemToCancelar?.id)}`
+                : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
+            }
+            size="sm"
+            fields={[
+              {
+                name: 'motivoCancelacion',
+                label: 'Motivo de Cancelación (Opcional)',
+                type: 'text',
+                width: 12,
+                required: false,
+              },
+            ]}
+            initialData={{ motivoCancelacion: '' }}
+            onSubmit={handleCancelarSubmit}
+            isSubmitting={isCancelando}
+            requireConfirmation={false}
           />
-        ) : (
-          <PedidosTable
-            data={ownOrdersData}
-            isLoading={isLoading}
-            page={isOwnOrdersTab ? 1 : page}
-            pageSize={pageSize}
-            totalPages={ownOrdersTotalPages}
-            viewMode={viewMode}
-            permissions={permissions}
-            handlers={handlers}
-            onPageChange={setPage}
-            onPageSizeChange={(nextPageSize: number) => {
-              setPageSize(nextPageSize);
-              setPage(1);
-            }}
-            onCreateClick={handleCreateClick}
-          />
-        )}
 
-        <ConfirmDialog
-          isOpen={!!itemToDelete}
-          onClose={() => !isDeleting && setItemToDelete(null)}
-          onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar pedido"
-          message={
-            <>
-              ¿Estás seguro de que deseas eliminar el pedido del{' '}
-              <strong>
-                {itemToDelete?.fechaPedido
-                  ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
-                  : ''}
-              </strong>
-              ? Esta acción no se puede deshacer.
-            </>
-          }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
-          isLoading={isDeleting}
-        />
-
-        <ConfirmDialog
-          isOpen={!!itemToAceptar}
-          onClose={() => !isAceptando && setItemToAceptar(null)}
-          onConfirm={() => void handleAceptarConfirm()}
-          title="Aprobar Pedido"
-          message={
-            <>
-              {itemToAceptar?.targetType === 'purchase_batch' ? (
-                <>
-                  ¿Estás seguro de que deseas tramitar la compra{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                  </strong>
-                  ({formatPedidoId(itemToAceptar?.id)})? La compra avanzará a su
-                  siguiente estado operativo.
-                </>
-              ) : (
-                <>
-                  ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                    ({formatPedidoId(itemToAceptar?.id)})
-                  </strong>{' '}
-                  al proveedor <strong>{itemToAceptar?.proveedorNombre}</strong>
-                  ? Pasará a estar "En Proceso" y se considerará tramitado.
-                </>
-              )}
-            </>
-          }
-          confirmText="Sí, Aprobar"
-          cancelText="Cancelar"
-          isLoading={isAceptando}
-          confirmColor="success"
-        />
-
-        <DynamicFormModal
-          isOpen={!!itemToCancelar}
-          onClose={() => !isCancelando && setItemToCancelar(null)}
-          title={
-            itemToCancelar?.targetType === 'purchase_batch'
-              ? `Cancelar Compra: ${formatPedidoId(itemToCancelar?.id)}`
-              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
-          }
-          size="sm"
-          fields={[
-            {
-              name: 'motivoCancelacion',
-              label: 'Motivo de Cancelación (Opcional)',
-              type: 'text',
-              width: 12,
-              required: false,
-            },
-          ]}
-          initialData={{ motivoCancelacion: '' }}
-          onSubmit={handleCancelarSubmit}
-          isSubmitting={isCancelando}
-          requireConfirmation={false}
-        />
-
-        <DynamicFormModal
-          isOpen={!!itemToEdit}
-          onClose={handleCloseModal}
-          title={
-            itemToEdit?.targetType === 'purchase_batch'
-              ? isItemToEditEditable
-                ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
-              : itemToEdit?.targetType === 'pedido_usuario'
+          <DynamicFormModal
+            isOpen={!!itemToEdit}
+            onClose={handleCloseModal}
+            title={
+              itemToEdit?.targetType === 'purchase_batch'
                 ? isItemToEditEditable
-                  ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                  : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
-                : itemToEdit?.id
+                  ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                  : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                : itemToEdit?.targetType === 'pedido_usuario'
                   ? isItemToEditEditable
-                    ? 'Editar Pedido'
-                    : 'Detalles del Pedido (Solo lectura)'
-                  : 'Crear Nuevo Pedido'
-          }
-          size="lg"
-          fields={pedidoSchema}
-          initialData={itemToEdit || {}}
-          onSubmit={
-            isItemToEditEditable ? handleSave : () => setItemToEdit(null)
-          }
-          isSubmitting={isSaving}
-          onValuesChange={handleValuesChange}
-          requireConfirmation={isItemToEditEditable}
-          submitLabel={isItemToEditEditable ? 'Guardar' : 'Cerrar'}
-          cancelLabel={isItemToEditEditable ? 'Cancelar' : ''}
-          confirmationMessage={
-            itemToEdit?.id
-              ? itemToEdit.targetType === 'purchase_batch'
-                ? '¿Estás seguro de que deseas guardar los cambios en esta compra?'
-                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-              : '¿Estás seguro de que deseas registrar este nuevo pedido?'
-          }
-        />
+                    ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                    : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                  : itemToEdit?.id
+                    ? isItemToEditEditable
+                      ? 'Editar Pedido'
+                      : 'Detalles del Pedido (Solo lectura)'
+                    : 'Crear Nuevo Pedido'
+            }
+            size="lg"
+            fields={pedidoSchema}
+            initialData={itemToEdit || {}}
+            onSubmit={
+              isItemToEditEditable ? handleSave : () => setItemToEdit(null)
+            }
+            isSubmitting={isSaving}
+            onValuesChange={handleValuesChange}
+            requireConfirmation={isItemToEditEditable}
+            submitLabel={isItemToEditEditable ? 'Guardar' : 'Cerrar'}
+            cancelLabel={isItemToEditEditable ? 'Cancelar' : ''}
+            confirmationMessage={
+              itemToEdit?.id
+                ? itemToEdit.targetType === 'purchase_batch'
+                  ? '¿Estás seguro de que deseas guardar los cambios en esta compra?'
+                  : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
+                : '¿Estás seguro de que deseas registrar este nuevo pedido?'
+            }
+          />
 
-        <PurchaseBatchDetailModal
-          detail={itemToViewBatch}
-          canEdit={permissions.canEdit}
-          canApprove={permissions.canApprove}
-          canCancel={permissions.canCancel}
-          onClose={() => setItemToViewBatch(null)}
-          onEdit={handleEditBatch}
-          onApprove={(detail) => {
-            setItemToViewBatch(null);
-            setItemToAceptar(buildBatchActionTarget(detail));
-          }}
-          onCancel={(detail) => {
-            setItemToViewBatch(null);
-            setItemToCancelar(buildBatchActionTarget(detail));
-          }}
-          onRecepcion={(batch) => {
-            setItemToViewBatch(null);
-            void startRecepcionFromBatch(batch);
-          }}
-        />
+          <PurchaseBatchDetailModal
+            detail={itemToViewBatch}
+            canEdit={permissions.canEdit}
+            canApprove={permissions.canApprove}
+            canCancel={permissions.canCancel}
+            onClose={() => setItemToViewBatch(null)}
+            onEdit={handleEditBatch}
+            onApprove={(detail) => {
+              setItemToViewBatch(null);
+              setItemToAceptar(buildBatchActionTarget(detail));
+            }}
+            onCancel={(detail) => {
+              setItemToViewBatch(null);
+              setItemToCancelar(buildBatchActionTarget(detail));
+            }}
+            onRecepcion={(batch) => {
+              setItemToViewBatch(null);
+              void startRecepcionFromBatch(batch);
+            }}
+          />
 
-        <PedidoDetailDrawer
-          pedido={itemToViewDetails}
-          canEdit={false}
-          onClose={() => setItemToViewDetails(null)}
-          onEdit={() => undefined}
-        />
+          <PedidoDetailDrawer
+            pedido={itemToViewDetails}
+            canEdit={false}
+            onClose={() => setItemToViewDetails(null)}
+            onEdit={() => undefined}
+          />
 
-        <PedidoDeliveryDateDialog
-          pedido={itemToViewDeliveryDate}
-          onClose={() => setItemToViewDeliveryDate(null)}
-        />
+          <PedidoDeliveryDateDialog
+            pedido={itemToViewDeliveryDate}
+            onClose={() => setItemToViewDeliveryDate(null)}
+          />
 
-        <ReporteSelectorModal
-          isOpen={isReporteOpen}
-          onClose={() => setIsReporteOpen(false)}
-          tipo="pedido"
-        />
+          <ReporteSelectorModal
+            isOpen={isReporteOpen}
+            onClose={() => setIsReporteOpen(false)}
+            tipo="pedido"
+          />
 
-        <ConfirmDialog
-          isOpen={isRecoveryOpen}
-          onClose={() => setIsRecoveryOpen(false)}
-          onConfirm={handleRecoverDraft}
-          title="Recuperar Pedido Pendiente"
-          message={
-            <>
-              Tienes un pedido que no llegaste a finalizar el día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>{' '}
-              a las{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('HH:mm')
-                  : '...'}
-              </strong>
-              .
-              <br />
-              <br />
-              ¿Deseas recuperarlo y continuar donde lo dejaste?
-            </>
-          }
-          confirmText="Sí, Recuperar"
-          cancelText="No, Descartar"
-          confirmColor="primary"
-          onCancel={handleDiscardDraft}
-        />
+          <ConfirmDialog
+            isOpen={isRecoveryOpen}
+            onClose={() => setIsRecoveryOpen(false)}
+            onConfirm={handleRecoverDraft}
+            title="Recuperar Pedido Pendiente"
+            message={
+              <>
+                Tienes un pedido que no llegaste a finalizar el día{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                    : '...'}
+                </strong>{' '}
+                a las{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('HH:mm')
+                    : '...'}
+                </strong>
+                .
+                <br />
+                <br />
+                ¿Deseas recuperarlo y continuar donde lo dejaste?
+              </>
+            }
+            confirmText="Sí, Recuperar"
+            cancelText="No, Descartar"
+            confirmColor="primary"
+            onCancel={handleDiscardDraft}
+          />
 
-        <ConfirmDialog
-          isOpen={isNewPedidoWarningOpen}
-          onClose={() => setIsNewPedidoWarningOpen(false)}
-          onConfirm={() => {
-            setIsNewPedidoWarningOpen(false);
-            openNewPedidoForm();
-          }}
-          title="Ya tienes un pedido pendiente"
-          message={
-            <>
-              Ya existe un borrador de pedido guardado del día{' '}
-              <strong>
-                {dayjs(draft?.updatedAt).isValid()
-                  ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
-                  : '...'}
-              </strong>
-              . Si empiezas uno nuevo y se guarda, el borrador pendiente se
-              reemplazará.
-              <br />
-              <br />
-              ¿Qué quieres hacer?
-            </>
-          }
-          confirmText="Crear nuevo pedido"
-          cancelText="Continuar borrador"
-          confirmColor="warning"
-          onCancel={handleRecoverDraft}
-        />
+          <ConfirmDialog
+            isOpen={isNewPedidoWarningOpen}
+            onClose={() => setIsNewPedidoWarningOpen(false)}
+            onConfirm={() => {
+              setIsNewPedidoWarningOpen(false);
+              openNewPedidoForm();
+            }}
+            title="Ya tienes un pedido pendiente"
+            message={
+              <>
+                Ya existe un borrador de pedido guardado del día{' '}
+                <strong>
+                  {dayjs(draft?.updatedAt).isValid()
+                    ? dayjs(draft?.updatedAt).format('DD/MM/YYYY')
+                    : '...'}
+                </strong>
+                . Si empiezas uno nuevo y se guarda, el borrador pendiente se
+                reemplazará.
+                <br />
+                <br />
+                ¿Qué quieres hacer?
+              </>
+            }
+            confirmText="Crear nuevo pedido"
+            cancelText="Continuar borrador"
+            confirmColor="warning"
+            onCancel={handleRecoverDraft}
+          />
 
-        <ConfirmDialog
-          isOpen={isDraftCloseConfirmOpen}
-          onClose={() => setIsDraftCloseConfirmOpen(false)}
-          onConfirm={handleSaveDraftAndClose}
-          title="¿Qué quieres hacer con este pedido?"
-          message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
-          confirmText="Guardar en borrador"
-          cancelText="Cancelar pedido"
-          confirmColor="primary"
-          onCancel={handleDiscardDraftAndClose}
-        />
+          <ConfirmDialog
+            isOpen={isDraftCloseConfirmOpen}
+            onClose={() => setIsDraftCloseConfirmOpen(false)}
+            onConfirm={handleSaveDraftAndClose}
+            title="¿Qué quieres hacer con este pedido?"
+            message="Si lo guardas en borrador, podrás retomarlo más tarde. Si cancelas ahora, se descartará el pedido pendiente."
+            confirmText="Guardar en borrador"
+            cancelText="Cancelar pedido"
+            confirmColor="primary"
+            onCancel={handleDiscardDraftAndClose}
+          />
+        </Box>
       </Paper>
     </Box>
   );

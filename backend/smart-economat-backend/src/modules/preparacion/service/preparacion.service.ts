@@ -14,6 +14,13 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { Preparacion } from '../preparacion.entity/preparacion.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
+/**
+ * Service that manages the lifecycle of kitchen preparation orders.
+ * A Preparacion moves through PENDIENTE → EN_PROCESO → COMPLETADA states, and can
+ * be cancelled at any point before completion. Finalising a preparation triggers
+ * the production execution pipeline via ProduccionService.
+ * @class PreparacionService
+ */
 @Injectable()
 export class PreparacionService {
   constructor(
@@ -22,6 +29,13 @@ export class PreparacionService {
     private readonly recetaRepository: RecetaRepository
   ) {}
 
+  /**
+   * Creates a new preparation order linked to a recipe.
+   * @param {CreatePreparacionDto} dto - DTO containing recetaId, cantidadAProducir and optional ubicacionDestinoId.
+   * @param {string} userId - ID of the authenticated user creating the preparation.
+   * @returns {Promise<Preparacion>} The newly created Preparacion entity.
+   * @throws {NotFoundException} When the referenced recipe does not exist.
+   */
   async create(
     dto: CreatePreparacionDto,
     userId: string
@@ -34,6 +48,13 @@ export class PreparacionService {
     return this.preparacionRepository.create(dto, userId);
   }
 
+  /**
+   * Returns a paginated list of preparation orders.
+   * When a userRole is provided the repository may apply role-based visibility filters.
+   * @param {PaginationQueryDto} query - Pagination parameters (page, limit).
+   * @param {string} [userRole] - Optional role name used to scope visibility.
+   * @returns {Promise<PaginatedResponseDto<Preparacion>>} Paginated result containing items and metadata.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -41,6 +62,13 @@ export class PreparacionService {
     return this.preparacionRepository.findAllPaginated(query, userRole);
   }
 
+  /**
+   * Finds a single preparation order by its ID.
+   * @param {string} id - UUID of the Preparacion to retrieve.
+   * @param {string} [userRole] - Optional role name used to scope visibility.
+   * @returns {Promise<Preparacion>} The found Preparacion entity.
+   * @throws {NotFoundException} When no preparation with the given ID exists.
+   */
   async findOne(id: string, userRole?: string): Promise<Preparacion> {
     const preparacion = await this.preparacionRepository.findById(id, userRole);
     if (!preparacion) {
@@ -49,11 +77,20 @@ export class PreparacionService {
     return preparacion;
   }
 
+  /**
+   * Transitions a preparation from PENDIENTE to EN_PROCESO, recording the start timestamp.
+   * @param {string} id - UUID of the Preparacion to start.
+   * @returns {Promise<Preparacion>} The updated Preparacion entity with estado EN_PROCESO.
+   * @throws {NotFoundException} When no preparation with the given ID exists.
+   * @throws {ConflictException} When the preparation is not in PENDIENTE state.
+   */
   async iniciarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
     if (preparacion.estado !== PreparacionEstado.PENDIENTE) {
       throw new ConflictException(
-        `No se puede iniciar una preparación en estado ${preparacion.estado}`
+        I18nHelper.getError('PREPARACION_CANNOT_START', {
+          estado: preparacion.estado,
+        })
       );
     }
 
@@ -62,6 +99,17 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
+  /**
+   * Finalises a preparation in EN_PROCESO state by executing the production pipeline
+   * and transitioning the entity to COMPLETADA. Records the finalisation timestamp.
+   * @param {string} id - UUID of the Preparacion to finalise.
+   * @param {string} userId - ID of the authenticated user performing the action.
+   * @param {string} [ubicacionDestinoId] - Override destination location; falls back to the stored value.
+   * @returns {Promise<Preparacion>} The updated Preparacion entity with estado COMPLETADA.
+   * @throws {NotFoundException} When no preparation with the given ID exists.
+   * @throws {ConflictException} When the preparation is not in EN_PROCESO state.
+   * @throws {BadRequestException} When no destination location is available.
+   */
   async finalizarPreparacion(
     id: string,
     userId: string,
@@ -71,14 +119,16 @@ export class PreparacionService {
 
     if (preparacion.estado !== PreparacionEstado.EN_PROCESO) {
       throw new ConflictException(
-        `Solo se pueden finalizar preparaciones EN_PROCESO. Estado actual: ${preparacion.estado}`
+        I18nHelper.getError('PREPARACION_MUST_BE_IN_PROCESS', {
+          estado: preparacion.estado,
+        })
       );
     }
 
     const destinoId = ubicacionDestinoId || preparacion.ubicacionDestinoId;
     if (!destinoId) {
       throw new BadRequestException(
-        'Se requiere una ubicación de destino para finalizar la preparación'
+        I18nHelper.getError('PREPARACION_MISSING_DESTINATION')
       );
     }
 
@@ -99,11 +149,18 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
+  /**
+   * Cancels a preparation that has not yet been completed.
+   * @param {string} id - UUID of the Preparacion to cancel.
+   * @returns {Promise<Preparacion>} The updated Preparacion entity with estado CANCELADA.
+   * @throws {NotFoundException} When no preparation with the given ID exists.
+   * @throws {ConflictException} When the preparation is already in COMPLETADA state.
+   */
   async cancelarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
     if (preparacion.estado === PreparacionEstado.COMPLETADA) {
       throw new ConflictException(
-        'No se puede cancelar una preparación ya completada'
+        I18nHelper.getError('PREPARACION_ALREADY_COMPLETED')
       );
     }
 
@@ -111,6 +168,11 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
+  /**
+   * Soft-deletes a preparation order by ID.
+   * @param {string} id - UUID of the Preparacion to remove.
+   * @returns {Promise<void>}
+   */
   async remove(id: string): Promise<void> {
     return this.preparacionRepository.remove(id);
   }

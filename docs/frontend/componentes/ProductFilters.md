@@ -7,15 +7,20 @@
 
 ## Propósito
 
-`ProductFilters` encapsula el control de filtrado por **categorías de producto** dentro de la página de Productos.  
-Implementa un **Autocomplete de MUI con selección múltiple** que combina:
+El componente `ProductFilters` es una implementación especializada del componente atómico `SmartFilterAutocomplete` para el módulo de productos. Permite filtrar el catálogo por categorías de forma rápida y visualmente rica.
 
-- Búsqueda en tiempo real al escribir
-- Dropdown desplegable para seleccionar categorías
-- Opciones seleccionadas como **chips con icono oficial de categoría** dentro del propio control
-- **Crecimiento dinámico del ancho**: El componente crece conforme se añaden categorías (mínimo 220 px, máximo 660 px), permitiendo que el buscador se reduzca hasta un mínimo responsivo.
-- **Responsividad Inteligente**: Si el buscador y los filtros no caben en la misma fila, los filtros pasan a ocupar el 100% del ancho debajo del buscador.
-- Mismo alto que el campo de búsqueda (`size="small"` → 40 px)
+## Evolución Tecnológica (v3) ✅
+
+Este componente ha sido refactorizado para utilizar el **SmartFilterAutocomplete** global, lo que le otorga automáticamente:
+- **Scroll Horizontal Infinito**: Las categorías seleccionadas no ocupan espacio vertical.
+- **Degradado Inteligente**: Indica visualmente si hay más filtros ocultos por scroll.
+- **Búsqueda-Primero**: El cursor se posiciona a la izquierda para una búsqueda inmediata.
+- **Reactividad**: Scroll automático al final al añadir nuevas categorías.
+
+## Accesibilidad (WAVE Ready) ✅
+
+- **Etiquetado Robusto**: El componente de entrada utiliza el patrón `slotProps.htmlInput` para asignar un `aria-label` descriptivo vinculable por lectores de pantalla.
+- **Tipografía**: Los Chips de categorías utilizan un tamaño de fuente de **0.8rem (12.8px)** para superar los umbrales de legibilidad de auditoría externa.
 
 Los iconos de cada categoría son los mismos que utiliza `StatusChip` — provienen de `getCategoryIconFilled`.
 

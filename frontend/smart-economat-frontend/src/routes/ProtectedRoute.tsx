@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/auth.hooks';
 import { hasAnyPermission, hasPermission } from '../utils/auth/permissionUtils';
-import Spinner from '../components/ui/Spinner';
+import LinearLoader from '../components/ui/LinearLoader';
 
 const AUTHORIZED_FALLBACK_PATH = '/perfil';
 
@@ -36,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   };
 
   if (!isAuthResolved) {
-    return <Spinner overlay="screen" size="lg" />;
+    return <LinearLoader fixed />;
   }
 
   if (!isAuthenticated || !isSessionVerified || !user) {

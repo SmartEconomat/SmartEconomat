@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SmartEconomat — Guía de Usuario</title>
+<style>
+  /* ── Reset y base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #1a1a2e;
+    background: #f8f9fa;
+    line-height: 1.7;
+  }
+
+  /* ── Tipografía ── */
+  h1 { font-size: 2.4rem; font-weight: 800; }
+  h2 { font-size: 1.8rem; font-weight: 700; border-bottom: 3px solid #2563eb; padding-bottom: .4rem; margin: 2.5rem 0 1.2rem; color: #1e3a8a; }
+  h3 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 .8rem; color: #1d4ed8; }
+  h4 { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 .5rem; color: #2563eb; }
+  p  { margin-bottom: .9rem; }
+  ul, ol { margin: .5rem 0 .9rem 1.6rem; }
+  li { margin-bottom: .3rem; }
+  code {
+    background: #e8f0fe;
+    padding: .1rem .4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: .88rem;
+    color: #1d4ed8;
+  }
+  strong { color: #1e3a8a; }
+
+  /* ── Layout general ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 2.5rem; }
+
+  /* ── Portada ── */
+  .cover {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    page-break-after: always;
+  }
+  .cover-logo { width: 180px; margin-bottom: 2rem; filter: brightness(0) invert(1); }
+  .cover h1 { font-size: 3rem; margin-bottom: .8rem; letter-spacing: -.5px; }
+  .cover .subtitle { font-size: 1.4rem; opacity: .88; margin-bottom: .4rem; }
+  .cover .meta { margin-top: 2.5rem; opacity: .75; font-size: .95rem; line-height: 2; }
+  .cover .badge {
+    display: inline-block; margin: 1.5rem .4rem 0;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.4);
+    border-radius: 999px; padding: .3rem 1rem; font-size: .85rem;
+  }
+
+  /* ── Índice ── */
+  .toc { background: white; border-radius: 12px; padding: 2rem 2.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 2rem; }
+  .toc h2 { margin-top: 0; }
+  .toc ol { list-style: none; margin: 0; }
+  .toc > ol > li { margin-bottom: .5rem; font-weight: 600; }
+  .toc > ol > li > ol { margin-top: .3rem; font-weight: 400; }
+  .toc a { color: #2563eb; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .toc-num { color: #6b7280; margin-right: .4rem; }
+
+  /* ── Secciones ── */
+  section { background: white; border-radius: 12px; padding: 2rem 2.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 2rem; }
+  section.full-width { max-width: 100%; }
+
+  /* ── Tablas ── */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .93rem; }
+  thead th { background: #1e3a8a; color: white; padding: .7rem 1rem; text-align: left; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #eff6ff; }
+  tbody td { padding: .65rem 1rem; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tbody tr:hover { background: #dbeafe; }
+
+  /* ── Imágenes ── */
+  .screenshot-wrap { margin: 1.5rem 0; }
+  .screenshot-wrap img { max-width: 100%; border-radius: 8px; border: 1px solid #d1d5db; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+  .screenshot-caption { font-size: .82rem; color: #6b7280; margin-top: .5rem; font-style: italic; text-align: center; }
+
+  /* ── Alertas / callouts ── */
+  .callout { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: .8rem 1.2rem; margin: 1rem 0; font-size: .93rem; }
+  .callout.info    { background: #eff6ff; border-color: #2563eb; }
+  .callout.warning { background: #fffbeb; border-color: #d97706; }
+  .callout.success { background: #f0fdf4; border-color: #16a34a; }
+  .callout.danger  { background: #fef2f2; border-color: #dc2626; }
+  .callout-title   { font-weight: 700; margin-bottom: .2rem; }
+
+  /* ── Badges de rol ── */
+  .role-badge {
+    display: inline-block; padding: .15rem .7rem; border-radius: 999px;
+    font-size: .78rem; font-weight: 700; margin: .1rem;
+  }
+  .role-superadmin { background: #4c1d95; color: white; }
+  .role-admin   { background: #1e3a8a; color: white; }
+  .role-profesor{ background: #065f46; color: white; }
+  .role-alumno  { background: #92400e; color: white; }
+
+  /* ── Steps de flujo ── */
+  .steps { counter-reset: step; list-style: none; margin: 1rem 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;
+  }
+  .steps li::before {
+    content: counter(step);
+    min-width: 2rem; height: 2rem; background: #2563eb; color: white;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem; flex-shrink: 0; margin-top: .1rem;
+  }
+
+  /* ── Estado chips ── */
+  .chip {
+    display: inline-block; padding: .15rem .65rem; border-radius: 999px;
+    font-size: .78rem; font-weight: 600;
+  }
+  .chip-pending  { background: #fef3c7; color: #92400e; }
+  .chip-active   { background: #d1fae5; color: #065f46; }
+  .chip-error    { background: #fee2e2; color: #991b1b; }
+  .chip-info     { background: #dbeafe; color: #1e40af; }
+  .chip-gray     { background: #f3f4f6; color: #374151; }
+
+  /* ── Grid 2 cols ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* ── Módulo card ── */
+  .module-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+  .module-card h3 { margin-top: 0; }
+
+  /* ── Número de sección ── */
+  .sec-num { color: #6b7280; margin-right: .4rem; }
+
+  /* ── Print / PDF ── */
+  @media print {
+    body { background: white; font-size: 11pt; }
+    .cover { page-break-after: always; min-height: auto; padding: 5cm 3cm; }
+    .toc   { page-break-after: always; }
+    section { box-shadow: none; border: 1px solid #e5e7eb; page-break-inside: avoid; }
+    h2 { page-break-before: always; }
+    .screenshot-wrap img { max-height: 12cm; width: auto; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PORTADA
+══════════════════════════════════════ -->
+<div class="cover" id="portada">
+  <img class="cover-logo" src="../assets/images/arquitectura.jpeg" alt="SmartEconomat" onerror="this.style.display='none'" />
+  <div>
+    <p style="font-size:1rem;opacity:.7;letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem">CIFP Virgen de Candelaria</p>
+    <h1>SmartEconomat</h1>
+    <p class="subtitle">Guía de Usuario Completa</p>
+    <p class="subtitle" style="font-size:1.1rem;opacity:.8">Sistema de Gestión de Economato para Escuela de Cocina</p>
+  </div>
+  <div class="meta">
+    <p><strong>Trabajo Fin de Grado — Desarrollo de Aplicaciones Web</strong></p>
+    <p>Proyecto SmartEconomat · Curso 2024–2025</p>
+    <p>Fecha de redacción: Abril 2025</p>
+  </div>
+  <div>
+    <span class="badge">React + TypeScript</span>
+    <span class="badge">NestJS</span>
+    <span class="badge">PostgreSQL</span>
+    <span class="badge">Docker</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ÍNDICE
+══════════════════════════════════════ -->
+<div class="container">
+<section class="toc" id="indice">
+  <h2>Índice de Contenidos</h2>
+  <ol>
+    <li><a href="#sec-intro"><span class="toc-num">1.</span> Introducción</a>
+      <ol>
+        <li><a href="#sec-intro-objetivo">1.1 Objetivo del sistema</a></li>
+        <li><a href="#sec-intro-publico">1.2 Público objetivo</a></li>
+        <li><a href="#sec-intro-tech">1.3 Tecnologías principales</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec-vision"><span class="toc-num">2.</span> Visión general</a>
+      <ol>
+        <li><a href="#sec-vision-problema">2.1 Problema que resuelve</a></li>
+        <li><a href="#sec-vision-roles">2.2 Roles del sistema</a></li>
+        <li><a href="#sec-vision-arq">2.3 Arquitectura general</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec-accesos"><span class="toc-num">3.</span> Gestión de accesos y roles</a></li>
+    <li><a href="#sec-auth"><span class="toc-num">4.</span> Módulo de Autenticación</a></li>
+    <li><a href="#sec-dashboard"><span class="toc-num">5.</span> Dashboard — Inicio</a></li>
+    <li><a href="#sec-productos"><span class="toc-num">6.</span> Módulo Productos</a></li>
+    <li><a href="#sec-proveedores"><span class="toc-num">7.</span> Módulo Proveedores</a></li>
+    <li><a href="#sec-recetas"><span class="toc-num">8.</span> Módulo Recetas</a></li>
+    <li><a href="#sec-pedidos"><span class="toc-num">9.</span> Módulo Pedidos</a></li>
+    <li><a href="#sec-recepcion"><span class="toc-num">10.</span> Módulo Recepción</a></li>
+    <li><a href="#sec-albaranes"><span class="toc-num">11.</span> Módulo Albaranes</a></li>
+    <li><a href="#sec-distribucion"><span class="toc-num">12.</span> Módulo Distribución</a></li>
+    <li><a href="#sec-inventario"><span class="toc-num">13.</span> Módulo Inventario</a></li>
+    <li><a href="#sec-movimientos"><span class="toc-num">14.</span> Módulo Movimientos</a></li>
+    <li><a href="#sec-mermas"><span class="toc-num">15.</span> Módulo Mermas</a></li>
+    <li><a href="#sec-incidencias"><span class="toc-num">16.</span> Módulo Incidencias</a></li>
+    <li><a href="#sec-preparaciones"><span class="toc-num">17.</span> Módulo Preparaciones</a></li>
+    <li><a href="#sec-administracion"><span class="toc-num">18.</span> Módulo Administración</a></li>
+    <li><a href="#sec-perfil"><span class="toc-num">19.</span> Perfil de Usuario</a></li>
+    <li><a href="#sec-notificaciones"><span class="toc-num">20.</span> Centro de Notificaciones</a></li>
+    <li><a href="#sec-flujos"><span class="toc-num">21.</span> Flujos de usuario completos</a></li>
+    <li><a href="#sec-validaciones"><span class="toc-num">22.</span> Validaciones y restricciones</a></li>
+    <li><a href="#sec-errores"><span class="toc-num">23.</span> Errores frecuentes y soluciones</a></li>
+    <li><a href="#sec-conclusiones"><span class="toc-num">24.</span> Conclusiones</a></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════════════
+     1. INTRODUCCIÓN
+══════════════════════════════════════ -->
+<section id="sec-intro">
+  <h2><span class="sec-num">1.</span> Introducción</h2>
+
+  <h3 id="sec-intro-objetivo">1.1 Objetivo del sistema</h3>
+  <p><strong>SmartEconomat</strong> es una aplicación web de gestión integral diseñada específicamente para el economato de una escuela de hostelería y cocina. Su misión es digitalizar y centralizar el ciclo completo de aprovisionamiento: desde la solicitud de materias primas hasta su consumo en el aula, pasando por la recepción de mercancía, el control de inventario, la trazabilidad de movimientos y la gestión de mermas e incidencias.</p>
+  <p>El sistema sustituye los procesos manuales —hojas de cálculo, albaranes en papel, comunicaciones informales— por flujos digitales auditables, con control de acceso por rol, exportación de datos y registro exhaustivo de toda actividad.</p>
+
+  <h3 id="sec-intro-publico">1.2 Público objetivo</h3>
+  <ul>
+    <li><strong>Personal administrativo y de almacén (Administrador / Superadministrador):</strong> gestiona el catálogo completo, aprueba pedidos, recepciona mercancía y supervisa el inventario.</li>
+    <li><strong>Profesorado (Profesor):</strong> solicita materiales para sus clases, registra preparaciones, reporta mermas e incidencias.</li>
+    <li><strong>Alumnado (Alumno):</strong> consulta el catálogo de productos, recetas y preparaciones relacionadas con su módulo.</li>
+  </ul>
+
+  <h3 id="sec-intro-tech">1.3 Tecnologías principales</h3>
+  <div class="grid2">
+    <div>
+      <h4>Frontend</h4>
+      <ul>
+        <li>React 18 + TypeScript</li>
+        <li>Material UI v5 (MUI)</li>
+        <li>Vite (bundler)</li>
+        <li>React Router v6</li>
+        <li>react-i18next (ES/EN)</li>
+        <li>Redux Toolkit (estado global)</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Backend</h4>
+      <ul>
+        <li>NestJS + TypeScript</li>
+        <li>TypeORM + PostgreSQL</li>
+        <li>JWT (autenticación)</li>
+        <li>UUID v7 (generados en DB)</li>
+        <li>Swagger / OpenAPI</li>
+        <li>Docker + Docker Compose</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout info">
+    <div class="callout-title">ℹ️ Internacionalización</div>
+    La interfaz está completamente traducida a español e inglés. El usuario puede cambiar el idioma desde su perfil o desde el menú de ajustes (icono de configuración en la barra lateral).
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     2. VISIÓN GENERAL
+══════════════════════════════════════ -->
+<section id="sec-vision">
+  <h2><span class="sec-num">2.</span> Visión general de la aplicación</h2>
+
+  <h3 id="sec-vision-problema">2.1 Problema que resuelve</h3>
+  <p>Las escuelas de hostelería gestionan grandes volúmenes de ingredientes perecederos con fechas de caducidad críticas, multitud de proveedores y docenas de clases simultáneas. SmartEconomat resuelve:</p>
+  <ul>
+    <li>Falta de trazabilidad en el consumo de materiales por aula y por receta.</li>
+    <li>Pérdida de albaranes y facturas en papel.</li>
+    <li>Ineficiencia en la gestión de pedidos multi-proveedor.</li>
+    <li>Ausencia de control FEFO (First Expired, First Out) en el inventario.</li>
+    <li>Dificultad para detectar y gestionar mermas e incidencias con proveedores.</li>
+  </ul>
+
+  <h3 id="sec-vision-roles">2.2 Roles del sistema</h3>
+  <table>
+    <thead><tr><th>Rol</th><th>Descripción</th><th>Prioridad</th><th>Bypass de permisos</th></tr></thead>
+    <tbody>
+      <tr><td><span class="role-badge role-superadmin">SUPER_ADMIN</span></td><td>Máximo nivel. Gestión total del sistema incluidos roles y permisos.</td><td>3 (máxima)</td><td>✅ Total</td></tr>
+      <tr><td><span class="role-badge role-admin">ADMIN</span></td><td>Administrador operativo. Acceso completo excepto gestión de roles del sistema.</td><td>2</td><td>✅ Total</td></tr>
+      <tr><td><span class="role-badge role-profesor">PROFESOR</span></td><td>Docente. Gestiona sus pedidos, preparaciones, mermas e incidencias.</td><td>1</td><td>❌ Por permisos asignados</td></tr>
+      <tr><td><span class="role-badge role-alumno">ALUMNO</span></td><td>Estudiante. Acceso de consulta al catálogo y preparaciones de su aula.</td><td>0 (mínima)</td><td>❌ Por permisos asignados</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sec-vision-arq">2.3 Arquitectura general</h3>
+  <p>La aplicación sigue una arquitectura cliente-servidor desacoplada:</p>
+  <ul>
+    <li><strong>Frontend SPA</strong> (React) expuesto en puerto <code>5173</code> (dev) / <code>443</code> (prod).</li>
+    <li><strong>API REST</strong> (NestJS) expuesta en <code>:3000</code>, con documentación Swagger en <code>/docs</code>.</li>
+    <li><strong>Base de datos</strong> PostgreSQL en <code>:5432</code>, con migraciones TypeORM.</li>
+    <li>Todo orquestado con <strong>Docker Compose</strong> (entornos dev y prod separados).</li>
+  </ul>
+  <p>La navegación está basada en un <strong>router dinámico</strong>: el menú lateral se construye automáticamente a partir de los permisos del usuario autenticado; si no dispone del permiso <code>listar</code> de un módulo, la ruta no aparece en el menú ni es accesible directamente.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     3. GESTIÓN DE ACCESOS Y ROLES
+══════════════════════════════════════ -->
+<section id="sec-accesos">
+  <h2><span class="sec-num">3.</span> Gestión de accesos y roles</h2>
+  <p>SmartEconomat implementa un sistema de permisos granular organizado por módulo y acción. Cada permiso sigue el patrón <code>módulo:acción</code>. Los roles SUPER_ADMIN y ADMIN tienen bypass total; PROFESOR y ALUMNO sólo acceden a lo que su plantilla de rol incluya.</p>
+
+  <table>
+    <thead>
+      <tr><th>Módulo</th><th>Permisos disponibles</th><th>SUPER_ADMIN / ADMIN</th><th>PROFESOR (típico)</th><th>ALUMNO (típico)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dashboard</td><td>ver_estadisticas</td><td>✅</td><td>✅</td><td>✅ (limitado)</td></tr>
+      <tr><td>Productos</td><td>listar, ver, crear, editar, eliminar, generar_ean13</td><td>✅ Todo</td><td>listar, ver</td><td>listar, ver</td></tr>
+      <tr><td>Proveedores</td><td>listar, crear, editar, eliminar</td><td>✅ Todo</td><td>listar</td><td>listar</td></tr>
+      <tr><td>Pedidos</td><td>listar, ver, crear, editar, cancelar, restaurar, eliminar</td><td>✅ Todo</td><td>listar, crear, ver</td><td>❌</td></tr>
+      <tr><td>Recepciones</td><td>listar, ver, crear, editar, eliminar</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Albaranes</td><td>listar, ver, crear, editar, eliminar</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Distribuciones</td><td>listar, ver, crear, confirmar, cancelar</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Inventario</td><td>listar, ver, crear, editar, eliminar, ajustar_stock</td><td>✅ Todo</td><td>listar, ver</td><td>❌</td></tr>
+      <tr><td>Movimientos</td><td>listar</td><td>✅</td><td>listar</td><td>❌</td></tr>
+      <tr><td>Mermas</td><td>listar, ver, crear, stats</td><td>✅ Todo</td><td>listar, crear, ver</td><td>❌</td></tr>
+      <tr><td>Incidencias</td><td>listar, ver, crear, editar, eliminar, resolver</td><td>✅ Todo</td><td>listar, crear, ver</td><td>❌</td></tr>
+      <tr><td>Recetas</td><td>listar, ver, crear, editar, eliminar, duplicar, cocinar</td><td>✅ Todo</td><td>listar, ver, cocinar</td><td>listar, ver</td></tr>
+      <tr><td>Archivos</td><td>listar, ver, subir, eliminar</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Usuarios</td><td>listar, ver, crear, editar, eliminar, activar_desactivar, resetear_password</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Roles / Permisos</td><td>listar, ver, crear, editar, eliminar</td><td>✅ Todo</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Profesor</td><td>gestionar_slots, gestionar_alumnos, ver_alumnos</td><td>✅</td><td>✅ (propios)</td><td>❌</td></tr>
+      <tr><td>Alumno</td><td>cambiar_profesor</td><td>✅</td><td>❌</td><td>✅</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠️ Gestión de plantillas de rol</div>
+    Los permisos concretos de cada rol PROFESOR o ALUMNO son configurables desde el módulo de Administración → Gestor de Permisos. Un SUPER_ADMIN puede crear plantillas de rol personalizadas y ajustar los permisos sin necesidad de modificar código.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     4. AUTENTICACIÓN
+══════════════════════════════════════ -->
+<section id="sec-auth">
+  <h2><span class="sec-num">4.</span> Módulo de Autenticación</h2>
+  <p>Las rutas públicas del sistema son <code>/login</code>, <code>/reset-password</code> y <code>/reset-password/:token</code>. Cualquier usuario no autenticado que intente acceder a una ruta protegida es redirigido automáticamente a <code>/login</code>.</p>
+
+  <h3>4.1 Pantalla de inicio de sesión</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Login/Login.png" alt="Pantalla de Login" />
+    <p class="screenshot-caption">Figura 4.1 — Pantalla de inicio de sesión (Login.png)</p>
+  </div>
+  <p>La pantalla de login presenta un diseño de dos paneles: un panel izquierdo con imagen decorativa y el formulario de autenticación a la derecha (o en columna única en móvil). Los elementos identificados son:</p>
+  <ol>
+    <li><strong>Campo de nombre de usuario o email</strong> — acepta tanto el nombre de usuario como la dirección de correo electrónico registrada.</li>
+    <li><strong>Campo de contraseña</strong> — con botón para mostrar/ocultar el texto.</li>
+    <li><strong>Botón "Iniciar Sesión"</strong> — envía las credenciales al endpoint <code>POST /auth/login</code> y recibe un token JWT en la respuesta. Dicho token se almacena en el contexto de autenticación de la aplicación.</li>
+    <li><strong>Enlace "¿Olvidaste tu contraseña?"</strong> — navega a la pantalla de recuperación.</li>
+    <li><strong>Enlace "Crear cuenta de alumno"</strong> — permite el autorregistro de nuevos alumnos.</li>
+  </ol>
+  <div class="callout info">
+    <div class="callout-title">ℹ️ Rate Limiting</div>
+    Los endpoints de autenticación tienen aplicado un limitador estricto (máx. 5 intentos por 15 minutos) para prevenir ataques de fuerza bruta, implementado con <code>@nestjs/throttler</code> y almacenamiento en Redis.
+  </div>
+
+  <h3>4.2 Registro de alumno</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Login/Login-CrearAlumno.png" alt="Registro de Alumno" />
+    <p class="screenshot-caption">Figura 4.2 — Formulario de autorregistro de alumno</p>
+  </div>
+  <p>El formulario de registro de alumno solicita:</p>
+  <ul>
+    <li><strong>Nombre completo</strong> (requerido)</li>
+    <li><strong>Email</strong> — debe ser único en el sistema</li>
+    <li><strong>Nombre de usuario</strong> — único, sin espacios</li>
+    <li><strong>Contraseña y confirmación</strong> — mínimo 8 caracteres, al menos una mayúscula, un número y un carácter especial</li>
+    <li><strong>Selección de profesor</strong> — el alumno elige el profesor al que queda vinculado</li>
+  </ul>
+  <p>Tras el registro, la cuenta queda <strong>pendiente de activación</strong> por parte del administrador. El alumno no podrá iniciar sesión hasta que un ADMIN o SUPER_ADMIN active su cuenta.</p>
+
+  <h3>4.3 Creación de profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Login/CrearProfesor-Login.png" alt="Creación de Profesor" />
+    <p class="screenshot-caption">Figura 4.3 — Pantalla de creación de cuenta de profesor</p>
+  </div>
+  <p>A diferencia del alumno, la creación de cuentas de profesor se realiza generalmente desde el módulo de Administración por un ADMIN. Sin embargo, existe un flujo específico accesible desde la pantalla de login para que un potencial profesor solicite acceso. Los datos solicitados son similares al registro de alumno, pero el rol asignado es <code>PROFESOR</code>. La cuenta requiere igualmente activación administrativa.</p>
+
+  <h3>4.4 Recuperación de contraseña</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Login/RecuperarContraseña.png" alt="Recuperar Contraseña" />
+    <p class="screenshot-caption">Figura 4.4 — Pantalla de recuperación de contraseña</p>
+  </div>
+  <p>El flujo de recuperación de contraseña sigue estos pasos:</p>
+  <ol class="steps">
+    <li>El usuario introduce su dirección de email en el formulario de recuperación (<code>POST /auth/forgot-password</code>).</li>
+    <li>El sistema genera un token seguro de un solo uso y lo envía por email al usuario.</li>
+    <li>El usuario hace clic en el enlace del email, que le lleva a <code>/reset-password/:token</code>.</li>
+    <li>El usuario introduce y confirma su nueva contraseña.</li>
+    <li>El sistema valida el token (comprueba expiración y uso único) y actualiza la contraseña hasheada con bcrypt.</li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════════════
+     5. DASHBOARD
+══════════════════════════════════════ -->
+<section id="sec-dashboard">
+  <h2><span class="sec-num">5.</span> Dashboard — Inicio</h2>
+  <p>El dashboard es la pantalla de bienvenida tras el inicio de sesión. Su contenido se adapta dinámicamente a los permisos del usuario: cada tarjeta de métrica, cada acción rápida y cada elemento de actividad sólo se muestra si el usuario dispone del permiso correspondiente.</p>
+
+  <h3>5.1 Dashboard del Administrador</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Dashboard-Admin.png" alt="Dashboard Admin" />
+    <p class="screenshot-caption">Figura 5.1 — Dashboard visto por un usuario Administrador</p>
+  </div>
+  <p>El dashboard del administrador muestra la vista más completa del sistema. Sus componentes son:</p>
+
+  <h4>Tarjetas de métricas KPI</h4>
+  <p>Cada tarjeta muestra un indicador clave. El administrador puede ver y hacer clic en todas:</p>
+  <table>
+    <thead><tr><th>Métrica</th><th>Qué muestra</th><th>Al hacer clic</th><th>Permiso requerido</th></tr></thead>
+    <tbody>
+      <tr><td>Total Productos</td><td>Número total de productos en catálogo + nuevos este mes</td><td>Abre resumen modal de productos</td><td><code>productos:listar</code></td></tr>
+      <tr><td>Pedidos Pendientes</td><td>Pedidos en estado pendiente de aprobación o recepción</td><td>Abre resumen modal de pedidos</td><td><code>pedidos:listar</code></td></tr>
+      <tr><td>Incidencias</td><td>Incidencias activas no resueltas</td><td>Abre resumen de incidencias</td><td><code>incidencias:listar</code></td></tr>
+      <tr><td>Alertas de Stock</td><td>Productos por debajo del stock mínimo</td><td>Abre resumen de inventario</td><td><code>inventario:listar</code></td></tr>
+      <tr><td>Proveedores</td><td>Total de proveedores activos</td><td>Abre resumen de proveedores</td><td><code>proveedores:listar</code></td></tr>
+      <tr><td>Notificaciones</td><td>Acciones pendientes del sistema (usuarios sin activar, alertas)</td><td>Abre el centro de notificaciones</td><td>Combinado</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">ℹ️ Personalización de métricas</div>
+    El usuario puede ocultar o mostrar tarjetas mediante el icono de configuración (⚙️) en la esquina superior del panel de métricas. Las preferencias se persisten en <code>localStorage</code> bajo la clave <code>dashboard_visible_metrics</code>.
+  </div>
+
+  <h4>Acciones rápidas</h4>
+  <p>El panel de acciones rápidas permite crear recursos directamente desde el dashboard sin navegar al módulo correspondiente:</p>
+  <ul>
+    <li><strong>Nuevo Pedido</strong> (requiere <code>pedidos:crear</code>) — abre modal de creación de pedido</li>
+    <li><strong>Añadir Producto</strong> (requiere <code>productos:crear</code>) — abre modal de creación de producto</li>
+    <li><strong>Registrar Recepción</strong> (requiere <code>recepciones:crear</code>) — navega a <code>/recepciones</code></li>
+    <li><strong>Nueva Receta</strong> (requiere <code>recetas:crear</code>) — abre modal de creación de receta</li>
+  </ul>
+
+  <h4>Actividad reciente</h4>
+  <p>Panel lateral que muestra los últimos movimientos de stock ordenados del más reciente al más antiguo. Incluye icono codificado por color según el tipo:</p>
+  <ul>
+    <li>🟢 <strong>Entrada</strong> — stock ingresado al almacén</li>
+    <li>🔴 <strong>Salida</strong> — stock consumido o retirado</li>
+    <li>🟡 <strong>Ajuste</strong> — corrección manual de inventario</li>
+    <li>🔵 <strong>Pedido</strong> — generación de un pedido</li>
+    <li>🟣 <strong>Entrada Compra</strong> — recepción desde un lote de compra</li>
+  </ul>
+  <p>El botón "Ver historial completo" navega al módulo de Movimientos.</p>
+
+  <h3>5.2 Dashboard del Profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Dashboard-Profesor.png" alt="Dashboard Profesor" />
+    <p class="screenshot-caption">Figura 5.2 — Dashboard visto por un usuario Profesor</p>
+  </div>
+  <p>El profesor ve un dashboard simplificado donde sólo aparecen las métricas para las que tiene permiso. Típicamente verá: pedidos pendientes propios, incidencias abiertas y las acciones rápidas de crear pedido y nueva receta. No verá el contador de proveedores ni las alertas de stock, pues no tiene <code>proveedores:listar</code> ni <code>inventario:listar</code> en su plantilla habitual.</p>
+
+  <h3>5.3 Dashboard del Alumno</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Alumno/Dashboard-Alumno.png" alt="Dashboard Alumno" />
+    <p class="screenshot-caption">Figura 5.3 — Dashboard visto por un usuario Alumno</p>
+  </div>
+  <p>El alumno dispone de la vista más reducida. Su menú lateral mostrará únicamente los módulos de consulta (Productos, Proveedores, Recetas, Preparaciones) según sus permisos. El dashboard muestra un saludo personalizado y las métricas disponibles para su rol.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     6. PRODUCTOS
+══════════════════════════════════════ -->
+<section id="sec-productos">
+  <h2><span class="sec-num">6.</span> Módulo Productos</h2>
+  <p>El catálogo de productos es el núcleo del sistema. Contiene todos los ingredientes y materiales que pueden ser pedidos, recepcionados, almacenados en inventario y consumidos en preparaciones.</p>
+
+  <h3>6.1 Listado de productos — Vista Admin</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Productos-Admin.png" alt="Productos Admin" />
+    <p class="screenshot-caption">Figura 6.1 — Catálogo de productos visto por el Administrador</p>
+  </div>
+  <p>La página de productos presenta una barra de herramientas superior (<code>PageToolbar</code>) con las siguientes funciones:</p>
+  <ul>
+    <li><strong>Buscador</strong> — filtra por nombre o código de barras en tiempo real</li>
+    <li><strong>Filtros avanzados</strong> (icono embudo) — filtra por categoría, unidad de medida, alérgenos, proveedor asociado y rango de precio</li>
+    <li><strong>Añadir producto</strong> — botón visible sólo con permiso <code>productos:crear</code></li>
+    <li><strong>Exportar Excel / PDF</strong> — descarga el catálogo filtrado</li>
+    <li><strong>Vista tarjeta / tabla</strong> — alterna entre vista de grid y tabla</li>
+  </ul>
+  <p>Cada producto en la tabla muestra: nombre, categoría, código de barras EAN-13, unidad de medida, contenido, alérgenos (badges de colores) y proveedor(es) asociados.</p>
+
+  <h3>6.2 Crear / Editar producto — Vista Admin</h3>
+  <div class="grid2">
+    <div class="screenshot-wrap">
+      <img src="img/Admin/CrearProducto-Admin.png" alt="Crear Producto" />
+      <p class="screenshot-caption">Figura 6.2a — Modal de creación de producto</p>
+    </div>
+    <div class="screenshot-wrap">
+      <img src="img/Admin/EditarProducto-Admin.png" alt="Editar Producto" />
+      <p class="screenshot-caption">Figura 6.2b — Modal de edición de producto</p>
+    </div>
+  </div>
+  <p>El formulario de producto (modal) incluye los siguientes campos:</p>
+  <table>
+    <thead><tr><th>Campo</th><th>Tipo</th><th>Obligatorio</th><th>Observaciones</th></tr></thead>
+    <tbody>
+      <tr><td>Nombre</td><td>Texto</td><td>✅</td><td>Máx. 200 caracteres</td></tr>
+      <tr><td>Categoría</td><td>Select</td><td>✅</td><td>Enum: carne, pescado, verdura, lácteo, bebida, otros…</td></tr>
+      <tr><td>Unidad de medida</td><td>Select</td><td>✅</td><td>kg, g, L, mL, ud, caja…</td></tr>
+      <tr><td>Contenido / Cantidad</td><td>Numérico</td><td>No</td><td>Contenido por unidad de venta</td></tr>
+      <tr><td>Código de barras EAN-13</td><td>Texto / Escáner</td><td>No</td><td>Botón de generación automática con permiso <code>productos:generar_ean13</code>. También es posible escanear con cámara o lector USB/serie.</td></tr>
+      <tr><td>Alérgenos</td><td>Multi-select con chips</td><td>No</td><td>14 alérgenos reglamentarios (gluten, lactosa, frutos secos…)</td></tr>
+      <tr><td>Proveedores / Precio</td><td>Relación múltiple</td><td>No</td><td>Permite vincular uno o más proveedores con precio unitario por proveedor</td></tr>
+      <tr><td>Imagen</td><td>Upload de archivo</td><td>No</td><td>Se almacena en el servidor vía <code>POST /archivos</code></td></tr>
+    </tbody>
+  </table>
+  <div class="callout info">
+    <div class="callout-title">ℹ️ Integración OpenFoodFacts</div>
+    Al escanear o introducir un código de barras, el sistema consulta automáticamente la API pública de OpenFoodFacts para autocompletar el nombre del producto y sus alérgenos. El usuario puede aceptar o modificar los datos sugeridos antes de guardar.
+  </div>
+
+  <h3>6.3 Vista del alumno</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Alumno/Productos-Alumno.png" alt="Productos Alumno" />
+    <p class="screenshot-caption">Figura 6.3 — Catálogo de productos visto por un Alumno</p>
+  </div>
+  <p>El alumno ve el mismo listado de productos pero <strong>sin</strong> botones de creación, edición ni eliminación. Puede buscar y filtrar para consultar la información nutricional, alérgenos y proveedores de cada producto. La vista es de solo lectura.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     7. PROVEEDORES
+══════════════════════════════════════ -->
+<section id="sec-proveedores">
+  <h2><span class="sec-num">7.</span> Módulo Proveedores</h2>
+
+  <div class="screenshot-wrap">
+    <img src="img/Alumno/Proveedor-Alumno.png" alt="Proveedores Alumno" />
+    <p class="screenshot-caption">Figura 7.1 — Listado de proveedores (vista alumno, solo lectura)</p>
+  </div>
+
+  <p>El módulo de proveedores gestiona el directorio de empresas suministradoras. Los datos almacenados por proveedor son:</p>
+  <ul>
+    <li>Razón social y nombre comercial</li>
+    <li>CIF / NIF</li>
+    <li>Persona de contacto y teléfono</li>
+    <li>Email comercial</li>
+    <li>Dirección postal completa</li>
+    <li>Condiciones de pago y plazo habitual de entrega</li>
+    <li>Catálogo de productos ofertados con precio unitario negociado</li>
+  </ul>
+
+  <div class="grid2">
+    <div class="screenshot-wrap">
+      <img src="img/Admin/CrearProveedor-Admin.png" alt="Crear Proveedor" />
+      <p class="screenshot-caption">Figura 7.2 — Formulario de creación de proveedor</p>
+    </div>
+    <div class="screenshot-wrap">
+      <img src="img/Admin/EditarProveedor-Admin.png" alt="Editar Proveedor" />
+      <p class="screenshot-caption">Figura 7.3 — Formulario de edición de proveedor</p>
+    </div>
+  </div>
+
+  <p>Las acciones disponibles según rol:</p>
+  <table>
+    <thead><tr><th>Acción</th><th>ADMIN</th><th>PROFESOR</th><th>ALUMNO</th></tr></thead>
+    <tbody>
+      <tr><td>Ver listado</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      <tr><td>Ver detalle</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      <tr><td>Crear proveedor</td><td>✅</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Editar proveedor</td><td>✅</td><td>❌</td><td>❌</td></tr>
+      <tr><td>Eliminar proveedor</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════
+     8. RECETAS
+══════════════════════════════════════ -->
+<section id="sec-recetas">
+  <h2><span class="sec-num">8.</span> Módulo Recetas</h2>
+  <p>El catálogo de recetas (escandallos) define las preparaciones que se ejecutan en el aula. Cada receta lista los ingredientes, sus cantidades brutas y netas (con porcentaje de merma aplicada), así como el rendimiento y el coste estimado.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Alumno/Recetas-Alumno.png" alt="Recetas Alumno" />
+    <p class="screenshot-caption">Figura 8.1 — Catálogo de recetas visto por un Alumno</p>
+  </div>
+
+  <h3>8.1 Edición de receta (Admin)</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/EditarReceta-Admin.png" alt="Editar Receta" />
+    <p class="screenshot-caption">Figura 8.2 — Modal de edición de receta</p>
+  </div>
+  <p>El formulario de receta incluye:</p>
+  <table>
+    <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Nombre</td><td>Denominación de la receta</td></tr>
+      <tr><td>Instrucciones</td><td>Texto libre de elaboración</td></tr>
+      <tr><td>Tiempo de preparación</td><td>En minutos</td></tr>
+      <tr><td>Dificultad</td><td>Enum: básica / media / avanzada</td></tr>
+      <tr><td>Alérgenos</td><td>Calculados automáticamente desde ingredientes + editables</td></tr>
+      <tr><td>Producto resultado</td><td>Producto del catálogo que se genera al cocinar</td></tr>
+      <tr><td>Rendimiento</td><td>Cantidad producida por ejecución</td></tr>
+      <tr><td>Unidad resultado</td><td>Unidad de medida del producto resultante</td></tr>
+      <tr><td>Días de caducidad</td><td>Vida útil del lote producido</td></tr>
+      <tr><td>Coste unitario estimado</td><td>Calculado automáticamente desde ingredientes</td></tr>
+      <tr><td>Ingredientes</td><td>Lista dinámica: producto, cantidad neta, % merma → cantidad bruta calculada automáticamente como: bruta = neta / (1 − merma/100)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-title">ℹ️ Cálculo de merma en ingredientes</div>
+    El campo <code>mermaAplicada</code> de cada ingrediente acepta valores entre 0 y 99,99 %. Al introducirlo, el sistema calcula automáticamente la cantidad bruta a pedir: <code>cantidadBruta = cantidadNeta / (1 − merma/100)</code>. Este valor es el que se utiliza al ejecutar la producción para descontar del inventario.
+  </div>
+
+  <h3>8.2 Ejecución de receta — Cocinar</h3>
+  <p>Con el permiso <code>recetas:cocinar</code>, el usuario puede ejecutar la producción de una receta. Este proceso:</p>
+  <ol class="steps">
+    <li>Verifica que haya stock suficiente para todos los ingredientes (con criterio FEFO: First Expired First Out, prioriza los lotes de caducidad más próxima).</li>
+    <li>Descuenta las cantidades brutas de cada ingrediente del inventario generando movimientos de tipo <code>PRODUCCION_CONSUMO</code>.</li>
+    <li>Crea un nuevo lote en el inventario del producto resultado con movimiento <code>PRODUCCION_RESULTADO</code>.</li>
+    <li>Registra un <code>ProduccionLote</code> con el usuario, la fecha y el rendimiento obtenido.</li>
+  </ol>
+  <p>Si el stock es insuficiente para algún ingrediente, la ejecución se cancela con error antes de realizar ningún descuento.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     9. PEDIDOS
+══════════════════════════════════════ -->
+<section id="sec-pedidos">
+  <h2><span class="sec-num">9.</span> Módulo Pedidos</h2>
+  <p>El módulo de pedidos gestiona el ciclo completo de aprovisionamiento desde la solicitud hasta la recepción en almacén. Soporta tres tipos de entidades: <strong>Pedido de compra</strong> (purchase_batch), <strong>Pedido de usuario</strong> (pedido_usuario) y el <strong>Pedido clásico</strong> (pedido).</p>
+
+  <h3>9.1 Listado de pedidos — Admin</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Pedidos-Admin.png" alt="Pedidos Admin" />
+    <p class="screenshot-caption">Figura 9.1 — Módulo de pedidos visto por el Administrador</p>
+  </div>
+  <p>La página dispone de pestañas para navegar entre vistas:</p>
+  <ul>
+    <li><strong>Vista semanal</strong> — tablero Kanban agrupado por semanas; permite consolidar pedidos de usuarios en un lote de compra</li>
+    <li><strong>Mis pedidos</strong> — pedidos creados por el usuario actual</li>
+    <li><strong>Lotes de compra</strong> — lotes agregados listos para enviar al proveedor</li>
+    <li><strong>Todos</strong> — listado completo paginado con buscador y filtros</li>
+  </ul>
+
+  <h3>9.2 Ciclo de vida de un pedido de usuario</h3>
+  <p>Los estados posibles de un <code>pedido_usuario</code> son:</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;">
+    <span class="chip chip-pending">BORRADOR</span> →
+    <span class="chip chip-pending">PENDIENTE</span> →
+    <span class="chip chip-active">APROBADO</span> →
+    <span class="chip chip-info">CONSOLIDADO</span> →
+    <span class="chip chip-error">CANCELADO</span>
+  </div>
+  <p>Los estados de un lote de compra (<code>purchase_batch</code>) son:</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;">
+    <span class="chip chip-pending">PENDIENTE</span> →
+    <span class="chip chip-info">PARCIAL</span> →
+    <span class="chip chip-active">COMPLETADO</span> →
+    <span class="chip chip-error">INCIDENCIA / CANCELADO</span>
+  </div>
+
+  <h3>9.3 Creación de pedido — Profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/CreaciónPedido-Profesor.png" alt="Creación Pedido Profesor" />
+    <p class="screenshot-caption">Figura 9.2 — Modal de creación de pedido por parte del Profesor</p>
+  </div>
+  <p>El profesor selecciona el proveedor, añade líneas de producto (producto-proveedor, cantidad, precio unitario) y puede incluir observaciones. El formulario permite autoguardado en borrador (persistido en <code>localStorage</code>) para que el profesor pueda cerrar el navegador y retomarlo más tarde.</p>
+  <div class="callout warning">
+    <div class="callout-title">⚠️ Recuperación de borrador</div>
+    Si el sistema detecta un borrador guardado al abrir la página de pedidos, muestra un diálogo de recuperación preguntando si desea continuar desde donde lo dejó o descartarlo.
+  </div>
+
+  <h3>9.4 Aprobación de pedido — Profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/AceptaciónPedido-Profesor.png" alt="Aceptación Pedido" />
+    <p class="screenshot-caption">Figura 9.3 — Diálogo de aprobación de pedido</p>
+  </div>
+
+  <h3>9.5 Pedidos del Profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Pedidos-Profesor.png" alt="Pedidos Profesor" />
+    <p class="screenshot-caption">Figura 9.4 — Módulo de pedidos visto por el Profesor</p>
+  </div>
+
+  <h3>9.6 Consolidación y lotes de compra</h3>
+  <p>Un ADMIN puede seleccionar múltiples pedidos de usuarios de una misma semana y consolidarlos en un único lote de compra que agrupa las líneas de producto por proveedor. Este lote es el que se envía al proveedor y el que se usa como referencia en la recepción de mercancía.</p>
+
+  <h3>9.7 Exportación</h3>
+  <p>Desde la cabecera de la página de pedidos el administrador puede:</p>
+  <ul>
+    <li>Exportar a <strong>Excel (.xlsx)</strong> el listado filtrado actual</li>
+    <li>Generar un <strong>PDF de reporte</strong> de pedidos seleccionando formato y rango de fechas</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════
+     10. RECEPCIÓN
+══════════════════════════════════════ -->
+<section id="sec-recepcion">
+  <h2><span class="sec-num">10.</span> Módulo Recepción</h2>
+  <p>El módulo de recepción gestiona la entrada física de mercancía al almacén. Opera mediante un <strong>asistente de pasos (wizard)</strong> de cuatro etapas que guía al operario durante el proceso de conteo y validación de la mercancía recibida.</p>
+
+  <h3>10.1 Paso 1 — Selección de pedidos</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Recepción-Admin.png" alt="Recepción Admin" />
+    <p class="screenshot-caption">Figura 10.1 — Paso 1: Selección del pedido a recepcionar</p>
+  </div>
+  <p>El operario selecciona el lote de compra o pedido pendiente que va a recepcionar. El sistema filtra automáticamente los pedidos en estado <span class="chip chip-info">POR_RECEPCIONAR</span>.</p>
+
+  <h3>10.2 Paso 2 — Escaneo / Conteo</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/ConteoRecepcion-Admin.png" alt="Conteo Recepción" />
+    <p class="screenshot-caption">Figura 10.2 — Paso 2: Escaneo y conteo de productos recibidos</p>
+  </div>
+  <p>En este paso el operario va registrando, línea por línea, la cantidad real recibida de cada producto. Dispone de:</p>
+  <ul>
+    <li><strong>Escáner de código de barras</strong> — mediante la Web Serial API (lector USB) o cámara del dispositivo</li>
+    <li><strong>Báscula</strong> — integración con balanza electrónica vía puerto serie para peso automático</li>
+    <li><strong>Búsqueda manual</strong> — autocompletado por nombre si no hay código de barras</li>
+    <li><strong>Crear nuevo producto</strong> — modal para dar de alta un producto no existente en catálogo durante la recepción</li>
+  </ul>
+
+  <h3>10.3 Paso 3 — Revisión</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/RevisionRecepcion-Admin.png" alt="Revisión Recepción" />
+    <p class="screenshot-caption">Figura 10.3 — Paso 3: Revisión de diferencias y asignación de lotes</p>
+  </div>
+  <p>La revisión muestra una comparativa entre la cantidad pedida y la cantidad contada. Si hay diferencias, el sistema las clasifica automáticamente como:</p>
+  <ul>
+    <li><span class="chip chip-error">FALTANTE</span> — se recibió menos de lo pedido → se genera incidencia automática</li>
+    <li><span class="chip chip-info">EXCESO</span> — se recibió más de lo pedido</li>
+    <li><span class="chip chip-error">DEFECTUOSO</span> — unidades recibidas en mal estado</li>
+  </ul>
+  <p>También se asigna en este paso la <strong>fecha de caducidad</strong> y la <strong>ubicación de almacenamiento</strong> para cada lote recibido.</p>
+
+  <h3>10.4 Paso 4 — Finalización</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Finalizacion-Recepcion.png" alt="Finalización Recepción" />
+    <p class="screenshot-caption">Figura 10.4 — Paso 4: Confirmación y resultado de la recepción</p>
+  </div>
+  <p>Al confirmar la recepción el sistema:</p>
+  <ol class="steps">
+    <li>Crea los registros de inventario (lotes) con movimientos tipo <code>ENTRADA_COMPRA</code>.</li>
+    <li>Actualiza el estado del pedido/lote a <span class="chip chip-active">RECEPCIONADO</span> o <span class="chip chip-info">PARCIAL</span> si hay diferencias.</li>
+    <li>Genera automáticamente las <strong>incidencias</strong> correspondientes a las diferencias detectadas.</li>
+    <li>Vincula el albarán del proveedor si ya fue digitalizado.</li>
+  </ol>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠️ Borrador de recepción</div>
+    Al igual que los pedidos, el wizard de recepción guarda automáticamente el progreso como borrador. Si el operario cierra el navegador accidentalmente, puede retomar desde donde lo dejó. Si detecta un borrador anterior de otro usuario, muestra un diálogo de conflicto.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     11. ALBARANES
+══════════════════════════════════════ -->
+<section id="sec-albaranes">
+  <h2><span class="sec-num">11.</span> Módulo Albaranes</h2>
+  <p>El módulo de albaranes digitaliza los documentos de entrega del proveedor. Permite adjuntar el PDF o imagen del albarán a la recepción correspondiente y hacer seguimiento de su estado.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Albaranes-Admin.png" alt="Albaranes Admin" />
+    <p class="screenshot-caption">Figura 11.1 — Listado de albaranes</p>
+  </div>
+
+  <div class="grid2">
+    <div class="screenshot-wrap">
+      <img src="img/Admin/SubirAlbaran-Admin.png" alt="Subir Albarán" />
+      <p class="screenshot-caption">Figura 11.2 — Modal de subida de documento de albarán</p>
+    </div>
+    <div class="screenshot-wrap">
+      <img src="img/Admin/DetallesAlbaran-Admin.png" alt="Detalles Albarán" />
+      <p class="screenshot-caption">Figura 11.3 — Vista de detalle de un albarán</p>
+    </div>
+  </div>
+
+  <p>Cada albarán almacena:</p>
+  <ul>
+    <li>Número de albarán (del proveedor)</li>
+    <li>Proveedor asociado</li>
+    <li>Fecha del albarán</li>
+    <li>Recepción(es) vinculada(s)</li>
+    <li>Pedido(s) asociado(s)</li>
+    <li>Documento digitalizado (PDF / imagen) con posibilidad de previsualización</li>
+    <li>Observaciones</li>
+  </ul>
+  <p>El sistema incluye un <strong>listener de eventos</strong> (<code>AlbaranRecepcionListener</code>) que crea automáticamente un registro de albarán vacío cada vez que se completa una recepción, para que el operario solo tenga que adjuntar el documento físico.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     12. DISTRIBUCIÓN
+══════════════════════════════════════ -->
+<section id="sec-distribucion">
+  <h2><span class="sec-num">12.</span> Módulo Distribución</h2>
+  <p>El módulo de distribución gestiona el traslado de materiales recepcionados desde el almacén central hacia las aulas o destinos de los profesores. Es el puente entre la recepción de mercancía y el consumo en preparaciones.</p>
+
+  <h3>12.1 Distribuciones disponibles</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Distribuición-Admin.png" alt="Distribución Admin" />
+    <p class="screenshot-caption">Figura 12.1 — Listado de distribuciones disponibles</p>
+  </div>
+
+  <h3>12.2 Entrega de distribución</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/EntregaDistribucion-Admin.png" alt="Entrega Distribución" />
+    <p class="screenshot-caption">Figura 12.2 — Registro de entrega de una distribución</p>
+  </div>
+
+  <h3>12.3 Historial de distribuciones</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/HistorialDistribución-Admin.png" alt="Historial Distribución" />
+    <p class="screenshot-caption">Figura 12.3 — Historial de distribuciones realizadas</p>
+  </div>
+
+  <p>El flujo de distribución funciona así:</p>
+  <ol class="steps">
+    <li>El sistema detecta los pedidos de usuario en estado <span class="chip chip-active">APROBADO</span> o <span class="chip chip-info">CONSOLIDADO</span> con stock disponible y los muestra en la pestaña "Disponibles".</li>
+    <li>El administrador selecciona las líneas de producto a distribuir e indica la cantidad, la ubicación origen y la ubicación destino (puede ser el slot de aula del alumno).</li>
+    <li>Al crear la distribución, su estado inicial es <span class="chip chip-pending">EN PREPARACIÓN</span>.</li>
+    <li>Al confirmar la entrega, el estado cambia a <span class="chip chip-active">ENTREGADO</span> y se generan los movimientos de inventario correspondientes (<code>DISTRIBUCION</code>).</li>
+    <li>La distribución puede cancelarse con un motivo antes de ser entregada.</li>
+  </ol>
+  <p>El sistema sugiere automáticamente la ubicación destino basándose en el <strong>slot de aula</strong> asignado al alumno que realizó el pedido.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     13. INVENTARIO
+══════════════════════════════════════ -->
+<section id="sec-inventario">
+  <h2><span class="sec-num">13.</span> Módulo Inventario</h2>
+  <p>El inventario controla el stock físico por lote y por ubicación. Implementa el criterio <strong>FEFO</strong> (First Expired, First Out): los lotes con fecha de caducidad más próxima se consumen primero. El sistema registra la trazabilidad completa de cada movimiento.</p>
+
+  <h3>13.1 Listado de inventario — Admin</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Inventario-Admin.png" alt="Inventario Admin" />
+    <p class="screenshot-caption">Figura 13.1 — Vista general del inventario (Administrador)</p>
+  </div>
+  <p>La tabla de inventario muestra el stock agrupado por producto, con la siguiente información por fila:</p>
+  <ul>
+    <li>Nombre del producto y categoría</li>
+    <li>Stock total disponible (suma de todos los lotes no caducados)</li>
+    <li>Unidad de medida</li>
+    <li>Número de lotes activos</li>
+    <li>Fecha de caducidad del lote más próximo a caducar</li>
+    <li>Ubicación(es) de almacenamiento</li>
+    <li>Indicadores visuales de alerta (stock bajo mínimo)</li>
+  </ul>
+
+  <h3>13.2 Inventario general — Profesor</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/InventarioGeneral-Profesor.png" alt="Inventario Profesor" />
+    <p class="screenshot-caption">Figura 13.2 — Vista del inventario para el Profesor</p>
+  </div>
+  <p>El profesor tiene acceso de consulta al inventario general. Puede ver el stock disponible para planificar sus pedidos, pero no puede realizar ajustes ni reportar mermas desde esta vista (lo hace desde el módulo de Mermas).</p>
+
+  <h3>13.3 Detalle de lote</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/DetalleLoteInventario-Admin.png" alt="Detalle Lote" />
+    <p class="screenshot-caption">Figura 13.3 — Modal de detalle de un lote de inventario</p>
+  </div>
+  <p>Al hacer clic en una fila del inventario se abre el modal de detalle que muestra:</p>
+  <ul>
+    <li>Todos los lotes del producto con cantidad, fecha de entrada, fecha de caducidad y ubicación</li>
+    <li>Historial de movimientos del producto</li>
+    <li>Acceso directo a ajuste de stock y reporte de merma</li>
+  </ul>
+
+  <h3>13.4 Añadir producto al inventario</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/AñadirProductoInventario-Admin.png" alt="Añadir Producto Inventario" />
+    <p class="screenshot-caption">Figura 13.4 — Formulario de añadir producto al inventario manualmente</p>
+  </div>
+
+  <h3>13.5 Ajuste de stock</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/AjusteStockInventario-Admin.png" alt="Ajuste Stock" />
+    <p class="screenshot-caption">Figura 13.5 — Modal de ajuste de stock</p>
+  </div>
+  <p>El ajuste de stock (requiere <code>inventario:ajustar_stock</code>) permite corregir la cantidad de un lote específico. El sistema crea un movimiento de tipo <code>AJUSTE</code> con el usuario y el motivo registrados para auditoría.</p>
+
+  <h3>13.6 Reporte de merma desde inventario</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/ReportarMermaInventario-Admin.png" alt="Reportar Merma" />
+    <p class="screenshot-caption">Figura 13.6 — Modal de reporte de merma desde el inventario</p>
+  </div>
+
+  <h3>13.7 Gestión de ubicaciones</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/gestionUbicaciónInventario-Admin.png" alt="Gestión Ubicación" />
+    <p class="screenshot-caption">Figura 13.7 — Modal de gestión de ubicaciones de almacén</p>
+  </div>
+  <p>Las ubicaciones son los espacios físicos del almacén (cámara frigorífica, almacén seco, aula 1, etc.). Un ADMIN puede crear, editar, activar/desactivar y restaurar (soft-delete) ubicaciones. Cada lote de inventario queda asignado a una ubicación específica.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     14. MOVIMIENTOS
+══════════════════════════════════════ -->
+<section id="sec-movimientos">
+  <h2><span class="sec-num">14.</span> Módulo Movimientos</h2>
+  <p>El módulo de movimientos es el registro de auditoría completo de todos los cambios de stock. Cada operación que afecta al inventario genera un movimiento inmutable con el tipo, cantidad, usuario, producto, lote y timestamp.</p>
+
+  <h3>14.1 Listado de movimientos</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/Movimientos-Admin.png" alt="Movimientos Admin" />
+    <p class="screenshot-caption">Figura 14.1 — Listado de movimientos de stock</p>
+  </div>
+
+  <h3>14.2 Detalle de movimiento</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/DetalleMovimiento-Admin.png" alt="Detalle Movimiento" />
+    <p class="screenshot-caption">Figura 14.2 — Vista de detalle de un movimiento individual</p>
+  </div>
+
+  <p>Los tipos de movimiento registrados en el sistema son:</p>
+  <table>
+    <thead><tr><th>Tipo</th><th>Descripción</th><th>Genera stock</th></tr></thead>
+    <tbody>
+      <tr><td><code>ENTRADA</code></td><td>Entrada manual de stock</td><td>✅ +</td></tr>
+      <tr><td><code>ENTRADA_COMPRA</code></td><td>Entrada desde recepción de pedido</td><td>✅ +</td></tr>
+      <tr><td><code>SALIDA</code></td><td>Salida manual de stock</td><td>❌ −</td></tr>
+      <tr><td><code>AJUSTE</code></td><td>Corrección de inventario</td><td>± Según diferencia</td></tr>
+      <tr><td><code>MERMA</code></td><td>Pérdida registrada</td><td>❌ −</td></tr>
+      <tr><td><code>DISTRIBUCION</code></td><td>Traslado a aula/destino</td><td>❌ − (origen) / + (destino)</td></tr>
+      <tr><td><code>PRODUCCION_CONSUMO</code></td><td>Consumo de ingrediente en receta</td><td>❌ −</td></tr>
+      <tr><td><code>PRODUCCION_RESULTADO</code></td><td>Lote producido por una receta</td><td>✅ +</td></tr>
+    </tbody>
+  </table>
+  <p>Los movimientos son inmutables. No se pueden editar ni eliminar para garantizar la integridad del registro de auditoría.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     15. MERMAS
+══════════════════════════════════════ -->
+<section id="sec-mermas">
+  <h2><span class="sec-num">15.</span> Módulo Mermas</h2>
+  <p>Las mermas son las pérdidas de producto registradas en el sistema. Pueden originarse en diferentes contextos: durante la recepción, en la producción, por caducidad, rotura o inventario.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Merma-Profesor.png" alt="Mermas Profesor" />
+    <p class="screenshot-caption">Figura 15.1 — Módulo de mermas visto por el Profesor</p>
+  </div>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/ReportarMermaPreparacion-Profesor.png" alt="Reportar Merma Preparación" />
+    <p class="screenshot-caption">Figura 15.2 — Modal de reporte de merma desde una preparación</p>
+  </div>
+
+  <p>Los motivos de merma disponibles son:</p>
+  <ul>
+    <li><strong>Rotura</strong> — el producto se ha roto o derramado</li>
+    <li><strong>Deterioro</strong> — degradación por temperatura, humedad u otros</li>
+    <li><strong>Hurto</strong> — desaparición por sustracción</li>
+    <li><strong>Error de preparación</strong> — desperdicio durante el cocinado</li>
+    <li><strong>Otros</strong> — causa no clasificada</li>
+  </ul>
+
+  <p>La página de mermas muestra estadísticas agregadas (por motivo y por producto) junto al historial de registros individuales. El profesor puede reportar mermas directamente desde el listado de preparaciones.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     16. INCIDENCIAS
+══════════════════════════════════════ -->
+<section id="sec-incidencias">
+  <h2><span class="sec-num">16.</span> Módulo Incidencias</h2>
+  <p>Las incidencias registran las discrepancias detectadas durante la recepción de mercancía. Se crean automáticamente cuando hay diferencias entre la cantidad pedida y la recibida, pero también pueden crearse manualmente.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Incidencia-Profesor.png" alt="Incidencias Profesor" />
+    <p class="screenshot-caption">Figura 16.1 — Módulo de incidencias visto por el Profesor</p>
+  </div>
+
+  <p>El ciclo de vida de una incidencia:</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0;align-items:center;">
+    <span class="chip chip-pending">NUEVA</span> →
+    <span class="chip chip-info">EN_AJUSTE</span> →
+    <span class="chip chip-pending">PENDIENTE_VALIDACIÓN</span> →
+    <span class="chip chip-active">RESUELTA</span>
+  </div>
+  <p>También puede terminar en <span class="chip chip-error">CANCELADA</span> o <span class="chip chip-gray">INVÁLIDA</span>.</p>
+
+  <p>Cada línea de incidencia tiene su propio estado de reclamación:</p>
+  <ul>
+    <li><span class="chip chip-pending">PENDIENTE</span> — sin acción por parte del proveedor</li>
+    <li><span class="chip chip-info">RECLAMADO</span> — se ha presentado reclamación formal</li>
+    <li><span class="chip chip-active">ABONADO</span> — el proveedor ha emitido abono/factura de crédito</li>
+    <li><span class="chip chip-active">REENVIADO</span> — el proveedor ha vuelto a enviar la mercancía</li>
+  </ul>
+
+  <p>Para resolver una incidencia, el usuario (con permiso <code>incidencias:resolver</code>) puede ajustar las cantidades recibidas línea a línea, cambiar los estados de reclamación e indicar el estado final (resuelta, cancelada o inválida).</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     17. PREPARACIONES
+══════════════════════════════════════ -->
+<section id="sec-preparaciones">
+  <h2><span class="sec-num">17.</span> Módulo Preparaciones</h2>
+  <p>Las preparaciones son las ejecuciones de recetas registradas en el sistema. Cada vez que un profesor o administrador "cocina" una receta, se crea un registro de preparación (<code>ProduccionLote</code>) con todos los datos de la ejecución.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Preparaciones-Profesor.png" alt="Preparaciones Profesor" />
+    <p class="screenshot-caption">Figura 17.1 — Listado de preparaciones visto por el Profesor</p>
+  </div>
+
+  <div class="screenshot-wrap">
+    <img src="img/Alumno/Preparaciones-Alumno.png" alt="Preparaciones Alumno" />
+    <p class="screenshot-caption">Figura 17.2 — Listado de preparaciones visto por el Alumno</p>
+  </div>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/CrearPreparacionReceta-Profesor.png" alt="Crear Preparación" />
+    <p class="screenshot-caption">Figura 17.3 — Modal de creación de preparación (ejecutar receta)</p>
+  </div>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/ConsumoPreparacion-Profesor.png" alt="Consumo Preparación" />
+    <p class="screenshot-caption">Figura 17.4 — Detalle de consumo de ingredientes de una preparación</p>
+  </div>
+
+  <p>Cada preparación registra:</p>
+  <ul>
+    <li>Receta ejecutada y usuario</li>
+    <li>Fecha y hora de ejecución</li>
+    <li>Número de raciones / rendimiento obtenido</li>
+    <li>Ingredientes consumidos (con lotes específicos descontados del inventario)</li>
+    <li>Lote de producto resultado creado en inventario</li>
+    <li>Mermas reportadas durante la preparación</li>
+    <li>Coste real de la preparación</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════
+     18. ADMINISTRACIÓN
+══════════════════════════════════════ -->
+<section id="sec-administracion">
+  <h2><span class="sec-num">18.</span> Módulo Administración</h2>
+  <p>El módulo de administración agrupa las funciones de gestión académica y de sistema. Es accesible para PROFESOR (sólo sus pestañas), ADMIN y SUPER_ADMIN.</p>
+
+  <div class="screenshot-wrap">
+    <img src="img/Admin/GestionUsuarios-Admin.png" alt="Gestión Usuarios" />
+    <p class="screenshot-caption">Figura 18.1 — Gestión de usuarios (Admin)</p>
+  </div>
+
+  <h3>18.1 Gestión de usuarios</h3>
+  <p>Visible sólo para ADMIN y SUPER_ADMIN. Permite:</p>
+  <ul>
+    <li>Listar todos los usuarios con filtros por rol, estado y búsqueda</li>
+    <li>Crear nuevos usuarios con rol, email y contraseña temporal</li>
+    <li>Editar datos del perfil de cualquier usuario</li>
+    <li>Activar / desactivar cuentas (sin eliminarlas, preservando historial)</li>
+    <li>Resetear la contraseña de un usuario generando una nueva aleatoriamente</li>
+    <li>Eliminar usuarios (soft-delete)</li>
+    <li>Asignar o cambiar el rol del usuario</li>
+  </ul>
+
+  <div class="screenshot-wrap">
+    <img src="img/Admin/GeneradorContraseña-Admin.png" alt="Generador Contraseña" />
+    <p class="screenshot-caption">Figura 18.2 — Generador de contraseña temporal para reset</p>
+  </div>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/ContraseñaNueva-Admin.png" alt="Contraseña Nueva" />
+    <p class="screenshot-caption">Figura 18.3 — Contraseña generada lista para comunicar al usuario</p>
+  </div>
+
+  <h3>18.2 Gestor de permisos (Plantillas de rol)</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Admin/GestordePermisos-Admin.png" alt="Gestor Permisos" />
+    <p class="screenshot-caption">Figura 18.4 — Gestor de permisos por plantilla de rol</p>
+  </div>
+  <p>El gestor de permisos permite a un SUPER_ADMIN configurar exactamente qué permisos tiene cada plantilla de rol (PROFESOR, ALUMNO y roles personalizados). Los cambios se aplican inmediatamente a todos los usuarios con dicho rol. Cada permiso puede activarse o desactivarse individualmente con un toggle.</p>
+
+  <h3>18.3 Gestión de clases y slots (Administración Profesor)</h3>
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Administración-Profesor.png" alt="Administración Profesor" />
+    <p class="screenshot-caption">Figura 18.5 — Módulo de administración visto por el Profesor</p>
+  </div>
+  <p>El profesor accede al módulo de administración con pestañas limitadas a:</p>
+  <ul>
+    <li><strong>Mis Clases</strong> — gestión de los slots de aula asignados al profesor (número de clase, aula, ubicación de almacén vinculada)</li>
+    <li><strong>Mis Alumnos</strong> — listado de alumnos vinculados al profesor con sus slots de clase</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════
+     19. PERFIL
+══════════════════════════════════════ -->
+<section id="sec-perfil">
+  <h2><span class="sec-num">19.</span> Perfil de Usuario</h2>
+
+  <div class="screenshot-wrap">
+    <img src="img/Profesor/Perfil-Profesor.png" alt="Perfil Profesor" />
+    <p class="screenshot-caption">Figura 19.1 — Página de perfil de usuario</p>
+  </div>
+
+  <p>La página de perfil está disponible para todos los roles y permite:</p>
+  <ul>
+    <li>Visualizar y editar nombre completo, email y nombre de usuario</li>
+    <li>Cambiar el idioma de la interfaz (ES / EN)</li>
+    <li>Cambiar la contraseña (requiere introducir la contraseña actual)</li>
+    <li>Ver el rol asignado (no editable por el propio usuario)</li>
+    <li>Para <strong>profesores</strong>: gestionar los slots de clase desde esta misma página</li>
+    <li>Para <strong>alumnos</strong>: cambiar el profesor asignado (si tiene permiso <code>alumno:cambiar_profesor</code>)</li>
+  </ul>
+
+  <h3>19.1 Cambio de contraseña</h3>
+  <p>El formulario de cambio de contraseña valida:</p>
+  <ul>
+    <li>Contraseña actual correcta (verificada contra el hash en base de datos)</li>
+    <li>Nueva contraseña con al menos 8 caracteres, una mayúscula, un número y un carácter especial</li>
+    <li>Confirmación coincidente con la nueva contraseña</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════
+     20. NOTIFICACIONES
+══════════════════════════════════════ -->
+<section id="sec-notificaciones">
+  <h2><span class="sec-num">20.</span> Centro de Notificaciones</h2>
+
+  <div class="screenshot-wrap">
+    <img src="img/Notificaciones.png" alt="Notificaciones" />
+    <p class="screenshot-caption">Figura 20.1 — Centro de notificaciones del sistema</p>
+  </div>
+
+  <p>El icono de campana en la barra superior muestra el contador de notificaciones pendientes. Al hacer clic abre el panel lateral de notificaciones. Los tipos de notificación son:</p>
+  <ul>
+    <li><strong>Usuarios pendientes de activación</strong> — usuarios registrados que aún no han sido activados (visible sólo para ADMIN)</li>
+    <li><strong>Alertas de stock bajo mínimo</strong> — productos por debajo del umbral configurado</li>
+    <li><strong>Incidencias sin resolver</strong> — incidencias en estado abierto</li>
+    <li><strong>Pedidos pendientes de aprobación</strong> — pedidos de usuarios aguardando revisión</li>
+  </ul>
+  <p>Las notificaciones de prioridad <strong>urgente</strong> muestran el badge en color rojo; las normales en azul. Hacer clic en una notificación navega directamente al módulo correspondiente.</p>
+</section>
+
+<!-- ══════════════════════════════════════
+     21. FLUJOS DE USUARIO COMPLETOS
+══════════════════════════════════════ -->
+<section id="sec-flujos">
+  <h2><span class="sec-num">21.</span> Flujos de usuario completos</h2>
+
+  <h3>21.1 Flujo de aprovisionamiento completo</h3>
+  <ol class="steps">
+    <li><strong>Profesor crea un pedido</strong> — selecciona productos del catálogo, indica cantidades y lo envía. Estado: <span class="chip chip-pending">PENDIENTE</span>.</li>
+    <li><strong>Admin aprueba el pedido</strong> — revisa el pedido del profesor y lo aprueba. Estado: <span class="chip chip-active">APROBADO</span>.</li>
+    <li><strong>Admin consolida pedidos semanales</strong> — agrupa pedidos de la misma semana en un lote de compra y lo envía al proveedor.</li>
+    <li><strong>Proveedor entrega la mercancía</strong> — el operario inicia el wizard de recepción, escanea los productos y registra las cantidades reales.</li>
+    <li><strong>Recepción finalizada</strong> — el sistema crea los lotes de inventario con sus fechas de caducidad y ubicaciones.</li>
+    <li><strong>Digitalización del albarán</strong> — el operario sube el PDF del albarán del proveedor y lo vincula a la recepción.</li>
+    <li><strong>Distribución al aula</strong> — el administrador prepara y confirma la entrega al slot de aula del profesor.</li>
+    <li><strong>Profesor ejecuta la receta</strong> — descontando los ingredientes del inventario y creando el lote de producto final.</li>
+  </ol>
+
+  <h3>21.2 Flujo de gestión de incidencia</h3>
+  <ol class="steps">
+    <li>Durante la recepción se detecta una diferencia → el sistema crea automáticamente la incidencia en estado <span class="chip chip-pending">NUEVA</span>.</li>
+    <li>El administrador revisa la incidencia y actualiza el estado de reclamación de cada línea (<span class="chip chip-info">RECLAMADO</span>).</li>
+    <li>El proveedor responde → el administrador actualiza a <span class="chip chip-active">ABONADO</span> o <span class="chip chip-active">REENVIADO</span>.</li>
+    <li>Se marca la incidencia como <span class="chip chip-active">RESUELTA</span> con las observaciones de resolución.</li>
+  </ol>
+
+  <h3>21.3 Flujo de alta de nuevo alumno</h3>
+  <ol class="steps">
+    <li>El alumno accede a <code>/login</code> y hace clic en "Crear cuenta de alumno".</li>
+    <li>Completa el formulario de registro y selecciona su profesor.</li>
+    <li>El sistema crea la cuenta con estado <strong>inactivo</strong> y notifica al administrador.</li>
+    <li>El administrador accede a Administración → Usuarios, localiza al nuevo alumno y activa su cuenta.</li>
+    <li>El alumno ya puede iniciar sesión con sus credenciales.</li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════════════
+     22. VALIDACIONES
+══════════════════════════════════════ -->
+<section id="sec-validaciones">
+  <h2><span class="sec-num">22.</span> Validaciones y restricciones</h2>
+  <table>
+    <thead><tr><th>Campo / Operación</th><th>Validación</th><th>Capa</th></tr></thead>
+    <tbody>
+      <tr><td>Email de usuario</td><td>Formato RFC 5322 válido; único en el sistema</td><td>Frontend + Backend</td></tr>
+      <tr><td>Contraseña</td><td>Mínimo 8 caracteres, 1 mayúscula, 1 número, 1 especial</td><td>Frontend + Backend</td></tr>
+      <tr><td>Nombre de usuario</td><td>Único, sin espacios, 3-50 caracteres</td><td>Backend</td></tr>
+      <tr><td>Cantidad en pedido</td><td>Mayor que 0; decimal máximo 2 decimales</td><td>Frontend + Backend (DTO)</td></tr>
+      <tr><td>Merma aplicada en receta</td><td>Entre 0 y 99,99 %</td><td>Frontend + Backend (@Max 99.99)</td></tr>
+      <tr><td>Stock en recepción</td><td>No puede ser negativo; si la cantidad recibida > pedida → exceso documentado</td><td>Backend (transacción)</td></tr>
+      <tr><td>Ejecución de receta</td><td>Verifica stock suficiente de todos los ingredientes antes de descontar</td><td>Backend (transacción atómica)</td></tr>
+      <tr><td>Ajuste de inventario</td><td>La cantidad resultante no puede ser negativa</td><td>Backend (método ajustarCantidad)</td></tr>
+      <tr><td>Código EAN-13</td><td>13 dígitos; checksum válido</td><td>Backend</td></tr>
+      <tr><td>Fecha de caducidad</td><td>No puede ser en el pasado al crear un lote</td><td>Backend</td></tr>
+      <tr><td>Eliminación de pedido</td><td>Solo si no tiene movimientos de inventario vinculados</td><td>Backend</td></tr>
+      <tr><td>Acceso a rutas protegidas</td><td>Token JWT válido; permiso requerido en la ruta</td><td>Backend (Guards JWT + AuthPermissions)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════
+     23. ERRORES FRECUENTES
+══════════════════════════════════════ -->
+<section id="sec-errores">
+  <h2><span class="sec-num">23.</span> Errores frecuentes y soluciones</h2>
+  <table>
+    <thead><tr><th>Problema</th><th>Causa probable</th><th>Solución</th></tr></thead>
+    <tbody>
+      <tr><td>No puedo iniciar sesión</td><td>Credenciales incorrectas o cuenta inactiva</td><td>Verificar usuario/email y contraseña. Si la cuenta está pendiente de activación, contactar con el administrador.</td></tr>
+      <tr><td>El menú no muestra un módulo</td><td>El usuario no tiene el permiso <code>módulo:listar</code> asignado</td><td>El administrador debe revisar la plantilla de rol en Administración → Gestor de Permisos y activar el permiso correspondiente.</td></tr>
+      <tr><td>Error al ejecutar receta: stock insuficiente</td><td>No hay suficiente cantidad de algún ingrediente en inventario</td><td>Verificar el inventario del ingrediente. Puede que el lote esté caducado o no distribuido aún al aula. Crear un pedido del ingrediente faltante.</td></tr>
+      <tr><td>El borrador de pedido no aparece</td><td>El borrador se guarda en <code>localStorage</code> del navegador</td><td>Verificar que no se haya limpiado el caché del navegador. El borrador es específico del navegador y dispositivo.</td></tr>
+      <tr><td>Error al subir albarán: tipo de archivo no permitido</td><td>El archivo no es PDF, JPG o PNG</td><td>Convertir el documento al formato admitido antes de subirlo.</td></tr>
+      <tr><td>El escáner de código de barras no funciona</td><td>El navegador no soporta Web Serial API o no hay permisos</td><td>Usar Chrome/Edge (Chromium). Aceptar el permiso de acceso al puerto serie cuando el navegador lo solicite. En móvil, usar la cámara como alternativa.</td></tr>
+      <tr><td>Demasiados intentos de login</td><td>Rate limiting activado (5 intentos / 15 min)</td><td>Esperar 15 minutos o usar la recuperación de contraseña si se desconoce.</td></tr>
+      <tr><td>La distribución no aparece en "Disponibles"</td><td>El pedido del usuario no está en estado APROBADO/CONSOLIDADO o no se ha recepcionado stock</td><td>Verificar el estado del pedido y confirmar que la recepción está finalizada.</td></tr>
+      <tr><td>Las métricas del dashboard no cargan</td><td>Error de conexión con la API o permiso insuficiente</td><td>Recargar la página. Si persiste, verificar la conectividad con el servidor backend. Comprobar el permiso <code>dashboard:ver_estadisticas</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════
+     24. CONCLUSIONES
+══════════════════════════════════════ -->
+<section id="sec-conclusiones">
+  <h2><span class="sec-num">24.</span> Conclusiones</h2>
+  <p>SmartEconomat representa una solución digital completa y robusta para la gestión del economato de una escuela de hostelería. Sus principales fortalezas son:</p>
+  <ul>
+    <li><strong>Trazabilidad completa</strong>: cada movimiento de stock queda registrado con usuario, fecha y motivo.</li>
+    <li><strong>Control FEFO</strong>: el sistema prioriza el consumo de los lotes más próximos a caducar, reduciendo el desperdicio alimentario.</li>
+    <li><strong>Sistema de permisos granular</strong>: cada usuario ve y puede hacer exactamente lo que su rol permite, sin necesidad de código adicional.</li>
+    <li><strong>Flujos guiados</strong>: el wizard de recepción y los borradores automáticos de pedidos previenen pérdidas de datos y guían al usuario paso a paso.</li>
+    <li><strong>Internacionalización completa</strong>: la interfaz está disponible en español e inglés con soporte para añadir más idiomas.</li>
+    <li><strong>Arquitectura escalable</strong>: el backend NestJS con módulos desacoplados y el frontend React con lazy loading permiten crecer en funcionalidad sin degradar el rendimiento.</li>
+  </ul>
+
+  <h3>Recomendaciones de uso</h3>
+  <ul>
+    <li>Realizar el <strong>conteo de inventario físico mensual</strong> y contrastar con el inventario digital para detectar desviaciones.</li>
+    <li>Activar las <strong>notificaciones de stock bajo mínimo</strong> para anticipar la rotura de stock.</li>
+    <li>Formar al profesorado en el uso del módulo de pedidos para que las solicitudes lleguen consolidadas y bien documentadas.</li>
+    <li>Mantener actualizado el catálogo de productos y sus precios de proveedor para que los costes de escandallo sean precisos.</li>
+    <li>Revisar periódicamente las mermas por producto para detectar patrones de desperdicio y tomar medidas correctoras.</li>
+  </ul>
+
+  <div class="callout success" style="margin-top:2rem;">
+    <div class="callout-title">✅ Guía elaborada con análisis del código fuente real</div>
+    Esta guía ha sido redactada analizando el código fuente completo del proyecto SmartEconomat: componentes React, páginas, rutas, guards de permisos, servicios, tipos TypeScript, controladores NestJS, DTOs, entidades TypeORM y 52 capturas de pantalla reales de la aplicación en sus cuatro roles (SUPER_ADMIN, ADMIN, PROFESOR, ALUMNO).
+  </div>
+</section>
+
+</div><!-- .container -->
+
+<footer style="text-align:center;padding:2rem;color:#6b7280;font-size:.85rem;border-top:1px solid #e5e7eb;margin-top:2rem;">
+  SmartEconomat — Guía de Usuario · CIFP Virgen de Candelaria · 2025
+</footer>
+
+</body>
+</html>

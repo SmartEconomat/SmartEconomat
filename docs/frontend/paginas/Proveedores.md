@@ -13,6 +13,19 @@ La página de Proveedores permite gestionar el directorio de entidades que sumin
 - **[DetailModal](../componentes/DetailModal.md)**: Muestra la ficha completa del proveedor al pulsar el icono de visualización (ojo). Personalizado con la etiqueta de acción **"Editar proveedor"**.
 - **[DynamicFormModal](../componentes/DynamicFormModal.md)**: Formulario para creación y edición de datos fiscales y de contacto.
 - **[ConfirmDialog](../componentes/ConfirmDialog.md)**: Validación para la eliminación de proveedores.
+- **[InteractiveTour](../componentes/InteractiveTour.md)**: Proporciona la guía paso a paso por el módulo.
+
+## Ayuda y Tutoriales
+
+La página de Proveedores incluye asistencia para la gestión administrativa del directorio:
+
+### Tour de Directorio (6 pasos)
+1. **Buscador**: Localización por NIF, Nombre o Email.
+2. **Ordenado**: Organización alfabética de la lista.
+3. **Registro**: Alta de nuevas entidades.
+4. **Exportación PDF**: Generación de ficheros de contacto.
+5. **Reporte Excel**: Descarga de base de datos para administración.
+6. **Gestión Individual**: Acceso a fichas y edición.
 
 ## Funcionalidades Clave
 

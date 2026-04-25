@@ -136,7 +136,11 @@ export default defineConfig(() => {
   const proxyTarget = `http://backend:${backendPort}`;
 
   return {
-    cacheDir: 'node_modules/.vite/frontend',
+    cacheDir: '/tmp/.vite-smarteconomat',
+    optimizeDeps: {
+      // Forzar re-optimización con: VITE_FORCE_OPTIMIZE=true docker compose up
+      force: process.env.VITE_FORCE_OPTIMIZE === 'true',
+    },
     build: {
       outDir: 'build',
       sourcemap: false,

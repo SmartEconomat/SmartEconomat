@@ -42,6 +42,15 @@ type ResolvedRecetaIngredientContext = {
   productosPorId: Map<string, ProductoProveedor[]>;
 };
 
+/**
+ * Converts one or more recipes into purchase order payloads.
+ *
+ * Consolidates ingredients across recipes (accounting for `mermaAplicada`),
+ * resolves supplier assignments, and either creates a single-supplier {@link Pedido}
+ * or builds a multi-supplier batch payload ({@link CreatePedidoUsuarioDto}).
+ * When no `proveedorId` is specified the cheapest common supplier is chosen;
+ * if no common supplier exists for all ingredients a batch payload is returned.
+ */
 @Injectable()
 export class RecetaToPedidoService {
   private readonly logger = new Logger(RecetaToPedidoService.name);
@@ -52,6 +61,17 @@ export class RecetaToPedidoService {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Creates a single-supplier {@link Pedido} from one or more recipes.
+   *
+   * Consolidates ingredients, picks the cheapest common supplier (or validates
+   * the explicitly requested one), then delegates to {@link PedidoService.create}.
+   *
+   * @param dto - Recipe IDs plus optional `proveedorId` and `observaciones`.
+   * @param userId - Actor used for order audit trail.
+   * @throws {BadRequestException} When no common supplier covers all ingredients.
+   * @throws {NotFoundException} When any recipe ID is not found.
+   */
   async generateFromRecetas(
     dto: GeneratePedidoFromRecetasDto,
     userId: string
@@ -76,6 +96,17 @@ export class RecetaToPedidoService {
     return pedido;
   }
 
+  /**
+   * Builds a multi-supplier batch order payload from one or more recipes.
+   *
+   * If a `proveedorId` is specified the result contains lines for that supplier only.
+   * Otherwise each ingredient is assigned to its cheapest eligible supplier,
+   * potentially spreading lines across multiple suppliers.
+   *
+   * @param dto - Recipe IDs plus optional `proveedorId` and `observaciones`.
+   * @returns A {@link CreatePedidoUsuarioDto} ready to be passed to the batch service.
+   * @throws {BadRequestException} When an ingredient has no supplier with a price.
+   */
   async buildBatchOrderFromRecetas(
     dto: GeneratePedidoFromRecetasDto
   ): Promise<CreatePedidoUsuarioDto> {

@@ -209,6 +209,17 @@ frontend/smart-economat-frontend/src/
 4. Si 401 → evento `AUTH_UNAUTHORIZED` → logout limpio
 5. Rutas protegidas validan `AuthContext.user` + permiso requerido vía `ProtectedRoute`
 
+### Rendimiento y UX (Carga Progresiva)
+
+- **Code Splitting**: Se utiliza `React.lazy` y `Suspense` para cargar componentes pesados y modales de forma diferida.
+
+### Accesibilidad (Arquitectura Semántica)
+
+SmartEconomat sigue los estándares WCAG AA para garantizar una experiencia inclusiva:
+- **Outline Semántico**: Cada página debe poseer un único `h1` que defina el contexto principal, seguido de una jerarquía lógica de `h2`, `h3`, etc., sin saltar niveles.
+- **Etiquetado ARIA**: Todo elemento interactivo sin texto (como `IconButton`) debe incluir un `aria-label` descriptivo. Los iconos meramente decorativos se ocultan mediante `aria-hidden="true"`.
+- **Ratios de Contraste**: Se garantiza un contraste mínimo de 4.5:1, ajustando los tokens de texto secundario en temas oscuros para maximizar la legibilidad.
+
 ### Transporte HTTP
 
 `api.service.ts` expone un `baseFetch()` que:
@@ -423,3 +434,15 @@ Comandos:
 - [Sistema RBAC](../wiki/security/rbac.md)
 - [Guía de despliegue](../wiki/DEPLOYMENT.md)
 - [Auditoría de seguridad](../wiki/audits/security-report.md)
+
+---
+
+## Evolución de Módulos (2026)
+
+### Elasticidad del Catálogo (Módulo Producto)
+
+Para soportar flujos de trabajo más flexibles, el catálogo de productos implementa **Elasticidad de Suministro**:
+- **Precio de Referencia Maestro**: La entidad `Producto` posee un campo `precioReferencia` que actúa como el coste maestro del producto.
+- **Sincronización PMP**: El sistema sincroniza automáticamente el `precioReferencia` con el valor del `PMP` (Precio Medio Ponderado) cada vez que este último se recalcula tras una compra oficial. Esto garantiza que las recetas y escandallos usen siempre el coste real más actualizado.
+- **Fallback de Estimación**: En ausencia de proveedores vinculados (productos nuevos o sin stock), el usuario puede definir manualmente el `precioReferencia`, permitiendo la creación de escandallos teóricos antes de realizar la primera compra.
+- **UX Adaptativo**: La interfaz de usuario oculta datos redundantes y solo muestra el precio de referencia como etiqueta "(Ref.)" cuando es el único dato de coste disponible.

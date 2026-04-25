@@ -1,3 +1,9 @@
+/**
+ * @module DashboardService
+ * Service layer for computing dashboard KPI statistics.
+ * Aggregates data from inventory, orders, movements, products, suppliers and
+ * incidencias into a single response DTO.
+ */
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +16,7 @@ import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 
+/** Pedido states that count as "pending" on the dashboard. */
 const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.PENDIENTE_DE_APROBACION,
   EstadoPedido.POR_RECEPCIONAR,
@@ -17,11 +24,26 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.INCIDENCIA,
 ] as const;
 
+/**
+ * Service that computes all KPI metrics displayed on the main dashboard.
+ * All queries are executed in parallel via Promise-based composition.
+ * @class DashboardService
+ */
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
+  /** Maximum number of recent stock movements returned in the stats response. */
   private static readonly MOVIMIENTOS_RECIENTES_LIMITE = 7;
 
+  /**
+   * Constructs the DashboardService with its required repository dependencies.
+   * @param {Repository<Inventario>} inventarioRepository - Repository for inventory stock records.
+   * @param {Repository<Pedido>} pedidoRepository - Repository for purchase orders.
+   * @param {Repository<Movimiento>} movimientoRepository - Repository for stock movement audit records.
+   * @param {Repository<Producto>} productoRepository - Repository for product catalogue entries.
+   * @param {Repository<Proveedor>} proveedorRepository - Repository for supplier records.
+   * @param {Repository<Incidencia>} incidenciaRepository - Repository for supply-reception incidencias.
+   */
   constructor(
     @InjectRepository(Inventario)
     private readonly inventarioRepository: Repository<Inventario>,
@@ -37,6 +59,17 @@ export class DashboardService {
     private readonly incidenciaRepository: Repository<Incidencia>
   ) {}
 
+  /**
+   * Computes and returns all dashboard KPI statistics in a single call.
+   * Metrics include:
+   * - Total inventory value and items below minimum stock.
+   * - Products expiring within 7 days and already expired.
+   * - Pending and today-completed orders with their total pending cost.
+   * - Open incidencias count.
+   * - Total products (all-time and added this month) and total suppliers.
+   * - The 7 most recent stock movements, enriched with product names.
+   * @returns {Promise<DashboardStatsDto>} Aggregated dashboard statistics.
+   */
   async getStats(): Promise<DashboardStatsDto> {
     this.logger.log(I18nHelper.translate('logs.FETCHING_DASHBOARD_STATISTICS'));
 

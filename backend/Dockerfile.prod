@@ -35,6 +35,7 @@ COPY src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
 
 # Copiar scripts de arranque requeridos por el ENTRYPOINT
 COPY scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
+COPY scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
 COPY scripts/db-reset-runner.js ./scripts/db-reset-runner.js
 COPY scripts/seed-runner.js ./scripts/seed-runner.js
 COPY scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js

@@ -16,6 +16,7 @@ import {
   Autocomplete,
   CircularProgress,
 } from '@mui/material';
+import Select from './Select';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -647,7 +648,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              variant="standard"
+                              variant="outlined"
                               placeholder={disabled ? '' : 'Buscar producto...'}
                               sx={{
                                 '& .MuiInputBase-root': {
@@ -670,7 +671,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         </Typography>
                       ) : providerOptions.length <= 1 ? (
                         <TextField
-                          variant="standard"
+                          variant="outlined"
+                          size="small"
                           fullWidth
                           value={providerOptions[0]?.nombreProveedor || ''}
                           placeholder={
@@ -681,15 +683,24 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                           InputProps={{ readOnly: true }}
                         />
                       ) : (
-                        <TextField
-                          select
-                          variant="standard"
+                        <Select
+                          name={`prov-${uniqueKey}`}
+                          label=""
+                          variant="outlined"
+                          size="small"
                           fullWidth
+                          margin="none"
                           value={selectedProvider?.id || ''}
                           onChange={(event) =>
-                            handleProviderChange(uniqueKey, event.target.value)
+                            handleProviderChange(
+                              uniqueKey,
+                              event.target.value as string
+                            )
                           }
                           placeholder="Selecciona proveedor"
+                          SelectProps={{
+                            displayEmpty: true,
+                          }}
                         >
                           <MenuItem value="" disabled>
                             Selecciona proveedor
@@ -709,7 +720,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               {provider.marca ? ` (${provider.marca})` : ''}
                             </MenuItem>
                           ))}
-                        </TextField>
+                        </Select>
                       )}
                     </TableCell>
                     <TableCell>
@@ -744,7 +755,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               parsedValue
                             );
                           }}
-                          variant="standard"
+                          variant="outlined"
                           InputProps={{
                             sx: { '& input': { pb: '4px' } },
                           }}
@@ -780,7 +791,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <TextField
                           type="number"
                           value={line.precioUnitario || ''}
-                          variant="standard"
+                          variant="outlined"
                           InputProps={{
                             readOnly: true,
                             sx: {
@@ -794,7 +805,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                     </TableCell>
                     <TableCell>
                       <TextField
-                        variant="standard"
+                        variant="outlined"
                         fullWidth
                         value={`${(
                           Number(line.cantidad || 0) *
@@ -802,7 +813,6 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         ).toFixed(2)} €`}
                         InputProps={{
                           readOnly: true,
-                          disableUnderline: false,
                           sx: {
                             '& input': { textAlign: 'right', pb: '4px' },
                           },

@@ -1,3 +1,8 @@
+/**
+ * @module AlbaranService
+ * Service layer for managing delivery notes (albaranes), including creation,
+ * retrieval, update, soft-deletion, document upload and concordance synchronisation.
+ */
 import {
   Injectable,
   NotFoundException,
@@ -38,10 +43,23 @@ const ALBARAN_DETAIL_RELATIONS = [
   'albaranPedidoRecepcion.recepcionPedido.recepcion.recepcionProductos.pedidoProducto.productoProveedor.proveedor',
 ] as const;
 
+/**
+ * Service responsible for all business logic related to delivery notes (albaranes).
+ * Handles CRUD operations, document uploads, automatic numbering and
+ * concordance synchronisation with associated recepciones.
+ * @class AlbaranService
+ */
 @Injectable()
 export class AlbaranService {
   private readonly logger = new Logger(AlbaranService.name);
 
+  /**
+   * Constructs the AlbaranService with its required dependencies.
+   * @param {Repository<Albaran>} albaranRepository - TypeORM repository for Albaran entity.
+   * @param {DataSource} dataSource - TypeORM DataSource used to create query runners and transactions.
+   * @param {ConfigService} configService - NestJS ConfigService for reading env variables.
+   * @param {ArchivoService} archivoService - Service for file compression and management.
+   */
   constructor(
     @InjectRepository(Albaran)
     private readonly albaranRepository: Repository<Albaran>,
@@ -50,11 +68,25 @@ export class AlbaranService {
     private readonly archivoService: ArchivoService
   ) {}
 
+  /**
+   * Creates and persists a new Albaran from the provided DTO.
+   * @param {CreateAlbaranDto} dto - Data transfer object containing albaran fields.
+   * @returns {Promise<Albaran>} The newly created Albaran entity.
+   */
   async create(dto: CreateAlbaranDto): Promise<Albaran> {
     const albaran = this.albaranRepository.create(dto);
     return await this.albaranRepository.save(albaran);
   }
 
+  /**
+   * Finds an existing Albaran by reference number or creates a new one if none exists.
+   * When no reference number is provided, an automatic sequential number is generated.
+   * @param {object} params - Parameters for finding or creating the albaran.
+   * @param {string} [params.numeroReferencia] - Optional reference number. If omitted, an automatic number is generated.
+   * @param {Date} [params.fecha] - Optional date to assign to the albaran. Defaults to now.
+   * @param {EntityManager} [params.manager] - Optional EntityManager to use within an active transaction.
+   * @returns {Promise<Albaran>} The found or newly created Albaran entity.
+   */
   async createOrGetAlbaran(params: {
     numeroReferencia?: string;
     fecha?: Date;
@@ -87,6 +119,12 @@ export class AlbaranService {
     return albaran;
   }
 
+  /**
+   * Generates a unique sequential albaran number with the format `AUTO-{YEAR}-{NNNNN}`.
+   * Falls back to a random 6-digit number if the last sequence cannot be parsed.
+   * @param {Repository<Albaran>} repo - The Albaran repository (may belong to a transaction).
+   * @returns {Promise<string>} A unique automatic albaran number string.
+   */
   private async generateAutomaticNumber(
     repo: Repository<Albaran>
   ): Promise<string> {
@@ -114,6 +152,14 @@ export class AlbaranService {
     return `${prefix}${paddedSeq}`;
   }
 
+  /**
+   * Derives the concordancia value for an already-loaded Albaran by inspecting
+   * the state and incidencia flag of its linked recepciones.
+   * Returns `undefined` when no recepciones are linked (concordancia cannot be determined).
+   * @param {Albaran} albaran - An Albaran entity with `albaranPedidoRecepcion` relations loaded.
+   * @returns {boolean | undefined} `true` if all recepciones are COMPLETADA without incidencia,
+   *   `false` if any recepcion fails the check, `undefined` if no recepciones are linked.
+   */
   private deriveConcordanciaFromLinks(albaran: Albaran): boolean | undefined {
     const recepciones = (albaran.albaranPedidoRecepcion ?? [])
       .map((link) => link.recepcionPedido?.recepcion)
@@ -130,6 +176,13 @@ export class AlbaranService {
     );
   }
 
+  /**
+   * Synchronises the `concordancia` field of a loaded Albaran entity and persists
+   * the change if it differs from the derived value.
+   * @param {Repository<Albaran>} repo - The Albaran repository (may belong to a transaction).
+   * @param {Albaran} albaran - An Albaran entity with concordancia relations loaded.
+   * @returns {Promise<Albaran>} The Albaran entity with the `concordancia` field up to date.
+   */
   private async syncLoadedAlbaranConcordancia(
     repo: Repository<Albaran>,
     albaran: Albaran
@@ -149,6 +202,14 @@ export class AlbaranService {
     return albaran;
   }
 
+  /**
+   * Loads an Albaran by ID, re-derives its concordancia from linked recepciones,
+   * persists any change, and returns the updated entity.
+   * @param {string} albaranId - UUID of the Albaran to synchronise.
+   * @param {EntityManager} [manager] - Optional EntityManager to use within an active transaction.
+   * @returns {Promise<Albaran>} The Albaran with `concordancia` synchronised.
+   * @throws {NotFoundException} If no Albaran with the given ID exists.
+   */
   async syncConcordanciaFromRecepciones(
     albaranId: string,
     manager?: EntityManager
@@ -169,6 +230,13 @@ export class AlbaranService {
     return await this.syncLoadedAlbaranConcordancia(repo, albaran);
   }
 
+  /**
+   * Returns a paginated list of albaranes, optionally including soft-deleted records
+   * for admin and super-admin roles. Each albaran has its concordancia synchronised.
+   * @param {PaginationQueryDto} query - Pagination, sort, and order parameters.
+   * @param {string} [userRole] - Role of the requesting user; admins see soft-deleted records.
+   * @returns {Promise<PaginatedResponseDto<Albaran>>} Paginated result containing albaranes and metadata.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -204,6 +272,15 @@ export class AlbaranService {
     };
   }
 
+  /**
+   * Finds a single Albaran by its UUID, optionally loading full product detail relations.
+   * Synchronises the concordancia before returning.
+   * @param {string} id - UUID of the Albaran to retrieve.
+   * @param {string} [_userRole] - Role of the requesting user (reserved, currently unused).
+   * @param {boolean} [includeProductos=false] - When `true`, loads full product detail relations.
+   * @returns {Promise<Albaran>} The found Albaran entity with concordancia synchronised.
+   * @throws {NotFoundException} If no Albaran with the given ID exists.
+   */
   async findOne(
     id: string,
     _userRole?: string,
@@ -230,12 +307,25 @@ export class AlbaranService {
     );
   }
 
+  /**
+   * Merges the provided DTO fields into an existing Albaran and persists the changes.
+   * @param {string} id - UUID of the Albaran to update.
+   * @param {UpdateAlbaranDto} dto - Partial data to merge into the existing entity.
+   * @returns {Promise<Albaran>} The updated Albaran entity.
+   * @throws {NotFoundException} If no Albaran with the given ID exists.
+   */
   async update(id: string, dto: UpdateAlbaranDto): Promise<Albaran> {
     const albaran = await this.findOne(id);
     this.albaranRepository.merge(albaran, dto);
     return this.albaranRepository.save(albaran);
   }
 
+  /**
+   * Soft-deletes an Albaran, making it invisible in standard queries.
+   * @param {string} id - UUID of the Albaran to remove.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} If no Albaran with the given ID exists.
+   */
   async remove(id: string): Promise<void> {
     const albaran = await this.findOne(id);
     await this.albaranRepository.softDelete(albaran.id);
@@ -252,9 +342,12 @@ export class AlbaranService {
    * 5. Guarda la referencia del archivo en la entidad Albaran
    * 6. Todo se ejecuta dentro de una transacción
    *
-   * @param file - Archivo subido mediante Multer
-   * @param dto - Datos del albarán (numeroReferencia, recepcionId, observaciones)
-   * @returns Albaran actualizado con la info del documento
+   * @param {Express.Multer.File} file - Archivo subido mediante Multer.
+   * @param {UploadAlbaranDto} dto - Datos del albarán (numeroReferencia, recepcionId, observaciones).
+   * @returns {Promise<Albaran>} Albaran actualizado con la info del documento.
+   * @throws {BadRequestException} If no file is provided or the upload fails unexpectedly.
+   * @throws {NotFoundException} If the recepcionId does not correspond to an existing Recepcion.
+   * @throws {ConflictException} If the albaran already has an attached document.
    */
   async uploadDocumento(
     file: Express.Multer.File,
@@ -392,6 +485,14 @@ export class AlbaranService {
     }
   }
 
+  /**
+   * Resolves the absolute filesystem path for a stored albaran document and validates
+   * that the path is within the configured upload directory and that the file exists.
+   * @param {string} filename - The filename (not the full path) of the stored document.
+   * @returns {string} Absolute path to the file on disk.
+   * @throws {BadRequestException} If the resolved path is outside the upload directory (path traversal attempt).
+   * @throws {NotFoundException} If the file does not exist on disk.
+   */
   getDocumentoPath(filename: string): string {
     const uploadDir = this.configService.get<string>(
       'LOCAL_STORAGE_PATH',
@@ -415,6 +516,9 @@ export class AlbaranService {
 
   /**
    * Elimina un archivo del disco de forma silenciosa (sin lanzar error si falla).
+   * Used as cleanup when an upload transaction fails or a conflict is detected.
+   * @param {string} filePath - Absolute path to the file that should be removed.
+   * @returns {void}
    */
   private deleteFileQuietly(filePath: string): void {
     try {

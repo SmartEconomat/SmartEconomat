@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Tab,
+  Tabs,
   Typography,
   Alert,
   IconButton,
@@ -16,6 +19,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -36,10 +43,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import IncidenciaFilters, {
   IncidenciaFiltersState,
 } from '../features/incidencias/IncidenciaFilters';
-import IncidenciasStatusTabs, {
-  IncidenciasCerradasTab,
-  IncidenciasResolucionTab,
-} from '../features/incidencias/IncidenciasStatusTabs';
+import { type IncidenciasResolucionTab } from '../features/incidencias/IncidenciasStatusTabs';
 import ResolveIncidenciaModal from '../features/incidencias/ResolveIncidenciaModal';
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
@@ -50,36 +54,21 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  nueva: 'Nueva',
-  en_ajuste: 'En ajuste',
-  pendiente_validacion: 'Pendiente validación',
-  resuelta: 'Resuelta',
-  cancelada: 'Cancelada',
-  invalida: 'Inválida',
+  [EstadoIncidencia.NUEVA]: 'Nueva',
+  [EstadoIncidencia.EN_AJUSTE]: 'En ajuste',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'Pendiente validación',
+  [EstadoIncidencia.RESUELTA]: 'Resuelta',
+  [EstadoIncidencia.CANCELADA]: 'Cancelada',
+  [EstadoIncidencia.INVALIDA]: 'Inválida',
 };
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
-  nueva: 'pending',
-  en_ajuste: 'warning',
-  pendiente_validacion: 'review',
-  resuelta: 'completed',
-  cancelada: 'cancelled',
-  invalida: 'error',
-};
-
-const CLOSED_INCIDENCIA_STATES = new Set<EstadoIncidencia>([
-  EstadoIncidencia.RESUELTA,
-  EstadoIncidencia.CANCELADA,
-  EstadoIncidencia.INVALIDA,
-]);
-
-const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
-  [EstadoIncidencia.CANCELADA]: 0,
-  [EstadoIncidencia.INVALIDA]: 1,
-  [EstadoIncidencia.RESUELTA]: 2,
-  [EstadoIncidencia.EN_AJUSTE]: 3,
-  [EstadoIncidencia.PENDIENTE_VALIDACION]: 4,
-  [EstadoIncidencia.NUEVA]: 5,
+  [EstadoIncidencia.NUEVA]: 'pending',
+  [EstadoIncidencia.EN_AJUSTE]: 'review',
+  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'warning',
+  [EstadoIncidencia.RESUELTA]: 'completed',
+  [EstadoIncidencia.CANCELADA]: 'cancelled',
+  [EstadoIncidencia.INVALIDA]: 'error',
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';
@@ -88,6 +77,8 @@ const Incidencias: React.FC = () => {
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasDashboardFilter = searchParams.get('resolucion') === 'por_resolver';
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -97,13 +88,23 @@ const Incidencias: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [resolucionTab, setResolucionTab] =
-    useState<IncidenciasResolucionTab>('abiertas');
-  const [cerradasTab, setCerradasTab] =
-    useState<IncidenciasCerradasTab>('todas');
+    useState<IncidenciasResolucionTab>('por_resolver');
   const [filters, setFilters] = useState<IncidenciaFiltersState>({
     startDate: null,
     endDate: null,
   });
+
+  useEffect(() => {
+    if (hasDashboardFilter) {
+      setResolucionTab('por_resolver');
+    }
+  }, [hasDashboardFilter]);
+
+  const clearDashboardFilter = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('resolucion');
+    setSearchParams(nextParams, { replace: true });
+  };
   const [itemToView, setItemToView] = useState<Incidencia | null>(null);
   const [itemToResolve, setItemToResolve] = useState<Incidencia | null>(null);
   const [resolveDialogMode, setResolveDialogMode] =
@@ -117,77 +118,22 @@ const Incidencias: React.FC = () => {
   const canResolve = usePermission(PERMISSIONS.incidencias.resolver);
   const canDelete = usePermission(PERMISSIONS.incidencias.eliminar);
 
-  const isCerradasTab = resolucionTab === 'cerradas';
-
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      if (isCerradasTab) {
-        const limit = 50;
-        const baseParams: IncidenciasQueryParams = {
-          limit,
-          searchTerm: searchTerm || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-
-        const firstPage = await fetchIncidencias({
-          ...baseParams,
-          page: 1,
-        });
-
-        let mergedData = [...firstPage.data];
-        if (firstPage.totalPages > 1) {
-          const restPages = await Promise.all(
-            Array.from({ length: firstPage.totalPages - 1 }, (_, idx) =>
-              fetchIncidencias({
-                ...baseParams,
-                page: idx + 2,
-              })
-            )
-          );
-
-          mergedData = mergedData.concat(
-            ...restPages.map((result) => result.data)
-          );
-        }
-
-        const mergedClosedData = mergedData.filter((item) =>
-          CLOSED_INCIDENCIA_STATES.has(item.estado)
-        );
-
-        mergedClosedData.sort((a, b) => {
-          const stateDiff =
-            (CLOSED_STATE_PRIORITY[a.estado] ?? 99) -
-            (CLOSED_STATE_PRIORITY[b.estado] ?? 99);
-
-          if (stateDiff !== 0) {
-            return stateDiff;
-          }
-
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        });
-
-        setData(mergedClosedData);
-        setTotalItems(mergedClosedData.length);
-        setTotalPages(1);
-      } else {
-        const params: IncidenciasQueryParams = {
-          page,
-          limit: pageSize,
-          searchTerm: searchTerm || undefined,
-          resuelta: false,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
-        const result = await fetchIncidencias(params);
-        setData(result.data);
-        setTotalItems(result.total);
-        setTotalPages(result.totalPages);
-      }
+      const params: IncidenciasQueryParams = {
+        page,
+        limit: pageSize,
+        searchTerm: searchTerm || undefined,
+        resuelta: resolucionTab === 'resueltas',
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+      };
+      const result = await fetchIncidencias(params);
+      setData(result.data);
+      setTotalItems(result.total);
+      setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar incidencias';
@@ -195,7 +141,7 @@ const Incidencias: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, isCerradasTab, filters]);
+  }, [page, pageSize, searchTerm, resolucionTab, filters]);
 
   useEffect(() => {
     loadData();
@@ -212,21 +158,11 @@ const Incidencias: React.FC = () => {
         usuarioId:
           payload.usuarioId || (user?.id ? String(user.id) : undefined),
       });
-      if (payload.marcarComoResuelta) {
-        switch (payload.estadoFinal) {
-          case EstadoIncidencia.CANCELADA:
-            toast.success('Incidencia marcada como cancelada');
-            break;
-          case EstadoIncidencia.INVALIDA:
-            toast.success('Incidencia marcada como inválida');
-            break;
-          default:
-            toast.success('Incidencia marcada como resuelta');
-            break;
-        }
-      } else {
-        toast.success('Incidencia actualizada correctamente');
-      }
+      toast.success(
+        payload.marcarComoResuelta
+          ? 'Incidencia marcada como resuelta'
+          : 'Incidencia actualizada correctamente'
+      );
       setItemToResolve(null);
       if (itemToView?.id === id) {
         setItemToView(null);
@@ -273,33 +209,8 @@ const Incidencias: React.FC = () => {
 
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
-    if (nextTab !== 'cerradas') {
-      setCerradasTab('todas');
-    }
     setPage(1);
   };
-
-  const dataFiltrada = useMemo(() => {
-    if (!isCerradasTab || cerradasTab === 'todas') {
-      return data;
-    }
-
-    return data.filter((item) => item.estado === cerradasTab);
-  }, [data, isCerradasTab, cerradasTab]);
-
-  const dataPaginada = useMemo(() => {
-    if (!isCerradasTab) {
-      return data;
-    }
-
-    const start = (page - 1) * pageSize;
-    return dataFiltrada.slice(start, start + pageSize);
-  }, [data, dataFiltrada, isCerradasTab, page, pageSize]);
-
-  const totalItemsVista = isCerradasTab ? dataFiltrada.length : totalItems;
-  const totalPagesVista = isCerradasTab
-    ? Math.max(1, Math.ceil(totalItemsVista / pageSize))
-    : totalPages;
 
   const columns: Column<Incidencia>[] = useMemo(
     () => [
@@ -383,74 +294,71 @@ const Incidencias: React.FC = () => {
     []
   );
 
-  const renderActions = (row: Incidencia) => {
-    const hasLineas = (row.lineas?.length ?? 0) > 0;
-    const canOperate = !row.resuelta && hasLineas;
-
-    return (
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{ minWidth: 160, justifyContent: 'flex-start' }}
-      >
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title="Ver detalle">
+  const renderActions = (row: Incidencia) => (
+    <Stack
+      direction="row"
+      spacing={0.5}
+      sx={{ minWidth: 160, justifyContent: 'flex-start' }}
+    >
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        <Tooltip title="Ver detalle">
+          <IconButton
+            color="primary"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setItemToView(row);
+            }}
+            size="small"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Ajustar cantidades">
             <IconButton
-              color="primary"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setItemToView(row);
-              }}
+              onClick={() => openResolveModal(row, 'adjust')}
               size="small"
+              color="warning"
+              id="btn-ajustar-incidencia"
+              aria-label="Ajustar cantidades"
             >
-              <VisibilityIcon fontSize="small" />
+              <TuneIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title="Ajustar cantidades">
-              <IconButton
-                onClick={() => openResolveModal(row, 'adjust')}
-                size="small"
-                color="warning"
-                aria-label="Ajustar cantidades"
-              >
-                <TuneIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canOperate && canResolve && (
-            <Tooltip title="Resolver incidencia">
-              <IconButton
-                onClick={() => openResolveModal(row, 'resolve')}
-                size="small"
-                color="success"
-                aria-label="Resolver incidencia"
-              >
-                <CheckCircleIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-        <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          {canDelete && (
-            <Tooltip title="Eliminar">
-              <IconButton
-                onClick={() => setItemToDelete(row)}
-                size="small"
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Stack>
-    );
-  };
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {!row.resuelta && canResolve && (
+          <Tooltip title="Resolver incidencia">
+            <IconButton
+              onClick={() => openResolveModal(row, 'resolve')}
+              size="small"
+              color="success"
+              id="btn-resolver-incidencia"
+              aria-label="Resolver incidencia"
+            >
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
+        {canDelete && (
+          <Tooltip title="Eliminar">
+            <IconButton
+              onClick={() => setItemToDelete(row)}
+              size="small"
+              color="error"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Stack>
+  );
 
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
@@ -668,8 +576,9 @@ const Incidencias: React.FC = () => {
   return (
     <Box>
       <PageToolbar
+        id="incidencias-toolbar"
         title="Centro de Incidencias"
-        totalItems={totalItemsVista}
+        totalItems={totalItems}
         totalItemsLabel="incidencias"
         searchValue={searchTerm}
         onSearchChange={(v) => {
@@ -706,64 +615,122 @@ const Incidencias: React.FC = () => {
         }
       />
 
-      <IncidenciasStatusTabs
-        value={resolucionTab}
-        onChange={handleResolucionTabChange}
-        closedValue={cerradasTab}
-        onClosedChange={(nextTab) => {
-          setCerradasTab(nextTab);
-          setPage(1);
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
         }}
-      />
-
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={dataPaginada}
-          isLoading={isLoading}
-          renderActions={renderActions}
-          emptyStateMessage={
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <ReportProblemOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {isCerradasTab
-                  ? cerradasTab === 'todas'
-                    ? 'No hay incidencias cerradas'
-                    : `No hay incidencias ${INCIDENCIA_STATUS_LABEL[cerradasTab]}`
-                  : 'No hay incidencias abiertas'}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ maxWidth: 400, mx: 'auto' }}
-              >
-                {searchTerm
-                  ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
-                  : isCerradasTab
-                    ? 'Las incidencias cerradas incluyen resueltas, canceladas e inválidas.'
-                    : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
-              </Typography>
-            </Box>
-          }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPagesVista,
-            onPageChange: (_, p) => setPage(p),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-        />
+        >
+          <Tabs
+            id="incidencias-tabs"
+            value={resolucionTab}
+            onChange={(_, newValue: IncidenciasResolucionTab) =>
+              handleResolucionTabChange(newValue)
+            }
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              value="por_resolver"
+              label="Por resolver"
+              icon={<PendingActionsIcon />}
+            />
+            <Tab
+              value="resueltas"
+              label="Resueltas"
+              icon={<CheckCircleOutlineIcon />}
+            />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {hasDashboardFilter && (
+            <Alert
+              severity="info"
+              icon={<FilterListIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={clearDashboardFilter}
+                  startIcon={<ClearIcon />}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Quitar filtro
+                </Button>
+              }
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.info.main, 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.info.main, 0.3),
+                '& .MuiAlert-message': { fontWeight: 500 },
+              }}
+            >
+              Estas visualizando las incidencias pendientes filtradas desde el
+              Dashboard.
+            </Alert>
+          )}
+
+          <DataTable
+            id="incidencias-table"
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            renderActions={renderActions}
+            emptyStateMessage={
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <ReportProblemOutlinedIcon
+                  sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {resolucionTab === 'resueltas'
+                    ? 'No hay incidencias resueltas'
+                    : 'No hay incidencias por resolver'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 400, mx: 'auto' }}
+                >
+                  {searchTerm
+                    ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                    : resolucionTab === 'resueltas'
+                      ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
+                      : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                </Typography>
+              </Box>
+            }
+            pagination={{
+              currentPage: page,
+              totalPages: totalPages,
+              onPageChange: (_, p) => setPage(p),
+              pageSize: pageSize,
+              onPageSizeChange: (e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              },
+            }}
+          />
+        </Box>
       </Paper>
 
       <DetailModal
