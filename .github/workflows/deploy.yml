@@ -30,18 +30,6 @@ jobs:
           cache-dependency-path: |
             backend/smart-economat-backend/package-lock.json
             frontend/smart-economat-frontend/package-lock.json
-            ElectronInstaller/package-lock.json
-
-      - name: Cache Electron and native build tooling
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-            ~/.cache/node-gyp
-          key: deploy-tools-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('ElectronInstaller/package-lock.json') }}
-          restore-keys: |
-            deploy-tools-${{ runner.os }}-${{ env.NODE_VERSION }}-
 
       - name: Instalar dependencias del backend
         working-directory: backend/smart-economat-backend
@@ -74,26 +62,6 @@ jobs:
       - name: Construir frontend
         working-directory: frontend/smart-economat-frontend
         run: npm run build
-
-      - name: Instalar dependencias del installer
-        working-directory: ElectronInstaller
-        run: npm ci
-
-      - name: Lint installer
-        working-directory: ElectronInstaller
-        run: npm run lint
-
-      - name: Type-check installer
-        working-directory: ElectronInstaller
-        run: npm run type-check
-
-      - name: Tests installer
-        working-directory: ElectronInstaller
-        run: npm run test
-
-      - name: Build installer app
-        working-directory: ElectronInstaller
-        run: npm run build:app
 
   deploy:
     name: Desplegar en servidor
