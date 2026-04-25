@@ -42,7 +42,9 @@ const InteractiveTour: React.FC = () => {
     null
   );
   const [renderedStep, setRenderedStep] = useState<TutorialStep | null>(null);
+  const [isLargeTarget, setIsLargeTarget] = useState(false);
   const spotlightRef = useRef<HTMLDivElement>(null);
+  const [prevStepIndex, setPrevStepIndex] = useState(currentStepIndex);
   const [, setTick] = useState(0);
 
   const step = currentSteps[currentStepIndex];
@@ -111,23 +113,65 @@ const InteractiveTour: React.FC = () => {
     const timer = setTimeout(() => {
       const element = document.querySelector(step.target!) as HTMLElement;
       if (element) {
+        const rect = element.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+
+        // Si el elemento ocupa más del 70% del alto o el 80% del ancho,
+        // lo consideramos "grande" y centraremos el diálogo.
+        const tooTall = rect.height > viewportHeight * 0.7;
+        const tooWide = rect.width > viewportWidth * 0.8;
+        setIsLargeTarget(tooTall || tooWide);
+
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setAnchorEl(element);
         setCurrentAnchorTarget(step.target!);
         setRenderedStep(step);
+        // Guardamos este índice como el último "exitoso" para determinar la dirección
+        setPrevStepIndex(currentStepIndex);
       } else {
-        // Si el elemento no existe en esta vista, saltamos
-        nextStep();
+        // Si el elemento no existe, saltamos en la dirección que venía el usuario
+        const movingForward = currentStepIndex >= prevStepIndex;
+
+        if (movingForward) {
+          if (currentStepIndex < currentSteps.length - 1) {
+            nextStep();
+          } else {
+            // Si es el último y no existe, simplemente lo mostramos centrado
+            setAnchorEl(null);
+            setRenderedStep(step);
+          }
+        } else {
+          if (currentStepIndex > 0) {
+            prevStep();
+          } else {
+            // Si es el primero y no existe, centrado
+            setAnchorEl(null);
+            setRenderedStep(step);
+          }
+        }
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [isActive, step, nextStep]);
+  }, [
+    isActive,
+    step,
+    nextStep,
+    prevStep,
+    currentStepIndex,
+    prevStepIndex,
+    currentSteps.length,
+  ]);
 
   if (!isActive || !step) return null;
 
   const displayStep = renderedStep || step;
   const isTransitioning = !anchorEl || currentAnchorTarget !== step.target;
+
+  // Determinar si debemos usar el modo centrado (por configuración o por tamaño)
+  const useCenterPlacement =
+    displayStep.placement === 'center' || isLargeTarget;
 
   // Estilos responsivos del diálogo
   const tourPaperStyles = {
@@ -230,11 +274,16 @@ const InteractiveTour: React.FC = () => {
           activeStep={currentStepIndex}
           sx={{
             bgcolor: 'transparent',
-            px: 1,
+            px: 0,
             py: isShortScreen ? 0.25 : 1,
             '& .MuiMobileStepper-dots': {
               gap: 0.5,
               display: isShortScreen ? 'none' : 'flex',
+            },
+            '& .MuiMobileStepper-dot': {
+              width: 6,
+              height: 6,
+              margin: '0 2px',
             },
           }}
           nextButton={
@@ -249,7 +298,11 @@ const InteractiveTour: React.FC = () => {
               endIcon={<KeyboardArrowRight />}
               sx={{
                 fontWeight: 700,
-                fontSize: isShortScreen ? '0.7rem' : 'inherit',
+                textTransform: 'none',
+                fontSize: isShortScreen ? '0.75rem' : '0.85rem',
+                minWidth: 'auto',
+                px: 1,
+                mr: 1,
               }}
             >
               {currentStepIndex === currentSteps.length - 1
@@ -265,7 +318,12 @@ const InteractiveTour: React.FC = () => {
               startIcon={<KeyboardArrowLeft />}
               sx={{
                 fontWeight: 700,
-                fontSize: isShortScreen ? '0.7rem' : 'inherit',
+                textTransform: 'none',
+                fontSize: isShortScreen ? '0.75rem' : '0.85rem',
+                minWidth: 'auto',
+                px: 1,
+                ml: 1,
+                visibility: currentStepIndex === 0 ? 'hidden' : 'visible',
               }}
             >
               Atrás
@@ -278,16 +336,30 @@ const InteractiveTour: React.FC = () => {
         <CardActions
           sx={{
             justifyContent: 'center',
-            bgcolor: 'grey.50',
+            bgcolor: 'background.paper',
             py: 0.5,
             flexShrink: 0,
+            borderTop: '1px solid',
+            borderColor: 'divider',
           }}
         >
           <Button
             size="small"
             onClick={skipTour}
-            color="inherit"
-            sx={{ fontSize: '0.65rem', opacity: 0.7 }}
+            color="primary"
+            variant="text"
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              opacity: 0.8,
+              border: 'none !important',
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                opacity: 1,
+                border: 'none !important',
+              },
+            }}
           >
             Saltar todo el tutorial
           </Button>
@@ -315,7 +387,7 @@ const InteractiveTour: React.FC = () => {
       />
 
       {/* Modo de posicionamiento central para áreas grandes */}
-      {displayStep.placement === 'center' && anchorEl && (
+      {useCenterPlacement && anchorEl && (
         <Box
           sx={{
             position: 'fixed',
@@ -335,7 +407,7 @@ const InteractiveTour: React.FC = () => {
       )}
 
       {/* Modo de posicionamiento anclado (Popper) */}
-      {displayStep.placement !== 'center' && (
+      {!useCenterPlacement && (
         <Popper
           open={isActive && !isTransitioning}
           anchorEl={anchorEl}

@@ -43,6 +43,7 @@ import { useSidebar } from '../store/sidebar.hooks';
 import InteractiveTour from '../components/common/Tutorial/InteractiveTour';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
+import LogoNegro from '../assets/images/SVG/logo-smart-economat-negro.svg';
 import Favicon from '../assets/icons/SVG/favicon.svg';
 import FaviconInv from '../assets/icons/SVG/favicon-inv.svg';
 
@@ -178,8 +179,14 @@ const SidebarContent = React.memo(
     }
 
     const getLogo = (isMini = false) => {
-      const isDark =
-        currentThemeName === 'dark' || currentThemeName === 'highContrastDark';
+      if (currentThemeName === 'highContrastDark') {
+        return isMini ? FaviconInv : LogoBlanco;
+      }
+      if (currentThemeName === 'highContrastLight') {
+        return isMini ? Favicon : LogoNegro;
+      }
+
+      const isDark = currentThemeName === 'dark';
       if (isMini) {
         return isDark ? FaviconInv : Favicon;
       }

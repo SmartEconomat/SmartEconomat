@@ -80,6 +80,18 @@ const highContrastLightPalette = {
   secondary: {
     main: '#0B0E14',
   },
+  error: {
+    main: '#0B0E14',
+  },
+  warning: {
+    main: '#0B0E14',
+  },
+  info: {
+    main: '#0B0E14',
+  },
+  success: {
+    main: '#0B0E14',
+  },
   background: {
     default: '#ffffff',
     paper: '#ffffff',
@@ -102,6 +114,18 @@ const highContrastDarkPalette = {
     main: '#ffffff',
   },
   secondary: {
+    main: '#ffffff',
+  },
+  error: {
+    main: '#ffffff',
+  },
+  warning: {
+    main: '#ffffff',
+  },
+  info: {
+    main: '#ffffff',
+  },
+  success: {
     main: '#ffffff',
   },
   background: {
@@ -164,6 +188,13 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
     case 'highContrastLight':
       palette = highContrastLightPalette;
       components = {
+        MuiCssBaseline: {
+          styleOverrides: {
+            img: {
+              filter: 'grayscale(100%)',
+            },
+          },
+        },
         MuiButton: {
           styleOverrides: {
             root: {
@@ -196,6 +227,13 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
     case 'highContrastDark':
       palette = highContrastDarkPalette;
       components = {
+        MuiCssBaseline: {
+          styleOverrides: {
+            img: {
+              filter: 'grayscale(100%)',
+            },
+          },
+        },
         MuiButton: {
           styleOverrides: {
             root: {
