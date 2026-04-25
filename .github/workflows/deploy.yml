@@ -98,6 +98,13 @@ jobs:
           target: ${{ env.REMOTE_BASE_DIR }}
           overwrite: true
 
+      - name: Validar variables criticas de despliegue
+        run: |
+          if [ -z "${{ secrets.SEED_DEFAULT_ADMIN_TEMP_PASSWORD || vars.SEED_DEFAULT_ADMIN_TEMP_PASSWORD }}" ]; then
+            echo "Falta SEED_DEFAULT_ADMIN_TEMP_PASSWORD en SmartEconomatEnv (secret o variable)."
+            exit 1
+          fi
+
       - name: Desplegar por SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -115,6 +122,7 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          SEED_DEFAULT_ADMIN_TEMP_PASSWORD: ${{ secrets.SEED_DEFAULT_ADMIN_TEMP_PASSWORD || vars.SEED_DEFAULT_ADMIN_TEMP_PASSWORD }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           TLS_PROVIDER: ${{ secrets.TLS_PROVIDER }}
@@ -127,7 +135,7 @@ jobs:
           key: ${{ secrets.SMARTECONOMAT_DO }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           timeout: 60s
-          envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_PORT,FRONTEND_PORT,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_PORT,DB_HOST,JWT_SECRET,JWT_EXPIRATION,SENTRY_DSN,VITE_SENTRY_DSN,TLS_PROVIDER,TLS_SELF_SIGNED_DAYS,LETSENCRYPT_EMAIL,LETSENCRYPT_DIRECTORY_URL
+          envs: APP_NAME,ARCHIVE_NAME,REMOTE_BASE_DIR,NODE_ENV,DOMAIN,BACKEND_PORT,FRONTEND_PORT,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_PORT,DB_HOST,JWT_SECRET,JWT_EXPIRATION,SEED_DEFAULT_ADMIN_TEMP_PASSWORD,SENTRY_DSN,VITE_SENTRY_DSN,TLS_PROVIDER,TLS_SELF_SIGNED_DAYS,LETSENCRYPT_EMAIL,LETSENCRYPT_DIRECTORY_URL
           script: |
             set -e
             # Instalar unzip si no existe (necesario para el primer despliegue)
