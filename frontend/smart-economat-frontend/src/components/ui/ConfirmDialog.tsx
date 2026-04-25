@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Button, Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import Modal from './Modal';
 import Spinner from './Spinner';
 
@@ -55,10 +56,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  title = 'Confirmar acción',
+  title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   cancelColor = 'inherit',
   cancelVariant = 'text',
   onCancel,
@@ -66,6 +67,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmVariant = 'contained',
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t('confirmDialog.title');
+  const resolvedConfirmText = confirmText ?? t('confirmDialog.confirm');
+  const resolvedCancelText = cancelText ?? t('confirmDialog.cancel');
+
   const handleCancel = () => {
     (onCancel || onClose)();
   };
@@ -75,7 +81,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={resolvedTitle} size="sm">
       <Box sx={{ pb: 3 }}>
         {typeof message === 'string' ? (
           <Typography variant="body1" color="text.secondary">
@@ -88,13 +94,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
       {/* Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        {cancelText && (
+        {resolvedCancelText && (
           <Button
             onClick={handleCancel}
             color={cancelColor}
             variant={cancelVariant}
           >
-            {cancelText}
+            {resolvedCancelText}
           </Button>
         )}
         <Button
@@ -107,7 +113,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             isLoading ? <Spinner size="sm" color="inherit" /> : undefined
           }
         >
-          {confirmText}
+          {resolvedConfirmText}
         </Button>
       </Box>
     </Modal>

@@ -4,6 +4,8 @@ const { existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
     stdio: 'inherit',
@@ -20,11 +22,11 @@ function runCommand(command, args) {
 }
 
 function runTsReset(cwd) {
-  const tsNodeBin = resolve(cwd, 'node_modules/.bin/ts-node');
   const typeormCliPath = resolve(cwd, 'node_modules/typeorm/cli.js');
   const typeormConfigPath = 'src/config/typeorm.config.ts';
 
-  runCommand(tsNodeBin, [
+  runCommand(NPX, [
+    'ts-node',
     '-r',
     'tsconfig-paths/register',
     typeormCliPath,
@@ -33,7 +35,8 @@ function runTsReset(cwd) {
     typeormConfigPath,
   ]);
 
-  runCommand(tsNodeBin, [
+  runCommand(NPX, [
+    'ts-node',
     '-r',
     'tsconfig-paths/register',
     typeormCliPath,
@@ -68,16 +71,11 @@ async function runDbReset() {
   }
 
   const cwd = process.cwd();
-  const tsNodeBin = resolve(cwd, 'node_modules/.bin/ts-node');
   const typeormCliPath = resolve(cwd, 'node_modules/typeorm/cli.js');
   const tsConfigPath = resolve(cwd, 'src/config/typeorm.config.ts');
   const distConfigPath = resolve(cwd, 'dist/config/typeorm.config.js');
 
-  if (
-    existsSync(tsNodeBin) &&
-    existsSync(typeormCliPath) &&
-    existsSync(tsConfigPath)
-  ) {
+  if (existsSync(typeormCliPath) && existsSync(tsConfigPath)) {
     runTsReset(cwd);
     return;
   }

@@ -42,10 +42,18 @@ async function initializeHttpSeedContext(
 ): Promise<SeedContext> {
   process.env.IS_SEEDING = 'true';
   const context = new SeedContext(config);
+  const backendWaitRetries = Number.parseInt(
+    process.env.SEED_BACKEND_WAIT_RETRIES ?? '120',
+    10
+  );
+  const backendWaitDelayMs = Number.parseInt(
+    process.env.SEED_BACKEND_WAIT_DELAY_MS ?? '2000',
+    10
+  );
 
   await context.ensureDockerInfra();
   await context.ensureDatabaseCompatibility();
-  await context.waitForBackend();
+  await context.waitForBackend(backendWaitRetries, backendWaitDelayMs);
   await context.login();
 
   return context;

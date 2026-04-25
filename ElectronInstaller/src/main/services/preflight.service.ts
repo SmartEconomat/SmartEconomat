@@ -3,14 +3,12 @@ import path from "node:path";
 
 import type {
   CommandResult,
-  DockerRuntimeStatus,
   OperationResult,
   PortRepairPayload,
   PreflightCheck,
   PreflightReport,
 } from "@shared/contracts";
 
-import { DockerReadinessService } from "./docker-readiness.service";
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
@@ -86,47 +84,11 @@ interface PortInspectionResult {
   ownerProcessName?: string;
 }
 
-interface DockerPortContainer {
-  id: string;
-  name: string;
-  composeProject: string;
-}
-
-interface DockerDesktopInstallProbe {
-  installed: boolean;
-  uncertain: boolean;
-  detail: string;
-}
-
-interface DockerDesktopRunningProbe {
-  running: boolean;
-  uncertain: boolean;
-  detail: string;
-}
-
 export class PreflightService {
-  private readonly installerComposeProjects = new Set([
-    "smarteconomat-prod",
-    "smarteconomat",
-  ]);
-
-  private onLog: (message: string) => void = () => {
-    // No-op by default
-  };
-
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
-    private readonly dockerReadiness = new DockerReadinessService(),
   ) {}
-
-  setLogCallback(callback: (message: string) => void): void {
-    this.onLog = callback;
-  }
-
-  private log(message: string): void {
-    this.onLog(message);
-  }
 
   async run(runtimePath: string): Promise<OperationResult<PreflightReport>> {
     const checks: PreflightCheck[] = [];
@@ -155,24 +117,11 @@ export class PreflightService {
   async runAutoRepair(
     runtimePath: string,
   ): Promise<OperationResult<PreflightReport>> {
-    this.log("[PREFLIGHT-REPAIR] Iniciando reparación automática...");
-
     if (process.platform === "win32") {
-      this.log(
-        "[PREFLIGHT-REPAIR] Detectado Windows. Reparando dependencias...",
-      );
       await this.repairWindowsDependencies(runtimePath);
     }
 
-    this.log("[PREFLIGHT-REPAIR] Limpiando residuos de runtime...");
-    await this.cleanupRuntimeResidues(runtimePath);
-
-    this.log("[PREFLIGHT-REPAIR] Liberando puertos conocidos bloqueados...");
     await this.releaseKnownBusyPorts();
-
-    this.log(
-      "[PREFLIGHT-REPAIR] Reparación completada. Revalidando preflight...",
-    );
     return this.run(runtimePath);
   }
 
@@ -182,19 +131,6 @@ export class PreflightService {
     const owner = await this.inspectPort(payload.port);
     if (owner.status === "OK") {
       return this.run(payload.runtimePath);
-    }
-
-    // Primero intentamos liberar el puerto cerrando forzadamente
-    // contenedores gestionados por SmartEconomat que publiquen ese puerto.
-    const dockerReleased = await this.tryReleasePortByInstallerDockerContainers(
-      payload.port,
-    );
-
-    if (dockerReleased) {
-      const verification = await this.inspectPort(payload.port);
-      if (verification.status === "OK") {
-        return this.run(payload.runtimePath);
-      }
     }
 
     if (!owner.ownerPid) {
@@ -237,27 +173,7 @@ export class PreflightService {
     const diskCheck = await this.buildDiskCheck(runtimePath);
     const writeCheck = await this.buildWriteCheck(runtimePath);
 
-    const windowsAdminCheck =
-      process.platform === "win32" ? [await this.buildWindowsAdminCheck()] : [];
-
-    return [memoryCheck, diskCheck, writeCheck, ...windowsAdminCheck];
-  }
-
-  private async buildWindowsAdminCheck(): Promise<PreflightCheck> {
-    const isAdmin = await this.isRunningAsAdministrator();
-
-    return {
-      id: "windows-admin",
-      label: "Permisos de administrador",
-      status: isAdmin ? "OK" : "WARN",
-      detail: isAdmin
-        ? "La aplicación se está ejecutando con permisos de administrador."
-        : "La aplicación NO se está ejecutando como administrador.",
-      recommendation: isAdmin
-        ? undefined
-        : "Para auto-reparar WSL2, Hyper-V, Docker y Defender, inicia SmartEconomat como Administrador.",
-      repairable: false,
-    };
+    return [memoryCheck, diskCheck, writeCheck];
   }
 
   private async buildDiskCheck(runtimePath: string): Promise<PreflightCheck> {
@@ -276,12 +192,6 @@ export class PreflightService {
           status === "BLOCKER"
             ? "Liberar espacio hasta superar 10 GB."
             : undefined,
-        repairable: status === "BLOCKER",
-        repairAction: status === "BLOCKER" ? "auto-repair" : undefined,
-        repairHint:
-          status === "BLOCKER"
-            ? "Intentará eliminar residuos temporales, liberar puertos y revalidar el espacio disponible."
-            : undefined,
       };
     } catch (error) {
       const message =
@@ -294,34 +204,6 @@ export class PreflightService {
         recommendation: "Validar manualmente que haya al menos 10 GB libres.",
       };
     }
-  }
-
-  private async cleanupRuntimeResidues(runtimePath: string): Promise<void> {
-    const residuePaths = [
-      path.join(runtimePath, "logs"),
-      path.join(runtimePath, "log"),
-      path.join(runtimePath, "diagnostics"),
-      path.join(runtimePath, "diagnostic"),
-      path.join(runtimePath, "tmp"),
-      path.join(runtimePath, "temp"),
-      path.join(runtimePath, "cache"),
-      path.join(runtimePath, ".write-check.tmp"),
-    ];
-
-    this.log("[CLEANUP] Eliminando residuos de instalaciones anteriores...");
-
-    await Promise.all(
-      residuePaths.map(async (candidatePath) => {
-        try {
-          await fs.rm(candidatePath, { recursive: true, force: true });
-          this.log(`[CLEANUP] ✓ Eliminado: ${path.basename(candidatePath)}`);
-        } catch {
-          // Ignore cleanup errors; the main repair path can continue.
-        }
-      }),
-    );
-
-    this.log("[CLEANUP] Limpieza de residuos completada.");
   }
 
   private async buildWriteCheck(runtimePath: string): Promise<PreflightCheck> {
@@ -353,29 +235,22 @@ export class PreflightService {
     const checks: PreflightCheck[] = [];
     const dockerDesktopChecks: PreflightCheck[] = [];
 
-    const runtimeProbe = await this.dockerReadiness.probe({
-      source: "preflight",
-      timeoutMs: 12_000,
-    });
-
-    checks.push(this.buildDockerRuntimeStateCheck(runtimeProbe));
-
     if (process.platform === "win32") {
       dockerDesktopChecks.push(await this.checkWsl2());
       dockerDesktopChecks.push(await this.checkDockerDesktopInstalled());
       dockerDesktopChecks.push(await this.checkDockerDesktopRunning());
     }
 
-    const dockerVersion = await this.runWithTimeoutRetry({
+    const dockerVersion = await this.processRunner.run({
       command: "docker",
       args: ["version", "--format", "{{.Server.Version}}"],
-      timeoutMs: 20_000,
+      timeoutMs: 15_000,
     });
 
-    const composeVersion = await this.runWithTimeoutRetry({
+    const composeVersion = await this.processRunner.run({
       command: "docker",
       args: ["compose", "version"],
-      timeoutMs: 20_000,
+      timeoutMs: 15_000,
     });
 
     const dockerChecks = evaluateDockerChecks(dockerVersion, composeVersion);
@@ -383,37 +258,17 @@ export class PreflightService {
     const dockerComposeCheck = dockerChecks[1];
 
     if (!dockerVersion.ok && dockerEngineCheck) {
-      const isTimeout = /timed out/i.test(dockerVersion.message);
-      if (isTimeout) {
-        dockerEngineCheck.status = "WARN";
-        dockerEngineCheck.detail =
-          dockerEngineCheck.detail ||
-          "Docker Engine no respondió a tiempo, posible falso negativo transitorio.";
-        dockerEngineCheck.recommendation =
-          "Reintenta preflight. Si Docker está operativo, este timeout no debe bloquear instalación.";
-      } else {
-        dockerEngineCheck.repairable = process.platform === "win32";
-        dockerEngineCheck.repairAction = "auto-repair";
-        dockerEngineCheck.repairHint =
-          "Intentará instalar/iniciar Docker Desktop y revalidar automáticamente.";
-      }
+      dockerEngineCheck.repairable = process.platform === "win32";
+      dockerEngineCheck.repairAction = "auto-repair";
+      dockerEngineCheck.repairHint =
+        "Intentará instalar/iniciar Docker Desktop y revalidar automáticamente.";
     }
 
     if (!composeVersion.ok && dockerComposeCheck) {
-      const isTimeout = /timed out/i.test(composeVersion.message);
-      if (isTimeout) {
-        dockerComposeCheck.status = "WARN";
-        dockerComposeCheck.detail =
-          dockerComposeCheck.detail ||
-          "Docker Compose no respondió a tiempo, posible falso negativo transitorio.";
-        dockerComposeCheck.recommendation =
-          "Reintenta preflight. Si Docker responde, este timeout no debería bloquear.";
-      } else {
-        dockerComposeCheck.repairable = process.platform === "win32";
-        dockerComposeCheck.repairAction = "auto-repair";
-        dockerComposeCheck.repairHint =
-          "Intentará habilitar Docker Compose v2 tras iniciar Docker Desktop.";
-      }
+      dockerComposeCheck.repairable = process.platform === "win32";
+      dockerComposeCheck.repairAction = "auto-repair";
+      dockerComposeCheck.repairHint =
+        "Intentará habilitar Docker Compose v2 tras iniciar Docker Desktop.";
     }
 
     checks.push(
@@ -436,69 +291,6 @@ export class PreflightService {
     }
 
     return [...checks, ...dockerChecks];
-  }
-
-  private buildDockerRuntimeStateCheck(
-    runtimeProbe: DockerRuntimeStatus,
-  ): PreflightCheck {
-    const statusByState: Record<DockerRuntimeStatus["state"], PreflightCheck["status"]> = {
-      "not-installed": "BLOCKER",
-      "desktop-not-running": process.platform === "win32" ? "BLOCKER" : "WARN",
-      "daemon-starting": "WARN",
-      "daemon-ready": "OK",
-      "daemon-error": "BLOCKER",
-      "compose-error": "BLOCKER",
-      "recovery-in-progress": "WARN",
-    };
-
-    const recommendationByState: Record<DockerRuntimeStatus["state"], string | undefined> = {
-      "not-installed": "Instala Docker Desktop (Windows/macOS) o Docker Engine (Linux) antes de continuar.",
-      "desktop-not-running": "Inicia Docker Desktop o ejecuta Auto-repair para abrirlo automáticamente.",
-      "daemon-starting": "Docker está iniciando. Espera unos segundos y reintenta preflight.",
-      "daemon-ready": undefined,
-      "daemon-error": "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight. Si persiste, consulta diagnósticos.",
-      "compose-error": "Revisa docker compose y los artefactos del runtime antes de continuar.",
-      "recovery-in-progress": "El sistema está recuperando Docker. Reintenta al finalizar.",
-    };
-
-    return {
-      id: "docker-runtime-state",
-      label: "Estado runtime de Docker",
-      status: statusByState[runtimeProbe.state],
-      detail: runtimeProbe.detail,
-      recommendation: recommendationByState[runtimeProbe.state],
-      repairable:
-        runtimeProbe.state === "desktop-not-running" ||
-        runtimeProbe.state === "daemon-starting" ||
-        runtimeProbe.state === "daemon-error",
-      repairAction:
-        runtimeProbe.state === "daemon-ready" ||
-        runtimeProbe.state === "not-installed"
-          ? undefined
-          : "auto-repair",
-    };
-  }
-
-  private async runWithTimeoutRetry(input: {
-    command: string;
-    args: string[];
-    timeoutMs: number;
-  }): Promise<CommandResult> {
-    const first = await this.processRunner.run({
-      command: input.command,
-      args: input.args,
-      timeoutMs: input.timeoutMs,
-    });
-
-    if (first.ok || !/timed out/i.test(first.message)) {
-      return first;
-    }
-
-    return this.processRunner.run({
-      command: input.command,
-      args: input.args,
-      timeoutMs: input.timeoutMs + 10_000,
-    });
   }
 
   private async portChecks(): Promise<PreflightCheck[]> {
@@ -546,57 +338,32 @@ export class PreflightService {
   private async inspectPortWindows(
     port: number,
   ): Promise<PortInspectionResult> {
-    const psNetTcpCommand = [
+    const command = [
       `$conn = Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1`,
       "if ($null -eq $conn) { Write-Output 'FREE'; exit 0 }",
-      "$pid = $conn.OwningProcess",
-      "$name = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName",
+      "$ownerPid = $conn.OwningProcess",
+      "$name = (Get-Process -Id $ownerPid -ErrorAction SilentlyContinue).ProcessName",
       "if ([string]::IsNullOrWhiteSpace($name)) { $name = 'desconocido' }",
-      "Write-Output ('BUSY|' + $pid + '|' + $name)",
+      "Write-Output ('BUSY|' + $ownerPid + '|' + $name)",
     ].join("; ");
 
-    const psNetstatFallback = [
-      "$line = netstat -ano -p tcp | Select-String -Pattern (':" +
-        port +
-        "\\s') | ForEach-Object { $_.Line } | Where-Object { $_ -match 'LISTENING' } | Select-Object -First 1",
-      "if ([string]::IsNullOrWhiteSpace($line)) { Write-Output 'FREE'; exit 0 }",
-      "$parts = ($line -replace '\\s+', ' ').Trim().Split(' ')",
-      "$pid = $parts[$parts.Length - 1]",
-      "$name = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName",
-      "if ([string]::IsNullOrWhiteSpace($name)) { $name = 'desconocido' }",
-      "Write-Output ('BUSY|' + $pid + '|' + $name)",
-    ].join("; ");
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-Command", command],
+      timeoutMs: 10_000,
+    });
 
-    const probes = [
-      await this.processRunner.run({
-        command: "powershell",
-        args: ["-NoProfile", "-Command", psNetTcpCommand],
-        timeoutMs: 20_000,
-      }),
-      await this.processRunner.run({
-        command: "powershell",
-        args: ["-NoProfile", "-Command", psNetstatFallback],
-        timeoutMs: 20_000,
-      }),
-    ];
-
-    const firstSuccess = probes.find((probe) => probe.ok);
-    if (!firstSuccess) {
-      const probeDetail = probes
-        .map((probe) => probe.stderr || probe.message)
-        .filter((detail) => detail.trim().length > 0)
-        .join(" | ");
-
+    if (!result.ok) {
       return {
         status: "WARN",
-        detail: `No se pudo inspeccionar el puerto ${port}: ${probeDetail || "sin detalle"}`,
+        detail: `No se pudo inspeccionar el puerto ${port}: ${result.stderr || result.message}`,
         recommendation:
           "Ejecutar como administrador: Get-NetTCPConnection -State Listen -LocalPort " +
           `${port} | Select-Object OwningProcess, LocalAddress, LocalPort`,
       };
     }
 
-    const output = firstSuccess.stdout.trim();
+    const output = result.stdout.trim();
     if (output === "FREE") {
       return {
         status: "OK",
@@ -769,11 +536,11 @@ export class PreflightService {
           detail:
             "Smart App Control está activo. Las apps sin firma de confianza pueden bloquearse.",
           recommendation:
-            "Genera instalador firmado (certificado de confianza/EV) con build:win:release o firma posterior y verifica firma antes de distribuir.",
+            "Firmar el instalador y añadir exclusión en Defender para entorno de desarrollo.",
           repairable: true,
           repairAction: "auto-repair",
           repairHint:
-            "Intentará añadir exclusiones de Defender para desarrollo local, pero en producción debes firmar el instalador para evitar bloqueos.",
+            "Intentará añadir exclusiones de Defender y abrir Seguridad de Windows.",
           metadata: {
             ownerProcessName: path.basename(process.execPath),
           },
@@ -807,361 +574,41 @@ export class PreflightService {
   }
 
   private async repairWindowsDependencies(runtimePath: string): Promise<void> {
-    this.log("[WINDOWS-REPAIR] Reparando dependencias de Windows...");
-
-    const runningAsAdmin = await this.isRunningAsAdministrator();
-    if (!runningAsAdmin) {
-      this.log(
-        "[WINDOWS-REPAIR] ⚠️  La app no está en modo Administrador. La activación de WSL2/VirtualMachinePlatform puede fallar por permisos.",
-      );
-      this.log(
-        "[WINDOWS-REPAIR] ⚠️  Recomendación: cerrar SmartEconomat y volver a abrirla con 'Ejecutar como administrador'.",
-      );
-    }
-
-    try {
-      this.log("[WINDOWS-REPAIR] 1/5 Verificando winget...");
-      await this.ensureWingetAvailable();
-      this.log("[WINDOWS-REPAIR] ✓ Winget disponible.");
-    } catch (error) {
-      this.log(
-        `[WINDOWS-REPAIR] ⚠️  Winget no disponible: ${error instanceof Error ? error.message : "desconocido"}`,
-      );
-    }
-
-    try {
-      this.log("[WINDOWS-REPAIR] 2/5 Verificando/instalando WSL2...");
-      await this.ensureWsl2Installed();
-      this.log("[WINDOWS-REPAIR] ✓ WSL2 listo.");
-    } catch (error) {
-      this.log(
-        `[WINDOWS-REPAIR] ⚠️  No se pudo instalar WSL2: ${error instanceof Error ? error.message : "desconocido"}`,
-      );
-    }
-
-    try {
-      this.log("[WINDOWS-REPAIR] 3/5 Verificando/instalando Docker Desktop...");
-      await this.ensureDockerDesktopInstalled();
-      this.log("[WINDOWS-REPAIR] ✓ Docker Desktop instalado.");
-    } catch (error) {
-      this.log(
-        `[WINDOWS-REPAIR] ⚠️  No se pudo instalar Docker Desktop: ${error instanceof Error ? error.message : "desconocido"}`,
-      );
-    }
-
-    try {
-      this.log("[WINDOWS-REPAIR] 4/5 Iniciando Docker Desktop...");
-      await this.ensureDockerDesktopRunning();
-      this.log("[WINDOWS-REPAIR] ✓ Docker Desktop en ejecución.");
-    } catch (error) {
-      this.log(
-        `[WINDOWS-REPAIR] ⚠️  No se pudo iniciar Docker Desktop: ${error instanceof Error ? error.message : "desconocido"}`,
-      );
-    }
-
-    try {
-      this.log("[WINDOWS-REPAIR] 5/5 Configurando exclusiones de Defender...");
-      await this.tryEnableDefenderExclusions(runtimePath);
-      this.log("[WINDOWS-REPAIR] ✓ Exclusiones de Defender configuradas.");
-    } catch (error) {
-      this.log(
-        `[WINDOWS-REPAIR] ⚠️  No se pudieron configurar las exclusiones: ${error instanceof Error ? error.message : "desconocido"}`,
-      );
-    }
-
-    this.log("[WINDOWS-REPAIR] Reparación de dependencias completada.");
+    await this.ensureWingetAvailable();
+    await this.ensureWsl2Installed();
+    await this.ensureDockerDesktopInstalled();
+    await this.ensureDockerDesktopRunning();
+    await this.tryEnableDefenderExclusions(runtimePath);
   }
 
   private async ensureWingetAvailable(): Promise<void> {
-    const result = await this.processRunner.run({
+    await this.processRunner.run({
       command: "winget",
       args: ["--version"],
       timeoutMs: 10_000,
     });
-
-    if (!result.ok) {
-      throw this.buildWindowsCommandError("verificar winget", result);
-    }
   }
 
   private async ensureWsl2Installed(): Promise<void> {
-    if (!(await this.isRunningAsAdministrator())) {
-      throw new Error(
-        "Permisos insuficientes para activar WSL2. Ejecuta SmartEconomat como Administrador y vuelve a lanzar Auto-repair.",
-      );
-    }
-
     const check = await this.processRunner.run({
       command: "wsl",
       args: ["-l", "-v"],
       timeoutMs: 15_000,
     });
-
-    const status = await this.processRunner.run({
-      command: "wsl",
-      args: ["--status"],
-      timeoutMs: 20_000,
-    });
-
-    if (this.isWsl2Ready(status, check)) {
+    if (check.ok) {
       return;
     }
 
-    this.log(
-      "[WINDOWS-REPAIR] [WSL2] Habilitando característica Microsoft-Windows-Subsystem-Linux...",
-    );
-    const wslFeature = await this.enableWindowsOptionalFeature(
-      "Microsoft-Windows-Subsystem-Linux",
-    );
-
-    this.log(
-      "[WINDOWS-REPAIR] [WSL2] Habilitando característica VirtualMachinePlatform...",
-    );
-    const vmPlatformFeature = await this.enableWindowsOptionalFeature(
-      "VirtualMachinePlatform",
-    );
-
-    this.log(
-      "[WINDOWS-REPAIR] [WSL2] Configurando hypervisorlaunchtype=Auto...",
-    );
-    await this.ensureHypervisorLaunchTypeAuto();
-
-    this.log(
-      "[WINDOWS-REPAIR] [WSL2] Ejecutando instalación base de WSL sin distro...",
-    );
-    const installResult = await this.processRunner.run({
+    await this.processRunner.run({
       command: "wsl",
       args: ["--install", "--no-distribution"],
       timeoutMs: 120_000,
     });
-
-    if (!this.isSuccessfulWindowsCommand(installResult)) {
-      throw this.buildWindowsCommandError(
-        "instalar WSL2 (wsl --install)",
-        installResult,
-      );
-    }
-
-    this.log(
-      "[WINDOWS-REPAIR] [WSL2] Estableciendo versión por defecto WSL2...",
-    );
-    const setDefaultVersionResult = await this.processRunner.run({
-      command: "wsl",
-      args: ["--set-default-version", "2"],
-      timeoutMs: 30_000,
-    });
-
-    if (!this.isSuccessfulWindowsCommand(setDefaultVersionResult)) {
-      throw this.buildWindowsCommandError(
-        "establecer WSL2 por defecto",
-        setDefaultVersionResult,
-      );
-    }
-
-    this.log("[WINDOWS-REPAIR] [WSL2] Actualizando componentes de WSL...");
-    const updateResult = await this.processRunner.run({
-      command: "wsl",
-      args: ["--update"],
-      timeoutMs: 120_000,
-    });
-
-    if (!this.isSuccessfulWindowsCommand(updateResult)) {
-      this.log(
-        `[WINDOWS-REPAIR] [WSL2] ⚠️  wsl --update falló: ${updateResult.stderr || updateResult.message}`,
-      );
-    }
-
-    const postInstallCheck = await this.processRunner.run({
-      command: "wsl",
-      args: ["-l", "-v"],
-      timeoutMs: 20_000,
-    });
-
-    const postInstallStatus = await this.processRunner.run({
-      command: "wsl",
-      args: ["--status"],
-      timeoutMs: 20_000,
-    });
-
-    if (this.isWsl2Ready(postInstallStatus, postInstallCheck)) {
-      return;
-    }
-
-    const rebootRequired =
-      wslFeature.rebootRequired || vmPlatformFeature.rebootRequired;
-    const combinedOutput =
-      `${postInstallStatus.stdout} ${postInstallStatus.stderr} ${postInstallCheck.stdout} ${postInstallCheck.stderr}`.toLowerCase();
-
-    if (
-      rebootRequired ||
-      /reinici|restart required|reboot|plataforma de máquina virtual|virtual machine platform|hyper-v|hypervisor/i.test(
-        combinedOutput,
-      )
-    ) {
-      throw new Error(
-        "WSL2 requiere reiniciar Windows para finalizar la activación de características. Reinicia el equipo y ejecuta de nuevo el preflight.",
-      );
-    }
-
-    throw new Error(
-      postInstallStatus.stderr ||
-        postInstallCheck.stderr ||
-        "No se pudo dejar WSL2 operativo automáticamente.",
-    );
-  }
-
-  private async enableWindowsOptionalFeature(featureName: string): Promise<{
-    rebootRequired: boolean;
-  }> {
-    const result = await this.processRunner.run({
-      command: "dism.exe",
-      args: [
-        "/online",
-        "/enable-feature",
-        `/featurename:${featureName}`,
-        "/all",
-        "/norestart",
-      ],
-      timeoutMs: 120_000,
-    });
-
-    if (!this.isSuccessfulWindowsCommand(result)) {
-      throw this.buildWindowsCommandError(
-        `activar característica ${featureName}`,
-        result,
-      );
-    }
-
-    const output = `${result.stdout} ${result.stderr}`.toLowerCase();
-    const rebootRequired =
-      result.code === 3010 ||
-      /reinici|restart required|reboot required|restart needed/i.test(output);
-
-    return { rebootRequired };
-  }
-
-  private async ensureHypervisorLaunchTypeAuto(): Promise<void> {
-    const result = await this.processRunner.run({
-      command: "bcdedit",
-      args: ["/set", "hypervisorlaunchtype", "auto"],
-      timeoutMs: 20_000,
-    });
-
-    if (!this.isSuccessfulWindowsCommand(result)) {
-      throw this.buildWindowsCommandError(
-        "configurar hypervisorlaunchtype=auto",
-        result,
-      );
-    }
-  }
-
-  private async isRunningAsAdministrator(): Promise<boolean> {
-    if (process.platform !== "win32") {
-      return true;
-    }
-
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        "[bool](([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))",
-      ],
-      timeoutMs: 10_000,
-    });
-
-    if (!result.ok) {
-      return false;
-    }
-
-    return result.stdout.trim().toLowerCase() === "true";
-  }
-
-  private buildWindowsCommandError(
-    action: string,
-    result: CommandResult,
-  ): Error {
-    const baseMessage =
-      result.stderr.trim() || result.stdout.trim() || result.message;
-
-    if (this.isWindowsElevationFailure(result)) {
-      return new Error(
-        `No se pudo ${action} por falta de permisos de administrador. Cierra SmartEconomat, ábrela con 'Ejecutar como administrador' y reintenta Auto-repair. Detalle: ${baseMessage}`,
-      );
-    }
-
-    return new Error(`No se pudo ${action}. Detalle: ${baseMessage}`);
-  }
-
-  private isWindowsElevationFailure(result: CommandResult): boolean {
-    const detail =
-      `${result.stderr} ${result.stdout} ${result.message}`.toLowerCase();
-
-    return (
-      detail.includes("requires elevation") ||
-      detail.includes("elevation required") ||
-      detail.includes("acceso denegado") ||
-      detail.includes("access is denied") ||
-      detail.includes("administrador") ||
-      detail.includes("admin") ||
-      detail.includes("0x80070005") ||
-      detail.includes("error 740")
-    );
-  }
-
-  private isSuccessfulWindowsCommand(result: CommandResult): boolean {
-    return result.ok || result.code === 3010;
-  }
-
-  private isWsl2Ready(
-    statusResult: CommandResult,
-    listResult: CommandResult,
-  ): boolean {
-    if (!listResult.ok) {
-      return false;
-    }
-
-    const mergedStatus =
-      `${statusResult.stdout} ${statusResult.stderr} ${listResult.stdout} ${listResult.stderr}`.toLowerCase();
-
-    return !/wsl2 no es compatible|not compatible|virtual machine platform|plataforma de máquina virtual|debe habilitarse|must be enabled|hyper-v|hypervisorlaunchtype/i.test(
-      mergedStatus,
-    );
-  }
-
-  private buildWsl2FailureDetail(
-    statusResult: CommandResult,
-    listResult: CommandResult,
-  ): string {
-    const mergedStatus =
-      `${statusResult.stdout} ${statusResult.stderr} ${listResult.stdout} ${listResult.stderr}`.toLowerCase();
-
-    if (
-      /virtual machine platform|plataforma de máquina virtual|must be enabled|debe habilitarse/i.test(
-        mergedStatus,
-      )
-    ) {
-      return "WSL2 no está operativo porque VirtualMachinePlatform/WSL no están habilitados o falta reinicio del sistema.";
-    }
-
-    if (/hyper-v|hypervisorlaunchtype/i.test(mergedStatus)) {
-      return "WSL2 requiere Hyper-V/hypervisorlaunchtype en modo auto y reinicio de Windows.";
-    }
-
-    if (/not compatible|no es compatible/i.test(mergedStatus)) {
-      return "WSL2 no es compatible con la configuración actual del sistema o virtualización desactivada en BIOS/UEFI.";
-    }
-
-    if (/0x8007019e|0x80370102/.test(mergedStatus)) {
-      return "WSL2 no está inicializado correctamente. Activa características de Windows para WSL2 y reinicia el equipo.";
-    }
-
-    return "WSL2 no disponible en el sistema. Activa Microsoft-Windows-Subsystem-Linux y VirtualMachinePlatform, reinicia y reintenta.";
   }
 
   private async ensureDockerDesktopInstalled(): Promise<void> {
-    const probe = await this.probeDockerDesktopInstalled();
-    if (probe.installed || probe.uncertain) {
+    const check = await this.checkDockerDesktopInstalled();
+    if (check.status === "OK") {
       return;
     }
 
@@ -1181,8 +628,8 @@ export class PreflightService {
   }
 
   private async ensureDockerDesktopRunning(): Promise<void> {
-    const runningProbe = await this.probeDockerDesktopRunning();
-    if (runningProbe.running || runningProbe.uncertain) {
+    const running = await this.checkDockerDesktopRunning();
+    if (running.status === "OK") {
       return;
     }
 
@@ -1208,8 +655,13 @@ export class PreflightService {
     }
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
-      const recheck = await this.probeDockerDesktopRunning();
-      if (recheck.running) {
+      const dockerVersion = await this.processRunner.run({
+        command: "docker",
+        args: ["version", "--format", "{{.Server.Version}}"],
+        timeoutMs: 10_000,
+      });
+
+      if (dockerVersion.ok) {
         return;
       }
 
@@ -1220,140 +672,12 @@ export class PreflightService {
   }
 
   private async releaseKnownBusyPorts(): Promise<void> {
-    this.log("[PORTS] Inspeccionando puertos 80 (HTTP) y 443 (HTTPS)...");
-
     for (const port of [80, 443]) {
       const status = await this.inspectPort(port);
-      if (status.status === "OK") {
-        this.log(`[PORTS] ✓ Puerto ${port} disponible.`);
-        continue;
-      }
-
-      this.log(
-        `[PORTS] ⚠️  Puerto ${port} ocupado por ${status.ownerProcessName || "desconocido"} (PID: ${status.ownerPid}).`,
-      );
-
-      const dockerReleased =
-        await this.tryReleasePortByInstallerDockerContainers(port);
-      if (dockerReleased) {
-        this.log(`[PORTS] ✓ Contenedor Docker liberado del puerto ${port}.`);
-        const verification = await this.inspectPort(port);
-        if (verification.status === "OK") {
-          continue;
-        }
-      }
-
-      if (!status.ownerPid) {
-        this.log(
-          `[PORTS] ⚠️  No se pudo identificar el PID del puerto ${port}.`,
-        );
-        continue;
-      }
-
-      this.log(
-        `[PORTS] Cerrando proceso ${status.ownerPid} para liberar puerto ${port}...`,
-      );
-      const killed = await this.killPid(status.ownerPid);
-      if (killed) {
-        this.log(
-          `[PORTS] ✓ Proceso ${status.ownerPid} cerrado. Puerto ${port} debe estar libre.`,
-        );
-      } else {
-        this.log(
-          `[PORTS] ⚠️  No se pudo cerrar el proceso ${status.ownerPid}. Puede requerir intervención manual.`,
-        );
+      if (status.ownerPid) {
+        await this.killPid(status.ownerPid);
       }
     }
-
-    this.log("[PORTS] Inspección de puertos completada.");
-  }
-
-  private isDockerOwnerProcess(processName: string): boolean {
-    const normalized = processName.trim().toLowerCase();
-    return (
-      normalized === "docker" ||
-      normalized === "dockerd" ||
-      normalized === "docker desktop" ||
-      normalized === "com.docker.backend" ||
-      normalized === "com.docker.service"
-    );
-  }
-
-  private async tryReleasePortByInstallerDockerContainers(
-    port: number,
-  ): Promise<boolean> {
-    const candidates =
-      await this.listInstallerDockerContainersByPublishedPort(port);
-    if (candidates.length === 0) {
-      return false;
-    }
-
-    const ids = candidates.map((container) => container.id);
-    const forceRemoveResult = await this.processRunner.run({
-      command: "docker",
-      args: ["rm", "-f", ...ids],
-      timeoutMs: 45_000,
-    });
-
-    return forceRemoveResult.ok;
-  }
-
-  private async listInstallerDockerContainersByPublishedPort(
-    port: number,
-  ): Promise<DockerPortContainer[]> {
-    const result = await this.processRunner.run({
-      command: "docker",
-      args: [
-        "ps",
-        "--filter",
-        `publish=${port}`,
-        "--format",
-        '{{.ID}}|{{.Names}}|{{.Label "com.docker.compose.project"}}',
-      ],
-      timeoutMs: 15_000,
-    });
-
-    if (!result.ok) {
-      return [];
-    }
-
-    const containers: DockerPortContainer[] = [];
-    for (const line of result.stdout.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (trimmed.length === 0) {
-        continue;
-      }
-
-      const [idRaw = "", nameRaw = "", composeProjectRaw = ""] =
-        trimmed.split("|");
-      const id = idRaw.trim();
-      const name = nameRaw.trim();
-      const composeProject = composeProjectRaw.trim();
-
-      if (!id || !name) {
-        continue;
-      }
-
-      if (this.isInstallerManagedContainer(name, composeProject)) {
-        containers.push({ id, name, composeProject });
-      }
-    }
-
-    return containers;
-  }
-
-  private isInstallerManagedContainer(
-    containerName: string,
-    composeProject: string,
-  ): boolean {
-    const normalizedName = containerName.trim().toLowerCase();
-    const normalizedProject = composeProject.trim().toLowerCase();
-
-    return (
-      this.installerComposeProjects.has(normalizedProject) ||
-      normalizedName.startsWith("smarteconomat-") ||
-      normalizedName.startsWith("smarteconomat_")
-    );
   }
 
   private async killPid(pid: number): Promise<boolean> {
@@ -1417,249 +741,86 @@ export class PreflightService {
       timeoutMs: 15_000,
     });
 
-    const statusResult = await this.processRunner.run({
-      command: "wsl",
-      args: ["--status"],
-      timeoutMs: 15_000,
-    });
-
-    const ready = this.isWsl2Ready(statusResult, result);
-    const detail = ready
-      ? "WSL2 detectado correctamente."
-      : this.buildWsl2FailureDetail(statusResult, result);
-    const recommendation = ready
-      ? undefined
-      : "Activa las características de Windows 'Microsoft-Windows-Subsystem-Linux' y 'VirtualMachinePlatform', reinicia el equipo y vuelve a ejecutar preflight.";
-
     return {
       id: "wsl2",
       label: "WSL2",
-      status: ready ? "OK" : "BLOCKER",
-      detail,
-      recommendation,
-      repairable: !ready,
-      repairAction: !ready ? "auto-repair" : undefined,
-      repairHint: !ready
+      status: result.ok ? "OK" : "BLOCKER",
+      detail: result.ok
+        ? "WSL2 detectado correctamente."
+        : result.stderr || "WSL2 no disponible en el sistema.",
+      recommendation: result.ok
+        ? undefined
+        : "Instalar WSL2 (wsl --install) y reiniciar el equipo.",
+      repairable: !result.ok,
+      repairAction: !result.ok ? "auto-repair" : undefined,
+      repairHint: !result.ok
         ? "Intentará instalar WSL2 automáticamente."
         : undefined,
     };
   }
 
   private async checkDockerDesktopInstalled(): Promise<PreflightCheck> {
-    const probe = await this.probeDockerDesktopInstalled();
-
-    return {
-      id: "docker-desktop-installed",
-      label: "Docker Desktop instalado",
-      status: probe.installed ? "OK" : probe.uncertain ? "WARN" : "BLOCKER",
-      detail: probe.detail,
-      recommendation: probe.installed
-        ? undefined
-        : probe.uncertain
-          ? "No se pudo confirmar al 100%. Reintenta preflight o verifica Docker Desktop manualmente."
-          : "Instalar Docker Desktop para habilitar Docker Engine y Compose.",
-      repairable: !probe.installed && !probe.uncertain,
-      repairAction:
-        !probe.installed && !probe.uncertain ? "auto-repair" : undefined,
-      repairHint:
-        !probe.installed && !probe.uncertain
-          ? "Intentará instalar Docker Desktop con winget."
-          : undefined,
-    };
-  }
-
-  private async checkDockerDesktopRunning(): Promise<PreflightCheck> {
-    const probe = await this.probeDockerDesktopRunning();
-
-    return {
-      id: "docker-desktop-running",
-      label: "Docker Desktop en ejecución",
-      status: probe.running ? "OK" : probe.uncertain ? "WARN" : "BLOCKER",
-      detail: probe.detail,
-      recommendation: probe.running
-        ? undefined
-        : probe.uncertain
-          ? "No se pudo confirmar el estado del engine. Si Docker está levantado, continúa; si no, inicia Docker Desktop y reintenta."
-          : "Iniciar Docker Desktop y esperar a que Engine esté operativo.",
-      repairable: !probe.running && !probe.uncertain,
-      repairAction:
-        !probe.running && !probe.uncertain ? "auto-repair" : undefined,
-      repairHint:
-        !probe.running && !probe.uncertain
-          ? "Intentará iniciar Docker Desktop automáticamente."
-          : undefined,
-    };
-  }
-
-  private async probeDockerDesktopInstalled(): Promise<DockerDesktopInstallProbe> {
-    const pathProbe = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        [
-          "$paths = @(",
-          "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe',",
-          "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop'",
-          ")",
-          "$exists = $false",
-          "foreach ($p in $paths) { if (Test-Path -LiteralPath $p) { $exists = $true; break } }",
-          "if ($exists) { Write-Output 'INSTALLED_PATH' } else { Write-Output 'MISSING_PATH' }",
-        ].join("; "),
-      ],
-      timeoutMs: 8_000,
-    });
-
-    if (pathProbe.ok && pathProbe.stdout.trim() === "INSTALLED_PATH") {
-      return {
-        installed: true,
-        uncertain: false,
-        detail: "Docker Desktop está instalado (detectado por ruta local).",
-      };
-    }
-
-    const dockerCliProbe = await this.processRunner.run({
-      command: "docker",
-      args: ["--version"],
-      timeoutMs: 12_000,
-    });
-
-    if (dockerCliProbe.ok) {
-      return {
-        installed: true,
-        uncertain: false,
-        detail: "Docker CLI responde correctamente en este sistema.",
-      };
-    }
-
     const command = [
-      "$candidateRoots = @($env:ProgramFiles, $env:ProgramW6432) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique",
-      "$paths = @()",
-      "foreach ($root in $candidateRoots) {",
-      "  $paths += Join-Path $root 'Docker\\Docker\\Docker Desktop.exe'",
-      "  $paths += Join-Path $root 'Docker\\Docker\\Docker Desktop'",
-      "}",
-      "$paths += 'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe'",
-      "$paths += 'C:\\Program Files\\Docker\\Docker\\Docker Desktop'",
-      "$paths = $paths | Select-Object -Unique",
-      "$existsByPath = $false",
-      "foreach ($p in $paths) { if (Test-Path -LiteralPath $p) { $existsByPath = $true; break } }",
-      "$existsByRegistry = $false",
-      "$registryPaths = @('HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*', 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*')",
-      "foreach ($reg in $registryPaths) {",
-      "  $item = Get-ItemProperty -Path $reg -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -eq 'Docker Desktop' } | Select-Object -First 1",
-      "  if ($null -ne $item) { $existsByRegistry = $true; break }",
-      "}",
-      "$existsByCommand = $null -ne (Get-Command 'Docker Desktop' -ErrorAction SilentlyContinue)",
-      "$installed = $existsByPath -or $existsByRegistry -or $existsByCommand",
-      "if ($installed) {",
-      "  Write-Output ('INSTALLED|' + ($paths -join ';'))",
-      "} else {",
-      "  Write-Output ('MISSING|' + ($paths -join ';'))",
-      "}",
+      "$paths = @(",
+      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe',",
+      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop'",
+      ")",
+      "$exists = $false",
+      "foreach ($path in $paths) { if (Test-Path $path) { $exists = $true; break } }",
+      "if ($exists) { Write-Output 'INSTALLED' } else { Write-Output 'MISSING' }",
     ].join("; ");
 
     const result = await this.processRunner.run({
       command: "powershell",
       args: ["-NoProfile", "-Command", command],
-      timeoutMs: 25_000,
+      timeoutMs: 10_000,
     });
-
-    const output = result.stdout.trim();
-    const installed = result.ok && output.startsWith("INSTALLED|");
-
-    if (installed) {
-      return {
-        installed: true,
-        uncertain: false,
-        detail: "Docker Desktop está instalado.",
-      };
-    }
-
-    if (!result.ok && /timed out/i.test(result.message)) {
-      return {
-        installed: false,
-        uncertain: true,
-        detail:
-          "No se pudo verificar instalación de Docker Desktop por timeout, pero el resultado puede ser transitorio.",
-      };
-    }
+    const installed = result.ok && result.stdout.trim() === "INSTALLED";
 
     return {
-      installed: false,
-      uncertain: false,
-      detail: result.ok
-        ? "No se encontró Docker Desktop en Program Files o registro del sistema."
-        : `No se pudo verificar instalación de Docker Desktop: ${result.stderr || result.message}`,
+      id: "docker-desktop-installed",
+      label: "Docker Desktop instalado",
+      status: installed ? "OK" : "BLOCKER",
+      detail: installed
+        ? "Docker Desktop está instalado."
+        : "No se encontró Docker Desktop en Program Files.",
+      recommendation: installed
+        ? undefined
+        : "Instalar Docker Desktop para habilitar Docker Engine y Compose.",
+      repairable: !installed,
+      repairAction: !installed ? "auto-repair" : undefined,
+      repairHint: !installed
+        ? "Intentará instalar Docker Desktop con winget."
+        : undefined,
     };
   }
 
-  private async probeDockerDesktopRunning(): Promise<DockerDesktopRunningProbe> {
-    const processCheck = await this.processRunner.run({
+  private async checkDockerDesktopRunning(): Promise<PreflightCheck> {
+    const command =
+      "if (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }";
+
+    const result = await this.processRunner.run({
       command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        "if (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }",
-      ],
+      args: ["-NoProfile", "-Command", command],
       timeoutMs: 10_000,
     });
-
-    if (processCheck.ok && processCheck.stdout.trim() === "RUNNING") {
-      return {
-        running: true,
-        uncertain: false,
-        detail: "Docker Desktop está en ejecución.",
-      };
-    }
-
-    const dockerServerVersion = await this.processRunner.run({
-      command: "docker",
-      args: ["version", "--format", "{{.Server.Version}}"],
-      timeoutMs: 15_000,
-    });
-
-    if (dockerServerVersion.ok) {
-      return {
-        running: true,
-        uncertain: false,
-        detail: "Docker Engine responde correctamente.",
-      };
-    }
-
-    const dockerInfo = await this.processRunner.run({
-      command: "docker",
-      args: ["info", "--format", "{{.ServerVersion}}"],
-      timeoutMs: 20_000,
-    });
-
-    if (dockerInfo.ok) {
-      return {
-        running: true,
-        uncertain: false,
-        detail: "Docker Engine responde correctamente (docker info).",
-      };
-    }
-
-    const timeoutSignals = [
-      processCheck,
-      dockerServerVersion,
-      dockerInfo,
-    ].filter((probe) => /timed out/i.test(probe.message));
-
-    if (timeoutSignals.length > 0) {
-      return {
-        running: false,
-        uncertain: true,
-        detail:
-          "No se pudo confirmar estado de Docker Desktop/Engine por timeout. Puede ser un falso negativo temporal.",
-      };
-    }
+    const running = result.ok && result.stdout.trim() === "RUNNING";
 
     return {
-      running: false,
-      uncertain: false,
-      detail: "Docker Desktop no está iniciado o Docker Engine no responde.",
+      id: "docker-desktop-running",
+      label: "Docker Desktop en ejecución",
+      status: running ? "OK" : "BLOCKER",
+      detail: running
+        ? "Docker Desktop está en ejecución."
+        : "Docker Desktop no está iniciado.",
+      recommendation: running
+        ? undefined
+        : "Iniciar Docker Desktop y esperar a que Engine esté operativo.",
+      repairable: !running,
+      repairAction: !running ? "auto-repair" : undefined,
+      repairHint: !running
+        ? "Intentará iniciar Docker Desktop automáticamente."
+        : undefined,
     };
   }
 }

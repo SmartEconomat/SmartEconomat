@@ -14,6 +14,7 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import { useAuth } from '../../store/auth.hooks';
 import { User } from '../../store/auth.types';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────
 // Constantes de layout y animación
@@ -129,6 +130,7 @@ const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
  * @returns {JSX.Element} Vista controladora de autenticación.
  */
 export default function Login() {
+  const { t } = useTranslation();
   const { login } = useAuth();
 
   // Forzamos el tema claro para esta página específica
@@ -354,10 +356,10 @@ export default function Login() {
                   sx={{ fontSize: 80, color: 'secondary.main', mb: 2 }}
                 />
                 <Typography variant="h3" fontWeight={700} gutterBottom>
-                  ¡Registro exitoso!
+                  {t('auth.overlay.registerSuccess')}
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
-                  debes esperar a que tu usuario esté activo.
+                  {t('auth.overlay.waitForActivation')}
                 </Typography>
               </>
             ) : (
@@ -366,10 +368,10 @@ export default function Login() {
                   sx={{ fontSize: 80, color: 'primary.main', mb: 2 }}
                 />
                 <Typography variant="h3" fontWeight={700} gutterBottom>
-                  ¡Bienvenido!
+                  {t('auth.overlay.welcome')}
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
-                  Cargando tu aplicación…
+                  {t('auth.overlay.loadingApp')}
                 </Typography>
               </>
             )}

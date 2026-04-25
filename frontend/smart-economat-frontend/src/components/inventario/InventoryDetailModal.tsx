@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -122,6 +123,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   onClose,
   onRefreshItem,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   // Filter items matching the product – memoized to avoid new reference each render
   const relevantItems = React.useMemo(
@@ -204,21 +206,21 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   ): string | null => {
     const rawValue = stockAdjustments[item.id]?.trim() ?? '';
     if (!rawValue) {
-      return requireValue ? 'Introduce un ajuste distinto de 0.' : null;
+      return requireValue ? t('inventoryDetail.errorRequireValue') : null;
     }
 
     const adjustment = parseAdjustmentValue(rawValue);
     if (adjustment === null) {
-      return 'Introduce un numero valido.';
+      return t('inventoryDetail.errorInvalidNumber');
     }
 
     if (adjustment === 0) {
-      return 'El ajuste no puede ser 0.';
+      return t('inventoryDetail.errorZeroAdjustment');
     }
 
     const currentStock = Number(item.cantidadActual) || 0;
     if (currentStock + adjustment < 0) {
-      return 'El ajuste no puede dejar el stock en negativo.';
+      return t('inventoryDetail.errorNegativeStock');
     }
 
     return null;
@@ -237,7 +239,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
     const adjustment = parseAdjustmentValue(stockAdjustments[item.id]);
     if (adjustment === null) {
-      toast.error('No se pudo interpretar el ajuste de stock.');
+      toast.error(t('inventoryDetail.errorParseAdjustment'));
       return;
     }
 
@@ -252,20 +254,18 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     try {
       await createAjusteManualInventario(payload);
       setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-      toast.success('Ajuste de stock aplicado correctamente.');
+      toast.success(t('inventoryDetail.adjustSuccessful'));
       onRefreshItem();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : 'Error al aplicar ajuste de stock.';
+          : t('inventoryDetail.errorParseAdjustment');
 
       if (errorMessage.toLowerCase().includes('inventario no encontrado')) {
         await onRefreshItem();
         setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-        toast.error(
-          'El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.'
-        );
+        toast.error(t('inventoryDetail.batchNotFound'));
       } else {
         toast.error(errorMessage);
       }
@@ -298,12 +298,12 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success('Merma registrada correctamente');
+      toast.success(t('inventoryDetail.wasteSuccess'));
       setIsMermaModalOpen(false);
       onRefreshItem();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al registrar merma';
+        err instanceof Error ? err.message : t('inventoryDetail.wasteError');
       toast.error(message);
     } finally {
       setIsSavingMerma(false);
@@ -321,7 +321,9 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle component="div">
         <Typography variant="h6" component="h2">
-          {mode === 'audit' ? 'Auditar Stock por Ajuste' : 'Detalles de Lotes'}
+          {mode === 'audit'
+            ? t('inventoryDetail.auditTitle')
+            : t('inventoryDetail.detailTitle')}
         </Typography>
         <Typography
           variant="subtitle2"
@@ -337,8 +339,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
             color="text.secondary"
             sx={{ display: 'block', mt: 0.5 }}
           >
-            Solo lectura: stock actual y stock total en unidades de envase.
-            Editable: ajuste de stock (+/-).
+            {t('inventoryDetail.auditReadOnlyHint')}
           </Typography>
         )}
         {mode === 'audit' && productConstruction && (
@@ -347,14 +348,16 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
             color="text.secondary"
             sx={{ display: 'block' }}
           >
-            Construcción del producto: {productConstruction}
+            {t('inventoryDetail.productConstruction', {
+              value: productConstruction,
+            })}
           </Typography>
         )}
       </DialogTitle>
       <DialogContent dividers>
         {relevantItems.length === 0 ? (
           <Typography color="text.secondary">
-            No se encontraron lotes para este producto.
+            {t('inventoryDetail.noBatches')}
           </Typography>
         ) : (
           <>
@@ -370,7 +373,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 }}
               >
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Resumen de auditoria
+                  {t('inventoryDetail.auditSummary')}
                 </Typography>
                 <Box
                   sx={{
@@ -382,7 +385,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 >
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Stock total actual (solo lectura)
+                      {t('inventoryDetail.currentStock')}
                     </Typography>
                     <Typography variant="h6">
                       {formatStockUnits(totalCurrentStock)}
@@ -403,7 +406,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Ajuste total pendiente
+                      {t('inventoryDetail.pendingAdjustment')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -428,7 +431,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Stock total proyectado (solo lectura)
+                      {t('inventoryDetail.projectedStock')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -458,23 +461,35 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Lote ID</TableCell>
-                    <TableCell>Proveedor</TableCell>
-                    <TableCell>Ubicación</TableCell>
-                    <TableCell>Caducidad</TableCell>
+                    <TableCell>
+                      {t('inventoryDetail.columns.batchId')}
+                    </TableCell>
+                    <TableCell>
+                      {t('inventoryDetail.columns.supplier')}
+                    </TableCell>
+                    <TableCell>
+                      {t('inventoryDetail.columns.location')}
+                    </TableCell>
+                    <TableCell>{t('inventoryDetail.columns.expiry')}</TableCell>
                     {mode === 'audit' ? (
                       <>
-                        <TableCell align="right">Stock actual (uds)</TableCell>
                         <TableCell align="right">
-                          Ajuste de stock (uds +/-)
+                          {t('inventoryDetail.columns.currentStockUnits')}
                         </TableCell>
                         <TableCell align="right">
-                          Stock resultante (uds)
+                          {t('inventoryDetail.columns.adjustment')}
                         </TableCell>
-                        <TableCell align="center">Acción</TableCell>
+                        <TableCell align="right">
+                          {t('inventoryDetail.columns.resultingStock')}
+                        </TableCell>
+                        <TableCell align="center">
+                          {t('inventoryDetail.columns.action')}
+                        </TableCell>
                       </>
                     ) : (
-                      <TableCell align="right">Cantidad actual (uds)</TableCell>
+                      <TableCell align="right">
+                        {t('inventoryDetail.columns.currentQty')}
+                      </TableCell>
                     )}
                   </TableRow>
                 </TableHead>
@@ -563,7 +578,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                                 error={Boolean(fieldError)}
                                 helperText={
                                   fieldError ??
-                                  'Ajuste en unidades de envase (+/-)'
+                                  t('inventoryDetail.adjustmentHelperText')
                                 }
                                 sx={{ width: '170px' }}
                                 inputProps={{
@@ -641,11 +656,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
           variant="outlined"
           onClick={handleOpenMerma}
         >
-          Reportar Merma
+          {t('inventoryDetail.reportWaste')}
         </Button>
         <Box>
           <Button onClick={onClose} variant="contained" color="primary">
-            {mode === 'audit' ? 'Cerrar Auditoría' : 'Cerrar'}
+            {mode === 'audit'
+              ? t('inventoryDetail.closeAudit')
+              : t('inventoryDetail.close')}
           </Button>
         </Box>
       </DialogActions>
@@ -653,13 +670,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       <DynamicFormModal
         isOpen={isMermaModalOpen}
         onClose={() => setIsMermaModalOpen(false)}
-        title="Registrar Merma"
+        title={t('inventoryDetail.registerWaste')}
         fields={dynamicMermaSchema}
         onSubmit={handleSaveMerma}
         isSubmitting={isSavingMerma}
         initialData={{ productoId }}
         requireConfirmation={true}
-        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+        confirmationMessage={t('inventoryDetail.wasteWarning')}
       />
     </Dialog>
   );

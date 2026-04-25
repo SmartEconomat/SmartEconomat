@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 25/04/2026, 13:04:45
+> **Última actualización:** 25/04/2026, 14:40:57
 
 ---
 
@@ -18,7 +18,7 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **50.22%** de todo el código.
+- Posee el **50.17%** de todo el código.
 - Ha logrado fusionar **100** funcionalidades completas.
 
 ---
@@ -26,11 +26,11 @@ Demostrando que:
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **299** (25.93%)
+- 💻 Commits: **300** (26.00%)
 - 🔀 PRs Fusionados: **23**
 
 ### 🥈 Sergio
-- 💻 Commits: **149** (12.92%)
+- 💻 Commits: **149** (12.91%)
 - 🔀 PRs Fusionados: **24**
 
 ### 🥈 Maurizio
@@ -63,9 +63,9 @@ Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **579** | 🔀 **100** | 50.22% | 👑 Líder |
-| #2 | Alexis | **299** | 🔀 **23** | 25.93% | 💪 Activo |
-| #3 | Sergio | **149** | 🔀 **24** | 12.92% | 💪 Activo |
+| #1 | Darel | **579** | 🔀 **100** | 50.17% | 👑 Líder |
+| #2 | Alexis | **300** | 🔀 **23** | 26.00% | 💪 Activo |
+| #3 | Sergio | **149** | 🔀 **24** | 12.91% | 💪 Activo |
 | #4 | Maurizio | **75** | 🔀 **8** | 6.50% | 💪 Activo |
 | #5 | Guillermo | **51** | 🔀 **8** | 4.42% | 🐌 Necesita café |
 
@@ -73,10 +73,10 @@ Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 1153
+- **Total de commits:** 1154
 - **Total de PRs fusionados:** 163
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 230.6
+- **Promedio de commits por persona:** 230.8
 
 ---
 
@@ -86,7 +86,7 @@ Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
 `████████████████████` 579 commits | 100 PRs
 
 **Alexis**
-`██████████░░░░░░░░░░` 299 commits | 23 PRs
+`██████████░░░░░░░░░░` 300 commits | 23 PRs
 
 **Sergio**
 `█████░░░░░░░░░░░░░░░` 149 commits | 24 PRs
