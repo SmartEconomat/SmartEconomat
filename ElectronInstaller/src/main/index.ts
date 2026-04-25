@@ -14,6 +14,10 @@ import { DebugLogService, parseDebugFlag } from "./services/debug-log.service";
 import { LocalDomainSelfHealService } from "./services/local-domain-selfheal.service";
 
 function isElevated(): boolean {
+  if (process.env.NODE_ENV === "test") {
+    return true;
+  }
+
   if (process.platform !== "win32") {
     return true;
   }
@@ -95,7 +99,8 @@ let traySupervisorState: "healthy" | "recovering" | "degraded" = "healthy";
 let installerIpc: ReturnType<typeof registerInstallerIpc> | null = null;
 let runtimeIpc: ReturnType<typeof registerRuntimeIpc> | null = null;
 let bootGuardian: BootGuardianService | null = null;
-const hasSingleInstanceLock = app.requestSingleInstanceLock();
+const hasSingleInstanceLock =
+  process.env.NODE_ENV === "test" ? true : app.requestSingleInstanceLock();
 const launchedInBackground = process.argv.some(
   (argument) => argument === "--background" || argument === "--control-panel",
 );
@@ -147,6 +152,13 @@ function resolvePreloadPath(baseDir: string): string {
 }
 
 function loadRenderer(window: BrowserWindow, hash?: string): void {
+  const isAbortedNavigationError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+    return error.message.includes("ERR_ABORTED (-3) loading");
+  };
+
   const rendererUrl = process.env.ELECTRON_RENDERER_URL;
   if (rendererUrl) {
     const parsed = new URL(rendererUrl);
@@ -155,6 +167,9 @@ function loadRenderer(window: BrowserWindow, hash?: string): void {
     }
 
     window.loadURL(parsed.toString()).catch((error: unknown) => {
+      if (isAbortedNavigationError(error)) {
+        return;
+      }
       console.error("Failed to load renderer URL", error);
     });
     return;
@@ -164,6 +179,9 @@ function loadRenderer(window: BrowserWindow, hash?: string): void {
   window
     .loadFile(rendererFile, hash ? { hash } : undefined)
     .catch((error: unknown) => {
+      if (isAbortedNavigationError(error)) {
+        return;
+      }
       console.error("Failed to load renderer file", error);
     });
 }

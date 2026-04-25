@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import path from "node:path";
 
 import type {
@@ -17,12 +18,25 @@ import {
 import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
+interface ComposeLocation {
+  composeFile: string;
+  projectDirectory: string;
+}
+
 interface ComposePsEntry {
   Service?: string;
   Name?: string;
   State?: string;
   Health?: string;
   Status?: string;
+}
+
+const ANSI_ESCAPE_REGEX =
+  // eslint-disable-next-line no-control-regex
+  /\u001b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
+
+function stripAnsi(input: string): string {
+  return input.replace(ANSI_ESCAPE_REGEX, "");
 }
 
 function parseComposeEntries(rawOutput: string): ComposePsEntry[] {
@@ -565,7 +579,7 @@ export class DockerOrchestratorService {
     return {
       ok: true,
       message: `Logs de ${service} obtenidos correctamente.`,
-      data: mergedLogs,
+      data: stripAnsi(mergedLogs),
     };
   }
 
@@ -735,6 +749,7 @@ export class DockerOrchestratorService {
       chunk
         .toString("utf8")
         .split("\n")
+        .map((line) => stripAnsi(line))
         .filter((line) => line.trim().length > 0)
         .forEach((line) => {
           onLogLine({
@@ -749,6 +764,7 @@ export class DockerOrchestratorService {
       chunk
         .toString("utf8")
         .split("\n")
+        .map((line) => stripAnsi(line))
         .filter((line) => line.trim().length > 0)
         .forEach((line) => {
           onLogLine({
@@ -840,18 +856,20 @@ export class DockerOrchestratorService {
       },
       onStdoutLine: onLogLine
         ? (line: string) => {
+            const cleanLine = stripAnsi(line);
             onLogLine({
               service: "docker",
-              line,
+              line: cleanLine,
               timestamp: new Date().toISOString(),
             });
           }
         : undefined,
       onStderrLine: onLogLine
         ? (line: string) => {
+            const cleanLine = stripAnsi(line);
             onLogLine({
               service: "docker",
-              line,
+              line: cleanLine,
               timestamp: new Date().toISOString(),
             });
           }
@@ -860,12 +878,52 @@ export class DockerOrchestratorService {
   }
 
   private getComposeBaseArgs(runtimePath: string): string[] {
-    const composeFile = path.join(
-      this.pathResolver.getProjectRoot(),
-      "docker-compose.prod.yml",
-    );
+    const composeLocation = this.resolveComposeLocation(runtimePath);
     const envFile = this.getEnvFilePath(runtimePath);
-    return ["compose", "-f", composeFile, "--env-file", envFile];
+    return [
+      "compose",
+      "--project-directory",
+      composeLocation.projectDirectory,
+      "-f",
+      composeLocation.composeFile,
+      "--env-file",
+      envFile,
+    ];
+  }
+
+  private resolveComposeLocation(runtimePath: string): ComposeLocation {
+    const candidates = [
+      path.join(runtimePath, "project", "docker-compose.prod.yml"),
+      path.join(this.pathResolver.getProjectRoot(), "docker-compose.prod.yml"),
+      path.join(process.cwd(), "docker-compose.prod.yml"),
+      path.join(process.cwd(), "ElectronInstaller", "docker-compose.prod.yml"),
+    ];
+
+    for (const candidate of candidates) {
+      if (!fsSync.existsSync(candidate)) {
+        continue;
+      }
+
+      const projectDirectory = path.dirname(candidate);
+      if (!this.isValidComposeProjectRoot(projectDirectory)) {
+        continue;
+      }
+
+      return { composeFile: candidate, projectDirectory };
+    }
+
+    const fallbackComposeFile = candidates[0] ?? "docker-compose.prod.yml";
+    return {
+      composeFile: fallbackComposeFile,
+      projectDirectory: path.dirname(fallbackComposeFile),
+    };
+  }
+
+  private isValidComposeProjectRoot(projectDirectory: string): boolean {
+    const requiredEntries = ["backend", "frontend", "database"];
+    return requiredEntries.every((entry) =>
+      fsSync.existsSync(path.join(projectDirectory, entry)),
+    );
   }
 
   private getEnvFilePath(runtimePath: string): string {

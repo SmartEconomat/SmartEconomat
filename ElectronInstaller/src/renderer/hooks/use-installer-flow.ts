@@ -12,6 +12,7 @@ import type {
   SupervisorSnapshot,
   WatchdogStatus,
 } from "@shared/contracts";
+import { getDefaultRuntimePath } from "@shared/default-runtime-path";
 
 export type WizardStep =
   | "welcome"
@@ -22,7 +23,12 @@ export type WizardStep =
   | "finish"
   | "control";
 
-const defaultRuntimePath = `${globalThis.navigator?.platform?.startsWith("Win") ? "C:/SmartEconomatRuntime" : "/tmp/smarteconomat-runtime"}`;
+const defaultRuntimePath = getDefaultRuntimePath(
+  typeof process !== "undefined" ? process.platform : "linux",
+  typeof process !== "undefined" && typeof process.env.HOME === "string"
+    ? process.env.HOME
+    : "",
+);
 
 const defaultConfig: InstallerConfigPayload = {
   runtimePath: defaultRuntimePath,
@@ -46,6 +52,11 @@ const defaultConfig: InstallerConfigPayload = {
   backupFrequency: "daily",
   backupScheduleTime: "02:00",
   backupRetentionDays: 30,
+  postgresUser: "",
+  postgresDb: "",
+  jwtExpiration: "7d",
+  i18nPath: "",
+  i18nFallbackLanguage: "es",
   sentryDsn: "",
   viteSentryDsn: "",
   startupRunMigrations: true,
@@ -285,45 +296,54 @@ export function useInstallerFlow() {
       return;
     }
 
-    const result = await bridge.runPreflight({
-      runtimePath: config.runtimePath,
-    });
-    setBusy(false);
+    try {
+      const result = await bridge.runPreflight({
+        runtimePath: config.runtimePath,
+      });
 
-    if (result.data) {
-      setPreflightReport(result.data);
-    }
+      if (result.data) {
+        setPreflightReport(result.data);
+      }
 
-    if (!result.ok) {
+      if (!result.ok) {
+        if (!result.data) {
+          setError(result.message);
+          return;
+        }
+
+        const blockers = result.data.checks.filter(
+          (check) => check.status === "BLOCKER",
+        );
+
+        if (blockers.length === 0) {
+          setError(result.message);
+          return;
+        }
+
+        const summarizedBlockers = blockers
+          .slice(0, 3)
+          .map((check) => `${check.label}: ${check.detail}`)
+          .join(" | ");
+        const extraInfo = blockers.length > 3 ? " | ..." : "";
+
+        setError(
+          `Preflight con bloqueantes (${blockers.length}). ${summarizedBlockers}${extraInfo}`,
+        );
+        return;
+      }
+
       if (!result.data) {
         setError(result.message);
         return;
       }
-
-      const blockers = result.data.checks.filter(
-        (check) => check.status === "BLOCKER",
-      );
-
-      if (blockers.length === 0) {
-        setError(result.message);
-        return;
-      }
-
-      const summarizedBlockers = blockers
-        .slice(0, 3)
-        .map((check) => `${check.label}: ${check.detail}`)
-        .join(" | ");
-      const extraInfo = blockers.length > 3 ? " | ..." : "";
-
-      setError(
-        `Preflight con bloqueantes (${blockers.length}). ${summarizedBlockers}${extraInfo}`,
-      );
-      return;
-    }
-
-    if (!result.data) {
-      setError(result.message);
-      return;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al ejecutar preflight.";
+      setError(message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -336,21 +356,30 @@ export function useInstallerFlow() {
       return;
     }
 
-    const result = await bridge.runPreflightAutoRepair({
-      runtimePath: config.runtimePath,
-    });
-    setBusy(false);
+    try {
+      const result = await bridge.runPreflightAutoRepair({
+        runtimePath: config.runtimePath,
+      });
 
-    if (result.data) {
-      setPreflightReport(result.data);
+      if (result.data) {
+        setPreflightReport(result.data);
+      }
+
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      setError(null);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al ejecutar autorreparación de preflight.";
+      setError(message);
+    } finally {
+      setBusy(false);
     }
-
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-
-    setError(null);
   }
 
   async function closeBusyPort(port: number): Promise<void> {
@@ -362,19 +391,28 @@ export function useInstallerFlow() {
       return;
     }
 
-    const result = await bridge.releaseBusyPort({
-      runtimePath: config.runtimePath,
-      port,
-    });
-    setBusy(false);
+    try {
+      const result = await bridge.releaseBusyPort({
+        runtimePath: config.runtimePath,
+        port,
+      });
 
-    if (result.data) {
-      setPreflightReport(result.data);
-    }
+      if (result.data) {
+        setPreflightReport(result.data);
+      }
 
-    if (!result.ok) {
-      setError(result.message);
-      return;
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al cerrar el proceso del puerto.";
+      setError(message);
+    } finally {
+      setBusy(false);
     }
   }
 

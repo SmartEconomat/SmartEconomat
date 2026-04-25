@@ -46,8 +46,18 @@ export interface InstallerConfigPayload {
   backupScheduleTime: string;
   backupRetentionDays: number;
   postgresPassword?: string;
+  /** Si vacío en el renderer, se usa `postgres`. */
+  postgresUser?: string;
+  /** Si vacío en el renderer, se usa `smarteconomat`. */
+  postgresDb?: string;
   redisPassword?: string;
   jwtSecret?: string;
+  /** Expiración JWT (p. ej. `7d`). Si vacío, `7d`. */
+  jwtExpiration?: string;
+  /** Ruta i18n custom; vacío = resolución por defecto del backend. */
+  i18nPath?: string;
+  /** Idioma por defecto i18n (p. ej. `es`). */
+  i18nFallbackLanguage?: string;
   sentryDsn?: string;
   viteSentryDsn?: string;
   startupRunMigrations?: boolean;

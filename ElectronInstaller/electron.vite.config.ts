@@ -23,6 +23,11 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    define: {
+      __INSTALLER_CAPTURE_BRIDGE_MOCK__: JSON.stringify(
+        process.env.VITE_INSTALLER_CAPTURE_BRIDGE_MOCK === "true",
+      ),
+    },
     build: {
       sourcemap: false,
       minify: true,

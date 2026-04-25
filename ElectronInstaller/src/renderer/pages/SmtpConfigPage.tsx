@@ -19,6 +19,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useState } from "react";
 
 import type { InstallerConfigPayload } from "@shared/contracts";
+import { WizardFooterNav } from "@renderer/components/WizardFooterNav";
 
 interface SmtpConfigPageProps {
   config: InstallerConfigPayload;
@@ -78,10 +79,7 @@ export function SmtpConfigPage({
   } | null>(null);
 
   const canTest =
-    !busy &&
-    !testing &&
-    config.smtpHost?.trim() &&
-    config.smtpPort?.trim();
+    !busy && !testing && config.smtpHost?.trim() && config.smtpPort?.trim();
 
   const handleTest = async () => {
     if (!canTest || typeof window === "undefined") return;
@@ -117,16 +115,28 @@ export function SmtpConfigPage({
         Configuración de Email (SMTP)
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 2.5 }}>
-        Configura el correo oficial que la aplicación utilizará para enviar comunicaciones automáticas a los usuarios.
+        Configura el correo oficial que la aplicación utilizará para enviar
+        comunicaciones automáticas a los usuarios.
       </Typography>
 
       <Alert severity="warning" sx={{ mb: 3 }}>
-        <AlertTitle sx={{ fontWeight: 700 }}>⚠️ Importancia del Correo Oficial</AlertTitle>
-        Esta configuración es <strong>crítica</strong> para el funcionamiento del sistema. Sin un servidor SMTP válido:
+        <AlertTitle sx={{ fontWeight: 700 }}>
+          ⚠️ Importancia del Correo Oficial
+        </AlertTitle>
+        Esta configuración es <strong>crítica</strong> para el funcionamiento
+        del sistema. Sin un servidor SMTP válido:
         <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
-          <li>Los usuarios <strong>no podrán recuperar sus contraseñas</strong> por email.</li>
-          <li>No se enviarán notificaciones de sistema ni alertas automáticas.</li>
-          <li>El "Correo del Sistema" (Remitente) debe estar autorizado en su proveedor SMTP para evitar que los mensajes sean marcados como SPAM.</li>
+          <li>
+            Los usuarios <strong>no podrán recuperar sus contraseñas</strong>{" "}
+            por email.
+          </li>
+          <li>
+            No se enviarán notificaciones de sistema ni alertas automáticas.
+          </li>
+          <li>
+            El "Correo del Sistema" (Remitente) debe estar autorizado en su
+            proveedor SMTP para evitar que los mensajes sean marcados como SPAM.
+          </li>
         </Box>
       </Alert>
 
@@ -159,6 +169,9 @@ export function SmtpConfigPage({
                   onChange({ ...config, smtpHost: event.target.value })
                 }
                 disabled={busy || testing}
+                slotProps={{
+                  htmlInput: { "aria-label": "Host SMTP" },
+                }}
               />
             </Box>
 
@@ -176,6 +189,9 @@ export function SmtpConfigPage({
                   onChange({ ...config, smtpPort: event.target.value })
                 }
                 disabled={busy || testing}
+                slotProps={{
+                  htmlInput: { "aria-label": "Puerto SMTP" },
+                }}
               />
             </Box>
           </Box>
@@ -271,36 +287,35 @@ export function SmtpConfigPage({
           </Alert>
         ) : null}
 
-        <Box sx={{ display: "flex", gap: 1.5, mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
-          <Button
-            variant="outlined"
-            onClick={onBack}
-            disabled={busy || testing}
-            sx={{ minWidth: 120 }}
-          >
-            Atrás
-          </Button>
-
-          <Box sx={{ flex: 1 }} />
-
-          <Button
-            variant="outlined"
-            onClick={handleTest}
-            disabled={!canTest}
-            startIcon={testing ? <CircularProgress size={16} color="inherit" /> : null}
-          >
-            {testing ? "Probando..." : "Probar conexión"}
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={skipTestAndContinue}
-            disabled={busy || testing}
-            sx={{ minWidth: 140, boxShadow: "none" }}
-            disableElevation
-          >
-            Continuar
-          </Button>
+        <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
+          <WizardFooterNav
+            onBack={onBack}
+            onContinue={skipTestAndContinue}
+            backDisabled={busy || testing}
+            continueDisabled={busy || testing}
+            centerContent={
+              <Button
+                variant="outlined"
+                onClick={handleTest}
+                disabled={!canTest}
+                startIcon={
+                  testing ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : null
+                }
+                sx={{
+                  height: 42,
+                  minHeight: 42,
+                  px: 2.25,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {testing ? "Probando..." : "Probar conexión"}
+              </Button>
+            }
+          />
         </Box>
       </Stack>
     </Box>

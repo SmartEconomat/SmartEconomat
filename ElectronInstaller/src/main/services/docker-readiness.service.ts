@@ -85,17 +85,6 @@ export class DockerReadinessService {
       );
     }
 
-    if (process.platform === "win32") {
-      const desktopRunning = await this.isDockerDesktopProcessRunning(timeoutMs);
-      if (!desktopRunning.running) {
-        return buildStatus(
-          "desktop-not-running",
-          desktopRunning.detail,
-          source,
-        );
-      }
-    }
-
     const daemonInfo = await this.processRunner.run({
       command: "docker",
       args: ["info", "--format", "{{.ServerVersion}}"],
@@ -103,6 +92,18 @@ export class DockerReadinessService {
     });
 
     if (!daemonInfo.ok) {
+      if (process.platform === "win32") {
+        const desktopRunning =
+          await this.isDockerDesktopProcessRunning(timeoutMs);
+        if (!desktopRunning.running) {
+          return buildStatus(
+            "desktop-not-running",
+            desktopRunning.detail,
+            source,
+          );
+        }
+      }
+
       if (isDaemonUnavailable(daemonInfo)) {
         return buildStatus(
           "daemon-starting",

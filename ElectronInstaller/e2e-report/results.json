@@ -71,6 +71,496 @@
   },
   "suites": [
     {
+      "title": "installer-screenshots.spec.ts",
+      "file": "installer-screenshots.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "captura automática completa de pantallas Electron",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 360000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 58427,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('option', { name: 'Certificado personalizado' })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('option', { name: 'Certificado personalizado' })\u001b[22m\n\n    at /home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-screenshots.spec.ts:520:6",
+                    "location": {
+                      "file": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-screenshots.spec.ts",
+                      "column": 6,
+                      "line": 520
+                    },
+                    "snippet": "  518 |   await mainWindow\n  519 |     .getByRole(\"option\", { name: \"Certificado personalizado\" })\n> 520 |     .click();\n      |      ^\n  521 |   await settle(mainWindow, 400);\n  522 |   await capture(\n  523 |     mainWindow,"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-screenshots.spec.ts",
+                        "column": 6,
+                        "line": 520
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('option', { name: 'Certificado personalizado' })\u001b[22m\n\n\n  518 |   await mainWindow\n  519 |     .getByRole(\"option\", { name: \"Certificado personalizado\" })\n> 520 |     .click();\n      |      ^\n  521 |   await settle(mainWindow, 400);\n  522 |   await capture(\n  523 |     mainWindow,\n    at /home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-screenshots.spec.ts:520:6"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-04-25T18:44:57.448Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/psych/projects/SmartEconomat/ElectronInstaller/test-results/installer-screenshots-capt-0a050-pleta-de-pantallas-Electron-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-screenshots.spec.ts",
+                    "column": 6,
+                    "line": 520
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "fe878b80d435f16ee108-899115332d17024d17bc",
+          "file": "installer-screenshots.spec.ts",
+          "line": 278,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "installer-wizard-deep.spec.ts",
+      "file": "installer-wizard-deep.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Instalador — cobertura ampliada UI / flujos",
+          "file": "installer-wizard-deep.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "pantalla de bienvenida muestra título y CTA principal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1126,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:45:57.923Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-0b6ed581c79e41dc963a",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "preflight: Continuar deshabilitado hasta ejecutar comprobaciones",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1231,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:45:59.546Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-b3d5c3992df51bc66b1b",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 27,
+              "column": 3
+            },
+            {
+              "title": "preflight: Atrás vuelve a bienvenida",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1179,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:46:00.839Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-738db0e653982c730c7f",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 41,
+              "column": 3
+            },
+            {
+              "title": "config: edita Host local y avanza a SMTP",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2147,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:46:02.074Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-6987ce3d5cd6b3dc4552",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 47,
+              "column": 3
+            },
+            {
+              "title": "SMTP: Probar conexión invoca bridge.testSmtp",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2182,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:46:04.267Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-69746fe3cffe05f31323",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 60,
+              "column": 3
+            },
+            {
+              "title": "SMTP: Atrás regresa a configuración y Continuar conserva datos",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 135597,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-wizard-deep.spec.ts",
+                            "column": 61,
+                            "line": 90
+                          },
+                          "message": "Error: locator.click: Test timeout of 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /^Continuar$/ })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled tabindex=\"-1\" type=\"button\" class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary Mui-disabled MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-xkfmug\">Continuar</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    258 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m        - element is not enabled\u001b[22m\n\u001b[2m      - retrying click action\u001b[22m\n\u001b[2m        - waiting 500ms\u001b[22m\n\n\n  88 |     ).toBeVisible();\n  89 |\n> 90 |     await page.getByRole(\"button\", { name: /^Continuar$/ }).click();\n     |                                                             ^\n  91 |     await expect(page.locator('[aria-label=\"Host SMTP\"]')).toHaveValue(\n  92 |       \"smtp.retain.test\",\n  93 |     );\n    at /home/psych/projects/SmartEconomat/ElectronInstaller/test/e2e/installer-wizard-deep.spec.ts:90:61"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:46:06.481Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/psych/projects/SmartEconomat/ElectronInstaller/test-results/installer-wizard-deep-Inst-06d8e--y-Continuar-conserva-datos-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/psych/projects/SmartEconomat/ElectronInstaller/test-results/installer-wizard-deep-Inst-06d8e--y-Continuar-conserva-datos-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-183468675169c3176573",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 76,
+              "column": 3
+            },
+            {
+              "title": "deploy: vista de despliegue con acción principal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2695,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:48:23.671Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-2ce49ab666dc4b7b2fa4",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 96,
+              "column": 3
+            },
+            {
+              "title": "finalizar: Reintentar instalación vuelve al paso de despliegue",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3307,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:48:26.600Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-7c631307e9f5a15db17c",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 110,
+              "column": 3
+            },
+            {
+              "title": "panel: logs frontend, exportar logs y acciones avanzadas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6066,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:48:29.959Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-79833a8ab170ec548a3e",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 124,
+              "column": 3
+            },
+            {
+              "title": "panel: desinstalación requiere frase de confirmación",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3785,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:48:36.085Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-983e7f1c6e395edfb396",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 149,
+              "column": 3
+            },
+            {
+              "title": "viewport móvil: bienvenida sigue mostrando CTA",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 980,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-25T18:48:39.903Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "908fcedbae43fe7fb112-ccb1a6a4f9d6c2292014",
+              "file": "installer-wizard-deep.spec.ts",
+              "line": 175,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "installer.spec.ts",
       "file": "installer.spec.ts",
       "column": 0,
@@ -80,7 +570,7 @@
         {
           "title": "SmartEconomat Installer E2E",
           "file": "installer.spec.ts",
-          "line": 20,
+          "line": 9,
           "column": 6,
           "specs": [
             {
@@ -96,15 +586,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 8762,
+                      "duration": 2752,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-25T10:51:31.064Z",
+                      "startTime": "2026-04-25T18:48:40.946Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -114,7 +604,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-4e740a9ac6262fc1213d",
               "file": "installer.spec.ts",
-              "line": 342,
+              "line": 17,
               "column": 3
             },
             {
@@ -130,15 +620,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 16502,
+                      "duration": 4885,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-25T10:51:40.457Z",
+                      "startTime": "2026-04-25T18:48:43.733Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -148,7 +638,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-174b826f793731173b03",
               "file": "installer.spec.ts",
-              "line": 353,
+              "line": 28,
               "column": 3
             },
             {
@@ -164,15 +654,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12347,
+                      "duration": 3121,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-25T10:51:57.057Z",
+                      "startTime": "2026-04-25T18:48:48.650Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -182,7 +672,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-e261daa5ad213f333e8f",
               "file": "installer.spec.ts",
-              "line": 395,
+              "line": 64,
               "column": 3
             },
             {
@@ -198,15 +688,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 14916,
+                      "duration": 3868,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-25T10:52:09.532Z",
+                      "startTime": "2026-04-25T18:48:51.803Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -216,7 +706,7 @@
               ],
               "id": "6160a0eab4e43b4eb173-8cd2765121bb13020200",
               "file": "installer.spec.ts",
-              "line": 419,
+              "line": 86,
               "column": 3
             }
           ]
@@ -226,11 +716,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-25T10:51:27.594Z",
-    "duration": 57224.013,
-    "expected": 4,
+    "startTime": "2026-04-25T18:44:52.845Z",
+    "duration": 243012.771,
+    "expected": 14,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 2,
     "flaky": 0
   }
 }

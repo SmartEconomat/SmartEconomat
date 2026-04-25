@@ -42,6 +42,32 @@ describe("evaluateDockerChecks", () => {
     expect(checks[0]?.status).toBe("BLOCKER");
     expect(checks[1]?.status).toBe("OK");
   });
+
+  it("marca WARN cuando docker devuelve timeout", () => {
+    const checks = evaluateDockerChecks(
+      commandResult(false, "", "Command timed out"),
+      commandResult(true, "Docker Compose version v2.30.0", ""),
+    );
+
+    expect(checks[0]?.status).toBe("WARN");
+    expect(checks[0]?.detail).toContain("excedió el tiempo de espera");
+    expect(checks[0]?.recommendation).toContain("vuelve a ejecutar preflight");
+  });
+
+  it("normaliza error de pipe dockerDesktopLinuxEngine en mensaje amigable", () => {
+    const checks = evaluateDockerChecks(
+      commandResult(
+        false,
+        "",
+        "failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; open //./pipe/dockerDesktopLinuxEngine: El sistema no puede encontrar el archivo especificado.",
+      ),
+      commandResult(true, "Docker Compose version v2.30.0", ""),
+    );
+
+    expect(checks[0]?.status).toBe("BLOCKER");
+    expect(checks[0]?.detail).toContain("daemon Linux no está disponible");
+    expect(checks[0]?.recommendation).toContain("Inicia o reinicia Docker Desktop");
+  });
 });
 
 describe("downgradeWindowsDockerDesktopChecks", () => {

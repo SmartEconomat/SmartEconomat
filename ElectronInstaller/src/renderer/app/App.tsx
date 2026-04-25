@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Box, Paper, Typography } from "@mui/material";
+import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
 
 import { BackupRestorePanel } from "@renderer/components/BackupRestorePanel";
 import { ConfirmDangerDialog } from "@renderer/components/ConfirmDangerDialog";
@@ -22,8 +22,18 @@ export function App() {
   const isWelcomeStep = flow.step === "welcome";
   const isPreflightStep = flow.step === "preflight";
   const isFinishStep = flow.step === "finish";
+  const isControlStep = flow.step === "control";
+  const isSmtpStep = flow.step === "smtp";
   const isPreflightPending = isPreflightStep && !flow.preflightReport;
-  const isCompactStep = isWelcomeStep || isPreflightPending || isFinishStep;
+  const isCompactStep =
+    !isControlStep && (isWelcomeStep || isPreflightPending || isFinishStep);
+  const useContentHeightLayout = !isControlStep && !isSmtpStep;
+  const shouldCenterMainCard = isCompactStep;
+  const lastBackupLabel = flow.lastBackup ? "Disponible" : "Sin backup";
+  const servicesUp =
+    flow.health.length > 0
+      ? flow.health.filter((service) => service.status === "running").length
+      : 0;
 
   useEffect(() => {
     if (flow.step === "control") {
@@ -43,17 +53,20 @@ export function App() {
     <Box
       sx={{
         width: "100%",
-        minHeight: "100vh",
+        height: "100vh",
         p: 0,
         m: 0,
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
         background:
           "radial-gradient(circle at 12% 18%, rgba(229, 0, 70, 0.11) 0%, rgba(229, 0, 70, 0) 42%), linear-gradient(180deg, #eef2f7 0%, #e7ebf2 100%)",
       }}
     >
       <Box
         sx={{
+          position: "relative",
+          zIndex: 20,
           width: "100%",
           borderBottom: "1px solid",
           borderColor: "rgba(15, 23, 42, 0.08)",
@@ -134,30 +147,37 @@ export function App() {
 
       <Box
         sx={{
+          position: "relative",
+          zIndex: 1,
           width: "100%",
           flex: 1,
           minHeight: 0,
           display: "grid",
-          alignItems: isCompactStep ? "center" : "stretch",
+          alignItems: shouldCenterMainCard ? "center" : "start",
           px: { xs: 0, sm: 1.5, md: 2.25 },
           py: { xs: 0, sm: 1.5, md: 2.25 },
+          // Único scroll bajo la cabecera: antes overflow visible + Paper hidden recortaba sin scroll
+          overflowY: "auto",
+          overscrollBehavior: "contain",
         }}
       >
         <Paper
-          elevation={isCompactStep ? 0 : 10}
+          elevation={useContentHeightLayout ? 0 : 10}
           sx={{
-            width: isCompactStep ? "min(980px, 100%)" : "min(1180px, 100%)",
-            height: isCompactStep ? "auto" : "100%",
-            minHeight: isCompactStep ? "unset" : 0,
+            width: useContentHeightLayout
+              ? "min(980px, 100%)"
+              : "min(1180px, 100%)",
+            height: useContentHeightLayout ? "auto" : "100%",
+            minHeight: useContentHeightLayout ? "unset" : 0,
             mx: "auto",
             borderRadius: { xs: 0, sm: 2.5 },
-            boxShadow: isCompactStep
+            boxShadow: useContentHeightLayout
               ? "none"
               : "0 22px 52px rgba(15, 23, 42, 0.14)",
             border: "1px solid",
             borderColor: "rgba(15, 23, 42, 0.08)",
-            backgroundColor: "rgba(255, 255, 255, 0.84)",
-            backdropFilter: "blur(2px)",
+            backgroundColor: "#ffffff",
+            backdropFilter: "none",
             overflow: "hidden",
             display: "grid",
             gridTemplateRows: "minmax(0, 1fr)",
@@ -171,10 +191,10 @@ export function App() {
                 : { xs: 2, sm: 2.5, md: 3 },
               display: "grid",
               gap: 2,
-              minHeight: 0,
-              overflowY: "auto",
+              minHeight: useContentHeightLayout ? "auto" : 0,
+              overflowY: useContentHeightLayout ? "visible" : "auto",
               overscrollBehavior: "contain",
-              alignContent: isCompactStep ? "center" : "start",
+              alignContent: shouldCenterMainCard ? "center" : "start",
             }}
           >
             {flow.error ? (
@@ -217,8 +237,18 @@ export function App() {
                   onRun={flow.runPreflight}
                   onAutoRepair={flow.runAutoRepair}
                   onCloseBusyPort={flow.closeBusyPort}
-                  onBack={() => flow.setStep("welcome")}
-                  onContinue={() => flow.setStep("config")}
+                  onBack={() => {
+                    if (flow.busy) {
+                      return;
+                    }
+                    flow.setStep("welcome");
+                  }}
+                  onContinue={() => {
+                    if (flow.busy) {
+                      return;
+                    }
+                    flow.setStep("config");
+                  }}
                 />
               ) : null}
 
@@ -290,16 +320,108 @@ export function App() {
                       gap: 2,
                       gridTemplateColumns: {
                         xs: "1fr",
-                        md: "minmax(0, 1.5fr) minmax(320px, 1fr)",
+                        md: "minmax(0, 1.15fr) minmax(0, 1fr)",
                       },
+                      alignItems: "start",
                     }}
                   >
-                    <LogsViewer
-                      logs={flow.logs}
-                      busy={flow.busy}
-                      onClearLogs={flow.clearVisibleLogs}
-                      onExportLogs={flow.exportVisibleLogs}
-                    />
+                    <Box sx={{ display: "grid", gap: 2 }}>
+                      <LogsViewer
+                        logs={flow.logs}
+                        busy={flow.busy}
+                        onClearLogs={flow.clearVisibleLogs}
+                        onExportLogs={flow.exportVisibleLogs}
+                      />
+
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: { xs: 1.6, sm: 1.85 },
+                          borderRadius: 3,
+                          borderColor: "rgba(148, 163, 184, 0.28)",
+                        }}
+                      >
+                        <Stack spacing={1.2}>
+                          <Stack
+                            direction={{ xs: "column", sm: "row" }}
+                            justifyContent="space-between"
+                            alignItems={{ xs: "flex-start", sm: "center" }}
+                            spacing={0.8}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 800 }}
+                            >
+                              Estado rápido del runtime
+                            </Typography>
+                            <Chip
+                              size="small"
+                              label={lastBackupLabel}
+                              color={flow.lastBackup ? "success" : "default"}
+                              variant={flow.lastBackup ? "filled" : "outlined"}
+                            />
+                          </Stack>
+
+                          <Box
+                            sx={{
+                              display: "grid",
+                              gap: 1,
+                              gridTemplateColumns: {
+                                xs: "1fr",
+                                sm: "repeat(2, minmax(0, 1fr))",
+                                lg: "repeat(4, minmax(0, 1fr))",
+                              },
+                            }}
+                          >
+                            <Paper
+                              variant="outlined"
+                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Eventos en buffer
+                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                {flow.logs.length}
+                              </Typography>
+                            </Paper>
+                            <Paper
+                              variant="outlined"
+                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Servicios activos
+                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                {servicesUp}/{flow.health.length}
+                              </Typography>
+                            </Paper>
+                            <Paper
+                              variant="outlined"
+                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Watchdog
+                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                {flow.watchdogStatus?.state ?? "N/A"}
+                              </Typography>
+                            </Paper>
+                            <Paper
+                              variant="outlined"
+                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Backups
+                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                {flow.lastBackup ? "1+" : "0"}
+                              </Typography>
+                            </Paper>
+                          </Box>
+                        </Stack>
+                      </Paper>
+                    </Box>
+
                     <BackupRestorePanel
                       lastBackup={flow.lastBackup}
                       busy={flow.busy}

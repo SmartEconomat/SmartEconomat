@@ -26,6 +26,8 @@ interface EnvSnapshotFile {
 
 interface PersistedSecrets {
   POSTGRES_PASSWORD?: string;
+  POSTGRES_USER?: string;
+  POSTGRES_DB?: string;
   REDIS_PASSWORD?: string;
   JWT_SECRET?: string;
 }
@@ -72,7 +74,9 @@ export class EnvRendererService {
       console.error("[ENV-RENDERER] Validation errors:", validate.errors);
       return {
         ok: false,
-        message: "Validación de env.schema.json falló: " + JSON.stringify(validate.errors),
+        message:
+          "Validación de env.schema.json falló: " +
+          JSON.stringify(validate.errors),
         errorCode: "ENV_SCHEMA_INVALID",
         data: undefined,
       };
@@ -250,6 +254,69 @@ export class EnvRendererService {
       };
     }
 
+    if (!this.isValidPort(config.httpPort)) {
+      return {
+        ok: false,
+        message: "Puerto HTTP inválido. Debe estar entre 1 y 65535.",
+        errorCode: "HTTP_PORT_INVALID",
+      };
+    }
+
+    if (!this.isValidPort(config.httpsPort)) {
+      return {
+        ok: false,
+        message: "Puerto HTTPS inválido. Debe estar entre 1 y 65535.",
+        errorCode: "HTTPS_PORT_INVALID",
+      };
+    }
+
+    const postgresUserOverride = config.postgresUser?.trim() ?? "";
+    if (
+      postgresUserOverride.length > 0 &&
+      !/^[a-zA-Z_][a-zA-Z0-9_-]{0,62}$/u.test(postgresUserOverride)
+    ) {
+      return {
+        ok: false,
+        message:
+          "POSTGRES_USER inválido: usa letras, números, guion bajo o medio; máximo 63 caracteres.",
+        errorCode: "POSTGRES_USER_INVALID",
+      };
+    }
+
+    const postgresDbOverride = config.postgresDb?.trim() ?? "";
+    if (
+      postgresDbOverride.length > 0 &&
+      !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}$/u.test(postgresDbOverride)
+    ) {
+      return {
+        ok: false,
+        message:
+          "POSTGRES_DB inválido: usa letras, números, guiones; máximo 63 caracteres.",
+        errorCode: "POSTGRES_DB_INVALID",
+      };
+    }
+
+    const jwtExpirationRaw = config.jwtExpiration?.trim() ?? "";
+    if (jwtExpirationRaw.length > 0 && jwtExpirationRaw.length > 32) {
+      return {
+        ok: false,
+        message: "JWT_EXPIRATION demasiado larga (máx. 32 caracteres).",
+        errorCode: "JWT_EXPIRATION_INVALID",
+      };
+    }
+
+    const i18nFallback = config.i18nFallbackLanguage?.trim() ?? "";
+    if (
+      i18nFallback.length > 0 &&
+      (i18nFallback.length < 2 || i18nFallback.length > 16)
+    ) {
+      return {
+        ok: false,
+        message: "I18N_FALLBACK_LANGUAGE debe tener entre 2 y 16 caracteres.",
+        errorCode: "I18N_FALLBACK_INVALID",
+      };
+    }
+
     return {
       ok: true,
       message: "Configuración de negocio válida.",
@@ -279,8 +346,6 @@ export class EnvRendererService {
 
     const requestedHost = config.localHost.trim();
     const effectiveHost = requestedHost || "localhost";
-    const protocol = config.tlsProvider === "none" ? "http" : "https";
-    const backendApiUrl = `${protocol}://${effectiveHost}/api/v1`;
     const superAdminPassword = config.useSamePasswordForBoth
       ? config.adminPassword
       : config.superAdminPassword;
@@ -288,18 +353,58 @@ export class EnvRendererService {
       .join(config.runtimePath, this.envFileName)
       .replaceAll("\\", "/");
 
+    const postgresUserTrim = config.postgresUser?.trim() ?? "";
+    const postgresUser =
+      postgresUserTrim.length > 0
+        ? postgresUserTrim
+        : (persistedSecrets.POSTGRES_USER?.trim() ?? "postgres");
+    const postgresDbTrim = config.postgresDb?.trim() ?? "";
+    const postgresDb =
+      postgresDbTrim.length > 0
+        ? postgresDbTrim
+        : (persistedSecrets.POSTGRES_DB?.trim() ?? "smarteconomat");
+    const jwtExpirationTrim = config.jwtExpiration?.trim() ?? "";
+    const jwtExpiration =
+      jwtExpirationTrim.length > 0 ? jwtExpirationTrim : "7d";
+    const i18nPath = config.i18nPath?.trim() ?? "";
+    const i18nFallbackTrim = config.i18nFallbackLanguage?.trim() ?? "";
+    const i18nFallbackLanguage =
+      i18nFallbackTrim.length > 0 ? i18nFallbackTrim : "es";
+
+    const httpPortStr = this.normalizePort(config.httpPort, 80);
+    const httpsPortStr = this.normalizePort(config.httpsPort, 443);
+    const frontendPublicPortStr =
+      config.tlsProvider === "none" ? httpPortStr : httpsPortStr;
+
+    const smtpFromTrim = config.smtpFrom?.trim() ?? "";
+    const mailFrom =
+      smtpFromTrim.length > 0
+        ? smtpFromTrim
+        : effectiveHost === "localhost" || effectiveHost === "127.0.0.1"
+          ? "noreply@localhost"
+          : `noreply@${effectiveHost}`;
+
+    const certsDir = this.normalizeEnvPath(
+      path.join(config.runtimePath, "certs"),
+    );
+    const certsWebrootDir = this.normalizeEnvPath(
+      path.join(config.runtimePath, "certs-webroot"),
+    );
+
     return {
       NODE_ENV: "production",
       DOMAIN: effectiveHost,
       SMARTECONOMAT_ENV_FILE: envFilePath,
-      POSTGRES_USER: "postgres",
+      BACKEND_PORT: "3000",
+      FRONTEND_PORT: frontendPublicPortStr,
+      POSTGRES_USER: postgresUser,
       POSTGRES_PASSWORD: postgresPassword,
-      POSTGRES_DB: "smarteconomat",
+      POSTGRES_DB: postgresDb,
       POSTGRES_PORT: "5432",
       DB_HOST: "db",
       DB_SYNC: "false",
       JWT_SECRET: jwtSecret,
-      JWT_EXPIRATION: "7d",
+      JWT_EXPIRATION: jwtExpiration,
       SEED_DEFAULT_ADMIN_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USER_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USERNAME: config.adminUsername,
@@ -309,29 +414,58 @@ export class EnvRendererService {
         config.superAdminEmail || "superadmin@smarteconomat.com",
       SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD: superAdminPassword,
       SEED_DEFAULT_USERS_SYNCED: String(config.useSamePasswordForBoth),
+      REDIS_HOST: "redis",
+      REDIS_PORT: "6379",
       REDIS_PASSWORD: redisPassword,
       INSTANCE_NAME: config.instanceName,
       ADMIN_USERNAME: config.adminUsername,
       TIMEZONE: config.timezone,
+      I18N_PATH: i18nPath,
+      I18N_FALLBACK_LANGUAGE: i18nFallbackLanguage,
       TLS_PROVIDER: config.tlsProvider,
       TLS_CUSTOM_FULLCHAIN_PATH: config.customCertFullchainPath?.trim() ?? "",
       TLS_CUSTOM_PRIVKEY_PATH: config.customCertPrivkeyPath?.trim() ?? "",
+      TLS_SELF_SIGNED_DAYS: "825",
+      LETSENCRYPT_EMAIL: "",
+      LETSENCRYPT_DIRECTORY_URL:
+        "https://acme-v02.api.letsencrypt.org/directory",
       BACKUP_FREQUENCY: config.backupFrequency,
       BACKUP_RETENTION_DAYS: String(config.backupRetentionDays),
-      CERTS_DIR: path.join(config.runtimePath, "certs"),
-      CERTS_WEBROOT_DIR: path.join(config.runtimePath, "certs-webroot"),
+      CERTS_DIR: certsDir,
+      CERTS_WEBROOT_DIR: certsWebrootDir,
       STARTUP_RUN_MIGRATIONS:
         config.startupRunMigrations === false ? "false" : "true",
       RUN_BOOTSTRAP_SEEDER: config.installMode === "new" ? "true" : "false",
       SENTRY_DSN: config.sentryDsn?.trim() ?? "",
       VITE_SENTRY_DSN: config.viteSentryDsn?.trim() ?? "",
-      FRONTEND_HTTP_PORT: String(config.httpPort),
-      FRONTEND_HTTPS_PORT: String(config.httpsPort),
+      FRONTEND_HTTP_PORT: httpPortStr,
+      FRONTEND_HTTPS_PORT: httpsPortStr,
       MAIL_HOST: config.smtpHost?.trim() ?? "",
       MAIL_PORT: config.smtpPort?.trim() ?? "",
       MAIL_USER: config.smtpUser?.trim() ?? "",
       MAIL_PASS: config.smtpPass?.trim() ?? "",
-      MAIL_SECURE: String(config.smtpSecure ?? false),
+      MAIL_SECURE: config.smtpSecure === true ? "true" : "false",
+      MAIL_FROM: mailFrom,
+      OPEN_FOOD_FACTS_PROXY_REQUEST_DELAY_MS: "1200",
+      OPEN_FOOD_FACTS_REQUEST_DELAY_MS: "",
+      OPEN_FOOD_FACTS_PROXY_TIMEOUT_MS: "15000",
+      OPEN_FOOD_FACTS_TIMEOUT_MS: "",
+      OPEN_FOOD_FACTS_IMAGE_TIMEOUT_MS: "20000",
+      OFF_API_ENABLED: "false",
+      LOCAL_STORAGE_PATH: "./uploads",
+      SEED_BOOTSTRAP_ADMIN_EMAIL: "",
+      SEED_BOOTSTRAP_ADMIN_USERNAME: "superadmin",
+      SEED_BOOTSTRAP_ADMIN_PASSWORD: "",
+      SEED_API_BASE_URL: "",
+      SEED_DOCKER_COMPOSE_FILE: "",
+      SEED_LOG_DIR: "",
+      SEED_MOVIMIENTOS_GET_ONLY: "",
+      SEED_MOVIMIENTOS_GET: "",
+      SEED_ONLY_DOMAIN: "",
+      SEED_RUN_TAG: "",
+      SEED_MULTIPLIER: "",
+      SEEDER_LANG: "es",
+      IS_SEEDING: "false",
     };
   }
 
@@ -376,6 +510,8 @@ export class EnvRendererService {
     return {
       POSTGRES_PASSWORD:
         fromEnv.POSTGRES_PASSWORD ?? fromSnapshot.POSTGRES_PASSWORD,
+      POSTGRES_USER: fromEnv.POSTGRES_USER ?? fromSnapshot.POSTGRES_USER,
+      POSTGRES_DB: fromEnv.POSTGRES_DB ?? fromSnapshot.POSTGRES_DB,
       REDIS_PASSWORD: fromEnv.REDIS_PASSWORD ?? fromSnapshot.REDIS_PASSWORD,
       JWT_SECRET: fromEnv.JWT_SECRET ?? fromSnapshot.JWT_SECRET,
     };
@@ -391,6 +527,8 @@ export class EnvRendererService {
 
       return {
         POSTGRES_PASSWORD: parsed.POSTGRES_PASSWORD ?? undefined,
+        POSTGRES_USER: parsed.POSTGRES_USER ?? undefined,
+        POSTGRES_DB: parsed.POSTGRES_DB ?? undefined,
         REDIS_PASSWORD: parsed.REDIS_PASSWORD ?? undefined,
         JWT_SECRET: parsed.JWT_SECRET ?? undefined,
       };
@@ -409,6 +547,8 @@ export class EnvRendererService {
 
       return {
         POSTGRES_PASSWORD: snapshot.envMap.POSTGRES_PASSWORD,
+        POSTGRES_USER: snapshot.envMap.POSTGRES_USER,
+        POSTGRES_DB: snapshot.envMap.POSTGRES_DB,
         REDIS_PASSWORD: snapshot.envMap.REDIS_PASSWORD,
         JWT_SECRET: snapshot.envMap.JWT_SECRET,
       };
@@ -442,5 +582,25 @@ export class EnvRendererService {
     }
 
     return result;
+  }
+
+  private isValidPort(value: unknown): value is number {
+    return (
+      typeof value === "number" &&
+      Number.isInteger(value) &&
+      value >= 1 &&
+      value <= 65535
+    );
+  }
+
+  private normalizePort(value: unknown, fallback: number): string {
+    if (this.isValidPort(value)) {
+      return String(value);
+    }
+    return String(fallback);
+  }
+
+  private normalizeEnvPath(value: string): string {
+    return value.replaceAll("\\", "/");
   }
 }

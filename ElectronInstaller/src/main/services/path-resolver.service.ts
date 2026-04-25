@@ -26,33 +26,47 @@ function pickExistingPath(
 }
 
 export function resolveTemplatesRoot(context: ResolverContext): string {
-  if (!context.isPackaged) {
-    return path.join(context.appPath, "resources", "templates");
+  const candidates = context.isPackaged
+    ? [
+        path.join(context.resourcesPath, "templates"),
+        path.join(context.resourcesPath, "resources", "templates"),
+        path.join(context.appPath, "resources", "templates"),
+      ]
+    : [
+        path.join(context.appPath, "resources", "templates"),
+        path.join(process.cwd(), "resources", "templates"),
+        path.join(process.cwd(), "ElectronInstaller", "resources", "templates"),
+        path.resolve(context.appPath, "..", "resources", "templates"),
+        path.resolve(context.appPath, "..", "..", "resources", "templates"),
+      ];
+
+  if (!context.isPackaged && !context.exists) {
+    return candidates[0] ?? "";
   }
 
-  return pickExistingPath(
-    [
-      path.join(context.resourcesPath, "templates"),
-      path.join(context.resourcesPath, "resources", "templates"),
-      path.join(context.appPath, "resources", "templates"),
-    ],
-    context.exists,
-  );
+  return pickExistingPath(candidates, context.exists);
 }
 
 export function resolveInstallerScriptsRoot(context: ResolverContext): string {
-  if (!context.isPackaged) {
-    return path.join(context.appPath, "scripts");
+  const candidates = context.isPackaged
+    ? [
+        path.join(context.resourcesPath, "scripts"),
+        path.join(context.resourcesPath, "app.asar.unpacked", "scripts"),
+        path.join(context.resourcesPath, "resources", "scripts"),
+      ]
+    : [
+        path.join(context.appPath, "scripts"),
+        path.join(process.cwd(), "scripts"),
+        path.join(process.cwd(), "ElectronInstaller", "scripts"),
+        path.resolve(context.appPath, "..", "scripts"),
+        path.resolve(context.appPath, "..", "..", "scripts"),
+      ];
+
+  if (!context.isPackaged && !context.exists) {
+    return candidates[0] ?? "";
   }
 
-  return pickExistingPath(
-    [
-      path.join(context.resourcesPath, "scripts"),
-      path.join(context.resourcesPath, "app.asar.unpacked", "scripts"),
-      path.join(context.resourcesPath, "resources", "scripts"),
-    ],
-    context.exists,
-  );
+  return pickExistingPath(candidates, context.exists);
 }
 
 export class PathResolverService {

@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef } from "react";
 
 import type { PreflightReport, RuntimeLogEvent } from "@shared/contracts";
+import { WizardFooterNav } from "@renderer/components/WizardFooterNav";
 
 interface PreflightPageProps {
   report: PreflightReport | null;
@@ -75,52 +76,74 @@ export function PreflightPage({
           Comprobaciones del sistema, Docker, puertos y dependencias TLS.
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 1.5,
-            flexWrap: "wrap",
-            mb: 2,
-          }}
-        >
-          <Button variant="outlined" onClick={onBack}>
-            Atrás
-          </Button>
-
-          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-            <Button
-              variant="contained"
-              disabled={busy}
-              onClick={() => void onRun()}
-            >
-              {busy ? "Validando..." : "Ejecutar preflight"}
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              disabled={busy || !report || blockersCount === 0}
-              onClick={() => void onAutoRepair()}
-            >
-              {busy
-                ? "Aplicando fixes..."
-                : "Intentar solucionar automáticamente"}
-            </Button>
-            <Button
-              variant="contained"
-              color={blockersCount > 0 ? "warning" : "primary"}
-              disabled={!report}
-              onClick={onContinue}
-              title={
-                blockersCount > 0
-                  ? "Continuar con advertencias"
-                  : "Continuar al formulario"
-              }
-            >
-              {blockersCount > 0 ? "Continuar con advertencias" : "Continuar"}
-            </Button>
-          </Stack>
+        <Box sx={{ mb: 2 }}>
+          <WizardFooterNav
+            onBack={onBack}
+            onContinue={onContinue}
+            backDisabled={busy}
+            continueDisabled={!report || busy}
+            continueLabel={
+              blockersCount > 0 ? "Continuar con advertencias" : "Continuar"
+            }
+            continueTooltip={
+              blockersCount > 0
+                ? "Continuar con advertencias"
+                : "Continuar al formulario"
+            }
+            centerContent={
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{
+                  width: "100%",
+                  minWidth: 0,
+                  justifyContent: "center",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  disabled={busy}
+                  onClick={() => void onRun()}
+                  sx={{
+                    height: 42,
+                    flex: 1,
+                    minWidth: { xs: "100%", sm: 0 },
+                    whiteSpace: { xs: "normal", sm: "nowrap" },
+                    textAlign: "center",
+                    lineHeight: 1.15,
+                    textTransform: "none",
+                    px: { xs: 1.1, sm: 1.8 },
+                    fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                  }}
+                >
+                  {busy ? "Validando..." : "Ejecutar preflight"}
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={busy || !report || blockersCount === 0}
+                  onClick={() => void onAutoRepair()}
+                  sx={{
+                    height: 42,
+                    flex: 1,
+                    minWidth: { xs: "100%", sm: 0 },
+                    whiteSpace: { xs: "normal", sm: "nowrap" },
+                    textAlign: "center",
+                    lineHeight: 1.15,
+                    textTransform: "none",
+                    px: { xs: 1.1, sm: 1.8 },
+                    fontSize: { xs: "0.76rem", sm: "0.875rem" },
+                  }}
+                >
+                  {busy
+                    ? "Aplicando fixes..."
+                    : "Solucionar automáticamente"}
+                </Button>
+              </Stack>
+            }
+          />
         </Box>
       </Box>
 

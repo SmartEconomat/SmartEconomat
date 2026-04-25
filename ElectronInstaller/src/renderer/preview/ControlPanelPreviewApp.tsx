@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 
 import { BackupRestorePanel } from "@renderer/components/BackupRestorePanel";
 import { ConfirmDangerDialog } from "@renderer/components/ConfirmDangerDialog";
@@ -192,16 +192,102 @@ function PreviewShell() {
                 gap: 2,
                 gridTemplateColumns: {
                   xs: "1fr",
-                  md: "minmax(0, 1.5fr) minmax(320px, 1fr)",
+                  md: "minmax(0, 1.15fr) minmax(320px, 1fr)",
                 },
+                alignItems: "start",
               }}
             >
-              <LogsViewer
-                logs={mockLogs}
-                busy={false}
-                onClearLogs={() => {}}
-                onExportLogs={async () => {}}
-              />
+              <Box sx={{ display: "grid", gap: 2 }}>
+                <LogsViewer
+                  logs={mockLogs}
+                  busy={false}
+                  onClearLogs={() => {}}
+                  onExportLogs={async () => {}}
+                />
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: { xs: 1.6, sm: 1.85 },
+                    borderRadius: 3,
+                    borderColor: "rgba(148, 163, 184, 0.28)",
+                  }}
+                >
+                  <Stack spacing={1.2}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      justifyContent="space-between"
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      spacing={0.8}
+                    >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        Estado rápido del runtime
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label="Disponible"
+                        color="success"
+                        variant="filled"
+                      />
+                    </Stack>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gap: 1,
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "repeat(2, minmax(0, 1fr))",
+                          lg: "repeat(4, minmax(0, 1fr))",
+                        },
+                      }}
+                    >
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Eventos en buffer
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {mockLogs.length}
+                        </Typography>
+                      </Paper>
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Servicios activos
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          2/2
+                        </Typography>
+                      </Paper>
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Watchdog
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          active
+                        </Typography>
+                      </Paper>
+                      <Paper
+                        variant="outlined"
+                        sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Backups
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          1+
+                        </Typography>
+                      </Paper>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Box>
               <BackupRestorePanel
                 lastBackup={mockBackup}
                 busy={false}

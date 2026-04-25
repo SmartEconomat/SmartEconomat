@@ -23,6 +23,7 @@ import type {
   InstallerConfigPayload,
   InstallerFilePickerPayload,
 } from "@shared/contracts";
+import { WizardFooterNav } from "@renderer/components/WizardFooterNav";
 
 interface ConfigPageProps {
   config: InstallerConfigPayload;
@@ -705,7 +706,10 @@ export function ConfigPage({
                     />
                   </Box>
                   <Box>
-                    <FieldLabel label="Email admin (opcional)" tooltip="Email para recuperación de contraseña del administrador principal." />
+                    <FieldLabel
+                      label="Email admin (opcional)"
+                      tooltip="Email para recuperación de contraseña del administrador principal."
+                    />
                     <TextField
                       fullWidth
                       placeholder="admin@ejemplo.com"
@@ -776,7 +780,10 @@ export function ConfigPage({
                     />
                   </Box>
                   <Box>
-                    <FieldLabel label="Email superadmin (opcional)" tooltip="Email para recuperación de contraseña del super administrador." />
+                    <FieldLabel
+                      label="Email superadmin (opcional)"
+                      tooltip="Email para recuperación de contraseña del super administrador."
+                    />
                     <TextField
                       fullWidth
                       placeholder="superadmin@ejemplo.com"
@@ -813,10 +820,15 @@ export function ConfigPage({
               usuarios que crea la migración inicial de la aplicación.
             </Typography>
 
-            {(!config.adminEmail?.trim() || !config.superAdminEmail?.trim()) && (
+            {(!config.adminEmail?.trim() ||
+              !config.superAdminEmail?.trim()) && (
               <Alert severity="info" sx={{ mt: 2 }}>
                 <Typography variant="body2">
-                  <strong>⚠️ Advertencia:</strong> Si no configuras los correos electrónicos, no será posible recuperar la contraseña por email. En ese caso, la única alternativa será que otro usuario con permisos de administrador acceda y establezca una contraseña temporal.
+                  <strong>⚠️ Advertencia:</strong> Si no configuras los correos
+                  electrónicos, no será posible recuperar la contraseña por
+                  email. En ese caso, la única alternativa será que otro usuario
+                  con permisos de administrador acceda y establezca una
+                  contraseña temporal.
                 </Typography>
               </Alert>
             )}
@@ -829,7 +841,8 @@ export function ConfigPage({
 
             {emailCollision ? (
               <Alert severity="error" sx={{ mt: 1.5 }}>
-                Los correos electrónicos de admin y superadmin deben ser distintos si se proporcionan.
+                Los correos electrónicos de admin y superadmin deben ser
+                distintos si se proporcionan.
               </Alert>
             ) : null}
           </Paper>
@@ -858,6 +871,9 @@ export function ConfigPage({
                 onChange={(event) =>
                   onChange({ ...config, localHost: event.target.value })
                 }
+                slotProps={{
+                  htmlInput: { "aria-label": "Host local" },
+                }}
               />
             </Box>
 
@@ -1149,6 +1165,86 @@ export function ConfigPage({
               </Box>
 
               <Box>
+                <FieldLabel label="POSTGRES_USER (opcional)" />
+                <TextField
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="postgres"
+                  value={config.postgresUser ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      postgresUser: event.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <Box>
+                <FieldLabel label="POSTGRES_DB (opcional)" />
+                <TextField
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="smarteconomat"
+                  value={config.postgresDb ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      postgresDb: event.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <Box>
+                <FieldLabel label="JWT_EXPIRATION (opcional)" />
+                <TextField
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="7d"
+                  value={config.jwtExpiration ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      jwtExpiration: event.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <Box>
+                <FieldLabel label="I18N_FALLBACK_LANGUAGE (opcional)" />
+                <TextField
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="es"
+                  value={config.i18nFallbackLanguage ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      i18nFallbackLanguage: event.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <Box sx={{ gridColumn: { md: "1 / -1" } }}>
+                <FieldLabel label="I18N_PATH (opcional)" />
+                <TextField
+                  fullWidth
+                  autoComplete="off"
+                  placeholder="Vacío = resolución por defecto del backend"
+                  value={config.i18nPath ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      i18nPath: event.target.value,
+                    })
+                  }
+                />
+              </Box>
+
+              <Box>
                 <FieldLabel label="REDIS_PASSWORD (opcional)" />
                 <TextField
                   fullWidth
@@ -1217,53 +1313,19 @@ export function ConfigPage({
         </Alert>
       ) : null}
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 1.5,
-          mt: 2.25,
-        }}
-      >
-        <Button variant="outlined" disabled={busy} onClick={onBack}>
-          Atrás
-        </Button>
-        <Tooltip
-          title={
-            config.installMode === "new" && !newInstallConfirmed
-              ? "Debes marcar el checkbox de confirmación para continuar con la instalación nueva."
-              : certModeIncomplete
-                ? "Debes seleccionar los archivos de certificado TLS para continuar."
-                : ""
-          }
-          arrow
-          disableHoverListener={canContinue}
-          disableFocusListener={canContinue}
-          disableTouchListener={canContinue}
-        >
-          <span>
-            <Button
-              variant="contained"
-              disabled={!canContinue}
-              onClick={onContinue}
-              sx={{
-                backgroundColor: "primary.main",
-                color: "common.white",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: 0.4,
-                px: 2.5,
-                "&:hover": {
-                  backgroundColor: "#b90043",
-                },
-              }}
-            >
-              Continuar
-            </Button>
-          </span>
-        </Tooltip>
-      </Box>
+      <WizardFooterNav
+        onBack={onBack}
+        onContinue={onContinue}
+        backDisabled={busy}
+        continueDisabled={!canContinue}
+        continueTooltip={
+          config.installMode === "new" && !newInstallConfirmed
+            ? "Debes marcar el checkbox de confirmación para continuar con la instalación nueva."
+            : certModeIncomplete
+              ? "Debes seleccionar los archivos de certificado TLS para continuar."
+              : ""
+        }
+      />
 
       <Typography
         variant="caption"

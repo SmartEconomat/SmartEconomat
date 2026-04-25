@@ -352,6 +352,20 @@ export function ControlPanelPage({
       icon: <TerminalRoundedIcon fontSize="small" />,
       onClick: () => void onStartLogs("frontend"),
     },
+    {
+      title: "Logs DB",
+      description: "Abre el stream de logs de PostgreSQL en el contenedor db.",
+      palette: actionPalettes.neutral,
+      icon: <TerminalRoundedIcon fontSize="small" />,
+      onClick: () => void onStartLogs("db"),
+    },
+    {
+      title: "Logs Redis",
+      description: "Abre el stream de logs del contenedor Redis.",
+      palette: actionPalettes.neutral,
+      icon: <TerminalRoundedIcon fontSize="small" />,
+      onClick: () => void onStartLogs("redis"),
+    },
   ];
 
   const advancedActions: ActionDefinition[] = [
@@ -588,9 +602,17 @@ export function ControlPanelPage({
       {supervisorSnapshot && (
         <Paper
           variant="outlined"
-          sx={{ p: 2, borderRadius: 3, borderColor: "rgba(148, 163, 184, 0.24)" }}
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            borderColor: "rgba(148, 163, 184, 0.24)",
+          }}
         >
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
               Supervisor autónomo
             </Typography>

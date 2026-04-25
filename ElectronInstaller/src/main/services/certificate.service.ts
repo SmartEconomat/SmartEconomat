@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import selfsigned from "selfsigned";
+import type { SelfSignedExtension } from "selfsigned";
 
 import type { OperationResult } from "@shared/contracts";
 
@@ -31,14 +32,19 @@ interface EnsureCertificateOptions {
 
 export class CertificateService {
   private readonly processRunner = new ProcessRunnerService();
+  private readonly testRuntimeOptimization =
+    process.env.VITEST === "true" ||
+    process.env.NODE_ENV === "test" ||
+    process.env.VITEST_WORKER_ID !== undefined;
 
   async ensureLocalCertificates(
     runtimePath: string,
     options: EnsureCertificateOptions,
   ): Promise<OperationResult> {
     const certPaths = this.resolveCertificatePaths(runtimePath);
-    const shouldInstallToTrustStore =
-      options.installToTrustStore ?? process.platform === "win32";
+    const shouldInstallToTrustStore = this.testRuntimeOptimization
+      ? false
+      : (options.installToTrustStore ?? process.platform === "win32");
 
     if (!options.overwrite) {
       const existing = await this.hasLocalCertificates(certPaths);
@@ -47,9 +53,10 @@ export class CertificateService {
         if (shouldInstallToTrustStore) {
           const isInstalled = await this.isCertificateInTrustStore();
           if (!isInstalled) {
-            const installResult = await this.installCertificateToWindowsTrustStore(
-              certPaths.stableFullchainPath,
-            );
+            const installResult =
+              await this.installCertificateToWindowsTrustStore(
+                certPaths.stableFullchainPath,
+              );
             if (!installResult.ok) {
               return installResult;
             }
@@ -64,7 +71,10 @@ export class CertificateService {
     }
 
     try {
-      await this.writeLocalSelfSignedCertificates(certPaths, options.domain || "smarteconomat.app");
+      await this.writeLocalSelfSignedCertificates(
+        certPaths,
+        options.domain || "smarteconomat.app",
+      );
 
       // Instalar en el almacén de certificados de Windows
       if (shouldInstallToTrustStore) {
@@ -99,7 +109,7 @@ export class CertificateService {
     const certsWebrootDir = path.join(runtimePath, "certs-webroot");
 
     // Primero, eliminar del trust store de Windows si existe
-    if (process.platform === "win32") {
+    if (process.platform === "win32" && !this.testRuntimeOptimization) {
       await this.removeCertificateFromWindowsTrustStore();
     }
 
@@ -161,6 +171,38 @@ export class CertificateService {
       recursive: true,
     });
 
+    const certificateExtensions: SelfSignedExtension[] = [
+      {
+        name: "basicConstraints",
+        cA: true,
+      },
+      {
+        name: "keyUsage",
+        keyCertSign: true,
+        digitalSignature: true,
+        nonRepudiation: true,
+        keyEncipherment: true,
+        dataEncipherment: true,
+      },
+      {
+        name: "extKeyUsage",
+        serverAuth: true,
+        clientAuth: true,
+        codeSigning: true,
+        emailProtection: true,
+        timeStamping: true,
+      },
+      {
+        name: "subjectAltName",
+        altNames: [
+          { type: 2, value: domain },
+          { type: 2, value: "localhost" },
+          { type: 2, value: `api.${domain}` },
+          { type: 7, ip: "127.0.0.1" },
+        ],
+      },
+    ];
+
     const pems = selfsigned.generate(
       [
         { name: "commonName", value: domain },
@@ -170,38 +212,8 @@ export class CertificateService {
       {
         algorithm: "sha256",
         days: 825,
-        keySize: 2048,
-        extensions: [
-          {
-            name: "basicConstraints",
-            cA: true,
-          },
-          {
-            name: "keyUsage",
-            keyCertSign: true,
-            digitalSignature: true,
-            nonRepudiation: true,
-            keyEncipherment: true,
-            dataEncipherment: true,
-          },
-          {
-            name: "extKeyUsage",
-            serverAuth: true,
-            clientAuth: true,
-            codeSigning: true,
-            emailProtection: true,
-            timeStamping: true,
-          },
-          {
-            name: "subjectAltName",
-            altNames: [
-              { type: 2, value: domain },
-              { type: 2, value: "localhost" },
-              { type: 2, value: `api.${domain}` },
-              { type: 7, ip: "127.0.0.1" },
-            ],
-          },
-        ] as any[],
+        keySize: this.testRuntimeOptimization ? 1024 : 2048,
+        extensions: certificateExtensions,
       },
     );
 

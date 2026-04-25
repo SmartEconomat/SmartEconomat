@@ -16,27 +16,99 @@ export function evaluateDockerChecks(
   dockerVersion: CommandResult,
   composeVersion: CommandResult,
 ): PreflightCheck[] {
+  const dockerFailure = normalizeDockerFailure(dockerVersion);
+  const composeFailure = normalizeDockerFailure(composeVersion);
+  const dockerTimedOut = isDockerTimeoutFailure(dockerVersion);
+  const composeTimedOut = isDockerTimeoutFailure(composeVersion);
+
   const dockerCheck: PreflightCheck = {
     id: "docker-engine",
     label: "Docker Engine",
-    status: dockerVersion.ok ? "OK" : "BLOCKER",
-    detail: dockerVersion.ok ? dockerVersion.stdout : dockerVersion.stderr,
+    status: dockerVersion.ok ? "OK" : dockerTimedOut ? "WARN" : "BLOCKER",
+    detail: dockerVersion.ok
+      ? dockerVersion.stdout
+      : dockerFailure.detail,
     recommendation: dockerVersion.ok
       ? undefined
-      : "Instalar/iniciar Docker Desktop o Docker Engine.",
+      : dockerFailure.recommendation,
   };
 
   const composeCheck: PreflightCheck = {
     id: "docker-compose",
     label: "Docker Compose",
-    status: composeVersion.ok ? "OK" : "BLOCKER",
-    detail: composeVersion.ok ? composeVersion.stdout : composeVersion.stderr,
+    status: composeVersion.ok ? "OK" : composeTimedOut ? "WARN" : "BLOCKER",
+    detail: composeVersion.ok
+      ? composeVersion.stdout
+      : composeFailure.detail,
     recommendation: composeVersion.ok
       ? undefined
-      : "Habilitar plugin docker compose en el host.",
+      : composeFailure.recommendation,
   };
 
   return [dockerCheck, composeCheck];
+}
+
+function normalizeDockerFailure(result: CommandResult): {
+  detail: string;
+  recommendation: string;
+} {
+  const fallbackDetail = result.stderr || result.message || "Docker no responde.";
+  const raw = `${result.stderr}\n${result.stdout}\n${result.message}`.toLowerCase();
+
+  if (
+    raw.includes("command timed out") ||
+    raw.includes("timed out")
+  ) {
+    return {
+      detail:
+        "La comprobación de Docker excedió el tiempo de espera. El motor puede estar arrancando o bajo carga.",
+      recommendation:
+        "Espera a que Docker Desktop/Engine termine de iniciar y vuelve a ejecutar preflight. Si persiste, revisa diagnóstico de Docker.",
+    };
+  }
+
+  if (
+    raw.includes("dockerdesktoplinuxengine") ||
+    raw.includes("open //./pipe/dockerdesktoplinuxengine") ||
+    raw.includes("failed to connect to the docker api at npipe")
+  ) {
+    return {
+      detail:
+        "Docker Desktop está instalado pero el daemon Linux no está disponible todavía (pipe dockerDesktopLinuxEngine no encontrada).",
+      recommendation:
+        "Inicia o reinicia Docker Desktop, espera a que el Engine quede en estado Running y vuelve a ejecutar preflight.",
+    };
+  }
+
+  if (
+    raw.includes("cannot connect to the docker daemon") ||
+    raw.includes("error during connect")
+  ) {
+    return {
+      detail:
+        "No se pudo conectar con Docker daemon. Docker Desktop/Engine parece no operativo.",
+      recommendation:
+        "Arranca Docker Desktop (o el servicio docker en Linux) y vuelve a ejecutar preflight.",
+    };
+  }
+
+  if (raw.includes("command not found") || raw.includes("enoent")) {
+    return {
+      detail: "Docker CLI no está disponible en PATH.",
+      recommendation:
+        "Instala Docker Desktop/Engine y verifica que el comando `docker` esté disponible en terminal.",
+    };
+  }
+
+  return {
+    detail: fallbackDetail,
+    recommendation: "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight.",
+  };
+}
+
+function isDockerTimeoutFailure(result: CommandResult): boolean {
+  const raw = `${result.message}\n${result.stderr}\n${result.stdout}`.toLowerCase();
+  return raw.includes("command timed out") || raw.includes("timed out");
 }
 
 export function downgradeWindowsDockerDesktopChecks(
@@ -221,12 +293,18 @@ export class PreflightService {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Permiso denegado";
+      const isAccessDenied =
+        message.includes("EACCES") || message.toLowerCase().includes("permission denied");
+      const recommendation =
+        isAccessDenied && runtimePath.startsWith("/tmp/")
+          ? "Esa ruta bajo /tmp no es escribible (a menudo por permisos o porque se creó con otro usuario/sudo). Elige una carpeta bajo tu usuario (por defecto ~/.smarteconomat-runtime) o corrige permisos/chown del directorio."
+          : "Seleccionar una carpeta con permisos de escritura.";
       return {
         id: "system-write",
         label: "Permisos de escritura",
         status: "BLOCKER",
         detail: message,
-        recommendation: "Seleccionar una carpeta con permisos de escritura.",
+        recommendation,
       };
     }
   }
