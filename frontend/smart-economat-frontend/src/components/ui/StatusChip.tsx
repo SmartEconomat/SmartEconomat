@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chip, ChipProps } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { useTranslation } from 'react-i18next';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 
@@ -214,15 +215,31 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   variant = 'outlined',
   ...rest
 }) => {
+  const { t } = useTranslation();
   const statusStr = status as string;
   const isCategoria = isCategoriaProducto(statusStr);
 
   const resolvedColor = getStatusColor(statusStr);
-  const displayLabel =
-    label ||
-    (isCategoria
-      ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
-      : getTranslatedStatus(statusStr));
+
+  const getI18nLabel = (s: string): string => {
+    if (!s) return '—';
+    const normalized = s.toLowerCase();
+    // Try status namespace first, then categoria
+    const statusKey = `status.${s}`;
+    const statusTranslated = t(statusKey, { defaultValue: '' });
+    if (statusTranslated) return statusTranslated;
+    if (isCategoria) {
+      const catKey = `categoria.${s.toUpperCase()}`;
+      const catTranslated = t(catKey, { defaultValue: '' });
+      if (catTranslated) return catTranslated;
+      return (
+        categoriaTranslations[normalized as CategoriaProducto] || capitalize(s)
+      );
+    }
+    return getTranslatedStatus(normalized);
+  };
+
+  const displayLabel = label || getI18nLabel(statusStr);
 
   // Icono de punto para estados que no son categorías
   const dotIcon = (

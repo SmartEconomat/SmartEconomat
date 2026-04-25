@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { EU_ALLERGENS } from '../../utils/constants';
 
 /**
@@ -32,6 +33,7 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   onChange,
   disabled,
 }) => {
+  const { t } = useTranslation();
   const handleToggle = (id: string) => {
     if (disabled) return;
     const currentIndex = value.indexOf(id);
@@ -49,7 +51,7 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Información de Alérgenos
+        {t('allergens.sectionTitle')}
       </Typography>
       <Box display="flex" flexWrap="wrap" gap={1}>
         {EU_ALLERGENS.map((allergen) => {
@@ -87,7 +89,11 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
                 },
               }}
             >
-              <Tooltip title={allergen.label}>
+              <Tooltip
+                title={t(`allergens.${allergen.id}`, {
+                  defaultValue: allergen.label,
+                })}
+              >
                 <Box sx={{ display: 'flex', mb: 0.5 }}>{allergen.icon}</Box>
               </Tooltip>
               <Typography
@@ -100,7 +106,9 @@ const AllergenSelector: React.FC<AllergenSelectorProps> = ({
                   hyphens: 'auto',
                 }}
               >
-                {allergen.label}
+                {t(`allergens.${allergen.id}`, {
+                  defaultValue: allergen.label,
+                })}
               </Typography>
             </Box>
           );

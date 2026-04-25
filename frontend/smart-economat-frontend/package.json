@@ -35,6 +35,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc -b && vite build",
+    "seed": "cd ../../backend/smart-economat-backend && npm run seed",
     "preview": "vite preview",
     "qa:ui:destructive": "node scripts/git-hooks/run-all-tests.mjs",
     "qa:ui:destructive:headed": "PW_HEADLESS=0 node scripts/git-hooks/run-all-tests.mjs",

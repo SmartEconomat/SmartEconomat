@@ -2,6 +2,7 @@ import React from 'react';
 import dayjs from 'dayjs';
 import { Alert, Button, Stack, Typography } from '@mui/material';
 import { PedidoDraftRecord } from '../../../services/pedidoDraft.service';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoDraftBannerProps {
   draft: PedidoDraftRecord | null;
@@ -23,6 +24,8 @@ const PedidoDraftBanner: React.FC<PedidoDraftBannerProps> = ({
   onRecover,
   onDiscard,
 }) => {
+  const { t } = useTranslation();
+
   if (!draft) return null;
 
   return (
@@ -32,22 +35,22 @@ const PedidoDraftBanner: React.FC<PedidoDraftBannerProps> = ({
       action={
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button color="inherit" size="small" onClick={onRecover}>
-            Recuperar
+            {t('pedidos.draft.recover')}
           </Button>
           <Button color="inherit" size="small" onClick={onDiscard}>
-            Descartar
+            {t('pedidos.draft.discard')}
           </Button>
         </Stack>
       }
     >
       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-        Hay un pedido pendiente de finalizar.
+        {t('pedidos.draft.pending')}
       </Typography>
       <Typography variant="caption" color="text.secondary">
-        Última actualización:{' '}
+        {t('pedidos.draft.lastUpdate')}{' '}
         {dayjs(draft.updatedAt).isValid()
           ? dayjs(draft.updatedAt).format('DD/MM/YYYY HH:mm')
-          : 'fecha no disponible'}
+          : t('pedidos.draft.noDate')}
       </Typography>
     </Alert>
   );

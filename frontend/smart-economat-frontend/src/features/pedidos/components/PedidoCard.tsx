@@ -21,6 +21,7 @@ import {
   getPedidoCreatorName,
   getPedidoProviderName,
 } from '../utils/pedidoFormatters';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoCardProps {
   pedido: PedidoListItem;
@@ -50,6 +51,7 @@ const PedidoCard: React.FC<PedidoCardProps> = ({
   onRowClick,
   selectionProps,
 }) => {
+  const { t } = useTranslation();
   const isSelectable = !!onRowClick;
 
   return (
@@ -114,7 +116,8 @@ const PedidoCard: React.FC<PedidoCardProps> = ({
               color="text.secondary"
               sx={{ lineHeight: 1, fontSize: '0.65rem' }}
             >
-              Pedido #{formatPedidoListNumber(pedido)}
+              {t('pedidos.card.orderPrefix')}
+              {formatPedidoListNumber(pedido)}
             </Typography>
             <Typography variant="caption" color="text.disabled" display="block">
               ID: {formatPedidoId(pedido.id)}
@@ -169,7 +172,7 @@ const PedidoCard: React.FC<PedidoCardProps> = ({
               display="block"
               sx={{ fontWeight: 500 }}
             >
-              Coste Estimado
+              {t('pedidos.card.estimatedCost')}
             </Typography>
             <Typography
               variant="h6"
