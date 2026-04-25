@@ -228,7 +228,8 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
                   color="text.secondary"
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {t('recepcion.resultado.pedidoRef')}: {inc.id.substring(0, 8)}...
+                  {t('recepcion.resultado.pedidoRef')}: {inc.id.substring(0, 8)}
+                  ...
                 </Typography>
                 {inc.datosOriginales.productos.map((p, j) => (
                   <Alert
@@ -242,7 +243,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
                     }}
                   >
                     <strong>{p.nombreProducto}</strong>:{' '}
-                    {p.tipo === 'FALTA' ? t('recepcion.resultado.faltan') : t('recepcion.resultado.sobran')}{' '}
+                    {p.tipo === 'FALTA'
+                      ? t('recepcion.resultado.faltan')
+                      : t('recepcion.resultado.sobran')}{' '}
                     {Math.abs(p.diferencia)} {t('recepcion.resultado.unidades')}
                   </Alert>
                 ))}
@@ -265,7 +268,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
           onClick={handleDownloadPdf}
           disabled={downloading}
         >
-          {downloading ? t('comun.descargando') : t('recepcion.resultado.descargarPdf')}
+          {downloading
+            ? t('comun.descargando')
+            : t('recepcion.resultado.descargarPdf')}
         </Button>
 
         {canViewDistribucion && (

@@ -248,9 +248,7 @@ const AlbaranPage: React.FC = () => {
       setItemToView(detalle);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('albaran.errors.cargarDetalle');
+        err instanceof Error ? err.message : t('albaran.errors.cargarDetalle');
       toast.error(`${message}. Se mostrará la información disponible.`);
       setItemToView(albaran);
     }
@@ -477,7 +475,9 @@ const AlbaranPage: React.FC = () => {
         label: t('albaran.columns.documento'),
         render: (row) =>
           row.documentoUrl ? (
-            <Tooltip title={row.documentoNombre || t('albaran.detalle.verDocumento')}>
+            <Tooltip
+              title={row.documentoNombre || t('albaran.detalle.verDocumento')}
+            >
               <AttachFileIcon
                 fontSize="small"
                 color="primary"
@@ -803,7 +803,9 @@ const AlbaranPage: React.FC = () => {
           setIsFormOpen(false);
           setItemToEdit(null);
         }}
-        title={itemToEdit ? t('albaran.modal.tituloEditar') : t('albaran.nuevo')}
+        title={
+          itemToEdit ? t('albaran.modal.tituloEditar') : t('albaran.nuevo')
+        }
         fields={ALBARAN_FORM_FIELDS}
         initialData={formInitialData}
         onSubmit={handleFormSubmit}
@@ -812,7 +814,11 @@ const AlbaranPage: React.FC = () => {
           setItemToEdit(null);
         }}
         isSubmitting={isSubmitting}
-        submitLabel={itemToEdit ? t('albaran.modal.guardarCambios') : t('albaran.modal.crearAlbaran')}
+        submitLabel={
+          itemToEdit
+            ? t('albaran.modal.guardarCambios')
+            : t('albaran.modal.crearAlbaran')
+        }
         size="sm"
       />
 
@@ -831,7 +837,9 @@ const AlbaranPage: React.FC = () => {
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
         title={t('albaran.confirm.titulo')}
-        message={t('albaran.confirm.mensaje', { nAlbaran: itemToDelete?.nAlbaran })}
+        message={t('albaran.confirm.mensaje', {
+          nAlbaran: itemToDelete?.nAlbaran,
+        })}
         confirmText={t('albaran.confirm.eliminar')}
         isLoading={isDeleting}
       />

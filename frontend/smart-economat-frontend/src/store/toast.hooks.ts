@@ -33,8 +33,18 @@ export const useToast = () => {
    * @param {ToastOptions} [options] - Opciones adicionales de interpolación.
    * @returns {void}
    */
-  function showToast(key: string, type: 'success' | 'error' | 'info' | 'warning', dur?: number, options?: ToastOptions): void {
-    addToast(i18n.t(key, options as Record<string, unknown>), type, dur, options);
+  function showToast(
+    key: string,
+    type: 'success' | 'error' | 'info' | 'warning',
+    dur?: number,
+    options?: ToastOptions
+  ): void {
+    addToast(
+      i18n.t(key, options as Record<string, unknown>),
+      type,
+      dur,
+      options
+    );
   }
 
   return React.useMemo(

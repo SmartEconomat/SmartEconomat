@@ -673,12 +673,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                               helperText={
                                 esEditable
                                   ? balanceOriginal > CANTIDAD_EPSILON
-                                    ? t(
-                                        'incidencias.modal.rangoPermitidoMax',
-                                        {
-                                          min: formatCantidad(boundsAjuste.min),
-                                        }
-                                      )
+                                    ? t('incidencias.modal.rangoPermitidoMax', {
+                                        min: formatCantidad(boundsAjuste.min),
+                                      })
                                     : balanceOriginal < -CANTIDAD_EPSILON
                                       ? t(
                                           'incidencias.modal.rangoPermitidoMin',

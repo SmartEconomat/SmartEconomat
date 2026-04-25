@@ -1,38 +1,58 @@
 # syntax=docker/dockerfile:1.4
-FROM node:22.2.0-alpine AS builder
-
-WORKDIR /app
-
-ARG VITE_SENTRY_DSN
-ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
-
-# Copy package files and install dependencies with build cache
-COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --no-audit --no-fund --cache /root/.npm
-
-# Copy source and build
-COPY . .
-RUN npm run build
-
+# ============================================================================
+# Dockerfile.prod — Frontend SmartEconomat (MODO INSTALADOR — SLIM)
+# ============================================================================
+# IMPORTANTE: Este Dockerfile asume que frontend/build/ ha sido pre-compilado
+# en la máquina del DESARROLLADOR antes de empaquetar el instalador.
+# NO hace npm ci ni npm run build en el cliente.
+#
+# Pasos en el desarrollador (ejecutados por scripts/pre-build-project.mjs):
+#   cd frontend/smart-economat-frontend
+#   npm ci --prefer-offline
+#   npm run build
 # ============================================================================
 FROM nginx:alpine
 
-# Copy built frontend assets to nginx
-COPY --from=builder /app/build /usr/share/nginx/html
+ARG BUILD_DATE=unknown
+ARG VCS_REF=unknown
+ARG VERSION=1.0.0
 
-# Copy nginx configuration templates (only if needed - validate paths)
+# Copiar assets React ya compilados (build/ pre-generado por el desarrollador)
+COPY build/ /usr/share/nginx/html/
+
+# Copiar configuraciones nginx (templates para SSL y HTTP)
 COPY nginx.conf /opt/nginx-templates/default-ssl.conf.template
 COPY nginx-http.conf /opt/nginx-templates/default-http.conf.template
 COPY nginx-http.conf /etc/nginx/templates/default.conf.template
 
-# Copy entrypoint scripts and make executable
+# Copiar scripts de entrypoint y darles permiso de ejecución
 COPY docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/19-select-nginx-template.sh
 COPY docker-entrypoint.d/15-export-vars.sh /docker-entrypoint.d/15-export-vars.sh
 
-RUN chmod +x /docker-entrypoint.d/19-select-nginx-template.sh /docker-entrypoint.d/15-export-vars.sh
+RUN chmod +x /docker-entrypoint.d/19-select-nginx-template.sh \
+        /docker-entrypoint.d/15-export-vars.sh \
+    && apk add --no-cache libcap \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && mkdir -p /var/cache/nginx /var/run /var/log/nginx /var/www/acme-challenge \
+    && chown -R nginx:nginx \
+         /var/cache/nginx \
+         /var/run \
+         /var/log/nginx \
+         /etc/nginx \
+         /opt/nginx-templates \
+         /var/www/acme-challenge
+
+LABEL org.opencontainers.image.title="SmartEconomat Frontend"
+LABEL org.opencontainers.image.description="React SPA served by nginx (pre-compiled)"
+LABEL org.opencontainers.image.version="$VERSION"
+LABEL org.opencontainers.image.revision="$VCS_REF"
+LABEL org.opencontainers.image.created="$BUILD_DATE"
 
 EXPOSE 80 443
 
-# Use exec form for proper signal handling  
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=30s \
+    CMD wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/ || \
+        wget --quiet --tries=1 --spider http://127.0.0.1/ || exit 1
+
+# Exec form para correcto manejo de señales
 CMD ["nginx", "-g", "daemon off;"]

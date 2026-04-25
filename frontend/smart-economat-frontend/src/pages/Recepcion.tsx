@@ -397,7 +397,7 @@ const Recepcion: React.FC = () => {
       serialService.stopContinuousRead();
       void serialService.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -1567,9 +1567,7 @@ const Recepcion: React.FC = () => {
               </Tooltip>
             )}
             {syncStatus === 'error' && (
-              <Tooltip
-                title={syncError || t('recepcion.sync.errorTooltip')}
-              >
+              <Tooltip title={syncError || t('recepcion.sync.errorTooltip')}>
                 <Chip
                   icon={<ErrorOutlineIcon />}
                   label={t('recepcion.sync.error')}

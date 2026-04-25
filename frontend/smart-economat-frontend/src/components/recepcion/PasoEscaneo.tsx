@@ -320,7 +320,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                   textTransform: 'none',
                 }}
               >
-                {isScaleConnected ? t('recepcion.bascula.cambiarPuerto') : t('recepcion.bascula.vincular')}
+                {isScaleConnected
+                  ? t('recepcion.bascula.cambiarPuerto')
+                  : t('recepcion.bascula.vincular')}
               </Button>
             </Stack>
 
@@ -392,7 +394,12 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                 variant="caption"
                 sx={{ ml: 1, color: 'text.secondary' }}
               >
-                ({t('recepcion.escaneo.itemsRecibidos', { count: p.lineas.filter((l) => Number(l.cantidadRecibida) > 0).length })})
+                (
+                {t('recepcion.escaneo.itemsRecibidos', {
+                  count: p.lineas.filter((l) => Number(l.cantidadRecibida) > 0)
+                    .length,
+                })}
+                )
               </Typography>
             </Typography>
           </AccordionSummary>
@@ -401,7 +408,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
               <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '25%' }}>{t('comun.producto')}</TableCell>
+                    <TableCell sx={{ width: '25%' }}>
+                      {t('comun.producto')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '7%' }}>
                       {t('comun.unidad')}
                     </TableCell>
@@ -414,7 +423,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                     <TableCell align="center" sx={{ width: '15%' }}>
                       {t('recepcion.escaneo.recibida')}
                     </TableCell>
-                    <TableCell sx={{ width: '15%' }}>{t('comun.estado')}</TableCell>
+                    <TableCell sx={{ width: '15%' }}>
+                      {t('comun.estado')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '15%' }}></TableCell>
                   </TableRow>
                 </TableHead>
@@ -661,7 +672,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
             <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '25%' }}>{t('comun.producto')}</TableCell>
+                  <TableCell sx={{ width: '25%' }}>
+                    {t('comun.producto')}
+                  </TableCell>
                   <TableCell align="center" sx={{ width: '8%' }}>
                     {t('comun.unidad')}
                   </TableCell>
@@ -671,7 +684,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                   <TableCell align="right" sx={{ width: '20%' }}>
                     {t('recepcion.escaneo.recibida')}
                   </TableCell>
-                  <TableCell sx={{ width: '15%' }}>{t('recepcion.escaneo.fisico')}</TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('recepcion.escaneo.fisico')}
+                  </TableCell>
                   <TableCell align="center" sx={{ width: '15%' }}>
                     {t('comun.accion')}
                   </TableCell>

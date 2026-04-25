@@ -366,9 +366,17 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
             <TableRow>
               <TableCell>{t('plantillasRoles.columnas.plantilla')}</TableCell>
               <TableCell>{t('plantillasRoles.columnas.estado')}</TableCell>
-              <TableCell align="center">{t('plantillasRoles.columnas.permisos')}</TableCell>
-              <TableCell align="center">{t('plantillasRoles.columnas.rolesVinculados')}</TableCell>
-              {canEdit && <TableCell align="right">{t('plantillasRoles.columnas.acciones')}</TableCell>}
+              <TableCell align="center">
+                {t('plantillasRoles.columnas.permisos')}
+              </TableCell>
+              <TableCell align="center">
+                {t('plantillasRoles.columnas.rolesVinculados')}
+              </TableCell>
+              {canEdit && (
+                <TableCell align="right">
+                  {t('plantillasRoles.columnas.acciones')}
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -394,7 +402,11 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                   <TableCell>
                     <Chip
                       size="small"
-                      label={plantilla.activo ? t('plantillasRoles.activa') : t('plantillasRoles.inactiva')}
+                      label={
+                        plantilla.activo
+                          ? t('plantillasRoles.activa')
+                          : t('plantillasRoles.inactiva')
+                      }
                       color={plantilla.activo ? 'success' : 'default'}
                     />
                   </TableCell>

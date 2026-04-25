@@ -147,13 +147,27 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
-  /**
-   * Obtiene (o crea en la primera llamada) el transportador SMTP de Nodemailer.
-   * Devuelve `null` si las variables de entorno MAIL_HOST, MAIL_USER o MAIL_PASS no están definidas,
-   * activando el modo simulación.
-   *
-   * @returns {Transporter | null} Instancia del transportador SMTP, o `null` si no está configurado.
-   */
+  private deriveFrontendUrl(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain) {
+      return 'http://localhost:5173';
+    }
+
+    if (domain === 'localhost' || domain === '127.0.0.1') {
+      const frontendPort = process.env.FRONTEND_PORT || '5173';
+      return `http://${domain}:${frontendPort}`;
+    }
+
+    return `https://${domain}`;
+  }
+
+  private deriveMailFromAddress(): string {
+    const domain = (process.env.DOMAIN || '').trim();
+    if (!domain || domain === 'localhost' || domain === '127.0.0.1') {
+      return 'noreply@localhost';
+    }
+    return `noreply@${domain}`;
+  }
   private getTransporter(): Transporter | null {
     if (this.transporter) return this.transporter;
 
@@ -164,11 +178,15 @@ export class MailService {
     if (!host || !user || !pass) return null;
 
     const port = parseInt(process.env.MAIL_PORT || '587', 10);
+    const secure =
+      process.env.MAIL_SECURE !== undefined
+        ? process.env.MAIL_SECURE === 'true'
+        : port === 465;
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure,
       auth: { user, pass },
     });
 
@@ -190,7 +208,7 @@ export class MailService {
     email: string,
     resetToken: string
   ): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_API_URL || 'http://localhost:5173';
+    const frontendUrl = this.deriveFrontendUrl();
     const recoveryLink = `${frontendUrl}/reset-password?token=${resetToken}`;
     const transporter = this.getTransporter();
 
@@ -200,7 +218,7 @@ export class MailService {
       return;
     }
 
-    const from = process.env.MAIL_FROM || process.env.MAIL_USER;
+    const from = this.deriveMailFromAddress();
 
     try {
       await transporter.sendMail({

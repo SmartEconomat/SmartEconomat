@@ -153,7 +153,9 @@ const Proveedores: React.FC = () => {
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('proveedores.errors.errorEliminar');
+        err instanceof Error
+          ? err.message
+          : t('proveedores.errors.errorEliminar');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -190,7 +192,9 @@ const Proveedores: React.FC = () => {
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('proveedores.errors.errorGuardar');
+        err instanceof Error
+          ? err.message
+          : t('proveedores.errors.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -513,16 +517,32 @@ const Proveedores: React.FC = () => {
             {
               title: t('proveedores.detail.infoFiscal'),
               fields: [
-                { label: t('proveedores.detail.razonSocial'), value: itemToView?.nombre },
-                { label: t('proveedores.detail.nifCuit'), value: itemToView?.nif },
+                {
+                  label: t('proveedores.detail.razonSocial'),
+                  value: itemToView?.nombre,
+                },
+                {
+                  label: t('proveedores.detail.nifCuit'),
+                  value: itemToView?.nif,
+                },
               ],
             },
             {
               title: t('proveedores.detail.contacto'),
               fields: [
-                { label: t('proveedores.detail.personaContacto'), value: itemToView?.contacto },
-                { label: t('proveedores.detail.telefono'), value: itemToView?.telefono },
-                { label: t('proveedores.detail.email'), value: itemToView?.email, fullWidth: true },
+                {
+                  label: t('proveedores.detail.personaContacto'),
+                  value: itemToView?.contacto,
+                },
+                {
+                  label: t('proveedores.detail.telefono'),
+                  value: itemToView?.telefono,
+                },
+                {
+                  label: t('proveedores.detail.email'),
+                  value: itemToView?.email,
+                  fullWidth: true,
+                },
               ],
             },
             {

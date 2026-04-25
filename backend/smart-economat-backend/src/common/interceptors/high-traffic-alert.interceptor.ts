@@ -14,7 +14,7 @@ import type { Request } from 'express';
  * requests within the {@link ALERT_WINDOW_MS} sliding window. The interceptor is a
  * no-op in Jest test environments to avoid false positives during testing.
  * @example
- * // Register globally in AppModule providers:
+ *
  * { provide: APP_INTERCEPTOR, useClass: HighTrafficAlertInterceptor }
  */
 @Injectable()

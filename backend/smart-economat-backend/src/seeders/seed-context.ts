@@ -63,7 +63,7 @@ export class SeedContext {
     },
     {
       email: 'superadmin@smarteconomat.com',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'superadmin',
@@ -71,11 +71,11 @@ export class SeedContext {
     },
     {
       email: 'superadmin',
-      password: 'SmartEconomat2026*',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'superAdmin',
-      password: 'SmartEconomat2026*',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'admin@smarteconomat.com',
@@ -83,7 +83,7 @@ export class SeedContext {
     },
     {
       email: 'admin@smarteconomat.com',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
     {
       email: 'admin',
@@ -91,7 +91,7 @@ export class SeedContext {
     },
     {
       email: 'admin',
-      password: 'SmartEconomat123!',
+      password: 'SmartEconomat2026!',
     },
   ];
 
@@ -413,13 +413,8 @@ export class SeedContext {
     }
 
     const composeFile = resolve(__dirname, this.dockerComposeFile);
-    const dbUser =
-      process.env.POSTGRES_USER || process.env.DB_USERNAME || 'postgres';
-    const dbName =
-      process.env.POSTGRES_DB ||
-      process.env.DB_DATABASE ||
-      process.env.DB_NAME ||
-      'smart_economat';
+    const dbUser = process.env.POSTGRES_USER || 'postgres';
+    const dbName = process.env.POSTGRES_DB || 'smart_economat';
 
     const countCommand =
       `docker compose -f "${composeFile}" exec -T db ` +

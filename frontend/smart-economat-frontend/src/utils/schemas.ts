@@ -44,11 +44,26 @@ export function getMermaSchema(): DynamicField[] {
       type: 'select',
       required: true,
       options: [
-        { value: MotivoMerma.ROTURA, label: t('merma.form.motivoOpciones.roturaEnvase') },
-        { value: MotivoMerma.DETERIORO, label: t('merma.form.motivoOpciones.deterioroCaducidad') },
-        { value: MotivoMerma.HURTO, label: t('merma.form.motivoOpciones.hurto') },
-        { value: MotivoMerma.ERROR_PREPARACION, label: t('merma.form.motivoOpciones.errorPreparacion') },
-        { value: MotivoMerma.OTROS, label: t('merma.form.motivoOpciones.otros') },
+        {
+          value: MotivoMerma.ROTURA,
+          label: t('merma.form.motivoOpciones.roturaEnvase'),
+        },
+        {
+          value: MotivoMerma.DETERIORO,
+          label: t('merma.form.motivoOpciones.deterioroCaducidad'),
+        },
+        {
+          value: MotivoMerma.HURTO,
+          label: t('merma.form.motivoOpciones.hurto'),
+        },
+        {
+          value: MotivoMerma.ERROR_PREPARACION,
+          label: t('merma.form.motivoOpciones.errorPreparacion'),
+        },
+        {
+          value: MotivoMerma.OTROS,
+          label: t('merma.form.motivoOpciones.otros'),
+        },
       ],
     },
     {

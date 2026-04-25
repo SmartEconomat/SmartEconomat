@@ -12,19 +12,19 @@ import { NormalizeDataPipe } from './common/pipes/normalize-data.pipe';
 
 import helmet from 'helmet';
 
-/**
- * @description Application bootstrap function.
- * Creates and configures the NestJS application instance:
- * - Sets the global API prefix (`api/v1`).
- * - Applies security middleware: `cookie-parser` and `helmet`.
- * - Configures Swagger documentation at `/docs`.
- * - Registers global validation pipes (`NormalizeDataPipe`, `I18nValidationPipe`).
- * - Registers the global exception filter and response-transform interceptors.
- * - Enables CORS with origin from `FRONTEND_API_URL` env var.
- * - Enables `trust proxy` for deployments behind a reverse proxy.
- * - Starts listening on `BACKEND_PORT` (default 3000) on all interfaces.
- * @returns {Promise<void>}
- */
+function deriveFrontendOrigin(): string {
+  const domain = (process.env.DOMAIN || '').trim();
+  if (!domain) {
+    return 'http://localhost:5173';
+  }
+
+  if (domain === 'localhost' || domain === '127.0.0.1') {
+    const frontendPort = process.env.FRONTEND_PORT || '5173';
+    return `http://${domain}:${frontendPort}`;
+  }
+
+  return `https://${domain}`;
+}
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -63,7 +63,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_API_URL || '*',
+    origin: deriveFrontendOrigin(),
     credentials: true,
   });
 

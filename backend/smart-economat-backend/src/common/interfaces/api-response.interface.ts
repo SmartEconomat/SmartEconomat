@@ -11,7 +11,7 @@
  * @template T - The type of the `data` payload.
  *
  * @example
- * // A successful paginated response
+ *
  * const res: ApiResponse<ProductoDto[]> = {
  *   success: true,
  *   message: 'Operación exitosa',

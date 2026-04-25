@@ -8,10 +8,10 @@
 |---|---|
 | `type` | `postgres` |
 | `host` | `DB_HOST` (fallback según entorno) |
-| `port` | `DB_PORT` (default 5432) |
-| `username` | `DB_USERNAME` o `POSTGRES_USER` |
-| `password` | `DB_PASSWORD` o `POSTGRES_PASSWORD` |
-| `database` | `DB_DATABASE` o `POSTGRES_DB` |
+| `port` | `POSTGRES_PORT` (default 5432) |
+| `username` | `POSTGRES_USER` o `POSTGRES_USER` |
+| `password` | `POSTGRES_PASSWORD` o `POSTGRES_PASSWORD` |
+| `database` | `POSTGRES_DB` |
 | `synchronize` | `DB_SYNC=true` o no-prod/no-test |
 | `entities` | `src/**/*.entity.{ts,js}` |
 | `migrations` | `src/migrations/*.{ts,js}` |

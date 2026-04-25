@@ -53,7 +53,7 @@ export const SEED_PROFILE = 'unified';
 
 export const DEFAULT_ADMIN_EMAIL = 'admin@smarteconomat.com';
 export const DEFAULT_SEED_PASSWORD = 'SmartEconomat2026!';
-export const ALT_SEED_PASSWORD = 'SmartEconomat2026*';
+export const ALT_SEED_PASSWORD = 'SmartEconomat2026!';
 
 const defaultMinSuccessPerEndpoint = SEED_GLOBAL_CONFIG.minRequests;
 const defaultMaxSuccessPerEndpoint = SEED_GLOBAL_CONFIG.maxRequests;

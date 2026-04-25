@@ -10,7 +10,7 @@
  * @template T - The type of each item in the `data` array.
  *
  * @example
- * // Service usage
+ *
  * const result: PaginatedResponseDto<ProductoDto> = {
  *   data: [...],
  *   total: 150,

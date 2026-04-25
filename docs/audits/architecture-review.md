@@ -22,7 +22,7 @@ graph TB
   subgraph "API Gateway (NestJS)"
     direction TB
     MW["Middlewares\n cookieParser · trust proxy"]
-    CORS["CORS Guard\n FRONTEND_API_URL"]
+    CORS["CORS Guard\n URL_FRONTEND_DERIVADA"]
     THROTTLE["SmartAuthThrottlerGuard\n in-memory | user/IP tracker"]
     PIPE["I18nValidationPipe\n whitelist · forbidNonWhitelisted"]
     GEF["GlobalExceptionFilter\n i18n errors · Sentry capture"]

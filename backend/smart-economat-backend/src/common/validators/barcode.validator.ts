@@ -17,10 +17,10 @@
  * @returns {boolean} `true` if the barcode is valid; `false` otherwise.
  *
  * @example
- * isValidBarcode('1234567890123');       // true
- * isValidBarcode('');                   // false
- * isValidBarcode(undefined);            // false
- * isValidBarcode('ABC', 2);             // false  (exceeds maxLength)
+ * isValidBarcode('1234567890123');
+ * isValidBarcode('');
+ * isValidBarcode(undefined);
+ * isValidBarcode('ABC', 2);
  */
 export function isValidBarcode(
   code: string | undefined,

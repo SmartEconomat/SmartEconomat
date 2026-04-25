@@ -10,7 +10,7 @@
  * @constant
  * @example
  * import { LanguageEnum } from './language.enum';
- * const lang = LanguageEnum.ES; // 'es'
+ * const lang = LanguageEnum.ES;
  */
 export const LanguageEnum = {
   /** Spanish */

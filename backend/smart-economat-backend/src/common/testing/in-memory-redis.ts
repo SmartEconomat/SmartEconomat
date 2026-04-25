@@ -7,7 +7,7 @@
  * @example
  * const redis = createInMemoryRedisClient();
  * await redis.set('key', 'value', 'EX', 60);
- * const val = await redis.get('key'); // 'value'
+ * const val = await redis.get('key');
  * await redis.quit();
  */
 

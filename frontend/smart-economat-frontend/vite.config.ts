@@ -132,6 +132,9 @@ function getManualChunk(id: string): string | undefined {
 }
 
 export default defineConfig(() => {
+  const backendPort = Number(process.env.BACKEND_PORT) || 3000;
+  const proxyTarget = `http://backend:${backendPort}`;
+
   return {
     cacheDir: '/tmp/.vite-smarteconomat',
     optimizeDeps: {
@@ -140,6 +143,8 @@ export default defineConfig(() => {
     },
     build: {
       outDir: 'build',
+      sourcemap: false,
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
           manualChunks: getManualChunk,
@@ -165,10 +170,7 @@ export default defineConfig(() => {
       historyApiFallback: true,
       proxy: {
         '/api': {
-          target:
-            process.env.VITE_API_PROXY_TARGET ||
-            process.env.BACKEND_API_URL ||
-            'http://localhost:3000',
+          target: proxyTarget,
           changeOrigin: true,
           secure: false, // En dev, el backend puede no tener TLS
         },

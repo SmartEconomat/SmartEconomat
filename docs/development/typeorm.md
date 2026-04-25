@@ -38,7 +38,7 @@
  Definir en `.env` (a nivel raíz):
  ```env
  POSTGRES_HOST=localhost
- DB_PORT=5432
+ POSTGRES_PORT=5432
  POSTGRES_USER=usuario
  POSTGRES_PASSWORD=secreto
  POSTGRES_DB=nombre_bd
@@ -62,7 +62,7 @@
        useFactory: (cs: ConfigService) => ({
          type: 'postgres',
          host: cs.get('POSTGRES_HOST'),
-         port: +cs.get<number>('DB_PORT'),
+         port: +cs.get<number>('POSTGRES_PORT'),
          username: cs.get('POSTGRES_USER'),
          password: cs.get('POSTGRES_PASSWORD'),
          database: cs.get('POSTGRES_DB'),
@@ -81,7 +81,7 @@
  export const dataSource = new DataSource({
   type: 'postgres',
   host: cs.get('POSTGRES_HOST'),
-  port: +cs.get<number>('DB_PORT'),
+  port: +cs.get<number>('POSTGRES_PORT'),
   username: cs.get('POSTGRES_USER'),
   password: cs.get('POSTGRES_PASSWORD'),
   database: cs.get('POSTGRES_DB'),

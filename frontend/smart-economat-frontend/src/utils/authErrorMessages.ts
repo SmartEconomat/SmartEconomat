@@ -19,18 +19,22 @@ type AuthAction =
 
 const actionMessageMap: Record<AuthAction, Array<[RegExp, string]>> = {
   login: [
-    [/invalid|inválid|credenciales|contraseña|password/i, 'auth.errors.invalidCredentials'],
+    [
+      /invalid|inválid|credenciales|contraseña|password/i,
+      'auth.errors.invalidCredentials',
+    ],
     [/inactive|inactivo|pendiente/i, 'auth.errors.accountPending'],
     [/blocked|bloquead/i, 'auth.errors.accountBlocked'],
   ],
-  forgotPassword: [
-    [/email|correo/i, 'auth.errors.invalidEmail'],
-  ],
+  forgotPassword: [[/email|correo/i, 'auth.errors.invalidEmail']],
   resetPassword: [
     [/token|expirad|inválid/i, 'auth.errors.invalidOrExpiredToken'],
   ],
   changePassword: [
-    [/actual|current|incorrecta|incorrect/i, 'auth.errors.invalidCurrentPassword'],
+    [
+      /actual|current|incorrecta|incorrect/i,
+      'auth.errors.invalidCurrentPassword',
+    ],
   ],
   registerAlumno: [
     [/código|codigo|slot|clase/i, 'auth.errors.invalidClassCode'],
@@ -39,7 +43,10 @@ const actionMessageMap: Record<AuthAction, Array<[RegExp, string]>> = {
   ],
   registerProfesor: [
     [/cial/i, 'auth.errors.invalidCial'],
-    [/taken|exist|username|usuario|email|correo/i, 'auth.errors.userOrEmailTaken'],
+    [
+      /taken|exist|username|usuario|email|correo/i,
+      'auth.errors.userOrEmailTaken',
+    ],
   ],
 };
 
@@ -89,7 +96,9 @@ export function getAuthErrorMessage(
     return fallbackMessage;
   }
 
-  const matched = actionMessageMap[action]?.find(([pattern]) => pattern.test(rawMessage));
+  const matched = actionMessageMap[action]?.find(([pattern]) =>
+    pattern.test(rawMessage)
+  );
 
   if (matched) {
     return i18n.t(matched[1]);

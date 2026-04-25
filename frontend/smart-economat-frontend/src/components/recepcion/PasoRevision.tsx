@@ -166,7 +166,9 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
               <Table size="small" sx={{ tableLayout: 'fixed', minWidth: 900 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '30%' }}>{t('comun.item')}</TableCell>
+                    <TableCell sx={{ width: '30%' }}>
+                      {t('comun.item')}
+                    </TableCell>
                     <TableCell align="center" sx={{ width: '8%' }}>
                       {t('comun.unidad')}
                     </TableCell>
@@ -179,9 +181,15 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                     <TableCell align="right" sx={{ width: '10%' }}>
                       {t('recepcion.revision.real')}
                     </TableCell>
-                    <TableCell sx={{ width: '12%' }}>{t('recepcion.revision.origenPeso')}</TableCell>
-                    <TableCell sx={{ width: '16%' }}>{t('recepcion.revision.estadoFisico')}</TableCell>
-                    <TableCell sx={{ width: '20%' }}>{t('comun.notas')}</TableCell>
+                    <TableCell sx={{ width: '12%' }}>
+                      {t('recepcion.revision.origenPeso')}
+                    </TableCell>
+                    <TableCell sx={{ width: '16%' }}>
+                      {t('recepcion.revision.estadoFisico')}
+                    </TableCell>
+                    <TableCell sx={{ width: '20%' }}>
+                      {t('comun.notas')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -377,9 +385,15 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                   <TableCell align="right" sx={{ width: '12%' }}>
                     {t('recepcion.revision.real')}
                   </TableCell>
-                  <TableCell sx={{ width: '12%' }}>{t('recepcion.revision.origenPeso')}</TableCell>
-                  <TableCell sx={{ width: '15%' }}>{t('recepcion.revision.estadoFisico')}</TableCell>
-                  <TableCell sx={{ width: '15%' }}>{t('comun.notas')}</TableCell>
+                  <TableCell sx={{ width: '12%' }}>
+                    {t('recepcion.revision.origenPeso')}
+                  </TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('recepcion.revision.estadoFisico')}
+                  </TableCell>
+                  <TableCell sx={{ width: '15%' }}>
+                    {t('comun.notas')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
