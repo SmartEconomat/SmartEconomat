@@ -5,8 +5,14 @@ import {
   Button,
   Checkbox,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Paper,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Tooltip,
@@ -18,7 +24,10 @@ import type { BackupMetadata } from "@shared/contracts";
 interface BackupRestorePanelProps {
   lastBackup: BackupMetadata | null;
   busy: boolean;
-  onBackup: (label: string) => Promise<void>;
+  backupDefaultDirectory: string;
+  onSaveBackupDefaultDirectory: (directory: string) => void;
+  onPickBackupDirectory: (defaultPath?: string) => Promise<string | null>;
+  onBackup: (label: string, destinationDir: string) => Promise<void>;
   onRestore: (artifactPath: string) => Promise<void>;
   onPickRestoreArtifact: () => Promise<string | null>;
   initialBackupLabel?: string;
@@ -41,6 +50,9 @@ function formatBackupDate(value: string): string {
 export function BackupRestorePanel({
   lastBackup,
   busy,
+  backupDefaultDirectory,
+  onSaveBackupDefaultDirectory,
+  onPickBackupDirectory,
   onBackup,
   onRestore,
   onPickRestoreArtifact,
@@ -54,12 +66,70 @@ export function BackupRestorePanel({
     initialRestoreAcknowledged,
   );
   const [pickingArtifact, setPickingArtifact] = useState(false);
+  const [backupDialogOpen, setBackupDialogOpen] = useState(false);
+  const [backupTargetMode, setBackupTargetMode] = useState<
+    "default" | "custom"
+  >("default");
+  const [customBackupDirectory, setCustomBackupDirectory] = useState("");
+  const [saveCustomAsDefault, setSaveCustomAsDefault] = useState(false);
 
   const restoreDisabled =
     busy ||
     pickingArtifact ||
     artifactPath.trim().length === 0 ||
     !restoreAcknowledged;
+  const resolvedBackupDirectory =
+    backupTargetMode === "default"
+      ? backupDefaultDirectory
+      : customBackupDirectory.trim();
+  const backupConfirmDisabled =
+    busy || pickingArtifact || resolvedBackupDirectory.trim().length === 0;
+
+  function openBackupDialog(): void {
+    setBackupTargetMode("default");
+    setCustomBackupDirectory(backupDefaultDirectory);
+    setSaveCustomAsDefault(false);
+    setBackupDialogOpen(true);
+  }
+
+  async function handlePickBackupDirectory(): Promise<void> {
+    const selectedDirectory = await onPickBackupDirectory(
+      customBackupDirectory.trim().length > 0
+        ? customBackupDirectory
+        : backupDefaultDirectory,
+    );
+    if (!selectedDirectory) {
+      return;
+    }
+
+    setCustomBackupDirectory(selectedDirectory);
+    setBackupTargetMode("custom");
+  }
+
+  async function handleUpdateDefaultBackupDirectory(): Promise<void> {
+    const selectedDirectory = await onPickBackupDirectory(
+      backupDefaultDirectory,
+    );
+    if (!selectedDirectory) {
+      return;
+    }
+
+    onSaveBackupDefaultDirectory(selectedDirectory);
+  }
+
+  async function confirmBackupWithSelectedDirectory(): Promise<void> {
+    const destinationDirectory = resolvedBackupDirectory.trim();
+    if (destinationDirectory.length === 0) {
+      return;
+    }
+
+    if (backupTargetMode === "custom" && saveCustomAsDefault) {
+      onSaveBackupDefaultDirectory(destinationDirectory);
+    }
+
+    setBackupDialogOpen(false);
+    await onBackup(label, destinationDirectory);
+  }
 
   async function handlePickRestoreArtifact(): Promise<void> {
     setPickingArtifact(true);
@@ -130,8 +200,23 @@ export function BackupRestorePanel({
             automáticamente.
           </Typography>
 
+          <TextField
+            fullWidth
+            label="Ruta por defecto de backups"
+            value={backupDefaultDirectory}
+            slotProps={{ htmlInput: { readOnly: true } }}
+          />
+
+          <Button
+            variant="outlined"
+            disabled={busy || pickingArtifact}
+            onClick={() => void handleUpdateDefaultBackupDirectory()}
+          >
+            Cambiar ruta por defecto
+          </Button>
+
           <Tooltip
-            title="Crea la copia y actualiza el resumen del último backup disponible en este panel."
+            title="Antes de crear el backup te pediremos confirmar si usas la ruta por defecto o una carpeta personalizada."
             arrow
           >
             <span>
@@ -139,7 +224,7 @@ export function BackupRestorePanel({
                 fullWidth
                 variant="contained"
                 disabled={busy || pickingArtifact}
-                onClick={() => void onBackup(label)}
+                onClick={openBackupDialog}
                 sx={{ fontWeight: 800 }}
               >
                 Crear Backup Ahora
@@ -174,7 +259,10 @@ export function BackupRestorePanel({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ fontFamily: '"JetBrains Mono", Consolas, monospace' }}
+              sx={{
+                fontFamily: '"JetBrains Mono", Consolas, monospace',
+                wordBreak: "break-all",
+              }}
             >
               Checksum: {lastBackup.checksum}
             </Typography>
@@ -266,6 +354,99 @@ export function BackupRestorePanel({
           </span>
         </Tooltip>
       </Stack>
+
+      <Dialog
+        open={backupDialogOpen}
+        onClose={() => setBackupDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Destino del backup manual</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              Elige si quieres guardar este backup en la ruta por defecto o en
+              una carpeta personalizada para esta ejecución.
+            </Typography>
+
+            <RadioGroup
+              value={backupTargetMode}
+              onChange={(event) =>
+                setBackupTargetMode(event.target.value as "default" | "custom")
+              }
+            >
+              <FormControlLabel
+                value="default"
+                control={<Radio />}
+                label="Usar carpeta por defecto"
+              />
+              <FormControlLabel
+                value="custom"
+                control={<Radio />}
+                label="Elegir carpeta solo para esta copia"
+              />
+            </RadioGroup>
+
+            <TextField
+              fullWidth
+              label="Carpeta por defecto"
+              value={backupDefaultDirectory}
+              slotProps={{ htmlInput: { readOnly: true } }}
+            />
+
+            {backupTargetMode === "default" ? (
+              <Typography variant="caption" color="text.secondary">
+                Este backup se guardará en la carpeta por defecto configurada y
+                no cambia tu configuración actual.
+              </Typography>
+            ) : null}
+
+            {backupTargetMode === "custom" ? (
+              <>
+                <TextField
+                  fullWidth
+                  label="Carpeta para esta copia"
+                  value={customBackupDirectory}
+                  onChange={(event) =>
+                    setCustomBackupDirectory(event.target.value)
+                  }
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => void handlePickBackupDirectory()}
+                >
+                  Seleccionar carpeta...
+                </Button>
+                <Typography variant="caption" color="text.secondary">
+                  Esta carpeta se usará solo en este backup manual, salvo que
+                  marques la opción para guardarla como predeterminada.
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={saveCustomAsDefault}
+                      onChange={(event) =>
+                        setSaveCustomAsDefault(event.target.checked)
+                      }
+                    />
+                  }
+                  label="Guardar esta carpeta como nueva ruta por defecto"
+                />
+              </>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBackupDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            disabled={backupConfirmDisabled}
+            onClick={() => void confirmBackupWithSelectedDirectory()}
+          >
+            Iniciar backup
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 }

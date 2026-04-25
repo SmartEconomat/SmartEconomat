@@ -16,6 +16,7 @@ interface ConfirmDangerDialogProps {
   title: string;
   description: string;
   confirmationText: string;
+  confirmButtonLabel?: string;
   onCancel: () => void;
   onConfirm: (phrase: string) => Promise<void>;
 }
@@ -25,6 +26,7 @@ export function ConfirmDangerDialog({
   title,
   description,
   confirmationText,
+  confirmButtonLabel = "Ejecutar limpieza agresiva",
   onCancel,
   onConfirm,
 }: ConfirmDangerDialogProps) {
@@ -72,7 +74,7 @@ export function ConfirmDangerDialog({
           disabled={value.trim().toUpperCase() !== confirmationText}
           onClick={() => void onConfirm(value)}
         >
-          Ejecutar limpieza agresiva
+          {confirmButtonLabel}
         </Button>
       </DialogActions>
     </Dialog>

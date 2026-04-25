@@ -102,12 +102,16 @@ function resolveSeedApiBaseUrl(): string | undefined {
     return explicit;
   }
 
-  const backendUrl = normalizeSeedApiBaseUrl(process.env.BACKEND_API_URL);
-  if (backendUrl) {
-    return backendUrl;
+  const domain = String(process.env.DOMAIN || '').trim();
+  if (domain) {
+    if (domain === 'localhost' || domain === '127.0.0.1') {
+      const backendPort = process.env.BACKEND_PORT || '3000';
+      return normalizeSeedApiBaseUrl(`http://${domain}:${backendPort}`);
+    }
+    return normalizeSeedApiBaseUrl(`https://${domain}`);
   }
 
-  return normalizeSeedApiBaseUrl(process.env.FRONTEND_API_URL);
+  return normalizeSeedApiBaseUrl('http://localhost:3000');
 }
 
 function resolveSeedDockerComposeFile(): string | undefined {

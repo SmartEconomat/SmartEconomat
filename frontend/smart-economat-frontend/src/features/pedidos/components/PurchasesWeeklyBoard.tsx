@@ -49,6 +49,16 @@ const getWeekRangeLabel = (referenceDate?: string): string => {
   return `Semana ${start.format('DD/MM')} - ${end.format('DD/MM')}`;
 };
 
+/**
+ * @description Weekly accordion board for displaying purchase batches grouped by ISO week.
+ * Supports list and grid view modes; shows an empty message when no batches are present.
+ * @param props.batches - Array of PurchaseBatch objects to display
+ * @param props.isLoading - Whether data is being fetched
+ * @param props.viewMode - 'list' or 'grid' display mode
+ * @param props.handlers - Action callbacks for each batch row
+ * @param props.emptyMessage - Optional message shown when there are no batches
+ * @returns Accordion-based weekly board for purchase batches
+ */
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   batches,
   isLoading,

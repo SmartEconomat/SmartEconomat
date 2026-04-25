@@ -67,6 +67,18 @@ interface BatchPedidoLineasViewerProps {
   showPdfActions?: boolean;
 }
 
+/**
+ * Viewer for the product lines of a purchase batch or user order.
+ *
+ * Groups products by supplier, aggregates quantities across individual orders,
+ * and optionally shows a summary table of all involved orders. Provides PDF
+ * download with configurable options (include cancelled orders, page per supplier).
+ *
+ * @param props - See {@link BatchPedidoLineasViewerProps}.
+ * @returns JSX element with grouped product tables, optional order summary, and print controls.
+ * @example
+ * <BatchPedidoLineasViewer batch={purchaseBatch} mode="batch" />
+ */
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,
   mode = 'batch',
@@ -101,14 +113,20 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   const groupedByProvider = React.useMemo(() => {
     const groups: Record<string, BatchProviderGroup> = {};
 
-    batch.pedidos?.forEach((p) => {
-      if (!incluirCancelados && p.estado === EstadoPedido.CANCELADO) return;
-      const provId = p.proveedor?.id || 'unknown';
-      if (!groups[provId]) {
-        groups[provId] = { proveedor: p.proveedor, pedidos: [], total: 0 };
+    batch.pedidos?.forEach((pedido) => {
+      if (!incluirCancelados && pedido.estado === EstadoPedido.CANCELADO)
+        return;
+
+      const key = pedido.proveedor?.id ?? '__sin_proveedor__';
+      if (!groups[key]) {
+        groups[key] = {
+          proveedor: pedido.proveedor,
+          pedidos: [],
+          total: 0,
+        };
       }
-      groups[provId].pedidos.push(p);
-      groups[provId].total += Number(p.costeTotal || 0);
+      groups[key].pedidos.push(pedido);
+      groups[key].total += Number(pedido.costeTotal ?? 0);
     });
 
     return Object.values(groups);

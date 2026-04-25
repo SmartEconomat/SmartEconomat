@@ -10,15 +10,11 @@ Toma los datos o un esquema definido para construir automáticamente campos de e
 
 Hereda de `ModalProps` pero sobreescribe su comportamiento de campos internos (no acepta un `children`).
 
-| Propiedad | Tipo | Obligatorio | Descripción |
-| :--- | :--- | :---: | :--- |
-| `fields` | `DynamicField[]` | No | Esquema detallado de los campos del formulario. Si no se provee, la forma se auto-generará basado en las claves de `initialData`. |
-| `initialData` | `Record<string, any>` | No | Valores iniciales del formulario para editar. |
-| `onSubmit` | `(data: Record<string, any>) => void \| Promise<void>` | Sí | Evento desencadenado al pulsar "Aceptar". |
-| `onCancel` | `() => void` | No | Evento desencadenado al cancelar. |
-| `submitLabel` | `string` | No | Etiqueta para el botón principal (por defecto "Aceptar"). |
-| `cancelLabel` | `string` | No | Etiqueta para el botón secundario (por defecto "Cancelar"). |
 | `isSubmitting` | `boolean` | No | Desactiva los botones y muestra un spinner de carga y estado. |
+| `onRefreshProveedores` | `() => void` | No | Callback para refrescar la lista de proveedores tras una creación externa/rápida. |
+| `onBarcodeFetch` | `(code: string) => Promise<any>` | No | Callback para buscar datos de un producto por código de barras. |
+| `onBarcodeGenerate` | `() => Promise<string>` | No | Callback para generar un nuevo código EAN-13. |
+| `onOFFSearch` | `(val: string) => Promise<any[]>` | No | Callback para búsqueda en OpenFoodFacts. |
 
 ### Configuración del Esquema (`fields`)
 
@@ -26,13 +22,17 @@ Hereda de `ModalProps` pero sobreescribe su comportamiento de campos internos (n
 | :--- | :--- | :---: | :--- |
 | `name` | `string` | Sí | Nombre interno del campo (y será la clave en el objeto resultante `onSubmit`). |
 | `label` | `string` | Sí | Etiqueta visible del componente. |
-| `type` | `'text' \| 'number' \| 'boolean' \| 'select' \| 'date' \| 'image' \| 'allergens'` | No | Renderiza el input adecuado para la interfaz. Tipo predeterminado: `text`. |
+| `type` | `'text' \| 'number' \| 'boolean' \| 'select' \| 'date' \| 'image' \| 'allergens' \| 'proveedores' \| 'email' \| 'barcode'` | No | Renderiza el input adecuado para la interfaz. Tipo predeterminado: `text`. |
 | `required` | `boolean` | No | Marca el campo como requerido. |
 | `options` | `SelectOption[]` | No | Para los tipos `select`, lista de opciones (`{ value, label }`). |
 | `defaultValue` | `any` | No | Valor por defecto en formularios vacíos. |
 | `disabled` | `boolean` | No | Desactivar el campo para edición. |
 | `position` | `'left' \| 'right' \| 'bottom'` | No | Ubica el componente en distintas áreas del modal (aplicable en vistas no móviles). |
 | `width` | `number` | No | Ancho proporcional del campo (grilla 1-12) a partir de la vista móvil. Defecto: 12. |
+| `pattern` | `string` | No | Expresión regular (Regex) para validación del campo. |
+| `patternMessage` | `string` | No | Mensaje de error personalizado si el patrón falla. |
+| `maxLength` | `number` | No | Límite máximo de caracteres (bloquea la entrada nativamente y valida). |
+| `minLength` | `number` | No | Límite mínimo de caracteres para validación. |
 
 ## Uso básico (Auto generado)
 

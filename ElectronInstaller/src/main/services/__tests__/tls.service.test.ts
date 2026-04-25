@@ -11,25 +11,56 @@ import { TLSService } from "../tls.service";
 const baseConfig: InstallerConfigPayload = {
   runtimePath: "",
   instanceName: "smarteconomat-local",
+  installMode: "new",
   adminUsername: "admin",
-  adminPassword: "AdminTemporal2026",
+  adminPassword: "SmartEconomat2026!",
+  adminEmail: "admin@smarteconomat.com",
   superAdminUsername: "superadmin",
-  superAdminPassword: "SuperAdminTemporal2026",
+  superAdminPassword: "SmartEconomat2026!",
+  superAdminEmail: "superadmin@smarteconomat.com",
+  verifyExistingAdminSession: true,
+  repairAdminCredentialsOnFailure: true,
   useSamePasswordForBoth: false,
   localHost: "smarteconomat.app",
   timezone: "Europe/Madrid",
   tlsProvider: "selfsigned",
   customCertFullchainPath: "",
   customCertPrivkeyPath: "",
+  backupDefaultDirectory: "/tmp/smarteconomat-runtime-test/backups",
   backupFrequency: "daily",
+  backupScheduleTime: "02:00",
   backupRetentionDays: 30,
+  httpPort: 80,
+  httpsPort: 443,
 };
 
 describe("TLSService", () => {
-  it("genera certificados aunque el modo sea none y no existan archivos previos", async () => {
+  it("no genera certificados cuando el modo es none", async () => {
     const runtimePath = await fs.mkdtemp(
       path.join(os.tmpdir(), "smarteconomat-tls-none-"),
     );
+
+    const certsDir = path.join(runtimePath, "certs");
+    await fs.mkdir(path.join(certsDir, "live", "local-smarteconomat"), {
+      recursive: true,
+    });
+    await fs.mkdir(path.join(runtimePath, "certs-webroot"), {
+      recursive: true,
+    });
+    await Promise.all([
+      fs.writeFile(
+        path.join(certsDir, "live", "local-smarteconomat", "fullchain.pem"),
+        "CERT",
+        "utf8",
+      ),
+      fs.writeFile(
+        path.join(certsDir, "live", "local-smarteconomat", "privkey.pem"),
+        "KEY",
+        "utf8",
+      ),
+      fs.writeFile(path.join(certsDir, "fullchain.pem"), "CERT", "utf8"),
+      fs.writeFile(path.join(certsDir, "privkey.pem"), "KEY", "utf8"),
+    ]);
 
     const service = new TLSService();
     const result = await service.setup({
@@ -39,12 +70,12 @@ describe("TLSService", () => {
     });
 
     expect(result.ok).toBe(true);
-
-    const fullchain = await fs.readFile(
-      path.join(runtimePath, "certs", "fullchain.pem"),
-      "utf8",
-    );
-    expect(fullchain).toContain("BEGIN CERTIFICATE");
+    await expect(
+      fs.access(path.join(runtimePath, "certs", "fullchain.pem")),
+    ).rejects.toBeDefined();
+    await expect(
+      fs.access(path.join(runtimePath, "certs-webroot")),
+    ).rejects.toBeDefined();
   });
 
   it("genera certificados autofirmados cuando el modo es selfsigned", async () => {

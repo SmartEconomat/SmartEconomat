@@ -108,8 +108,8 @@ Este script hace limpieza completa de contenedores huérfanos y redespliega.
 
 Creado automáticamente en `.env.prod`:
 - `DOMAIN=smarteconomat.app`
-- `BACKEND_API_URL=https://smarteconomat.app/api/v1`
-- `FRONTEND_API_URL=https://smarteconomat.app`
+- `URL_BACKEND_DERIVADA=https://smarteconomat.app/api/v1`
+- `URL_FRONTEND_DERIVADA=https://smarteconomat.app`
 - `DB_SYNC=false`
 - `SEED_DEFAULT_ADMIN_TEMP_PASSWORD=...`
 

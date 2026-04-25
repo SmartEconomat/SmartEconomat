@@ -6,10 +6,7 @@ declare module "selfsigned" {
 
   export interface SelfSignedExtension {
     name: string;
-    altNames?: Array<
-      | { type: 2; value: string }
-      | { type: 7; ip: string }
-    >;
+    altNames?: Array<{ type: 2; value: string } | { type: 7; ip: string }>;
     cA?: boolean;
     keyUsage?: boolean[];
     extendedKeyUsage?: boolean[];

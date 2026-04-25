@@ -99,24 +99,24 @@ function runDockerBuild(attempt) {
 async function main() {
   for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
     console.log(
-      `[build:win:linux] Intento ${attempt}/${maxRetries} (timeout ${Math.round(timeoutMs / 60000)}m)`,
+      `[build:windows-from-linux] Intento ${attempt}/${maxRetries} (timeout ${Math.round(timeoutMs / 60000)}m)`,
     );
 
     const result = await runDockerBuild(attempt);
 
     if (result.code === 0) {
-      console.log("[build:win:linux] Build completado correctamente.");
+      console.log("[build:windows-from-linux] Build completado correctamente.");
       process.exit(0);
     }
 
     const timeoutTriggered = result.signal === "SIGTERM";
     console.error(
-      `[build:win:linux] Fallo en intento ${attempt}: code=${result.code} signal=${result.signal ?? "none"}${timeoutTriggered ? " (timeout)" : ""}`,
+      `[build:windows-from-linux] Fallo en intento ${attempt}: code=${result.code} signal=${result.signal ?? "none"}${timeoutTriggered ? " (timeout)" : ""}`,
     );
 
     if (attempt < maxRetries) {
       console.log(
-        `[build:win:linux] Reintentando en ${Math.round(retryDelayMs / 1000)}s...`,
+        `[build:windows-from-linux] Reintentando en ${Math.round(retryDelayMs / 1000)}s...`,
       );
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }

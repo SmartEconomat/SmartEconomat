@@ -6,6 +6,8 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/frontend.node.tsbuildinfo",
     "skipLibCheck": true,
     "strict": true
   },

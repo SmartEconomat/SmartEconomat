@@ -9,17 +9,22 @@ import type {
 import { CertificateService } from "./certificate.service";
 
 export class TLSService {
-  constructor(
-    private readonly certificateService = new CertificateService(),
-  ) {}
+  constructor(private readonly certificateService = new CertificateService()) {}
 
   async setup(config: InstallerConfigPayload): Promise<OperationResult> {
     const runtimePath = config.runtimePath;
 
     if (config.tlsProvider === "none") {
-      return this.certificateService.ensureLocalCertificates(runtimePath, {
-        overwrite: false,
-      });
+      const cleanupResult =
+        await this.certificateService.removeLocalCertificates(runtimePath);
+
+      return cleanupResult.ok
+        ? {
+            ok: true,
+            message:
+              "TLS desactivado: se eliminaron certificados locales previos y no se generaron nuevos.",
+          }
+        : cleanupResult;
     }
 
     if (config.tlsProvider === "custom") {
@@ -32,6 +37,7 @@ export class TLSService {
 
     return this.certificateService.ensureLocalCertificates(runtimePath, {
       overwrite: true,
+      domain: config.localHost,
     });
   }
 

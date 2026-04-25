@@ -19,6 +19,8 @@ import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
  * - Gestionar cache de permisos (Redis o memoria)
  * - Invalidar cache cuando cambian roles/permisos
  * - Validar permisos en < 5ms (con cache)
+ *
+ * @class AuthPermissionsService
  */
 @Injectable()
 export class AuthPermissionsService {

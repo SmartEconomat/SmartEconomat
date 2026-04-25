@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -38,6 +39,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
   profesores,
   ubicaciones,
 }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
@@ -71,7 +73,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       !formData.capacidad ||
       !formData.profesorId
     ) {
-      toast.error('Todos los campos marcados son obligatorios');
+      toast.error(t('perfil.slot.errors.camposObligatorios'));
       return;
     }
 
@@ -86,7 +88,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       });
 
       if (res.success) {
-        toast.success('Aula/Slot creado con éxito');
+        toast.success(t('perfil.slot.toast.creado'));
         onSuccess(res.data);
         onClose();
         setFormData({
@@ -97,11 +99,11 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
           ubicacionId: '',
         });
       } else {
-        toast.error(res.message || 'Error al crear el slot');
+        toast.error(res.message || t('perfil.slot.errors.crear'));
       }
     } catch (error) {
       console.error('Error creating slot', error);
-      toast.error('Error al crear el slot académico');
+      toast.error(t('perfil.slot.errors.crearAcademico'));
     } finally {
       setIsSaving(false);
     }
@@ -109,16 +111,16 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Nueva Aula / Clase (Slot)</DialogTitle>
+      <DialogTitle>{t('perfil.slot.titulo')}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ pt: 1 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label="Nombre del Aula/Grupo"
+                label={t('perfil.nombreAulaGrupo')}
                 name="aula"
-                placeholder="Ej: Cocina Básica, Aula 101..."
+                placeholder={t('perfil.aulaPlaceholder')}
                 value={formData.aula}
                 onChange={handleChange}
                 required
@@ -128,7 +130,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
             <Grid size={{ xs: 6 }}>
               <TextField
                 fullWidth
-                label="Nº Clase"
+                label={t('perfil.campoNumeroClase')}
                 name="numeroClase"
                 type="number"
                 value={formData.numeroClase}
@@ -140,7 +142,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
             <Grid size={{ xs: 6 }}>
               <TextField
                 fullWidth
-                label="Capacidad (Alumnos)"
+                label={t('perfil.capacidadAlumnos')}
                 name="capacidad"
                 type="number"
                 value={formData.capacidad}
@@ -152,11 +154,11 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth required>
                 <InputLabel id="quick-slot-profesor-label">
-                  Profesor Responsable
+                  {t('perfil.profesorResponsable')}
                 </InputLabel>
                 <Select
                   labelId="quick-slot-profesor-label"
-                  label="Profesor Responsable"
+                  label={t('perfil.profesorResponsable')}
                   name="profesorId"
                   value={formData.profesorId}
                   onChange={(e) =>
@@ -178,11 +180,11 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
                 <InputLabel id="quick-slot-ubicacion-label">
-                  Ubicación Warehouse (Opcional)
+                  {t('perfil.ubicacionWarehouse')}
                 </InputLabel>
                 <Select
                   labelId="quick-slot-ubicacion-label"
-                  label="Ubicación Warehouse (Opcional)"
+                  label={t('perfil.ubicacionWarehouse')}
                   name="ubicacionId"
                   value={formData.ubicacionId}
                   onChange={(e) =>
@@ -194,7 +196,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
                   disabled={isSaving}
                 >
                   <MenuItem value="">
-                    <em>Sin ubicación física</em>
+                    <em>{t('perfil.sinUbicacion')}</em>
                   </MenuItem>
                   {ubicaciones.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
@@ -209,7 +211,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={isSaving}>
-          Cancelar
+          {t('comun.cancelar')}
         </Button>
         <Button
           onClick={handleSave}
@@ -217,7 +219,7 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
           disabled={isSaving}
           startIcon={isSaving ? <CircularProgress size={20} /> : null}
         >
-          Crear Aula
+          {t('perfil.slot.crearAula')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -341,10 +341,10 @@ export class PreflightService {
     const command = [
       `$conn = Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1`,
       "if ($null -eq $conn) { Write-Output 'FREE'; exit 0 }",
-      "$pid = $conn.OwningProcess",
-      "$name = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName",
+      "$ownerPid = $conn.OwningProcess",
+      "$name = (Get-Process -Id $ownerPid -ErrorAction SilentlyContinue).ProcessName",
       "if ([string]::IsNullOrWhiteSpace($name)) { $name = 'desconocido' }",
-      "Write-Output ('BUSY|' + $pid + '|' + $name)",
+      "Write-Output ('BUSY|' + $ownerPid + '|' + $name)",
     ].join("; ");
 
     const result = await this.processRunner.run({

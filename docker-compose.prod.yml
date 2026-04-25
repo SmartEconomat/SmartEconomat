@@ -6,9 +6,10 @@ services:
       context: ./database
       dockerfile: Dockerfile
     image: smarteconomat-db:prod
-    restart: unless-stopped
+    restart: always
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
@@ -38,9 +39,10 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
+    restart: always
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     command:
       [
         "redis-server",
@@ -83,21 +85,21 @@ services:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
-    restart: unless-stopped
+    restart: always
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
       - NODE_ENV=production
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
-      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
-      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
       - DB_SYNC=${DB_SYNC:-false}
       - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
-      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-}
+      - RUN_BOOTSTRAP_SEEDER=true
+      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-SmartEconomatTemp2026!}
     networks:
       - backend-network
       - frontend-network
@@ -135,23 +137,27 @@ services:
       args:
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
     image: smarteconomat-frontend:prod
-    restart: unless-stopped
+    restart: always
     init: true
     ports:
-      - '80:80'
-      - '443:443'
-    env_file: .env.prod
+      - '${FRONTEND_HTTP_PORT:-80}:80'
+      - '${FRONTEND_HTTPS_PORT:-443}:443'
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
+      - TLS_PROVIDER=${TLS_PROVIDER:-selfsigned}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
-      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
-      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
     networks:
       - frontend-network
     volumes:
       - ${CERTS_DIR:-./certs}:/etc/nginx/certs:ro
       - ${CERTS_WEBROOT_DIR:-./certs-webroot}:/var/www/acme-challenge:ro
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', '--no-check-certificate', 'https://127.0.0.1/']
+      test:
+        [
+          'CMD-SHELL',
+          'if [ "$${TLS_PROVIDER}" = "none" ]; then wget --quiet --tries=1 --spider http://127.0.0.1/; else wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/; fi'
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -169,6 +175,22 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
+
+  seeder:
+    image: smarteconomat-backend:prod
+    profiles: ['db-seeding']
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    environment:
+      - NODE_ENV=production
+      - SEED_API_BASE_URL=http://backend:3000/api/v1
+    command: ["node", "scripts/seed-runner.js", "--force-production"]
+    networks:
+      - backend-network
+    restart: "no"
 
   tools:
     image: alpine:3.20

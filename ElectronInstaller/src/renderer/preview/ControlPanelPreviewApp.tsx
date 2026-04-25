@@ -159,14 +159,31 @@ function PreviewShell() {
           <ControlPanelPage
             busy={false}
             health={mockHealth}
+            supervisorSnapshot={{
+              overallState: "healthy",
+              checks: [],
+              lastAutomaticActionAt: null,
+              lastAutomaticAction: null,
+              uptimeSeconds: 3600,
+            }}
+            watchdogStatus={{
+              state: "active",
+              consecutiveFailures: 0,
+              currentRecoveryLevel: 1,
+              nextCheckInMs: 30000,
+              lastCheck: new Date().toISOString(),
+            }}
             onStart={async () => {}}
             onStop={async () => {}}
             onRestart={async () => {}}
             onRefresh={async () => {}}
+            onRestartDockerDesktop={async () => {}}
+            onRunSupervisorRecovery={async () => {}}
             onStartLogs={async () => {}}
             onStopLogs={async () => {}}
             onDiagnostics={async () => {}}
             onOpenDanger={() => setDangerOpen(true)}
+            onOpenUninstall={() => {}}
           >
             <Box
               sx={{
@@ -188,6 +205,9 @@ function PreviewShell() {
               <BackupRestorePanel
                 lastBackup={mockBackup}
                 busy={false}
+                backupDefaultDirectory="C:/SmartEconomatRuntime/backups"
+                onSaveBackupDefaultDirectory={() => {}}
+                onPickBackupDirectory={async () => null}
                 onBackup={async () => {}}
                 onRestore={async () => {}}
                 onPickRestoreArtifact={async () => null}

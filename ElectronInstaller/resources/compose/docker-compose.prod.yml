@@ -6,9 +6,11 @@ services:
       context: ./database
       dockerfile: Dockerfile
     image: smarteconomat-db:prod
-    restart: always
+    restart: unless-stopped
+    stop_grace_period: 30s
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
@@ -16,38 +18,41 @@ services:
     volumes:
       - database_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
     networks:
       - backend-network
     logging:
-      driver: 'json-file'
+      driver: "json-file"
       options:
-        max-size: '10m'
-        max-file: '3'
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
 
   redis:
     image: redis:7-alpine
-    restart: always
+    restart: unless-stopped
+    stop_grace_period: 10s
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     command:
       [
         "redis-server",
         "--appendonly",
         "yes",
         "--requirepass",
-        "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+        "${REDIS_PASSWORD:?REDIS_PASSWORD is required}",
       ]
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
@@ -58,24 +63,25 @@ services:
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep -q PONG'
+          "CMD-SHELL",
+          'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep -q PONG',
         ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     logging:
-      driver: 'json-file'
+      driver: "json-file"
       options:
-        max-size: '10m'
-        max-file: '3'
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
   backend:
@@ -83,17 +89,17 @@ services:
       context: ./backend/smart-economat-backend
       dockerfile: ../Dockerfile.prod
     image: smarteconomat-backend:prod
-    restart: always
+    restart: unless-stopped
+    stop_grace_period: 20s
     init: true
-    env_file: .env.prod
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
       - NODE_ENV=production
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
-      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
-      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
       - DB_SYNC=${DB_SYNC:-false}
       - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
@@ -109,23 +115,31 @@ services:
     volumes:
       - uploads_prod:/app/uploads
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3000/api/v1']
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3000/api/v1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
     logging:
-      driver: 'json-file'
+      driver: "json-file"
       options:
-        max-size: '50m'
-        max-file: '5'
+        max-size: "50m"
+        max-file: "5"
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
 
   frontend:
@@ -135,39 +149,44 @@ services:
       args:
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
     image: smarteconomat-frontend:prod
-    restart: always
+    restart: unless-stopped
+    stop_grace_period: 15s
     init: true
     ports:
-      - '80:80'
-      - '443:443'
-    env_file: .env.prod
+      - "${FRONTEND_HTTP_PORT:-80}:80"
+      - "${FRONTEND_HTTPS_PORT:-443}:443"
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
+      - TLS_PROVIDER=${TLS_PROVIDER:-selfsigned}
       - DOMAIN=${DOMAIN:-smarteconomat.app}
-      - FRONTEND_API_URL=${FRONTEND_API_URL:-https://smarteconomat.app}
-      - BACKEND_API_URL=${BACKEND_API_URL:-https://smarteconomat.app/api/v1}
     networks:
       - frontend-network
     volumes:
       - ${CERTS_DIR:-./certs}:/etc/nginx/certs:ro
       - ${CERTS_WEBROOT_DIR:-./certs-webroot}:/var/www/acme-challenge:ro
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', '--no-check-certificate', 'https://127.0.0.1/']
+      test:
+        [
+          "CMD-SHELL",
+          'if [ "$${TLS_PROVIDER}" = "none" ]; then wget --quiet --tries=1 --spider http://127.0.0.1/; else wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/; fi',
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 15s
     logging:
-      driver: 'json-file'
+      driver: "json-file"
       options:
-        max-size: '10m'
-        max-file: '3'
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
 
 volumes:

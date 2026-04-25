@@ -32,6 +32,23 @@ interface PedidosTableProps {
 
 const columns = buildPedidoColumns();
 
+/**
+ * @description Table/grid component for the pedidos list page.
+ * Switches between a DataTable (list view) and a responsive card grid (grid view).
+ * Shows an empty state prompt with a create button when no pedidos are found.
+ * @param props.data - Array of pedido rows to display
+ * @param props.isLoading - Whether a data fetch is in progress
+ * @param props.page - Current page index (1-based)
+ * @param props.pageSize - Number of rows per page
+ * @param props.totalPages - Total number of pages for pagination
+ * @param props.viewMode - 'list' or 'grid' display mode
+ * @param props.permissions - Permission flags controlling which actions are shown
+ * @param props.handlers - Action callbacks passed to column renderers and cards
+ * @param props.onPageChange - Callback for page navigation
+ * @param props.onPageSizeChange - Callback for page size changes
+ * @param props.onCreateClick - Callback for the empty-state create button
+ * @returns Table or grid view of pedidos
+ */
 const PedidosTable: React.FC<PedidosTableProps> = ({
   data,
   isLoading,

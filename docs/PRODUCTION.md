@@ -16,8 +16,8 @@ Ejemplo con IP pública `48.220.49.43`:
 
 ```env
 DOMAIN=48.220.49.43.nip.io
-BACKEND_API_URL=https://api.48.220.49.43.nip.io
-FRONTEND_API_URL=https://48.220.49.43.nip.io
+URL_BACKEND_DERIVADA=https://api.48.220.49.43.nip.io
+URL_FRONTEND_DERIVADA=https://48.220.49.43.nip.io
 ```
 
 Además deben definirse las variables habituales de base de datos, JWT y TLS (`TLS_PROVIDER`, `TLS_SELF_SIGNED_DAYS`, `LETSENCRYPT_EMAIL` y `LETSENCRYPT_DIRECTORY_URL` cuando aplique).

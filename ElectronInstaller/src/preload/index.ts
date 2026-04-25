@@ -5,6 +5,8 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
+  InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerProgressEvent,
@@ -16,7 +18,9 @@ import type {
   RestorePayload,
   RuntimePaths,
   ServiceHealth,
+  SupervisorSnapshot,
   TailLogsPayload,
+  UninstallPayload,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
 
@@ -212,9 +216,18 @@ contextBridge.exposeInMainWorld("smartEconomat", {
       IPCChannels.installer.pickFile,
       payload,
     ),
+  testSmtp: (config: Partial<InstallerConfigPayload>) =>
+    invokeWithTracing<Partial<InstallerConfigPayload>, OperationResult<boolean>>(
+      IPCChannels.installer.testSmtp,
+      config,
+    ),
   getInstallerState: () =>
     invokeWithTracing<undefined, OperationResult<InstallerStateSnapshot>>(
       IPCChannels.installer.getState,
+    ),
+  getInstallerBootState: () =>
+    invokeWithTracing<undefined, OperationResult<InstallerBootState>>(
+      IPCChannels.installer.getBootState,
     ),
   onInstallerProgress: (callback: (event: InstallerProgressEvent) => void) =>
     onChannelEvent(IPCChannels.installer.progressEvent, callback),
@@ -265,6 +278,11 @@ contextBridge.exposeInMainWorld("smartEconomat", {
       IPCChannels.runtime.pruneSafe,
       payload,
     ),
+  uninstall: (payload: UninstallPayload) =>
+    invokeWithTracing<UninstallPayload, OperationResult>(
+      IPCChannels.runtime.uninstall,
+      payload,
+    ),
   backupNow: (payload: BackupPayload) =>
     invokeWithTracing<BackupPayload, OperationResult<BackupMetadata>>(
       IPCChannels.runtime.backupNow,
@@ -280,6 +298,25 @@ contextBridge.exposeInMainWorld("smartEconomat", {
       IPCChannels.runtime.diagnostics,
       payload,
     ),
+
+  getWatchdogStatus: () =>
+    invokeWithTracing<undefined, OperationResult<HealthUpdateEvent>>(
+      IPCChannels.runtime.getWatchdogStatus,
+    ),
+  getSupervisorSnapshot: () =>
+    invokeWithTracing<undefined, OperationResult<SupervisorSnapshot>>(
+      IPCChannels.runtime.getSupervisorSnapshot,
+    ),
+  restartDockerDesktop: () =>
+    invokeWithTracing<undefined, OperationResult>(
+      IPCChannels.runtime.restartDockerDesktop,
+    ),
+  runSupervisorRecovery: () =>
+    invokeWithTracing<undefined, OperationResult>(
+      IPCChannels.runtime.runSupervisorRecovery,
+    ),
+  onHealthUpdate: (callback: (event: HealthUpdateEvent) => void) =>
+    onChannelEvent(IPCChannels.runtime.healthUpdate, callback),
 
   onDebugLog: (callback: (event: DebugLogEntry) => void) =>
     onChannelEvent(IPCChannels.debug.streamEvent, callback),

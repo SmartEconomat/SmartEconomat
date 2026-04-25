@@ -24,6 +24,14 @@ interface UsePedidosDataParams {
   misPedidosStatus: MisPedidosStatusFilter;
 }
 
+/**
+ * @description Custom hook for fetching and managing the pedidos list data.
+ * Handles pagination, search, tab selection, and per-user order filtering.
+ * @param params - Pagination, search, tab, user identity, and status filter
+ * @returns Object with data arrays, loading state, error, totals, reload callback, and state setters
+ * @example
+ * const { data, batches, isLoading, error, reload } = usePedidosData({ page, pageSize, searchTerm, tabIndex, currentUserId, misPedidosStatus });
+ */
 export function usePedidosData({
   page,
   pageSize,

@@ -15,24 +15,34 @@ import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRound
 import TerminalRoundedIcon from "@mui/icons-material/TerminalRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import type { ServiceHealth } from "@shared/contracts";
+import type {
+  ServiceHealth,
+  SupervisorSnapshot,
+  WatchdogStatus,
+} from "@shared/contracts";
 import { ServiceStatusCard } from "@renderer/components/ServiceStatusCard";
 
 interface ControlPanelPageProps {
   busy: boolean;
   health: ServiceHealth[];
+  watchdogStatus: WatchdogStatus | null;
+  supervisorSnapshot: SupervisorSnapshot | null;
   onStart: () => Promise<void>;
   onStop: () => Promise<void>;
   onRestart: () => Promise<void>;
   onRefresh: () => Promise<void>;
+  onRestartDockerDesktop: () => Promise<void>;
+  onRunSupervisorRecovery: () => Promise<void>;
   onStartLogs: (
     service: "frontend" | "backend" | "db" | "redis",
   ) => Promise<void>;
   onStopLogs: () => Promise<void>;
   onDiagnostics: () => Promise<void>;
   onOpenDanger: () => void;
+  onOpenUninstall: () => void;
   children: ReactNode;
 }
 
@@ -129,19 +139,33 @@ const actionPalettes: Record<ActionPaletteName, ActionPalette> = {
 };
 
 function buildMonitoredServices(health: ServiceHealth[]): ServiceHealth[] {
-  return ["backend", "frontend"].map((serviceName) => {
+  const orderedServices: ServiceHealth["service"][] = [
+    "backend",
+    "frontend",
+    "db",
+    "redis",
+  ];
+
+  return orderedServices.map((serviceName) => {
     const matched = health.find((service) => service.service === serviceName);
     if (matched) {
       return matched;
     }
 
+    const placeholderDetails: Record<ServiceHealth["service"], string> = {
+      backend:
+        "Ejecuta Verificar Salud para consultar el estado de la API y la capa de negocio.",
+      frontend:
+        "Ejecuta Verificar Salud para consultar el estado de la interfaz y el proxy HTTPS local.",
+      db: "Ejecuta Verificar Salud para consultar el estado de PostgreSQL y la persistencia.",
+      redis:
+        "Ejecuta Verificar Salud para consultar el estado de Redis y las colas auxiliares.",
+    };
+
     return {
       service: serviceName,
       status: "unknown",
-      detail:
-        serviceName === "backend"
-          ? "Ejecuta Verificar Salud para consultar el estado de la API y la capa de negocio."
-          : "Ejecuta Verificar Salud para consultar el estado de la interfaz y el proxy HTTPS local.",
+      detail: placeholderDetails[serviceName],
     } as ServiceHealth;
   });
 }
@@ -167,7 +191,7 @@ function resolveOverallState(services: ServiceHealth[]): {
     return {
       label: "Healthy",
       color: "success",
-      text: "Backend y Frontend están operativos y preparados para atender tráfico.",
+      text: "Backend, Frontend, Base de datos y Redis están operativos y preparados para atender tráfico.",
     };
   }
 
@@ -264,14 +288,19 @@ function ActionCard({
 export function ControlPanelPage({
   busy,
   health,
+  watchdogStatus,
+  supervisorSnapshot,
   onStart,
   onStop,
   onRestart,
   onRefresh,
+  onRestartDockerDesktop,
+  onRunSupervisorRecovery,
   onStartLogs,
   onStopLogs,
   onDiagnostics,
   onOpenDanger,
+  onOpenUninstall,
   children,
 }: ControlPanelPageProps) {
   const monitoredServices = buildMonitoredServices(health);
@@ -327,6 +356,21 @@ export function ControlPanelPage({
 
   const advancedActions: ActionDefinition[] = [
     {
+      title: "Reparar ahora",
+      description:
+        "Ejecuta de inmediato la recuperación automática del supervisor.",
+      palette: actionPalettes.warning,
+      icon: <RestartAltRoundedIcon fontSize="small" />,
+      onClick: () => void onRunSupervisorRecovery(),
+    },
+    {
+      title: "Reiniciar Docker",
+      description: "Reinicia Docker Desktop y vuelve a verificar el stack.",
+      palette: actionPalettes.info,
+      icon: <RestartAltRoundedIcon fontSize="small" />,
+      onClick: () => void onRestartDockerDesktop(),
+    },
+    {
       title: "Detener Logs",
       description: "Cierra cualquier stream activo de logs en tiempo real.",
       palette: actionPalettes.neutral,
@@ -349,6 +393,14 @@ export function ControlPanelPage({
       icon: <DeleteSweepRoundedIcon fontSize="small" />,
       onClick: onOpenDanger,
     },
+    {
+      title: "Desinstalar SmartEconomat",
+      description:
+        "Elimina completamente la instalación: contenedores, volúmenes, certificados, registro y atajos.",
+      palette: actionPalettes.destructive,
+      icon: <DeleteForeverRoundedIcon fontSize="small" />,
+      onClick: onOpenUninstall,
+    },
   ];
 
   return (
@@ -369,9 +421,9 @@ export function ControlPanelPage({
           color="text.secondary"
           sx={{ maxWidth: 860, lineHeight: 1.65 }}
         >
-          Gestiona el ciclo de vida del stack local, supervisa Backend y
-          Frontend y lanza operaciones de soporte con acciones claras, seguras y
-          auditables.
+          Gestiona el ciclo de vida del stack local, supervisa todos los
+          contenedores levantados y lanza operaciones de soporte con acciones
+          claras, seguras y auditables.
         </Typography>
       </Stack>
 
@@ -393,11 +445,12 @@ export function ControlPanelPage({
             Monitorización principal
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Servicios monitorizados: 2 (Backend y Frontend)
+            Servicios monitorizados: {monitoredServices.length} (Stack completo)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            La vista principal prioriza los servicios visibles para el usuario
-            final y resume su estado operativo actual.
+            La vista principal resume el estado operativo de todos los
+            contenedores del stack: backend, frontend, base de datos, Redis y
+            cualquier servicio que el healthcheck exponga.
           </Typography>
         </Paper>
 
@@ -435,6 +488,137 @@ export function ControlPanelPage({
           </Stack>
         </Paper>
       </Box>
+
+      {watchdogStatus && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            borderRadius: 3,
+            borderColor:
+              watchdogStatus.state === "active"
+                ? "rgba(24, 135, 84, 0.25)"
+                : watchdogStatus.state === "recovering"
+                  ? "rgba(239, 143, 26, 0.25)"
+                  : watchdogStatus.state === "backoff"
+                    ? "rgba(216, 58, 82, 0.25)"
+                    : "rgba(148, 163, 184, 0.24)",
+            bgcolor:
+              watchdogStatus.state === "active"
+                ? "rgba(24, 135, 84, 0.04)"
+                : watchdogStatus.state === "recovering"
+                  ? "rgba(239, 143, 26, 0.04)"
+                  : watchdogStatus.state === "backoff"
+                    ? "rgba(216, 58, 82, 0.04)"
+                    : "transparent",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <HealthAndSafetyRoundedIcon
+                fontSize="small"
+                sx={{
+                  color:
+                    watchdogStatus.state === "active"
+                      ? "#188754"
+                      : watchdogStatus.state === "recovering"
+                        ? "#ef8f1a"
+                        : watchdogStatus.state === "backoff"
+                          ? "#d83a52"
+                          : "#475569",
+                }}
+              />
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                  Boot Guardian
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {watchdogStatus.state === "active" &&
+                    "Vigilancia activa — todos los servicios bajo monitorización."}
+                  {watchdogStatus.state === "recovering" &&
+                    `Recuperación en curso — nivel ${watchdogStatus.currentRecoveryLevel}/3, ${watchdogStatus.consecutiveFailures} fallo(s).`}
+                  {watchdogStatus.state === "backoff" &&
+                    `Backoff activo — esperando ${Math.round(watchdogStatus.nextCheckInMs / 1000)}s antes del próximo intento.`}
+                  {watchdogStatus.state === "idle" &&
+                    "Guardian inactivo — no se está monitorizando el stack."}
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                label={
+                  watchdogStatus.state === "active"
+                    ? "Activo"
+                    : watchdogStatus.state === "recovering"
+                      ? "Recuperando"
+                      : watchdogStatus.state === "backoff"
+                        ? "Backoff"
+                        : "Inactivo"
+                }
+                size="small"
+                color={
+                  watchdogStatus.state === "active"
+                    ? "success"
+                    : watchdogStatus.state === "recovering"
+                      ? "warning"
+                      : watchdogStatus.state === "backoff"
+                        ? "error"
+                        : "default"
+                }
+                sx={{ fontWeight: 800 }}
+              />
+              {watchdogStatus.currentRecoveryLevel > 1 && (
+                <Chip
+                  label={`Nivel ${watchdogStatus.currentRecoveryLevel}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontWeight: 700 }}
+                />
+              )}
+            </Stack>
+          </Stack>
+        </Paper>
+      )}
+
+      {supervisorSnapshot && (
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 3, borderColor: "rgba(148, 163, 184, 0.24)" }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+              Supervisor autónomo
+            </Typography>
+            <Chip
+              size="small"
+              color={
+                supervisorSnapshot.overallState === "healthy"
+                  ? "success"
+                  : supervisorSnapshot.overallState === "recovering"
+                    ? "warning"
+                    : "error"
+              }
+              label={
+                supervisorSnapshot.overallState === "healthy"
+                  ? "Todo correcto"
+                  : supervisorSnapshot.overallState === "recovering"
+                    ? "Recuperando"
+                    : "Error crítico"
+              }
+            />
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            Uptime: {Math.floor(supervisorSnapshot.uptimeSeconds / 60)} min ·
+            Última reparación automática:{" "}
+            {supervisorSnapshot.lastAutomaticAction ?? "Sin acciones aún"}
+          </Typography>
+        </Paper>
+      )}
 
       <Paper
         variant="outlined"
@@ -497,7 +681,7 @@ export function ControlPanelPage({
           sx={{
             display: "grid",
             gap: 1.25,
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" },
           }}
         >
           {advancedActions.map((action) => (

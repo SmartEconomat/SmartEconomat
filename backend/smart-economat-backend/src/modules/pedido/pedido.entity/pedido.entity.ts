@@ -48,18 +48,23 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
+  /** Auto-incremented global sequential number for display/reference (e.g. PED-00001). Stored as bigint. */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
+  /** Foreign key referencing the User who created the order. Nullable (SET NULL on delete). */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
+  /** Foreign key referencing the Proveedor of this order. Nullable (RESTRICT on delete). */
   @Column({ name: 'proveedor_id', nullable: true })
   proveedorId?: string;
 
+  /** Foreign key referencing the PurchaseBatch this order belongs to. Nullable (SET NULL on delete). */
   @Column({ name: 'batch_id', nullable: true })
   batchId?: string;
 
+  /** Foreign key referencing the user-initiated PedidoUsuario that originated this order. Nullable. */
   @Column({ name: 'pedido_usuario_id', nullable: true })
   pedidoUsuarioId?: string;
 
@@ -96,6 +101,10 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'batch_id' })
   batch?: Relation<PurchaseBatch>;
 
+  /**
+   * User-initiated order (PedidoUsuario) that originated this purchase order.
+   * ON DELETE SET NULL preserves the purchase order history.
+   */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -188,7 +197,9 @@ export class Pedido extends BaseEntity {
   /* --- Métodos de Dominio --- */
 
   /**
-   * Calcular coste total desde productos
+   * Calculates the total cost of the order by summing (cantidad * precioUnitario) for each line.
+   *
+   * @returns {number} The total cost, or 0 if there are no lines.
    */
   calcularTotal(): number {
     if (!this.pedidoProductos || this.pedidoProductos.length === 0) {
@@ -200,14 +211,17 @@ export class Pedido extends BaseEntity {
   }
 
   /**
-   * Marcar como recepcionado
+   * Transitions the order state to RECEPCIONADO (fully received).
+   * Should be called once all reception lines have been closed.
    */
   marcarComoRecepcionado(): void {
     this.estado = EstadoPedido.RECEPCIONADO;
   }
 
   /**
-   * Cancelar pedido con motivo
+   * Cancels the order and records the cancellation reason.
+   *
+   * @param {string} motivo - The reason for cancellation (required for audit trail).
    */
   cancelar(motivo: string): void {
     this.estado = EstadoPedido.CANCELADO;

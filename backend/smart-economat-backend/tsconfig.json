@@ -14,6 +14,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/backend.tsbuildinfo",
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,

@@ -273,6 +273,15 @@ export class InstallerIPC {
     payload: InstallerConfigPayload,
   ): Promise<OperationResult<InstallerStateSnapshot>> {
     try {
+      const snapshot = this.stateMachine.getSnapshot();
+      if (snapshot.state === "DONE") {
+        await this.transition(
+          payload.runtimePath,
+          "IDLE",
+          "Reinicio de flujo para nueva instalación",
+        );
+      }
+
       this.emitRuntimeLog("installer", "Iniciando despliegue Docker...");
       this.emitRuntimeLog(
         "installer",

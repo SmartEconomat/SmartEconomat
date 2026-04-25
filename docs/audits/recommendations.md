@@ -22,22 +22,22 @@ Cada recomendación se clasifica según:
 **ID Finding:** C-001 · **Esfuerzo:** Bajo · **Impacto:** Seguridad
 
 **Problema:**  
-`origin: process.env.FRONTEND_API_URL || '*'` en `src/main.ts:48` permite que el servidor arranque con `origin: '*'` si la variable de entorno no está definida. La combinación `credentials: true` + `origin: '*'` es rechazada por los navegadores modernos y supone un fallo silencioso de seguridad.
+`origin: process.env.URL_FRONTEND_DERIVADA || '*'` en `src/main.ts:48` permite que el servidor arranque con `origin: '*'` si la variable de entorno no está definida. La combinación `credentials: true` + `origin: '*'` es rechazada por los navegadores modernos y supone un fallo silencioso de seguridad.
 
 **Pasos concretos:**
-1. En `src/main.ts`, antes de `enableCors`, validar que `FRONTEND_API_URL` está definida cuando `NODE_ENV === 'production'`:
+1. En `src/main.ts`, antes de `enableCors`, validar que `URL_FRONTEND_DERIVADA` está definida cuando `NODE_ENV === 'production'`:
    ```ts
    // Validación al arranque (no silenciosa)
-   if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_API_URL) {
-     throw new Error('FRONTEND_API_URL is required in production');
+   if (process.env.NODE_ENV === 'production' && !process.env.URL_FRONTEND_DERIVADA) {
+     throw new Error('URL_FRONTEND_DERIVADA is required in production');
    }
    app.enableCors({
-     origin: process.env.FRONTEND_API_URL || 'http://localhost:5173',
+     origin: process.env.URL_FRONTEND_DERIVADA || 'http://localhost:5173',
      credentials: true,
    });
    ```
-2. Verificar que `.env.prod` y los pipelines de CI siempre tienen `FRONTEND_API_URL` definida.
-3. Añadir `FRONTEND_API_URL` como variable requerida al checklist de despliegue.
+2. Verificar que `.env.prod` y los pipelines de CI siempre tienen `URL_FRONTEND_DERIVADA` definida.
+3. Añadir `URL_FRONTEND_DERIVADA` como variable requerida al checklist de despliegue.
 
 ---
 

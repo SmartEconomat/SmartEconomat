@@ -1,17 +1,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog } from "electron";
 import { z } from "zod";
 
 import type {
   BackupPayload,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
   OperationResult,
   PrunePayload,
   RestorePayload,
   RuntimePaths,
+  SupervisorSnapshot,
   TailLogsPayload,
+  UninstallPayload,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
 import {
@@ -21,10 +24,16 @@ import {
 
 import { registerIpcHandleWithDebug } from "@main/ipc/ipc-handler-with-debug";
 import type { DebugLogService } from "@main/services/debug-log.service";
+import type { BootGuardianService } from "@main/services/boot-guardian.service";
 import { assertDangerConfirmation } from "@main/security/command-allowlist";
 import { BackupRestoreService } from "@main/services/backup-restore.service";
+import { CertificateService } from "@main/services/certificate.service";
 import { DiagnosticsService } from "@main/services/diagnostics.service";
+import { DockerAutostartService } from "@main/services/docker-autostart.service";
 import { DockerOrchestratorService } from "@main/services/docker-orchestrator.service";
+import { EnvRendererService } from "@main/services/env-renderer.service";
+import { PathResolverService } from "@main/services/path-resolver.service";
+import { ProcessRunnerService } from "@main/services/process-runner.service";
 
 const runtimePathSchema = z.object({ runtimePath: z.string().min(1) });
 const tailLogsSchema = z.object({
@@ -45,10 +54,15 @@ const pruneSchema = z.object({
 const backupSchema = z.object({
   runtimePath: z.string().min(1),
   label: z.string().min(1).max(50),
+  destinationDir: z.string().min(1),
 });
 const restoreSchema = z.object({
   runtimePath: z.string().min(1),
   artifactPath: z.string().min(1),
+  confirmationPhrase: z.string().min(1),
+});
+const uninstallSchema = z.object({
+  runtimePath: z.string().min(1),
   confirmationPhrase: z.string().min(1),
 });
 const exportVisibleLogsSchema = z.object({
@@ -71,9 +85,20 @@ export class RuntimeIPC {
     private window: BrowserWindow,
     private readonly debugLogService: DebugLogService,
     private readonly dockerService = new DockerOrchestratorService(),
+    private readonly envRendererService = new EnvRendererService(),
     private readonly backupService = new BackupRestoreService(),
     private readonly diagnosticsService = new DiagnosticsService(),
+    private readonly certificateService = new CertificateService(),
+    private readonly dockerAutostartService = new DockerAutostartService(),
+    private readonly processRunner = new ProcessRunnerService(),
+    private readonly pathResolver = new PathResolverService(),
   ) {}
+
+  private bootGuardian: BootGuardianService | null = null;
+
+  setBootGuardian(guardian: BootGuardianService | null): void {
+    this.bootGuardian = guardian;
+  }
 
   setWindow(window: BrowserWindow): void {
     this.window = window;
@@ -88,7 +113,9 @@ export class RuntimeIPC {
         if (!parsed.success) {
           return invalidPayload(parsed.error.message);
         }
-        return this.dockerService.startStack(parsed.data.runtimePath);
+        return this.runWithEnvAutoRecovery(parsed.data.runtimePath, () =>
+          this.dockerService.startStack(parsed.data.runtimePath),
+        );
       },
     );
 
@@ -112,7 +139,9 @@ export class RuntimeIPC {
         if (!parsed.success) {
           return invalidPayload(parsed.error.message);
         }
-        return this.dockerService.restartStack(parsed.data.runtimePath);
+        return this.runWithEnvAutoRecovery(parsed.data.runtimePath, () =>
+          this.dockerService.restartStack(parsed.data.runtimePath),
+        );
       },
     );
 
@@ -233,6 +262,140 @@ export class RuntimeIPC {
         return this.diagnosticsService.generate(parsed.data);
       },
     );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.reinstallCertificate,
+      async (_event, payload: RuntimePaths) => {
+        const parsed = runtimePathSchema.safeParse(payload);
+        if (!parsed.success) {
+          return invalidPayload(parsed.error.message);
+        }
+        return this.certificateService.reinstallCertificateToTrustStore(
+          parsed.data.runtimePath,
+        );
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.getDockerAutostartStatus,
+      async () => {
+        return this.dockerAutostartService.getAutostartStatus();
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.setDockerAutostart,
+      async (_event, payload: { enable: boolean }) => {
+        if (payload.enable) {
+          return this.dockerAutostartService.enableAutostart();
+        }
+        return this.dockerAutostartService.disableAutostart();
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.uninstall,
+      async (_event, payload: UninstallPayload) => {
+        const parsed = uninstallSchema.safeParse(payload);
+        if (!parsed.success) {
+          return invalidPayload(parsed.error.message);
+        }
+
+        try {
+          assertDangerConfirmation(parsed.data.confirmationPhrase);
+        } catch (error) {
+          return {
+            ok: false,
+            message:
+              error instanceof Error ? error.message : "Confirmación inválida",
+            errorCode: "INVALID_CONFIRMATION",
+          };
+        }
+
+        return this.runFullUninstall(parsed.data.runtimePath);
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.getWatchdogStatus,
+      async (): Promise<OperationResult<HealthUpdateEvent>> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+
+        return {
+          ok: true,
+          message: "Estado del watchdog obtenido.",
+          data: this.bootGuardian.getStatus(),
+        };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.getSupervisorSnapshot,
+      async (): Promise<OperationResult<SupervisorSnapshot>> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        return {
+          ok: true,
+          message: "Snapshot del supervisor obtenido.",
+          data: this.bootGuardian.getSupervisorSnapshot(),
+        };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.restartDockerDesktop,
+      async (): Promise<OperationResult> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        const restarted = await this.bootGuardian.restartDockerDesktopNow();
+        return restarted
+          ? { ok: true, message: "Docker Desktop reiniciado correctamente." }
+          : {
+              ok: false,
+              message: "No fue posible reiniciar Docker Desktop.",
+              errorCode: "DOCKER_RESTART_FAILED",
+            };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.runSupervisorRecovery,
+      async (): Promise<OperationResult> => {
+        if (!this.bootGuardian) {
+          return {
+            ok: false,
+            message: "Boot Guardian no está activo.",
+            errorCode: "GUARDIAN_NOT_ACTIVE",
+          };
+        }
+        await this.bootGuardian.runRecoveryNow();
+        return { ok: true, message: "Recuperación manual ejecutada." };
+      },
+    );
   }
 
   private async exportVisibleLogs(
@@ -279,6 +442,131 @@ export class RuntimeIPC {
       message: "Logs exportados correctamente.",
       data: selection.filePath,
     };
+  }
+
+  private async runWithEnvAutoRecovery(
+    runtimePath: string,
+    operation: () => Promise<OperationResult>,
+  ): Promise<OperationResult> {
+    const initialResult = await operation();
+    if (initialResult.ok || initialResult.errorCode !== "ENV_FILE_MISSING") {
+      return initialResult;
+    }
+
+    this.emitRuntimeLog(
+      "runtime",
+      "No se encontró .env.prod. Intentando regeneración automática desde snapshot seguro.",
+    );
+
+    const regeneration =
+      await this.envRendererService.regenerateFromSnapshot(runtimePath);
+
+    if (!regeneration.ok) {
+      this.emitRuntimeLog(
+        "runtime",
+        `Regeneración automática fallida: ${regeneration.message}`,
+      );
+      return {
+        ok: false,
+        message: `${initialResult.message} ${regeneration.message}`,
+        errorCode: regeneration.errorCode ?? initialResult.errorCode,
+      };
+    }
+
+    this.emitRuntimeLog(
+      "runtime",
+      "Regeneración de .env.prod completada. Reintentando operación Docker.",
+    );
+
+    return operation();
+  }
+
+  private async runFullUninstall(
+    runtimePath: string,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: false,
+        message:
+          "La desinstalación automática solo está disponible en Windows.",
+        errorCode: "UNSUPPORTED_PLATFORM",
+      };
+    }
+
+    const scriptPath = path.join(
+      this.pathResolver.getInstallerScriptsRoot(),
+      "ops",
+      "uninstall-clean.ps1",
+    );
+
+    try {
+      await fs.access(scriptPath);
+    } catch {
+      return {
+        ok: false,
+        message: `No se encontró el script de desinstalación: ${scriptPath}`,
+        errorCode: "UNINSTALL_SCRIPT_MISSING",
+      };
+    }
+
+    this.emitRuntimeLog(
+      "uninstall",
+      "Iniciando desinstalación completa de SmartEconomat...",
+    );
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        scriptPath,
+        "-RuntimePath",
+        runtimePath,
+        "-InstallDir",
+        this.pathResolver.getInstallerRoot(),
+        "-PreserveRuntime",
+      ],
+      timeoutMs: 300_000,
+      onStdoutLine: (line) => this.emitRuntimeLog("uninstall", line),
+      onStderrLine: (line) => this.emitRuntimeLog("uninstall", line),
+    });
+
+    if (!result.ok) {
+      const detail = result.stderr || result.message;
+      this.emitRuntimeLog("uninstall", `Desinstalación fallida: ${detail}`);
+      return {
+        ok: false,
+        message: `Error durante la desinstalación: ${detail}`,
+        errorCode: "UNINSTALL_FAILED",
+      };
+    }
+
+    this.emitRuntimeLog(
+      "uninstall",
+      "Desinstalación completada. La aplicación se cerrará automáticamente.",
+    );
+
+    setTimeout(() => {
+      app.quit();
+    }, 2000);
+
+    return {
+      ok: true,
+      message: "Desinstalación completada correctamente.",
+    };
+  }
+
+  private emitRuntimeLog(service: string, line: string): void {
+    const event = {
+      service,
+      line,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.debugLogService.logIpcPush(IPCChannels.runtime.streamLogEvent, event);
+    this.window.webContents.send(IPCChannels.runtime.streamLogEvent, event);
   }
 }
 

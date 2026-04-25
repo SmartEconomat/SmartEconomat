@@ -25,6 +25,19 @@ La pantalla no trabaja solo con una tabla; actúa como orquestador de filtros, b
 - **`PedidoDetailDrawer`**: detalle del pedido interno con PDF/impresión.
 - **`PurchaseBatchDetailModal`**: detalle reutilizable de `PedidoUsuario` o `PurchaseBatch`.
 - **`PedidoDraftBanner`** y modales de recuperación: UX de borradores persistidos.
+- **[InteractiveTour](../componentes/InteractiveTour.md)**: Proporciona la guía secuencial por el ecosistema de pedidos.
+
+## Gestión de Pedidos Asistida ✅
+
+El módulo de Pedidos cuenta con un sistema de ayuda para navegar por su arquitectura de pestañas:
+
+### Tour de Gestión de Órdenes (6 pasos)
+1. **Centro de Pedidos**: Gestión de pestañas (Mis Pedidos, Global, Compras).
+2. **Nuevo Pedido**: Iniciando una solicitud de artículos.
+3. **Borradores**: Recuperación de trabajo pendiente.
+4. **Seguimiento**: Visualización del estado del flujo logístico.
+5. **Control PDF**: Generación de reportes de consolidación.
+6. **Reportes Excel**: Exportación técnica de datos.
 
 ## Hooks y utilidades clave
 

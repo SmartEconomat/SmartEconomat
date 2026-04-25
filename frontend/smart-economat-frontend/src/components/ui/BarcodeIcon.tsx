@@ -2,8 +2,15 @@ import React from 'react';
 import { SvgIcon, SvgIconProps } from '@mui/material';
 
 /**
- * Icono de Código de Barras personalizado para Material UI.
- * Representa una serie de líneas verticales de diferentes grosores.
+ * Inline SVG barcode icon wrapped in MUI's {@link SvgIcon}.
+ *
+ * Accepts all standard {@link SvgIconProps} (color, fontSize, sx, etc.) so it
+ * integrates seamlessly as a button `startIcon` or standalone decorative element.
+ *
+ * @param props - Standard MUI {@link SvgIconProps}.
+ * @returns An SVG barcode glyph inside an MUI SvgIcon container.
+ * @example
+ * <BarcodeIcon color="primary" fontSize="large" />
  */
 const BarcodeIcon: React.FC<SvgIconProps> = (props) => (
   <SvgIcon {...props}>

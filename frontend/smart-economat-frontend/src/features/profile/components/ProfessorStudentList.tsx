@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -50,6 +51,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
   isSaving,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = React.useState<string | false>(false);
 
   // Agrupar alumnos por aula y clase
@@ -176,7 +178,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                         permitidos
                       </Typography>
                     </Box>
-                    <Tooltip title="Click para copiar código de clase">
+                    <Tooltip title={t('perfil.copiarCodigo')}>
                       <Chip
                         label={group.codigoSlot || 'SIN CÓDIGO'}
                         size="small"
@@ -308,7 +310,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                               )}
 
                               <Box display="flex" gap={0.5}>
-                                <Tooltip title="Gestionar Permisos">
+                                <Tooltip title={t('perfil.gestionarPermisos')}>
                                   <IconButton
                                     size="small"
                                     onClick={() => onManagePermissions(student)}
@@ -321,7 +323,9 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                   </IconButton>
                                 </Tooltip>
 
-                                <Tooltip title="Restablecer Contraseña">
+                                <Tooltip
+                                  title={t('perfil.restablecerContrasena')}
+                                >
                                   <IconButton
                                     size="small"
                                     onClick={() => onResetPassword(student.id)}
@@ -334,7 +338,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                                   </IconButton>
                                 </Tooltip>
 
-                                <Tooltip title="Eliminar Alumno">
+                                <Tooltip title={t('perfil.eliminarAlumno')}>
                                   <IconButton
                                     size="small"
                                     onClick={() => onDeleteStudent(student.id)}

@@ -9,6 +9,7 @@ import MuiDialog, {
   type DialogProps as MuiDialogProps,
 } from '@mui/material/Dialog';
 
+/** CSS selector string targeting all focusable elements within a container. */
 const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
   '[href]',
@@ -19,8 +20,16 @@ const FOCUSABLE_SELECTOR = [
   '[contenteditable="true"]',
 ].join(',');
 
+/** Tracks how many accessible dialogs are currently open. */
 let openDialogCount = 0;
 
+/**
+ * Sets or removes the `inert` attribute/property on a DOM element.
+ * Supports both the native boolean property and the string attribute fallback.
+ *
+ * @param element - The HTML element to modify.
+ * @param shouldBeInert - Whether the element should be inert.
+ */
 function setElementInert(element: HTMLElement, shouldBeInert: boolean): void {
   const target = element as HTMLElement & { inert?: boolean };
 
@@ -36,11 +45,21 @@ function setElementInert(element: HTMLElement, shouldBeInert: boolean): void {
   }
 }
 
+/**
+ * Returns whether a DOM element is currently inert.
+ *
+ * @param element - The element to check.
+ * @returns `true` if the element is inert.
+ */
 function isElementInert(element: HTMLElement): boolean {
   const target = element as HTMLElement & { inert?: boolean };
   return Boolean(target.inert) || element.hasAttribute('inert');
 }
 
+/**
+ * Synchronises the `inert` state of the application root element
+ * based on whether any accessible dialogs are currently open.
+ */
 function syncApplicationInertState(): void {
   const appRoot = document.getElementById('root');
 
@@ -58,6 +77,10 @@ function syncApplicationInertState(): void {
   }
 }
 
+/**
+ * Synchronises the `inert` state of all open accessible dialog papers
+ * so that only the topmost dialog is interactive.
+ */
 function syncDialogStackInertState(): void {
   const dialogPapers = Array.from(
     document.querySelectorAll<HTMLElement>(
@@ -77,6 +100,13 @@ function syncDialogStackInertState(): void {
   });
 }
 
+/**
+ * Restores keyboard focus to a previously focused element, guarding
+ * against cases where the element has been removed from the DOM or
+ * is blocked by an inert application root.
+ *
+ * @param element - The element to focus, or `null` to skip.
+ */
 function restoreFocus(element: HTMLElement | null): void {
   if (!element || !element.isConnected) {
     return;
@@ -95,6 +125,14 @@ function restoreFocus(element: HTMLElement | null): void {
   element.focus({ preventScroll: true });
 }
 
+/**
+ * Determines which element inside a dialog paper should receive initial focus.
+ * Prefers `[data-dialog-initial-focus]` or `[autofocus]` attributes, then
+ * the first focusable element, and finally the paper itself.
+ *
+ * @param dialogPaper - The dialog's paper element.
+ * @returns The element that should receive initial focus.
+ */
 function getInitialFocusTarget(dialogPaper: HTMLElement): HTMLElement {
   const preferred = dialogPaper.querySelector<HTMLElement>(
     '[data-dialog-initial-focus="true"], [autofocus]'
@@ -114,6 +152,14 @@ function getInitialFocusTarget(dialogPaper: HTMLElement): HTMLElement {
   return dialogPaper;
 }
 
+/**
+ * Accessible replacement for `MuiDialog` that correctly manages focus trapping,
+ * focus restoration, and `inert` attributes for stacked dialogs.
+ *
+ * Drop-in replacement: accepts all standard `MuiDialogProps`.
+ *
+ * @param props - MUI Dialog props forwarded to the underlying Dialog.
+ */
 export default function AccessibleDialog({
   open,
   PaperProps,

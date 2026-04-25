@@ -4,7 +4,7 @@
 ARG POSTGRES_BASE_IMAGE=public.ecr.aws/docker/library/postgres:16-bookworm
 FROM ${POSTGRES_BASE_IMAGE} AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::Check-Date=false -o Acquire::Check-Valid-Until=false update && apt-get install -y --no-install-recommends \
     build-essential \
     postgresql-server-dev-16 \
     && rm -rf /var/lib/apt/lists/*

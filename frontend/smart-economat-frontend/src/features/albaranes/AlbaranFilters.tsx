@@ -1,27 +1,56 @@
 import React from 'react';
 import { Box, Autocomplete, TextField } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import { useTranslation } from 'react-i18next';
 
+/**
+ * Represents the current state of the albaran filter controls.
+ */
 export interface AlbaranFiltersState {
+  /** Whether the albaran is concordant (true), non-concordant (false), or unfiltered (null). */
   concordancia: boolean | null;
+  /** ISO date string for the start of the date range, or null if not set. */
   startDate: string | null;
+  /** ISO date string for the end of the date range, or null if not set. */
   endDate: string | null;
 }
 
+/**
+ * Props for the {@link AlbaranFilters} component.
+ */
 interface AlbaranFiltersProps {
+  /** Current filter values. */
   filters: AlbaranFiltersState;
+  /** Callback invoked whenever any filter value changes. */
   onChange: (filters: AlbaranFiltersState) => void;
 }
 
-const CONCORDANCIA_OPTIONS = [
-  { label: 'Conforme', value: true },
-  { label: 'No conforme', value: false },
-];
-
+/**
+ * Filter toolbar for the albaranes list.
+ * Provides concordancia (compliant / non-compliant) and date-range controls.
+ *
+ * @param {AlbaranFiltersProps} props - Component props.
+ * @returns JSX rendered filter toolbar.
+ * @example
+ * <AlbaranFilters filters={filters} onChange={setFilters} />
+ */
 const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
+
+  const CONCORDANCIA_OPTIONS = [
+    { label: t('albaran.form.conforme'), value: true },
+    { label: t('albaran.form.noConforme'), value: false },
+  ];
+
+  /**
+   * Handles changes to the concordancia autocomplete.
+   *
+   * @param _ - Unused synthetic event.
+   * @param newValue - The newly selected option, or null if cleared.
+   */
   const handleConcordanciaChange = (
     _: unknown,
     newValue: { label: string; value: boolean } | null
@@ -29,6 +58,12 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
     onChange({ ...filters, concordancia: newValue ? newValue.value : null });
   };
 
+  /**
+   * Returns a change handler for a date field.
+   *
+   * @param field - The filter field to update ('startDate' or 'endDate').
+   * @returns An input change handler that updates the specified date field.
+   */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,8 +93,8 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Concordancia"
-            placeholder="Filtrar por concordancia..."
+            label={t('albaran.form.concordancia')}
+            placeholder={t('albaran.filters.placeholder')}
             size="small"
             InputProps={{
               ...params.InputProps,
@@ -87,7 +122,7 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
 
       <TextField
         id="start-date"
-        label="Desde"
+        label={t('albaran.filters.desde')}
         type="date"
         size="small"
         value={filters.startDate || ''}
@@ -104,7 +139,7 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
 
       <TextField
         id="end-date"
-        label="Hasta"
+        label={t('albaran.filters.hasta')}
         type="date"
         size="small"
         value={filters.endDate || ''}

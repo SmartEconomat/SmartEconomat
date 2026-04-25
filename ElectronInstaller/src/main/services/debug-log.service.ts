@@ -1,3 +1,4 @@
+import { app, dialog } from "electron";
 import type { BrowserWindow } from "electron";
 import electronLog from "electron-log/main.js";
 
@@ -109,6 +110,7 @@ export function parseDebugFlag(value: string | undefined): boolean {
 
 export class DebugLogService {
   private readonly enabled: boolean;
+  private readonly exitOnFatal: boolean;
   private readonly maxEntries: number;
   private readonly logs: DebugLogEntry[] = [];
   private debugWindow: BrowserWindow | null = null;
@@ -117,13 +119,12 @@ export class DebugLogService {
 
   constructor(options: DebugLogServiceOptions) {
     this.enabled = options.enabled;
+    this.exitOnFatal = parseDebugFlag(process.env.INSTALLER_EXIT_ON_FATAL);
     this.maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
 
-    if (this.enabled) {
-      electronLog.initialize();
-      electronLog.transports.console.level = false;
-      electronLog.transports.file.level = "warn";
-    }
+    electronLog.initialize();
+    electronLog.transports.console.level = this.enabled ? "debug" : false;
+    electronLog.transports.file.level = this.enabled ? "debug" : "info";
   }
 
   isEnabled(): boolean {
@@ -195,13 +196,15 @@ export class DebugLogService {
   }
 
   installProcessErrorCapture(): void {
-    if (!this.enabled || this.processCaptureInstalled) {
+    if (this.processCaptureInstalled) {
       return;
     }
 
     this.processCaptureInstalled = true;
 
     process.on("uncaughtException", (error: Error) => {
+      electronLog.error("FATAL ERROR (uncaughtException):", error);
+
       this.publish({
         type: "error",
         source: "main",
@@ -209,6 +212,27 @@ export class DebugLogService {
         timestamp: Date.now(),
         context: serializeError(error),
       });
+
+      try {
+        dialog.showErrorBox(
+          "Error Crítico Inesperado",
+          `El instalador ha encontrado un error crítico.\n\nError: ${error.message}\n\nPara más detalles, revisa el archivo principal de logs de la aplicación.`,
+        );
+      } catch {
+        // Ignorar fallo de renderizado de UI
+      }
+
+      if (this.exitOnFatal) {
+        app.exit(1);
+      } else {
+        this.publish({
+          type: "system",
+          source: "main",
+          message:
+            "UncaughtException capturada. Continúa en modo tolerante (sin cierre automático).",
+          timestamp: Date.now(),
+        });
+      }
     });
 
     process.on("unhandledRejection", (reason: unknown) => {
@@ -216,6 +240,8 @@ export class DebugLogService {
         reason instanceof Error
           ? reason.message
           : `Unhandled rejection: ${formatUnknown(reason)}`;
+
+      electronLog.error("FATAL ERROR (unhandledRejection):", reason);
 
       this.publish({
         type: "error",
@@ -227,6 +253,27 @@ export class DebugLogService {
             ? serializeError(reason)
             : sanitizeContext(reason),
       });
+
+      try {
+        dialog.showErrorBox(
+          "Error Inesperado (Asíncrono)",
+          `Se ha producido un fallo no controlado durante una operación en segundo plano.\n\nDetalle: ${message}`,
+        );
+      } catch {
+        // Ignorar fallo de UI
+      }
+
+      if (this.exitOnFatal) {
+        app.exit(1);
+      } else {
+        this.publish({
+          type: "system",
+          source: "main",
+          message:
+            "UnhandledRejection capturada. Continúa en modo tolerante (sin cierre automático).",
+          timestamp: Date.now(),
+        });
+      }
     });
 
     this.publish({

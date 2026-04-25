@@ -26,8 +26,16 @@ export type StatusType =
   | 'default'
   | 'unknown';
 
+/**
+ * Props for the {@link StatusChip} component.
+ */
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
+  /**
+   * Status or category value used to derive the chip colour and default label.
+   * Accepts any {@link StatusType} string or a {@link CategoriaProducto} value.
+   */
   status: StatusType | string;
+  /** Override for the displayed label. When omitted, the status is translated automatically. */
   label?: string;
 }
 
@@ -40,6 +48,18 @@ const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
 const isCategoriaProducto = (status: string): status is CategoriaProducto =>
   CATEGORIA_VALUES.has(status.toLowerCase());
 
+/**
+ * Maps a status string to a MUI semantic colour.
+ *
+ * Normalises the input to lower-case before matching against known status
+ * tokens. Returns `'default'` for unrecognised values.
+ *
+ * @param status - The raw status string to evaluate.
+ * @returns A MUI colour string suitable for `Chip`'s `color` prop.
+ * @example
+ * getStatusColor('completed'); // 'success'
+ * getStatusColor('cancelled'); // 'error'
+ */
 export const getStatusColor = (
   status: string
 ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
@@ -173,6 +193,20 @@ const getTranslatedStatus = (status: string) => {
   return capitalize(String(status));
 };
 
+/**
+ * Versatile status/category chip component.
+ *
+ * Automatically resolves the MUI colour, translated label, and icon based on
+ * the `status` value. Works for workflow statuses (e.g. `'completed'`, `'cancelled'`)
+ * as well as product category values from {@link CategoriaProducto}.
+ *
+ * @param props - See {@link StatusChipProps}.
+ * @returns JSX element rendering a styled MUI `Chip`.
+ * @example
+ * <StatusChip status="completed" />
+ * <StatusChip status={CategoriaProducto.VERDURA} />
+ * <StatusChip status="pending" label="Awaiting review" />
+ */
 export const StatusChip: React.FC<StatusChipProps> = ({
   status,
   label,

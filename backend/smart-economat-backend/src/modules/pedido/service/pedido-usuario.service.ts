@@ -30,6 +30,7 @@ import { IncidenciaLinea } from '../../incidencia/incidencia-linea.entity/incide
 import { PurchaseBatchService } from './purchase-batch.service';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -38,6 +39,13 @@ type PendingAggregateLine = {
   pedidoUsuarioLineaId?: string;
 };
 
+/**
+ * Servicio responsable del ciclo de vida completo de los pedidos de usuario (PedidoUsuario).
+ * Un PedidoUsuario es un agregado que contiene una o más líneas de producto y genera
+ * automáticamente sub-pedidos (Pedido) agrupados por proveedor.
+ *
+ * @class PedidoUsuarioService
+ */
 @Injectable()
 export class PedidoUsuarioService {
   constructor(
@@ -47,6 +55,17 @@ export class PedidoUsuarioService {
     private readonly purchaseBatchService: PurchaseBatchService
   ) {}
 
+  /**
+   * Crea un nuevo PedidoUsuario junto con sus líneas y los sub-pedidos por proveedor.
+   * La operación se ejecuta dentro de una transacción; si algún paso falla se hace rollback.
+   *
+   * @param {CreatePedidoUsuarioDto} dto - Datos del pedido a crear (líneas, observaciones).
+   * @param {string} userId - ID del usuario que realiza el pedido.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario creado con todas sus relaciones cargadas.
+   * @throws {NotFoundException} Si algún producto-proveedor de las líneas no existe.
+   * @throws {BadRequestException} Si el pedido no contiene líneas o los datos son inválidos.
+   * @throws {ConflictException} Si ocurre un error inesperado durante la creación.
+   */
   async create(
     dto: CreatePedidoUsuarioDto,
     userId: string
@@ -82,6 +101,12 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Devuelve una lista paginada de pedidos de usuario con soporte de filtros y ordenación.
+   *
+   * @param {PedidoUsuarioQueryDto} query - Parámetros de paginación, filtros y orden.
+   * @returns {Promise<PaginatedResponseDto<PedidoUsuario>>} Resultado paginado con metadatos.
+   */
   async findAll(
     query: PedidoUsuarioQueryDto
   ): Promise<PaginatedResponseDto<PedidoUsuario>> {
@@ -185,6 +210,13 @@ export class PedidoUsuarioService {
     };
   }
 
+  /**
+   * Obtiene un PedidoUsuario por su ID con todas sus relaciones cargadas.
+   *
+   * @param {string} id - ID del pedido de usuario.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario encontrado.
+   * @throws {NotFoundException} Si no existe un pedido con el ID proporcionado.
+   */
   async findOne(id: string): Promise<PedidoUsuario> {
     const pedidoUsuario = await this.dataSource
       .getRepository(PedidoUsuario)
@@ -207,13 +239,28 @@ export class PedidoUsuarioService {
       });
 
     if (!pedidoUsuario) {
-      throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+      throw new NotFoundException(
+        I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+      );
     }
 
     await this.annotateLinkedMovements(pedidoUsuario.pedidos || []);
     return pedidoUsuario;
   }
 
+  /**
+   * Actualiza un PedidoUsuario existente reemplazando sus líneas y sub-pedidos.
+   * Solo permite editar pedidos en estado PENDIENTE sin movimientos o recepciones asociadas.
+   * La operación elimina los sub-pedidos anteriores y los recrea desde cero.
+   *
+   * @param {string} id - ID del pedido de usuario a actualizar.
+   * @param {UpdatePedidoUsuarioDto} dto - Nuevos datos del pedido (líneas, observaciones).
+   * @param {string} [userId] - ID del usuario que realiza la modificación.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario actualizado.
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {BadRequestException} Si el pedido no es editable o tiene referencias vinculadas.
+   * @throws {ConflictException} Si ocurre un error inesperado durante la actualización.
+   */
   async update(
     id: string,
     dto: UpdatePedidoUsuarioDto,
@@ -230,7 +277,9 @@ export class PedidoUsuarioService {
       });
 
       if (!existing) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       this.assertEditable(existing);
@@ -313,11 +362,30 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Aprueba un PedidoUsuario delegando en PurchaseBatchService para crear el lote de compra.
+   *
+   * @param {string} id - ID del pedido de usuario a aprobar.
+   * @param {string} userId - ID del usuario que aprueba el pedido.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario con su estado actualizado.
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {BadRequestException} Si el pedido no se encuentra en estado aprobable.
+   */
   async accept(id: string, userId: string): Promise<PedidoUsuario> {
     await this.purchaseBatchService.approvePedidoUsuario(id, userId);
     return this.findOne(id);
   }
 
+  /**
+   * Cancela un PedidoUsuario y todos sus sub-pedidos en estado pendiente.
+   *
+   * @param {string} id - ID del pedido de usuario a cancelar.
+   * @param {CancelPedidoUsuarioDto} dto - Datos de cancelación, incluido el motivo opcional.
+   * @param {string} [userId] - ID del usuario que cancela el pedido.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario con estado CANCELADO.
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {BadRequestException} Si el pedido ya tiene recepciones registradas.
+   */
   async cancel(
     id: string,
     dto: CancelPedidoUsuarioDto,
@@ -336,6 +404,15 @@ export class PedidoUsuarioService {
     );
   }
 
+  /**
+   * Restaura un PedidoUsuario previamente cancelado al estado PENDIENTE_DE_APROBACION.
+   *
+   * @param {string} id - ID del pedido de usuario a restaurar.
+   * @param {string} [userId] - ID del usuario que restaura el pedido.
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario restaurado.
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {BadRequestException} Si algún sub-pedido no está en estado CANCELADO.
+   */
   async restore(id: string, userId?: string): Promise<PedidoUsuario> {
     return this.changePendingAggregateStatus(
       id,
@@ -353,6 +430,18 @@ export class PedidoUsuarioService {
     );
   }
 
+  /**
+   * Elimina (soft delete) un PedidoUsuario y todos sus sub-pedidos.
+   * Solo el propietario o un usuario con rol elevado puede eliminar el pedido.
+   *
+   * @param {string} id - ID del pedido de usuario a eliminar.
+   * @param {{ id: string; rol?: string }} user - Usuario que realiza la eliminación.
+   * @returns {Promise<void>}
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {ForbiddenException} Si el usuario no es el propietario ni tiene rol elevado.
+   * @throws {BadRequestException} Si el pedido no se encuentra en estado editable.
+   * @throws {ConflictException} Si ocurre un error inesperado durante la eliminación.
+   */
   async remove(id: string, user: { id: string; rol?: string }): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -365,7 +454,9 @@ export class PedidoUsuarioService {
       });
 
       if (!pedidoUsuario) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       const isElevated = isSherlockElevatedRole(user.rol);
@@ -405,6 +496,15 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Recalcula y persiste el estado agregado del PedidoUsuario basándose en el estado
+   * de sus sub-pedidos. Se llama tras cualquier operación que pueda cambiar dicho estado.
+   *
+   * @param {string} pedidoUsuarioId - ID del pedido de usuario a sincronizar.
+   * @param {EntityManager} [manager] - EntityManager de transacción activa (opcional).
+   * @param {string} [actorId] - ID del usuario que provoca el cambio (para auditoría).
+   * @returns {Promise<void>}
+   */
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
     manager?: EntityManager,
@@ -436,6 +536,19 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Cambia el estado de los sub-pedidos (Pedido) de un PedidoUsuario aplicando una
+   * función de mutación sobre cada uno. Se usa para operaciones de cancelación y restauración.
+   *
+   * @param {string} id - ID del pedido de usuario.
+   * @param {(pedido: Pedido) => Promise<void> | void} mutatePedido - Función que muta el estado de un sub-pedido.
+   * @param {boolean} [force=false] - Si es `true`, omite la validación de estado editable.
+   * @param {string} [actorId] - ID del usuario que realiza la acción (para auditoría).
+   * @returns {Promise<PedidoUsuario>} El pedido de usuario con estados actualizados.
+   * @throws {NotFoundException} Si el pedido no existe.
+   * @throws {BadRequestException} Si el pedido tiene recepciones registradas o no es modificable.
+   * @throws {ConflictException} Si ocurre un error inesperado.
+   */
   private async changePendingAggregateStatus(
     id: string,
     mutatePedido: (pedido: Pedido) => Promise<void> | void,
@@ -453,7 +566,9 @@ export class PedidoUsuarioService {
       });
 
       if (!pedidoUsuario) {
-        throw new NotFoundException(`Pedido de usuario #${id} no encontrado`);
+        throw new NotFoundException(
+          I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
+        );
       }
 
       if (!force) {
@@ -507,6 +622,16 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Crea y persiste el agregado PedidoUsuario con sus líneas y sub-pedidos.
+   *
+   * @param {EntityManager} manager - EntityManager de la transacción activa.
+   * @param {CreatePedidoUsuarioDto} dto - Datos del pedido a crear.
+   * @param {string} userId - ID del usuario creador.
+   * @returns {Promise<PedidoUsuario>} El PedidoUsuario persistido (sin relaciones cargadas).
+   * @throws {BadRequestException} Si no hay líneas en el DTO.
+   * @throws {NotFoundException} Si algún producto-proveedor no existe.
+   */
   private async persistAggregate(
     manager: EntityManager,
     dto: CreatePedidoUsuarioDto,
@@ -533,6 +658,19 @@ export class PedidoUsuarioService {
     return savedPedidoUsuario;
   }
 
+  /**
+   * Crea las líneas del PedidoUsuario y genera los sub-pedidos (Pedido) agrupados por proveedor.
+   * Actualiza el coste total del PedidoUsuario tras procesar todas las líneas.
+   *
+   * @param {EntityManager} manager - EntityManager de la transacción activa.
+   * @param {PedidoUsuario} pedidoUsuario - Instancia del PedidoUsuario al que se asociarán las líneas.
+   * @param {CreatePedidoUsuarioDto} dto - DTO con las líneas de pedido.
+   * @param {string} userId - ID del usuario creador/modificador.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} Si el DTO no contiene líneas.
+   * @throws {NotFoundException} Si algún producto-proveedor no existe.
+   * @throws {ConflictException} Si algún producto-proveedor no tiene precio configurado.
+   */
   private async persistAggregateLinesAndPedidos(
     manager: EntityManager,
     pedidoUsuario: PedidoUsuario,
@@ -667,6 +805,14 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Determina el estado agregado de un PedidoUsuario en función del estado de sus sub-pedidos
+   * y de si pertenecen a uno o varios lotes de compra.
+   *
+   * @param {PedidoUsuario} pedidoUsuario - Instancia del PedidoUsuario con relación `pedidos` cargada.
+   * @param {EntityManager} [manager] - EntityManager opcional para consultas dentro de una transacción.
+   * @returns {Promise<EstadoPedidoUsuario>} Estado calculado del agregado.
+   */
   private async calculateAggregateStatus(
     pedidoUsuario: PedidoUsuario,
     manager?: EntityManager
@@ -723,6 +869,15 @@ export class PedidoUsuarioService {
       : EstadoPedidoUsuario.APROBADO;
   }
 
+  /**
+   * Verifica si alguno de los sub-pedidos o sus líneas tiene recepciones o incidencias vinculadas.
+   * Se usa para bloquear la edición de pedidos con historial de operaciones.
+   *
+   * @param {EntityManager} manager - EntityManager de la transacción activa.
+   * @param {string[]} pedidoIds - IDs de los sub-pedidos a verificar.
+   * @param {string[]} pedidoProductoIds - IDs de las líneas de pedido a verificar.
+   * @returns {Promise<boolean>} `true` si existe al menos una referencia vinculada.
+   */
   private async hasLinkedReferences(
     manager: EntityManager,
     pedidoIds: string[],
@@ -754,6 +909,14 @@ export class PedidoUsuarioService {
     );
   }
 
+  /**
+   * Verifica que el PedidoUsuario y todos sus sub-pedidos están en estado editable.
+   * Lanza BadRequestException si el estado no permite modificaciones.
+   *
+   * @param {PedidoUsuario} pedidoUsuario - Instancia del PedidoUsuario con relación `pedidos` cargada.
+   * @throws {BadRequestException} Si el pedido de usuario no está en estado PENDIENTE.
+   * @throws {BadRequestException} Si algún sub-pedido no está en estado PENDIENTE_DE_APROBACION.
+   */
   private assertEditable(pedidoUsuario: PedidoUsuario): void {
     if (pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE) {
       throw new BadRequestException(
@@ -771,6 +934,13 @@ export class PedidoUsuarioService {
     }
   }
 
+  /**
+   * Enriquece las líneas de producto de los sub-pedidos con la propiedad `hasLinkedMovements`,
+   * indicando si tienen recepciones o incidencias asociadas. Se usa para la UI de detalle.
+   *
+   * @param {Pedido[]} pedidos - Lista de sub-pedidos con relación `pedidoProductos` cargada.
+   * @returns {Promise<void>}
+   */
   private async annotateLinkedMovements(pedidos: Pedido[]): Promise<void> {
     const lineIds = pedidos.flatMap((pedido) =>
       (pedido.pedidoProductos || []).map((line) => line.id)
@@ -803,6 +973,13 @@ export class PedidoUsuarioService {
     });
   }
 
+  /**
+   * Calcula la fecha de entrega estimada sumando las horas configuradas en
+   * la variable de entorno `PEDIDO_FECHA_ENTREGA_HOURS` (por defecto 48 h).
+   *
+   * @param {Date} [baseDate=new Date()] - Fecha base desde la que calcular.
+   * @returns {Date} Fecha de entrega calculada.
+   */
   private calculateFechaEntrega(baseDate = new Date()): Date {
     const hours = this.configService.get<number>(
       'PEDIDO_FECHA_ENTREGA_HOURS',

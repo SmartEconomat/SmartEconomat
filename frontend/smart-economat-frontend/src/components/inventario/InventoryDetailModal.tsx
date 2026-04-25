@@ -289,7 +289,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     setIsMermaModalOpen(true);
   };
 
-  const handleSaveMerma = async (formData: Record<string, string | number>) => {
+  const handleSaveMerma = async (formData: Record<string, unknown>) => {
     setIsSavingMerma(true);
     try {
       await createMerma({

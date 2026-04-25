@@ -9,6 +9,7 @@ import {
   Paper,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -39,6 +40,7 @@ const getNotificationLabel = (priority: AppNotification['priority']) =>
   priority === 'urgent' ? 'Urgente' : 'Pendiente';
 
 export default function NotificationCenter() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const canListUsers = usePermission(PERMISSIONS.usuarios.listar);
   const canReviewInventoryNotifications = useAnyPermission([
@@ -51,6 +53,7 @@ export default function NotificationCenter() {
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [shouldRenderContent, setShouldRenderContent] = useState(false);
 
   const loadNotifications = useCallback(async () => {
     if (!canListUsers && !canReviewInventoryNotifications) {
@@ -104,7 +107,18 @@ export default function NotificationCenter() {
 
   const handleClose = () => {
     setOpen(false);
+    // Limpiamos el contenido al cerrar para que la animación de salida sea ligera
+    setShouldRenderContent(false);
   };
+
+  // Efecto para diferir el renderizado del contenido hasta que la animación del Drawer comience/avance
+  useEffect(() => {
+    if (open) {
+      // Un pequeño retraso para permitir que el Drawer inicie su animación sin carga de JS/DOM pesada
+      const timer = setTimeout(() => setShouldRenderContent(true), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const handleNotificationAction = (path: string) => {
     navigate(path);
@@ -115,6 +129,7 @@ export default function NotificationCenter() {
     <>
       <Tooltip title="Abrir centro de notificaciones">
         <IconButton
+          id="btn-notifications"
           color="inherit"
           onClick={handleOpen}
           aria-label="Notificaciones"
@@ -135,16 +150,16 @@ export default function NotificationCenter() {
             maxWidth: '100%',
             borderLeft: '1px solid',
             borderColor: 'divider',
-            boxShadow: '0 0 40px rgba(0,0,0,0.1)',
-            bgcolor: 'grey.100', // Sombreado de fondo REAL
+            boxShadow: theme.shadows[10], // Usar sombra estándar de MUI (más optimizada)
+            bgcolor: 'background.default',
           },
         }}
         ModalProps={{
           sx: {
             zIndex: 9999, // Superponer sobre TODO
             '& .MuiBackdrop-root': {
-              backgroundColor: 'rgba(0, 0, 0, 0.6)', // Sombrear mucho más fuerte el fondo
-              backdropFilter: 'blur(2px)', // Añadir un poco de desenfoque al fondo
+              backgroundColor: 'rgba(0, 0, 0, 0.4)', // Sombreado más ligero
+              backdropFilter: 'none', // ELIMINADO: Causa principal de lag en animaciones
             },
           },
         }}
@@ -211,6 +226,7 @@ export default function NotificationCenter() {
                         setError('No se pudieron cargar las notificaciones.');
                       })
                   }
+                  aria-label="Actualizar notificaciones"
                   sx={{
                     bgcolor: 'action.hover',
                     '&:hover': { bgcolor: 'action.selected' },
@@ -222,6 +238,7 @@ export default function NotificationCenter() {
               <IconButton
                 size="small"
                 onClick={handleClose}
+                aria-label="Cerrar panel de notificaciones"
                 sx={{
                   bgcolor: 'action.hover',
                   '&:hover': { bgcolor: 'error.50', color: 'error.main' },
@@ -242,7 +259,11 @@ export default function NotificationCenter() {
               gap: 2,
             }}
           >
-            {isLoading ? (
+            {!shouldRenderContent ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Spinner size="sm" />
+              </Box>
+            ) : isLoading ? (
               <Box
                 sx={{
                   height: 200,

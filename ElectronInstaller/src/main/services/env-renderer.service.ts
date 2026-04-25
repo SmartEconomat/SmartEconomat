@@ -19,8 +19,21 @@ interface EnvRenderResult {
   envMap: Record<string, string>;
 }
 
+interface EnvSnapshotFile {
+  createdAt: string;
+  envMap: Record<string, string>;
+}
+
+interface PersistedSecrets {
+  POSTGRES_PASSWORD?: string;
+  REDIS_PASSWORD?: string;
+  JWT_SECRET?: string;
+}
+
 export class EnvRendererService {
   private readonly ajv: Ajv;
+  private readonly envFileName = ".env.prod";
+  private readonly snapshotFileName = ".env.prod.snapshot.json";
 
   constructor(
     private readonly pathResolver = new PathResolverService(),
@@ -50,12 +63,16 @@ export class EnvRendererService {
     const schema = JSON.parse(schemaRaw) as object;
     const validate = this.ajv.compile(schema);
 
-    const envMap = this.buildEnvMap(config);
+    const persistedSecrets = await this.loadPersistedSecrets(
+      config.runtimePath,
+    );
+    const envMap = this.buildEnvMap(config, persistedSecrets);
 
     if (!validate(envMap)) {
+      console.error("[ENV-RENDERER] Validation errors:", validate.errors);
       return {
         ok: false,
-        message: "Validación de env.schema.json falló.",
+        message: "Validación de env.schema.json falló: " + JSON.stringify(validate.errors),
         errorCode: "ENV_SCHEMA_INVALID",
         data: undefined,
       };
@@ -64,11 +81,12 @@ export class EnvRendererService {
     const rendered = this.renderTemplate(templateRaw, envMap);
 
     await fs.mkdir(config.runtimePath, { recursive: true });
-    const envFilePath = path.join(config.runtimePath, ".env.prod");
+    const envFilePath = path.join(config.runtimePath, this.envFileName);
     await fs.writeFile(envFilePath, rendered, {
       encoding: "utf8",
       mode: 0o600,
     });
+    await this.writeSnapshot(config.runtimePath, envMap);
 
     const secretsToMask = [
       envMap.POSTGRES_PASSWORD,
@@ -76,6 +94,7 @@ export class EnvRendererService {
       envMap.JWT_SECRET,
       envMap.SEED_DEFAULT_ADMIN_TEMP_PASSWORD,
       envMap.SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD,
+      envMap.MAIL_PASS,
     ].filter((value): value is string => typeof value === "string");
 
     return {
@@ -87,6 +106,61 @@ export class EnvRendererService {
         maskedPreview: this.secretStore.maskText(rendered, secretsToMask),
       },
     };
+  }
+
+  async regenerateFromSnapshot(runtimePath: string): Promise<OperationResult> {
+    try {
+      const snapshotPath = this.getSnapshotPath(runtimePath);
+      const snapshotRaw = await fs.readFile(snapshotPath, "utf8");
+      const snapshot = JSON.parse(snapshotRaw) as EnvSnapshotFile;
+
+      if (!snapshot.envMap || typeof snapshot.envMap !== "object") {
+        return {
+          ok: false,
+          message: "Snapshot de entorno inválido o corrupto.",
+          errorCode: "ENV_SNAPSHOT_INVALID",
+        };
+      }
+
+      const templatesRoot = this.pathResolver.getTemplatesRoot();
+      const templatePath = path.join(templatesRoot, "env.template.prod");
+      const schemaPath = path.join(templatesRoot, "env.schema.json");
+      const [templateRaw, schemaRaw] = await Promise.all([
+        fs.readFile(templatePath, "utf8"),
+        fs.readFile(schemaPath, "utf8"),
+      ]);
+
+      const schema = JSON.parse(schemaRaw) as object;
+      const validate = this.ajv.compile(schema);
+      if (!validate(snapshot.envMap)) {
+        return {
+          ok: false,
+          message: "Snapshot no supera la validación de env.schema.json.",
+          errorCode: "ENV_SNAPSHOT_SCHEMA_INVALID",
+        };
+      }
+
+      const rendered = this.renderTemplate(templateRaw, snapshot.envMap);
+      await fs.mkdir(runtimePath, { recursive: true });
+      await fs.writeFile(path.join(runtimePath, this.envFileName), rendered, {
+        encoding: "utf8",
+        mode: 0o600,
+      });
+
+      return {
+        ok: true,
+        message: ".env.prod regenerado correctamente desde snapshot seguro.",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "No se pudo regenerar .env.prod desde snapshot.",
+        errorCode: "ENV_SNAPSHOT_NOT_FOUND",
+      };
+    }
   }
 
   private validateBusinessRules(
@@ -182,47 +256,57 @@ export class EnvRendererService {
     };
   }
 
-  private buildEnvMap(config: InstallerConfigPayload): Record<string, string> {
+  private buildEnvMap(
+    config: InstallerConfigPayload,
+    persistedSecrets: PersistedSecrets,
+  ): Record<string, string> {
     const postgresPassword =
       config.postgresPassword && config.postgresPassword.trim().length > 0
         ? config.postgresPassword.trim()
-        : this.secretStore.generateSecret(32);
+        : (persistedSecrets.POSTGRES_PASSWORD ??
+          this.secretStore.generateSecret(32));
 
     const redisPassword =
       config.redisPassword && config.redisPassword.trim().length > 0
         ? config.redisPassword.trim()
-        : this.secretStore.generateSecret(32);
+        : (persistedSecrets.REDIS_PASSWORD ??
+          this.secretStore.generateSecret(32));
 
     const jwtSecret =
       config.jwtSecret && config.jwtSecret.trim().length > 0
         ? config.jwtSecret.trim()
-        : this.secretStore.generateSecret(48);
+        : (persistedSecrets.JWT_SECRET ?? this.secretStore.generateSecret(48));
 
-    const domain = config.localHost.trim();
+    const requestedHost = config.localHost.trim();
+    const effectiveHost = requestedHost || "localhost";
+    const protocol = config.tlsProvider === "none" ? "http" : "https";
+    const backendApiUrl = `${protocol}://${effectiveHost}/api/v1`;
     const superAdminPassword = config.useSamePasswordForBoth
       ? config.adminPassword
       : config.superAdminPassword;
+    const envFilePath = path
+      .join(config.runtimePath, this.envFileName)
+      .replaceAll("\\", "/");
 
     return {
       NODE_ENV: "production",
-      DOMAIN: domain,
-      BACKEND_API_URL: `https://${domain}/api/v1`,
-      FRONTEND_API_URL: `https://${domain}`,
+      DOMAIN: effectiveHost,
+      SMARTECONOMAT_ENV_FILE: envFilePath,
       POSTGRES_USER: "postgres",
       POSTGRES_PASSWORD: postgresPassword,
       POSTGRES_DB: "smarteconomat",
+      POSTGRES_PORT: "5432",
       DB_HOST: "db",
-      DB_PORT: "5432",
-      DB_USERNAME: "postgres",
-      DB_PASSWORD: postgresPassword,
-      DB_DATABASE: "smarteconomat",
       DB_SYNC: "false",
       JWT_SECRET: jwtSecret,
       JWT_EXPIRATION: "7d",
       SEED_DEFAULT_ADMIN_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USER_TEMP_PASSWORD: config.adminPassword,
       SEED_DEFAULT_ADMIN_USERNAME: config.adminUsername,
+      SEED_DEFAULT_ADMIN_EMAIL: config.adminEmail || "admin@smarteconomat.com",
       SEED_DEFAULT_SUPERADMIN_USERNAME: config.superAdminUsername,
+      SEED_DEFAULT_SUPERADMIN_EMAIL:
+        config.superAdminEmail || "superadmin@smarteconomat.com",
       SEED_DEFAULT_SUPERADMIN_TEMP_PASSWORD: superAdminPassword,
       SEED_DEFAULT_USERS_SYNCED: String(config.useSamePasswordForBoth),
       REDIS_PASSWORD: redisPassword,
@@ -236,6 +320,18 @@ export class EnvRendererService {
       BACKUP_RETENTION_DAYS: String(config.backupRetentionDays),
       CERTS_DIR: path.join(config.runtimePath, "certs"),
       CERTS_WEBROOT_DIR: path.join(config.runtimePath, "certs-webroot"),
+      STARTUP_RUN_MIGRATIONS:
+        config.startupRunMigrations === false ? "false" : "true",
+      RUN_BOOTSTRAP_SEEDER: config.installMode === "new" ? "true" : "false",
+      SENTRY_DSN: config.sentryDsn?.trim() ?? "",
+      VITE_SENTRY_DSN: config.viteSentryDsn?.trim() ?? "",
+      FRONTEND_HTTP_PORT: String(config.httpPort),
+      FRONTEND_HTTPS_PORT: String(config.httpsPort),
+      MAIL_HOST: config.smtpHost?.trim() ?? "",
+      MAIL_PORT: config.smtpPort?.trim() ?? "",
+      MAIL_USER: config.smtpUser?.trim() ?? "",
+      MAIL_PASS: config.smtpPass?.trim() ?? "",
+      MAIL_SECURE: String(config.smtpSecure ?? false),
     };
   }
 
@@ -246,5 +342,105 @@ export class EnvRendererService {
     return Object.entries(envMap).reduce((result, [key, value]) => {
       return result.replaceAll(`{{${key}}}`, value);
     }, templateRaw);
+  }
+
+  private getSnapshotPath(runtimePath: string): string {
+    return path.join(runtimePath, this.snapshotFileName);
+  }
+
+  private async writeSnapshot(
+    runtimePath: string,
+    envMap: Record<string, string>,
+  ): Promise<void> {
+    const snapshot: EnvSnapshotFile = {
+      createdAt: new Date().toISOString(),
+      envMap,
+    };
+
+    await fs.writeFile(
+      this.getSnapshotPath(runtimePath),
+      JSON.stringify(snapshot),
+      {
+        encoding: "utf8",
+        mode: 0o600,
+      },
+    );
+  }
+
+  private async loadPersistedSecrets(
+    runtimePath: string,
+  ): Promise<PersistedSecrets> {
+    const fromEnv = await this.loadSecretsFromEnvFile(runtimePath);
+    const fromSnapshot = await this.loadSecretsFromSnapshot(runtimePath);
+
+    return {
+      POSTGRES_PASSWORD:
+        fromEnv.POSTGRES_PASSWORD ?? fromSnapshot.POSTGRES_PASSWORD,
+      REDIS_PASSWORD: fromEnv.REDIS_PASSWORD ?? fromSnapshot.REDIS_PASSWORD,
+      JWT_SECRET: fromEnv.JWT_SECRET ?? fromSnapshot.JWT_SECRET,
+    };
+  }
+
+  private async loadSecretsFromEnvFile(
+    runtimePath: string,
+  ): Promise<PersistedSecrets> {
+    try {
+      const envPath = path.join(runtimePath, this.envFileName);
+      const raw = await fs.readFile(envPath, "utf8");
+      const parsed = this.parseEnv(raw);
+
+      return {
+        POSTGRES_PASSWORD: parsed.POSTGRES_PASSWORD ?? undefined,
+        REDIS_PASSWORD: parsed.REDIS_PASSWORD ?? undefined,
+        JWT_SECRET: parsed.JWT_SECRET ?? undefined,
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  private async loadSecretsFromSnapshot(
+    runtimePath: string,
+  ): Promise<PersistedSecrets> {
+    try {
+      const snapshotPath = this.getSnapshotPath(runtimePath);
+      const raw = await fs.readFile(snapshotPath, "utf8");
+      const snapshot = JSON.parse(raw) as EnvSnapshotFile;
+
+      return {
+        POSTGRES_PASSWORD: snapshot.envMap.POSTGRES_PASSWORD,
+        REDIS_PASSWORD: snapshot.envMap.REDIS_PASSWORD,
+        JWT_SECRET: snapshot.envMap.JWT_SECRET,
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  private parseEnv(raw: string): Record<string, string> {
+    const result: Record<string, string> = {};
+
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (trimmed.length === 0 || trimmed.startsWith("#")) {
+        continue;
+      }
+
+      const separatorIndex = trimmed.indexOf("=");
+      if (separatorIndex <= 0) {
+        continue;
+      }
+
+      const key = trimmed.slice(0, separatorIndex).trim();
+      const value = trimmed.slice(separatorIndex + 1).trim();
+
+      if (key.length === 0) {
+        continue;
+      }
+
+      result[key] = value;
+    }
+
+    return result;
   }
 }
