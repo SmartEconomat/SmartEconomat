@@ -73,6 +73,30 @@ jobs:
       - name: Checkout del codigo
         uses: actions/checkout@v6
 
+      - name: Configurar Node.js para empaquetado
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            backend/smart-economat-backend/package-lock.json
+            frontend/smart-economat-frontend/package-lock.json
+
+      - name: Compilar artefactos de produccion para Dockerfiles slim
+        run: |
+          cd backend/smart-economat-backend
+          npm ci
+          npm run build
+
+          cd ../../frontend/smart-economat-frontend
+          npm ci
+          npm run build
+
+      - name: Validar artefactos compilados requeridos
+        run: |
+          test -d backend/smart-economat-backend/dist || (echo "Falta backend/smart-economat-backend/dist"; exit 1)
+          test -d frontend/smart-economat-frontend/build || (echo "Falta frontend/smart-economat-frontend/build"; exit 1)
+
       - name: Crear paquete de despliegue
         run: |
           rm -f "${{ env.ARCHIVE_NAME }}"
@@ -80,7 +104,6 @@ jobs:
             -x ".git/*" \
             -x ".github/workflows/*" \
             -x "**/node_modules/*" \
-            -x "**/dist/*" \
             -x "**/coverage/*" \
             -x "**/.env" \
             -x "**/.env.*" \
