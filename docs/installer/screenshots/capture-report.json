@@ -1,0 +1,256 @@
+{
+  "generatedAt": "2026-04-25T19:25:31.589Z",
+  "os": "win32",
+  "screenshotsRoot": "C:\\Users\\psych\\projects\\SmartEconomat\\ElectronInstaller\\screenshots",
+  "screenshots": [
+    {
+      "filename": "wizard/01-welcome-light.png",
+      "category": "wizard",
+      "description": "Bienvenida tema claro",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/02-welcome-dark.png",
+      "category": "wizard",
+      "description": "Bienvenida tema oscuro",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/03-preflight-initial.png",
+      "category": "wizard",
+      "description": "Preflight antes de ejecutar",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/05-preflight-loading.png",
+      "category": "wizard",
+      "description": "Preflight ejecutando validaciones (loading)",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/04-preflight-ok.png",
+      "category": "wizard",
+      "description": "Preflight con checks OK (mock E2E)",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/06-preflight-warning-blockers.png",
+      "category": "wizard",
+      "description": "Preflight con warning de bloqueantes",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/07-config-top.png",
+      "category": "wizard",
+      "description": "Configuración parte superior",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/08-config-env-paper.png",
+      "category": "wizard",
+      "description": "Sección entorno de ejecución",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/09-config-users-paper.png",
+      "category": "wizard",
+      "description": "Sección usuarios por defecto",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/10-config-backups-paper.png",
+      "category": "wizard",
+      "description": "Sección política de backups",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/11-config-advanced-secrets-paper.png",
+      "category": "wizard",
+      "description": "Secretos avanzados desplegados",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/12-config-validation-username-collision.png",
+      "category": "wizard",
+      "description": "Validación colisión admin/superadmin",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/13-config-reinstall-info.png",
+      "category": "wizard",
+      "description": "Configuración en modo reinstalación",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/14-config-tls-custom-validation-error.png",
+      "category": "wizard",
+      "description": "Error validación TLS personalizado incompleto",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/15-smtp-initial.png",
+      "category": "wizard",
+      "description": "Formulario SMTP inicial",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/16-smtp-test-loading.png",
+      "category": "wizard",
+      "description": "SMTP probando conexión (loading)",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/17-smtp-test-success.png",
+      "category": "wizard",
+      "description": "SMTP prueba de conexión exitosa",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/18-deploy-before-start.png",
+      "category": "wizard",
+      "description": "Despliegue antes de iniciar",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/19-deploy-progress.png",
+      "category": "wizard",
+      "description": "Despliegue con progreso",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/20-finish-success.png",
+      "category": "wizard",
+      "description": "Finalización exitosa",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/21-deploy-retry-error.png",
+      "category": "wizard",
+      "description": "Reintento de instalación con error simulado",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "wizard/22-finish-error.png",
+      "category": "wizard",
+      "description": "Finalización con incidencias",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/01-control-top.png",
+      "category": "admin",
+      "description": "Panel de control parte superior",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/02-control-actions-band.png",
+      "category": "admin",
+      "description": "Panel acciones principales (scroll)",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/03-control-services-band.png",
+      "category": "admin",
+      "description": "Panel tarjetas de servicios (scroll)",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/04-control-logs-paper.png",
+      "category": "admin",
+      "description": "Bloque logs de aplicación",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/05-control-backup-paper.png",
+      "category": "admin",
+      "description": "Bloque backup y restauración",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/06-control-logs-empty-state.png",
+      "category": "admin",
+      "description": "Estado vacío del visor de logs",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/07-control-logs-with-data.png",
+      "category": "admin",
+      "description": "Visor de logs con eventos cargados",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/08-modal-prune-open.png",
+      "category": "admin",
+      "description": "Modal limpieza agresiva abierto",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/09-modal-uninstall-open.png",
+      "category": "admin",
+      "description": "Modal desinstalación abierto",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/10-modal-backup-destination-default.png",
+      "category": "admin",
+      "description": "Modal destino backup manual en modo por defecto",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/11-modal-backup-destination-custom.png",
+      "category": "admin",
+      "description": "Modal destino backup manual en modo carpeta personalizada",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "admin/12-control-restore-selected-pending-confirmation.png",
+      "category": "admin",
+      "description": "Restore con backup seleccionado y confirmación pendiente",
+      "window": "main",
+      "status": "ok"
+    },
+    {
+      "filename": "debug/01-debug-console.png",
+      "category": "debug",
+      "description": "Ventana secundaria consola debug",
+      "window": "debug-secondary",
+      "status": "ok"
+    }
+  ],
+  "windowsDetected": [
+    "SmartEconomat Installer"
+  ],
+  "inaccessibleScreens": []
+}

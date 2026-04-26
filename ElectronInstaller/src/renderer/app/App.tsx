@@ -375,9 +375,16 @@ export function App() {
                           >
                             <Paper
                               variant="outlined"
-                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                              sx={{
+                                p: 1.1,
+                                borderRadius: 2,
+                                bgcolor: "grey.50",
+                              }}
                             >
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 Eventos en buffer
                               </Typography>
                               <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -386,9 +393,16 @@ export function App() {
                             </Paper>
                             <Paper
                               variant="outlined"
-                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                              sx={{
+                                p: 1.1,
+                                borderRadius: 2,
+                                bgcolor: "grey.50",
+                              }}
                             >
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 Servicios activos
                               </Typography>
                               <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -397,9 +411,16 @@ export function App() {
                             </Paper>
                             <Paper
                               variant="outlined"
-                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                              sx={{
+                                p: 1.1,
+                                borderRadius: 2,
+                                bgcolor: "grey.50",
+                              }}
                             >
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 Watchdog
                               </Typography>
                               <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -408,9 +429,16 @@ export function App() {
                             </Paper>
                             <Paper
                               variant="outlined"
-                              sx={{ p: 1.1, borderRadius: 2, bgcolor: "grey.50" }}
+                              sx={{
+                                p: 1.1,
+                                borderRadius: 2,
+                                bgcolor: "grey.50",
+                              }}
                             >
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 Backups
                               </Typography>
                               <Typography variant="h6" sx={{ fontWeight: 800 }}>

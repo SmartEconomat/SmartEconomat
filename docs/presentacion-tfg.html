@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartEconomat - Presentacion oral resumida TFG</title>
+  <style>
+    :root {
+      --color-primary: #dc004e;
+      --color-primary-dark: #b80042;
+      --color-secondary: #0a6151;
+      --color-bg: #eef2f7;
+      --color-paper: #ffffff;
+      --color-text: #1e293b;
+      --color-muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 22px 52px rgba(15, 23, 42, 0.12);
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --paper-alt: #f8fafc;
+      --font-sans: "Segoe UI", system-ui, -apple-system, "Manrope", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-size: 11pt;
+      line-height: 1.55;
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(229, 0, 70, 0.11) 0%, rgba(229, 0, 70, 0) 42%),
+        linear-gradient(180deg, var(--color-bg) 0%, #e7ebf2 100%);
+      color: var(--color-text);
+    }
+    main {
+      width: min(calc(100vw - 2rem), 210mm);
+      margin: 14mm auto 20mm;
+      padding-bottom: 12mm;
+    }
+    section {
+      width: 100%;
+      background: var(--color-paper);
+      box-shadow: var(--shadow);
+      margin: 0 auto 12mm;
+      padding: 16mm 14mm 15mm;
+      border-radius: 10px;
+    }
+    section.cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 260mm;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(229, 0, 70, 0.11) 0%, rgba(229, 0, 70, 0) 42%),
+        linear-gradient(180deg, #eef2f7 0%, #e7ebf2 100%);
+    }
+    .cover h1 { margin: 0; font-size: 30pt; }
+    .eyebrow {
+      margin: 0 0 8mm;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--color-primary);
+      font-size: 10pt;
+    }
+    .cover-meta {
+      width: 100%;
+      border-top: 0.6mm solid rgba(220, 0, 78, 0.22);
+      border-bottom: 0.6mm solid rgba(220, 0, 78, 0.22);
+      padding: 6mm 0;
+      margin: 8mm 0 0;
+    }
+    .cover-meta p { margin: 1.8mm 0; }
+    .team-stamp img {
+      height: 14mm;
+      width: auto;
+      display: block;
+      margin: 8mm auto 0;
+      opacity: 0.95;
+    }
+    h1, h2, h3 { color: var(--color-text); margin-top: 0; }
+    .section-title {
+      font-size: 19pt;
+      margin: 0 0 7mm;
+      padding-bottom: 3.2mm;
+      border-bottom: 0.7mm solid var(--color-primary);
+    }
+    h2 {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+      color: var(--color-text);
+      border-bottom: 0.45mm solid var(--color-primary);
+      padding-bottom: 1mm;
+    }
+    h3 {
+      font-size: 11.5pt;
+      margin: 5mm 0 2mm;
+      color: var(--color-secondary);
+    }
+    p { margin: 0 0 4mm; text-align: justify; }
+    .lead { font-size: 12pt; color: #2d3748; }
+    .small { font-size: 8.8pt; color: var(--color-muted); }
+    .facts, .two-col {
+      display: grid;
+      gap: 5mm;
+    }
+    .facts { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4mm 0 7mm; }
+    .two-col { grid-template-columns: 1fr 1fr; margin: 5mm 0; }
+    .metric, .note, .card {
+      background: linear-gradient(180deg, #ffffff 0%, #f4f6f5 100%);
+      border: 0.35mm solid var(--line);
+      border-radius: 4mm;
+      padding: 4.4mm;
+    }
+    .metric strong, .note strong, .card strong {
+      display: block;
+      margin-bottom: 1.5mm;
+      color: #064238;
+    }
+    .note {
+      border-left: 1.1mm solid #f59e0b;
+      background: #fff7ed;
+    }
+    ul, ol { margin: 0 0 4mm 5mm; padding: 0; }
+    li { margin-bottom: 1.8mm; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4mm 0 6mm;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 0.28mm solid var(--line);
+      padding: 2.2mm 2.4mm;
+      vertical-align: top;
+    }
+    thead th {
+      background: var(--paper-alt);
+      color: var(--color-text);
+    }
+    .diagram {
+      margin: 5mm 0 6mm;
+      border: 0.3mm solid var(--line);
+      border-radius: 4mm;
+      padding: 4mm;
+      background: linear-gradient(180deg, #fafcfb 0%, #f4f6f5 100%);
+    }
+    .diagram figcaption {
+      font-weight: 700;
+      margin-bottom: 2.8mm;
+      color: var(--color-secondary);
+    }
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4mm;
+      margin: 4mm 0;
+    }
+    .shot {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .shot span {
+      display: block;
+      padding: 2.4mm;
+      font-size: 8.5pt;
+      color: var(--color-muted);
+    }
+    .mermaid-wrap {
+      background: var(--color-paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1rem 0.8rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+    .mermaid-wrap figcaption {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 0.8rem;
+      text-align: center;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .say {
+      margin-top: 3mm;
+      border-top: 0.3mm dashed var(--line-strong);
+      padding-top: 2.5mm;
+      color: #334155;
+      font-size: 9.3pt;
+    }
+    .say strong { color: var(--color-primary-dark); }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(238, 242, 247, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 8px;
+      margin-bottom: 8mm;
+      backdrop-filter: blur(4px);
+    }
+    .toolbar a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 9pt;
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: 6px;
+    }
+    .toolbar a:hover { background: #fce7f3; }
+    @media (max-width: 900px) {
+      .facts, .two-col, .image-grid { grid-template-columns: 1fr; }
+      main { width: min(calc(100vw - 1rem), 210mm); }
+      section { padding: 12mm 7mm; }
+      .toolbar { flex-wrap: wrap; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral",
+      securityLevel: "loose",
+      flowchart: { useMaxWidth: true }
+    });
+  </script>
+</head>
+<body>
+  <main>
+    <nav class="toolbar" aria-label="Navegacion rapida">
+      <a href="#problema-y-objetivos">Problema y objetivos</a>
+      <a href="#arquitectura">Arquitectura</a>
+      <a href="#modulos-clave">Modulos funcionales</a>
+      <a href="#instalador-admin">Instalador y admin</a>
+      <a href="#proceso-desarrollo">Proceso y Git</a>
+      <a href="#calidad">Calidad y despliegue</a>
+    </nav>
+
+    <section class="cover" id="portada">
+      <p class="eyebrow">Trabajo Fin de Grado · Defensa oral</p>
+      <h1>SmartEconomat</h1>
+      <div class="cover-meta">
+        <p><strong>Formato:</strong> Presentacion oral con hilo tecnico y cronologico</p>
+        <p><strong>Duracion:</strong> 25 minutos teoria + 5 minutos demo</p>
+        <p><strong>Alcance:</strong> Ciclo completo del producto, de la necesidad al despliegue</p>
+      </div>
+      <div class="team-stamp">
+        <img
+          src="../frontend/smart-economat-frontend/src/assets/logos/SVG/logo-lamarr-c.svg"
+          alt="Lamarr equipo de desarrollo"
+          width="202"
+          height="101"
+        >
+      </div>
+    </section>
+
+    <section id="problema-y-objetivos">
+      <h1 class="section-title">Contexto inicial: problema, alcance y objetivos</h1>
+      <p class="lead">El punto de partida fue un economato con procesos manuales y trazabilidad fragmentada. El objetivo del TFG no era crear pantallas aisladas, sino un flujo digital completo que redujera errores operativos.</p>
+      <h2>Situacion de partida detectada</h2>
+      <ul>
+        <li>Pedidos y recepciones gestionados con documentos y hojas sueltas.</li>
+        <li>Control de stock reactivo, con incidencias detectadas tarde.</li>
+        <li>Escasa gobernanza de permisos y roles por perfil de usuario.</li>
+        <li>Dificultad para auditar que paso, cuando y quien realizo cada accion.</li>
+      </ul>
+      <h2>Objetivos definidos al inicio del proyecto</h2>
+      <ol>
+        <li>Centralizar catalogo, compras, recepciones, inventario e incidencias en una unica plataforma.</li>
+        <li>Implantar seguridad real con RBAC y validacion en backend por capas.</li>
+        <li>Garantizar trazabilidad de datos y estados con reglas de negocio consistentes.</li>
+        <li>Construir un flujo de desarrollo repetible (Git, tests, CI/CD) para evolucionar el producto.</li>
+      </ol>
+    </section>
+
+    <section id="arquitectura">
+      <h1 class="section-title">Arquitectura y decisiones tecnicas</h1>
+      <p class="lead">La arquitectura cliente-servidor mantiene contratos claros: UI y servicios frontend consumen API versionada, mientras backend centraliza validacion, negocio y seguridad.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Capa</th>
+            <th>Decision aplicada</th>
+            <th>Beneficio defendible</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Frontend</td><td>React + servicios HTTP centralizados</td><td>Evita duplicar reglas de auth, errores y payloads.</td></tr>
+          <tr><td>Backend</td><td>NestJS modular + DTO validation</td><td>Escalabilidad por dominio y contratos robustos.</td></tr>
+          <tr><td>Datos</td><td>PostgreSQL + UUID v7 + soft delete</td><td>Trazabilidad y rendimiento de indices por orden temporal.</td></tr>
+          <tr><td>Seguridad</td><td>JWT + guards por capas + throttling</td><td>Control de acceso consistente y minimizacion de riesgo.</td></tr>
+        </tbody>
+      </table>
+      <figure class="diagram">
+        <figcaption>Flujo macro de datos (estilo memoria tecnica)</figcaption>
+        <svg viewBox="0 0 980 340" xmlns="http://www.w3.org/2000/svg" aria-label="Flujo macro">
+          <defs>
+            <marker id="arr-main" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0a6151"/>
+            </marker>
+          </defs>
+          <rect x="35" y="116" width="170" height="72" rx="18" fill="#e8f5f1" stroke="#0a6151" stroke-width="2"/>
+          <text x="120" y="148" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">UI / React</text>
+          <text x="120" y="171" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Paginas + hooks</text>
+          <rect x="258" y="116" width="180" height="72" rx="18" fill="#f0f9f7" stroke="#0a6151" stroke-width="2"/>
+          <text x="348" y="148" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">API /api/v1</text>
+          <text x="348" y="171" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Controllers + DTOs</text>
+          <rect x="494" y="58" width="205" height="72" rx="18" fill="#f5faf8" stroke="#0a6151" stroke-width="2"/>
+          <text x="596" y="90" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">Servicios dominio</text>
+          <text x="596" y="113" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Recepcion, pedidos, admin</text>
+          <rect x="494" y="205" width="205" height="72" rx="18" fill="#f5faf8" stroke="#0a6151" stroke-width="2"/>
+          <text x="596" y="237" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#064238">Capa transversal</text>
+          <text x="596" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6b7280">Guards, pipes, filtros</text>
+          <rect x="760" y="60" width="150" height="70" rx="18" fill="#eef6ff" stroke="#25518c" stroke-width="2"/>
+          <text x="835" y="91" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#19365d">PostgreSQL</text>
+          <text x="835" y="114" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#4b5563">Persistencia</text>
+          <rect x="760" y="206" width="150" height="70" rx="18" fill="#eefcf1" stroke="#1f7a1f" stroke-width="2"/>
+          <text x="835" y="237" text-anchor="middle" font-family="Georgia, serif" font-size="17" fill="#14532d">Redis</text>
+          <text x="835" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#4b5563">Cache permisos</text>
+          <path d="M205 152 L258 152" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arr-main)"/>
+          <path d="M438 152 L494 94" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arr-main)"/>
+          <path d="M438 152 L494 241" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arr-main)"/>
+          <path d="M699 95 L760 95" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arr-main)"/>
+          <path d="M699 241 L760 241" stroke="#0a6151" stroke-width="3" fill="none" marker-end="url(#arr-main)"/>
+        </svg>
+      </figure>
+    </section>
+
+    <section id="modulos-clave">
+      <h1 class="section-title">Recorrido funcional de la aplicacion</h1>
+      <p class="lead">Una vez definida la arquitectura, el desarrollo se estructuro por modulos de negocio conectados entre si. Este es el recorrido logico de uso de la aplicacion en operacion real.</p>
+      <h2>1) Catalogo y compras</h2>
+      <ul>
+        <li>Gestion de productos, proveedores y relacion producto-proveedor.</li>
+        <li>Creacion de pedidos con lineas y estados trazables.</li>
+        <li>Base para controlar costes y disponibilidad antes de recepcionar.</li>
+      </ul>
+      <h2>2) Recepciones e incidencias</h2>
+      <ol>
+        <li>Seleccion de pedidos pendientes desde wizard de recepcion.</li>
+        <li>Escaneo o conteo por linea con guardado automatico de borrador.</li>
+        <li>Envio de recepcion al backend con DTO validado.</li>
+        <li>Transaccion unica para recepcion, albaran, stock y movimientos.</li>
+        <li>Creacion automatica de incidencia si hay diferencias.</li>
+        <li>Actualizacion de estado de pedido y cierre trazable.</li>
+      </ol>
+      <figure class="mermaid-wrap">
+        <figcaption>Diagrama de flujo: recepcion con incidencias</figcaption>
+        <pre class="mermaid">
+flowchart LR
+  wizardRecepcion[Wizard Recepciones] --> draftSave[Guardado Draft]
+  draftSave --> submitRecepcion[POST /recepciones]
+  submitRecepcion --> txService[RecepcionStockService Transaccion]
+  txService --> inventarioMov[Inventario + Movimiento]
+  txService --> incidenciaCheck{Diferencias}
+  incidenciaCheck -->|Si| crearIncidencia[Incidencia + IncidenciaLinea]
+  incidenciaCheck -->|No| cerrarOk[Recepcion OK]
+  crearIncidencia --> pedidoEstado[Actualizar Estado Pedido]
+  cerrarOk --> pedidoEstado
+  pedidoEstado --> resultadoUI[Resultado en UI]
+        </pre>
+      </figure>
+      <h2>3) Inventario, produccion y administracion</h2>
+      <ul>
+        <li>Inventario y movimientos conectados con recepciones para datos fiables en tiempo real.</li>
+        <li>Modulo de produccion/cocina para recetas, preparaciones y lotes.</li>
+        <li>Panel de administracion para supervisar sistema, usuarios y operativa.</li>
+      </ul>
+      <h2>Evidencia visual del recorrido funcional</h2>
+      <div class="image-grid">
+        <figure class="shot">
+          <img src="./installer/screenshots/wizard/03-preflight-initial.png" alt="Vista inicial de flujo wizard">
+          <span>Inicio de flujo guiado</span>
+        </figure>
+        <figure class="shot">
+          <img src="./pantallas/Admin/Recepción-Admin.png" alt="Pantalla de recepcion en panel admin">
+          <span>Pantalla de recepciones en operacion</span>
+        </figure>
+        <figure class="shot">
+          <img src="./pantallas/Admin/ConteoRecepcion-Admin.png" alt="Conteo de recepcion">
+          <span>Conteo y validacion por linea</span>
+        </figure>
+        <figure class="shot">
+          <img src="./pantallas/Admin/Finalizacion-Recepcion.png" alt="Finalizacion de recepcion">
+          <span>Cierre de proceso con trazabilidad</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="instalador-admin">
+      <h1 class="section-title">Instalador y panel de administracion operativa</h1>
+      <p class="lead">SmartEconomat no se limita a la aplicacion web: incorpora un instalador de escritorio para Windows, un asistente guiado de despliegue y un panel de control para operar el stack Docker en produccion o laboratorio.</p>
+
+      <h2>Instalacion asistida (NSIS + wizard)</h2>
+      <p>El flujo de puesta en marcha parte del ejecutable, solicita elevacion cuando es necesaria y guia al operador por preflight, configuracion, SMTP, despliegue y finalizacion. Esto reduce barreras tecnicas y estandariza instalaciones en entornos no expertos.</p>
+      <div class="image-grid">
+        <figure class="shot">
+          <img src="./installer/screenshots/instalador-nsis/01-instalador-exe.png" alt="Ejecutable del instalador SmartEconomat">
+          <span>Instalador distribuido para Windows (entrada del flujo)</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/instalador-nsis/05-installer-progress.png" alt="Progreso de instalacion NSIS">
+          <span>Instalacion guiada y controlada con NSIS</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/wizard/03-preflight-initial.png" alt="Chequeos preflight del asistente">
+          <span>Preflight: validacion de requisitos antes del despliegue</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/wizard/19-deploy-progress.png" alt="Progreso de despliegue en el asistente">
+          <span>Despliegue automatizado del stack con seguimiento visual</span>
+        </figure>
+      </div>
+
+      <h2>Panel de control del instalador</h2>
+      <p>Tras el primer despliegue, el operador puede gestionar servicios, revisar logs, lanzar backups y ejecutar acciones de mantenimiento desde un panel central. Este panel evita tener que usar comandos de Docker manualmente para operaciones rutinarias.</p>
+      <div class="image-grid">
+        <figure class="shot">
+          <img src="./installer/screenshots/admin/01-control-top.png" alt="Vista superior del panel de control del instalador">
+          <span>Panel operativo con estado general del entorno</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/admin/03-control-services-band.png" alt="Tarjetas de servicios en el panel de control">
+          <span>Control visual de servicios del stack</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/admin/04-control-logs-paper.png" alt="Bloque de logs del panel de control">
+          <span>Consulta de logs para diagnostico y soporte</span>
+        </figure>
+        <figure class="shot">
+          <img src="./installer/screenshots/admin/05-control-backup-paper.png" alt="Bloque de backup y restauracion del panel">
+          <span>Backups y restauracion para continuidad operativa</span>
+        </figure>
+      </div>
+
+      <h2>Administracion funcional dentro de la aplicacion</h2>
+      <p>En paralelo al panel tecnico del instalador, la propia aplicacion incluye administracion de negocio: usuarios, permisos, catalogo, recepciones e inventario. Esta separacion entre operacion tecnica y operacion funcional mejora gobernanza y mantenibilidad.</p>
+      <div class="image-grid">
+        <figure class="shot">
+          <img src="./guia_usuario/img/Admin/Dashboard-Admin.png" alt="Dashboard del administrador de SmartEconomat">
+          <span>Dashboard administrativo para control funcional diario</span>
+        </figure>
+        <figure class="shot">
+          <img src="./guia_usuario/img/Admin/GestionUsuarios-Admin.png" alt="Gestion de usuarios en SmartEconomat">
+          <span>Gestion de usuarios y ciclo de cuentas</span>
+        </figure>
+        <figure class="shot">
+          <img src="./guia_usuario/img/Admin/GestordePermisos-Admin.png" alt="Gestor de permisos de SmartEconomat">
+          <span>RBAC granular desde el gestor de permisos</span>
+        </figure>
+        <figure class="shot">
+          <img src="./guia_usuario/img/Admin/Recepción-Admin.png" alt="Modulo de recepciones en administracion">
+          <span>Recepciones e inventario como nucleo operativo</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="proceso-desarrollo">
+      <h1 class="section-title">Proceso de desarrollo: metodologia y workflow Git</h1>
+      <p class="lead">El resultado tecnico se apoyo en un proceso de equipo disciplinado. Se trabajo por incrementos funcionales cortos, validando contratos, pruebas y calidad antes de integrar.</p>
+      <h2>Workflow Git aplicado</h2>
+      <ol>
+        <li>Planificacion de tarea y apertura de rama por feature o fix.</li>
+        <li>Commits pequenos y trazables, con mensaje claro de intencion tecnica.</li>
+        <li>Pull Request con revision funcional y tecnica antes de merge.</li>
+        <li>Ejecucion de checks automatizados (lint, tests, build, capturas E2E).</li>
+        <li>Merge a rama principal de integracion y despliegue controlado.</li>
+      </ol>
+      <h2>Practicas que evitaron regresiones</h2>
+      <div class="two-col">
+        <article class="card">
+          <strong>Gobierno de codigo</strong>
+          <ul>
+            <li>Ramas enfocadas en una unica responsabilidad funcional.</li>
+            <li>Revisiones cruzadas para detectar deuda tecnica temprano.</li>
+            <li>Sincronizacion continua con contratos backend como fuente de verdad.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <strong>Seguridad y permisos como requisito continuo</strong>
+          <ul>
+            <li><code>JwtAuthGuard</code>, <code>RolesGuard</code> y <code>PermisosGuard</code> validados en cada iteracion.</li>
+            <li>Pruebas sobre rutas protegidas y perfiles de usuario.</li>
+            <li>Backend como ultima decision de autorizacion (frontend no decide acceso).</li>
+          </ul>
+        </article>
+      </div>
+      <figure class="mermaid-wrap">
+        <figcaption>Flujo Git + calidad antes de integrar</figcaption>
+        <pre class="mermaid">
+flowchart TD
+  task[Tarea definida] --> branch[Rama feature/fix]
+  branch --> commits[Commits pequenos]
+  commits --> pr[Pull Request]
+  pr --> checks[Lint + Tests + Build]
+  checks --> review[Revision tecnica]
+  review --> merge[Merge rama integracion]
+  merge --> deploy[Deploy controlado]
+        </pre>
+      </figure>
+    </section>
+
+    <section id="calidad">
+      <h1 class="section-title">Calidad tecnica, seguridad y despliegue</h1>
+      <h2>Pruebas por capas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Capa</th>
+            <th>Estrategia</th>
+            <th>Objetivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Backend</td><td>Unit + E2E + qa:gate</td><td>Reglas de negocio y contratos estables.</td></tr>
+          <tr><td>Frontend</td><td>Vitest + Playwright + rutas protegidas</td><td>UX consistente y permisos correctos.</td></tr>
+          <tr><td>Installer</td><td>Unit + E2E + capturas automatizadas</td><td>Despliegue repetible y verificable.</td></tr>
+        </tbody>
+      </table>
+      <h2>Seguridad aplicada en producto</h2>
+      <ul>
+        <li>JWT en cookie httpOnly, validacion por guards y permisos granulares.</li>
+        <li>DTOs y validaciones estrictas para proteger contratos y datos de entrada.</li>
+        <li>Rate limiting y normalizacion de errores para robustez operativa.</li>
+      </ul>
+      <h2>Despliegue real</h2>
+      <ul>
+        <li>Pipeline CI/CD: lint, test, build, empaquetado y despliegue remoto.</li>
+        <li>Produccion con Docker Compose (frontend, backend, PostgreSQL, Redis).</li>
+        <li>Instalador para reducir friccion en entornos no tecnicos.</li>
+      </ul>
+    </section>
+
+  </main>
+</body>
+</html>

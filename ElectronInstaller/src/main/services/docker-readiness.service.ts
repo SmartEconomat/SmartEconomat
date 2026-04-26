@@ -1,5 +1,6 @@
 import type { CommandResult, DockerRuntimeStatus } from "@shared/contracts";
 
+import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
 import { ProcessRunnerService } from "./process-runner.service";
 
 export interface DockerReadinessProbeOptions {
@@ -34,7 +35,8 @@ function buildStatus(
 }
 
 function isCommandMissing(result: CommandResult): boolean {
-  const joined = `${result.message} ${result.stderr} ${result.stdout}`.toLowerCase();
+  const joined =
+    `${result.message} ${result.stderr} ${result.stdout}`.toLowerCase();
   return (
     joined.includes("enoent") ||
     joined.includes("not recognized") ||
@@ -43,7 +45,8 @@ function isCommandMissing(result: CommandResult): boolean {
 }
 
 function isDaemonUnavailable(result: CommandResult): boolean {
-  const joined = `${result.message} ${result.stderr} ${result.stdout}`.toLowerCase();
+  const joined =
+    `${result.message} ${result.stderr} ${result.stdout}`.toLowerCase();
   return (
     joined.includes("cannot connect to the docker daemon") ||
     joined.includes("error during connect") ||
@@ -155,7 +158,11 @@ export class DockerReadinessService {
       });
 
       return openResult.ok
-        ? buildStatus("daemon-starting", "Docker Desktop iniciado (macOS).", source)
+        ? buildStatus(
+            "daemon-starting",
+            "Docker Desktop iniciado (macOS).",
+            source,
+          )
         : buildStatus(
             "daemon-error",
             openResult.stderr || openResult.message,
@@ -170,7 +177,11 @@ export class DockerReadinessService {
     });
 
     return serviceResult.ok
-      ? buildStatus("daemon-starting", "Servicio Docker iniciado (Linux).", source)
+      ? buildStatus(
+          "daemon-starting",
+          "Servicio Docker iniciado (Linux).",
+          source,
+        )
       : buildStatus(
           "daemon-error",
           serviceResult.stderr || serviceResult.message,
@@ -178,7 +189,9 @@ export class DockerReadinessService {
         );
   }
 
-  async waitUntilReady(options: DockerWaitOptions): Promise<DockerRuntimeStatus> {
+  async waitUntilReady(
+    options: DockerWaitOptions,
+  ): Promise<DockerRuntimeStatus> {
     const source = options.source ?? "boot-guardian";
     const startTime = Date.now();
     const maxWaitMs = Math.max(5_000, options.maxWaitMs);
@@ -248,18 +261,25 @@ export class DockerReadinessService {
   private async startDockerDesktopWindows(
     source: DockerRuntimeStatus["source"],
   ): Promise<DockerRuntimeStatus> {
-    const candidatePaths = [
-      "C:/Program Files/Docker/Docker/Docker Desktop.exe",
-      "C:/Program Files/Docker/Docker/Docker Desktop",
-    ];
+    const resolved = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+    const candidatePaths =
+      resolved !== null
+        ? [resolved]
+        : [
+            "C:/Program Files/Docker/Docker/Docker Desktop.exe",
+            "C:/Program Files/Docker/Docker/Docker Desktop",
+          ];
 
     for (const executablePath of candidatePaths) {
+      const escaped = executablePath.replace(/'/g, "''");
       const result = await this.processRunner.run({
         command: "powershell",
         args: [
           "-NoProfile",
           "-Command",
-          `if (Test-Path '${executablePath}') { Start-Process -FilePath '${executablePath}'; exit 0 } else { exit 1 }`,
+          `if (Test-Path -LiteralPath '${escaped}') { Start-Process -FilePath '${escaped}'; exit 0 } else { exit 1 }`,
         ],
         timeoutMs: 12_000,
       });
@@ -275,7 +295,7 @@ export class DockerReadinessService {
 
     return buildStatus(
       "daemon-error",
-      "No se encontró Docker Desktop en rutas estándar de Windows.",
+      "No se encontró Docker Desktop.exe (Program Files, perfil local ni registro de desinstalación).",
       source,
     );
   }

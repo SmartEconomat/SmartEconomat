@@ -409,6 +409,11 @@ export function createInstallerCaptureBridgeMock(): Record<string, unknown> {
         lastAutomaticActionAt: null,
         lastAutomaticAction: null,
         uptimeSeconds: 120,
+        incidentsResolved: 0,
+        incidentsOpen: 0,
+        lastIncidentAt: null,
+        latestIncident: null,
+        recentIncidents: [],
       },
     }),
 

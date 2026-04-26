@@ -9,6 +9,7 @@ import type {
   PreflightReport,
 } from "@shared/contracts";
 
+import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
@@ -25,21 +26,15 @@ export function evaluateDockerChecks(
     id: "docker-engine",
     label: "Docker Engine",
     status: dockerVersion.ok ? "OK" : dockerTimedOut ? "WARN" : "BLOCKER",
-    detail: dockerVersion.ok
-      ? dockerVersion.stdout
-      : dockerFailure.detail,
-    recommendation: dockerVersion.ok
-      ? undefined
-      : dockerFailure.recommendation,
+    detail: dockerVersion.ok ? dockerVersion.stdout : dockerFailure.detail,
+    recommendation: dockerVersion.ok ? undefined : dockerFailure.recommendation,
   };
 
   const composeCheck: PreflightCheck = {
     id: "docker-compose",
     label: "Docker Compose",
     status: composeVersion.ok ? "OK" : composeTimedOut ? "WARN" : "BLOCKER",
-    detail: composeVersion.ok
-      ? composeVersion.stdout
-      : composeFailure.detail,
+    detail: composeVersion.ok ? composeVersion.stdout : composeFailure.detail,
     recommendation: composeVersion.ok
       ? undefined
       : composeFailure.recommendation,
@@ -52,13 +47,12 @@ function normalizeDockerFailure(result: CommandResult): {
   detail: string;
   recommendation: string;
 } {
-  const fallbackDetail = result.stderr || result.message || "Docker no responde.";
-  const raw = `${result.stderr}\n${result.stdout}\n${result.message}`.toLowerCase();
+  const fallbackDetail =
+    result.stderr || result.message || "Docker no responde.";
+  const raw =
+    `${result.stderr}\n${result.stdout}\n${result.message}`.toLowerCase();
 
-  if (
-    raw.includes("command timed out") ||
-    raw.includes("timed out")
-  ) {
+  if (raw.includes("command timed out") || raw.includes("timed out")) {
     return {
       detail:
         "La comprobación de Docker excedió el tiempo de espera. El motor puede estar arrancando o bajo carga.",
@@ -102,12 +96,14 @@ function normalizeDockerFailure(result: CommandResult): {
 
   return {
     detail: fallbackDetail,
-    recommendation: "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight.",
+    recommendation:
+      "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight.",
   };
 }
 
 function isDockerTimeoutFailure(result: CommandResult): boolean {
-  const raw = `${result.message}\n${result.stderr}\n${result.stdout}`.toLowerCase();
+  const raw =
+    `${result.message}\n${result.stderr}\n${result.stdout}`.toLowerCase();
   return raw.includes("command timed out") || raw.includes("timed out");
 }
 
@@ -294,7 +290,8 @@ export class PreflightService {
       const message =
         error instanceof Error ? error.message : "Permiso denegado";
       const isAccessDenied =
-        message.includes("EACCES") || message.toLowerCase().includes("permission denied");
+        message.includes("EACCES") ||
+        message.toLowerCase().includes("permission denied");
       const recommendation =
         isAccessDenied && runtimePath.startsWith("/tmp/")
           ? "Esa ruta bajo /tmp no es escribible (a menudo por permisos o porque se creó con otro usuario/sudo). Elige una carpeta bajo tu usuario (por defecto ~/.smarteconomat-runtime) o corrige permisos/chown del directorio."
@@ -711,22 +708,28 @@ export class PreflightService {
       return;
     }
 
-    const candidatePaths = [
-      "C:/Program Files/Docker/Docker/Docker Desktop.exe",
-      "C:/Program Files/Docker/Docker/Docker Desktop",
-    ];
+    const resolved = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+    const candidatePaths =
+      resolved !== null
+        ? [resolved]
+        : [
+            "C:/Program Files/Docker/Docker/Docker Desktop.exe",
+            "C:/Program Files/Docker/Docker/Docker Desktop",
+          ];
 
     for (const executablePath of candidatePaths) {
+      const escaped = executablePath.replace(/'/g, "''");
       const start = await this.processRunner.run({
         command: "powershell",
         args: [
           "-NoProfile",
           "-Command",
-          `if (Test-Path '${executablePath}') { Start-Process -FilePath '${executablePath}'; exit 0 } else { exit 1 }`,
+          `if (Test-Path -LiteralPath '${escaped}') { Start-Process -FilePath '${escaped}'; exit 0 } else { exit 1 }`,
         ],
         timeoutMs: 15_000,
       });
-
       if (start.ok) {
         break;
       }
@@ -838,30 +841,27 @@ export class PreflightService {
   }
 
   private async checkDockerDesktopInstalled(): Promise<PreflightCheck> {
-    const command = [
-      "$paths = @(",
-      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe',",
-      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop'",
-      ")",
-      "$exists = $false",
-      "foreach ($path in $paths) { if (Test-Path $path) { $exists = $true; break } }",
-      "if ($exists) { Write-Output 'INSTALLED' } else { Write-Output 'MISSING' }",
-    ].join("; ");
-
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: ["-NoProfile", "-Command", command],
-      timeoutMs: 10_000,
-    });
-    const installed = result.ok && result.stdout.trim() === "INSTALLED";
+    const exePath = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+    const installed = exePath !== null;
+    const normalized = (exePath ?? "")
+      .replace(/\\/g, "/")
+      .toLowerCase();
+    const looksLikeSystemProgramFiles =
+      normalized.includes("/program files/") ||
+      normalized.includes("/archivos de programa/");
+    const detail = installed
+      ? looksLikeSystemProgramFiles
+        ? "Docker Desktop está instalado."
+        : "Docker Desktop está instalado (ubicación por usuario o registro; instalación válida en Windows)."
+      : "No se detectó el ejecutable de Docker Desktop (Program Files, perfil local ni registro de desinstalación).";
 
     return {
       id: "docker-desktop-installed",
       label: "Docker Desktop instalado",
       status: installed ? "OK" : "BLOCKER",
-      detail: installed
-        ? "Docker Desktop está instalado."
-        : "No se encontró Docker Desktop en Program Files.",
+      detail,
       recommendation: installed
         ? undefined
         : "Instalar Docker Desktop para habilitar Docker Engine y Compose.",
@@ -874,8 +874,14 @@ export class PreflightService {
   }
 
   private async checkDockerDesktopRunning(): Promise<PreflightCheck> {
-    const command =
-      "if (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }";
+    const command = [
+      "$names = @('Docker Desktop','com.docker.backend')",
+      "$running = $false",
+      "foreach ($n in $names) {",
+      "  if (Get-Process -Name $n -ErrorAction SilentlyContinue) { $running = $true; break }",
+      "}",
+      "if ($running) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }",
+    ].join(" ");
 
     const result = await this.processRunner.run({
       command: "powershell",

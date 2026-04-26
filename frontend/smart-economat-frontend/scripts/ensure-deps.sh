@@ -23,10 +23,18 @@ fi
 
 if [ ! -d node_modules ] || [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
   echo "📦 Sincronizando dependencias del frontend usando $MANIFEST_FILE..."
+  # Red inestable (Docker/CI): reintentos y menos conexiones paralelas (misma idea que backend/Dockerfile.prod)
+  export NPM_CONFIG_FETCH_RETRIES=5
+  export NPM_CONFIG_FETCH_RETRY_FACTOR=2
+  export NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000
+  export NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000
+  export NPM_CONFIG_MAXSOCKETS=1
+  export NPM_CONFIG_PROGRESS=false
+  export NPM_CONFIG_PREFER_OFFLINE=true
   if [ "$MANIFEST_FILE" = "package-lock.json" ]; then
-    npm ci
+    npm ci --no-audit --no-fund
   else
-    npm install
+    npm install --no-audit --no-fund
   fi
   mkdir -p "$MARKER_DIR"
   printf '%s' "$CURRENT_HASH" > "$MARKER_FILE"

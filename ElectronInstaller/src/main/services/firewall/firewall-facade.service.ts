@@ -45,7 +45,11 @@ export class FirewallFacadeService {
     return Array.from(targets);
   }
 
-  private agentLog(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  private agentLog(
+    hypothesisId: string,
+    message: string,
+    data: Record<string, unknown>,
+  ) {
     const payload = {
       sessionId: "1b9740",
       runId: process.env.DEBUG_RUN_ID ?? "runtime",
@@ -67,14 +71,17 @@ export class FirewallFacadeService {
       }
 
       try {
-        await fetch("http://127.0.0.1:7788/ingest/ae88677f-9837-49c4-8f3e-780503dbdea8", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "1b9740",
+        await fetch(
+          "http://127.0.0.1:7788/ingest/ae88677f-9837-49c4-8f3e-780503dbdea8",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "1b9740",
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload),
-        });
+        );
       } catch {
         // ignore
       }
@@ -114,7 +121,8 @@ export class FirewallFacadeService {
 
     this.agentLog("IPC-FW-1", "firewall.facade.ensure.summary", {
       verificationMode: context.verificationMode ?? "default",
-      connectivityChecksDeferred: verification.connectivityChecksDeferred ?? false,
+      connectivityChecksDeferred:
+        verification.connectivityChecksDeferred ?? false,
       canContinue: userDecision.canContinue,
       warningCode: userDecision.warningCode,
       rulesConsistent: verification.rulesConsistent,
@@ -125,9 +133,12 @@ export class FirewallFacadeService {
       dnsLoopback: verification.connectivity.dnsLoopback,
       listeningPorts: verification.connectivity.listeningPorts,
       localhostHttpErrorCode: verification.connectivity.localhostHttpErrorCode,
-      localhostHttpsErrorCode: verification.connectivity.localhostHttpsErrorCode,
-      localDomainHttpErrorCode: verification.connectivity.localDomainHttpErrorCode,
-      localDomainHttpsErrorCode: verification.connectivity.localDomainHttpsErrorCode,
+      localhostHttpsErrorCode:
+        verification.connectivity.localhostHttpsErrorCode,
+      localDomainHttpErrorCode:
+        verification.connectivity.localDomainHttpErrorCode,
+      localDomainHttpsErrorCode:
+        verification.connectivity.localDomainHttpsErrorCode,
       technicalMessage,
     });
 

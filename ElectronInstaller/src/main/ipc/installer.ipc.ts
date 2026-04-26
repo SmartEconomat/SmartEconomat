@@ -425,10 +425,9 @@ export class InstallerIPC {
       }
       const firewallResult = await this.ensureWindowsFirewallRules(payload);
       if (!firewallResult.ok) {
-        return this.fail(
-          payload.runtimePath,
-          firewallResult.message,
-          "FIREWALL_RULES_FAILED",
+        this.emitRuntimeLog(
+          "installer",
+          `[WARN] ${firewallResult.message} Se continuará con la instalación; revisa reglas de Windows Firewall manualmente.`,
         );
       }
 
@@ -759,7 +758,10 @@ export class InstallerIPC {
         }
       : {
           ok: false,
-          message: result.stderr || "Error configurando firewall en Windows.",
+          message:
+            result.stderr ||
+            result.stdout ||
+            "No fue posible configurar reglas de firewall en Windows.",
         };
   }
 

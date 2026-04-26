@@ -236,6 +236,7 @@ export interface WatchdogStatus {
 export interface HealthUpdateEvent {
   health: ServiceHealth[];
   watchdog: WatchdogStatus;
+  supervisorSnapshot?: SupervisorSnapshot;
   timestamp: string;
 }
 
@@ -248,6 +249,13 @@ export interface SupervisorCheck {
     | "docker-version"
     | "docker-info"
     | "docker-network"
+    | "docker-volumes"
+    | "compose-stack"
+    | "backend-api"
+    | "database"
+    | "reverse-proxy"
+    | "certificates"
+    | "hosts-file"
     | "containers-running"
     | "containers-health"
     | "ports"
@@ -265,10 +273,30 @@ export interface SupervisorCheck {
 
 export type SupervisorOverallState = "healthy" | "recovering" | "degraded";
 
+export type SupervisorIncidentSeverity = "info" | "warn" | "error" | "critical";
+
+export interface SupervisorIncident {
+  id: string;
+  service: string;
+  title: string;
+  detail: string;
+  severity: SupervisorIncidentSeverity;
+  state: "open" | "resolved";
+  detectedAt: string;
+  resolvedAt?: string;
+  occurrences: number;
+}
+
 export interface SupervisorSnapshot {
   overallState: SupervisorOverallState;
   checks: SupervisorCheck[];
   lastAutomaticActionAt: string | null;
   lastAutomaticAction: string | null;
   uptimeSeconds: number;
+  nextCheckInMs?: number;
+  incidentsResolved: number;
+  incidentsOpen: number;
+  lastIncidentAt: string | null;
+  latestIncident: SupervisorIncident | null;
+  recentIncidents: SupervisorIncident[];
 }

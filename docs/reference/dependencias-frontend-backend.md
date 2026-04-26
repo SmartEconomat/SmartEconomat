@@ -161,5 +161,5 @@ El backend se apoya en NestJS 11 como framework principal, TypeORM 0.3 como capa
 
 - [getting-started/dependencias.md](../getting-started/dependencias.md)
 - [reference/typeorm-y-datasource.md](typeorm-y-datasource.md)
-- [reference/variables-entorno.md](variables-entorno.md)
+- [environment-variables.md](../environment-variables.md)
 - [frontend/README.md](../frontend/README.md)

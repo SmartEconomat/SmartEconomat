@@ -137,9 +137,7 @@ export function PreflightPage({
                     fontSize: { xs: "0.76rem", sm: "0.875rem" },
                   }}
                 >
-                  {busy
-                    ? "Aplicando fixes..."
-                    : "Solucionar automáticamente"}
+                  {busy ? "Aplicando fixes..." : "Solucionar automáticamente"}
                 </Button>
               </Stack>
             }

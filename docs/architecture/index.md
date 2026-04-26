@@ -29,5 +29,5 @@ Este índice reúne los documentos canónicos de arquitectura del proyecto. La n
 ## Relacionado
 
 - [Referencia de API](../reference/api/README.md)
-- [Variables de entorno](../reference/variables-entorno.md)
-- [Guía de despliegue](../DEPLOYMENT.md)
+- [Variables de entorno](../environment-variables.md)
+- [Guia de despliegue](../deployment.md)

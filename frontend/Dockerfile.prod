@@ -5,6 +5,7 @@
 # IMPORTANTE: Este Dockerfile asume que frontend/build/ ha sido pre-compilado
 # en la máquina del DESARROLLADOR antes de empaquetar el instalador.
 # NO hace npm ci ni npm run build en el cliente.
+# (Si se añade un stage builder con npm aquí, reutilizar la política de red/reintentos de backend/Dockerfile.prod.)
 #
 # Pasos en el desarrollador (ejecutados por scripts/pre-build-project.mjs):
 #   cd frontend/smart-economat-frontend

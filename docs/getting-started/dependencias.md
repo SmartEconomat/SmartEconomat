@@ -17,7 +17,7 @@ Esta página resume las dependencias runtime principales del proyecto y enlaza a
 
 - Si necesitas entender el stack real y el motivo de cada librería, usa la referencia detallada.
 - Si estás buscando tooling de build, lint, testing o CI/CD, consulta la documentación de desarrollo y operación; ese alcance queda fuera de esta página.
-- Si quieres revisar la capa de persistencia o la configuración del entorno, usa también [reference/typeorm-y-datasource.md](../reference/typeorm-y-datasource.md) y [reference/variables-entorno.md](../reference/variables-entorno.md).
+- Si quieres revisar la capa de persistencia o la configuración del entorno, usa también [reference/typeorm-y-datasource.md](../reference/typeorm-y-datasource.md) y [environment-variables.md](../environment-variables.md).
 
 ## Alcance de este resumen
 

@@ -16,6 +16,24 @@ import type {
   InstallerStateSnapshot,
 } from "@shared/contracts";
 
+/** True mientras el state machine del instalador no está en un estado terminal (defensa si `busy` se desincroniza). */
+function isInstallerPipelineRunning(
+  snapshot: InstallerStateSnapshot | null,
+): boolean {
+  if (!snapshot) {
+    return false;
+  }
+  switch (snapshot.state) {
+    case "IDLE":
+    case "FAILED":
+    case "DONE":
+    case "DONE_WITH_WARNINGS":
+      return false;
+    default:
+      return true;
+  }
+}
+
 const sampleLogLines = [
   "[sin actividad] Pulsa 'Iniciar instalación' para ejecutar el flujo transaccional.",
   "[sin actividad] El instalador validará WSL2, Docker Desktop, generará .env.prod y verificará accesibilidad real al final.",
@@ -171,6 +189,9 @@ export function DeployPage({
     currentPhaseIndex >= 0
       ? installPhases.slice(currentPhaseIndex + 1)
       : installPhases;
+
+  const deployInteractionLocked =
+    busy || isInstallerPipelineRunning(state);
 
   return (
     <Box component="section" sx={{ display: "grid", gap: 2 }}>
@@ -442,16 +463,16 @@ export function DeployPage({
           mt: 0.5,
         }}
       >
-        <Button variant="outlined" disabled={busy} onClick={onBack}>
+        <Button variant="outlined" disabled={deployInteractionLocked} onClick={onBack}>
           Atrás
         </Button>
         <Button
           variant="contained"
-          disabled={busy}
+          disabled={deployInteractionLocked}
           onClick={() => void onDeploy()}
           sx={{ minWidth: 196, fontWeight: 700 }}
         >
-          {busy ? (
+          {deployInteractionLocked ? (
             <Stack direction="row" spacing={1} alignItems="center">
               <CircularProgress size={16} color="inherit" />
               <span>Ejecutando...</span>

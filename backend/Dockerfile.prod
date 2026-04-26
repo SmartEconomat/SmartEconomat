@@ -26,7 +26,14 @@ COPY package.json ./
 COPY package-lock.json ./
 
 # Instalar solo dependencias de runtime del backend (sin build)
-RUN npm ci --omit=dev --no-audit --no-fund
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-factor 2 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set maxsockets 1 \
+    && npm config set prefer-offline true \
+    && npm config set progress false \
+    && npm ci --omit=dev --no-audit --no-fund
 
 # Copiar archivos i18n necesarios en runtime (en el origen están en src/, en
 # el build los copiamos al lado del dist/ durante el pre-build del desarrollador)

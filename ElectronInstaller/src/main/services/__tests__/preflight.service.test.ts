@@ -66,7 +66,9 @@ describe("evaluateDockerChecks", () => {
 
     expect(checks[0]?.status).toBe("BLOCKER");
     expect(checks[0]?.detail).toContain("daemon Linux no está disponible");
-    expect(checks[0]?.recommendation).toContain("Inicia o reinicia Docker Desktop");
+    expect(checks[0]?.recommendation).toContain(
+      "Inicia o reinicia Docker Desktop",
+    );
   });
 });
 

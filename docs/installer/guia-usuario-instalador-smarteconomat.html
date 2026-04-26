@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SmartEconomat — Guía de usuario del instalador (Electron)</title>
+    <style>
+      :root {
+        --color-primary: #dc004e;
+        --color-primary-dark: #b80042;
+        --color-secondary: #0a6151;
+        --color-bg: #eef2f7;
+        --color-paper: #ffffff;
+        --color-text: #1e293b;
+        --color-muted: #64748b;
+        --font-sans: "Segoe UI", system-ui, -apple-system, "Manrope", sans-serif;
+        --radius: 12px;
+        --shadow: 0 22px 52px rgba(15, 23, 42, 0.12);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: var(--color-text);
+        line-height: 1.55;
+        font-size: 11.5pt;
+        background: linear-gradient(
+          180deg,
+          var(--color-bg) 0%,
+          #e7ebf2 100%
+        );
+      }
+      .cover {
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 3rem 1.5rem;
+        background: radial-gradient(
+            circle at 12% 18%,
+            rgba(229, 0, 70, 0.11) 0%,
+            rgba(229, 0, 70, 0) 42%
+          ),
+          linear-gradient(180deg, #eef2f7 0%, #e7ebf2 100%);
+      }
+      .cover-inner {
+        max-width: 640px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: var(--radius);
+        padding: 2.75rem 2.25rem;
+        box-shadow: var(--shadow);
+      }
+        .cover img.logo {
+        height: 56px;
+        width: auto;
+        margin-bottom: 1.5rem;
+      }
+      .team-stamp {
+        margin-top: 1.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.35);
+        text-align: center;
+      }
+      .team-stamp img {
+        height: 48px;
+        width: auto;
+        opacity: 0.95;
+        filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+      }
+      .team-stamp .stamp-caption {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+      }
+      .cover h1 {
+        margin: 0 0 0.35rem;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        font-size: 1.85rem;
+        color: var(--color-text);
+      }
+      .cover .subtitle {
+        color: var(--color-muted);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+      }
+      .cover .meta {
+        font-size: 0.95rem;
+        color: var(--color-muted);
+        border-top: 1px solid rgba(148, 163, 184, 0.35);
+        padding-top: 1.25rem;
+      }
+      .doc {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+      }
+      .doc-inner {
+        background: var(--color-paper);
+        border-radius: var(--radius);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        padding: 2rem 2.25rem 2.5rem;
+        box-shadow: var(--shadow);
+      }
+      nav.toc {
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 10px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+      }
+      nav.toc h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.1rem;
+      }
+      nav.toc ol {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      nav.toc a {
+        color: var(--color-primary);
+        text-decoration: none;
+      }
+      nav.toc a:hover {
+        text-decoration: underline;
+      }
+      h2 {
+        font-size: 1.35rem;
+        margin: 2rem 0 0.75rem;
+        color: var(--color-text);
+        border-bottom: 2px solid var(--color-primary);
+        padding-bottom: 0.35rem;
+      }
+      h3 {
+        font-size: 1.08rem;
+        margin: 1.35rem 0 0.5rem;
+        color: var(--color-secondary);
+      }
+      p,
+      li {
+        margin: 0.5rem 0;
+      }
+      ul.compact li {
+        margin: 0.25rem 0;
+      }
+      .note {
+        background: #fff7ed;
+        border-left: 4px solid #f59e0b;
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+      }
+      .note.source {
+        background: #eff6ff;
+        border-color: #3b82f6;
+      }
+      figure {
+        margin: 1.25rem 0;
+        text-align: center;
+      }
+      figure img {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      }
+      figcaption {
+        font-size: 0.88rem;
+        color: var(--color-muted);
+        margin-top: 0.5rem;
+        text-align: left;
+      }
+      code,
+      kbd {
+        font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        font-size: 0.88em;
+        background: #f1f5f9;
+        padding: 0.12em 0.35em;
+        border-radius: 4px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #e2e8f0;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 700;
+      }
+      section {
+        margin-bottom: 1.5rem;
+      }
+      .kbd {
+        border: 1px solid #cbd5e1;
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 0.1em 0.4em;
+        font-size: 0.9em;
+      }
+      @media print {
+        @page {
+          margin: 18mm 16mm;
+        }
+        body {
+          background: #fff;
+          font-size: 10.5pt;
+        }
+        .cover {
+          min-height: auto;
+          page-break-after: always;
+        }
+        .doc-inner {
+          box-shadow: none;
+          border: none;
+        }
+        nav.toc {
+          page-break-after: always;
+        }
+        h2 {
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+        figure {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        figure img {
+          max-height: 220mm;
+          object-fit: contain;
+        }
+        a {
+          color: #000;
+          text-decoration: none;
+        }
+        a[href^="#"]::after {
+          content: "";
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="cover" id="portada">
+      <div class="cover-inner">
+        <img
+          class="logo"
+          src="../../ElectronInstaller/src/renderer/assets/images/SVG/logo-smat-economato.svg"
+          alt="Logotipo SmartEconomat"
+        />
+        <h1>SmartEconomat</h1>
+        <p class="subtitle">Guía de usuario — Instalador Electron y despliegue Docker</p>
+        <p class="meta">
+          <strong>Documento:</strong> guía académica (TFG DAW)<br />
+          <strong>Autores:</strong> Darel, Alexis, Sergio, Guillermo, Maurizio
+        </p>
+        <div class="team-stamp" aria-label="Sello del equipo de desarrollo">
+          <img
+            src="../../frontend/smart-economat-frontend/src/assets/logos/SVG/logo-lamarr-c.svg"
+            alt="Lamarr — equipo de desarrollo"
+            width="202"
+            height="101"
+          />
+          <span class="stamp-caption">Equipo Lamarr</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="doc">
+      <div class="doc-inner">
+        <nav class="toc" aria-label="Índice">
+          <h2>Índice</h2>
+          <ol>
+            <li><a href="#intro">Introducción</a></li>
+            <li><a href="#descripcion">Descripción general</a></li>
+            <li><a href="#requisitos">Requisitos previos</a></li>
+            <li><a href="#instalacion">Instalación del paquete (NSIS)</a></li>
+            <li><a href="#inicio">Inicio de la aplicación Electron</a></li>
+            <li><a href="#flujo">Asistente (wizard) paso a paso</a></li>
+            <li><a href="#panel">Panel de control, backups y modales</a></li>
+            <li><a href="#funcionalidades">IPC, depuración y recursos gráficos</a></li>
+            <li><a href="#casos">Casos de uso reales</a></li>
+            <li><a href="#errores">Errores y situaciones frecuentes</a></li>
+            <li><a href="#conclusion">Conclusión</a></li>
+          </ol>
+        </nav>
+
+        <section id="intro">
+          <h2>1. Introducción</h2>
+          <p>
+            Este documento describe lo que el usuario puede hacer con el <strong>instalador de
+            SmartEconomat</strong> según la implementación real del repositorio: un ejecutable
+            <strong>Electron</strong> (proceso principal + renderer React) que orquesta
+            <strong>Docker</strong>, certificados, red local y ciclo de vida del stack, y un
+            instalador <strong>NSIS</strong> generado por <code>electron-builder</code> que
+            despliega los artefactos en disco.
+          </p>
+          <p class="note source">
+            <strong>Criterio de verdad:</strong> si una captura parece sugerir un comportamiento
+            distinto al del código, prevalece el código. Las figuras de este documento son
+            apoyo visual; los textos citan rutas, canales IPC y configuraciones verificables en
+            el árbol fuente.
+          </p>
+        </section>
+
+        <section id="descripcion">
+          <h2>2. Descripción general de la aplicación</h2>
+          <p>El producto se articula en dos capas complementarias:</p>
+          <ul>
+            <li>
+              <strong>Instalador NSIS (Windows):</strong> definido en
+              <code>ElectronInstaller/package.json</code> bajo <code>build.nsis</code>. Copia
+              binarios y recursos, permite elegir idioma, ruta de instalación y accesos directos.
+            </li>
+            <li>
+              <strong>Aplicación Electron «SmartEconomat»:</strong> tras la instalación, el
+              ejecutable arranca el proceso principal (<code>src/main/index.ts</code>), carga el
+              preload seguro (<code>src/preload/index.ts</code>) y el renderer React
+              (<code>src/renderer/app/App.tsx</code>). El usuario recorre un asistente por pasos
+              (<code>useInstallerFlow</code> en <code>src/renderer/hooks/use-installer-flow.ts</code>)
+              y, una vez desplegado el stack, dispone de un panel de control con operaciones sobre
+              contenedores, backups y diagnóstico.
+            </li>
+          </ul>
+          <p>
+            El <strong>frontend web</strong> de gestión del economato (React en
+            <code>frontend/smart-economat-frontend</code>) no forma parte del ejecutable del
+            instalador; se empaqueta en la imagen Docker del frontend y se sirve cuando el stack está
+            en marcha. La guía del instalador se centra en Electron; la identidad visual de este
+            HTML replica la paleta MUI del instalador y del frontend (<code>primary.main</code>
+            ≈ <code>#dc004e</code>, <code>secondary.main</code> ≈ <code>#0a6151</code>).
+          </p>
+        </section>
+
+        <section id="requisitos">
+          <h2>3. Requisitos previos</h2>
+          <p>El código del paso «preflight» valida el entorno antes de permitir continuar el asistente. Entre las comprobaciones implementadas en <code>preflight.service.ts</code> destacan:</p>
+          <ul>
+            <li><strong>Docker Engine</strong> y <strong>Docker Compose</strong> operativos (estados <code>OK</code>, <code>WARN</code> o <code>BLOCKER</code> según resultado de comandos).</li>
+            <li>Comprobaciones de sistema operativo, espacio en disco, privilegios y conectividad coherente con el runtime elegido.</li>
+            <li>En Windows, la aplicación empaquetada exige <strong>elevación a administrador</strong> para gestionar Docker, WSL y certificados (véase sección 5).</li>
+          </ul>
+          <p>
+            El dominio local por defecto del asistente es <code>smarteconomat.app</code> (campo
+            <code>localHost</code> en la configuración por defecto de
+            <code>use-installer-flow.ts</code>), con puertos HTTP/HTTPS configurables
+            (<code>httpPort</code> / <code>httpsPort</code>).
+          </p>
+        </section>
+
+        <section id="instalacion">
+          <h2>4. Instalación del paquete Windows (NSIS + artefacto)</h2>
+          <p>
+            La sección <code>build.nsis</code> de <code>ElectronInstaller/package.json</code> define
+            el instalador nativo: <code>oneClick: false</code>, cambio de carpeta, elevación, idiomas
+            <code>es_ES</code> / <code>en_US</code>, accesos directos y <code>runAfterFinish</code>.
+            Las figuras enlazan las capturas en <code>docs/installer/screenshots/</code> (sin
+            recortes ni marcas encima).
+          </p>
+          <p class="note source">
+            Este HTML y la carpeta <code>screenshots/</code> conviven en <code>docs/installer/</code>.
+            Las figuras usan rutas relativas <code>screenshots/…</code>. El logotipo sigue enlazando al
+            SVG en el árbol de <code>ElectronInstaller</code> (ruta relativa al repo).
+          </p>
+
+          <h3>4.1 Artefacto <code>.exe</code> del build</h3>
+          <p>Fichero generado por <code>electron-builder</code> (nombre según <code>artifactName</code> en <code>package.json</code>).</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/01-instalador-exe.png" alt="Ejecutable SmartEconomat en carpeta" />
+            <figcaption>Figura 1. Ejecutable de instalación: doble clic para iniciar el asistente NSIS.</figcaption>
+          </figure>
+
+          <h3>4.2 Idioma del instalador</h3>
+          <p>Selector inicial <code>displayLanguageSelector</code> / idiomas en <code>build.nsis</code>.</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/02-installer-language.png" alt="Selector de idioma NSIS" />
+            <figcaption>Figura 2. Lista desplegable de idioma y botón <strong>OK</strong>.</figcaption>
+          </figure>
+
+          <h3>4.3 Alcance de instalación (por usuario / todos)</h3>
+          <p>Determina permisos y ruta por defecto (p. ej. perfil de usuario vs. <code>Program Files</code>).</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/03-installer-options.png" alt="Opciones de instalación NSIS" />
+            <figcaption>Figura 3. Opciones de radio y botón <strong>Siguiente</strong>.</figcaption>
+          </figure>
+
+          <h3>4.4 Carpeta de destino y <strong>Instalar</strong></h3>
+          <p><code>allowToChangeInstallationDirectory: true</code>: campo de ruta, <strong>Examinar</strong> e <strong>Instalar</strong>.</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/04-installer-path.png" alt="Ruta de instalación NSIS" />
+            <figcaption>Figura 4. Fila «Carpeta de destino», <strong>Examinar</strong> y botón <strong>Instalar</strong>.</figcaption>
+          </figure>
+
+          <h3>4.5 Progreso y cancelación</h3>
+          <p>Barra de progreso NSIS; <strong>Cancelar</strong> permanece habilitado durante la copia.</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/05-installer-progress.png" alt="Progreso NSIS" />
+            <figcaption>Figura 5. Barra de progreso y botón <strong>Cancelar</strong>.</figcaption>
+          </figure>
+
+          <h3>4.6 Finalizar y ejecutar la app</h3>
+          <p><code>runAfterFinish</code>: casilla <strong>Ejecutar SmartEconomat</strong> y <strong>Terminar</strong>.</p>
+          <figure>
+            <img src="screenshots/instalador-nsis/06-installer-finish.png" alt="Pantalla final NSIS" />
+            <figcaption>Figura 6. Casilla de ejecución y botón <strong>Terminar</strong>.</figcaption>
+          </figure>
+
+          <h3>4.7 Desinstalador NSIS</h3>
+          <p>Flujo independiente para retirar el producto del sistema (complementario al diálogo de desinstalación interno de Electron).</p>
+          <figure>
+            <img src="screenshots/uninstaller-nsis/01-uninstaller.png" alt="Asistente desinstalador" />
+            <figcaption>Figura 7. Asistente de desinstalación NSIS.</figcaption>
+          </figure>
+        </section>
+
+        <section id="inicio">
+          <h2>5. Inicio de la aplicación Electron</h2>
+
+          <h3>5.1 Diálogo informativo previo a la elevación (no es la ventana UAC)</h3>
+          <p>
+            Si no hay elevación (<code>isElevated()</code> en <code>src/main/index.ts</code>), la
+            aplicación muestra este cuadro; al pulsar <strong>Continuar</strong> se lanza
+            <code>Start-Process -Verb RunAs</code> y entonces aparece el UAC del sistema. El archivo
+            <code>alert/01-alert-uac.png</code> captura <strong>este diálogo de Electron</strong>, no
+            el escudo de Windows.
+          </p>
+          <figure>
+            <img src="screenshots/alert/01-alert-uac.png" alt="Diálogo elevación SmartEconomat" />
+            <figcaption>Figura 8. Botones <strong>Salir</strong> y <strong>Continuar</strong>.</figcaption>
+          </figure>
+
+          <h3>5.2 Bandeja del sistema y menú contextual</h3>
+          <p>
+            <code>Tray</code>, menú con «Abrir panel», estado, reinicio de stack, logs y salida; doble
+            clic en el icono abre <code>/control</code> (<code>src/main/index.ts</code>).
+          </p>
+          <figure>
+            <img src="screenshots/hidden-icon/01-hidden-icon.png" alt="Menú contextual bandeja SmartEconomat" />
+            <figcaption>Figura 9. Menú contextual del icono en la bandeja del sistema.</figcaption>
+          </figure>
+
+          <h3>5.3 Instancia única y arranque en segundo plano</h3>
+          <p>
+            <code>requestSingleInstanceLock</code>, <code>second-instance</code>,
+            <code>--background</code>, <code>--control-panel</code> y
+            <code>setLoginItemSettings</code> según el código del proceso principal.
+          </p>
+
+          <h3>5.4 Mosaico de iconos (recursos de build)</h3>
+          <figure>
+            <img src="screenshots/icons/icons.png" alt="Iconos SmartEconomat" />
+            <figcaption>Figura 10. Hoja de iconos empaquetados (referencia visual de marca).</figcaption>
+          </figure>
+        </section>
+
+        <section id="flujo">
+          <h2>6. Asistente (wizard) — vistas según <code>App.tsx</code> y <code>useInstallerFlow</code></h2>
+          <p>
+            Orden de pasos: <code>welcome</code> → <code>preflight</code> → <code>config</code> →
+            <code>smtp</code> → <code>deploy</code> → <code>finish</code> → <code>control</code>. Cada
+            figura corresponde a un archivo en <code>docs/installer/screenshots/wizard/</code>
+            alineado con la matriz <code>test/e2e/screenshot-capture-matrix.ts</code>.
+          </p>
+
+          <figure>
+            <img src="screenshots/wizard/01-welcome-light.png" alt="Bienvenida tema claro" />
+            <figcaption>Figura 11. <code>WelcomePage</code> — botón principal «Iniciar instalación guiada».</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/02-welcome-dark.png" alt="Bienvenida tema oscuro" />
+            <figcaption>Figura 12. Misma vista en tema oscuro (<code>ThemeContext</code> / preferencias de tema).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/03-preflight-initial.png" alt="Preflight inicial" />
+            <figcaption>Figura 13. <code>PreflightPage</code> antes de ejecutar — acción <strong>Ejecutar preflight</strong>.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/04-preflight-bad-b.png" alt="Preflight error variante B" />
+            <figcaption>Figura 14. Preflight con incidencias (variante capturada <code>04-preflight-bad-b</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/04-preflight-bad.png" alt="Preflight error" />
+            <figcaption>Figura 15. Preflight con incidencias (<code>04-preflight-bad</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/04-preflight-ok.png" alt="Preflight OK" />
+            <figcaption>Figura 16. Resultado OK y <strong>Continuar</strong> habilitado según lógica de <code>PreflightPage</code>.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/05-preflight-loading.png" alt="Preflight cargando" />
+            <figcaption>Figura 17. Estado ocupado durante <code>runPreflight</code> / bridge IPC.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/06-preflight-warning-blockers.png" alt="Preflight bloqueantes" />
+            <figcaption>Figura 18. Advertencias y bloqueantes (<code>blockersCount</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/07-config-top.png" alt="Configuración parte superior" />
+            <figcaption>Figura 19. <code>ConfigPage</code> — cabecera del formulario de instalación.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/08-config-env-paper.png" alt="Entorno de ejecución" />
+            <figcaption>Figura 20. Tarjeta «Entorno de ejecución»: <code>runtimePath</code> e instancia.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/09-config-users-paper.png" alt="Usuarios por defecto" />
+            <figcaption>Figura 21. Credenciales y usuarios por defecto (<code>InstallerConfigPayload</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/10-config-backups-paper.png" alt="Política de backups" />
+            <figcaption>Figura 22. Directorio y política de backups.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/11-config-advanced-secrets-paper.png" alt="Secretos avanzados" />
+            <figcaption>Figura 23. Sección avanzada / secretos.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/12-config-validation-username-collision.png" alt="Validación colisión usuarios" />
+            <figcaption>Figura 24. Validación colisión admin / superadmin en el formulario.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/13-config-reinstall-info.png" alt="Modo reinstalación" />
+            <figcaption>Figura 25. Modo <code>reinstall</code> cuando existe instalación previa (<code>getInstallerBootState</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/14-config-tls-custom-validation-error.png" alt="Error TLS personalizado" />
+            <figcaption>Figura 26. Error de validación con certificados TLS personalizados.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/15-smtp-initial.png" alt="SMTP inicial" />
+            <figcaption>Figura 27. <code>SmtpConfigPage</code> — formulario SMTP.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/16-smtp-test-loading.png" alt="SMTP prueba en curso" />
+            <figcaption>Figura 28. Prueba de conexión SMTP en curso (<code>testSmtp</code>).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/17-smtp-test-success.png" alt="SMTP prueba correcta" />
+            <figcaption>Figura 29. Resultado exitoso de la prueba SMTP.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/18-deploy-before-start.png" alt="Despliegue antes de iniciar" />
+            <figcaption>Figura 30. <code>DeployPage</code> antes de <code>startInstallation</code>.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/19-deploy-progress.png" alt="Despliegue en progreso" />
+            <figcaption>Figura 31. Progreso vía eventos <code>onInstallerProgress</code> / estado en UI.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/20-finish-success.png" alt="Finalización correcta" />
+            <figcaption>Figura 32. <code>FinishPage</code> tras instalación correcta (acceso al panel / reintento).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/21-deploy-retry-error.png" alt="Error despliegue reintento" />
+            <figcaption>Figura 33. Error en despliegue y flujo de reintento.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/wizard/22-finish-error.png" alt="Finalización con error" />
+            <figcaption>Figura 34. Pantalla de fin con incidencias.</figcaption>
+          </figure>
+        </section>
+
+        <section id="panel">
+          <h2>7. Panel de control, logs, backups y modales de riesgo</h2>
+          <p>
+            Vistas de <code>ControlPanelPage</code> y componentes hijos en <code>App.tsx</code>:
+            acciones de stack, modales <code>ConfirmDangerDialog</code> (poda, desinstalación),
+            <code>BackupRestorePanel</code> y <code>LogsViewer</code>.
+          </p>
+          <figure>
+            <img src="screenshots/admin/01-control-top.png" alt="Panel control parte superior" />
+            <figcaption>Figura 35. Resumen de estado y franja de acciones principales.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/02-control-actions-band.png" alt="Acciones del stack" />
+            <figcaption>Figura 36. Iniciar / detener / reiniciar stack y atajos de logs.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/03-control-services-band.png" alt="Tarjetas de servicios" />
+            <figcaption>Figura 37. Salud por servicio (backend, frontend, DB, Redis).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/04-control-logs-paper.png" alt="Bloque logs" />
+            <figcaption>Figura 38. Bloque de logs de aplicación.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/05-control-backup-paper.png" alt="Backup y restauración" />
+            <figcaption>Figura 39. Panel backup / restauración.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/06-control-logs-empty-state.png" alt="Logs vacíos" />
+            <figcaption>Figura 40. Visor de logs sin eventos.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/07-control-logs-with-data.png" alt="Logs con datos" />
+            <figcaption>Figura 41. Visor de logs con eventos cargados (<code>tailLogs</code> / stream).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/08-modal-prune-open.png" alt="Modal limpieza agresiva" />
+            <figcaption>Figura 42. Modal de limpieza agresiva: campo «CONFIRMAR» y acción deshabilitada hasta validar.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/09-modal-uninstall-open.png" alt="Modal desinstalación" />
+            <figcaption>Figura 43. Modal de desinstalación completa (misma mecánica de frase de confirmación).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/10-modal-backup-destination-default.png" alt="Modal backup destino por defecto" />
+            <figcaption>Figura 44. Destino de backup (modo por defecto).</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/11-modal-backup-destination-custom.png" alt="Modal backup carpeta personalizada" />
+            <figcaption>Figura 45. Destino de backup en carpeta personalizada.</figcaption>
+          </figure>
+          <figure>
+            <img src="screenshots/admin/12-control-restore-selected-pending-confirmation.png" alt="Restauración pendiente confirmación" />
+            <figcaption>Figura 46. Restauración con artefacto seleccionado y confirmación pendiente.</figcaption>
+          </figure>
+        </section>
+
+        <section id="funcionalidades">
+          <h2>8. IPC, consola de depuración y aplicación web</h2>
+
+          <h3>8.1 Puente de contexto aislado (preload)</h3>
+          <p>
+            El preload expone <code>window.smartEconomat</code> con métodos que delegan en
+            <code>ipcRenderer.invoke</code> y suscripciones por evento. Resumen de grupos en
+            <code>src/shared/ipc-channels.ts</code>:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Área</th>
+                <th>Operaciones expuestas al renderer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Instalador</td>
+                <td>
+                  Preflight, auto-reparación, liberar puerto ocupado, iniciar instalación, elegir
+                  ficheros, probar SMTP, estado y progreso (<code>installer:*</code>).
+                </td>
+              </tr>
+              <tr>
+                <td>Runtime</td>
+                <td>
+                  Arranque / parada / reinicio del stack, salud, logs en vivo, exportar logs visibles,
+                  poda segura o agresiva (con confirmación), desinstalación, backup y restore,
+                  diagnósticos, certificado, autostart Docker, watchdog, supervisor, reinicio Docker
+                  Desktop (<code>runtime:*</code>).
+                </td>
+              </tr>
+              <tr>
+                <td>Depuración</td>
+                <td>
+                  Registro de logs del renderer hacia el main, stream y lectura de entradas de
+                  depuración cuando el modo debug está habilitado (<code>debug:*</code>).
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>8.2 Ventana «Debug Console»</h3>
+          <p>
+            Si el modo debug está activo en el proceso principal, puede abrirse la ventana secundaria
+            cargando <code>/debug</code> (<code>src/main/index.ts</code>).
+          </p>
+          <figure>
+            <img src="screenshots/debug/01-debug-console.png" alt="Consola debug SmartEconomat" />
+            <figcaption>Figura 47. Consola de depuración (stream de eventos / logs internos).</figcaption>
+          </figure>
+
+          <h3>8.3 Frontend web (post-instalación)</h3>
+          <p>
+            Con el stack en marcha, la aplicación de gestión se sirve desde Docker; tema y paleta
+            alineados con <code>frontend/smart-economat-frontend/src/utils/theme/themes.ts</code>
+            (MUI, primario ≈ <code>#dc004e</code>).
+          </p>
+        </section>
+
+        <section id="casos">
+          <h2>9. Casos de uso reales</h2>
+          <ul class="compact">
+            <li><strong>Instalación inicial en Windows:</strong> ejecutar el NSIS, aceptar UAC, completar el asistente Electron hasta <code>deploy</code> y abrir el panel para verificar salud.</li>
+            <li><strong>Reinstalación:</strong> si <code>getInstallerBootState</code> informa instalación existente, el modo pasa a <code>reinstall</code> en configuración.</li>
+            <li><strong>Operación silenciosa desde inicio de sesión:</strong> arranque con <code>--background</code> y uso de la bandeja para abrir <code>/control</code> cuando sea necesario.</li>
+            <li><strong>Resolución de puertos bloqueados:</strong> desde preflight, <code>closeBusyPort</code> invoca <code>releaseBusyPort</code> en el main.</li>
+            <li><strong>Copia de seguridad antes de actualizar:</strong> backup manual desde el panel (<code>backupNow</code>) a la carpeta persistida o elegida por el usuario.</li>
+          </ul>
+        </section>
+
+        <section id="errores">
+          <h2>10. Errores comunes (detectables en código)</h2>
+          <ul class="compact">
+            <li>
+              <strong>Puente no disponible:</strong> mensaje «No se pudo conectar con el bridge de
+              Electron…» si tras reintentos no existe <code>window.smartEconomat</code>.
+            </li>
+            <li>
+              <strong>Preflight con bloqueantes:</strong> el hook agrega un resumen de hasta tres
+              chequeos en estado <code>BLOCKER</code> al mensaje de error.
+            </li>
+            <li>
+              <strong>Timeout de instalación:</strong> superados 12 minutos sin respuesta exitosa de
+              <code>startInstallation</code>, se muestra error de tiempo excedido (el usuario puede
+              reintentar sin cerrar la app).
+            </li>
+            <li>
+              <strong>Elevación denegada:</strong> si el usuario cancela UAC o falla
+              <code>Start-Process -Verb RunAs</code>, se informa y la aplicación termina.
+            </li>
+            <li>
+              <strong>Docker lento o sin daemon:</strong> textos orientativos en
+              <code>evaluateDockerChecks</code> y funciones relacionadas (timeouts, pipe de Docker
+              Desktop, etc.).
+            </li>
+          </ul>
+        </section>
+
+        <section id="conclusion">
+          <h2>11. Conclusión</h2>
+          <p>
+            El instalador SmartEconomat combina un <strong>empaquetado NSIS</strong> estándar de
+            Windows con una <strong>aplicación Electron</strong> que guía el despliegue Docker y el
+            endurecimiento local mediante un flujo de pasos y un panel operativo persistente. Esta
+            guía se apoya en el código fuente y en las <strong>47</strong> capturas en
+            <code>docs/installer/screenshots</code>, enlazadas tal cual desde este documento.
+          </p>
+          <p>
+            Para exportar a PDF, abra este archivo en un navegador (Chrome o Edge recomendados) y
+            use <span class="kbd">Imprimir</span> → «Guardar como PDF», comprobando que las opciones
+            «Gráficos de fondo» / «Imprimir fondos» estén activadas para conservar la portada.
+          </p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

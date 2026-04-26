@@ -165,6 +165,11 @@ function PreviewShell() {
               lastAutomaticActionAt: null,
               lastAutomaticAction: null,
               uptimeSeconds: 3600,
+              incidentsResolved: 12,
+              incidentsOpen: 0,
+              lastIncidentAt: null,
+              latestIncident: null,
+              recentIncidents: [],
             }}
             watchdogStatus={{
               state: "active",

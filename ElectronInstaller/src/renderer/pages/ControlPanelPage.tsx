@@ -1,5 +1,8 @@
 import type { ReactElement, ReactNode } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Chip,
@@ -8,6 +11,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import PlayCircleFilledWhiteRoundedIcon from "@mui/icons-material/PlayCircleFilledWhiteRounded";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -636,9 +640,78 @@ export function ControlPanelPage({
           </Stack>
           <Typography variant="caption" color="text.secondary">
             Uptime: {Math.floor(supervisorSnapshot.uptimeSeconds / 60)} min ·
-            Última reparación automática:{" "}
-            {supervisorSnapshot.lastAutomaticAction ?? "Sin acciones aún"}
+            Próxima comprobación:{" "}
+            {Math.max(
+              1,
+              Math.round((supervisorSnapshot.nextCheckInMs ?? 0) / 1000),
+            )}
+            s · Incidentes resueltos: {supervisorSnapshot.incidentsResolved}
           </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">
+            Última reparación automática:{" "}
+            {supervisorSnapshot.lastAutomaticAction ?? "Sin acciones aún"} ·
+            Última verificación:{" "}
+            {supervisorSnapshot.checks[0]?.measuredAt ?? "Sin datos"}
+          </Typography>
+          {supervisorSnapshot.latestIncident && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+            >
+              Servicio afectado: {supervisorSnapshot.latestIncident.title} ·{" "}
+              {supervisorSnapshot.latestIncident.state === "open"
+                ? "Incidente activo"
+                : "Recuperado"}
+            </Typography>
+          )}
+          <Accordion
+            disableGutters
+            elevation={0}
+            sx={{
+              mt: 1,
+              borderRadius: 2,
+              border: "1px solid rgba(148, 163, 184, 0.24)",
+              "&:before": { display: "none" },
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                Registro reciente de incidentes (
+                {supervisorSnapshot.recentIncidents.length})
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ display: "grid", gap: 1 }}>
+              {supervisorSnapshot.recentIncidents.length === 0 ? (
+                <Typography variant="caption" color="text.secondary">
+                  Sin incidentes recientes.
+                </Typography>
+              ) : (
+                supervisorSnapshot.recentIncidents.map((incident) => (
+                  <Box
+                    key={incident.id}
+                    sx={{
+                      p: 1,
+                      borderRadius: 1.5,
+                      border: "1px solid rgba(148, 163, 184, 0.22)",
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      {incident.title} ·{" "}
+                      {incident.state === "open" ? "abierto" : "resuelto"}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                    >
+                      {incident.detail}
+                    </Typography>
+                  </Box>
+                ))
+              )}
+            </AccordionDetails>
+          </Accordion>
         </Paper>
       )}
 

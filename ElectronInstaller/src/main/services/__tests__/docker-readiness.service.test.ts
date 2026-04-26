@@ -40,7 +40,8 @@ describe("DockerReadinessService.probe", () => {
     ];
 
     const fakeRunner = {
-      run: async () => outputs.shift() ?? result({ ok: false, stderr: "missing" }),
+      run: async () =>
+        outputs.shift() ?? result({ ok: false, stderr: "missing" }),
     };
 
     const service = new DockerReadinessService(fakeRunner as never);
@@ -58,7 +59,8 @@ describe("DockerReadinessService.probe", () => {
     ];
 
     const fakeRunner = {
-      run: async () => outputs.shift() ?? result({ ok: false, stderr: "missing" }),
+      run: async () =>
+        outputs.shift() ?? result({ ok: false, stderr: "missing" }),
     };
 
     const service = new DockerReadinessService(fakeRunner as never);
@@ -66,5 +68,24 @@ describe("DockerReadinessService.probe", () => {
 
     expect(status.state).toBe("daemon-ready");
     expect(status.source).toBe("runtime");
+  });
+
+  it("detecta daemon-starting cuando el daemon aún no acepta conexiones", async () => {
+    const outputs: CommandResult[] = [
+      result({ ok: true, stdout: "Docker version 26.1.1" }),
+      result({
+        ok: false,
+        stderr:
+          "error during connect: This error may indicate that the docker daemon is not running",
+      }),
+      result({ ok: true, stdout: "RUNNING" }),
+    ];
+    const fakeRunner = {
+      run: async () =>
+        outputs.shift() ?? result({ ok: false, stderr: "missing" }),
+    };
+    const service = new DockerReadinessService(fakeRunner as never);
+    const status = await service.probe({ source: "boot-guardian" });
+    expect(status.state).toBe("daemon-starting");
   });
 });

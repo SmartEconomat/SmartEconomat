@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
 import { ProcessRunnerService } from "./process-runner.service";
 
 export interface DockerAutostartStatus {
@@ -106,11 +107,6 @@ export class DockerAutostartService {
   // ── Windows ──────────────────────────────────────────────────
   // ══════════════════════════════════════════════════════════════
 
-  private readonly dockerDesktopWindowsPaths = [
-    "C:/Program Files/Docker/Docker/Docker Desktop.exe",
-    "C:/Program Files/Docker/Docker/Docker Desktop",
-  ];
-
   private async getAutostartStatusWindows(): Promise<DockerAutostartStatus> {
     const dockerPath = await this.findDockerDesktopPathWindows();
     if (!dockerPath) {
@@ -119,7 +115,7 @@ export class DockerAutostartService {
         dockerDesktopInstalled: false,
         dockerDesktopPath: null,
         message:
-          "Docker Desktop no está instalado o no se encontró en las rutas estándar.",
+          "Docker Desktop no está instalado o no se encontró (Program Files, perfil local ni registro).",
       };
     }
 
@@ -185,26 +181,7 @@ export class DockerAutostartService {
   }
 
   private async findDockerDesktopPathWindows(): Promise<string | null> {
-    for (const candidatePath of this.dockerDesktopWindowsPaths) {
-      const exists = await this.fileExistsWindows(candidatePath);
-      if (exists) {
-        return candidatePath;
-      }
-    }
-    return null;
-  }
-
-  private async fileExistsWindows(filePath: string): Promise<boolean> {
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        `if (Test-Path '${filePath}') { exit 0 } else { exit 1 }`,
-      ],
-      timeoutMs: 5_000,
-    });
-    return result.ok;
+    return resolveWindowsDockerDesktopExePath(this.processRunner);
   }
 
   private async isAutoStartEnabledWindows(): Promise<boolean> {
@@ -342,9 +319,7 @@ export class DockerAutostartService {
     return result.ok;
   }
 
-  private async createStartupTaskWindows(
-    dockerPath: string,
-  ): Promise<boolean> {
+  private async createStartupTaskWindows(dockerPath: string): Promise<boolean> {
     const normalizedPath = path.win32.normalize(dockerPath);
     const script = [
       "$taskName = 'DockerDesktopAutoStart'",

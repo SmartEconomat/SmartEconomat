@@ -5,146 +5,268 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SmartEconomat — Guía de Usuario</title>
 <style>
-  /* ── Reset y base ── */
+  :root {
+    --color-primary: #dc004e;
+    --color-primary-dark: #b80042;
+    --color-secondary: #0a6151;
+    --color-bg: #eef2f7;
+    --color-paper: #ffffff;
+    --color-text: #1e293b;
+    --color-muted: #64748b;
+    --font-sans: "Segoe UI", system-ui, -apple-system, "Manrope", sans-serif;
+    --radius: 12px;
+    --shadow: 0 22px 52px rgba(15, 23, 42, 0.12);
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; scroll-behavior: smooth; }
   body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    color: #1a1a2e;
-    background: #f8f9fa;
-    line-height: 1.7;
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background: linear-gradient(180deg, var(--color-bg) 0%, #e7ebf2 100%),
+      radial-gradient(circle at 12% 18%, rgba(229, 0, 70, 0.11) 0%, rgba(229, 0, 70, 0) 42%);
+    line-height: 1.55;
+    font-size: 11.5pt;
   }
 
-  /* ── Tipografía ── */
-  h1 { font-size: 2.4rem; font-weight: 800; }
-  h2 { font-size: 1.8rem; font-weight: 700; border-bottom: 3px solid #2563eb; padding-bottom: .4rem; margin: 2.5rem 0 1.2rem; color: #1e3a8a; }
-  h3 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 .8rem; color: #1d4ed8; }
-  h4 { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 .5rem; color: #2563eb; }
-  p  { margin-bottom: .9rem; }
-  ul, ol { margin: .5rem 0 .9rem 1.6rem; }
-  li { margin-bottom: .3rem; }
+  h1 { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.03em; color: var(--color-text); }
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 2.5rem 0 0.75rem;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 0.35rem;
+  }
+  h3 { font-size: 1.08rem; font-weight: 700; margin: 1.35rem 0 0.5rem; color: var(--color-secondary); }
+  h4 { font-size: 1.05rem; font-weight: 700; margin: 1.25rem 0 0.5rem; color: var(--color-text); }
+  p  { margin-bottom: 0.65rem; }
+  ul, ol { margin: 0.5rem 0 0.9rem 1.6rem; }
+  li { margin-bottom: 0.3rem; }
   code {
-    background: #e8f0fe;
-    padding: .1rem .4rem;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: #f1f5f9;
+    padding: 0.12em 0.35em;
     border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    font-size: .88rem;
-    color: #1d4ed8;
+    font-size: 0.88em;
+    color: var(--color-text);
   }
-  strong { color: #1e3a8a; }
+  strong { color: var(--color-text); }
 
-  /* ── Layout general ── */
-  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 2.5rem; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
-  /* ── Portada ── */
   .cover {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
-    color: white;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-content: center;
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 3rem 1.5rem;
     page-break-after: always;
+    background: radial-gradient(
+        circle at 12% 18%,
+        rgba(229, 0, 70, 0.11) 0%,
+        rgba(229, 0, 70, 0) 42%
+      ),
+      linear-gradient(180deg, #eef2f7 0%, #e7ebf2 100%);
   }
-  .cover-logo { width: 180px; margin-bottom: 2rem; filter: brightness(0) invert(1); }
-  .cover h1 { font-size: 3rem; margin-bottom: .8rem; letter-spacing: -.5px; }
-  .cover .subtitle { font-size: 1.4rem; opacity: .88; margin-bottom: .4rem; }
-  .cover .meta { margin-top: 2.5rem; opacity: .75; font-size: .95rem; line-height: 2; }
+  .cover-inner {
+    max-width: 640px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: var(--radius);
+    padding: 2.75rem 2.25rem;
+    box-shadow: var(--shadow);
+  }
+  .cover .eyebrow {
+    font-size: 1rem;
+    color: var(--color-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .cover img.logo {
+    height: 56px;
+    width: auto;
+    margin-bottom: 1.5rem;
+  }
+  .cover h1 { font-size: 1.85rem; margin-bottom: 0.35rem; }
+  .cover .subtitle { color: var(--color-muted); font-size: 1.1rem; margin-bottom: 0.35rem; }
+  .cover .meta {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+    padding-top: 1.25rem;
+    line-height: 1.75;
+  }
+  .cover .badges-row {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+  }
   .cover .badge {
-    display: inline-block; margin: 1.5rem .4rem 0;
-    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.4);
-    border-radius: 999px; padding: .3rem 1rem; font-size: .85rem;
+    display: inline-block;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 999px;
+    background: rgba(220, 0, 78, 0.1);
+    color: var(--color-primary-dark);
+    border: 1px solid rgba(220, 0, 78, 0.2);
+  }
+  .team-stamp {
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+    text-align: center;
+  }
+  .team-stamp img {
+    height: 48px;
+    width: auto;
+    opacity: 0.95;
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+  }
+  .team-stamp .stamp-caption {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
   }
 
-  /* ── Índice ── */
-  .toc { background: white; border-radius: 12px; padding: 2rem 2.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 2rem; }
-  .toc h2 { margin-top: 0; }
+  .toc {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+  }
+  .toc h2 { margin-top: 0; font-size: 1.1rem; border-bottom: none; }
   .toc ol { list-style: none; margin: 0; }
-  .toc > ol > li { margin-bottom: .5rem; font-weight: 600; }
-  .toc > ol > li > ol { margin-top: .3rem; font-weight: 400; }
-  .toc a { color: #2563eb; text-decoration: none; }
+  .toc > ol > li { margin-bottom: 0.5rem; font-weight: 600; }
+  .toc > ol > li > ol { margin-top: 0.3rem; font-weight: 400; }
+  .toc a { color: var(--color-primary); text-decoration: none; }
   .toc a:hover { text-decoration: underline; }
-  .toc .toc-num { color: #6b7280; margin-right: .4rem; }
+  .toc .toc-num { color: var(--color-muted); margin-right: 0.4rem; }
 
-  /* ── Secciones ── */
-  section { background: white; border-radius: 12px; padding: 2rem 2.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 2rem; }
+  section {
+    background: var(--color-paper);
+    border-radius: var(--radius);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 2rem 2.25rem 2.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+  }
   section.full-width { max-width: 100%; }
 
-  /* ── Tablas ── */
-  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .93rem; }
-  thead th { background: #1e3a8a; color: white; padding: .7rem 1rem; text-align: left; font-weight: 600; }
-  tbody tr:nth-child(even) { background: #eff6ff; }
-  tbody td { padding: .65rem 1rem; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
-  tbody tr:hover { background: #dbeafe; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.92rem; }
+  thead th {
+    background: #f8fafc;
+    color: var(--color-text);
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+  }
+  tbody td { padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #fff7ed; }
 
-  /* ── Imágenes ── */
-  .screenshot-wrap { margin: 1.5rem 0; }
-  .screenshot-wrap img { max-width: 100%; border-radius: 8px; border: 1px solid #d1d5db; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
-  .screenshot-caption { font-size: .82rem; color: #6b7280; margin-top: .5rem; font-style: italic; text-align: center; }
+  .screenshot-wrap { margin: 1.25rem 0; text-align: center; }
+  .screenshot-wrap img {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+  .screenshot-caption {
+    font-size: 0.88rem;
+    color: var(--color-muted);
+    margin-top: 0.5rem;
+    font-style: italic;
+    text-align: center;
+  }
 
-  /* ── Alertas / callouts ── */
-  .callout { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: .8rem 1.2rem; margin: 1rem 0; font-size: .93rem; }
-  .callout.info    { background: #eff6ff; border-color: #2563eb; }
-  .callout.warning { background: #fffbeb; border-color: #d97706; }
+  .callout { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.95rem; }
+  .callout.info    { background: #eff6ff; border-color: #3b82f6; }
+  .callout.warning { background: #fff7ed; border-color: #f59e0b; }
   .callout.success { background: #f0fdf4; border-color: #16a34a; }
   .callout.danger  { background: #fef2f2; border-color: #dc2626; }
-  .callout-title   { font-weight: 700; margin-bottom: .2rem; }
+  .callout-title   { font-weight: 700; margin-bottom: 0.2rem; }
 
-  /* ── Badges de rol ── */
   .role-badge {
-    display: inline-block; padding: .15rem .7rem; border-radius: 999px;
-    font-size: .78rem; font-weight: 700; margin: .1rem;
+    display: inline-block;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin: 0.1rem;
   }
   .role-superadmin { background: #4c1d95; color: white; }
-  .role-admin   { background: #1e3a8a; color: white; }
-  .role-profesor{ background: #065f46; color: white; }
+  .role-admin   { background: var(--color-primary-dark); color: white; }
+  .role-profesor{ background: var(--color-secondary); color: white; }
   .role-alumno  { background: #92400e; color: white; }
 
-  /* ── Steps de flujo ── */
   .steps { counter-reset: step; list-style: none; margin: 1rem 0; }
   .steps li {
     counter-increment: step;
-    display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
   }
   .steps li::before {
     content: counter(step);
-    min-width: 2rem; height: 2rem; background: #2563eb; color: white;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: .9rem; flex-shrink: 0; margin-top: .1rem;
+    min-width: 2rem;
+    height: 2rem;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
   }
 
-  /* ── Estado chips ── */
   .chip {
-    display: inline-block; padding: .15rem .65rem; border-radius: 999px;
-    font-size: .78rem; font-weight: 600;
+    display: inline-block;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
   }
   .chip-pending  { background: #fef3c7; color: #92400e; }
   .chip-active   { background: #d1fae5; color: #065f46; }
   .chip-error    { background: #fee2e2; color: #991b1b; }
   .chip-info     { background: #dbeafe; color: #1e40af; }
-  .chip-gray     { background: #f3f4f6; color: #374151; }
+  .chip-gray     { background: #f1f5f9; color: #475569; }
 
-  /* ── Grid 2 cols ── */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
   @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
 
-  /* ── Módulo card ── */
-  .module-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+  .module-card {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
   .module-card h3 { margin-top: 0; }
 
-  /* ── Número de sección ── */
-  .sec-num { color: #6b7280; margin-right: .4rem; }
+  .sec-num { color: var(--color-muted); margin-right: 0.4rem; }
 
-  /* ── Print / PDF ── */
   @media print {
     body { background: white; font-size: 11pt; }
-    .cover { page-break-after: always; min-height: auto; padding: 5cm 3cm; }
+    .cover { page-break-after: always; min-height: auto; padding: 2rem; }
     .toc   { page-break-after: always; }
-    section { box-shadow: none; border: 1px solid #e5e7eb; page-break-inside: avoid; }
-    h2 { page-break-before: always; }
+    section { box-shadow: none; border: 1px solid #e2e8f0; page-break-inside: avoid; }
+    h2 { page-break-before: always; border-bottom-color: var(--color-primary); }
     .screenshot-wrap img { max-height: 12cm; width: auto; }
     .no-print { display: none; }
     a { color: inherit; text-decoration: none; }
@@ -157,23 +279,35 @@
      PORTADA
 ══════════════════════════════════════ -->
 <div class="cover" id="portada">
-  <img class="cover-logo" src="../assets/images/arquitectura.jpeg" alt="SmartEconomat" onerror="this.style.display='none'" />
-  <div>
-    <p style="font-size:1rem;opacity:.7;letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem">CIFP Virgen de Candelaria</p>
+  <div class="cover-inner">
+    <img
+      class="logo"
+      src="../../frontend/smart-economat-frontend/src/assets/images/SVG/logo-smat-economato.svg"
+      alt="Logotipo SmartEconomat"
+    />
     <h1>SmartEconomat</h1>
     <p class="subtitle">Guía de Usuario Completa</p>
-    <p class="subtitle" style="font-size:1.1rem;opacity:.8">Sistema de Gestión de Economato para Escuela de Cocina</p>
-  </div>
-  <div class="meta">
-    <p><strong>Trabajo Fin de Grado — Desarrollo de Aplicaciones Web</strong></p>
-    <p>Proyecto SmartEconomat · Curso 2024–2025</p>
-    <p>Fecha de redacción: Abril 2025</p>
-  </div>
-  <div>
-    <span class="badge">React + TypeScript</span>
-    <span class="badge">NestJS</span>
-    <span class="badge">PostgreSQL</span>
-    <span class="badge">Docker</span>
+    <p class="subtitle">Sistema de Gestión de Economato para Escuela de Cocina</p>
+    <div class="meta">
+      <p><strong>Trabajo Fin de Grado — Desarrollo de Aplicaciones Web</strong></p>
+      <p>Proyecto SmartEconomat · Curso 2024–2025</p>
+      <p><strong>Autores:</strong> Darel, Alexis, Sergio, Guillermo, Maurizio</p>
+    </div>
+    <div class="badges-row">
+      <span class="badge">React + TypeScript</span>
+      <span class="badge">NestJS</span>
+      <span class="badge">PostgreSQL</span>
+      <span class="badge">Docker</span>
+    </div>
+    <div class="team-stamp" aria-label="Sello del equipo de desarrollo">
+      <img
+        src="../../frontend/smart-economat-frontend/src/assets/logos/SVG/logo-lamarr-c.svg"
+        alt="Lamarr — equipo de desarrollo"
+        width="202"
+        height="101"
+      />
+      <span class="stamp-caption">Equipo Lamarr</span>
+    </div>
   </div>
 </div>
 
@@ -1258,7 +1392,7 @@
 </div><!-- .container -->
 
 <footer style="text-align:center;padding:2rem;color:#6b7280;font-size:.85rem;border-top:1px solid #e5e7eb;margin-top:2rem;">
-  SmartEconomat — Guía de Usuario · CIFP Virgen de Candelaria · 2025
+  SmartEconomat — Guía de Usuario · 2025
 </footer>
 
 </body>

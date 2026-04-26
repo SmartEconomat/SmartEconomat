@@ -22,6 +22,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand test/e2e/all.e2e-spec.ts",
     "test:e2e:file": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --runInBand",
+    "qa:gate": "npm run build && npm run lint && npm run test:e2e",
     "seed": "node scripts/seed-runner.js",
     "seed:bootstrap-admin-users": "node scripts/bootstrap-admin-users-runner.js",
     "seed:force-production": "cross-env NODE_ENV=production node scripts/seed-runner.js --force-production",

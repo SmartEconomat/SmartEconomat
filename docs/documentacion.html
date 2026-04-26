@@ -6,21 +6,30 @@
   <title>SmartEconomat - Memoria tecnica TFG</title>
   <style>
     :root {
-      --ink: #1a2332;
-      --muted: #4a5568;
-      --line: #d2dae4;
-      --line-strong: #9fb3c8;
-      --paper: #ffffff;
-      --paper-alt: #f4f6f5;
-      --accent: #0a6151;
-      --accent-soft: #dff0ec;
-      --accent-dark: #064238;
-      --code-bg: #f5f7fa;
-      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --color-primary: #dc004e;
+      --color-primary-dark: #b80042;
+      --color-secondary: #0a6151;
+      --color-bg: #eef2f7;
+      --color-paper: #ffffff;
+      --color-text: #1e293b;
+      --color-muted: #64748b;
+      --font-sans: "Segoe UI", system-ui, -apple-system, "Manrope", sans-serif;
+      --radius: 12px;
+      --shadow: 0 22px 52px rgba(15, 23, 42, 0.12);
       --page-width: 210mm;
       --page-min-height: 297mm;
-      --body-font: Georgia, "Times New Roman", serif;
-      --mono-font: "Courier New", Courier, monospace;
+      --mono-font: ui-monospace, "Cascadia Code", Consolas, monospace;
+      --ink: var(--color-text);
+      --muted: var(--color-muted);
+      --paper: var(--color-paper);
+      --accent: var(--color-secondary);
+      --accent-soft: #dff0ec;
+      --accent-dark: #064238;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --paper-alt: #f8fafc;
+      --code-bg: #f1f5f9;
+      --body-font: var(--font-sans);
     }
 
     * {
@@ -28,10 +37,10 @@
     }
 
     html {
-      background: #e4e7ea;
+      background: var(--color-bg);
       color: var(--ink);
       font-size: 11pt;
-      line-height: 1.5;
+      line-height: 1.55;
       scroll-behavior: smooth;
     }
 
@@ -39,8 +48,12 @@
       margin: 0;
       font-family: var(--body-font);
       background:
-        radial-gradient(circle at top left, rgba(10, 97, 81, 0.05), transparent 30%),
-        linear-gradient(180deg, #eaecee 0%, #e5e8ea 16%, #e1e4e6 100%);
+        radial-gradient(
+          circle at 12% 18%,
+          rgba(229, 0, 70, 0.11) 0%,
+          rgba(229, 0, 70, 0) 42%
+        ),
+        linear-gradient(180deg, var(--color-bg) 0%, #e7ebf2 100%);
       color: var(--ink);
     }
 
@@ -73,8 +86,12 @@
       align-items: center;
       text-align: center;
       background:
-        linear-gradient(145deg, rgba(10, 97, 81, 0.06), rgba(10, 97, 81, 0.01)),
-        linear-gradient(180deg, #ffffff 0%, #f7f9f8 100%);
+        radial-gradient(
+            circle at 12% 18%,
+            rgba(229, 0, 70, 0.11) 0%,
+            rgba(229, 0, 70, 0) 42%
+          ),
+        linear-gradient(180deg, #eef2f7 0%, #e7ebf2 100%);
       overflow: hidden;
     }
 
@@ -83,7 +100,7 @@
       content: "";
       position: absolute;
       border-radius: 999px;
-      background: rgba(10, 97, 81, 0.05);
+      background: rgba(229, 0, 70, 0.06);
       filter: blur(4px);
     }
 
@@ -111,7 +128,7 @@
       margin: 0 0 8mm;
       text-transform: uppercase;
       letter-spacing: 0.24em;
-      color: var(--accent);
+      color: var(--color-primary);
       font-size: 10pt;
     }
 
@@ -119,15 +136,39 @@
       margin: 0;
       font-size: 28pt;
       line-height: 1.1;
-      color: #1a2332;
+      color: var(--color-text);
     }
 
     .cover-meta {
       width: 100%;
-      border-top: 0.6mm solid rgba(10, 97, 81, 0.18);
-      border-bottom: 0.6mm solid rgba(10, 97, 81, 0.18);
+      border-top: 0.6mm solid rgba(220, 0, 78, 0.22);
+      border-bottom: 0.6mm solid rgba(220, 0, 78, 0.22);
       padding: 7mm 0;
       margin: 0;
+    }
+
+    .team-stamp {
+      margin-top: 10mm;
+      padding-top: 6mm;
+      border-top: 0.35mm solid rgba(148, 163, 184, 0.45);
+    }
+
+    .team-stamp img {
+      height: 14mm;
+      width: auto;
+      display: block;
+      margin: 0 auto;
+      opacity: 0.95;
+      filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+    }
+
+    .team-stamp .stamp-caption {
+      display: block;
+      margin-top: 2.5mm;
+      font-size: 8pt;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-muted);
     }
 
     .cover-meta p {
@@ -139,7 +180,7 @@
     h3,
     h4 {
       font-weight: 700;
-      color: #1b1410;
+      color: var(--color-text);
       page-break-after: avoid;
       break-after: avoid;
     }
@@ -148,18 +189,21 @@
       font-size: 19pt;
       margin: 0 0 7mm;
       padding-bottom: 4mm;
-      border-bottom: 0.7mm solid var(--line);
+      border-bottom: 0.7mm solid var(--color-primary);
     }
 
     h2 {
       font-size: 14pt;
       margin: 9mm 0 4mm;
-      color: var(--accent-dark);
+      color: var(--color-text);
+      border-bottom: 0.5mm solid var(--color-primary);
+      padding-bottom: 1mm;
     }
 
     h3 {
       font-size: 12pt;
       margin: 6mm 0 3mm;
+      color: var(--color-secondary);
     }
 
     p {
@@ -191,11 +235,17 @@
     }
 
     .note,
-    .metric,
-    .toc-shell {
+    .metric {
       background: linear-gradient(180deg, #ffffff 0%, #f4f6f5 100%);
       border: 0.35mm solid var(--line);
       border-radius: 4mm;
+      padding: 5mm;
+    }
+
+    .toc-shell {
+      background: #f8fafc;
+      border: 0.35mm solid rgba(148, 163, 184, 0.35);
+      border-radius: 10px;
       padding: 5mm;
     }
 
@@ -207,8 +257,8 @@
     }
 
     .note {
-      border-left: 1.2mm solid var(--accent);
-      background: linear-gradient(180deg, #f0f9f7 0%, #f7fbfa 100%);
+      border-left: 1.2mm solid #f59e0b;
+      background: #fff7ed;
     }
 
     ul,
@@ -235,7 +285,7 @@
       text-align: left;
       font-weight: 700;
       margin-bottom: 2mm;
-      color: var(--accent-dark);
+      color: var(--color-secondary);
     }
 
     th,
@@ -247,7 +297,7 @@
 
     thead th {
       background: var(--paper-alt);
-      color: #172026;
+      color: var(--color-text);
     }
 
     tbody tr:nth-child(even) {
@@ -277,10 +327,6 @@
       white-space: pre-wrap;
       break-inside: avoid;
       page-break-inside: avoid;
-    }
-
-    .toc-shell {
-      background: linear-gradient(180deg, #fafcfb 0%, #f2f5f4 100%);
     }
 
     .toc-list {
@@ -324,8 +370,8 @@
       border-radius: 999px;
       font-size: 8pt;
       font-weight: 700;
-      background: var(--accent-soft);
-      color: var(--accent-dark);
+      background: rgba(220, 0, 78, 0.1);
+      color: var(--color-primary-dark);
       margin-right: 2mm;
     }
 
@@ -348,7 +394,7 @@
     .diagram figcaption {
       font-weight: 700;
       margin-bottom: 3mm;
-      color: var(--accent-dark);
+      color: var(--color-secondary);
     }
 
     details {
@@ -391,6 +437,14 @@
     @media screen {
       body {
         padding: 1rem 0;
+      }
+
+      .toc-link {
+        color: var(--color-primary);
+      }
+
+      .toc-link:hover {
+        text-decoration: underline;
       }
     }
 
@@ -440,7 +494,7 @@
     .mermaid-wrap figcaption {
       font-size: 0.92rem;
       font-weight: 600;
-      color: var(--accent);
+      color: var(--color-primary);
       margin-bottom: 0.8rem;
       text-align: center;
     }
@@ -449,8 +503,12 @@
       justify-content: center;
     }
     .mermaid svg {
+      width: 100% !important;
       max-width: 100%;
       height: auto;
+    }
+    .mermaid-wrap .mermaid {
+      min-height: 220px;
     }
     .er-domain-intro {
       margin: 1rem 0 0.5rem;
@@ -475,9 +533,18 @@
         <p class="eyebrow">Trabajo Fin de Grado</p>
         <h1>SmartEconomat</h1>
         <div class="cover-meta">
-          <p><strong>Autores:</strong> Alexis, Darel, Sergio, Mauricio, Guillermo</p>
+          <p><strong>Autores:</strong> Darel, Alexis, Sergio, Guillermo, Maurizio</p>
           <p><strong>Titulacion:</strong> DAW</p>
           <p><strong>Fecha:</strong> 18 de abril de 2026</p>
+        </div>
+        <div class="team-stamp" aria-label="Sello del equipo de desarrollo">
+          <img
+            src="../frontend/smart-economat-frontend/src/assets/logos/SVG/logo-lamarr-c.svg"
+            alt="Lamarr — equipo de desarrollo"
+            width="202"
+            height="101"
+          />
+          <span class="stamp-caption">Equipo Lamarr</span>
         </div>
       </div>
     </section>
@@ -1164,56 +1231,53 @@ erDiagram
         <pre class="mermaid">
 erDiagram
     PEDIDO_USUARIO {
-        uuid id PK
-        uuid usuario_id FK
-        bigint numero_global UK
-        timestamptz fecha_pedido
-        numeric coste_total
-        enum estado
-        uuid ubicacion_entrega_sugerida_id FK
+      uuid id PK
+      uuid usuario_id FK
+      bigint numero_global UK
+      timestamptz fecha_pedido
+      numeric coste_total
+      enum estado
     }
     PEDIDO_USUARIO_LINEA {
-        uuid id PK
-        uuid pedido_usuario_id FK
-        uuid producto_proveedor_id FK
-        numeric cantidad
-        numeric precio_unitario
-        text observaciones
+      uuid id PK
+      uuid pedido_usuario_id FK
+      uuid producto_proveedor_id FK
+      numeric cantidad
+      numeric precio_unitario
     }
     PURCHASE_BATCH {
-        uuid id PK
-        bigint numero_global UK
-        varchar referencia UK
-        uuid usuario_id FK
-        boolean is_aprobado
-        enum estado_lote
+      uuid id PK
+      bigint numero_global UK
+      varchar referencia UK
+      uuid usuario_id FK
+      boolean aprobado
+      enum estado_lote
     }
     PEDIDO {
-        uuid id PK
-        bigint numero_global UK
-        uuid usuario_id FK
-        uuid proveedor_id FK
-        uuid batch_id FK
-        uuid pedido_usuario_id FK
-        timestamptz fecha_pedido
-        numeric coste_total
-        enum estado_pedido
-        text motivo_cancelacion
+      uuid id PK
+      bigint numero_global UK
+      uuid usuario_id FK
+      uuid proveedor_id FK
+      uuid batch_id FK
+      uuid pedido_usuario_id FK
+      timestamptz fecha_pedido
+      numeric coste_total
+      enum estado_pedido
     }
     PEDIDO_PRODUCTO {
-        uuid id PK
-        uuid pedido_id FK
-        uuid producto_proveedor_id FK
-        uuid pedido_usuario_linea_id FK
-        numeric cantidad
-        numeric precio_unitario
+      uuid id PK
+      uuid pedido_id FK
+      uuid producto_proveedor_id FK
+      uuid pedido_usuario_linea_id FK
+      numeric cantidad
+      numeric precio_unitario
     }
 
-    PEDIDO_USUARIO ||--o{ PEDIDO_USUARIO_LINEA : "contiene"
-    PEDIDO_USUARIO ||--o{ PEDIDO : "descompone en"
-    PURCHASE_BATCH ||--o{ PEDIDO : "agrupa"
-    PEDIDO ||--o{ PEDIDO_PRODUCTO : "incluye"
-    PEDIDO_USUARIO_LINEA ||--o{ PEDIDO_PRODUCTO : "origina"
+    PEDIDO_USUARIO ||--o{ PEDIDO_USUARIO_LINEA : contiene
+    PEDIDO_USUARIO ||--o{ PEDIDO : genera
+    PURCHASE_BATCH ||--o{ PEDIDO : agrupa
+    PEDIDO ||--o{ PEDIDO_PRODUCTO : incluye
+    PEDIDO_USUARIO_LINEA ||--o{ PEDIDO_PRODUCTO : origina
         </pre>
       </figure>
 
@@ -1305,54 +1369,52 @@ erDiagram
         <pre class="mermaid">
 erDiagram
     RECETA {
-        uuid id PK
-        varchar nombre
-        text instrucciones
-        int tiempo_estimado_minutos
-        enum dificultad
-        numeric rendimiento
-        enum unidad_resultado
-        int dias_caducidad
-        numeric coste_unitario_estimado
-        numeric raciones
+      uuid id PK
+      varchar nombre
+      text instrucciones
+      int tiempo_minutos
+      enum dificultad
+      numeric rendimiento
+      enum unidad_resultado
+      numeric coste_unitario
+      numeric raciones
     }
     RECETA_INGREDIENTE {
-        uuid id PK
-        uuid receta_id FK
-        uuid producto_id FK
-        numeric cantidad
-        enum unidad
-        numeric merma_aplicada
-        uuid proveedor_favorito_id FK
+      uuid id PK
+      uuid receta_id FK
+      uuid producto_id FK
+      numeric cantidad
+      enum unidad
+      numeric merma
     }
     PREPARACION {
-        uuid id PK
-        uuid receta_id FK
-        uuid usuario_id FK
-        uuid ubicacion_destino_id FK
-        numeric cantidad_a_producir
-        enum estado
-        timestamptz fecha_programada
-        timestamptz fecha_inicio
-        timestamptz fecha_finalizacion
+      uuid id PK
+      uuid receta_id FK
+      uuid usuario_id FK
+      uuid ubicacion_destino_id FK
+      numeric cantidad_objetivo
+      enum estado
+      timestamptz fecha_programada
+      timestamptz fecha_inicio
+      timestamptz fecha_fin
     }
     PRODUCCION_LOTE {
-        uuid id PK
-        uuid receta_id FK
-        uuid usuario_id FK
-        uuid preparacion_id FK
-        numeric cantidad_producida
-        numeric coste_total_real
-        numeric porciones_producidas
-        numeric porciones_restantes
-        enum estado_lote
-        timestamptz fecha_produccion
+      uuid id PK
+      uuid receta_id FK
+      uuid usuario_id FK
+      uuid preparacion_id FK
+      numeric cantidad_producida
+      numeric coste_total
+      numeric porciones_producidas
+      numeric porciones_restantes
+      enum estado_lote
+      timestamptz fecha_produccion
     }
 
-    RECETA ||--o{ RECETA_INGREDIENTE : "formula"
-    RECETA ||--o{ PREPARACION : "planifica"
-    RECETA ||--o{ PRODUCCION_LOTE : "produce"
-    PREPARACION ||--o| PRODUCCION_LOTE : "genera lote"
+    RECETA ||--o{ RECETA_INGREDIENTE : define
+    RECETA ||--o{ PREPARACION : planifica
+    RECETA ||--o{ PRODUCCION_LOTE : produce
+    PREPARACION ||--o| PRODUCCION_LOTE : genera
         </pre>
       </figure>
 
@@ -1556,11 +1618,11 @@ erDiagram
 
     <section class="chapter" id="api">
       <h1 class="section-title">API</h1>
-      <p class="lead">La API REST del backend expone <strong>238 endpoints</strong> distribuidos en <strong>37 controladores</strong>, todos bajo el prefijo <code>/api/v1</code>. El proyecto utiliza <code>@nestjs/swagger</code> para generar documentacion OpenAPI interactiva en tiempo real, accesible en la ruta <code>/docs</code> del servidor. Esta seccion resume la estructura, convenciones y rutas mas representativas; para el detalle exhaustivo de cada endpoint (parametros, DTOs, schemas de respuesta y codigos de error) se recomienda consultar directamente la interfaz Swagger del proyecto en ejecucion.</p>
+      <p class="lead">La API REST del backend expone <strong>238 endpoints</strong> distribuidos en <strong>37 controladores</strong>, todos bajo el prefijo <code>/api/v1</code>. El proyecto utiliza <code>@nestjs/swagger</code> para generar documentacion OpenAPI interactiva en tiempo real, accesible en la ruta <code>/api/v1/docs</code> del servidor. Esta seccion resume la estructura, convenciones y rutas mas representativas; para el detalle exhaustivo de cada endpoint (parametros, DTOs, schemas de respuesta y codigos de error) se recomienda consultar directamente la interfaz Swagger del proyecto en ejecucion.</p>
 
       <div class="note">
         <strong>Documentacion interactiva con Swagger</strong>
-        <p>Al levantar el backend en desarrollo (<code>npm run start:dev</code>), la documentacion OpenAPI completa se genera automaticamente en <code>http://localhost:3000/docs</code>. Alli se puede explorar cada endpoint, ver los DTOs de entrada/salida, probar peticiones en vivo y descargar la especificacion en formato JSON. En produccion, Swagger no se expone por defecto por seguridad.</p>
+        <p>Al levantar el backend en desarrollo (<code>npm run start:dev</code>), la documentacion OpenAPI completa se genera automaticamente en <code>http://localhost:3000/api/v1/docs</code>. Alli se puede explorar cada endpoint, ver los DTOs de entrada/salida, probar peticiones en vivo y descargar la especificacion en formato JSON. En produccion, Swagger no se expone por defecto por seguridad.</p>
       </div>
 
       <h2>Cifras clave</h2>
@@ -1575,7 +1637,7 @@ erDiagram
           <tr><td>Endpoints protegidos (JWT + permisos)</td><td>~228</td></tr>
           <tr><td>Formatos de exportacion binaria</td><td>XLSX, PDF</td></tr>
           <tr><td>Prefijo global</td><td><code>/api/v1</code></td></tr>
-          <tr><td>Documentacion OpenAPI</td><td><code>/docs</code> (solo desarrollo)</td></tr>
+          <tr><td>Documentacion OpenAPI</td><td><code>/api/v1/docs</code> (solo desarrollo)</td></tr>
         </tbody>
       </table>
 
@@ -1814,7 +1876,7 @@ Content-Disposition: attachment; filename="productos.xlsx"
       </table>
 
       <h2>Referencia rapida de endpoints por dominio</h2>
-      <p>Las siguientes tablas muestran los endpoints mas representativos de cada dominio. Para la lista exhaustiva de los 238 endpoints con sus DTOs, parametros y schemas de respuesta, consultar la interfaz Swagger en <code>/docs</code>.</p>
+      <p>Las siguientes tablas muestran los endpoints mas representativos de cada dominio. Para la lista exhaustiva de los 238 endpoints con sus DTOs, parametros y schemas de respuesta, consultar la interfaz Swagger en <code>/api/v1/docs</code>.</p>
 
       <h3>Autenticacion y usuarios (28 endpoints)</h3>
       <table>

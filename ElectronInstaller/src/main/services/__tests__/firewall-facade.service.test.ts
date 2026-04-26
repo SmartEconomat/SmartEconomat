@@ -230,8 +230,8 @@ describe("FirewallFacadeService chaos matrix", () => {
       },
     });
     const result = await facade.ensure(context);
-    expect(result.ok).toBe(false);
-    expect(result.warningCode).toBe("FIREWALL_CONNECTIVITY_BLOCKED");
+    expect(result.ok).toBe(true);
+    expect(result.warningCode).toBe("FIREWALL_CONNECTIVITY_BLOCKED_CONTINUE");
   });
 
   it("TEST 7: sin reglas pero localhost funciona => continuar con warning", async () => {

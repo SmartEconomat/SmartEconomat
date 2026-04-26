@@ -45,7 +45,11 @@ export class FirewallVerifierService {
     return Array.from(targets);
   }
 
-  private debugLog(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  private debugLog(
+    hypothesisId: string,
+    message: string,
+    data: Record<string, unknown>,
+  ) {
     const payload = {
       sessionId: "1b9740",
       runId: process.env.DEBUG_RUN_ID ?? "pre-fix",
@@ -61,7 +65,11 @@ export class FirewallVerifierService {
         for (const logPath of this.resolveDebugLogTargets()) {
           try {
             await fs.mkdir(path.dirname(logPath), { recursive: true });
-            await fs.appendFile(logPath, `${JSON.stringify(payload)}\n`, "utf8");
+            await fs.appendFile(
+              logPath,
+              `${JSON.stringify(payload)}\n`,
+              "utf8",
+            );
           } catch {
             // try next target
           }
@@ -71,14 +79,17 @@ export class FirewallVerifierService {
       }
 
       try {
-        await fetch("http://127.0.0.1:7788/ingest/ae88677f-9837-49c4-8f3e-780503dbdea8", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "1b9740",
+        await fetch(
+          "http://127.0.0.1:7788/ingest/ae88677f-9837-49c4-8f3e-780503dbdea8",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "1b9740",
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload),
-        });
+        );
       } catch {
         // ignore
       }
@@ -204,7 +215,8 @@ export class FirewallVerifierService {
 
     const localhostHttpProbe = await this.probeUrlWithMeta(localhostHttpUrl);
     const localhostHttpsProbe = await this.probeUrlWithMeta(localhostHttpsUrl);
-    const localDomainHttpProbe = await this.probeUrlWithMeta(localDomainHttpUrl);
+    const localDomainHttpProbe =
+      await this.probeUrlWithMeta(localDomainHttpUrl);
     const localDomainHttpsProbe =
       await this.probeUrlWithMeta(localDomainHttpsUrl);
 
@@ -217,7 +229,10 @@ export class FirewallVerifierService {
     });
     // #endregion
 
-    const tcpLocalhostHttp = await this.probeTcpConnect("127.0.0.1", context.httpPort);
+    const tcpLocalhostHttp = await this.probeTcpConnect(
+      "127.0.0.1",
+      context.httpPort,
+    );
     const tcpLocalhostHttps = await this.probeTcpConnect(
       "127.0.0.1",
       context.httpsPort,
@@ -350,7 +365,10 @@ export class FirewallVerifierService {
     });
   }
 
-  private async probeTcpConnect(host: string, port: number): Promise<{
+  private async probeTcpConnect(
+    host: string,
+    port: number,
+  ): Promise<{
     ok: boolean;
     errorName?: string;
     errorMessage?: string;

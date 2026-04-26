@@ -14,5 +14,20 @@ export default defineConfig({
     screenshot: "off",
     video: "off",
     headless: process.env.HEADED ? false : true,
+    viewport: { width: 1920, height: 1240 },
   },
+  projects: [
+    {
+      name: "windows-baseline",
+      grepInvert: /@skip-windows-baseline/,
+    },
+    {
+      name: "linux-compat",
+      grepInvert: /@skip-linux-compat/,
+    },
+    {
+      name: "macos-compat",
+      grepInvert: /@skip-macos-compat/,
+    },
+  ],
 });

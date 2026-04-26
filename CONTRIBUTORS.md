@@ -1,6 +1,6 @@
 # 🏆 Clasificación de Contribuidores - SmartEconomat
 
-> **Última actualización:** 25/04/2026, 14:40:57
+> **Última actualización:** 26/04/2026, 11:56:46
 
 ---
 
@@ -9,8 +9,8 @@
 ### 🎖️ **Darel**
 
 Este guerrero del código lidera la carga con:
-- 💻 **579** Commits
-- 🔀 **100** PRs Fusionados
+- 💻 **399** Commits
+- 🔀 **111** PRs Fusionados
 
 Demostrando que:
 - ✨ El teclado es su arma favorita
@@ -18,27 +18,27 @@ Demostrando que:
 - 🚀 Git commit es su mantra matutino
 
 **Estadísticas de Dominio:**
-- Posee el **50.17%** de todo el código.
-- Ha logrado fusionar **100** funcionalidades completas.
+- Posee el **50.25%** de todo el código.
+- Ha logrado fusionar **111** funcionalidades completas.
 
 ---
 
 ## 📊 Hall de la Fama
 
 ### 🥈 Alexis
-- 💻 Commits: **300** (26.00%)
+- 💻 Commits: **203** (25.57%)
 - 🔀 PRs Fusionados: **23**
 
 ### 🥈 Sergio
-- 💻 Commits: **149** (12.91%)
-- 🔀 PRs Fusionados: **24**
+- 💻 Commits: **108** (13.60%)
+- 🔀 PRs Fusionados: **25**
 
 ### 🥈 Maurizio
-- 💻 Commits: **75** (6.50%)
+- 💻 Commits: **53** (6.68%)
 - 🔀 PRs Fusionados: **8**
 
 ### 🥈 Guillermo
-- 💻 Commits: **51** (4.42%)
+- 💻 Commits: **31** (3.90%)
 - 🔀 PRs Fusionados: **8**
 
 ---
@@ -47,7 +47,7 @@ Demostrando que:
 
 ### 😅 **Guillermo**
 
-Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
+Con **31 commits** y **8 PRs**, tenemos aquí a alguien que:
 - 🤔 Prefiere la calidad sobre la cantidad (eso espero...)
 - 🏖️ Cree que git es una red social casual
 - 🎯 Está "esperando el momento perfecto" para contribuir
@@ -63,39 +63,39 @@ Con **51 commits** y **8 PRs**, tenemos aquí a alguien que:
 
 | Posición | Contribuidor | Commits | PRs Fusionados | % Código | Estado |
 |----------|--------------|---------|----------------|----------|--------|
-| #1 | Darel | **579** | 🔀 **100** | 50.17% | 👑 Líder |
-| #2 | Alexis | **300** | 🔀 **23** | 26.00% | 💪 Activo |
-| #3 | Sergio | **149** | 🔀 **24** | 12.91% | 💪 Activo |
-| #4 | Maurizio | **75** | 🔀 **8** | 6.50% | 💪 Activo |
-| #5 | Guillermo | **51** | 🔀 **8** | 4.42% | 🐌 Necesita café |
+| #1 | Darel | **399** | 🔀 **111** | 50.25% | 👑 Líder |
+| #2 | Alexis | **203** | 🔀 **23** | 25.57% | 💪 Activo |
+| #3 | Sergio | **108** | 🔀 **25** | 13.60% | 💪 Activo |
+| #4 | Maurizio | **53** | 🔀 **8** | 6.68% | 💪 Activo |
+| #5 | Guillermo | **31** | 🔀 **8** | 3.90% | 🐌 Necesita café |
 
 ---
 
 ## 📊 Estadísticas Generales
 
-- **Total de commits:** 1154
-- **Total de PRs fusionados:** 163
+- **Total de commits:** 794
+- **Total de PRs fusionados:** 175
 - **Total de contribuidores:** 5
-- **Promedio de commits por persona:** 230.8
+- **Promedio de commits por persona:** 158.8
 
 ---
 
 ## 🎯 Ranking de Poder (Commits + PRs)
 
 **Darel**
-`████████████████████` 579 commits | 100 PRs
+`████████████████████` 399 commits | 111 PRs
 
 **Alexis**
-`██████████░░░░░░░░░░` 300 commits | 23 PRs
+`██████████░░░░░░░░░░` 203 commits | 23 PRs
 
 **Sergio**
-`█████░░░░░░░░░░░░░░░` 149 commits | 24 PRs
+`█████░░░░░░░░░░░░░░░` 108 commits | 25 PRs
 
 **Maurizio**
-`██░░░░░░░░░░░░░░░░░░` 75 commits | 8 PRs
+`██░░░░░░░░░░░░░░░░░░` 53 commits | 8 PRs
 
 **Guillermo**
-`█░░░░░░░░░░░░░░░░░░░` 51 commits | 8 PRs
+`█░░░░░░░░░░░░░░░░░░░` 31 commits | 8 PRs
 
 ---
 

@@ -245,6 +245,9 @@ export function useInstallerFlow() {
       stopHealthUpdate = bridge.onHealthUpdate((event: HealthUpdateEvent) => {
         setHealth(event.health);
         setWatchdogStatus(event.watchdog);
+        if (event.supervisorSnapshot) {
+          setSupervisorSnapshot(event.supervisorSnapshot);
+        }
       });
     };
 
@@ -439,7 +442,6 @@ export function useInstallerFlow() {
           }, INSTALL_TIMEOUT_MS);
         }),
       ])) as Awaited<ReturnType<SmartEconomatBridge["startInstallation"]>>;
-      setBusy(false);
 
       if (!result.ok || !result.data) {
         setError(result.message);
@@ -449,12 +451,13 @@ export function useInstallerFlow() {
       setInstallerState(result.data);
       setStep("finish");
     } catch (error) {
-      setBusy(false);
       const message =
         error instanceof Error
           ? error.message
           : "Error inesperado al iniciar la instalación.";
       setError(message);
+    } finally {
+      setBusy(false);
     }
   }
 

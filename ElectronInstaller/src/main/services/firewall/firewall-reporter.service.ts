@@ -23,10 +23,10 @@ export class FirewallReporterService {
         };
       }
       return {
-        canContinue: false,
-        warningCode: "FIREWALL_RULES_INCONSISTENT_PRE_HOSTS",
+        canContinue: true,
+        warningCode: "FIREWALL_RULES_INCONSISTENT_PRE_HOSTS_CONTINUE",
         message:
-          "No se pudieron validar las reglas de Windows Firewall para SmartEconomat antes de continuar. Corrige permisos o reglas y reintenta.",
+          "No se pudieron validar completamente las reglas de Windows Firewall antes de continuar. La instalación seguirá con advertencia; revisa permisos o reglas manualmente después del despliegue.",
       };
     }
 
@@ -72,10 +72,10 @@ export class FirewallReporterService {
     }
 
     return {
-      canContinue: false,
-      warningCode: "FIREWALL_CONNECTIVITY_BLOCKED",
+      canContinue: true,
+      warningCode: "FIREWALL_CONNECTIVITY_BLOCKED_CONTINUE",
       message:
-        "No se pudo confirmar conectividad local de SmartEconomat. Se requiere intervención guiada antes de continuar.",
+        "No se pudo confirmar conectividad local durante la verificación de firewall. La instalación seguirá con advertencia; valida conectividad y reglas manualmente al finalizar.",
     };
   }
 }

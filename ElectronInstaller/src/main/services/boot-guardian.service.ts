@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import net from "node:net";
+import { randomUUID } from "node:crypto";
 
 import { Notification, app } from "electron";
 import type { BrowserWindow } from "electron";
@@ -12,6 +13,7 @@ import type {
   RecoveryLevel,
   ServiceHealth,
   SupervisorCheck,
+  SupervisorIncident,
   SupervisorSnapshot,
   WatchdogState,
 } from "@shared/contracts";
@@ -21,7 +23,9 @@ import { DockerAutostartService } from "./docker-autostart.service";
 import { DockerOrchestratorService } from "./docker-orchestrator.service";
 import { DockerReadinessService } from "./docker-readiness.service";
 import { GuardianStateService } from "./guardian-state.service";
+import { ProcessRunnerService } from "./process-runner.service";
 import { SupervisorLogService } from "./supervisor-log.service";
+import { computeBackoffInterval, shouldRunRecovery } from "./supervisor-policy";
 
 export interface BootGuardianOptions {
   onLog: (message: string) => void;
@@ -75,6 +79,7 @@ export class BootGuardianService {
   private readonly dockerReadiness = new DockerReadinessService();
   private readonly guardianState = new GuardianStateService();
   private readonly supervisorLog = new SupervisorLogService();
+  private readonly processRunner = new ProcessRunnerService();
   private readonly onLog: (message: string) => void;
   private readonly onSnapshot?: (snapshot: SupervisorSnapshot) => void;
   private readonly onTrayStateChange?: (
@@ -103,10 +108,16 @@ export class BootGuardianService {
   };
   private currentWatchdogState: WatchdogState = "idle";
   private cycleInProgress = false;
+  private recoveryLock = false;
   private startedAtMs = Date.now();
   private supervisorChecks: SupervisorCheck[] = [];
   private lastAutomaticActionAt: string | null = null;
   private lastAutomaticAction: string | null = null;
+  private lastRecoveryAttemptAt = 0;
+  private readonly minimumRecoveryCooldownMs = 20_000;
+  private incidentsByKey = new Map<string, SupervisorIncident>();
+  private incidentsResolved = 0;
+  private lastIncidentAt: string | null = null;
 
   constructor(options: BootGuardianOptions) {
     this.onLog = options.onLog;
@@ -141,14 +152,19 @@ export class BootGuardianService {
         lastCheck: this.guardianState.get().lastHealthCheck,
         dockerStatus: this.lastDockerStatus,
       },
+      supervisorSnapshot: this.getSupervisorSnapshot(),
       timestamp: new Date().toISOString(),
     };
   }
 
   getSupervisorSnapshot(): SupervisorSnapshot {
     const now = Date.now();
-    const hasErrors = this.supervisorChecks.some((check) => check.state === "error");
-    const hasWarnings = this.supervisorChecks.some((check) => check.state === "warn");
+    const hasErrors = this.supervisorChecks.some(
+      (check) => check.state === "error",
+    );
+    const hasWarnings = this.supervisorChecks.some(
+      (check) => check.state === "warn",
+    );
     const overallState = hasErrors
       ? "degraded"
       : this.currentWatchdogState === "recovering"
@@ -157,12 +173,25 @@ export class BootGuardianService {
           ? "recovering"
           : "healthy";
 
+    const incidents = [...this.incidentsByKey.values()].sort((a, b) =>
+      b.detectedAt.localeCompare(a.detectedAt),
+    );
+    const openIncidents = incidents.filter(
+      (incident) => incident.state === "open",
+    );
+
     return {
       overallState,
       checks: this.supervisorChecks,
       lastAutomaticActionAt: this.lastAutomaticActionAt,
       lastAutomaticAction: this.lastAutomaticAction,
       uptimeSeconds: Math.max(0, Math.floor((now - this.startedAtMs) / 1000)),
+      nextCheckInMs: this.computeCurrentInterval(),
+      incidentsResolved: this.incidentsResolved,
+      incidentsOpen: openIncidents.length,
+      lastIncidentAt: this.lastIncidentAt,
+      latestIncident: incidents[0] ?? null,
+      recentIncidents: incidents.slice(0, 8),
     };
   }
 
@@ -193,7 +222,8 @@ export class BootGuardianService {
     this.currentRecoveryLevel = savedState.lastRecoveryLevel ?? 1;
     this.lastDockerStatus = {
       state: savedState.lastDockerState,
-      detail: savedState.lastDockerDetail || "Estado cargado desde persistencia.",
+      detail:
+        savedState.lastDockerDetail || "Estado cargado desde persistencia.",
       source: "boot-guardian",
       retries: 0,
       lastCheckedAt: new Date().toISOString(),
@@ -368,9 +398,8 @@ export class BootGuardianService {
       "[BOOT-GUARDIAN] Docker Engine no responde. Intentando iniciar Docker Desktop...",
     );
 
-    const started = await this.dockerReadiness.startDockerDesktop(
-      "boot-guardian",
-    );
+    const started =
+      await this.dockerReadiness.startDockerDesktop("boot-guardian");
     this.lastDockerStatus = started;
     await this.guardianState.update({
       lastDockerState: started.state,
@@ -406,7 +435,6 @@ export class BootGuardianService {
     return ready;
   }
 
-
   // ── Graduated Recovery ────────────────────────────────────────
 
   /**
@@ -428,6 +456,22 @@ export class BootGuardianService {
     if (healthResult.ok && healthResult.data) {
       this.lastHealth = healthResult.data;
       this.broadcastHealth();
+
+      if (healthResult.data.length === 0) {
+        this.log(
+          "[BOOT-GUARDIAN] Stack sin contenedores activos detectado. Escalando recuperación automática (nivel 2).",
+        );
+        if (this.currentRecoveryLevel < 2) {
+          this.currentRecoveryLevel = 2;
+        }
+        this.registerCriticalIncident(
+          "compose-stack-empty",
+          "Docker Compose stack",
+          "No se detectaron contenedores activos en el stack.",
+        );
+        await this.performGraduatedRecovery(runtimePath, []);
+        return;
+      }
 
       const allHealthy = this.areAllServicesUp(healthResult.data);
       if (allHealthy) {
@@ -460,102 +504,129 @@ export class BootGuardianService {
     runtimePath: string,
     downServices: ServiceHealth[],
   ): Promise<void> {
-    this.updateWatchdogState("recovering");
-
-    if (this.currentRecoveryLevel === 1) {
-      const success = await this.performRecoveryLevel1(
-        runtimePath,
-        downServices,
+    if (this.recoveryLock) {
+      this.log(
+        "[BOOT-GUARDIAN] Recuperación ya en curso. Se evita ejecutar otra en paralelo.",
       );
-      if (success) {
-        await this.resetRecoveryState();
-        return;
-      }
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
-        this.log(
-          "[BOOT-GUARDIAN] Nivel 1 agotado. Escalando a nivel 2 (stack restart ligero).",
+      return;
+    }
+    const nowMs = Date.now();
+    if (
+      !shouldRunRecovery(
+        nowMs,
+        this.lastRecoveryAttemptAt,
+        this.minimumRecoveryCooldownMs,
+      )
+    ) {
+      const waitMs =
+        this.minimumRecoveryCooldownMs - (nowMs - this.lastRecoveryAttemptAt);
+      this.log(
+        `[BOOT-GUARDIAN] Cooldown activo para reparaciones (${Math.ceil(waitMs / 1000)}s restantes).`,
+      );
+      return;
+    }
+
+    this.recoveryLock = true;
+    this.lastRecoveryAttemptAt = nowMs;
+    this.updateWatchdogState("recovering");
+    try {
+      if (this.currentRecoveryLevel === 1) {
+        const success = await this.performRecoveryLevel1(
+          runtimePath,
+          downServices,
         );
-        this.currentRecoveryLevel = 2;
-        this.consecutiveFailures = 0;
+        if (success) {
+          await this.resetRecoveryState();
+          return;
+        }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+          this.log(
+            "[BOOT-GUARDIAN] Nivel 1 agotado. Escalando a nivel 2 (stack restart ligero).",
+          );
+          this.currentRecoveryLevel = 2;
+          this.consecutiveFailures = 0;
+        }
       }
+
+      if (this.currentRecoveryLevel === 2) {
+        const success = await this.performRecoveryLevel2(runtimePath);
+        if (success) {
+          await this.resetRecoveryState();
+          return;
+        }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+          this.log(
+            "[BOOT-GUARDIAN] Nivel 2 agotado. Escalando a nivel 3 (full recreate).",
+          );
+          this.currentRecoveryLevel = 3;
+          this.consecutiveFailures = 0;
+        }
+      }
+
+      if (this.currentRecoveryLevel === 3) {
+        const success = await this.performRecoveryLevel3(runtimePath);
+        if (success) {
+          await this.resetRecoveryState();
+          return;
+        }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+          this.log("[BOOT-GUARDIAN] Nivel 3 agotado. Escalando a nivel 4.");
+          this.currentRecoveryLevel = 4;
+          this.consecutiveFailures = 0;
+        }
+      }
+
+      if (this.currentRecoveryLevel === 4) {
+        const success = await this.performRecoveryLevel4(runtimePath);
+        if (success) {
+          await this.resetRecoveryState();
+          return;
+        }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+          this.log("[BOOT-GUARDIAN] Nivel 4 agotado. Escalando a nivel 5.");
+          this.currentRecoveryLevel = 5;
+          this.consecutiveFailures = 0;
+        }
+      }
+
+      if (this.currentRecoveryLevel === 5) {
+        const success = await this.performRecoveryLevel5(runtimePath);
+        if (success) {
+          await this.resetRecoveryState();
+          return;
+        }
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
+          this.log("[BOOT-GUARDIAN] Nivel 5 agotado. Escalando a nivel 6.");
+          this.currentRecoveryLevel = 6;
+          this.consecutiveFailures = 0;
+        }
+      }
+
+      if (this.currentRecoveryLevel === 6) {
+        await this.performRecoveryLevel6();
+        this.consecutiveFailures++;
+      }
+
+      await this.guardianState.update({
+        consecutiveFailures: this.consecutiveFailures,
+        lastRecoveryLevel: this.currentRecoveryLevel,
+        lastRecoveryAction: new Date().toISOString(),
+        watchdogState: "recovering",
+      });
+
+      this.updateWatchdogState(
+        this.consecutiveFailures >= this.maxRetriesPerLevel
+          ? "backoff"
+          : "recovering",
+      );
+    } finally {
+      this.recoveryLock = false;
     }
-
-    if (this.currentRecoveryLevel === 2) {
-      const success = await this.performRecoveryLevel2(runtimePath);
-      if (success) {
-        await this.resetRecoveryState();
-        return;
-      }
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
-        this.log(
-          "[BOOT-GUARDIAN] Nivel 2 agotado. Escalando a nivel 3 (full recreate).",
-        );
-        this.currentRecoveryLevel = 3;
-        this.consecutiveFailures = 0;
-      }
-    }
-
-    if (this.currentRecoveryLevel === 3) {
-      const success = await this.performRecoveryLevel3(runtimePath);
-      if (success) {
-        await this.resetRecoveryState();
-        return;
-      }
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
-        this.log("[BOOT-GUARDIAN] Nivel 3 agotado. Escalando a nivel 4.");
-        this.currentRecoveryLevel = 4;
-        this.consecutiveFailures = 0;
-      }
-    }
-
-    if (this.currentRecoveryLevel === 4) {
-      const success = await this.performRecoveryLevel4(runtimePath);
-      if (success) {
-        await this.resetRecoveryState();
-        return;
-      }
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
-        this.log("[BOOT-GUARDIAN] Nivel 4 agotado. Escalando a nivel 5.");
-        this.currentRecoveryLevel = 5;
-        this.consecutiveFailures = 0;
-      }
-    }
-
-    if (this.currentRecoveryLevel === 5) {
-      const success = await this.performRecoveryLevel5(runtimePath);
-      if (success) {
-        await this.resetRecoveryState();
-        return;
-      }
-      this.consecutiveFailures++;
-      if (this.consecutiveFailures >= this.maxRetriesPerLevel) {
-        this.log("[BOOT-GUARDIAN] Nivel 5 agotado. Escalando a nivel 6.");
-        this.currentRecoveryLevel = 6;
-        this.consecutiveFailures = 0;
-      }
-    }
-
-    if (this.currentRecoveryLevel === 6) {
-      await this.performRecoveryLevel6();
-      this.consecutiveFailures++;
-    }
-
-    await this.guardianState.update({
-      consecutiveFailures: this.consecutiveFailures,
-      lastRecoveryLevel: this.currentRecoveryLevel,
-      lastRecoveryAction: new Date().toISOString(),
-      watchdogState: "recovering",
-    });
-
-    this.updateWatchdogState(
-      this.consecutiveFailures >= this.maxRetriesPerLevel
-        ? "backoff"
-        : "recovering",
-    );
   }
 
   /**
@@ -629,9 +700,7 @@ export class BootGuardianService {
       return true;
     }
 
-    this.log(
-      `[BOOT-GUARDIAN] ⚠️ Nivel 2 fallido: ${result.message}`,
-    );
+    this.log(`[BOOT-GUARDIAN] ⚠️ Nivel 2 fallido: ${result.message}`);
     return false;
   }
 
@@ -660,9 +729,7 @@ export class BootGuardianService {
       return true;
     }
 
-    this.log(
-      `[BOOT-GUARDIAN] ⚠️ Nivel 3 fallido: ${result.message}`,
-    );
+    this.log(`[BOOT-GUARDIAN] ⚠️ Nivel 3 fallido: ${result.message}`);
     return false;
   }
 
@@ -745,9 +812,11 @@ export class BootGuardianService {
       return this.baseIntervalMs;
     }
 
-    const exponentialDelay =
-      this.baseIntervalMs * Math.pow(2, this.consecutiveFailures);
-    return Math.min(exponentialDelay, this.maxIntervalMs);
+    return computeBackoffInterval(
+      this.baseIntervalMs,
+      this.maxIntervalMs,
+      this.consecutiveFailures,
+    );
   }
 
   private async watchdogCycle(): Promise<void> {
@@ -805,10 +874,7 @@ export class BootGuardianService {
 
     const event = this.getStatus();
     try {
-      this.mainWindow.webContents.send(
-        IPCChannels.runtime.healthUpdate,
-        event,
-      );
+      this.mainWindow.webContents.send(IPCChannels.runtime.healthUpdate, event);
     } catch {
       // La ventana puede haberse destruido entre la verificación y el envío.
     }
@@ -925,6 +991,7 @@ export class BootGuardianService {
       measuredAt: now,
     });
 
+    const hasContainerInventory = this.lastHealth.length > 0;
     const unhealthyCount = this.lastHealth.filter(
       (service) =>
         service.status === "unhealthy" || service.status === "unknown",
@@ -932,9 +999,14 @@ export class BootGuardianService {
     checks.push({
       id: "containers-running",
       label: "Contenedores running",
-      state: unhealthyCount === 0 ? "ok" : "error",
-      detail:
-        unhealthyCount === 0
+      state: !hasContainerInventory
+        ? "error"
+        : unhealthyCount === 0
+          ? "ok"
+          : "error",
+      detail: !hasContainerInventory
+        ? "No se detectaron contenedores del stack."
+        : unhealthyCount === 0
           ? "Todos los contenedores requeridos están operativos."
           : `${unhealthyCount} contenedor(es) con incidencia.`,
       measuredAt: now,
@@ -942,9 +1014,14 @@ export class BootGuardianService {
     checks.push({
       id: "containers-health",
       label: "Healthchecks",
-      state: unhealthyCount === 0 ? "ok" : "warn",
-      detail:
-        unhealthyCount === 0
+      state: !hasContainerInventory
+        ? "error"
+        : unhealthyCount === 0
+          ? "ok"
+          : "warn",
+      detail: !hasContainerInventory
+        ? "No hay healthchecks disponibles porque no hay contenedores activos."
+        : unhealthyCount === 0
           ? "Healthchecks en estado esperado."
           : "Se detectaron healthchecks degradados.",
       measuredAt: now,
@@ -969,7 +1046,9 @@ export class BootGuardianService {
       measuredAt: now,
     });
 
-    const httpOk = await this.checkHttpEndpoint(`http://${domain}:${httpPort}/`);
+    const httpOk = await this.checkHttpEndpoint(
+      `http://${domain}:${httpPort}/`,
+    );
     checks.push({
       id: "http-endpoint",
       label: "Endpoint HTTP",
@@ -984,7 +1063,9 @@ export class BootGuardianService {
       id: "https-endpoint",
       label: "Endpoint HTTPS",
       state: httpsOk ? "ok" : "warn",
-      detail: httpsOk ? "Endpoint HTTPS responde." : "Endpoint HTTPS no responde.",
+      detail: httpsOk
+        ? "Endpoint HTTPS responde."
+        : "Endpoint HTTPS no responde.",
       measuredAt: now,
     });
 
@@ -1013,18 +1094,100 @@ export class BootGuardianService {
       detail: "Sin señal de espacio crítico detectada por el supervisor.",
       measuredAt: now,
     });
+    const composeHealth =
+      this.lastHealth.length > 0
+        ? this.lastHealth.some((service) => service.status === "unhealthy")
+          ? "error"
+          : "ok"
+        : "warn";
+    checks.push({
+      id: "compose-stack",
+      label: "Docker Compose stack",
+      state: composeHealth,
+      detail:
+        composeHealth === "ok"
+          ? "Compose reporta servicios operativos."
+          : composeHealth === "warn"
+            ? "Stack sin datos de salud todavía."
+            : "Hay servicios del stack con incidencias.",
+      measuredAt: now,
+    });
+
+    const composeAssets = await this.inspectComposeAssets(runtimePath);
+    checks.push({
+      id: "docker-volumes",
+      label: "Volúmenes requeridos",
+      state: composeAssets.missingVolumes.length > 0 ? "warn" : "ok",
+      detail:
+        composeAssets.missingVolumes.length > 0
+          ? `Faltan ${composeAssets.missingVolumes.length} volumen(es): ${composeAssets.missingVolumes.join(", ")}`
+          : "Volúmenes requeridos detectados.",
+      measuredAt: now,
+    });
     checks.push({
       id: "docker-network",
       label: "Red Docker",
-      state: dockerStatus.state === "daemon-ready" ? "ok" : "warn",
+      state: composeAssets.missingNetworks.length > 0 ? "warn" : "ok",
       detail:
-        dockerStatus.state === "daemon-ready"
-          ? "Networking Docker activo."
-          : "Networking pendiente de validación.",
+        composeAssets.missingNetworks.length > 0
+          ? `Faltan ${composeAssets.missingNetworks.length} red(es): ${composeAssets.missingNetworks.join(", ")}`
+          : "Redes requeridas detectadas.",
+      measuredAt: now,
+    });
+
+    const backendPort = Number(envValues.BACKEND_PORT || 3000);
+    const backendOk = await this.checkHttpEndpoint(
+      `http://127.0.0.1:${backendPort}/api/v1`,
+    );
+    checks.push({
+      id: "backend-api",
+      label: "Backend API local",
+      state: backendOk ? "ok" : "error",
+      detail: backendOk
+        ? "API local responde correctamente."
+        : "La API local no responde o devolvió error de conectividad.",
+      measuredAt: now,
+    });
+
+    const dbReady = await this.verifyDatabaseContainer(runtimePath);
+    checks.push({
+      id: "database",
+      label: "Base de datos",
+      state: dbReady ? "ok" : "warn",
+      detail: dbReady
+        ? "PostgreSQL responde al chequeo pg_isready."
+        : "PostgreSQL no respondió a pg_isready.",
+      measuredAt: now,
+    });
+
+    checks.push({
+      id: "reverse-proxy",
+      label: "Reverse proxy",
+      state: httpsOk ? "ok" : "warn",
+      detail: httpsOk
+        ? "Proxy HTTPS responde correctamente."
+        : "Proxy HTTPS no responde todavía.",
+      measuredAt: now,
+    });
+
+    const certState = await this.checkCertificatesAndHosts(runtimePath, domain);
+    checks.push({
+      id: "certificates",
+      label: "Certificados locales",
+      state: certState.certsOk ? "ok" : "warn",
+      detail: certState.certsDetail,
+      measuredAt: now,
+    });
+    checks.push({
+      id: "hosts-file",
+      label: "Hosts local",
+      state: certState.hostsOk ? "ok" : "warn",
+      detail: certState.hostsDetail,
       measuredAt: now,
     });
 
     this.supervisorChecks = checks;
+    this.refreshIncidentsFromChecks(checks);
     const snapshot = this.getSupervisorSnapshot();
     this.onSnapshot?.(snapshot);
     this.onTrayStateChange?.(snapshot.overallState);
@@ -1082,12 +1245,227 @@ export class BootGuardianService {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4_000);
-      const response = await fetch(url, { method: "GET", signal: controller.signal });
+      const response = await fetch(url, {
+        method: "GET",
+        signal: controller.signal,
+      });
       clearTimeout(timer);
       return response.ok || response.status < 500;
     } catch {
       return false;
     }
+  }
+
+  private async inspectComposeAssets(runtimePath: string): Promise<{
+    missingVolumes: string[];
+    missingNetworks: string[];
+  }> {
+    const baseArgs = [
+      "compose",
+      "--project-directory",
+      path.join(runtimePath, "project"),
+      "-f",
+      path.join(runtimePath, "project", "docker-compose.prod.yml"),
+      "--env-file",
+      path.join(runtimePath, ".env.prod"),
+    ];
+    const volumesResult = await this.processRunner.run({
+      command: "docker",
+      args: [...baseArgs, "config", "--volumes"],
+      timeoutMs: 20_000,
+    });
+    const networksResult = await this.processRunner.run({
+      command: "docker",
+      args: [...baseArgs, "config", "--networks"],
+      timeoutMs: 20_000,
+    });
+    const existingVolumes = await this.processRunner.run({
+      command: "docker",
+      args: ["volume", "ls", "--format", "{{.Name}}"],
+      timeoutMs: 20_000,
+    });
+    const existingNetworks = await this.processRunner.run({
+      command: "docker",
+      args: ["network", "ls", "--format", "{{.Name}}"],
+      timeoutMs: 20_000,
+    });
+
+    const requiredVolumes = volumesResult.ok
+      ? volumesResult.stdout
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+      : [];
+    const requiredNetworks = networksResult.ok
+      ? networksResult.stdout
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+      : [];
+    const volumeSet = new Set(
+      existingVolumes.stdout.split(/\r?\n/).map((line) => line.trim()),
+    );
+    const networkSet = new Set(
+      existingNetworks.stdout.split(/\r?\n/).map((line) => line.trim()),
+    );
+
+    return {
+      missingVolumes: requiredVolumes.filter(
+        (volume) => !volumeSet.has(volume),
+      ),
+      missingNetworks: requiredNetworks.filter(
+        (network) => !networkSet.has(network),
+      ),
+    };
+  }
+
+  private async verifyDatabaseContainer(runtimePath: string): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "docker",
+      args: [
+        "compose",
+        "--project-directory",
+        path.join(runtimePath, "project"),
+        "-f",
+        path.join(runtimePath, "project", "docker-compose.prod.yml"),
+        "--env-file",
+        path.join(runtimePath, ".env.prod"),
+        "exec",
+        "-T",
+        "db",
+        "pg_isready",
+      ],
+      timeoutMs: 25_000,
+    });
+    return result.ok;
+  }
+
+  private async checkCertificatesAndHosts(
+    runtimePath: string,
+    domain: string,
+  ): Promise<{
+    certsOk: boolean;
+    certsDetail: string;
+    hostsOk: boolean;
+    hostsDetail: string;
+  }> {
+    const fullchainPath = path.join(runtimePath, "certs", "fullchain.pem");
+    const privkeyPath = path.join(runtimePath, "certs", "privkey.pem");
+    let certsOk = false;
+    try {
+      await Promise.all([fs.access(fullchainPath), fs.access(privkeyPath)]);
+      certsOk = true;
+    } catch {
+      certsOk = false;
+    }
+
+    if (process.platform !== "win32") {
+      return {
+        certsOk,
+        certsDetail: certsOk
+          ? "Certificados locales detectados."
+          : "No se encontraron certificados locales esperados.",
+        hostsOk: true,
+        hostsDetail: "Validación de hosts específica de Windows omitida.",
+      };
+    }
+
+    const hostsPath = path.join(
+      process.env.SystemRoot ?? "C:/Windows",
+      "System32",
+      "drivers",
+      "etc",
+      "hosts",
+    );
+    try {
+      const hostsContent = await fs.readFile(hostsPath, "utf8");
+      const hostMapped =
+        hostsContent.includes(`127.0.0.1 ${domain}`) ||
+        hostsContent.includes(`::1 ${domain}`);
+      return {
+        certsOk,
+        certsDetail: certsOk
+          ? "Certificados locales detectados."
+          : "No se encontraron certificados locales esperados.",
+        hostsOk: hostMapped,
+        hostsDetail: hostMapped
+          ? "Dominio local presente en hosts."
+          : "Dominio local no encontrado en hosts de Windows.",
+      };
+    } catch {
+      return {
+        certsOk,
+        certsDetail: certsOk
+          ? "Certificados locales detectados."
+          : "No se encontraron certificados locales esperados.",
+        hostsOk: false,
+        hostsDetail: "No se pudo leer hosts de Windows.",
+      };
+    }
+  }
+
+  private refreshIncidentsFromChecks(checks: SupervisorCheck[]): void {
+    const now = new Date().toISOString();
+    const activeKeys = new Set<string>();
+    for (const check of checks) {
+      if (check.state === "ok") {
+        continue;
+      }
+      const key = `${check.id}:${check.state}`;
+      activeKeys.add(key);
+      const existing = this.incidentsByKey.get(key);
+      if (!existing) {
+        const severity = check.state === "error" ? "error" : ("warn" as const);
+        this.incidentsByKey.set(key, {
+          id: randomUUID(),
+          service: check.id,
+          title: check.label,
+          detail: check.detail,
+          severity,
+          state: "open",
+          detectedAt: now,
+          occurrences: 1,
+        });
+        this.lastIncidentAt = now;
+      } else {
+        existing.detail = check.detail;
+        existing.occurrences += 1;
+      }
+    }
+
+    for (const [key, incident] of this.incidentsByKey.entries()) {
+      if (incident.state === "open" && !activeKeys.has(key)) {
+        incident.state = "resolved";
+        incident.resolvedAt = now;
+        this.incidentsResolved += 1;
+      }
+    }
+  }
+
+  private registerCriticalIncident(
+    key: string,
+    title: string,
+    detail: string,
+  ): void {
+    const now = new Date().toISOString();
+    const existing = this.incidentsByKey.get(key);
+    if (existing) {
+      existing.state = "open";
+      existing.detail = detail;
+      existing.occurrences += 1;
+      return;
+    }
+    this.incidentsByKey.set(key, {
+      id: randomUUID(),
+      service: key,
+      title,
+      detail,
+      severity: "critical",
+      state: "open",
+      detectedAt: now,
+      occurrences: 1,
+    });
+    this.lastIncidentAt = now;
   }
 
   // ── Utilidades ────────────────────────────────────────────────
