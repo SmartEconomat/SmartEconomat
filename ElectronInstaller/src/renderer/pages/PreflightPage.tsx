@@ -3,12 +3,13 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Paper,
   Stack,
   Typography,
   type ChipProps,
 } from "@mui/material";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { PreflightReport, RuntimeLogEvent } from "@shared/contracts";
 import { WizardFooterNav } from "@renderer/components/WizardFooterNav";
@@ -39,6 +40,9 @@ export function PreflightPage({
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
   const lastLogCountRef = useRef(0);
+  const [activeAction, setActiveAction] = useState<"run" | "repair" | null>(
+    null,
+  );
 
   const syncAutoScrollPreference = (): void => {
     const container = logsContainerRef.current;
@@ -65,6 +69,40 @@ export function PreflightPage({
       container.scrollTop = container.scrollHeight;
     }
   }, [runtimeLogs]);
+
+  useEffect(() => {
+    if (!busy) {
+      setActiveAction(null);
+    }
+  }, [busy]);
+
+  const latestLog = runtimeLogs.at(-1)?.line;
+  const hasAutoRepairChecks =
+    report?.checks.some(
+      (check) => check.repairable && check.repairAction === "auto-repair",
+    ) ?? false;
+  const busyTitle =
+    activeAction === "repair"
+      ? "Aplicando soluciones automáticas..."
+      : "Ejecutando preflight...";
+  const busyReason =
+    activeAction === "repair"
+      ? "Se están ejecutando comandos de diagnóstico y reparación del entorno."
+      : "Se están validando dependencias, Docker, puertos y TLS antes de continuar.";
+
+  const waitingMessage = latestLog
+    ? `Motivo de espera actual: ${latestLog}`
+    : "Motivo de espera actual: iniciando comprobaciones y esperando respuesta del sistema.";
+
+  const handleRunClick = async (): Promise<void> => {
+    setActiveAction("run");
+    await onRun();
+  };
+
+  const handleAutoRepairClick = async (): Promise<void> => {
+    setActiveAction("repair");
+    await onAutoRepair();
+  };
 
   return (
     <Box component="section">
@@ -105,7 +143,7 @@ export function PreflightPage({
                 <Button
                   variant="contained"
                   disabled={busy}
-                  onClick={() => void onRun()}
+                  onClick={() => void handleRunClick()}
                   sx={{
                     height: 42,
                     flex: 1,
@@ -123,8 +161,8 @@ export function PreflightPage({
                 <Button
                   variant="contained"
                   color="secondary"
-                  disabled={busy || !report || blockersCount === 0}
-                  onClick={() => void onAutoRepair()}
+                  disabled={busy || !report || !hasAutoRepairChecks}
+                  onClick={() => void handleAutoRepairClick()}
                   sx={{
                     height: 42,
                     flex: 1,
@@ -145,7 +183,25 @@ export function PreflightPage({
         </Box>
       </Box>
 
-      {busy && runtimeLogs.length > 0 && (
+      {busy && (
+        <Alert
+          icon={<CircularProgress size={18} color="inherit" />}
+          severity="info"
+          sx={{ mb: 2, alignItems: "center" }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            {busyTitle}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.35 }}>
+            {busyReason}
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", mt: 0.4 }}>
+            {waitingMessage}
+          </Typography>
+        </Alert>
+      )}
+
+      {busy && activeAction === "repair" && (
         <Paper
           ref={logsContainerRef}
           onScroll={syncAutoScrollPreference}
@@ -167,26 +223,33 @@ export function PreflightPage({
           >
             Registros en tiempo real:
           </Typography>
-          {runtimeLogs.map((log, index) => (
-            <Box
-              key={index}
-              sx={{
-                color:
-                  log.line.includes("✓") || log.line.includes("OK")
-                    ? "#4caf50"
-                    : log.line.includes("⚠️") || log.line.includes("WARN")
-                      ? "#ff9800"
-                      : log.line.includes("❌") || log.line.includes("ERROR")
-                        ? "#f44336"
-                        : "#333",
-                mb: 0.5,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {log.line}
-            </Box>
-          ))}
+          {runtimeLogs.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Preparando ejecución... en cuanto haya salida del proceso se
+              mostrará aquí.
+            </Typography>
+          ) : (
+            runtimeLogs.map((log, index) => (
+              <Box
+                key={index}
+                sx={{
+                  color:
+                    log.line.includes("✓") || log.line.includes("OK")
+                      ? "#4caf50"
+                      : log.line.includes("⚠️") || log.line.includes("WARN")
+                        ? "#ff9800"
+                        : log.line.includes("❌") || log.line.includes("ERROR")
+                          ? "#f44336"
+                          : "#333",
+                  mb: 0.5,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {log.line}
+              </Box>
+            ))
+          )}
         </Paper>
       )}
 

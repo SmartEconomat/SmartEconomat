@@ -17,6 +17,10 @@ import {
 
 import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
+import {
+  resolveWindowsDockerCliPath,
+  resolveWindowsDockerDesktopExePath,
+} from "./docker-desktop-windows-resolve";
 
 interface ComposeLocation {
   composeFile: string;
@@ -31,12 +35,36 @@ interface ComposePsEntry {
   Status?: string;
 }
 
+interface DockerOrchestratorOptions {
+  dockerStartupWaitMs?: number;
+  dockerStartupPollMs?: number;
+}
+
 const ANSI_ESCAPE_REGEX =
   // eslint-disable-next-line no-control-regex
   /\u001b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 function stripAnsi(input: string): string {
   return input.replace(ANSI_ESCAPE_REGEX, "");
+}
+
+export function isDockerDesktopLinuxPipeError(rawOutput: string): boolean {
+  const normalized = rawOutput.toLowerCase();
+  return (
+    normalized.includes("dockerdesktoplinuxengine") &&
+    normalized.includes("pipe")
+  );
+}
+
+export function parseDockerContextNames(rawOutput: string): string[] {
+  return rawOutput
+    .split(/\r?\n/)
+    .map((line) => line.replace("*", "").trim())
+    .filter((line) => line.length > 0)
+    .map((line) => line.split(/\s+/)[0] ?? "")
+    .filter(
+      (name, index, list) => name.length > 0 && list.indexOf(name) === index,
+    );
 }
 
 function parseComposeEntries(rawOutput: string): ComposePsEntry[] {
@@ -161,15 +189,23 @@ function normalizeService(value: string): ServiceHealth["service"] {
 
 export class DockerOrchestratorService {
   private logProcess: ReturnType<typeof spawn> | null = null;
+  private dockerCommand: string | null = null;
+  private dockerContext: string | null = null;
   private readonly envFileName = ".env.prod";
   private readonly startStackTimeoutMs = 3_600_000; // 1 hora en lugar de 20 min, permite build lento en cliente
   private readonly letsEncryptRenewTaskName =
     "SmartEconomat-LetsEncrypt-Renewal";
+  private readonly dockerStartupWaitMs: number;
+  private readonly dockerStartupPollMs: number;
 
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
-  ) {}
+    options: DockerOrchestratorOptions = {},
+  ) {
+    this.dockerStartupWaitMs = options.dockerStartupWaitMs ?? 120_000;
+    this.dockerStartupPollMs = options.dockerStartupPollMs ?? 3_000;
+  }
 
   async startStack(
     runtimePath: string,
@@ -295,8 +331,9 @@ export class DockerOrchestratorService {
     await this.prepareRuntimeDirectories(safeRuntimePath);
 
     const certbotResult = await this.processRunner.run({
-      command: "docker",
+      command: await this.getDockerCommand(),
       args: [
+        ...this.getDockerGlobalArgs(),
         "run",
         "--rm",
         "-v",
@@ -319,6 +356,7 @@ export class DockerOrchestratorService {
       ],
       timeoutMs: 300_000,
       cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
       onStdoutLine: onLogLine
         ? (line: string) => {
             onLogLine({
@@ -730,6 +768,7 @@ export class DockerOrchestratorService {
     this.stopLogStream();
 
     const composeArgs = [
+      ...this.getDockerGlobalArgs(),
       ...this.getComposeBaseArgs(runtimePath),
       "logs",
       payload.service,
@@ -738,7 +777,7 @@ export class DockerOrchestratorService {
       "--follow",
     ];
 
-    const logProcess = spawn("docker", composeArgs, {
+    const logProcess = spawn(await this.getDockerCommand(), composeArgs, {
       cwd: this.pathResolver.getProjectRoot(),
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
@@ -798,10 +837,11 @@ export class DockerOrchestratorService {
     level: "safe" | "aggressive",
   ): Promise<OperationResult> {
     const safeResult = await this.processRunner.run({
-      command: "docker",
-      args: ["image", "prune", "-f"],
+      command: await this.getDockerCommand(),
+      args: [...this.getDockerGlobalArgs(), "image", "prune", "-f"],
       timeoutMs: 60_000,
       cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
     });
 
     if (!safeResult.ok) {
@@ -814,10 +854,17 @@ export class DockerOrchestratorService {
 
     if (level === "aggressive") {
       const aggressiveResult = await this.processRunner.run({
-        command: "docker",
-        args: ["system", "prune", "-f", "--volumes"],
+        command: await this.getDockerCommand(),
+        args: [
+          ...this.getDockerGlobalArgs(),
+          "system",
+          "prune",
+          "-f",
+          "--volumes",
+        ],
         timeoutMs: 120_000,
         cwd: this.pathResolver.getProjectRoot(),
+        env: this.getDockerEnvironment(),
       });
 
       return this.commandResult(
@@ -844,16 +891,32 @@ export class DockerOrchestratorService {
     const safeRuntimePath = assertRuntimePath(runtimePath);
     await this.prepareRuntimeDirectories(safeRuntimePath);
     const envFilePath = this.getEnvFilePath(safeRuntimePath);
+    const readinessCheck = await this.ensureDockerContextAndDaemon(onLogLine);
+    if (!readinessCheck.ok) {
+      return {
+        ok: false,
+        code: 1,
+        stdout: "",
+        stderr: readinessCheck.message,
+        message: readinessCheck.message,
+      };
+    }
 
     return this.processRunner.run({
-      command: "docker",
-      args: [...this.getComposeBaseArgs(safeRuntimePath), ...actionArgs],
+      command: await this.getDockerCommand(),
+      args: [
+        ...this.getDockerGlobalArgs(),
+        ...this.getComposeBaseArgs(safeRuntimePath),
+        ...actionArgs,
+      ],
       timeoutMs,
       cwd: this.pathResolver.getProjectRoot(),
-      env: {
-        ...process.env,
+      env: this.getDockerEnvironment({
         SMARTECONOMAT_ENV_FILE: envFilePath,
-      },
+        ...(this.shouldRunStartupMigrations(actionArgs)
+          ? { STARTUP_RUN_MIGRATIONS: "true" }
+          : {}),
+      }),
       onStdoutLine: onLogLine
         ? (line: string) => {
             const cleanLine = stripAnsi(line);
@@ -874,6 +937,455 @@ export class DockerOrchestratorService {
             });
           }
         : undefined,
+    });
+  }
+
+  private async ensureDockerContextAndDaemon(
+    onLogLine?: (event: RuntimeLogEvent) => void,
+  ): Promise<OperationResult<string | null>> {
+    const emit = (line: string): void => {
+      if (!onLogLine) {
+        return;
+      }
+      onLogLine({
+        service: "docker",
+        line,
+        timestamp: new Date().toISOString(),
+      });
+    };
+
+    const firstInfo = await this.processRunner.run({
+      command: await this.getDockerCommand(),
+      args: [
+        ...this.getDockerGlobalArgs(),
+        "info",
+        "--format",
+        "{{.ServerVersion}}",
+      ],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+    if (firstInfo.ok) {
+      if (process.platform === "win32") {
+        await this.ensureWindowsDockerServiceConfigured(emit);
+      }
+      return {
+        ok: true,
+        message: "Docker daemon operativo.",
+        data: this.dockerContext,
+      };
+    }
+
+    const firstErrorText =
+      `${firstInfo.stderr}\n${firstInfo.stdout}\n${firstInfo.message}`.trim();
+    if (isDockerDesktopLinuxPipeError(firstErrorText)) {
+      emit(
+        "Detectado contexto Docker inválido (dockerDesktopLinuxEngine). Buscando contexto Docker operativo...",
+      );
+    }
+
+    if (process.platform === "win32") {
+      const serviceReady = await this.ensureWindowsDockerServiceRunning(emit);
+      if (!serviceReady) {
+        emit(
+          "No se pudo dejar com.docker.service en Running; se continuará buscando un daemon Docker operativo.",
+        );
+      }
+    }
+
+    const detectedContext = await this.findWorkingDockerContext();
+    if (detectedContext) {
+      this.dockerContext = detectedContext;
+      emit(`Usando contexto Docker operativo: ${detectedContext}`);
+      return {
+        ok: true,
+        message: `Docker daemon operativo en contexto ${detectedContext}.`,
+        data: detectedContext,
+      };
+    }
+
+    if (process.platform === "win32") {
+      const windowsState = await this.inspectWindowsDockerEngineState();
+      if (windowsState.engineLikelyStuck) {
+        emit(windowsState.detail);
+        emit(
+          "Estado recuperable: arrancando Docker Desktop y forzando engine Linux antes de fallar.",
+        );
+      }
+
+      emit(
+        "Docker daemon no responde. Iniciando Docker Desktop/Engine y esperando a que WSL exponga el daemon...",
+      );
+      await this.startWindowsDockerEngine();
+
+      const contextAfterServiceStart =
+        await this.waitForWorkingDockerContext(emit);
+      if (contextAfterServiceStart) {
+        this.dockerContext = contextAfterServiceStart;
+        emit(
+          `Docker daemon disponible tras reinicio de servicio en contexto ${contextAfterServiceStart}.`,
+        );
+        return {
+          ok: true,
+          message: "Docker daemon operativo tras reinicio de servicio.",
+          data: contextAfterServiceStart,
+        };
+      }
+    }
+
+    return {
+      ok: false,
+      message:
+        "Docker daemon no disponible tras reintentos de contexto/servicio. Revisa `docker context ls` y estado del daemon.",
+      errorCode: "DOCKER_DAEMON_NOT_READY",
+    };
+  }
+
+  private async startWindowsDockerEngine(): Promise<void> {
+    await this.ensureWindowsDockerServiceRunning();
+
+    const dockerDesktopPath = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+
+    if (!dockerDesktopPath) {
+      return;
+    }
+
+    const escapedPath = dockerDesktopPath.replace(/'/g, "''");
+    await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-Command",
+        `Start-Process -FilePath '${escapedPath}' -WindowStyle Minimized -ErrorAction SilentlyContinue`,
+      ],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+
+    await this.switchWindowsDockerToLinuxEngine();
+  }
+
+  private async switchWindowsDockerToLinuxEngine(): Promise<void> {
+    const dockerCliCandidates = [
+      "C:\\Program Files\\Docker\\Docker\\DockerCli.exe",
+      "C:\\Program Files (x86)\\Docker\\Docker\\DockerCli.exe",
+    ];
+
+    for (const dockerCliPath of dockerCliCandidates) {
+      const switchResult = await this.processRunner.run({
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-Command",
+          [
+            `$dockerCli='${dockerCliPath.replace(/'/g, "''")}'`,
+            "if (-not (Test-Path -LiteralPath $dockerCli)) { exit 2 }",
+            "& $dockerCli -SwitchLinuxEngine",
+            "exit 0",
+          ].join("; "),
+        ],
+        timeoutMs: 45_000,
+        cwd: this.pathResolver.getProjectRoot(),
+        env: this.getDockerEnvironment(),
+      });
+
+      if (switchResult.ok || switchResult.code !== 2) {
+        return;
+      }
+    }
+  }
+
+  private async ensureWindowsDockerServiceRunning(
+    emit?: (line: string) => void,
+  ): Promise<boolean> {
+    const configureAndStart =
+      await this.ensureWindowsDockerServiceConfigured(emit);
+    if (configureAndStart) {
+      return true;
+    }
+
+    const elevatedRepair =
+      await this.tryElevatedWindowsDockerServiceRepair(emit);
+    return elevatedRepair
+      ? this.waitForWindowsDockerServiceRunning(emit)
+      : false;
+  }
+
+  private async ensureWindowsDockerServiceConfigured(
+    emit?: (line: string) => void,
+  ): Promise<boolean> {
+    const configureAndStart = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-Command",
+        [
+          "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue",
+          "if ($null -eq $service) { exit 2 }",
+          "sc.exe config com.docker.service start= auto | Out-Null",
+          "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
+          "Set-Service -Name 'com.docker.service' -StartupType Automatic -ErrorAction Stop",
+          "$service = Get-Service -Name 'com.docker.service'",
+          "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' -ErrorAction Stop }",
+          "$service = Get-Service -Name 'com.docker.service'",
+          "if ($service.Status -eq 'Running') { exit 0 }",
+          "exit 1",
+        ].join("; "),
+      ],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+
+    if (!configureAndStart.ok && configureAndStart.code === 2) {
+      emit?.("Servicio com.docker.service no encontrado en Windows.");
+      return false;
+    }
+
+    if (!configureAndStart.ok) {
+      emit?.(
+        "No se pudo configurar com.docker.service en modo normal; puede requerir elevación.",
+      );
+      return false;
+    }
+
+    return this.waitForWindowsDockerServiceRunning(emit);
+  }
+
+  private async waitForWindowsDockerServiceRunning(
+    emit?: (line: string) => void,
+  ): Promise<boolean> {
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      const status = await this.processRunner.run({
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-Command",
+          "(Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue).Status",
+        ],
+        timeoutMs: 10_000,
+        cwd: this.pathResolver.getProjectRoot(),
+        env: this.getDockerEnvironment(),
+      });
+
+      if (status.ok && status.stdout.trim().toLowerCase() === "running") {
+        return true;
+      }
+
+      emit?.(
+        `Servicio com.docker.service aún no está Running (intento ${attempt}/5).`,
+      );
+      await this.delay(1_500);
+    }
+
+    return false;
+  }
+
+  private async tryElevatedWindowsDockerServiceRepair(
+    emit?: (line: string) => void,
+  ): Promise<boolean> {
+    emit?.(
+      "Windows requiere elevación para configurar com.docker.service. Solicitando UAC para dejarlo en Automatic/Running...",
+    );
+    const script = [
+      "$ErrorActionPreference = 'Stop'",
+      "sc.exe config com.docker.service start= auto | Out-Null",
+      "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
+      "Set-Service -Name 'com.docker.service' -StartupType Automatic",
+      "$service = Get-Service -Name 'com.docker.service'",
+      "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' }",
+    ].join("; ");
+    const encodedScript = Buffer.from(script, "utf16le").toString("base64");
+    const elevateCommand = [
+      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','${encodedScript}')`,
+      "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList $argumentList",
+      "if ($null -eq $process) { exit 1 }",
+      "exit $process.ExitCode",
+    ].join("; ");
+
+    const elevated = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        elevateCommand,
+      ],
+      timeoutMs: 90_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+
+    if (elevated.ok) {
+      emit?.("Servicio com.docker.service configurado con elevación.");
+      return true;
+    }
+
+    emit?.(
+      "No se pudo configurar com.docker.service con elevación o el usuario canceló UAC.",
+    );
+    return false;
+  }
+
+  private async waitForWorkingDockerContext(
+    emit: (line: string) => void,
+  ): Promise<string | null> {
+    const deadline = Date.now() + this.dockerStartupWaitMs;
+    let attempt = 1;
+
+    while (Date.now() <= deadline) {
+      const context = await this.findWorkingDockerContext();
+      if (context) {
+        return context;
+      }
+
+      emit(
+        `Docker daemon aún no disponible (intento ${attempt}). Esperando arranque de WSL/Engine...`,
+      );
+      attempt += 1;
+      await this.delay(this.dockerStartupPollMs);
+    }
+
+    return null;
+  }
+
+  private async inspectWindowsDockerEngineState(): Promise<{
+    engineLikelyStuck: boolean;
+    detail: string;
+  }> {
+    const wslState = await this.processRunner.run({
+      command: "wsl",
+      args: ["-l", "-v"],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+    const pipes = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-Command",
+        "Get-ChildItem -Path '\\\\.\\pipe\\' | Where-Object { $_.Name -like '*docker*' } | Select-Object -ExpandProperty Name",
+      ],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+
+    const normalizedWsl = `${wslState.stdout}\n${wslState.stderr}`
+      .split(String.fromCharCode(0))
+      .join("")
+      .toLowerCase();
+    const normalizedPipes = `${pipes.stdout}\n${pipes.stderr}`.toLowerCase();
+    const dockerDesktopStopped =
+      normalizedWsl.includes("docker-desktop") &&
+      normalizedWsl.includes("stopped");
+    const hasEnginePipe =
+      normalizedPipes.includes("docker_engine") ||
+      normalizedPipes.includes("dockerdesktoplinuxengine");
+    const hasDesktopBackendPipe = normalizedPipes.includes("dockerbackendv2");
+
+    if (dockerDesktopStopped && !hasEnginePipe && hasDesktopBackendPipe) {
+      return {
+        engineLikelyStuck: true,
+        detail:
+          "Docker Desktop está abierto, pero el engine Linux de WSL no está arrancado: la distro `docker-desktop` está Stopped y no existen los pipes `docker_engine`/`dockerDesktopLinuxEngine`. Cierra Docker Desktop completamente o ejecuta reparación elevada del servicio antes de continuar.",
+      };
+    }
+
+    return {
+      engineLikelyStuck: false,
+      detail: "Estado Docker Desktop no bloqueante.",
+    };
+  }
+
+  private async findWorkingDockerContext(): Promise<string | null> {
+    const contextList = await this.processRunner.run({
+      command: await this.getDockerCommand(),
+      args: ["context", "ls", "--format", "{{.Name}}"],
+      timeoutMs: 20_000,
+      cwd: this.pathResolver.getProjectRoot(),
+      env: this.getDockerEnvironment(),
+    });
+
+    const contextNames = contextList.ok
+      ? parseDockerContextNames(contextList.stdout)
+      : [];
+    const candidates = ["desktop-linux", "default", ...contextNames].filter(
+      (name, index, list) => name.length > 0 && list.indexOf(name) === index,
+    );
+
+    for (const contextName of candidates) {
+      const probe = await this.processRunner.run({
+        command: await this.getDockerCommand(),
+        args: [
+          "--context",
+          contextName,
+          "info",
+          "--format",
+          "{{.ServerVersion}}",
+        ],
+        timeoutMs: 20_000,
+        cwd: this.pathResolver.getProjectRoot(),
+        env: this.getDockerEnvironment(),
+      });
+
+      if (probe.ok) {
+        return contextName;
+      }
+    }
+
+    return null;
+  }
+
+  private getDockerGlobalArgs(): string[] {
+    return this.dockerContext ? ["--context", this.dockerContext] : [];
+  }
+
+  private async getDockerCommand(): Promise<string> {
+    if (this.dockerCommand) {
+      return this.dockerCommand;
+    }
+
+    this.dockerCommand =
+      process.platform === "win32"
+        ? ((await resolveWindowsDockerCliPath(this.processRunner)) ?? "docker")
+        : "docker";
+    return this.dockerCommand;
+  }
+
+  private getDockerEnvironment(
+    extraEnv: NodeJS.ProcessEnv = {},
+  ): NodeJS.ProcessEnv {
+    const nextEnv = { ...process.env };
+    delete nextEnv.DOCKER_CONTEXT;
+    delete nextEnv.DOCKER_HOST;
+    return {
+      ...nextEnv,
+      ...extraEnv,
+    };
+  }
+
+  private shouldRunStartupMigrations(actionArgs: string[]): boolean {
+    const [command, ...args] = actionArgs;
+    if (command !== "up") {
+      return false;
+    }
+
+    return args.includes("-d") || args.includes("--detach");
+  }
+
+  private async delay(ms: number): Promise<void> {
+    if (ms <= 0) {
+      return;
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, ms);
     });
   }
 

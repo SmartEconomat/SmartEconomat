@@ -42,6 +42,12 @@
   ; CreateShortCut sobreescribe sin borrar primero, evitando ventanas de estado inconsistente.
   CreateShortCut "$DESKTOP\SmartEconomat Uninstaller.lnk" "$INSTDIR\Uninstall SmartEconomat.exe" "" "$INSTDIR\Uninstall SmartEconomat.exe" 0
   DetailPrint "Acceso directo del desinstalador creado en el escritorio y caché de iconos notificada."
+  DetailPrint "Registrando servicio persistente SmartEconomatSupervisor..."
+  nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\resources\scripts\windows-supervisor\install-service.ps1"'
+  Pop $0
+  DetailPrint "Configurando Docker Desktop Service en arranque automático si existe..."
+  nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -Command "$service = Get-Service -Name ''com.docker.service'' -ErrorAction SilentlyContinue; if ($null -ne $service) { sc.exe config com.docker.service start= auto | Out-Null; sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null; Set-Service -Name ''com.docker.service'' -StartupType Automatic; if ($service.Status -ne ''Running'') { Start-Service -Name ''com.docker.service'' } }"'
+  Pop $0
   DetailPrint "Archivos listos. Se abrirá el asistente de configuración."
 !macroend
 
@@ -73,6 +79,10 @@
 
   IfFileExists "$INSTDIR\resources\scripts\ops\uninstall-clean.ps1" 0 +3
     nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\resources\scripts\ops\uninstall-clean.ps1" -RuntimePath "$1" -InstallDir "$INSTDIR" -PreserveRuntime'
+    Pop $0
+
+  IfFileExists "$INSTDIR\resources\scripts\windows-supervisor\uninstall-service.ps1" 0 +3
+    nsExec::ExecToLog 'powershell -NoProfile -ExecutionPolicy Bypass -File "$INSTDIR\resources\scripts\windows-supervisor\uninstall-service.ps1"'
     Pop $0
 
   ; Eliminar tarea programada de autoarranque de Docker Desktop

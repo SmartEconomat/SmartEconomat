@@ -24,7 +24,7 @@ import {
 
 import { registerIpcHandleWithDebug } from "@main/ipc/ipc-handler-with-debug";
 import type { DebugLogService } from "@main/services/debug-log.service";
-import type { BootGuardianService } from "@main/services/boot-guardian.service";
+import type { ExternalSupervisorService } from "@main/services/external-supervisor.service";
 import { assertDangerConfirmation } from "@main/security/command-allowlist";
 import { BackupRestoreService } from "@main/services/backup-restore.service";
 import { CertificateService } from "@main/services/certificate.service";
@@ -94,9 +94,9 @@ export class RuntimeIPC {
     private readonly pathResolver = new PathResolverService(),
   ) {}
 
-  private bootGuardian: BootGuardianService | null = null;
+  private bootGuardian: ExternalSupervisorService | null = null;
 
-  setBootGuardian(guardian: BootGuardianService | null): void {
+  setBootGuardian(guardian: ExternalSupervisorService | null): void {
     this.bootGuardian = guardian;
   }
 

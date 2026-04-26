@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CommandResult } from "@shared/contracts";
 
 import {
+  downgradeDockerContextPipeChecks,
   downgradeWindowsDockerDesktopChecks,
   evaluateDockerChecks,
 } from "../preflight.service";
@@ -64,11 +65,33 @@ describe("evaluateDockerChecks", () => {
       commandResult(true, "Docker Compose version v2.30.0", ""),
     );
 
-    expect(checks[0]?.status).toBe("BLOCKER");
-    expect(checks[0]?.detail).toContain("daemon Linux no está disponible");
-    expect(checks[0]?.recommendation).toContain(
-      "Inicia o reinicia Docker Desktop",
+    expect(checks[0]?.status).toBe("WARN");
+    expect(checks[0]?.detail).toContain(
+      "contexto Docker actual apunta a dockerDesktopLinuxEngine",
     );
+    expect(checks[0]?.recommendation).toContain("docker context use default");
+  });
+});
+
+describe("downgradeDockerContextPipeChecks", () => {
+  it("fuerza a WARN los bloqueos de contexto dockerDesktopLinuxEngine", () => {
+    const checks = downgradeDockerContextPipeChecks([
+      {
+        id: "docker-engine",
+        label: "Docker Engine",
+        status: "BLOCKER",
+        detail:
+          "El contexto Docker actual apunta a dockerDesktopLinuxEngine y ese pipe no responde.",
+        repairable: true,
+        repairAction: "auto-repair",
+        repairHint: "Intentará reparar Docker.",
+      },
+    ]);
+
+    expect(checks[0]?.status).toBe("WARN");
+    expect(checks[0]?.repairable).toBe(true);
+    expect(checks[0]?.repairAction).toBe("auto-repair");
+    expect(checks[0]?.repairHint).toContain("com.docker.service");
   });
 });
 

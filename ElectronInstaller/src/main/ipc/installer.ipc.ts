@@ -198,7 +198,21 @@ export class InstallerIPC {
             errorCode: "INVALID_AUTOREPAIR_PAYLOAD",
           };
         }
-        return this.preflightService.runAutoRepair(parsed.data.runtimePath);
+        this.emitRuntimeLog(
+          "installer",
+          "AUTO_REPAIR · Ejecutando reparación automática de preflight...",
+        );
+        const result = await this.preflightService.runAutoRepair(
+          parsed.data.runtimePath,
+          (line) => this.emitRuntimeLog("installer", `[AUTO_REPAIR] ${line}`),
+        );
+        this.emitRuntimeLog(
+          "installer",
+          result.ok
+            ? "AUTO_REPAIR · Reparación automática finalizada."
+            : `AUTO_REPAIR · Reparación finalizada con incidencias: ${result.message}`,
+        );
+        return result;
       },
     );
 
@@ -368,6 +382,23 @@ export class InstallerIPC {
           preflight.message,
           "INSTALL_PREFLIGHT_FAILED",
         );
+      }
+      if (this.hasAutoRepairablePreflightChecks(preflight.data)) {
+        this.emitRuntimeLog(
+          "installer",
+          "Preflight contiene avisos reparables de Docker/Windows. Ejecutando reparación automática antes del despliegue...",
+        );
+        const repairResult = await this.preflightService.runAutoRepair(
+          payload.runtimePath,
+          (line) => this.emitRuntimeLog("installer", `[AUTO_REPAIR] ${line}`),
+        );
+        if (!repairResult.ok) {
+          return this.fail(
+            payload.runtimePath,
+            repairResult.message,
+            repairResult.errorCode ?? "INSTALL_PREFLIGHT_REPAIR_FAILED",
+          );
+        }
       }
 
       await this.transition(
@@ -643,6 +674,14 @@ export class InstallerIPC {
       message: "Auto-reparación PostgreSQL aplicada.",
       data: postRepairHealth.data ?? [],
     };
+  }
+
+  private hasAutoRepairablePreflightChecks(report?: PreflightReport): boolean {
+    return (
+      report?.checks.some(
+        (check) => check.repairable && check.repairAction === "auto-repair",
+      ) ?? false
+    );
   }
 
   private async transition(

@@ -1,0 +1,15 @@
+<service>
+  <id>SmartEconomatSupervisor</id>
+  <name>SmartEconomat Supervisor</name>
+  <description>Servicio persistente para supervisar Docker y SmartEconomat.</description>
+  <executable>%BASE%\SmartEconomat.WindowsSupervisor.exe</executable>
+  <arguments></arguments>
+  <log mode="roll-by-size-time">
+    <sizeThreshold>10240</sizeThreshold>
+    <pattern>yyyyMMdd</pattern>
+    <keepFiles>14</keepFiles>
+  </log>
+  <onfailure action="restart" delay="10 sec" />
+  <onfailure action="restart" delay="30 sec" />
+  <onfailure action="none" />
+</service>

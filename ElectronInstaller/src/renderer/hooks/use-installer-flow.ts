@@ -293,6 +293,7 @@ export function useInstallerFlow() {
   async function runPreflight(): Promise<void> {
     setBusy(true);
     setError(null);
+    setLogs([]);
 
     const bridge = requireBridge(true);
     if (!bridge) {
@@ -353,6 +354,7 @@ export function useInstallerFlow() {
   async function runAutoRepair(): Promise<void> {
     setBusy(true);
     setError(null);
+    setLogs([]);
 
     const bridge = requireBridge(true);
     if (!bridge) {

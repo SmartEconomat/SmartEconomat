@@ -229,6 +229,7 @@ export function App() {
                   blockersCount={flow.blockersCount}
                   runtimeLogs={flow.logs.filter(
                     (log) =>
+                      log.line.includes("AUTO_REPAIR") ||
                       log.line.includes("[PREFLIGHT") ||
                       log.line.includes("[CLEANUP") ||
                       log.line.includes("[PORTS") ||

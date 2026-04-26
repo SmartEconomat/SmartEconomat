@@ -156,7 +156,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'if [ "$${TLS_PROVIDER}" = "none" ]; then wget --quiet --tries=1 --spider http://127.0.0.1/; else wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/; fi'
+          'if [ "$${TLS_PROVIDER}" != "none" ] && [ -f /etc/nginx/certs/fullchain.pem ] && [ -f /etc/nginx/certs/privkey.pem ]; then wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1/; else wget --quiet --tries=1 --spider http://127.0.0.1/; fi'
         ]
       interval: 10s
       timeout: 5s

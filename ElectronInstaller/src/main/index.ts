@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 import {
   app,
@@ -10,100 +9,45 @@ import {
   Tray,
   nativeImage,
   powerMonitor,
-  dialog,
 } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 
 import { registerDebugIpc } from "./ipc/debug.ipc";
 import { registerInstallerIpc } from "./ipc/installer.ipc";
 import { registerRuntimeIpc } from "./ipc/runtime.ipc";
-import { BootGuardianService } from "./services/boot-guardian.service";
 import { DebugLogService, parseDebugFlag } from "./services/debug-log.service";
+import { ExternalSupervisorService } from "./services/external-supervisor.service";
 import { LocalDomainSelfHealService } from "./services/local-domain-selfheal.service";
 
-function isElevated(): boolean {
-  if (process.env.NODE_ENV === "test") {
-    return true;
-  }
-
-  if (!app.isPackaged) {
-    return true;
-  }
-
+function configureWritableElectronPaths(): void {
   if (process.platform !== "win32") {
-    return true;
+    return;
   }
+
+  const localAppData = process.env.LOCALAPPDATA;
+  if (!localAppData) {
+    return;
+  }
+
+  const basePath = path.join(localAppData, "SmartEconomatInstaller");
+  const userDataPath = path.join(basePath, "user-data");
+  const cachePath = path.join(basePath, "cache");
+  const sessionDataPath = path.join(basePath, "session-data");
+
   try {
-    execSync("net session", { stdio: "ignore", windowsHide: true });
-    return true;
-  } catch {
-    return false;
+    fs.mkdirSync(userDataPath, { recursive: true });
+    fs.mkdirSync(cachePath, { recursive: true });
+    fs.mkdirSync(sessionDataPath, { recursive: true });
+    app.setPath("userData", userDataPath);
+    app.setPath("cache", cachePath);
+    app.setPath("sessionData", sessionDataPath);
+  } catch (error) {
+    console.warn("No se pudieron configurar rutas locales de Electron:", error);
   }
 }
 
-function elevateAndQuit(): void {
-  const exePath = process.execPath;
-  const args = process.argv.slice(1);
-  const argsString = args
-    .map((arg) => `'${arg.replace(/'/g, "''")}'`)
-    .join(",");
-  const argumentListFlag =
-    argsString.length > 0 ? `-ArgumentList ${argsString}` : "";
-
-  const psCommand = `try { Start-Process -FilePath '${exePath}' ${argumentListFlag} -Verb RunAs -ErrorAction Stop } catch { exit 1 }`;
-
-  // Prevenir que la app se cierre antes de que el usuario responda
-  app.on("window-all-closed", () => {
-    // Evita el cierre automático
-  });
-
-  app.whenReady().then(async () => {
-    const { response } = await dialog.showMessageBox({
-      type: "info",
-      title: "Elevación de Privilegios Requerida",
-      message:
-        "SmartEconomat necesita permisos de administrador para gestionar los servicios de Docker, WSL y certificados de seguridad.",
-      detail:
-        "Al hacer clic en 'Continuar', se abrirá el diálogo de Windows (UAC) para autorizar la ejecución con permisos elevados. Este paso es fundamental para el correcto funcionamiento de la aplicación.",
-      buttons: ["Continuar", "Salir"],
-      defaultId: 0,
-      cancelId: 1,
-      noLink: true,
-    });
-
-    if (response === 1) {
-      app.exit(0);
-      return;
-    }
-
-    try {
-      execSync(
-        `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
-        {
-          stdio: "ignore",
-          windowsHide: true,
-        },
-      );
-      app.exit(0);
-    } catch {
-      await dialog.showMessageBox({
-        type: "warning",
-        title: "Permisos Denegados",
-        message: "No se pudieron obtener permisos de administrador.",
-        detail:
-          "Sin estos permisos, SmartEconomat no puede configurarse ni funcionar. Si desea intentarlo de nuevo, abra la aplicación manualmente como administrador (clic derecho > Ejecutar como administrador).",
-        buttons: ["Entendido"],
-      });
-      app.exit(0);
-    }
-  });
-}
-
-if (!isElevated()) {
-  elevateAndQuit();
-} else {
-  initApp();
-}
+configureWritableElectronPaths();
+initApp();
 
 function initApp() {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -115,11 +59,11 @@ function initApp() {
   let debugWindow: BrowserWindow | null = null;
   let tray: Tray | null = null;
   let isQuitting = false;
-  let traySupervisorState: "healthy" | "recovering" | "degraded" = "healthy";
+  let traySupervisorState: "healthy" | "recovering" | "degraded" = "degraded";
 
   let installerIpc: ReturnType<typeof registerInstallerIpc> | null = null;
   let runtimeIpc: ReturnType<typeof registerRuntimeIpc> | null = null;
-  let bootGuardian: BootGuardianService | null = null;
+  let bootGuardian: ExternalSupervisorService | null = null;
   const hasSingleInstanceLock =
     process.env.NODE_ENV === "test" || !app.isPackaged
       ? true
@@ -564,7 +508,7 @@ function initApp() {
         createDebugWindow();
       }
 
-      bootGuardian = new BootGuardianService({
+      bootGuardian = new ExternalSupervisorService({
         onLog: (message) => {
           debugLogService.publish({
             type: "system",

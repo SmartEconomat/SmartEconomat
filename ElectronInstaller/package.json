@@ -1,6 +1,6 @@
 {
   "name": "smarteconomat-installer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Instalador de SmartEconomat vía Docker",
   "main": "out/main/index.js",
   "type": "module",
@@ -207,6 +207,27 @@
         "filter": [
           "**/*",
           "!**/*.map"
+        ]
+      },
+      {
+        "from": "windows-supervisor/scripts",
+        "to": "scripts/windows-supervisor",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "windows-supervisor/winsw",
+        "to": "scripts/windows-supervisor/winsw",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "windows-supervisor/src",
+        "to": "scripts/windows-supervisor/src",
+        "filter": [
+          "**/*"
         ]
       },
       {

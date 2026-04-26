@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseWindowsDockerDesktopResolveStdout } from "../docker-desktop-windows-resolve";
+import {
+  buildWindowsDockerCliResolveCommand,
+  buildWindowsDockerDesktopResolveCommand,
+  parseWindowsDockerDesktopResolveStdout,
+} from "../docker-desktop-windows-resolve";
 
 describe("parseWindowsDockerDesktopResolveStdout", () => {
   it("parsea FOUND con ruta en segunda línea", () => {
@@ -25,5 +29,21 @@ describe("parseWindowsDockerDesktopResolveStdout", () => {
     );
     expect(found).toBe(false);
     expect(exePath).toBeNull();
+  });
+});
+
+describe("windows docker resolve commands", () => {
+  it("incluye fallback por proceso para Docker Desktop.exe", () => {
+    const command = buildWindowsDockerDesktopResolveCommand();
+    expect(command).toContain("frontend\\Docker Desktop.exe");
+    expect(command).toContain("Get-Process -Name 'Docker Desktop'");
+    expect(command).toContain("Get-Process -Name 'com.docker.backend'");
+  });
+
+  it("incluye fallback por where.exe y servicio com.docker.service para docker.exe", () => {
+    const command = buildWindowsDockerCliResolveCommand();
+    expect(command).toContain("where.exe docker");
+    expect(command).toContain("Name='com.docker.service'");
+    expect(command).toContain("Get-Process -Name 'Docker Desktop'");
   });
 });
