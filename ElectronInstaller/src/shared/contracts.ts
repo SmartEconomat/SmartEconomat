@@ -245,6 +245,7 @@ export type SupervisorCheckState = "ok" | "warn" | "error";
 export interface SupervisorCheck {
   id:
     | "docker-desktop"
+    | "wsl2"
     | "docker-engine"
     | "docker-version"
     | "docker-info"

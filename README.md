@@ -49,7 +49,13 @@ cp .env.example .env.dev
 3. Arrancar entorno de desarrollo:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose --env-file .env.dev --file docker-compose.dev.yml up
+```
+
+Para levantar el stack de produccion con la configuracion productiva:
+
+```bash
+docker compose --env-file .env.prod --file docker-compose.prod.yml up -d
 ```
 
 4. Servicios principales:

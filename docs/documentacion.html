@@ -534,6 +534,105 @@
       font-size: 0.95rem;
       color: var(--muted);
     }
+
+    @media print {
+      html,
+      body,
+      main,
+      section {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+
+      section {
+        background: transparent !important;
+        break-after: auto;
+        page-break-after: auto;
+        min-height: 0 !important;
+      }
+
+      section:last-of-type {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        min-height: 0 !important;
+        break-after: auto;
+        page-break-after: auto;
+      }
+
+      section:last-of-type > *:last-child {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+      }
+
+      section.cover {
+        overflow: hidden !important;
+      }
+
+      section.cover::before,
+      section.cover::after {
+        display: none !important;
+      }
+
+      table {
+        break-inside: auto;
+        page-break-inside: auto;
+        font-size: 8.3pt;
+      }
+
+      thead {
+        display: table-header-group;
+      }
+
+      tr,
+      th,
+      td {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      pre {
+        overflow: visible !important;
+        white-space: pre-wrap;
+        word-break: break-word;
+        break-inside: auto;
+        page-break-inside: auto;
+        font-size: 7.6pt;
+      }
+
+      details {
+        display: none !important;
+      }
+
+      .diagram,
+      .mermaid-wrap {
+        overflow: visible !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 2.5mm;
+        margin: 4mm 0 6mm;
+      }
+
+      .mermaid {
+        min-height: 0;
+        overflow: visible !important;
+      }
+
+      .diagram svg,
+      .mermaid svg {
+        display: block;
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 210mm !important;
+        margin: 0 auto;
+        overflow: visible !important;
+      }
+
+      .mermaid-wrap figcaption {
+        margin-bottom: 2mm;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <script>
@@ -584,7 +683,7 @@
       <p>El objetivo principal del sistema es automatizar el control del inventario escolar, reducir errores humanos, mejorar la trazabilidad del stock y facilitar la gestion de pedidos, recepciones y elaboraciones culinarias. El objetivo de esta memoria es describir ese sistema con la precision necesaria para defensa academica, mantenimiento tecnico y continuidad del proyecto.</p>
 
       <h2>Alcance</h2>
-      <p>La memoria cubre el sistema principal SmartEconomat: frontend web, backend NestJS, base de datos PostgreSQL, cache Redis, despliegue Docker y estrategia de testing. Se excluye del cuerpo principal <em>ElectronInstaller</em>, que aparece en el repositorio como una capa administrativa complementaria todavia no integrada al mismo nivel funcional que el sistema core.</p>
+      <p>La memoria cubre el sistema SmartEconomat completo: frontend web, backend NestJS, base de datos PostgreSQL, cache Redis, despliegue Docker, instalador Windows, supervisor persistente y estrategia de testing. El instalador se documenta como capa operativa de entrega y mantenimiento, separada del dominio funcional del economato pero relevante para produccion self-hosted.</p>
 
       <h2>Definiciones clave</h2>
       <table>
@@ -618,6 +717,14 @@
           <tr>
             <td>Envelope API</td>
             <td>Estructura estandar de respuesta basada en <code>success</code>, <code>message</code>, <code>data</code> y <code>meta</code>.</td>
+          </tr>
+          <tr>
+            <td>ElectronInstaller</td>
+            <td>Aplicacion desktop que guia la instalacion, genera configuracion productiva, prepara TLS, levanta Docker Compose y ofrece un panel operativo local.</td>
+          </tr>
+          <tr>
+            <td>Supervisor Windows</td>
+            <td>Servicio persistente que vigila Docker, WSL2 y el stack SmartEconomat aunque la interfaz Electron no este abierta.</td>
           </tr>
         </tbody>
       </table>
@@ -789,6 +896,30 @@
           <tr><td>Persistencia</td><td>PostgreSQL + TypeORM + UUID v7</td><td>Integridad relacional, orden temporal de identificadores y soporte fuerte para consultas.</td></tr>
           <tr><td>Cache</td><td>Redis 7</td><td>Cache de permisos y apoyo al runtime con baja latencia.</td></tr>
           <tr><td>Despliegue</td><td>Docker Compose dev/prod</td><td>Reproducibilidad, aislamiento y menor friccion operativa.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Ejecucion con Docker Compose</h2>
+      <p>El proyecto puede levantarse directamente desde la raiz del repositorio con Docker Compose, usando el fichero de entorno correspondiente al modo de ejecucion.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Entorno</th>
+            <th>Comando</th>
+            <th>Uso recomendado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Desarrollo</td>
+            <td><code>docker compose --env-file .env.dev --file docker-compose.dev.yml up</code></td>
+            <td>Arranque interactivo para desarrollo local, con logs visibles en la terminal.</td>
+          </tr>
+          <tr>
+            <td>Produccion</td>
+            <td><code>docker compose --env-file .env.prod --file docker-compose.prod.yml up -d</code></td>
+            <td>Arranque del stack productivo en segundo plano.</td>
+          </tr>
         </tbody>
       </table>
 
@@ -2145,6 +2276,46 @@ Content-Disposition: attachment; filename="productos.xlsx"
         </details>
       </figure>
 
+      <h2>Instalador Windows y supervisor persistente</h2>
+      <p>El proyecto incluye <code>ElectronInstaller</code> como capa de instalacion y operacion local para despliegues Windows self-hosted. La interfaz Electron ejecuta el wizard, recoge configuracion, genera <code>.env.prod</code>, prepara certificados y permite operar el stack; la vigilancia continua se delega en un supervisor persistente para que la salud del sistema no dependa de que la ventana de instalacion este abierta.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Responsabilidad</th>
+            <th>Detalle tecnico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Electron main</td><td>Orquestacion local</td><td>Expone IPC validada al renderer, resuelve rutas, ejecuta preflight, despliegue, diagnostico, backup/restore y operaciones Docker permitidas.</td></tr>
+          <tr><td>Renderer</td><td>Experiencia de instalacion</td><td>Wizard de preflight, configuracion, deploy, panel de control, logs en tiempo real y visualizacion de salud.</td></tr>
+          <tr><td>Boot guardian</td><td>Alta disponibilidad durante sesion Electron</td><td>Arranque automatico, polling de salud, backoff exponencial, recuperacion graduada y notificaciones IPC al panel.</td></tr>
+          <tr><td>Windows Supervisor</td><td>Vigilancia fuera de la UI</td><td>Worker .NET 8 instalado con WinSW, ciclo de verificacion cada 15 s y estado persistido bajo <code>C:\ProgramData\SmartEconomat</code>.</td></tr>
+          <tr><td>Docker orchestrator</td><td>Gestion del runtime productivo</td><td>Usa siempre <code>.env.prod</code> y <code>docker-compose.prod.yml</code>; evita levantar el stack de desarrollo desde el instalador.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Protocolo de recuperacion Windows</h3>
+      <p>El supervisor trata la salud del sistema como un observable activo. En cada ciclo comprueba WSL2, <code>com.docker.service</code>, Docker daemon, contexto Docker y contenedores esperados (<code>frontend</code>, <code>backend</code>, <code>db</code>, <code>redis</code>). Si el estado no es saludable, intenta recuperacion automatica con cooldown para evitar bucles agresivos.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Nivel</th>
+            <th>Accion</th>
+            <th>Objetivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Verificar Docker CLI, contextos y pipe WSL2</td><td>Distinguir fallo real de contexto, daemon no disponible o servicio Windows parado.</td></tr>
+          <tr><td>2</td><td>Asegurar <code>com.docker.service</code></td><td>Arrancar el servicio Docker Desktop y configurar reparacion cuando Windows lo permita.</td></tr>
+          <tr><td>3</td><td>Reiniciar o levantar stack Compose</td><td>Restaurar contenedores productivos desde el runtime activo.</td></tr>
+          <tr><td>4</td><td>Notificar degradacion persistente</td><td>Registrar incidente y mostrar al usuario que la recuperacion automatica no ha sido suficiente.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Artefactos operativos del runtime</h3>
+      <p>El runtime path seleccionado por el usuario concentra los ficheros necesarios para operar sin depender del arbol de desarrollo. Alli se escriben <code>.env.prod</code>, <code>installation-journal.json</code>, certificados TLS, webroot de renovacion, backups y diagnosticos. Esta separacion permite que el instalador copie, repare o diagnostique una instalacion productiva sin modificar contratos backend ni fuentes del repositorio.</p>
+
       <h2>Redis</h2>
       <p>Redis se usa como cache y servicio auxiliar. En desarrollo puede ejecutarse sin password; en produccion exige <code>REDIS_PASSWORD</code> y se arranca con <code>--appendonly yes</code>. La documentacion de arquitectura y auditoria lo vincula expresamente al cacheo de permisos efectivos, con el objetivo de reducir consultas repetidas a PostgreSQL.</p>
     </section>
@@ -2195,6 +2366,9 @@ Content-Disposition: attachment; filename="productos.xlsx"
           <tr><td>ADR-04</td><td>Soft delete y versionado optimista</td><td>Trazabilidad funcional y proteccion frente a cambios concurrentes.</td><td>Mayor complejidad en consultas y restauracion de registros.</td></tr>
           <tr><td>ADR-05</td><td>Redis para cache de permisos</td><td>Reducir coste de autorizacion repetitiva.</td><td>Hay que invalidar cache cuando cambian rol o permiso.</td></tr>
           <tr><td>ADR-06</td><td>Transiciones de estado con rutas dedicadas</td><td>Proteger invariantes de negocio.</td><td>Mas endpoints, pero menos ambiguedad que un PATCH generico.</td></tr>
+          <tr><td>ADR-07</td><td>Instalador separado del supervisor Windows</td><td>Evitar que la disponibilidad del stack dependa de una UI Electron abierta.</td><td>La UI se centra en configuracion y operacion, mientras el servicio persistente vigila Docker y contenedores.</td></tr>
+          <tr><td>ADR-08</td><td>Un unico runtime productivo para el instalador</td><td>Reducir ambiguedad operativa en equipos cliente.</td><td>El instalador usa <code>.env.prod</code> y <code>docker-compose.prod.yml</code>; el modo desarrollo queda fuera del flujo de instalacion.</td></tr>
+          <tr><td>ADR-09</td><td>Recuperacion Docker/WSL con backoff y observabilidad</td><td>Windows puede dejar Docker Desktop, WSL2 o el pipe Linux Engine en estados intermedios.</td><td>Se aplican reintentos controlados, incidentes visibles, logs en tiempo real y escalado a accion manual si no se recupera.</td></tr>
         </tbody>
       </table>
 
@@ -2212,6 +2386,8 @@ Content-Disposition: attachment; filename="productos.xlsx"
           <tr><td>Operaciones multi-entidad delicadas</td><td>Uso de <code>dataSource.transaction()</code> y <code>QueryRunner</code> cuando la recepcion o la produccion afectan varios agregados.</td></tr>
           <tr><td>Reutilizacion de permisos complejos</td><td>Plantillas de roles, permisos adicionales y excluidos por usuario.</td></tr>
           <tr><td>Generacion de documentos de negocio</td><td>Endpoints binarios dedicados para PDF y XLSX en vez de adaptar respuestas JSON genericas.</td></tr>
+          <tr><td>Docker Desktop inestable en Windows</td><td>Supervisor activo que comprueba WSL2, <code>com.docker.service</code>, Docker daemon, contextos y contenedores; si hay degradacion, ejecuta recuperacion automatica con cooldown.</td></tr>
+          <tr><td>Permisos elevados y certificados TLS locales</td><td>Instalacion preferente en <code>CurrentUser\Root</code> y uso de elevacion solo cuando es necesario, evitando bloquear la instalacion completa por restricciones del store de Windows.</td></tr>
         </tbody>
       </table>
 
@@ -2504,7 +2680,7 @@ Content-Disposition: attachment; filename="productos.xlsx"
         <li>Instrumentar metricas de rendimiento reales en produccion para respaldar los RNF con datos.</li>
         <li>Ampliar la evidencia de pruebas en frontend y accesibilidad, especialmente en dispositivos tablet.</li>
         <li>Decidir si Swagger debe exponerse de forma controlada en produccion o mantenerse solo para entornos internos.</li>
-        <li>Integrar o descartar definitivamente ElectronInstaller como componente de entrega del producto.</li>
+        <li>Mantener el instalador Windows y el supervisor dentro del runbook operativo.</li>
       </ul>
     </section>
   </main>

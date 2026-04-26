@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PACKAGE_JSON_PATH = path.join(ROOT, "package.json");
 const LOCKFILE_PATH = path.join(ROOT, "package-lock.json");
 const CACHE_PATH = path.join(ROOT, ".cache", "native-rebuild-cache.json");
 const NATIVE_DEPENDENCIES = ["sharp"];
@@ -37,9 +38,26 @@ function run(command, args, cwd) {
 }
 
 async function hashLockAndDeps() {
-  const lockContent = await fs.readFile(LOCKFILE_PATH);
+  let dependencySource = "package-lock.json";
+  let dependencyContent;
+
+  try {
+    dependencyContent = await fs.readFile(LOCKFILE_PATH);
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
+
+    dependencySource = "package.json";
+    dependencyContent = await fs.readFile(PACKAGE_JSON_PATH);
+  }
+
   const payload = {
-    lockSha: crypto.createHash("sha256").update(lockContent).digest("hex"),
+    dependencySource,
+    dependencySha: crypto
+      .createHash("sha256")
+      .update(dependencyContent)
+      .digest("hex"),
     nativeDependencies: NATIVE_DEPENDENCIES,
     nodeVersion: process.versions.node,
   };

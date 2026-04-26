@@ -77,6 +77,63 @@ const BRIDGE_UNAVAILABLE_ERROR =
 const BACKUP_DEFAULT_DIR_STORAGE_KEY = "installer.backupDefaultDirectory";
 const INSTALL_TIMEOUT_MS = 12 * 60 * 1000;
 
+function normalizeHealthForComparison(health: ServiceHealth[]): string {
+  return JSON.stringify(
+    health
+      .map((service) => ({
+        service: service.service,
+        status: service.status,
+        detail: service.detail,
+      }))
+      .sort((a, b) => a.service.localeCompare(b.service)),
+  );
+}
+
+function normalizeWatchdogForComparison(
+  watchdog: WatchdogStatus | null,
+): string {
+  if (!watchdog) {
+    return "";
+  }
+
+  return JSON.stringify({
+    state: watchdog.state,
+    consecutiveFailures: watchdog.consecutiveFailures,
+    currentRecoveryLevel: watchdog.currentRecoveryLevel,
+    nextCheckInMs: watchdog.nextCheckInMs,
+    dockerState: watchdog.dockerStatus?.state,
+    dockerDetail: watchdog.dockerStatus?.detail,
+  });
+}
+
+function normalizeSupervisorForComparison(
+  snapshot: SupervisorSnapshot | null,
+): string {
+  if (!snapshot) {
+    return "";
+  }
+
+  return JSON.stringify({
+    overallState: snapshot.overallState,
+    lastAutomaticActionAt: snapshot.lastAutomaticActionAt,
+    lastAutomaticAction: snapshot.lastAutomaticAction,
+    incidentsOpen: snapshot.incidentsOpen,
+    incidentsResolved: snapshot.incidentsResolved,
+    checks: snapshot.checks.map((check) => ({
+      id: check.id,
+      state: check.state,
+      detail: check.detail,
+    })),
+    latestIncident: snapshot.latestIncident
+      ? {
+          id: snapshot.latestIncident.id,
+          state: snapshot.latestIncident.state,
+          detail: snapshot.latestIncident.detail,
+        }
+      : null,
+  });
+}
+
 function resolveRuntimeBackupDirectory(runtimePath: string): string {
   return `${runtimePath}/backups`;
 }
@@ -243,10 +300,25 @@ export function useInstallerFlow() {
       });
 
       stopHealthUpdate = bridge.onHealthUpdate((event: HealthUpdateEvent) => {
-        setHealth(event.health);
-        setWatchdogStatus(event.watchdog);
+        setHealth((previous) =>
+          normalizeHealthForComparison(previous) ===
+          normalizeHealthForComparison(event.health)
+            ? previous
+            : event.health,
+        );
+        setWatchdogStatus((previous) =>
+          normalizeWatchdogForComparison(previous) ===
+          normalizeWatchdogForComparison(event.watchdog)
+            ? previous
+            : event.watchdog,
+        );
         if (event.supervisorSnapshot) {
-          setSupervisorSnapshot(event.supervisorSnapshot);
+          setSupervisorSnapshot((previous) =>
+            normalizeSupervisorForComparison(previous) ===
+            normalizeSupervisorForComparison(event.supervisorSnapshot ?? null)
+              ? previous
+              : (event.supervisorSnapshot ?? previous),
+          );
         }
       });
     };

@@ -234,18 +234,14 @@ export class CertificateService {
 
   /**
    * Instala el certificado en el almacén de certificados raíz de confianza
-   * en Windows usando Import-Certificate (convierte PEM → DER en memoria).
+   * en Windows usando X509Store (convierte PEM → DER en memoria).
    *
    * Estrategia:
-   *  1. Intentar CurrentUser\Root (no requiere elevación, no usa Remove).
-   *  2. Si falla, intentar LocalMachine\Root directamente (funciona si el
-   *     proceso ya corre elevado como administrador).
+   *  1. Intentar CurrentUser\Root (no requiere elevación).
+   *  2. Si el proceso ya corre elevado, intentar también LocalMachine\Root.
    *
-   * Se evita deliberadamente X509Store.Remove() en el almacén Root porque
-   * lanza "Acceso denegado" en contextos no interactivos incluso con permisos
-   * de administrador. Import-Certificate maneja duplicados internamente.
-   * Se evita Start-Process -Verb RunAs porque falla cuando el proceso padre
-   * ya está elevado por UAC.
+   * El certificado local no debe bloquear la instalación: si Windows impide
+   * escribir en el trust store, el instalador continúa con advertencia.
    */
   private async installCertificateToWindowsTrustStore(
     certPath: string,
@@ -258,12 +254,13 @@ export class CertificateService {
     }
 
     const normalizedPath = path.win32.normalize(certPath);
+    const escapedPath = normalizedPath.replace(/'/g, "''");
 
-    // Script robusto: convierte PEM → DER en memoria y usa Import-Certificate.
-    // Import-Certificate no requiere Remove previo y no lanza AccessDenied.
+    // Script robusto: convierte PEM → DER en memoria y usa X509Store.Add().
+    // Evita Import-Certificate porque puede colgarse en algunos Windows.
     const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") => `
       $ErrorActionPreference = 'Stop'
-      $certPemPath = '${normalizedPath}'
+      $certPemPath = '${escapedPath}'
 
       if (-not (Test-Path $certPemPath)) {
         Write-Error "El certificado no existe: $certPemPath"
@@ -281,15 +278,25 @@ export class CertificateService {
           -replace ' ', ''
         $derBytes = [System.Convert]::FromBase64String($b64)
 
-        # Escribir DER a archivo temporal
-        $derTempPath = [System.IO.Path]::GetTempFileName() + '.cer'
-        [System.IO.File]::WriteAllBytes($derTempPath, $derBytes)
-
-        # Importar al almacén Root (Import-Certificate gestiona duplicados sin Remove)
-        $imported = Import-Certificate -FilePath $derTempPath -CertStoreLocation 'Cert:\\${storeLocation}\\Root'
-
-        Remove-Item -Path $derTempPath -Force -ErrorAction SilentlyContinue
-        Write-Host "Certificado importado correctamente. Thumbprint: $($imported.Thumbprint)"
+        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new([byte[]]$derBytes)
+        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root', '${storeLocation}')
+        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+        try {
+          $existing = $store.Certificates.Find(
+            [System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,
+            $cert.Thumbprint,
+            $false
+          )
+          if ($existing.Count -eq 0) {
+            $store.Add($cert)
+            Write-Host "Certificado importado correctamente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
+          } else {
+            Write-Host "Certificado ya presente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
+          }
+        } finally {
+          $store.Close()
+          $cert.Dispose()
+        }
         exit 0
       } catch {
         Write-Error "Error al importar certificado en ${storeLocation}: $($_.Exception.Message)"
@@ -302,52 +309,75 @@ export class CertificateService {
       command: "powershell",
       args: [
         "-NoProfile",
+        "-NonInteractive",
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
         buildScript("CurrentUser"),
       ],
-      timeoutMs: 30_000,
+      timeoutMs: 12_000,
     });
 
     if (currentUserResult.ok) {
+      const elevated = await this.isWindowsProcessElevated();
+      if (!elevated) {
+        return {
+          ok: true,
+          message:
+            "Certificado instalado en el almacén de confianza del usuario (CurrentUser).",
+        };
+      }
+
+      const localMachineResult = await this.processRunner.run({
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-NonInteractive",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          buildScript("LocalMachine"),
+        ],
+        timeoutMs: 12_000,
+      });
+
       return {
         ok: true,
-        message:
-          "Certificado instalado en el almacén de confianza del usuario (CurrentUser).",
-      };
-    }
-
-    // Intento 2: LocalMachine\Root directamente (funciona si ya corremos como admin)
-    // No se usa Start-Process -Verb RunAs porque falla cuando el proceso padre ya está elevado.
-    const localMachineResult = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        buildScript("LocalMachine"),
-      ],
-      timeoutMs: 30_000,
-    });
-
-    if (localMachineResult.ok) {
-      return {
-        ok: true,
-        message:
-          "Certificado instalado en el almacén de confianza del sistema (LocalMachine).",
+        message: localMachineResult.ok
+          ? "Certificado instalado en CurrentUser y LocalMachine."
+          : `Certificado instalado en CurrentUser. Aviso LocalMachine: ${
+              localMachineResult.stderr || localMachineResult.message
+            }`,
       };
     }
 
     return {
-      ok: false,
+      ok: true,
       message:
-        "No se pudo instalar el certificado en el almacén de confianza. " +
-        `CurrentUser: ${currentUserResult.stderr || currentUserResult.message}. ` +
-        `LocalMachine: ${localMachineResult.stderr || localMachineResult.message}.`,
-      errorCode: "TLS_TRUST_STORE_INSTALL_FAILED",
+        "Certificado generado, pero Windows no permitió instalarlo automáticamente en el almacén de confianza del usuario. " +
+        `Aviso: ${currentUserResult.stderr || currentUserResult.message}.`,
     };
+  }
+
+  private async isWindowsProcessElevated(): Promise<boolean> {
+    if (process.platform !== "win32") {
+      return false;
+    }
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+      ],
+      timeoutMs: 5_000,
+    });
+
+    return result.ok && result.stdout.trim().toLowerCase() === "true";
   }
 
   /**

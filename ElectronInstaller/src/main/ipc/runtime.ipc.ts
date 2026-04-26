@@ -392,8 +392,15 @@ export class RuntimeIPC {
             errorCode: "GUARDIAN_NOT_ACTIVE",
           };
         }
-        await this.bootGuardian.runRecoveryNow();
-        return { ok: true, message: "Recuperación manual ejecutada." };
+        const recovered = await this.bootGuardian.runRecoveryNow();
+        return recovered
+          ? { ok: true, message: "Recuperación manual ejecutada." }
+          : {
+              ok: false,
+              message:
+                "La recuperación manual se ejecutó, pero el stack sigue degradado.",
+              errorCode: "SUPERVISOR_RECOVERY_FAILED",
+            };
       },
     );
   }

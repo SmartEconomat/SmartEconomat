@@ -3,6 +3,13 @@
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-gpu",
-    "--disable-dev-shm-usage"
-  ]
+    "--disable-dev-shm-usage",
+    "--font-render-hinting=none",
+    "--force-color-profile=srgb"
+  ],
+  "defaultViewport": {
+    "width": 8192,
+    "height": 4608,
+    "deviceScaleFactor": 2
+  }
 }

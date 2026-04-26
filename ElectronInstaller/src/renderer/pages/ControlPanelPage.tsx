@@ -179,11 +179,16 @@ function resolveOverallState(services: ServiceHealth[]): {
   color: "success" | "warning" | "error";
   text: string;
 } {
-  if (services.some((service) => service.status === "unhealthy")) {
+  if (
+    services.some(
+      (service) =>
+        service.status === "unhealthy" || service.status === "unknown",
+    )
+  ) {
     return {
       label: "Error",
       color: "error",
-      text: "Hay al menos un servicio con incidencia y requiere atención inmediata.",
+      text: "Hay servicios sin contenedor activo o con incidencia real en Docker.",
     };
   }
 
@@ -214,6 +219,10 @@ function ActionCard({
   disabled,
   onClick,
 }: ActionCardProps) {
+  const stableIcon = (
+    <Box sx={{ display: "grid", placeItems: "center" }}>{icon}</Box>
+  );
+
   return (
     <Tooltip title={description} arrow placement="top">
       <Paper
@@ -243,7 +252,7 @@ function ActionCard({
                 flexShrink: 0,
               }}
             >
-              {icon}
+              {stableIcon}
             </Box>
             <Typography
               variant="subtitle2"
@@ -268,7 +277,6 @@ function ActionCard({
           disableElevation
           disabled={disabled}
           onClick={onClick}
-          startIcon={icon}
           sx={{
             bgcolor: palette.buttonBg,
             color: palette.buttonText,

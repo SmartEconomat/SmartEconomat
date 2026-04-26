@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 
-import type { BrowserWindow } from "electron";
+import { app, type BrowserWindow } from "electron";
 
 import type {
   DockerRuntimeStatus,
@@ -15,6 +15,7 @@ import type {
 import { IPCChannels } from "@shared/ipc-channels";
 
 import { resolveWindowsDockerCliPath } from "./docker-desktop-windows-resolve";
+import { DockerOrchestratorService } from "./docker-orchestrator.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
 interface ExternalSupervisorOptions {
@@ -29,9 +30,12 @@ const EXPECTED_SERVICES: ServiceHealth["service"][] = [
   "db",
   "redis",
 ];
+const AUTOMATIC_RECOVERY_COOLDOWN_MS = 60_000;
+const ELEVATED_DOCKER_SERVICE_REPAIR_COOLDOWN_MS = 10 * 60_000;
 
 export class ExternalSupervisorService {
   private readonly processRunner = new ProcessRunnerService();
+  private readonly dockerOrchestrator = new DockerOrchestratorService();
   private readonly onLog: (message: string) => void;
   private readonly onTrayStateChange?: (
     state: "healthy" | "recovering" | "degraded",
@@ -40,6 +44,11 @@ export class ExternalSupervisorService {
   private mainWindow: BrowserWindow | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private dockerCommand: string | null = null;
+  private refreshing = false;
+  private automaticRecoveryRunning = false;
+  private lastAutomaticRecoveryAttemptMs = 0;
+  private lastElevatedDockerServiceRepairAttemptMs = 0;
+  private consecutiveAutomaticRecoveryFailures = 0;
   private lastHealth: ServiceHealth[] = [];
   private lastSnapshot: SupervisorSnapshot = {
     overallState: "degraded",
@@ -68,9 +77,7 @@ export class ExternalSupervisorService {
     await this.refreshSnapshot();
     this.pushHealthUpdate();
     this.timer = setInterval(() => {
-      void this.refreshSnapshot().then(() => {
-        this.pushHealthUpdate();
-      });
+      void this.refreshAndPush();
     }, this.intervalMs);
     this.onLog(
       "[SUPERVISOR] Cliente de supervisor externo activo (Windows Service).",
@@ -85,8 +92,7 @@ export class ExternalSupervisorService {
   }
 
   async onSystemResume(): Promise<void> {
-    await this.refreshSnapshot();
-    this.pushHealthUpdate();
+    await this.refreshAndPush();
   }
 
   onSystemSuspend(): void {
@@ -97,17 +103,133 @@ export class ExternalSupervisorService {
     const result = await this.runPowerShell(
       "Start-Service -Name com.docker.service -ErrorAction SilentlyContinue; exit 0",
     );
-    await this.refreshSnapshot();
-    this.pushHealthUpdate();
+    await this.refreshAndPush();
     return result.ok;
   }
 
-  async runRecoveryNow(): Promise<void> {
-    await this.runPowerShell(
-      "Restart-Service -Name SmartEconomatSupervisor -ErrorAction SilentlyContinue; exit 0",
+  async runRecoveryNow(): Promise<boolean> {
+    return this.recoverStack(
+      "manual",
+      "Recuperación manual del stack Docker solicitada.",
     );
-    await this.refreshSnapshot();
+  }
+
+  private async recoverStack(
+    mode: "automatic" | "manual",
+    actionLabel: string,
+  ): Promise<boolean> {
+    const startedAt = new Date().toISOString();
+    this.lastSnapshot = {
+      ...this.lastSnapshot,
+      overallState: "recovering",
+      lastAutomaticActionAt: startedAt,
+      lastAutomaticAction: actionLabel,
+    };
+    this.onTrayStateChange?.("recovering");
+    this.onLog(`[SUPERVISOR] ${actionLabel}`);
     this.pushHealthUpdate();
+
+    const dockerServiceStarted = await this.ensureWindowsDockerServiceStarted();
+    if (!dockerServiceStarted && process.platform === "win32") {
+      this.onLog(
+        "[SUPERVISOR] com.docker.service no pudo arrancar sin elevación; se intentará continuar con Docker y se notificará si el daemon no responde.",
+      );
+    }
+    const runtimePath = await this.resolveRuntimePath();
+    if (!runtimePath) {
+      const message =
+        "No se encontró runtime válido para restablecer el stack de SmartEconomat.";
+      this.mergeLiveChecks([
+        {
+          id: "compose-stack",
+          label: "Docker Compose stack",
+          state: "error",
+          detail: message,
+          measuredAt: new Date().toISOString(),
+        },
+      ]);
+      this.markRecoveryFailure(mode, message);
+      this.pushHealthUpdate();
+      return false;
+    }
+
+    const shouldRestart =
+      this.lastHealth.length === 0 ||
+      this.lastHealth.some((service) => service.status === "unhealthy");
+    const recoveryResult = shouldRestart
+      ? await this.dockerOrchestrator.restartStack(runtimePath)
+      : await this.dockerOrchestrator.startStack(runtimePath);
+    if (!recoveryResult.ok) {
+      this.markRecoveryFailure(mode, recoveryResult.message);
+      await this.refreshSnapshot();
+      this.pushHealthUpdate();
+      return false;
+    }
+
+    await this.refreshSnapshot();
+    const recovered = this.lastSnapshot.overallState === "healthy";
+    if (recovered) {
+      this.consecutiveAutomaticRecoveryFailures = 0;
+      this.lastSnapshot = {
+        ...this.lastSnapshot,
+        lastAutomaticActionAt: new Date().toISOString(),
+        lastAutomaticAction:
+          mode === "automatic"
+            ? "Recuperación automática completada: stack operativo."
+            : "Recuperación manual completada: stack operativo.",
+      };
+      this.onLog("[SUPERVISOR] Stack Docker operativo tras recuperación.");
+    } else {
+      this.markRecoveryFailure(
+        mode,
+        "El stack sigue degradado tras ejecutar la recuperación.",
+      );
+    }
+    this.pushHealthUpdate();
+    return recovered;
+  }
+
+  private async refreshAndPush(): Promise<void> {
+    if (this.refreshing) {
+      return;
+    }
+
+    this.refreshing = true;
+    try {
+      await this.refreshSnapshot();
+      this.pushHealthUpdate();
+      await this.maybeRunAutomaticRecovery();
+    } finally {
+      this.refreshing = false;
+    }
+  }
+
+  private async maybeRunAutomaticRecovery(): Promise<void> {
+    if (
+      this.lastSnapshot.overallState === "healthy" ||
+      this.automaticRecoveryRunning
+    ) {
+      return;
+    }
+
+    const now = Date.now();
+    if (
+      now - this.lastAutomaticRecoveryAttemptMs <
+      AUTOMATIC_RECOVERY_COOLDOWN_MS
+    ) {
+      return;
+    }
+
+    this.automaticRecoveryRunning = true;
+    this.lastAutomaticRecoveryAttemptMs = now;
+    try {
+      await this.recoverStack(
+        "automatic",
+        "Recuperación automática: intentando restaurar WSL/Docker/contenedores.",
+      );
+    } finally {
+      this.automaticRecoveryRunning = false;
+    }
   }
 
   getSupervisorSnapshot(): SupervisorSnapshot {
@@ -124,6 +246,12 @@ export class ExternalSupervisorService {
   }
 
   private getWatchdogStatus(): WatchdogStatus {
+    const state =
+      this.lastSnapshot.overallState === "healthy"
+        ? "active"
+        : this.lastSnapshot.overallState === "recovering"
+          ? "recovering"
+          : "backoff";
     const dockerStatus: DockerRuntimeStatus = {
       state:
         this.lastSnapshot.overallState === "healthy"
@@ -140,8 +268,7 @@ export class ExternalSupervisorService {
     };
 
     return {
-      state:
-        this.lastSnapshot.overallState === "healthy" ? "active" : "recovering",
+      state,
       consecutiveFailures: this.lastSnapshot.incidentsOpen,
       currentRecoveryLevel: 1,
       nextCheckInMs: this.intervalMs,
@@ -156,13 +283,24 @@ export class ExternalSupervisorService {
       "supervisor-state.json",
     );
     try {
+      const currentActionAt = this.lastSnapshot.lastAutomaticActionAt;
+      const currentAction = this.lastSnapshot.lastAutomaticAction;
       const raw = await fs.readFile(statePath, "utf8");
       const parsed = JSON.parse(raw) as Partial<SupervisorSnapshot>;
+      const parsedActionAt = parsed.lastAutomaticActionAt ?? null;
+      const preferCurrentAction =
+        currentActionAt !== null &&
+        (parsedActionAt === null ||
+          Date.parse(currentActionAt) >= Date.parse(parsedActionAt));
       this.lastSnapshot = {
         overallState: parsed.overallState ?? "degraded",
         checks: parsed.checks ?? [],
-        lastAutomaticActionAt: parsed.lastAutomaticActionAt ?? null,
-        lastAutomaticAction: parsed.lastAutomaticAction ?? null,
+        lastAutomaticActionAt: preferCurrentAction
+          ? currentActionAt
+          : parsedActionAt,
+        lastAutomaticAction: preferCurrentAction
+          ? currentAction
+          : (parsed.lastAutomaticAction ?? null),
         uptimeSeconds: parsed.uptimeSeconds ?? 0,
         incidentsResolved: parsed.incidentsResolved ?? 0,
         incidentsOpen: parsed.incidentsOpen ?? 0,
@@ -182,6 +320,7 @@ export class ExternalSupervisorService {
   }
 
   private async refreshLiveDockerState(): Promise<void> {
+    const wslCheck = await this.getWindowsWslCheck();
     const serviceCheck = await this.getWindowsDockerServiceCheck();
     const result = await this.runDocker([
       "ps",
@@ -199,7 +338,15 @@ export class ExternalSupervisorService {
         detail: `No se pudo consultar Docker en vivo: ${result.output}`,
       }));
       this.mergeLiveChecks([
+        ...(wslCheck ? [wslCheck] : []),
         ...(serviceCheck ? [serviceCheck] : []),
+        {
+          id: "docker-engine",
+          label: "Docker Engine",
+          state: "error",
+          detail: "Docker no responde a la consulta viva del sentinela.",
+          measuredAt,
+        },
         {
           id: "containers-running",
           label: "Contenedores Docker en vivo",
@@ -268,7 +415,15 @@ export class ExternalSupervisorService {
     );
 
     this.mergeLiveChecks([
+      ...(wslCheck ? [wslCheck] : []),
       ...(serviceCheck ? [serviceCheck] : []),
+      {
+        id: "docker-engine",
+        label: "Docker Engine",
+        state: "ok",
+        detail: "Docker responde y permite consultar contenedores en vivo.",
+        measuredAt,
+      },
       {
         id: "containers-running",
         label: "Contenedores Docker en vivo",
@@ -294,6 +449,38 @@ export class ExternalSupervisorService {
                 : "Frontend, backend, db y redis detectados en Docker.",
         measuredAt,
       },
+      {
+        id: "containers-health",
+        label: "Healthchecks",
+        state:
+          missingServices.length > 0 || unhealthyServices.length > 0
+            ? "error"
+            : startingServices.length > 0
+              ? "warn"
+              : "ok",
+        detail:
+          missingServices.length > 0
+            ? "No hay healthcheck fiable porque faltan contenedores obligatorios."
+            : unhealthyServices.length > 0
+              ? "Uno o más healthchecks de Docker están fallando."
+              : startingServices.length > 0
+                ? "Healthchecks todavía arrancando."
+                : "Healthchecks de Docker en estado correcto.",
+        measuredAt,
+      },
+      {
+        id: "compose-stack",
+        label: "Docker Compose stack",
+        state: allHealthy
+          ? "ok"
+          : startingServices.length > 0
+            ? "warn"
+            : "error",
+        detail: allHealthy
+          ? "El stack smarteconomat-prod está operativo."
+          : "El stack smarteconomat-prod no está completamente operativo.",
+        measuredAt,
+      },
     ]);
 
     if (
@@ -310,21 +497,176 @@ export class ExternalSupervisorService {
   }
 
   private mergeLiveChecks(liveChecks: SupervisorCheck[]): void {
-    const liveIds = new Set(liveChecks.map((check) => check.id));
-    const preservedChecks = this.lastSnapshot.checks.filter(
-      (check) => !liveIds.has(check.id),
-    );
-    const mergedChecks = [...preservedChecks, ...liveChecks];
-    const hasErrors = mergedChecks.some((check) => check.state === "error");
-    const hasWarnings = mergedChecks.some((check) => check.state === "warn");
+    const hasErrors = liveChecks.some((check) => check.state === "error");
+    const hasWarnings = liveChecks.some((check) => check.state === "warn");
+    const overallState = hasErrors
+      ? "degraded"
+      : hasWarnings
+        ? "recovering"
+        : "healthy";
+    const incident =
+      overallState === "degraded"
+        ? {
+            id: "live-docker-state",
+            service: "docker",
+            title: "Estado real Docker degradado",
+            detail:
+              liveChecks.find((check) => check.state === "error")?.detail ??
+              "El sentinela detectó un problema en Docker.",
+            severity: "critical" as const,
+            state: "open" as const,
+            detectedAt: new Date().toISOString(),
+            occurrences: 1,
+          }
+        : null;
+
     this.lastSnapshot = {
       ...this.lastSnapshot,
-      checks: mergedChecks,
-      overallState: hasErrors
-        ? "degraded"
-        : hasWarnings
-          ? "recovering"
-          : "healthy",
+      checks: liveChecks,
+      overallState,
+      incidentsOpen: incident ? 1 : 0,
+      lastIncidentAt: incident?.detectedAt ?? this.lastSnapshot.lastIncidentAt,
+      latestIncident: incident,
+      recentIncidents: incident ? [incident] : [],
+    };
+  }
+
+  private markRecoveryFailure(
+    mode: "automatic" | "manual",
+    reason: string,
+  ): void {
+    if (mode === "automatic") {
+      this.consecutiveAutomaticRecoveryFailures += 1;
+    }
+
+    const action =
+      mode === "automatic"
+        ? `Recuperación automática fallida (${this.consecutiveAutomaticRecoveryFailures}): ${reason}`
+        : `Recuperación manual fallida: ${reason}`;
+    this.lastSnapshot = {
+      ...this.lastSnapshot,
+      overallState: "degraded",
+      lastAutomaticActionAt: new Date().toISOString(),
+      lastAutomaticAction: action,
+    };
+    this.onLog(`[SUPERVISOR] ${action}`);
+  }
+
+  private async resolveRuntimePath(): Promise<string | null> {
+    const markerPath = path.join(
+      app.getPath("appData"),
+      "SmartEconomatInstaller",
+      "runtime-path.txt",
+    );
+    const candidates = [
+      await this.readRuntimeMarker(markerPath),
+      "C:/SmartEconomatRuntime",
+    ]
+      .filter((value): value is string => value.length > 0)
+      .filter((value, index, all) => all.indexOf(value) === index);
+
+    for (const candidate of candidates) {
+      try {
+        await Promise.all([
+          fs.access(path.join(candidate, ".env.prod")),
+          fs.access(path.join(candidate, "project", "docker-compose.prod.yml")),
+        ]);
+        return candidate;
+      } catch {
+        // Sigue probando rutas conocidas.
+      }
+    }
+
+    return null;
+  }
+
+  private async readRuntimeMarker(markerPath: string): Promise<string> {
+    try {
+      return (await fs.readFile(markerPath, "utf8")).trim();
+    } catch {
+      return "";
+    }
+  }
+
+  private async ensureWindowsDockerServiceStarted(): Promise<boolean> {
+    if (process.platform !== "win32") {
+      return true;
+    }
+
+    await this.runPowerShell(
+      [
+        "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue",
+        "if ($null -ne $service) {",
+        "  sc.exe config com.docker.service start= auto | Out-Null",
+        "  sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
+        "  Start-Service -Name com.docker.service -ErrorAction SilentlyContinue",
+        "}",
+        "exit 0",
+      ].join("; "),
+    );
+
+    if (await this.isWindowsDockerServiceRunning()) {
+      return true;
+    }
+
+    const now = Date.now();
+    if (
+      now - this.lastElevatedDockerServiceRepairAttemptMs <
+      ELEVATED_DOCKER_SERVICE_REPAIR_COOLDOWN_MS
+    ) {
+      return false;
+    }
+
+    this.lastElevatedDockerServiceRepairAttemptMs = now;
+    this.onLog(
+      "[SUPERVISOR] Docker Desktop Service requiere elevación. Solicitando UAC para reparación controlada.",
+    );
+    await this.runPowerShell(
+      [
+        '$script = "',
+        "$ErrorActionPreference = 'SilentlyContinue';",
+        "sc.exe config com.docker.service start= auto | Out-Null;",
+        "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null;",
+        "Set-Service -Name com.docker.service -StartupType Automatic;",
+        "Start-Service -Name com.docker.service;",
+        "Start-Sleep -Seconds 3;",
+        "exit 0",
+        '"',
+        ";",
+        "Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-Command',$script) -Verb RunAs -Wait",
+      ].join(" "),
+    );
+
+    return this.isWindowsDockerServiceRunning();
+  }
+
+  private async isWindowsDockerServiceRunning(): Promise<boolean> {
+    const statusResult = await this.runPowerShell(
+      "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue; if ($null -eq $service) { Write-Output 'missing'; exit 0 }; Write-Output $service.Status",
+    );
+    return statusResult.output.trim().toLowerCase() === "running";
+  }
+
+  private async getWindowsWslCheck(): Promise<SupervisorCheck | null> {
+    if (process.platform !== "win32") {
+      return null;
+    }
+
+    const measuredAt = new Date().toISOString();
+    const result = await this.runPowerShell(
+      "wsl --status 2>$null | Out-String",
+    );
+    const output = result.output.trim();
+
+    return {
+      id: "wsl2",
+      label: "WSL2",
+      state: result.ok && output.length > 0 ? "ok" : "error",
+      detail:
+        result.ok && output.length > 0
+          ? "WSL responde correctamente para el backend Docker."
+          : "WSL no responde o no está disponible; Docker Desktop no puede estabilizar el engine Linux.",
+      measuredAt,
     };
   }
 
