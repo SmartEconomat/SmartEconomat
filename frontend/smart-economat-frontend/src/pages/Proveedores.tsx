@@ -321,10 +321,10 @@ const Proveedores: React.FC = () => {
         primaryAction={
           canCreate
             ? {
-              label: t('proveedores.nuevoProveedor'),
-              onClick: () => setItemToEdit({}),
-              id: 'btn-nuevo-proveedor',
-            }
+                label: t('proveedores.nuevoProveedor'),
+                onClick: () => setItemToEdit({}),
+                id: 'btn-nuevo-proveedor',
+              }
             : undefined
         }
         onViewModeChange={undefined}
@@ -447,11 +447,11 @@ const Proveedores: React.FC = () => {
           onEdit={
             canEdit
               ? () => {
-                if (itemToView) {
-                  handleEditClick(itemToView);
-                  setItemToView(null);
+                  if (itemToView) {
+                    handleEditClick(itemToView);
+                    setItemToView(null);
+                  }
                 }
-              }
               : undefined
           }
           actions={
