@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -74,6 +74,7 @@ import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import RecipeCarousel from '../components/ui/RecipeCarousel';
+import { useTranslation } from 'react-i18next';
 import PageToolbar from '../components/ui/PageToolbar';
 
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
@@ -275,6 +276,7 @@ const RecipeImagePreview: React.FC<{
 };
 
 const Recetas: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -329,19 +331,15 @@ const Recetas: React.FC = () => {
       setTotalPages(recetasData.totalPages);
       setTotalItems(recetasData.total || recetasData.data.length);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar recetas.';
+      const message = err instanceof Error ? err.message : t('errors.unknown');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, sortBy, sortOrder]);
+  }, [page, pageSize, searchTerm, sortBy, sortOrder, t]);
 
   useEffect(() => {
     loadData();
-    // Cargar ubicaciones para el modal de preparación
     UbicacionService.findAll().then(setUbicaciones).catch(console.error);
   }, [loadData]);
 
@@ -351,10 +349,14 @@ const Recetas: React.FC = () => {
     try {
       await deleteResource(`/recetas/${itemToDelete.id}`);
       setData((prev) => prev.filter((r) => r.id !== itemToDelete.id));
-      toast.success(`Receta "${itemToDelete.nombre}" eliminada correctamente.`);
+      toast.success(
+        t('recetas.mensajes.eliminada', { nombre: itemToDelete.nombre })
+      );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al eliminar la receta.';
+        err instanceof Error
+          ? err.message
+          : t('recetas.mensajes.errorEliminar');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -369,16 +371,16 @@ const Recetas: React.FC = () => {
 
       if (formData.id) {
         await updateReceta(String(formData.id), payload as RecetaPayload);
-        toast.success('Receta actualizada correctamente.');
+        toast.success(t('recetas.mensajes.actualizada'));
       } else {
         await createReceta(payload as RecetaPayload);
-        toast.success('Receta creada correctamente.');
+        toast.success(t('recetas.mensajes.creada'));
       }
       await loadData();
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al guardar la receta.';
+        err instanceof Error ? err.message : t('recetas.mensajes.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -391,7 +393,7 @@ const Recetas: React.FC = () => {
 
   const openExportDialog = (ids: string[]) => {
     if (ids.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(t('recetas.mensajes.errorSeleccionExportar'));
       return;
     }
 
@@ -402,7 +404,7 @@ const Recetas: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (exportIds.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(t('recetas.mensajes.errorSeleccionExportar'));
       return;
     }
 
@@ -422,7 +424,6 @@ const Recetas: React.FC = () => {
 
   const handleExportExcel = async () => {
     try {
-      // Si hay seleccionados exportamos solo esos, si no, todo lo filtrado (searchTerm)
       const ids = selectedIds.length > 0 ? selectedIds.join(',') : '';
       const query = new URLSearchParams({ searchTerm });
       if (ids) query.append('ids', ids);
@@ -532,16 +533,16 @@ const Recetas: React.FC = () => {
     if (!stockValidation) return;
 
     if (!hasMissingIngredients) {
-      toast.error(
-        'No se encontraron proveedores válidos para los ingredientes faltantes.'
-      );
+      toast.error(t('recetas.mensajes.errorProveedorValido'));
       return;
     }
 
     setIsCooking(true);
     try {
       const pedidoUsuario = await createPedidoUsuarioFromMissingStock({
-        observaciones: `Pedido automático por falta de stock para: ${cookData.items.map((it) => it.receta.nombre).join(', ')}`,
+        observaciones: t('recetas.mensajes.pedidoAutoObservaciones', {
+          nombres: cookData.items.map((it) => it.receta.nombre).join(', '),
+        }),
         items: cookData.items.map((item) => ({
           recetaId: item.receta.id,
           cantidad: item.cantidad,
@@ -551,13 +552,18 @@ const Recetas: React.FC = () => {
       const totalPedidos = pedidoUsuario.pedidos?.length ?? 0;
       toast.success(
         totalPedidos > 0
-          ? `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} con ${totalPedidos} pedido${totalPedidos === 1 ? '' : 's'} interno${totalPedidos === 1 ? '' : 's'} para cubrir los faltantes.`
-          : `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} para cubrir los faltantes.`
+          ? t('recetas.mensajes.pedidoCreadoMulti', {
+              numero: pedidoUsuario.numeroGlobal,
+              count: totalPedidos,
+            })
+          : t('recetas.mensajes.pedidoCreado', {
+              numero: pedidoUsuario.numeroGlobal,
+            })
       );
       setIsCookModalOpen(false);
     } catch (err: unknown) {
       toast.error(
-        'Error al generar pedidos: ' +
+        t('recetas.mensajes.errorGenerarPedido') +
           (err instanceof Error ? err.message : String(err))
       );
     } finally {
@@ -567,7 +573,7 @@ const Recetas: React.FC = () => {
 
   const handleConfirmCook = async () => {
     if (cookData.items.length === 0 || !cookData.ubicacionId) {
-      toast.error('Debes seleccionar una ubicación de destino.');
+      toast.error(t('recetas.mensajes.errorUbicacion'));
       return;
     }
 
@@ -590,7 +596,7 @@ const Recetas: React.FC = () => {
             const recipeError =
               axiosLike.response?.data?.message ||
               axiosLike.message ||
-              'Error en esta receta';
+              t('recetas.mensajes.errorReceta');
             toast.error(`${item.receta.nombre}: ${recipeError}`);
             return null;
           }
@@ -601,123 +607,136 @@ const Recetas: React.FC = () => {
       if (successful > 0) {
         toast.success(
           successful === cookData.items.length
-            ? 'Producciones lanzadas con éxito'
-            : `Se procesaron ${successful} de ${cookData.items.length} producciones.`
+            ? t('recetas.mensajes.produccionExito')
+            : t('recetas.mensajes.produccionParcial', {
+                successful,
+                total: cookData.items.length,
+              })
         );
       }
       setIsCookModalOpen(false);
       setSelectedIds([]);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al iniciar la preparación.';
+        err instanceof Error ? err.message : t('recetas.mensajes.errorIniciar');
       toast.error(message);
     } finally {
       setIsCooking(false);
     }
   };
 
-  const columns: Column<Receta>[] = [
-    {
-      id: 'nombre',
-      label: 'Nombre',
-      sortable: true,
-      width: 350,
-      cellSx: { py: 2 },
-      render: (row) => (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <RecipeImagePreview
-            receta={row}
-            width={44}
-            height={44}
-            borderRadius={1.5}
-            iconSize={20}
-          />
-          <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
-            <Typography
-              variant="inherit"
-              sx={{
-                fontWeight: 400,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              noWrap
-            >
-              {row.nombre}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              noWrap
-              sx={{
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {row.unidadResultado
-                ? `${row.rendimiento ?? '—'} ${row.unidadResultado}`
-                : `${row.ingredientes?.length ?? 0} ingredientes`}
-            </Typography>
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      id: 'dificultad',
-      label: 'Dificultad',
-      render: (row) =>
-        row.dificultad ? (
-          <StatusChip status={row.dificultad} size="small" variant="outlined" />
-        ) : (
-          <span style={{ color: '#bbb' }}>—</span>
-        ),
-      sortable: true,
-      width: 120,
-      cellSx: { py: 2 },
-    },
-    {
-      id: 'tiempoPreparacion',
-      label: 'Tiempo',
-      width: 140,
-      sortable: true,
-      render: (row) => {
-        const tiempoLabel = getTiempoPreparacionLabel(row);
-
-        return tiempoLabel ? (
+  const columns = useMemo<Column<Receta>[]>(
+    () => [
+      {
+        id: 'nombre',
+        label: t('recetas.columnas.nombre'),
+        sortable: true,
+        width: 350,
+        cellSx: { py: 2 },
+        render: (row) => (
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 0.5,
-              whiteSpace: 'nowrap',
+              gap: 1,
+              minWidth: 0,
+              overflow: 'hidden',
             }}
           >
-            <AccessTimeOutlinedIcon fontSize="inherit" sx={{ opacity: 0.6 }} />
-            {tiempoLabel}
+            <RecipeImagePreview
+              receta={row}
+              width={44}
+              height={44}
+              borderRadius={1.5}
+              iconSize={20}
+            />
+            <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
+              <Typography
+                variant="inherit"
+                sx={{
+                  fontWeight: 400,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                noWrap
+              >
+                {row.nombre}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {row.unidadResultado
+                  ? `${row.rendimiento ?? '—'} ${row.unidadResultado}`
+                  : `${row.ingredientes?.length ?? 0} ${t('recetas.ingredientes')}`}
+              </Typography>
+            </Box>
           </Box>
-        ) : (
-          <span>—</span>
-        );
+        ),
       },
-    },
-    {
-      id: 'ingredientes',
-      label: 'Ingredientes',
-      align: 'right',
-      width: 120,
-      render: (row) => row.ingredientes?.length ?? 0,
-      cellSx: { whiteSpace: 'nowrap' },
-      responsiveDisplay: { xs: 'none', lg: 'table-cell' },
-    },
-  ];
+      {
+        id: 'dificultad',
+        label: t('recetas.columnas.dificultad'),
+        render: (row: Receta) =>
+          row.dificultad ? (
+            <StatusChip
+              status={row.dificultad}
+              size="small"
+              variant="outlined"
+            />
+          ) : (
+            <span style={{ color: '#bbb' }}>—</span>
+          ),
+        sortable: true,
+        width: 120,
+        cellSx: { py: 2 },
+      },
+      {
+        id: 'tiempoPreparacion',
+        label: t('recetas.columnas.tiempo'),
+        width: 140,
+        sortable: true,
+        render: (row: Receta) => {
+          const tiempoLabel = getTiempoPreparacionLabel(row);
+
+          return tiempoLabel ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <AccessTimeOutlinedIcon
+                fontSize="inherit"
+                sx={{ opacity: 0.6 }}
+              />
+              {tiempoLabel}
+            </Box>
+          ) : (
+            <span>—</span>
+          );
+        },
+      },
+      {
+        id: 'ingredientes',
+        label: t('recetas.columnas.ingredientes'),
+        align: 'right',
+        width: 120,
+        render: (row: Receta) => row.ingredientes?.length ?? 0,
+        cellSx: { whiteSpace: 'nowrap' },
+        responsiveDisplay: { xs: 'none', lg: 'table-cell' },
+      },
+    ],
+    [t]
+  );
 
   const handleSort = (key: string | keyof Receta) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -934,21 +953,21 @@ const Recetas: React.FC = () => {
       <RecipeCarousel />
 
       <PageToolbar
-        title="Gestión de Recetas"
+        title={t('recetas.gestionTitulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, instrucciones, ingredientes..."
+        searchPlaceholder={t('recetas.buscarPlaceholder')}
         searchId="search-recetas"
         totalItems={totalItems}
-        totalItemsLabel="recetas"
+        totalItemsLabel={t('recetas.totalItemsLabel')}
         viewMode={viewMode}
         primaryAction={
           canCreate
             ? {
-                label: 'Nueva Receta',
+                label: t('recetas.btn.nueva'),
                 onClick: () => setItemToEdit({}),
                 id: 'btn-nueva-receta',
               }
@@ -960,8 +979,8 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Preparar (${selectedIds.length})`
-                      : 'Preparar recetas',
+                      ? `${t('recetas.btn.preparar')} (${selectedIds.length})`
+                      : t('recetas.btn.preparar'),
                   icon: <RestaurantIcon />,
                   onClick: () => {
                     const items = data.filter((r) =>
@@ -981,8 +1000,8 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Exportar PDF (${selectedIds.length})`
-                      : 'Exportar PDF',
+                      ? `${t('recetas.btn.exportarPdf')} (${selectedIds.length})`
+                      : t('recetas.btn.exportarPdf'),
                   icon: <PictureAsPdfOutlinedIcon />,
                   onClick: () => {
                     const ids =

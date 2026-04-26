@@ -20,11 +20,31 @@ export const resources = {
   es: { translation: es },
 };
 
+const savedLng =
+  typeof window !== 'undefined'
+    ? localStorage.getItem('i18nextLng') || 'es'
+    : 'es';
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: 'es',
-  fallbackLng: 'en',
+  lng: savedLng,
+  fallbackLng: 'es',
   interpolation: { escapeValue: false },
+  /**
+   * Red de seguridad: Si falta una key, la humanizamos en lugar de mostrarla tal cual.
+   * Ej: 'user.name' -> 'Name' | 'status.PENDIENTE' -> 'Pendiente'
+   */
+  parseMissingKeyHandler: (key) => {
+    // Si la key contiene un punto, tomamos la última parte (ej: 'user.name' -> 'name')
+    const parts = key.split('.');
+    const lastPart = parts[parts.length - 1];
+
+    // Reemplazamos guiones bajos por espacios y capitalizamos
+    return lastPart
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // CamelCase a Spaced
+      .replace(/^\w/, (c) => c.toUpperCase());
+  },
 });
 
 export default i18n;

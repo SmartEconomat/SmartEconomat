@@ -36,6 +36,7 @@ import {
 } from '@mui/material';
 import { formatDigitsForSR } from '../utils/a11y-format';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import { useTranslation } from 'react-i18next';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
@@ -141,6 +142,7 @@ const resolveProveedorId = (proveedor: ProductoProveedor): string | undefined =>
   proveedor.proveedor?.id ?? proveedor.proveedorId;
 
 const Productos: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
@@ -341,7 +343,7 @@ const Productos: React.FC = () => {
     const allColumns: Column<Producto>[] = [
       {
         id: 'nombre',
-        label: 'Nombre',
+        label: t('productos.columnas.nombre'),
         sortable: true,
         minWidth: 280,
         render: (row) => (
@@ -350,9 +352,9 @@ const Productos: React.FC = () => {
               {row.nombre}
             </Typography>
             {(!row.proveedores || row.proveedores.length === 0) && (
-              <Tooltip title="Producto sin proveedores asignados">
+              <Tooltip title={t('productos.sinProveedores')}>
                 <Chip
-                  label="Sin Prov."
+                  label={t('productos.sinProvCorta')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -365,7 +367,7 @@ const Productos: React.FC = () => {
       },
       {
         id: 'marca',
-        label: 'Marca',
+        label: t('productos.columnas.marca'),
         render: (row) => row.marca ?? '—',
         hideOnMobile: true,
         sortable: true,
@@ -374,7 +376,7 @@ const Productos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: 'Tipo',
+        label: t('productos.columnas.tipo'),
         render: (row) =>
           row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
         hideOnMobile: true,
@@ -383,19 +385,21 @@ const Productos: React.FC = () => {
       },
       {
         id: 'contenido',
-        label: 'Contenido',
+        label: t('productos.columnas.contenido'),
         align: 'right',
         render: (row) =>
-          row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
+          row.unidad
+            ? `${row.contenido} ${t(`comun.unidades.${row.unidad.toLowerCase()}Corta`) || row.unidad}`
+            : `${row.contenido}`,
         width: 120,
       },
       {
         id: 'codigoBarras',
-        label: 'Cód. Barras',
+        label: t('productos.columnas.codigoBarras'),
         render: (row) => (
           <Typography
             variant="body2"
-            aria-label={`Código de barras: ${formatDigitsForSR(row.codigoBarras || '')}`}
+            aria-label={`${t('productos.columnas.codigoBarras')}: ${formatDigitsForSR(row.codigoBarras || '')}`}
           >
             {row.codigoBarras ?? '—'}
           </Typography>
@@ -406,9 +410,9 @@ const Productos: React.FC = () => {
       },
       {
         id: 'createdAt',
-        label: 'Alta',
+        label: t('productos.columnas.alta'),
         render: (row) =>
-          new Date(row.createdAt).toLocaleDateString('es-ES', {
+          new Date(row.createdAt).toLocaleDateString(i18n.language, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -427,7 +431,7 @@ const Productos: React.FC = () => {
     }
 
     return allColumns;
-  }, [isSidebarActuallyExpanded, screenWidth]);
+  }, [isSidebarActuallyExpanded, screenWidth, t, i18n.language]);
 
   const handleSort = (key: string | keyof Producto) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -564,33 +568,33 @@ const Productos: React.FC = () => {
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
       {activeTab === 'active' && canEdit && (
-        <Tooltip title="Editar">
+        <Tooltip title={t('comun.editar')}>
           <IconButton
             color="secondary"
             onClick={() => {
               setProductToEdit(buildEditData(row));
             }}
             size="small"
-            aria-label="Editar"
+            aria-label={t('comun.editar')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {activeTab === 'active' && canDelete && (
-        <Tooltip title="Eliminar">
+        <Tooltip title={t('comun.eliminar')}>
           <IconButton
             color="error"
             onClick={() => setProductToDelete(row)}
             size="small"
-            aria-label="Borrar"
+            aria-label={t('comun.eliminar')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {activeTab === 'deleted' && (
-        <Tooltip title="Restaurar Producto">
+        <Tooltip title={t('productos.restaurar')}>
           <IconButton
             color="success"
             onClick={(e) => {
@@ -598,7 +602,7 @@ const Productos: React.FC = () => {
               handleRestoreProduct(row);
             }}
             size="small"
-            aria-label="Restaurar"
+            aria-label={t('productos.restaurar')}
           >
             <RestoreFromTrashIcon fontSize="small" />
           </IconButton>
@@ -616,21 +620,21 @@ const Productos: React.FC = () => {
     <Box>
       {(isLoading || isSaving) && <LinearLoader fixed />}
       <PageToolbar
-        title="Gestión de Productos"
+        title={t('productos.gestionTitulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, marca, código de barras..."
+        searchPlaceholder={t('productos.buscarPlaceholder')}
         searchId="search-productos"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel="productos"
+        totalItemsLabel={t('productos.totalItemsLabel')}
         primaryAction={
           canCreate
             ? {
-                label: 'Nuevo Producto',
+                label: t('productos.nuevoProducto'),
                 onClick: () => {
                   setProductToEdit({});
                 },
@@ -642,7 +646,7 @@ const Productos: React.FC = () => {
         onViewModeChange={setViewMode}
         extraActions={[
           {
-            label: 'Exportar PDF',
+            label: t('comun.exportarPdf'),
             onClick: () => {
               void handleExportPdf();
             },
@@ -652,7 +656,7 @@ const Productos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('comun.exportarExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -727,12 +731,12 @@ const Productos: React.FC = () => {
           >
             <Tab
               icon={<Inventory2OutlinedIcon />}
-              label="Activos"
+              label={t('productos.tabs.activos')}
               value="active"
             />
             <Tab
               icon={<DeleteSweepOutlinedIcon />}
-              label="Eliminados"
+              label={t('productos.tabs.eliminados')}
               value="deleted"
             />
           </Tabs>
@@ -756,7 +760,10 @@ const Productos: React.FC = () => {
             sortConfig={{ key: sortBy || '', direction: sortOrder }}
             actionsWidth={120}
             getRowAriaLabel={(row) =>
-              `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`
+              t('productos.getRowAriaLabel', {
+                nombre: row.nombre,
+                marca: row.marca ?? t('comun.generica'),
+              })
             }
             emptyStateMessage={
               <Box
@@ -796,10 +803,10 @@ const Productos: React.FC = () => {
                   sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
                 >
                   {hasSearchOrFilters
-                    ? 'Sin coincidencias'
+                    ? t('productos.empty.noResultados')
                     : activeTab === 'deleted'
-                      ? 'Sin productos eliminados'
-                      : 'Catálogo vacío'}
+                      ? t('productos.empty.noEliminados')
+                      : t('productos.empty.noProductos')}
                 </Typography>
                 <Typography
                   variant="body1"

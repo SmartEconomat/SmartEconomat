@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import {
   Box,
@@ -102,6 +103,7 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
 };
 
 const Pedidos: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasDashboardFilter =
@@ -260,7 +262,10 @@ const Pedidos: React.FC = () => {
     },
   });
 
-  const pedidoSchema = useMemo(() => getPedidoSchema(itemToEdit), [itemToEdit]);
+  const pedidoSchema = useMemo(
+    () => getPedidoSchema(itemToEdit, t),
+    [itemToEdit, t]
+  );
 
   useEffect(() => {
     void loadDraft();
@@ -593,7 +598,7 @@ const Pedidos: React.FC = () => {
         onContinueDraftClick={handleRecoverDraft}
         extraActions={[
           {
-            label: 'Reporte PDF',
+            label: t('pedidos.acciones.reportePdf'),
             onClick: () => setIsReporteOpen(true),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-pedidos-pdf',
@@ -601,7 +606,7 @@ const Pedidos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('pedidos.acciones.exportarExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -644,10 +649,16 @@ const Pedidos: React.FC = () => {
           >
             <Tab
               icon={<AssignmentTurnedInOutlinedIcon />}
-              label="Mis Pedidos"
+              label={t('pedidos.tabs.misPedidos')}
             />
-            <Tab icon={<FormatListBulletedOutlinedIcon />} label="Pedidos" />
-            <Tab icon={<ShoppingCartCheckoutOutlinedIcon />} label="Compras" />
+            <Tab
+              icon={<FormatListBulletedOutlinedIcon />}
+              label={t('pedidos.tabs.pedidos')}
+            />
+            <Tab
+              icon={<ShoppingCartCheckoutOutlinedIcon />}
+              label={t('pedidos.tabs.compras')}
+            />
           </Tabs>
         </Box>
 
@@ -678,7 +689,7 @@ const Pedidos: React.FC = () => {
                   startIcon={<ClearIcon />}
                   sx={{ fontWeight: 700 }}
                 >
-                  Quitar filtro
+                  {t('pedidos.filtros.quitar')}
                 </Button>
               }
               sx={{
@@ -690,8 +701,7 @@ const Pedidos: React.FC = () => {
                 '& .MuiAlert-message': { fontWeight: 500 },
               }}
             >
-              Estas visualizando tus pedidos pendientes filtrados desde el
-              Dashboard.
+              {t('pedidos.filtros.dashboardInfo')}
             </Alert>
           )}
 

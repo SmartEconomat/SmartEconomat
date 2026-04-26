@@ -1,4 +1,5 @@
 import React from 'react';
+import type { TFunction } from 'i18next';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -82,75 +83,69 @@ export interface TutorialConfigItem {
 /**
  * Paso común para finalizar todos los tutoriales indicando dónde encontrar ayuda.
  */
-const helpTutorialStep: TutorialStep = {
+const getHelpTutorialStep = (t: TFunction): TutorialStep => ({
   target: '#help-tutorial-button',
   placement: 'right',
   icon: <HelpOutlineIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-  title: 'Tutorial de Página',
-  description:
-    '¿Necesitas ayuda? Haz clic aquí en cualquier momento para iniciar un tutorial interactivo que te explicará paso a paso cómo usar la página actual.',
-};
+  title: t('tutorial.ayuda.title'),
+  description: t('tutorial.ayuda.description'),
+});
 
-export const tutorialConfig: Record<string, TutorialConfigItem> = {
+export const getTutorialConfig = (
+  t: TFunction
+): Record<string, TutorialConfigItem> => ({
   '/': {
     steps: [
       {
         target: '#dashboard-welcome',
         placement: 'bottom',
         icon: <DashboardIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: '¡Bienvenido a Smart Economat!',
-        description:
-          'Este es tu panel central. Desde aquí tendrás una visión global de todo lo que ocurre en el economato en tiempo real.',
+        title: t('tutorial.inicio.s0.title'),
+        description: t('tutorial.inicio.s0.description'),
       },
       {
         target: '#sidebar-nav',
         placement: 'right',
         icon: <MenuIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Menú de Navegación',
-        description:
-          'Utiliza la barra lateral para moverte entre las diferentes áreas del sistema. El menú se adapta según tu dispositivo.',
+        title: t('tutorial.inicio.s1.title'),
+        description: t('tutorial.inicio.s1.description'),
       },
       {
         target: '#dashboard-stats',
         placement: 'center',
         icon: <TrendingUpIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Estado del Economato',
-        description:
-          'Vigila tus KPIs más importantes: stock bajo mínimo, pedidos pendientes e incidencias activas de un vistazo.',
+        title: t('tutorial.inicio.s2.title'),
+        description: t('tutorial.inicio.s2.description'),
       },
       {
         target: '#dashboard-quick-actions',
         placement: 'center',
         icon: <TouchAppIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Acciones Rápidas',
-        description:
-          '¿Necesitas crear un pedido o añadir un producto? Accede a las funciones más frecuentes sin navegar por los menús.',
+        title: t('tutorial.inicio.s3.title'),
+        description: t('tutorial.inicio.s3.description'),
       },
       {
         target: '#btn-notifications',
         placement: 'bottom',
         icon: <NotificationsIcon sx={{ fontSize: 60, color: 'error.main' }} />,
-        title: 'Centro de Notificaciones',
-        description:
-          'Vigila las alertas críticas del sistema: roturas de stock, nuevos usuarios pendientes o discrepancias urgentes.',
+        title: t('tutorial.inicio.s4.title'),
+        description: t('tutorial.inicio.s4.description'),
       },
       {
         target: '#dashboard-activity',
         placement: 'left',
         icon: <HistoryIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-        title: 'Actividad Reciente',
-        description:
-          'Mantente al día con el historial de movimientos de stock y operaciones realizadas recientemente.',
+        title: t('tutorial.inicio.s5.title'),
+        description: t('tutorial.inicio.s5.description'),
       },
       {
         target: '#user-menu-button',
         placement: 'bottom',
         icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Tu Perfil y Preferencias',
-        description:
-          'Gestiona tus datos personales y notificaciones. Aquí también podrás encontrar esta ayuda cuando la necesites.',
+        title: t('tutorial.inicio.s6.title'),
+        description: t('tutorial.inicio.s6.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/productos': {
@@ -159,33 +154,29 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#search-productos',
         placement: 'bottom',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Búsqueda Inteligente',
-        description:
-          'Escribe el nombre, marca o código de barras para localizar productos. ¡Incluso puedes usar el escáner!',
+        title: t('tutorial.productos.s0.title'),
+        description: t('tutorial.productos.s0.description'),
       },
       {
         target: '#filter-productos',
         placement: 'bottom',
         icon: <FilterListIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Filtros Avanzados',
-        description:
-          'Refina tu búsqueda seleccionando categorías específicas para encontrar exactamente lo que necesitas.',
+        title: t('tutorial.productos.s1.title'),
+        description: t('tutorial.productos.s1.description'),
       },
       {
         target: '#table-header-sort',
         placement: 'bottom',
         icon: <SortByAlphaIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Ordenado de Datos',
-        description:
-          'Pulsa sobre las cabeceras de las columnas para ordenar la lista de forma ascendente o descendente.',
+        title: t('tutorial.productos.s2.title'),
+        description: t('tutorial.productos.s2.description'),
       },
       {
         target: '#btn-nuevo-producto',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Alta de Productos',
-        description:
-          'Añade nuevos artículos al catálogo. El sistema intentará autocompletar datos si usas el escáner.',
+        title: t('tutorial.productos.s3.title'),
+        description: t('tutorial.productos.s3.description'),
       },
       {
         target: '#btn-exportar-productos-pdf',
@@ -195,9 +186,8 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'error.main' }}
           />
         ),
-        title: 'Exportación a PDF',
-        description:
-          'Genera documentos listos para imprimir con el listado actual y sus precios.',
+        title: t('tutorial.productos.s4.title'),
+        description: t('tutorial.productos.s4.description'),
       },
       {
         target: '#btn-exportar-productos-excel',
@@ -207,19 +197,17 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'success.main' }}
           />
         ),
-        title: 'Reportes Excel',
-        description:
-          'Descarga toda la información técnica para trabajarla de forma externa.',
+        title: t('tutorial.productos.s5.title'),
+        description: t('tutorial.productos.s5.description'),
       },
       {
         target: '#table-row-actions',
         placement: 'left',
         icon: <TouchAppIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Acciones Rápidas',
-        description:
-          'Desde aquí puedes editar, eliminar o restaurar productos de forma individual.',
+        title: t('tutorial.productos.s6.title'),
+        description: t('tutorial.productos.s6.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/proveedores': {
@@ -228,25 +216,22 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#search-proveedores',
         placement: 'bottom',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Buscador de Proveedores',
-        description:
-          'Encuentra cualquier proveedor por su nombre, NIF, persona de contacto o email.',
+        title: t('tutorial.proveedores.s0.title'),
+        description: t('tutorial.proveedores.s0.description'),
       },
       {
         target: '#table-header-sort',
         placement: 'bottom',
         icon: <SortByAlphaIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Ordenado Inteligente',
-        description:
-          'Organiza la lista alfabéticamente por razón social o por cualquier otro campo de contacto.',
+        title: t('tutorial.proveedores.s1.title'),
+        description: t('tutorial.proveedores.s1.description'),
       },
       {
         target: '#btn-nuevo-proveedor',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Registro de Proveedor',
-        description:
-          'Añade nuevos proveedores a tu catálogo para poder gestionar sus pedidos y productos.',
+        title: t('tutorial.proveedores.s2.title'),
+        description: t('tutorial.proveedores.s2.description'),
       },
       {
         target: '#btn-export-pdf',
@@ -256,9 +241,8 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'error.main' }}
           />
         ),
-        title: 'Exportación PDF',
-        description:
-          'Genera un documento PDF con el listado completo de tus proveedores y sus datos de contacto.',
+        title: t('tutorial.proveedores.s3.title'),
+        description: t('tutorial.proveedores.s3.description'),
       },
       {
         target: '#btn-export-excel',
@@ -268,19 +252,17 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'success.main' }}
           />
         ),
-        title: 'Reporte Excel',
-        description:
-          'Descarga la base de datos de proveedores para análisis externos o gestión administrativa.',
+        title: t('tutorial.proveedores.s4.title'),
+        description: t('tutorial.proveedores.s4.description'),
       },
       {
         target: '#table-row-actions',
         placement: 'left',
         icon: <TouchAppIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Gestión Individual',
-        description:
-          'Consulta fichas detalladas, edita información o elimina proveedores directamente desde la fila.',
+        title: t('tutorial.proveedores.s5.title'),
+        description: t('tutorial.proveedores.s5.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/recetas': {
@@ -291,43 +273,38 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <MenuBookOutlinedIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Inspiración Culinaria',
-        description:
-          'Explora nuestras sugerencias destacadas y platos de temporada en este carrusel visual.',
+        title: t('tutorial.recetas.s0.title'),
+        description: t('tutorial.recetas.s0.description'),
       },
       {
         target: '#search-recetas',
         placement: 'bottom',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Buscador de Recetas',
-        description:
-          'Encuentra cualquier plato por su nombre, ingredientes o incluso por pasos de su elaboración.',
+        title: t('tutorial.recetas.s1.title'),
+        description: t('tutorial.recetas.s1.description'),
       },
       {
         target: '#table-header-sort',
         placement: 'bottom',
         icon: <SortByAlphaIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Ordenado Ágil',
-        description:
-          'Organiza tu recetario por dificultad, tiempo de preparación o nombre según necesites.',
+        title: t('tutorial.recetas.s2.title'),
+        description: t('tutorial.recetas.s2.description'),
       },
       {
         target: '#btn-nueva-receta',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Creación de Recetas',
-        description:
-          'Registra nuevas elaboraciones detallando ingredientes, pasos y costes estimados.',
+        title: t('tutorial.recetas.s3.title'),
+        description: t('tutorial.recetas.s3.description'),
       },
       {
         target: '#table-row-actions',
         placement: 'left',
         icon: <RestaurantIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: '¡A Cocinar!',
-        description:
-          'Usa el botón de preparación para lanzar producciones al instante. También puedes ver fichas técnicas completas.',
+        title: t('tutorial.recetas.s4.title'),
+        description: t('tutorial.recetas.s4.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/pedidos': {
@@ -340,9 +317,8 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'primary.main' }}
           />
         ),
-        title: 'Centro de Pedidos',
-        description:
-          'Alterna entre tus pedidos personales, el listado global del centro o la gestión de compras a proveedores.',
+        title: t('tutorial.pedidos.s0.title'),
+        description: t('tutorial.pedidos.s0.description'),
       },
       {
         target: '#btn-nuevo-pedido',
@@ -350,25 +326,22 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <AddShoppingCartIcon sx={{ fontSize: 60, color: 'success.main' }} />
         ),
-        title: 'Nuevo Pedido',
-        description:
-          'Inicia una solicitud de artículos. El sistema te permite buscar y añadir productos de forma ágil.',
+        title: t('tutorial.pedidos.s1.title'),
+        description: t('tutorial.pedidos.s1.description'),
       },
       {
         target: '#btn-continuar-pedido',
         placement: 'bottom',
         icon: <HistoryIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-        title: 'Recuperar Borradores',
-        description:
-          'Si dejas un pedido a medias, podrás continuarlo aquí sin perder los productos que ya habías añadido.',
+        title: t('tutorial.pedidos.s2.title'),
+        description: t('tutorial.pedidos.s2.description'),
       },
       {
         target: '#pedidos-content-area',
         placement: 'top',
         icon: <ShoppingCartIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Seguimiento del Flujo',
-        description:
-          'Aquí verás el estado de cada pedido (Pendiente, En Proceso, Recibido) y podrás gestionar sus detalles.',
+        title: t('tutorial.pedidos.s3.title'),
+        description: t('tutorial.pedidos.s3.description'),
       },
       {
         target: '#btn-reporte-pedidos-pdf',
@@ -378,9 +351,8 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'error.main' }}
           />
         ),
-        title: 'Control por PDF',
-        description:
-          'Genera listados consolidados para revisar las necesidades de compra del periodo.',
+        title: t('tutorial.pedidos.s4.title'),
+        description: t('tutorial.pedidos.s4.description'),
       },
       {
         target: '#btn-exportar-pedidos-excel',
@@ -390,11 +362,10 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'success.main' }}
           />
         ),
-        title: 'Exportación Excel',
-        description:
-          'Descarga toda la información detallada para trabajarla en hojas de cálculo externas.',
+        title: t('tutorial.pedidos.s5.title'),
+        description: t('tutorial.pedidos.s5.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/recepciones': {
@@ -403,17 +374,15 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#recepcion-stepper',
         placement: 'bottom',
         icon: <RuleIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Asistente de Recepción',
-        description:
-          'Sigue estos 4 pasos guiados para registrar la entrada de mercancía de forma precisa y organizada.',
+        title: t('tutorial.recepciones.s0.title'),
+        description: t('tutorial.recepciones.s0.description'),
       },
       {
         target: '#recepcion-sync-status',
         placement: 'bottom',
         icon: <CloudSyncIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Borrador Seguro',
-        description:
-          'Tu progreso se sincroniza automáticamente en la nube. Puedes empezar en un PC y terminar en una Tablet sin perder datos.',
+        title: t('tutorial.recepciones.s1.title'),
+        description: t('tutorial.recepciones.s1.description'),
       },
       {
         target: '#search-recepcion-productos',
@@ -421,27 +390,24 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Recepción Inteligente',
-        description:
-          'Escanea el código de barras o busca por nombre para identificar los productos que estás recibiendo.',
+        title: t('tutorial.recepciones.s2.title'),
+        description: t('tutorial.recepciones.s2.description'),
       },
       {
         target: '#scale-options-container',
         placement: 'bottom',
         icon: <BalanceIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Conectividad con Báscula',
-        description:
-          'Si tienes una báscula compatible, conéctala vía USB para capturar pesos automáticamente en tiempo real.',
+        title: t('tutorial.recepciones.s3.title'),
+        description: t('tutorial.recepciones.s3.description'),
       },
       {
         target: '#btn-next-step',
         placement: 'top',
         icon: <TouchAppIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Pasos del Proceso',
-        description:
-          'Usa los botones de navegación para avanzar entre la selección de pedidos, el conteo y la revisión final.',
+        title: t('tutorial.recepciones.s4.title'),
+        description: t('tutorial.recepciones.s4.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/distribucion': {
@@ -452,43 +418,38 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <LocalShippingIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Gestión de Entregas',
-        description:
-          'Alterna entre los pedidos listos para ser entregados y el historial de distribuciones realizadas.',
+        title: t('tutorial.distribucion.s0.title'),
+        description: t('tutorial.distribucion.s0.description'),
       },
       {
         target: '#search-distribucion',
         placement: 'bottom',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Búsqueda Rápida',
-        description:
-          'Localiza entregas específicas buscando por número de pedido, nombre de usuario o aula de destino.',
+        title: t('tutorial.distribucion.s1.title'),
+        description: t('tutorial.distribucion.s1.description'),
       },
       {
         target: '#distribucion-content-area',
         placement: 'top',
         icon: <InventoryIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-        title: 'Listado de Pendientes',
-        description:
-          'Aquí verás todos los productos que ya han sido recepcionados en el almacén y están esperando a ser llevados a su destino final.',
+        title: t('tutorial.distribucion.s2.title'),
+        description: t('tutorial.distribucion.s2.description'),
       },
       {
         target: '#btn-distribuir-stock',
         placement: 'left',
         icon: <CallSplitIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Iniciar Entrega',
-        description:
-          'Haz clic aquí para abrir el asistente de entrega, donde podrás elegir la ubicación destino y las cantidades a traspasar.',
+        title: t('tutorial.distribucion.s3.title'),
+        description: t('tutorial.distribucion.s3.description'),
       },
       {
         target: '#btn-confirmar-entrega',
         placement: 'left',
         icon: <CheckCircleIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Confirmación de Recepción',
-        description:
-          'Una vez entregada la mercancía, el destinatario debe confirmar la recepción desde el historial para formalizar el movimiento de stock.',
+        title: t('tutorial.distribucion.s4.title'),
+        description: t('tutorial.distribucion.s4.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/preparaciones': {
@@ -497,25 +458,22 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#preparaciones-summary',
         placement: 'bottom',
         icon: <RestaurantIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Bolsa de Preparaciones',
-        description:
-          'Aquí gestionas todo lo que sale de cocina. Controla el stock de platos elaborados listos para servir o distribuir.',
+        title: t('tutorial.preparaciones.s0.title'),
+        description: t('tutorial.preparaciones.s0.description'),
       },
       {
         target: '#preparaciones-tabs',
         placement: 'bottom',
         icon: <HistoryIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Estado de Producción',
-        description:
-          'Cambia entre las preparaciones disponibles en este momento y el historial de aquellas que ya se han agotado.',
+        title: t('tutorial.preparaciones.s1.title'),
+        description: t('tutorial.preparaciones.s1.description'),
       },
       {
         target: '#btn-consumir-preparacion',
         placement: 'left',
         icon: <LocalDiningIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Registro de Consumo',
-        description:
-          'Usa este botón cuando envíes raciones al comedor o realices una entrega. El sistema descontará automáticamente el stock del lote.',
+        title: t('tutorial.preparaciones.s2.title'),
+        description: t('tutorial.preparaciones.s2.description'),
       },
       {
         target: '#btn-merma-preparacion',
@@ -523,19 +481,17 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <ReportProblemIcon sx={{ fontSize: 60, color: 'warning.main' }} />
         ),
-        title: 'Gestión de Mermas',
-        description:
-          'Si se estropea una ración o hay un error en el servicio, regístralo aquí para mantener el inventario cuadrado.',
+        title: t('tutorial.preparaciones.s3.title'),
+        description: t('tutorial.preparaciones.s3.description'),
       },
       {
         target: '#btn-ver-detalle-preparacion',
         placement: 'left',
         icon: <VisibilityIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Control Detallado',
-        description:
-          'Consulta la ficha técnica de la preparación, incluyendo costes reales y fechas de caducidad.',
+        title: t('tutorial.preparaciones.s4.title'),
+        description: t('tutorial.preparaciones.s4.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/albaranes': {
@@ -548,25 +504,22 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'primary.main' }}
           />
         ),
-        title: 'Gestión de Albaranes',
-        description:
-          'En esta sección puedes digitalizar y administrar los albaranes de entrega de tus proveedores.',
+        title: t('tutorial.albaranes.s0.title'),
+        description: t('tutorial.albaranes.s0.description'),
       },
       {
         target: '#btn-nuevo-albaran',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Registro Manual',
-        description:
-          '¿No tienes el albarán digitalizado? Créalo manualmente aquí para vincularlo después a tus recepciones.',
+        title: t('tutorial.albaranes.s1.title'),
+        description: t('tutorial.albaranes.s1.description'),
       },
       {
         target: '#btn-albaran-upload',
         placement: 'left',
         icon: <AttachFileIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Almacenamiento Digital',
-        description:
-          'Sube una foto o PDF del albarán físico para tener siempre el respaldo documental a un clic.',
+        title: t('tutorial.albaranes.s2.title'),
+        description: t('tutorial.albaranes.s2.description'),
       },
       {
         target: '#albaranes-table',
@@ -576,19 +529,17 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'success.main' }}
           />
         ),
-        title: 'Control de Concordancia',
-        description:
-          'Verifica de un vistazo si la mercancía recibida coincide con lo indicado en el papel del proveedor.',
+        title: t('tutorial.albaranes.s3.title'),
+        description: t('tutorial.albaranes.s3.description'),
       },
       {
         target: '#btn-albaran-view',
         placement: 'left',
         icon: <VisibilityIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Historial y Consulta',
-        description:
-          'Accede al detalle completo para ver qué productos específicos venían en este envío.',
+        title: t('tutorial.albaranes.s4.title'),
+        description: t('tutorial.albaranes.s4.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/inventario': {
@@ -597,25 +548,22 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#inventario-toolbar',
         placement: 'bottom',
         icon: <InventoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Gestión de Inventario',
-        description:
-          'Aquí puedes ver y administrar todo el stock disponible en el economato de forma centralizada.',
+        title: t('tutorial.inventario.s0.title'),
+        description: t('tutorial.inventario.s0.description'),
       },
       {
         target: '#btn-add-inventario',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Entrada de Stock',
-        description:
-          'Utiliza este botón para añadir productos al inventario manualmente si no vienen de un pedido previo.',
+        title: t('tutorial.inventario.s1.title'),
+        description: t('tutorial.inventario.s1.description'),
       },
       {
         target: '#btn-manage-locations',
         placement: 'bottom',
         icon: <SettingsIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Configuración de Almacén',
-        description:
-          'Define y gestiona las estanterías, cámaras y zonas de almacenamiento de tu centro.',
+        title: t('tutorial.inventario.s2.title'),
+        description: t('tutorial.inventario.s2.description'),
       },
       {
         target: '#search-inventario',
@@ -623,35 +571,31 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Búsqueda e IA',
-        description:
-          'Busca productos por nombre o usa el escáner de códigos de barras para una gestión mucho más ágil.',
+        title: t('tutorial.inventario.s3.title'),
+        description: t('tutorial.inventario.s3.description'),
       },
       {
         target: '#inventario-filters',
         placement: 'bottom',
         icon: <FilterListIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Filtros Inteligentes',
-        description:
-          'Refina la lista por categorías de producto o por ubicaciones específicas para encontrar lo que necesitas.',
+        title: t('tutorial.inventario.s4.title'),
+        description: t('tutorial.inventario.s4.description'),
       },
       {
         target: '#inventario-tabs',
         placement: 'bottom',
         icon: <HomeWorkIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-        title: 'Ubicaciones y Slots',
-        description:
-          'Cambia entre la vista global y tus zonas asignadas para ver solo lo que te pertenece.',
+        title: t('tutorial.inventario.s5.title'),
+        description: t('tutorial.inventario.s5.description'),
       },
       {
         target: '#inventario-table',
         placement: 'top',
         icon: <SyncAltIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Acciones de Control',
-        description:
-          'Desde la tabla podrás ajustar el stock por mermas o auditar los lotes y fechas de caducidad de cada producto.',
+        title: t('tutorial.inventario.s6.title'),
+        description: t('tutorial.inventario.s6.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/movimientos': {
@@ -661,35 +605,31 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         placement: 'bottom',
         disableFlip: true,
         icon: <HistoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Historial de Movimientos',
-        description:
-          'Aquí queda registrado cada cambio en el stock: entradas, salidas, mermas y ajustes manuales.',
+        title: t('tutorial.movimientos.s0.title'),
+        description: t('tutorial.movimientos.s0.description'),
       },
       {
         target: '#movimientos-filters',
         placement: 'bottom',
         icon: <FilterListIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Filtrado por Tipo',
-        description:
-          'Busca movimientos específicos filtrando por fecha o por el tipo de operación (ej. solo mermas o solo entradas).',
+        title: t('tutorial.movimientos.s1.title'),
+        description: t('tutorial.movimientos.s1.description'),
       },
       {
         target: '#movimientos-table',
         placement: 'center',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Trazabilidad',
-        description:
-          'Revisa de un vistazo qué usuario realizó la acción, qué producto se vio afectado y la cantidad exacta.',
+        title: t('tutorial.movimientos.s2.title'),
+        description: t('tutorial.movimientos.s2.description'),
       },
       {
         target: '#btn-ver-detalle-movimiento',
         placement: 'left',
         icon: <VisibilityIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Detalles de Auditoría',
-        description:
-          'Accede al detalle completo para ver el lote afectado y, si el movimiento viene de un pedido o distribución, ir directo a su origen.',
+        title: t('tutorial.movimientos.s3.title'),
+        description: t('tutorial.movimientos.s3.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/mermas': {
@@ -702,35 +642,31 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
             sx={{ fontSize: 60, color: 'primary.main' }}
           />
         ),
-        title: 'Gestión de Mermas',
-        description:
-          'Desde aquí controlarás todas las pérdidas de stock no planificadas en el inventario.',
+        title: t('tutorial.mermas.s0.title'),
+        description: t('tutorial.mermas.s0.description'),
       },
       {
         target: '#btn-reportar-merma',
         placement: 'bottom',
         icon: <AddIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Reportar Merma',
-        description:
-          'Registra mermas por rotura, caducidad o robo. Recuerda que esta acción descuenta stock de forma permanente.',
+        title: t('tutorial.mermas.s1.title'),
+        description: t('tutorial.mermas.s1.description'),
       },
       {
         target: '#merma-stats',
         placement: 'bottom',
         icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Estadísticas de Impacto',
-        description:
-          'Consulta de un vistazo el volumen total de pérdidas y los motivos más frecuentes para tomar medidas.',
+        title: t('tutorial.mermas.s2.title'),
+        description: t('tutorial.mermas.s2.description'),
       },
       {
         target: '#mermas-table-container',
         placement: 'center',
         icon: <HistoryIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Historial de Mermas',
-        description:
-          'Toda merma queda auditada. Revisa el historial para ver quién reportó la pérdida y el motivo detallado.',
+        title: t('tutorial.mermas.s3.title'),
+        description: t('tutorial.mermas.s3.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/incidencias': {
@@ -741,51 +677,45 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <ReportProblemIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Centro de Incidencias',
-        description:
-          'Aquí se centralizan todas las discrepancias detectadas durante la recepción de mercancía.',
+        title: t('tutorial.incidencias.s0.title'),
+        description: t('tutorial.incidencias.s0.description'),
       },
       {
         target: '#btn-reporte-incidencias-pdf',
         placement: 'bottom',
         icon: <PictureAsPdfIcon sx={{ fontSize: 60, color: 'error.main' }} />,
-        title: 'Reportes y Exportación',
-        description:
-          'Genera listados oficiales en PDF o Excel para reclamaciones a proveedores o auditorías internas.',
+        title: t('tutorial.incidencias.s1.title'),
+        description: t('tutorial.incidencias.s1.description'),
       },
       {
         target: '#incidencias-tabs',
         placement: 'bottom',
         icon: <PendingActionsIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Filtrado por Estado',
-        description:
-          'Organiza tu trabajo separando lo que está pendiente de revisión de aquello que ya ha sido resuelto.',
+        title: t('tutorial.incidencias.s2.title'),
+        description: t('tutorial.incidencias.s2.description'),
       },
       {
         target: '#incidencias-table',
         placement: 'center',
         icon: <SearchIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Trazabilidad de Problemas',
-        description:
-          'Consulta el detalle de qué faltó o qué llegó de más en cada pedido para tomar la decisión correcta.',
+        title: t('tutorial.incidencias.s3.title'),
+        description: t('tutorial.incidencias.s3.description'),
       },
       {
         target: '#btn-ajustar-incidencia',
         placement: 'left',
         icon: <TuneIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-        title: 'Ajuste de Discrepancias',
-        description:
-          'Corrige las cantidades reales recibidas si hubo un error en la toma de datos inicial.',
+        title: t('tutorial.incidencias.s4.title'),
+        description: t('tutorial.incidencias.s4.description'),
       },
       {
         target: '#btn-resolver-incidencia',
         placement: 'left',
         icon: <CheckCircleIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Resolución Final',
-        description:
-          'Al resolver, el sistema ajustará automáticamente el inventario y cerrará el ciclo de la discrepancia.',
+        title: t('tutorial.incidencias.s5.title'),
+        description: t('tutorial.incidencias.s5.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/administracion': {
@@ -794,35 +724,31 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#admin-header',
         placement: 'bottom',
         icon: <SettingsIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Administración Académica',
-        description:
-          'Desde este centro de control gestionarás la estructura organizativa del economato y los accesos al sistema.',
+        title: t('tutorial.administracion.s0.title'),
+        description: t('tutorial.administracion.s0.description'),
       },
       {
         target: '#admin-tabs',
         placement: 'bottom',
         icon: <SchoolIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Módulos de Gestión',
-        description:
-          'Navega entre la gestión de aulas, el listado de alumnos vinculados, la administración de usuarios y las plantillas de roles.',
+        title: t('tutorial.administracion.s1.title'),
+        description: t('tutorial.administracion.s1.description'),
       },
       {
         target: '#admin-tab-usuarios',
         placement: 'bottom',
         icon: <PeopleIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Control de Usuarios',
-        description:
-          'Administra cuentas, restablece contraseñas y asigna roles específicos a cada miembro del equipo.',
+        title: t('tutorial.administracion.s2.title'),
+        description: t('tutorial.administracion.s2.description'),
       },
       {
         target: '#btn-gestionar-slots',
         placement: 'top',
         icon: <EditIcon sx={{ fontSize: 60, color: 'secondary.main' }} />,
-        title: 'Modo Gestión',
-        description:
-          'Activa este modo para editar nombres de aulas, capacidades o asignar profesores a clases específicas.',
+        title: t('tutorial.administracion.s3.title'),
+        description: t('tutorial.administracion.s3.description'),
       },
-      helpTutorialStep,
+      getHelpTutorialStep(t),
     ],
   },
   '/perfil': {
@@ -830,23 +756,21 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
       PROFESOR: [
         {
           icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description:
-            'Desde esta tarjeta puedes revisar y editar tus datos personales básicos.',
+          title: t('tutorial.perfil.s0.title'),
+          description: t('tutorial.perfil.s0.description'),
         },
         {
           icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-          title: 'Seguridad y contraseña',
-          description:
-            'Puedes cambiar tu nombre de usuario y contraseña. El cambio de email requiere autorización de un rol superior.',
+          title: t('tutorial.perfil.s1.title'),
+          description: t('tutorial.perfil.s1.description'),
         },
         // ... otros pasos del rol
       ],
       ALUMNO: [
         {
           icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description: 'Aquí puedes consultar tu información personal.',
+          title: t('tutorial.perfil.s2.title'),
+          description: t('tutorial.perfil.s2.description'),
         },
       ],
     },
@@ -857,18 +781,16 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         target: '#sidebar-nav',
         placement: 'right',
         icon: <HelpIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Navegación',
-        description:
-          'Usa el menú lateral para moverte entre las diferentes secciones asignadas a tu rol.',
+        title: t('tutorial.perfil.s3.title'),
+        description: t('tutorial.perfil.s3.description'),
       },
       {
         target: '#user-menu-button', // ID a añadir en MainLayout
         placement: 'bottom',
         icon: <SettingsIcon sx={{ fontSize: 60, color: 'action.active' }} />,
-        title: 'Tu Cuenta',
-        description:
-          'Gestiona tu perfil, preferencias de tema y cierra sesión desde el menú superior.',
+        title: t('tutorial.perfil.s4.title'),
+        description: t('tutorial.perfil.s4.description'),
       },
     ],
   },
-};
+});

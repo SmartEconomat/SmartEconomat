@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Portal,
@@ -24,6 +25,7 @@ import { useTutorial } from '../../../store/tutorial.hooks';
 import type { TutorialStep } from '../../../utils/config/tutorialData';
 
 const InteractiveTour: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   // Detectar si la pantalla es muy bajita (ej: móvil en landscape o consola abierta)
   const isShortScreen = useMediaQuery('(max-height: 520px)');
@@ -209,7 +211,11 @@ const InteractiveTour: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        <IconButton size="small" onClick={skipTour} aria-label="Omitir tour">
+        <IconButton
+          size="small"
+          onClick={skipTour}
+          aria-label={t('tutorial.omitirTour')}
+        >
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -306,8 +312,8 @@ const InteractiveTour: React.FC = () => {
               }}
             >
               {currentStepIndex === currentSteps.length - 1
-                ? 'Finalizar'
-                : 'Siguiente'}
+                ? t('tutorial.finalizar')
+                : t('tutorial.siguiente')}
             </Button>
           }
           backButton={
@@ -326,7 +332,7 @@ const InteractiveTour: React.FC = () => {
                 visibility: currentStepIndex === 0 ? 'hidden' : 'visible',
               }}
             >
-              Atrás
+              {t('tutorial.atras')}
             </Button>
           }
         />
@@ -361,7 +367,7 @@ const InteractiveTour: React.FC = () => {
               },
             }}
           >
-            Saltar todo el tutorial
+            {t('tutorial.saltarTodo')}
           </Button>
         </CardActions>
       )}

@@ -22,6 +22,8 @@ import {
   alpha,
 } from '@mui/material';
 import { Autocomplete, CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+
 import DataTable, { Column } from '../components/ui/DataTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DynamicFormModal, {
@@ -110,7 +112,8 @@ const formatEquivalentAmount = (value: number, unit: UnidadMedida): string => {
 const formatEquivalentByConstruction = (
   cantidadUnidades: number,
   contenidoPorUnidad?: number,
-  unidad?: string
+  unidad?: string,
+  t?: (k: string) => string
 ): string | null => {
   const normalizedUnit = normalizeUnidadMedida(unidad);
   if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
@@ -257,6 +260,7 @@ const Inventario: React.FC = () => {
   const [isCantidadDialogOpen, setIsCantidadDialogOpen] = useState(false);
   const [isAddingFromScanner, setIsAddingFromScanner] = useState(false);
 
+  const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
@@ -341,8 +345,6 @@ const Inventario: React.FC = () => {
     void loadUbicaciones();
     void loadAssignedLocations();
   }, [loadUbicaciones, loadAssignedLocations]);
-
-  // Eliminado el useEffect inicial redundante que ya maneja reloadInventario con tabIndex
 
   // Autocomplete remoto: NO cargamos el catálogo completo (escala a millones).
   useEffect(() => {
@@ -992,159 +994,162 @@ const Inventario: React.FC = () => {
     setPage(1);
   }, [searchTerm, filters]);
 
-  const columns: Column<InventarioPorProducto>[] = [
-    { id: 'nombre', label: 'Producto' },
-    {
-      id: 'tipo',
-      label: 'Tipo',
-      render: (row) =>
-        row.tipo ? (
-          <StatusChip status={row.tipo} variant="outlined" size="small" />
-        ) : (
-          '—'
-        ),
-      hideOnMobile: true,
-    },
-    {
-      id: 'cantidadTotal',
-      label: 'Stock Total',
-      align: 'right',
-      render: (row) => {
-        const equivalente = formatEquivalentByConstruction(
-          row.cantidadTotal,
-          row.contenidoPorUnidad,
-          row.unidad
-        );
-
-        return (
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="body2" fontWeight={500}>
-              {formatStockUnits(row.cantidadTotal)}
-            </Typography>
-            {equivalente ? (
-              <Typography variant="caption" color="text.secondary">
-                {equivalente}
-              </Typography>
-            ) : null}
-          </Box>
-        );
+  const columns = useMemo<Column<InventarioPorProducto>[]>(
+    () => [
+      { id: 'nombre', label: t('inventario.columnas.producto') },
+      {
+        id: 'tipo',
+        label: t('inventario.columnas.tipo'),
+        render: (row) =>
+          row.tipo ? (
+            <StatusChip status={row.tipo} variant="outlined" size="small" />
+          ) : (
+            '—'
+          ),
+        hideOnMobile: true,
       },
-    },
-    {
-      id: 'cantidadMinima',
-      label: 'Mínimo',
-      align: 'right',
-      render: (row) => {
-        const equivalente = formatEquivalentByConstruction(
-          row.cantidadMinima,
-          row.contenidoPorUnidad,
-          row.unidad
-        );
+      {
+        id: 'cantidadTotal',
+        label: t('inventario.columnas.stockTotal'),
+        align: 'right',
+        render: (row) => {
+          const equivalente = formatEquivalentByConstruction(
+            row.cantidadTotal,
+            row.contenidoPorUnidad,
+            row.unidad
+          );
 
-        return (
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="body2" fontWeight={500}>
-              {formatStockUnits(row.cantidadMinima)}
-            </Typography>
-            {equivalente ? (
-              <Typography variant="caption" color="text.secondary">
-                {equivalente}
+          return (
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="body2" fontWeight={500}>
+                {formatStockUnits(row.cantidadTotal)}
               </Typography>
-            ) : null}
-          </Box>
-        );
+              {equivalente ? (
+                <Typography variant="caption" color="text.secondary">
+                  {equivalente}
+                </Typography>
+              ) : null}
+            </Box>
+          );
+        },
       },
-      hideOnMobile: true,
-    },
-    {
-      id: 'bajoStock',
-      label: 'Estado',
-      render: (row) =>
-        row.bajoStock ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <WarningAmberOutlinedIcon color="warning" fontSize="small" />
-            <Typography variant="body2" color="warning.main">
-              Bajo stock
+      {
+        id: 'cantidadMinima',
+        label: t('inventario.columnas.minimo'),
+        align: 'right',
+        render: (row) => {
+          const equivalente = formatEquivalentByConstruction(
+            row.cantidadMinima,
+            row.contenidoPorUnidad,
+            row.unidad
+          );
+
+          return (
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="body2" fontWeight={500}>
+                {formatStockUnits(row.cantidadMinima)}
+              </Typography>
+              {equivalente ? (
+                <Typography variant="caption" color="text.secondary">
+                  {equivalente}
+                </Typography>
+              ) : null}
+            </Box>
+          );
+        },
+        hideOnMobile: true,
+      },
+      {
+        id: 'bajoStock',
+        label: t('inventario.columnas.estado'),
+        render: (row) =>
+          row.bajoStock ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <WarningAmberOutlinedIcon color="warning" fontSize="small" />
+              <Typography variant="body2" color="warning.main">
+                {t('inventario.estado.bajoStock')}
+              </Typography>
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {t('inventario.estado.ok')}
             </Typography>
-          </Box>
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            OK
-          </Typography>
-        ),
-    },
-    {
-      id: 'proveedores',
-      label: 'Proveedores',
-      render: (row) => row.proveedores?.join(', ') ?? '—',
-      hideOnMobile: true,
-    },
-    {
-      id: 'ubicaciones',
-      label: 'Ubicaciones',
-      render: (row) => row.ubicaciones?.join(', ') ?? '—',
-      hideOnMobile: true,
-    },
-    {
-      id: 'acciones',
-      label: 'Acciones',
-      align: 'right',
-      render: (row) => (
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="Ver Detalles y Lotes">
-            <IconButton
-              size="small"
-              color="primary"
-              id="btn-ver-detalle-stock"
-              onClick={() => {
-                setSelectedProductId(row.productoId);
-                setDetailMode('view');
-                setDetailModalOpen(true);
-              }}
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canAjustar && (
-            <Tooltip title="Auditar stock por ajuste (+/-)">
+          ),
+      },
+      {
+        id: 'proveedores',
+        label: t('inventario.columnas.proveedores'),
+        render: (row) => row.proveedores?.join(', ') ?? '—',
+        hideOnMobile: true,
+      },
+      {
+        id: 'ubicaciones',
+        label: t('inventario.columnas.ubicaciones'),
+        render: (row) => row.ubicaciones?.join(', ') ?? '—',
+        hideOnMobile: true,
+      },
+      {
+        id: 'acciones',
+        label: t('inventario.columnas.acciones'),
+        align: 'right',
+        render: (row) => (
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title={t('inventario.acciones.verDetalles')}>
               <IconButton
                 size="small"
-                color="secondary"
-                id="btn-ajustar-stock"
+                color="primary"
+                id="btn-ver-detalle-stock"
                 onClick={() => {
                   setSelectedProductId(row.productoId);
-                  setDetailMode('audit');
+                  setDetailMode('view');
                   setDetailModalOpen(true);
                 }}
               >
-                <SyncAltIcon fontSize="small" />
+                <VisibilityIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
-        </Stack>
-      ),
-    },
-  ];
+            {canAjustar && (
+              <Tooltip title={t('inventario.acciones.auditarStock')}>
+                <IconButton
+                  size="small"
+                  color="secondary"
+                  id="btn-ajustar-stock"
+                  onClick={() => {
+                    setSelectedProductId(row.productoId);
+                    setDetailMode('audit');
+                    setDetailModalOpen(true);
+                  }}
+                >
+                  <SyncAltIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+        ),
+      },
+    ],
+    [canAjustar, t]
+  );
 
   return (
     <Box>
       <PageToolbar
         id="inventario-toolbar"
-        title="Inventario por Producto"
+        title={t('inventario.titulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
+        searchPlaceholder={t('inventario.buscarPlaceholder')}
         searchId="search-inventario"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel="productos"
+        totalItemsLabel={t('inventario.productosLabel')}
         primaryAction={
           canCrear
             ? {
-                label: 'Añadir al inventario',
+                label: t('inventario.btn.anadir'),
                 onClick: handleOpenCreate,
                 icon: <AddIcon />,
                 id: 'btn-add-inventario',
@@ -1154,7 +1159,7 @@ const Inventario: React.FC = () => {
         secondaryAction={
           canGestionarUbicaciones
             ? {
-                label: 'Gestionar Ubicaciones',
+                label: t('inventario.btn.gestionarUbicaciones'),
                 onClick: () => setIsUbicacionesModalOpen(true),
                 icon: <SettingsIcon />,
                 id: 'btn-manage-locations',
@@ -1183,7 +1188,7 @@ const Inventario: React.FC = () => {
         onScan={(code) => {
           void handleSearchScannerResult(code);
         }}
-        title="Escanear Producto para Buscar"
+        title={t('inventario.scanner.titulo')}
       />
 
       <Paper
@@ -1214,11 +1219,14 @@ const Inventario: React.FC = () => {
             indicatorColor="primary"
             aria-label="inventory tabs"
           >
-            <Tab icon={<HomeWorkOutlinedIcon />} label="Mis Ubicaciones" />
+            <Tab
+              icon={<HomeWorkOutlinedIcon />}
+              label={t('inventario.tabs.misUbicaciones')}
+            />
             {canSeeGeneral && (
               <Tab
                 icon={<Inventory2OutlinedIcon />}
-                label="Inventario General"
+                label={t('inventario.tabs.inventarioGeneral')}
               />
             )}
           </Tabs>
@@ -1243,7 +1251,7 @@ const Inventario: React.FC = () => {
                   startIcon={<ClearIcon />}
                   sx={{ fontWeight: 700 }}
                 >
-                  Quitar filtro
+                  {t('comun.quitarFiltro')}
                 </Button>
               }
               sx={{
@@ -1255,8 +1263,7 @@ const Inventario: React.FC = () => {
                 '& .MuiAlert-message': { fontWeight: 500 },
               }}
             >
-              Estas visualizando el inventario filtrado por productos con stock
-              bajo el mínimo.
+              {t('inventario.alertas.bajoMinimo')}
             </Alert>
           )}
 
@@ -1275,12 +1282,16 @@ const Inventario: React.FC = () => {
                   {searchTerm.trim() ||
                   filters.categorias.length > 0 ||
                   filters.ubicaciones.length > 0
-                    ? 'No hay productos que coincidan con tu búsqueda o filtros'
+                    ? t('inventario.empty.noResultados')
                     : tabIndex === 0
                       ? assignedLocations.length === 0
-                        ? 'No tienes ubicaciones asignadas'
-                        : `No hay stock en ${assignedLocations.map((l) => l.nombre).join(', ')}`
-                      : 'No hay stock en inventario'}
+                        ? t('inventario.empty.noUbicacionesAsignadas')
+                        : t('inventario.empty.noStockEnUbicaciones', {
+                            ubicaciones: assignedLocations
+                              .map((l) => l.nombre)
+                              .join(', '),
+                          })
+                      : t('inventario.empty.noStockGeneral')}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -1290,10 +1301,10 @@ const Inventario: React.FC = () => {
                   {searchTerm.trim() ||
                   filters.categorias.length > 0 ||
                   filters.ubicaciones.length > 0
-                    ? 'Prueba con otros términos o limpia los filtros.'
+                    ? t('inventario.empty.limpiarFiltros')
                     : tabIndex === 0 && assignedLocations.length === 0
-                      ? 'Contacta con tu profesor o administrador para que te asigne un slot.'
-                      : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
+                      ? t('inventario.empty.contactaAdmin')
+                      : t('inventario.empty.instruccionesStock')}
                 </Typography>
               </Box>
             }
@@ -1316,7 +1327,7 @@ const Inventario: React.FC = () => {
             fullWidth
             maxWidth="sm"
           >
-            <DialogTitle>Añadir producto al inventario</DialogTitle>
+            <DialogTitle>{t('inventario.modal.anadirTitulo')}</DialogTitle>
             <DialogContent dividers>
               <Box display="flex" flexDirection="column" gap={2} mt={1}>
                 <Autocomplete
@@ -1334,14 +1345,14 @@ const Inventario: React.FC = () => {
                   filterOptions={(x) => x} // sin filtrado local
                   noOptionsText={
                     productoProveedorInput.trim().length < 2
-                      ? 'Escribe al menos 2 caracteres para buscar…'
-                      : 'Sin resultados'
+                      ? t('inventario.modal.escribeMinLetras')
+                      : t('inventario.modal.sinResultados')
                   }
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Producto / Proveedor"
-                      placeholder="Buscar producto o proveedor…"
+                      label={t('inventario.modal.productoProveedorLabel')}
+                      placeholder={t('inventario.modal.buscarPlaceholder')}
                       fullWidth
                       required
                       error={
@@ -1351,7 +1362,7 @@ const Inventario: React.FC = () => {
                       helperText={
                         !productoProveedorValue &&
                         productoProveedorInput.length > 0
-                          ? 'Debes seleccionar una opción válida'
+                          ? t('inventario.modal.seleccionaOpcionValida')
                           : undefined
                       }
                       InputProps={{
@@ -1371,7 +1382,7 @@ const Inventario: React.FC = () => {
 
                 <Box display="flex" gap={2} flexWrap="wrap">
                   <TextField
-                    label="Cantidad actual"
+                    label={t('inventario.modal.cantidadActual')}
                     type="number"
                     value={cantidadActual}
                     onChange={(e) => setCantidadActual(e.target.value)}
@@ -1390,7 +1401,7 @@ const Inventario: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="Cantidad mínima"
+                    label={t('inventario.modal.cantidadMinima')}
                     type="number"
                     value={cantidadMinima}
                     onChange={(e) => setCantidadMinima(e.target.value)}

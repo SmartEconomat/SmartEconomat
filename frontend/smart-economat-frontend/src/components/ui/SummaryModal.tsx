@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -99,18 +100,22 @@ const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.INCIDENCIA,
 ] as const;
 
-const tipoDiferenciaLabel: Record<TipoDiferencia, string> = {
-  FALTANTE: 'Faltante',
-  EXCESO: 'Exceso',
-  DEFECTUOSO: 'Defectuoso',
-};
+const tipoDiferenciaLabel = (
+  t: (key: string) => string
+): Record<TipoDiferencia, string> => ({
+  FALTANTE: t('modal.summary.incidencias.faltante'),
+  EXCESO: t('modal.summary.incidencias.exceso'),
+  DEFECTUOSO: t('modal.summary.incidencias.defectuoso'),
+});
 
-const estadoReclamacionLabel: Record<EstadoReclamacion, string> = {
-  PENDIENTE: 'Pendiente',
-  RECLAMADO: 'Reclamado',
-  ABONADO: 'Abonado',
-  REENVIADO: 'Reenviado',
-};
+const estadoReclamacionLabel = (
+  t: (key: string) => string
+): Record<EstadoReclamacion, string> => ({
+  PENDIENTE: t('modal.summary.incidencias.pendiente'),
+  RECLAMADO: t('modal.summary.incidencias.reclamado'),
+  ABONADO: t('modal.summary.incidencias.abonado'),
+  REENVIADO: t('modal.summary.incidencias.reenviado'),
+});
 
 const decimalFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
@@ -144,6 +149,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   type,
   title,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SummaryItem[]>([]);
@@ -261,11 +267,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       setData(result);
     } catch (err) {
       console.error('Error loading summary data:', err);
-      setError('No se pudo cargar la información detallada.');
+      setError(t('modal.summary.errorLoading'));
     } finally {
       setLoading(false);
     }
-  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, type]);
+  }, [fetchAllIncidencias, fetchDashboardPendingPedidos, type, t]);
 
   useEffect(() => {
     if (isOpen && type) {
@@ -308,17 +314,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   }, [data, type]);
 
   const getButtonLabel = () => {
-    if (!type) return `Ver todos los ${title.toLowerCase()}`;
+    if (!type)
+      return t('modal.summary.verTodos', { title: title.toLowerCase() });
 
     const labels: Record<SummaryModalType, string> = {
-      productos: 'Ver todos los productos',
-      pedidos: 'Ver todos los pedidos',
-      incidencias: 'Ver todas las incidencias',
-      stock: 'Ver todo el inventario',
-      proveedores: 'Ver todos los proveedores',
+      productos: t('modal.summary.btn.productos'),
+      pedidos: t('modal.summary.btn.pedidos'),
+      incidencias: t('modal.summary.btn.incidencias'),
+      stock: t('modal.summary.btn.stock'),
+      proveedores: t('modal.summary.btn.proveedores'),
     };
 
-    return labels[type] || `Ver todos los ${title.toLowerCase()}`;
+    return (
+      labels[type] ||
+      t('modal.summary.verTodos', { title: title.toLowerCase() })
+    );
   };
 
   const handleSeeAll = () => {
@@ -355,7 +365,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   const renderItem = (item: SummaryItem) => {
     if (type === 'stock' && isAlertaStock(item)) {
-      const stockLabel = `${formatDecimalOrFallback(item.cantidadActual)} / ${formatDecimalOrFallback(item.cantidadMinima)} ${item.unidad || 'und'}`;
+      const stockLabel = `${formatDecimalOrFallback(item.cantidadActual)} / ${formatDecimalOrFallback(item.cantidadMinima)} ${item.unidad || t('modal.summary.und')}`;
 
       return (
         <ListItem key={item.id} sx={{ px: 0 }}>
@@ -395,8 +405,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       const stockMinimo = normalizeNumericValue(item.stockMinimo);
       const stockLabel =
         stockActual != null
-          ? `${formatDecimalOrFallback(stockActual)} ${item.unidad || 'und'}`
-          : 'N/D';
+          ? `${formatDecimalOrFallback(stockActual)} ${item.unidad || t('modal.summary.und')}`
+          : t('modal.summary.nd');
       const isLowStock =
         stockActual != null &&
         stockMinimo != null &&
@@ -413,7 +423,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
                 <Typography variant="caption" color="text.secondary">
-                  {item.categoria?.nombre || 'Sin categoría'}
+                  {item.categoria?.nombre || t('modal.summary.sinCategoria')}
                 </Typography>
                 <Chip
                   label={stockLabel}
@@ -440,7 +450,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             <ShoppingCartIcon />
           </ListItemIcon>
           <ListItemText
-            primary={`Pedido #${formatPedidoListNumber(item)}`}
+            primary={`${t('modal.summary.pedido')} #${formatPedidoListNumber(item)}`}
             secondaryTypographyProps={{ component: 'div' }}
             secondary={
               <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
@@ -499,12 +509,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     color={item.resuelta ? 'success' : 'warning'}
-                    label={item.resuelta ? 'Resuelta' : 'Pendiente'}
+                    label={
+                      item.resuelta
+                        ? t('modal.summary.incidencias.resuelta')
+                        : t('modal.summary.incidencias.pendiente')
+                    }
                   />
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={`${lineas.length} línea${lineas.length !== 1 ? 's' : ''}`}
+                    label={`${lineas.length} ${t('modal.summary.incidencias.lineas', { count: lineas.length })}`}
                   />
                 </Stack>
               </Box>
@@ -523,23 +537,26 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }
                 sx={{ alignSelf: 'center' }}
               >
-                {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
+                {isExpanded
+                  ? t('modal.summary.incidencias.ocultarResumen')
+                  : t('modal.summary.incidencias.verResumen')}
               </Button>
             </Stack>
 
             <Typography variant="body2" color="text.secondary">
-              Proveedor: {item.proveedorNombre || 'Sin proveedor'}
+              {t('modal.summary.proveedor')}:{' '}
+              {item.proveedorNombre || t('modal.summary.sinProveedor')}
             </Typography>
 
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               <Stack spacing={1.5} sx={{ pt: 0.5 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Observaciones de recepción
+                    {t('modal.summary.incidencias.observacionesRecepcion')}
                   </Typography>
                   <Typography variant="body2">
                     {item.observacionesRecepcion ||
-                      'Sin observaciones registradas.'}
+                      t('modal.summary.incidencias.sinObservaciones')}
                   </Typography>
                 </Box>
 
@@ -549,7 +566,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     color="text.secondary"
                     sx={{ display: 'block', mb: 1 }}
                   >
-                    Detalle de la incidencia
+                    {t('modal.summary.incidencias.detalleIncidencia')}
                   </Typography>
                   <Stack spacing={1}>
                     {lineas.map((linea) => (
@@ -571,24 +588,30 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             <Chip
                               size="small"
                               color="error"
-                              label={tipoDiferenciaLabel[linea.tipoDiferencia]}
+                              label={
+                                tipoDiferenciaLabel(t)[linea.tipoDiferencia]
+                              }
                             />
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
-                            Esperado: {linea.cantidadEsperada} · Recibido:{' '}
-                            {linea.cantidadRecibida} · Diferencia:{' '}
+                            {t('modal.summary.incidencias.esperado')}:{' '}
+                            {linea.cantidadEsperada} ·{' '}
+                            {t('modal.summary.incidencias.recibido')}:{' '}
+                            {linea.cantidadRecibida} ·{' '}
+                            {t('modal.summary.incidencias.diferencia')}:{' '}
                             {linea.diferencia}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Reclamación:{' '}
-                            {estadoReclamacionLabel[linea.estadoReclamacion]}
+                            {t('modal.summary.incidencias.reclamacion')}:{' '}
+                            {estadoReclamacionLabel(t)[linea.estadoReclamacion]}
                           </Typography>
                           {linea.observaciones ? (
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
-                              Nota: {linea.observaciones}
+                              {t('modal.summary.incidencias.nota')}:{' '}
+                              {linea.observaciones}
                             </Typography>
                           ) : null}
                         </Stack>
@@ -611,13 +634,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </ListItemIcon>
           <ListItemText
             primary={item.nombre}
-            secondary={item.contacto || 'Sin contacto'}
+            secondary={item.contacto || t('modal.summary.sinContacto')}
           />
           <Chip
             label={
               item.productos?.length
-                ? `${item.productos.length} producto${item.productos.length !== 1 ? 's' : ''}`
-                : 'Proveedor'
+                ? `${item.productos.length} ${t('modal.summary.productosCount', { count: item.productos.length })}`
+                : t('modal.summary.proveedor')
             }
             size="small"
           />
@@ -662,7 +685,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         ) : data.length === 0 ? (
           <Box py={4} textAlign="center">
             <Typography color="text.secondary">
-              No hay elementos para mostrar.
+              {t('modal.summary.empty')}
             </Typography>
           </Box>
         ) : (

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { tutorialConfig, TutorialStep } from '../utils/config/tutorialData';
+import { useTranslation } from 'react-i18next';
+import { getTutorialConfig, TutorialStep } from '../utils/config/tutorialData';
 import { TutorialContext } from './tutorial.context';
 import { useAuth } from './auth.hooks';
 
@@ -9,22 +10,46 @@ export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentSteps, setCurrentSteps] = useState<TutorialStep[]>([]);
 
   const userRole = user?.rol?.toUpperCase() || '';
 
+  // When language changes, re-generate current steps so titles/descriptions update
+  useEffect(() => {
+    if (isActive && currentSteps.length > 0) {
+      const config = getTutorialConfig(t);
+      const currentPath = location.pathname;
+      const pageConfig = config[currentPath] || config['default'];
+      const roleToUse = userRole;
+
+      let steps: TutorialStep[] = [];
+      if (pageConfig.roles && pageConfig.roles[roleToUse]) {
+        steps = pageConfig.roles[roleToUse];
+      } else {
+        steps = pageConfig.steps || [];
+      }
+
+      if (steps.length > 0) {
+        setCurrentSteps(steps);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t]); // Only re-run when t changes (i.e. language changes)
+
   const startTour = useCallback(
     (path: string, role?: string) => {
-      const config = tutorialConfig[path] || tutorialConfig['default'];
+      const config = getTutorialConfig(t);
+      const pageConfig = config[path] || config['default'];
       const roleToUse = role || userRole;
 
       let steps: TutorialStep[] = [];
-      if (config.roles && config.roles[roleToUse]) {
-        steps = config.roles[roleToUse];
+      if (pageConfig.roles && pageConfig.roles[roleToUse]) {
+        steps = pageConfig.roles[roleToUse];
       } else {
-        steps = config.steps || [];
+        steps = pageConfig.steps || [];
       }
 
       if (steps.length > 0) {
@@ -33,7 +58,7 @@ export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
         setIsActive(true);
       }
     },
-    [userRole]
+    [userRole, t]
   );
 
   const setTourSeen = useCallback((path: string) => {

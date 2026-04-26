@@ -44,6 +44,7 @@ export default function LanguageSwitcher() {
 
   const handleSelect = (code: LangCode) => {
     i18n.changeLanguage(code);
+    localStorage.setItem('i18nextLng', code);
     handleClose();
   };
 

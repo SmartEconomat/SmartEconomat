@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Stack, Grid } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -112,8 +113,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   initialData = {},
   onSubmit,
   onCancel,
-  submitLabel = 'Aceptar',
-  cancelLabel = 'Cancelar',
+  submitLabel,
+  cancelLabel,
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
@@ -126,6 +127,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
+  const { t } = useTranslation();
+  const finalSubmitLabel = submitLabel || t('comun.aceptar');
+
   const [formData, setFormData] = useState<FormDataRecord>({});
   const formDataRef = useRef<FormDataRecord>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -247,21 +251,24 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     const stringValue = value != null ? String(value).trim() : '';
 
     if (required && !stringValue) {
-      return `${label} es obligatorio`;
+      return t('modal.dynamicForm.errors.required', { label });
     }
 
     if (stringValue) {
       if (maxLength && stringValue.length > maxLength) {
-        return `${label} no puede superar los ${maxLength} caracteres`;
+        return t('modal.dynamicForm.errors.maxLength', { label, maxLength });
       }
       if (minLength && stringValue.length < minLength) {
-        return `${label} debe tener al menos ${minLength} caracteres`;
+        return t('modal.dynamicForm.errors.minLength', { label, minLength });
       }
       if (pattern) {
         try {
           const regex = new RegExp(pattern);
           if (!regex.test(stringValue)) {
-            return patternMessage || `${label} no tiene un formato válido`;
+            return (
+              patternMessage ||
+              t('modal.dynamicForm.errors.invalidFormat', { label })
+            );
           }
         } catch {
           console.error(`Invalid regex for field ${field.name}:`, pattern);
@@ -270,7 +277,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       if (field.type === 'email') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(stringValue)) {
-          return 'Formato de correo electrónico no válido';
+          return t('modal.dynamicForm.errors.invalidEmail');
         }
       }
     }
@@ -641,7 +648,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Tooltip title="Escanear con cámara">
+                      <Tooltip
+                        title={t('modal.dynamicForm.tooltips.scanCamera')}
+                      >
                         <IconButton
                           size="small"
                           onClick={() => setActiveBarcodeField(name)}
@@ -665,7 +674,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     <InputAdornment position="end">
                       <Stack direction="row" spacing={0.5}>
                         {onBarcodeGenerate && (
-                          <Tooltip title="Generar codigo EAN-13">
+                          <Tooltip
+                            title={t('modal.dynamicForm.tooltips.generateCode')}
+                          >
                             <span>
                               <IconButton
                                 size="small"
@@ -695,7 +706,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                           </Tooltip>
                         )}
                         {onOFFSearch && (
-                          <Tooltip title="Buscar en OpenFoodFacts">
+                          <Tooltip
+                            title={t('modal.dynamicForm.tooltips.searchOFF')}
+                          >
                             <span>
                               <IconButton
                                 size="small"
@@ -1034,14 +1047,15 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         <Box
           sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
         >
-          {Boolean(cancelLabel) && (
+          {!secondarySubmitLabel && (
             <Button
-              onClick={handleCancel}
-              variant="outlined"
+              onClick={() => (onCancel ? onCancel() : onClose())}
+              variant="text"
+              color="inherit"
               fullWidth={false}
               sx={{ mt: 0, mb: 0 }}
             >
-              {cancelLabel}
+              {cancelLabel || t('comun.cancelar')}
             </Button>
           )}
           {secondarySubmitLabel && onSecondarySubmit && (
@@ -1063,7 +1077,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             fullWidth={false}
             sx={{ mt: 0, mb: 0 }}
           >
-            {submitLabel}
+            {finalSubmitLabel}
           </Button>
         </Box>
       </form>
@@ -1072,14 +1086,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmSubmit}
-        title="Confirmar acción"
-        message={
-          confirmationMessage ||
-          '¿Estás seguro de que deseas guardar estos datos?'
-        }
-        confirmText="Guardar"
-        cancelText="Cerrar"
-        confirmColor="primary"
+        title={t('comun.confirmar')}
+        message={confirmationMessage || t('modal.dynamicForm.confirmSave')}
+        confirmText={t('comun.guardar')}
+        cancelText={t('comun.cancelar')}
       />
     </Modal>
   );

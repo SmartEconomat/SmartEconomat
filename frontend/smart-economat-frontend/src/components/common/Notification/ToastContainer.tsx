@@ -1,5 +1,6 @@
 import React from 'react';
 import { Snackbar, Alert, Stack, Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useToastList } from '../../../store/toast.hooks';
 import { getCategoryIconFilled } from '../../../features/productos/utils/getCategoryIconFilled';
 import NearMeIcon from '@mui/icons-material/NearMeOutlined';
@@ -20,6 +21,7 @@ const TOAST_WIDTH = 360;
  */
 export default function ToastContainer() {
   const { toasts, removeToast } = useToastList();
+  const { t } = useTranslation();
 
   return (
     <Stack
@@ -99,7 +101,7 @@ export default function ToastContainer() {
               variant="body2"
               sx={{ color: 'inherit', lineHeight: 1.4, whiteSpace: 'pre-line' }}
             >
-              {toast.message}
+              {t(toast.message)}
             </Typography>
           </Alert>
         </Snackbar>

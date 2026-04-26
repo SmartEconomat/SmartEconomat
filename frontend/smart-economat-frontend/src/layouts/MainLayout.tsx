@@ -38,12 +38,13 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import LanguageSwitcher from '../components/common/Settings/LanguageSwitcher';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../store/sidebar.hooks';
 import InteractiveTour from '../components/common/Tutorial/InteractiveTour';
 import Logo from '../assets/images/SVG/logo-smat-economato.svg';
 import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
-import LogoNegro from '../assets/images/SVG/logo-smart-economat-negro.svg';
 import Favicon from '../assets/icons/SVG/favicon.svg';
 import FaviconInv from '../assets/icons/SVG/favicon-inv.svg';
 
@@ -159,6 +160,7 @@ interface SidebarContentProps {
     path: string;
     title: string;
     description: string;
+    i18nKey: string;
     group: 'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion';
     icon?: React.ReactNode;
   }>;
@@ -174,19 +176,14 @@ const SidebarContent = React.memo(
     theme,
     visibleMenuItems,
   }: SidebarContentProps) => {
+    const { t } = useTranslation();
     if (!theme || !location || !visibleMenuItems) {
       return null;
     }
 
     const getLogo = (isMini = false) => {
-      if (currentThemeName === 'highContrastDark') {
-        return isMini ? FaviconInv : LogoBlanco;
-      }
-      if (currentThemeName === 'highContrastLight') {
-        return isMini ? Favicon : LogoNegro;
-      }
-
-      const isDark = currentThemeName === 'dark';
+      const isDark =
+        currentThemeName === 'dark' || currentThemeName === 'highContrastDark';
       if (isMini) {
         return isDark ? FaviconInv : Favicon;
       }
@@ -197,11 +194,11 @@ const SidebarContent = React.memo(
       'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion',
       string
     > = {
-      inicio: 'Inicio',
-      catalogo: 'Catálogo',
-      operaciones: 'Operaciones',
-      control: 'Control',
-      gestion: 'Gestión',
+      inicio: t('layout.menu.inicio'),
+      catalogo: t('layout.menu.catalogo'),
+      operaciones: t('layout.menu.operaciones'),
+      control: t('layout.menu.control'),
+      gestion: t('layout.menu.gestion'),
     };
 
     return (
@@ -300,8 +297,8 @@ const SidebarContent = React.memo(
                     title={getTooltipContent(
                       isExpanded,
                       isLearningMode || false,
-                      item.title,
-                      item.description
+                      t(`layout.menu.${item.i18nKey}`) || item.title,
+                      t(`layout.menu.${item.i18nKey}Desc`) || item.description
                     )}
                     describeChild
                   >
@@ -331,7 +328,7 @@ const SidebarContent = React.memo(
                         {item.icon}
                       </ListItemIcon>
                       <ListItemText
-                        primary={item.title}
+                        primary={t(`layout.menu.${item.i18nKey}`) || item.title}
                         sx={{
                           display: isExpanded ? 'block' : 'none',
                           opacity: isExpanded ? 1 : 0,
@@ -375,6 +372,7 @@ const SidebarContent = React.memo(
 SidebarContent.displayName = 'SidebarContent';
 
 export default function MainLayout() {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const { isMobile, isTablet, isDesktop, isLargeDesktop, isXLarge } =
     useBreakpoints();
@@ -494,7 +492,7 @@ export default function MainLayout() {
         elevation={1}
         component="header"
         role="banner"
-        aria-label="Cabecera superior"
+        aria-label={t('layout.menu.navegacionPrincipal')}
       >
         <Toolbar
           sx={{
@@ -506,20 +504,20 @@ export default function MainLayout() {
           <Tooltip
             title={
               isMobile
-                ? 'Abrir menú'
+                ? t('layout.menu.expandir')
                 : sidebarExpanded
-                  ? 'Minimizar menú'
-                  : 'Expandir menú'
+                  ? t('layout.menu.minimizar')
+                  : t('layout.menu.expandir')
             }
           >
             <IconButton
               color="inherit"
               aria-label={
                 isMobile
-                  ? 'Abrir menú'
+                  ? t('layout.menu.expandir')
                   : sidebarExpanded
-                    ? 'Minimizar menú'
-                    : 'Expandir menú'
+                    ? t('layout.menu.minimizar')
+                    : t('layout.menu.expandir')
               }
               onClick={isMobile ? handleMobileDrawerOpen : handleSidebarToggle}
               edge="start"
@@ -542,6 +540,7 @@ export default function MainLayout() {
           <Box
             sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}
           >
+            <LanguageSwitcher />
             <NotificationCenter />
             <Typography
               variant="subtitle1"
@@ -553,7 +552,9 @@ export default function MainLayout() {
               id="user-menu-button"
               onClick={handleUserMenuOpen}
               sx={{ p: 0 }}
-              aria-label="Abrir menú de usuario"
+              aria-label={
+                t('auth.login.ariaRevealPassword') || 'Abrir menú de usuario'
+              }
             >
               <Avatar
                 sx={{
@@ -588,14 +589,18 @@ export default function MainLayout() {
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Mi Perfil</Typography>
+                <Typography textAlign="center">
+                  {t('layout.menu.miPerfil')}
+                </Typography>
               </MuiMenuItem>
               <Divider />
               <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Cerrar Sesión</Typography>
+                <Typography textAlign="center">
+                  {t('auth.login.logout') || 'Cerrar Sesión'}
+                </Typography>
               </MuiMenuItem>
             </Menu>
           </Box>

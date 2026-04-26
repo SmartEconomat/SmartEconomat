@@ -49,20 +49,6 @@ interface MermasTableProps {
 /**
  * Paginated table for displaying merma (waste/loss) records with inline
  * filters for motivo (reason) and date range.
- *
- * @param {MermasTableProps} props - Component props.
- * @returns JSX rendered mermas table with filter controls.
- * @example
- * <MermasTable
- *   data={mermas}
- *   total={total}
- *   page={page}
- *   pageSize={pageSize}
- *   onPageChange={setPage}
- *   onPageSizeChange={setPageSize}
- *   filters={filters}
- *   onFiltersChange={setFilters}
- * />
  */
 const MermasTable: React.FC<MermasTableProps> = ({
   data,
@@ -77,74 +63,77 @@ const MermasTable: React.FC<MermasTableProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const columns: Column<Merma>[] = [
-    {
-      id: 'createdAt',
-      label: t('merma.tabla.fecha'),
-      render: (row) => dayjs(row.createdAt).format('DD/MM/YYYY HH:mm'),
-    },
-    {
-      id: 'producto',
-      label: t('merma.tabla.producto'),
-      render: (row) => row.producto?.nombre || '—',
-    },
-    {
-      id: 'cantidad',
-      label: t('merma.tabla.cantidad'),
-      align: 'right',
-      render: (row) => `${row.cantidad} ${row.producto?.unidad || ''}`,
-    },
-    {
-      id: 'motivo',
-      label: t('merma.tabla.motivo'),
-      render: (row) => (
-        <StatusChip
-          status={row.motivo}
-          label={
-            {
-              [MotivoMerma.ROTURA]: t('merma.motivos.rotura'),
-              [MotivoMerma.DETERIORO]: t('merma.motivos.deterioro'),
-              [MotivoMerma.HURTO]: t('merma.motivos.hurto'),
-              [MotivoMerma.ERROR_PREPARACION]: t(
-                'merma.motivos.errorPreparacion'
-              ),
-              [MotivoMerma.OTROS]: t('merma.motivos.otros'),
-            }[row.motivo]
-          }
-          variant="outlined"
-          size="small"
-        />
-      ),
-    },
-    {
-      id: 'usuario',
-      label: t('merma.tabla.registradoPor'),
-      render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
-      hideOnMobile: true,
-    },
-    {
-      id: 'acciones',
-      label: t('comun.acciones'),
-      align: 'right',
-      render: (row) => (
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title={t('merma.tabla.verNotas')}>
-            <IconButton
-              size="small"
-              onClick={() =>
-                alert(
-                  `${t('merma.tabla.notas')}: ${row.notas || t('merma.tabla.sinNotas')}`
-                )
-              }
-              disabled={!row.notas}
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+  const columns: Column<Merma>[] = React.useMemo(
+    () => [
+      {
+        id: 'createdAt',
+        label: t('merma.tabla.fecha'),
+        render: (row) => dayjs(row.createdAt).format('DD/MM/YYYY HH:mm'),
+      },
+      {
+        id: 'producto',
+        label: t('merma.tabla.producto'),
+        render: (row) => row.producto?.nombre || '—',
+      },
+      {
+        id: 'cantidad',
+        label: t('merma.tabla.cantidad'),
+        align: 'right',
+        render: (row) => `${row.cantidad} ${row.producto?.unidad || ''}`,
+      },
+      {
+        id: 'motivo',
+        label: t('merma.tabla.motivo'),
+        render: (row) => (
+          <StatusChip
+            status={row.motivo}
+            label={
+              {
+                [MotivoMerma.ROTURA]: t('merma.motivos.rotura'),
+                [MotivoMerma.DETERIORO]: t('merma.motivos.deterioro'),
+                [MotivoMerma.HURTO]: t('merma.motivos.hurto'),
+                [MotivoMerma.ERROR_PREPARACION]: t(
+                  'merma.motivos.errorPreparacion'
+                ),
+                [MotivoMerma.OTROS]: t('merma.motivos.otros'),
+              }[row.motivo]
+            }
+            variant="outlined"
+            size="small"
+          />
+        ),
+      },
+      {
+        id: 'usuario',
+        label: t('merma.tabla.registradoPor'),
+        render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
+        hideOnMobile: true,
+      },
+      {
+        id: 'acciones',
+        label: t('comun.acciones'),
+        align: 'right',
+        render: (row) => (
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title={t('merma.tabla.verNotas')}>
+              <IconButton
+                size="small"
+                onClick={() =>
+                  alert(
+                    `${t('merma.tabla.notas')}: ${row.notas || t('merma.tabla.sinNotas')}`
+                  )
+                }
+                disabled={!row.notas}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [t]
+  );
 
   return (
     <Box>

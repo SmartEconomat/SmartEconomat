@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -9,10 +9,10 @@ import {
   Tooltip,
   Stack,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -37,51 +37,46 @@ import AddIcon from '@mui/icons-material/Add';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { DownloadService } from '../services/download.service';
 
-const proveedorSchema: DynamicField[] = [
+const getProveedorSchema = (t: (key: string) => string): DynamicField[] => [
   {
     name: 'nif',
-    label: 'NIF / CUIT',
+    label: t('proveedores.form.nif'),
     required: true,
     width: 4,
     maxLength: 20,
     pattern: '^[a-zA-Z0-9]+$',
-    patternMessage: 'NIF solo permite caracteres alfanuméricos',
+    patternMessage: t('proveedores.form.nifPatternError'),
   },
   {
     name: 'nombre',
-    label: 'Razón Social',
+    label: t('proveedores.form.nombre'),
     required: true,
     width: 8,
     maxLength: 100,
   },
   {
     name: 'contacto',
-    label: 'Persona de Contacto',
+    label: t('proveedores.form.contacto'),
     maxLength: 100,
   },
   {
     name: 'telefono',
-    label: 'Teléfono',
+    label: t('proveedores.form.telefono'),
     width: 6,
     maxLength: 50,
     pattern: '^[+]?[0-9\\s]*$',
-    patternMessage: 'El teléfono solo permite números, espacios y el prefijo +',
+    patternMessage: t('proveedores.form.telefonoPatternError'),
   },
   {
     name: 'email',
-    label: 'Email',
+    label: t('proveedores.form.email'),
     type: 'email',
     width: 6,
     maxLength: 255,
   },
-  { name: 'direccion', label: 'Dirección' },
+  { name: 'direccion', label: t('proveedores.form.direccion') },
 ];
 
-/**
- * @description Page component for managing suppliers (proveedores).
- * Implements full CRUD with a searchable, sortable table and export capabilities.
- * @returns The Proveedores React page element.
- */
 const Proveedores: React.FC = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
@@ -103,11 +98,8 @@ const Proveedores: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  /**
-   * @description Fetches the paginated and filtered list of suppliers from the API.
-   * Updates data, totalPages, and totalItems state. Sets an error message on failure.
-   * @returns Promise that resolves when supplier data is loaded.
-   */
+  const proveedorSchema = getProveedorSchema(t);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -124,9 +116,7 @@ const Proveedores: React.FC = () => {
       setTotalItems(proveedoresData.total || proveedoresData.data.length);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('proveedores.errors.errorCargar');
+        err instanceof Error ? err.message : t('proveedores.toast.errorCargar');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -137,11 +127,6 @@ const Proveedores: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  /**
-   * @description Confirms and executes deletion of the currently selected supplier.
-   * Removes the supplier from local state on success and shows a toast notification.
-   * @returns Promise that resolves when deletion is complete.
-   */
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -155,7 +140,7 @@ const Proveedores: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : t('proveedores.errors.errorEliminar');
+          : t('proveedores.toast.errorEliminar');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -163,12 +148,6 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Handles saving a supplier — either creating a new one or updating an existing one.
-   * Calls the appropriate API endpoint based on presence of formData.id.
-   * @param formData - Form values with supplier fields and optional id for updates.
-   * @returns Promise that resolves when the supplier is saved.
-   */
   const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
@@ -194,43 +173,27 @@ const Proveedores: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : t('proveedores.errors.errorGuardar');
+          : t('proveedores.toast.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  /**
-   * @description Opens the edit modal pre-populated with the given supplier's data.
-   * @param row - The supplier row to edit.
-   */
   const handleEditClick = (row: Proveedor) => {
     setItemToEdit({ ...row } as unknown as Record<string, unknown>);
   };
 
-  /**
-   * @description Opens the detail view modal for the given supplier.
-   * @param row - The supplier row to view.
-   */
   const handleViewClick = (row: Proveedor) => {
     setItemToView(row);
   };
 
-  /**
-   * @description Handles column sort toggling. Alternates between asc/desc for the same column.
-   * @param key - The column key to sort by.
-   */
   const handleSort = (key: string | keyof Proveedor) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
     setSortOrder(isAsc ? 'desc' : 'asc');
     setSortBy(key as string);
   };
 
-  /**
-   * @description Triggers a PDF export of the current filtered suppliers list.
-   * @returns Promise that resolves when the download is initiated.
-   */
   const handleExportPdf = async () => {
     try {
       await DownloadService.downloadFile(
@@ -242,10 +205,6 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Triggers an Excel export of the current filtered suppliers list.
-   * @returns Promise that resolves when the download is initiated.
-   */
   const handleExportExcel = async () => {
     try {
       await DownloadService.downloadFile(
@@ -257,11 +216,6 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Exports a single supplier's record as a PDF using its NIF or name as the search filter.
-   * @param proveedor - The supplier whose individual PDF will be downloaded.
-   * @returns Promise that resolves when the download is initiated.
-   */
   const handleExportIndividualPdf = async (proveedor: Proveedor) => {
     try {
       // Usamos el searchTerm con el NIF para filtrar solo este proveedor
@@ -278,51 +232,47 @@ const Proveedores: React.FC = () => {
   const canEdit = usePermission(PERMISSIONS.proveedores.editar);
   const canDelete = usePermission(PERMISSIONS.proveedores.eliminar);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
-
-  const columns: Column<Proveedor>[] = [
-    { id: 'nombre', label: t('proveedores.columns.nombre'), sortable: true },
-    {
-      id: 'nif',
-      label: t('proveedores.columns.nif'),
-      render: (row) => row.nif ?? '—',
-      sortable: true,
-      responsiveDisplay: { xs: 'none', md: 'table-cell' },
-    },
-    {
-      id: 'contacto',
-      label: t('proveedores.columns.contacto'),
-      render: (row) => row.contacto ?? '—',
-      responsiveDisplay: { xs: 'none', md: 'table-cell' },
-      sortable: true,
-    },
-    {
-      id: 'telefono',
-      label: t('proveedores.columns.telefono'),
-      render: (row) => row.telefono ?? '—',
-      sortable: true,
-      responsiveDisplay: { xs: 'none', sm: 'table-cell' },
-    },
-    {
-      id: 'email',
-      label: t('proveedores.columns.email'),
-      render: (row) => row.email ?? '—',
-      sortable: true,
-      responsiveDisplay: { xs: 'none', lg: 'table-cell' },
-    },
-  ];
-
-  /**
-   * @description Renders the action buttons (view, edit, delete) for a supplier table row.
-   * @param row - The supplier row for which to render actions.
-   * @returns A Stack of icon buttons appropriate for the user's permissions.
-   */
+  const columns: Column<Proveedor>[] = useMemo(
+    () => [
+      { id: 'nombre', label: t('proveedores.columns.nombre'), sortable: true },
+      {
+        id: 'nif',
+        label: t('proveedores.columns.nif'),
+        render: (row: Proveedor) => row.nif ?? '—',
+        sortable: true,
+        responsiveDisplay: { xs: 'none', md: 'table-cell' },
+      },
+      {
+        id: 'contacto',
+        label: t('proveedores.columns.contacto'),
+        render: (row: Proveedor) => row.contacto ?? '—',
+        responsiveDisplay: { xs: 'none', md: 'table-cell' },
+        sortable: true,
+      },
+      {
+        id: 'telefono',
+        label: t('proveedores.columns.telefono'),
+        render: (row: Proveedor) => row.telefono ?? '—',
+        sortable: true,
+        responsiveDisplay: { xs: 'none', sm: 'table-cell' },
+      },
+      {
+        id: 'email',
+        label: t('proveedores.columns.email'),
+        render: (row: Proveedor) => row.email ?? '—',
+        sortable: true,
+        responsiveDisplay: { xs: 'none', lg: 'table-cell' },
+      },
+    ],
+    [t]
+  );
   const renderActions = (row: Proveedor) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title={t('proveedores.actions.verDetalle')}>
+      <Tooltip title={t('proveedores.verDetalle')}>
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
-          aria-label={t('proveedores.actions.verDetalle')}
+          aria-label={t('proveedores.verDetalle')}
           sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
@@ -364,14 +314,14 @@ const Proveedores: React.FC = () => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder={t('proveedores.searchPlaceholder')}
+        searchPlaceholder={t('proveedores.buscarPlaceholder')}
         searchId="search-proveedores"
         totalItems={totalItems}
         totalItemsLabel={t('proveedores.totalItemsLabel')}
         primaryAction={
           canCreate
             ? {
-                label: t('proveedores.acciones.nuevo'),
+                label: t('proveedores.nuevoProveedor'),
                 onClick: () => setItemToEdit({}),
                 id: 'btn-nuevo-proveedor',
               }
@@ -395,13 +345,18 @@ const Proveedores: React.FC = () => {
           exportHandlers={{
             onExportPdf: handleExportPdf,
             onExportExcel: handleExportExcel,
-            exportLabel: t('proveedores.exportLabel'),
+            exportLabel: t('proveedores.exportarLabel'),
           }}
           onSort={handleSort}
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
           defaultViewMode="list"
           onRowClick={handleViewClick}
-          getRowAriaLabel={(row) => `Ver detalle de proveedor ${row.nombre}`}
+          getRowAriaLabel={(row) =>
+            t('proveedores.getRowAriaLabel', {
+              nombre: row.nombre,
+              defaultValue: `Ver detalle de proveedor ${row.nombre}`,
+            })
+          }
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <StorefrontOutlinedIcon
@@ -409,13 +364,13 @@ const Proveedores: React.FC = () => {
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {searchTerm.trim()
-                  ? t('proveedores.empty.sinResultados')
-                  : t('proveedores.empty.sinProveedores')}
+                  ? t('proveedores.empty.noResultados')
+                  : t('proveedores.empty.noProveedores')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {searchTerm.trim()
-                  ? t('proveedores.empty.prueba')
-                  : t('proveedores.empty.empieza')}
+                  ? t('proveedores.empty.limpiarFiltro')
+                  : t('proveedores.empty.primerProveedor')}
               </Typography>
               {!searchTerm.trim() && canCreate && (
                 <Button
@@ -423,7 +378,7 @@ const Proveedores: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => setItemToEdit({})}
                 >
-                  {t('proveedores.acciones.anadir')}
+                  {t('proveedores.empty.anadirBoton')}
                 </Button>
               )}
             </Box>
@@ -452,10 +407,11 @@ const Proveedores: React.FC = () => {
             <>
               {t('proveedores.confirm.eliminarMensaje', {
                 nombre: itemToDelete?.nombre,
+                interpolation: { escapeValue: false },
               })}
             </>
           }
-          confirmText={t('proveedores.confirm.eliminarConfirm')}
+          confirmText={t('comun.siEliminar')}
           cancelText={t('comun.cancelar')}
           isLoading={isDeleting}
         />
@@ -465,10 +421,8 @@ const Proveedores: React.FC = () => {
           onClose={() => setItemToEdit(null)}
           title={
             itemToEdit?.id
-              ? t('proveedores.modal.tituloEditar', {
-                  nombre: itemToEdit.nombre || '',
-                })
-              : t('proveedores.modal.tituloCrear')
+              ? t('proveedores.editar', { nombre: itemToEdit.nombre || '' })
+              : t('proveedores.crearNuevo')
           }
           size="md"
           fields={proveedorSchema}
@@ -479,7 +433,7 @@ const Proveedores: React.FC = () => {
           confirmationMessage={
             itemToEdit?.id
               ? t('proveedores.confirm.guardarCambios')
-              : t('proveedores.confirm.crearNuevo')
+              : t('proveedores.confirm.anadirNuevo')
           }
         />
 
@@ -489,7 +443,7 @@ const Proveedores: React.FC = () => {
           title={itemToView?.nombre || ''}
           subtitle={itemToView?.nif || undefined}
           size="md"
-          editLabel={t('proveedores.actions.editarProveedor')}
+          editLabel={t('comun.editar')}
           onEdit={
             canEdit
               ? () => {
@@ -509,47 +463,44 @@ const Proveedores: React.FC = () => {
                 onClick={() => handleExportIndividualPdf(itemToView)}
                 disableElevation
               >
-                {t('proveedores.actions.descargarFicha')}
+                {t('proveedores.descargarFicha')}
               </Button>
             )
           }
           sections={[
             {
-              title: t('proveedores.detail.infoFiscal'),
+              title: t('proveedores.sections.infoFiscal'),
               fields: [
                 {
-                  label: t('proveedores.detail.razonSocial'),
+                  label: t('proveedores.form.nombre'),
                   value: itemToView?.nombre,
                 },
-                {
-                  label: t('proveedores.detail.nifCuit'),
-                  value: itemToView?.nif,
-                },
+                { label: t('proveedores.form.nif'), value: itemToView?.nif },
               ],
             },
             {
-              title: t('proveedores.detail.contacto'),
+              title: t('proveedores.sections.contacto'),
               fields: [
                 {
-                  label: t('proveedores.detail.personaContacto'),
+                  label: t('proveedores.form.contacto'),
                   value: itemToView?.contacto,
                 },
                 {
-                  label: t('proveedores.detail.telefono'),
+                  label: t('proveedores.form.telefono'),
                   value: itemToView?.telefono,
                 },
                 {
-                  label: t('proveedores.detail.email'),
+                  label: t('proveedores.form.email'),
                   value: itemToView?.email,
                   fullWidth: true,
                 },
               ],
             },
             {
-              title: t('proveedores.detail.ubicacion'),
+              title: t('proveedores.sections.ubicacion'),
               fields: [
                 {
-                  label: t('proveedores.detail.direccion'),
+                  label: t('proveedores.form.direccion'),
                   value: itemToView?.direccion,
                   fullWidth: true,
                 },
