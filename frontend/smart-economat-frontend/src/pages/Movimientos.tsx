@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
+import { useTranslation } from 'react-i18next';
 import MovimientoFilters, {
   MovimientoFiltersState,
 } from '../features/movimientos/MovimientoFilters';
@@ -51,6 +52,7 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 };
 
 const Movimientos: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
@@ -155,7 +157,7 @@ const Movimientos: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: 'Fecha',
+        label: t('movimientos.columns.fecha'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -173,7 +175,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: 'Tipo',
+        label: t('movimientos.columns.tipo'),
         render: (row: Movimiento) => (
           <Tooltip title={capitalize(row.tipo)}>
             <StatusChip
@@ -193,7 +195,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'cantidad',
-        label: 'Cant.',
+        label: t('movimientos.columns.cantidad'),
         render: (row: Movimiento) => {
           const isNegative =
             row.tipo === TipoMovimiento.SALIDA ||
@@ -216,7 +218,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'producto',
-        label: 'Descripción',
+        label: t('movimientos.columns.descripcion'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -242,7 +244,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'usuario',
-        label: 'Usuario',
+        label: t('movimientos.columns.usuario'),
         render: (row: Movimiento) => {
           const displayName = getMovimientoUsuarioDisplayName(row.usuario);
 
@@ -271,7 +273,7 @@ const Movimientos: React.FC = () => {
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
-    [theme]
+    [theme, t]
   );
 
   const handleViewClick = (row: Movimiento) => {
@@ -345,13 +347,13 @@ const Movimientos: React.FC = () => {
         ],
       },
     ];
-  }, [itemToView]);
+  }, [itemToView, t]);
 
+  // 't' no es necesario como dependencia si no cambia en runtime
   const detailActions = useMemo(() => {
     if (!itemToView?.entidadId) {
       return null;
     }
-
     if (String(itemToView.entidad || '').toLowerCase() === 'distribucion') {
       return (
         <Button
@@ -366,22 +368,23 @@ const Movimientos: React.FC = () => {
             setItemToView(null);
           }}
         >
-          Ver Distribución
+          {t('movimientos.detail.actions.viewDistribucion')}
         </Button>
       );
     }
 
     return null;
-  }, [itemToView, navigate]);
+  }, [itemToView, navigate, t]);
 
   return (
     <Box>
       <PageToolbar
         id="movimientos-toolbar"
-        title="Historial de Movimientos"
+        title={t('movimientos.title')}
         totalItems={totalItems}
-        totalItemsLabel="movimientos"
+        totalItemsLabel={t('movimientos.totalLabel')}
         searchValue={searchTerm}
+        searchPlaceholder={t('movimientos.searchPlaceholder')}
         onSearchChange={(val) => {
           setSearchTerm(val);
           setPage(1);
@@ -415,7 +418,7 @@ const Movimientos: React.FC = () => {
           <Box sx={{ py: 8, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              No hay movimientos
+              {t('movimientos.empty.title')}
             </Typography>
             <Typography
               variant="body2"
@@ -426,8 +429,8 @@ const Movimientos: React.FC = () => {
               filters.types.length > 0 ||
               filters.startDate ||
               filters.endDate
-                ? 'No se encontraron movimientos que coincidan con los filtros seleccionados.'
-                : 'Aún no se han registrado alteraciones de inventario en el sistema.'}
+                ? t('movimientos.empty.noResults')
+                : t('movimientos.empty.noData')}
             </Typography>
           </Box>
         }
@@ -445,8 +448,8 @@ const Movimientos: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle del Movimiento"
-        subtitle={`ID: ${itemToView?.id || ''}`}
+        title={t('movimientos.detail.title')}
+        subtitle={`${t('movimientos.detail.id')}: ${itemToView?.id || ''}`}
         size="md"
         sections={detailSections}
         actions={detailActions}

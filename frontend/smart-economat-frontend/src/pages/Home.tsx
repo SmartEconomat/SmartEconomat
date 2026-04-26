@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  lazy,
+  Suspense,
+} from 'react';
+
 import {
   Typography,
   Box,
@@ -9,6 +17,7 @@ import {
   IconButton,
   Skeleton,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuth, usePermission, useAnyPermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useNavigate } from 'react-router-dom';
@@ -93,7 +102,7 @@ interface QuickActionFormData {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function tiempoRelativoCorto(fechaStr: string): string {
+function tiempoRelativoCorto(fechaStr: string, t: any): string {
   const fecha = new Date(fechaStr);
   const ahora = new Date();
   const diffMs = ahora.getTime() - fecha.getTime();
@@ -101,23 +110,27 @@ function tiempoRelativoCorto(fechaStr: string): string {
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return 'ahora';
-  if (diffMin < 60) return `${diffMin}min`;
-  if (diffH < 24) return `${diffH}h`;
-  if (diffD === 1) return 'ayer';
-  if (diffD < 7) return `${diffD}d`;
-  return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  if (diffMin < 1) return t('dashboard.time.ahora');
+  if (diffMin < 60) return t('dashboard.time.min', { count: diffMin });
+  if (diffH < 24) return t('dashboard.time.hora', { count: diffH });
+  if (diffD === 1) return t('dashboard.time.ayer');
+  if (diffD < 7) return t('dashboard.time.dias', { count: diffD });
+  return fecha.toLocaleDateString(
+    t('language.locale') === 'en' ? 'en-US' : 'es-ES',
+    { day: 'numeric', month: 'short' }
+  );
 }
 
-function tipoActividadLabel(mov: DashboardMovimiento): string {
+function tipoActividadLabel(mov: DashboardMovimiento, t: any): string {
   const labels: Record<string, string> = {
-    entrada: 'Se ha registrado una entrada de stock',
-    salida: 'Se ha registrado una salida de stock',
-    ajuste: 'Se ha realizado un ajuste de inventario',
-    pedido: 'Se ha registrado un pedido',
-    entrada_compra: 'Se ha registrado una recepción de compra',
+    entrada: t('dashboard.activity.entrada'),
+    salida: t('dashboard.activity.salida'),
+    ajuste: t('dashboard.activity.ajuste'),
+    pedido: t('dashboard.activity.pedido'),
+    entrada_compra: t('dashboard.activity.entradaCompra'),
   };
-  const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
+  const base =
+    labels[mov.tipo] ?? t('dashboard.activity.desconocido', { tipo: mov.tipo });
   if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
   if (mov.descripcion) return `${base}: ${mov.descripcion}`;
   return base;
@@ -144,18 +157,21 @@ function getActividadColor(tipo: string): string {
   return TIPO_ACTIVIDAD_CONFIG[tipo]?.color ?? 'info';
 }
 
-const AVAILABLE_METRICS: MetricDefinition[] = [
-  { id: 'productos', label: 'Total Productos' },
-  { id: 'pedidos', label: 'Pedidos Pendientes' },
-  { id: 'incidencias', label: 'Incidencias' },
-  { id: 'stock', label: 'Alertas de Stock' },
-  { id: 'proveedores', label: 'Proveedores' },
-  { id: 'notificaciones', label: 'Notificaciones' },
+// Mover AVAILABLE_METRICS fuera para evitar re-renders innecesarios o dentro de useMemo
+// Lo manejaremos dentro del componente con useMemo para soportar i18n dinámico
+const METRIC_IDS = [
+  'productos',
+  'pedidos',
+  'incidencias',
+  'stock',
+  'proveedores',
+  'notificaciones',
 ];
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 const Home: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -209,9 +225,21 @@ const Home: React.FC = () => {
 
   // Metrics Customization
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const AVAILABLE_METRICS: MetricDefinition[] = useMemo(
+    () => [
+      { id: 'productos', label: t('dashboard.metrics.totalProductos') },
+      { id: 'pedidos', label: t('dashboard.metrics.pedidosPendientes') },
+      { id: 'incidencias', label: t('dashboard.metrics.incidencias') },
+      { id: 'stock', label: t('dashboard.metrics.alertasStock') },
+      { id: 'proveedores', label: t('dashboard.metrics.proveedores') },
+      { id: 'notificaciones', label: t('dashboard.metrics.notificaciones') },
+    ],
+    [t]
+  );
+
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>(() => {
     const saved = localStorage.getItem('dashboard_visible_metrics');
-    return saved ? JSON.parse(saved) : AVAILABLE_METRICS.map((m) => m.id);
+    return saved ? JSON.parse(saved) : METRIC_IDS;
   });
 
   const handleUpdateVisibleMetrics = (newMetrics: string[]) => {
@@ -226,7 +254,7 @@ const Home: React.FC = () => {
     if (!canViewDashboard) {
       setStats(null);
       setIsLoading(false);
-      setError('No tienes permisos para ver el dashboard.');
+      setError(t('dashboard.errors.sinPermisos'));
       return;
     }
 
@@ -297,11 +325,11 @@ const Home: React.FC = () => {
         const payload = await buildProductoPayload(formData as any);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createProducto(payload as any);
-        toast.success('Producto añadido correctamente.');
+        toast.success(t('dashboard.toast.productoAniadido'));
       } else if (quickActionTask === 'recipe') {
         const payload = await buildRecetaPayload(formData);
         await createReceta(payload);
-        toast.success('Receta creada correctamente.');
+        toast.success(t('dashboard.toast.recetaCreada'));
       }
       setQuickActionTask(null);
       loadStats();
@@ -316,7 +344,7 @@ const Home: React.FC = () => {
     }
   };
 
-  const pedidoSchema = getPedidoSchema(null);
+  const pedidoSchema = getPedidoSchema(null, t);
 
   // ── Derived values ──────────────────────────────────────────────────────
 
@@ -355,13 +383,15 @@ const Home: React.FC = () => {
       {/* Header */}
       <Box id="dashboard-welcome" mb={4}>
         <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
-          Hola, {user?.name || 'Administrador'}{' '}
+          {t('dashboard.greeting', {
+            name: user?.name || t('dashboard.admin'),
+          })}{' '}
           <span role="img" aria-label="emoji saludo">
             👋
           </span>
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Aquí tienes un resumen del estado actual del economato.
+          {t('dashboard.intro')}
         </Typography>
       </Box>
 
@@ -419,7 +449,7 @@ const Home: React.FC = () => {
                 mb={3}
               >
                 <Typography component="h2" variant="h6" fontWeight={600}>
-                  Estadísticas del Economato
+                  {t('dashboard.statsTitle')}
                 </Typography>
                 <IconButton
                   size="small"
@@ -449,13 +479,13 @@ const Home: React.FC = () => {
                 {/* Total Productos */}
                 {visibleMetrics.includes('productos') && canListProductos && (
                   <DashboardMetricCard
-                    title="Total Productos"
+                    title={t('dashboard.metrics.totalProductos')}
                     value={isLoading ? null : totalProductos}
                     isLoading={isLoading}
                     icon={<InventoryIcon />}
                     color="primary"
                     onClick={() =>
-                      openSummary('productos', 'Listado de Productos')
+                      openSummary('productos', t('dashboard.summary.productos'))
                     }
                     subtitle={
                       isLoading ? undefined : (
@@ -469,8 +499,10 @@ const Home: React.FC = () => {
                             />
                           )}
                           {productosEsteMes > 0
-                            ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
-                            : 'Sin nuevos productos este mes'}
+                            ? t('dashboard.metrics.productosEsteMes', {
+                                count: productosEsteMes,
+                              })
+                            : t('dashboard.metrics.sinNuevosProductos')}
                         </>
                       )
                     }
@@ -480,19 +512,23 @@ const Home: React.FC = () => {
                 {/* Pedidos Pendientes */}
                 {visibleMetrics.includes('pedidos') && canListPedidos && (
                   <DashboardMetricCard
-                    title="Pedidos Pendientes"
+                    title={t('dashboard.metrics.pedidosPendientes')}
                     value={isLoading ? null : pedidosPendientes}
                     isLoading={isLoading}
                     icon={<ShoppingCartIcon />}
                     color="warning"
-                    onClick={() => openSummary('pedidos', 'Pedidos Pendientes')}
+                    onClick={() =>
+                      openSummary('pedidos', t('dashboard.summary.pedidos'))
+                    }
                     subtitle={
                       isLoading ? undefined : (
                         <>
                           <CalendarTodayIcon fontSize="small" />
                           {pedidosProcesarHoy > 0
-                            ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
-                            : 'Sin recepciones hoy'}
+                            ? t('dashboard.metrics.pedidosHoy', {
+                                count: pedidosProcesarHoy,
+                              })
+                            : t('dashboard.metrics.sinRecepcionesHoy')}
                         </>
                       )
                     }
@@ -503,22 +539,15 @@ const Home: React.FC = () => {
                 {visibleMetrics.includes('incidencias') &&
                   canListIncidencias && (
                     <DashboardMetricCard
-                      title="Incidencias"
+                      title={t('dashboard.metrics.incidencias')}
                       value={isLoading ? null : incidenciasCount}
                       isLoading={isLoading}
                       icon={<ErrorOutlineIcon />}
                       color="error"
                       onClick={() =>
-                        openSummary('incidencias', 'Listado de Incidencias')
-                      }
-                      subtitle={
-                        isLoading ? undefined : (
-                          <>
-                            <ErrorOutlineIcon fontSize="small" />
-                            {incidenciasCount > 0
-                              ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
-                              : 'Sin incidencias'}
-                          </>
+                        openSummary(
+                          'incidencias',
+                          t('dashboard.summary.incidencias')
                         )
                       }
                     />
@@ -527,13 +556,13 @@ const Home: React.FC = () => {
                 {/* Alertas de Stock */}
                 {visibleMetrics.includes('stock') && canListInventario && (
                   <DashboardMetricCard
-                    title="Alertas de Stock"
+                    title={t('dashboard.metrics.alertasStock')}
                     value={isLoading ? null : alertasStock}
                     isLoading={isLoading}
                     icon={<WarningAmberIcon />}
                     color="error"
                     onClick={() =>
-                      openSummary('stock', 'Productos Bajo Mínimo')
+                      openSummary('stock', t('dashboard.summary.stock'))
                     }
                     subtitle={
                       isLoading ? undefined : (
@@ -543,8 +572,10 @@ const Home: React.FC = () => {
                             color={alertasStock > 0 ? 'error' : 'disabled'}
                           />
                           {alertasStock > 0
-                            ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
-                            : 'Stock correcto'}
+                            ? t('dashboard.metrics.itemsBajoMinimo', {
+                                count: alertasStock,
+                              })
+                            : t('dashboard.metrics.stockCorrecto')}
                         </>
                       )
                     }
@@ -555,13 +586,16 @@ const Home: React.FC = () => {
                 {visibleMetrics.includes('proveedores') &&
                   canListProveedores && (
                     <DashboardMetricCard
-                      title="Proveedores"
+                      title={t('dashboard.metrics.proveedores')}
                       value={isLoading ? null : totalProveedores}
                       isLoading={isLoading}
                       icon={<LocalShippingIcon />}
                       color="info"
                       onClick={() =>
-                        openSummary('proveedores', 'Nuestros Proveedores')
+                        openSummary(
+                          'proveedores',
+                          t('dashboard.summary.proveedores')
+                        )
                       }
                       subtitle={
                         isLoading ? undefined : (
@@ -570,7 +604,7 @@ const Home: React.FC = () => {
                               fontSize="small"
                               color="success"
                             />
-                            Catálogo actualizado
+                            {t('dashboard.metrics.catalogoActualizado')}
                           </>
                         )
                       }
@@ -580,7 +614,7 @@ const Home: React.FC = () => {
                 {/* Card de Notificaciones */}
                 {visibleMetrics.includes('notificaciones') && (
                   <DashboardMetricCard
-                    title="Notificaciones"
+                    title={t('dashboard.metrics.notificaciones')}
                     value={
                       isLoading
                         ? null
@@ -604,8 +638,13 @@ const Home: React.FC = () => {
                         <>
                           <NotificationsIcon fontSize="small" />
                           {notifications.length > 0
-                            ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
-                            : 'Sin notificaciones'}
+                            ? t('dashboard.metrics.accionesPendientes', {
+                                count: notifications.reduce(
+                                  (acc, curr) => acc + curr.count,
+                                  0
+                                ),
+                              })
+                            : t('dashboard.metrics.sinNotificaciones')}
                         </>
                       )
                     }
@@ -626,7 +665,7 @@ const Home: React.FC = () => {
               }}
             >
               <Typography component="h2" variant="h6" fontWeight={600} mb={3}>
-                Acciones Rápidas
+                {t('dashboard.quickActions.title') || 'Acciones Rápidas'}
               </Typography>
               <Box
                 sx={{
@@ -637,8 +676,11 @@ const Home: React.FC = () => {
               >
                 {canCreatePedido && (
                   <DashboardQuickAction
-                    title="Nuevo Pedido"
-                    description="Registra una nueva solicitud"
+                    title={t('dashboard.quickActions.nuevoPedido')}
+                    description={
+                      t('dashboard.quickActions.descripcionNuevoPedido') ||
+                      'Registra una nueva solicitud'
+                    }
                     icon={<ShoppingCartIcon fontSize="small" />}
                     color="primary"
                     onClick={() => setQuickActionTask('order')}
@@ -646,8 +688,11 @@ const Home: React.FC = () => {
                 )}
                 {canCreateProducto && (
                   <DashboardQuickAction
-                    title="Añadir Producto"
-                    description="Registra un ítem en el catálogo"
+                    title={t('dashboard.quickActions.anadirProducto')}
+                    description={
+                      t('dashboard.quickActions.descripcionAnadirProducto') ||
+                      'Registra un ítem en el catálogo'
+                    }
                     icon={<InventoryIcon fontSize="small" />}
                     color="secondary"
                     onClick={() => setQuickActionTask('product')}
@@ -655,8 +700,12 @@ const Home: React.FC = () => {
                 )}
                 {canCreateRecepcion && (
                   <DashboardQuickAction
-                    title="Registrar Recepción"
-                    description="Confirmar entrada de mercancía"
+                    title={t('dashboard.quickActions.registrarRecepcion')}
+                    description={
+                      t(
+                        'dashboard.quickActions.descripcionRegistrarRecepcion'
+                      ) || 'Confirmar entrada de mercancía'
+                    }
                     icon={<AddCircleOutlineIcon fontSize="small" />}
                     color="success"
                     onClick={() => navigate('/recepciones')}
@@ -664,8 +713,11 @@ const Home: React.FC = () => {
                 )}
                 {canCreateReceta && (
                   <DashboardQuickAction
-                    title="Nueva Receta"
-                    description="Crear fórmula de producción"
+                    title={t('dashboard.quickActions.nuevaReceta')}
+                    description={
+                      t('dashboard.quickActions.descripcionNuevaReceta') ||
+                      'Crear fórmula de producción'
+                    }
                     icon={<AssignmentIcon fontSize="small" />}
                     color="warning"
                     onClick={() => setQuickActionTask('recipe')}
@@ -699,7 +751,7 @@ const Home: React.FC = () => {
               }}
             >
               <Typography component="h2" variant="h6" fontWeight={600} mb={3}>
-                Actividad Reciente
+                {t('dashboard.recentActivity')}
               </Typography>
 
               <Box
@@ -729,7 +781,7 @@ const Home: React.FC = () => {
                     minHeight={120}
                   >
                     <Typography variant="body2" color="text.secondary">
-                      No hay actividad reciente registrada.
+                      {t('dashboard.noRecentActivity')}
                     </Typography>
                   </Box>
                 ) : (
@@ -757,7 +809,7 @@ const Home: React.FC = () => {
                             fontWeight={500}
                             sx={{ mb: 0.5, lineHeight: 1.2 }}
                           >
-                            {tipoActividadLabel(mov)}
+                            {tipoActividadLabel(mov, t)}
                           </Typography>
                           <Stack
                             direction="row"
@@ -775,7 +827,7 @@ const Home: React.FC = () => {
                                 borderRadius: 1,
                               }}
                             >
-                              {tiempoRelativoCorto(mov.createdAt)}
+                              {tiempoRelativoCorto(mov.createdAt, t)}
                             </Typography>
                             {mov.usuario && (
                               <Typography

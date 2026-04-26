@@ -116,82 +116,10 @@ export const getStatusColor = (
   }
 };
 
-const statusTranslations: Record<string, string> = {
-  success: 'Éxito',
-  completed: 'Completado',
-  delivered: 'En almacén',
-  entregado: 'En almacén',
-  en_almacen: 'En almacén',
-  approved: 'Aprobado',
-  error: 'Error',
-  failed: 'Fallido',
-  cancelled: 'Cancelado',
-  cancelado: 'Cancelado',
-  rejected: 'Rechazado',
-  warning: 'Advertencia',
-  pending: 'Pendiente',
-  pendiente: 'Pendiente',
-  in_progress: 'En progreso',
-  en_proceso: 'En proceso',
-  recibido: 'Recibido',
-  review: 'En revisión',
-  info: 'Info',
-  active: 'Activo',
-  archived: 'Archivado',
-  fácil: 'Fácil',
-  media: 'Media',
-  difícil: 'Difícil',
-  unknown: 'Desconocido',
-  default: 'Por defecto',
-  entrada: 'Entrada',
-  salida: 'Salida',
-  ajuste: 'Ajuste',
-  pedido: 'Pedido',
-  entrada_compra: 'Entrada compra',
-  entrada_distribucion: 'Entrada distribución',
-  salida_distribucion: 'Salida distribución',
-  salida_elaboracion: 'Salida elaboración',
-  parcial: 'Parcial',
-  completado: 'Completado',
-  preparada: 'Por recoger',
-  preparado: 'Por recoger',
-  entregada: 'Entregada',
-};
-
-const categoriaTranslations: Record<CategoriaProducto, string> = {
-  [CategoriaProducto.VERDURA]: 'Verdura',
-  [CategoriaProducto.FRUTA]: 'Fruta',
-  [CategoriaProducto.CARNE]: 'Carne',
-  [CategoriaProducto.PESCADO]: 'Pescado',
-  [CategoriaProducto.MARISCO]: 'Marisco',
-  [CategoriaProducto.LACTEO]: 'Lácteo',
-  [CategoriaProducto.HUEVO]: 'Huevo',
-  [CategoriaProducto.CEREAL]: 'Cereal',
-  [CategoriaProducto.LEGUMBRE]: 'Legumbre',
-  [CategoriaProducto.FRUTO_SECO]: 'Fruto seco',
-  [CategoriaProducto.CONDIMENTO]: 'Condimento',
-  [CategoriaProducto.ACEITE]: 'Aceite',
-  [CategoriaProducto.AZUCAR]: 'Azúcar',
-  [CategoriaProducto.BEBIDA]: 'Bebida',
-  [CategoriaProducto.OTRO]: 'Otro',
-};
-
 const capitalize = (text: string) => {
   if (!text) return '';
-  const spacedText = text.replace(/[_]/g, ' ');
+  const spacedText = text.replace(/[_.]/g, ' ');
   return spacedText.charAt(0).toUpperCase() + spacedText.slice(1);
-};
-
-const getTranslatedStatus = (status: string) => {
-  if (!status) return '—';
-  const normalized =
-    typeof status === 'string'
-      ? status.toLowerCase()
-      : String(status).toLowerCase();
-  if (statusTranslations[normalized]) {
-    return statusTranslations[normalized];
-  }
-  return capitalize(String(status));
 };
 
 /**
@@ -223,20 +151,27 @@ export const StatusChip: React.FC<StatusChipProps> = ({
 
   const getI18nLabel = (s: string): string => {
     if (!s) return '—';
-    const normalized = s.toLowerCase();
-    // Try status namespace first, then categoria
-    const statusKey = `status.${s}`;
-    const statusTranslated = t(statusKey, { defaultValue: '' });
-    if (statusTranslated) return statusTranslated;
+    const sLower = s.toLowerCase();
+
+    // 1. Intentamos traducir directamente desde el namespace global status
+    const statusKey = `status.${sLower}`;
+    const translated = t(statusKey, { defaultValue: '' });
+    if (translated && translated !== statusKey) return translated;
+
+    // 2. Si es una categoría, intentamos el namespace categoria
     if (isCategoria) {
       const catKey = `categoria.${s.toUpperCase()}`;
       const catTranslated = t(catKey, { defaultValue: '' });
-      if (catTranslated) return catTranslated;
-      return (
-        categoriaTranslations[normalized as CategoriaProducto] || capitalize(s)
-      );
+      if (catTranslated && catTranslated !== catKey) return catTranslated;
     }
-    return getTranslatedStatus(normalized);
+
+    // 3. Probamos si la propia cadena (ej: 'user.name' o 'PENDING') tiene traducción directa
+    const directTranslated = t(s, { defaultValue: '' });
+    if (directTranslated && directTranslated !== s) return directTranslated;
+
+    // 4. Fallback final capitalizando la última parte de la key para garantizar texto humano
+    const parts = s.split('.');
+    return capitalize(parts[parts.length - 1]);
   };
 
   const displayLabel = label || getI18nLabel(statusStr);

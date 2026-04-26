@@ -198,15 +198,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
 
       if (v.includes('.')) {
-        return I18nHelper.translate(v);
+        const translated = I18nHelper.translate(v);
+        return translated === v ? this.humanize(v) : translated;
       }
 
       return v;
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : String(err);
       this.logger.warn(`i18n.translate failed for key "${v}": ${errMessage}`);
-      return v;
+      return this.humanize(v);
     }
+  }
+
+  /**
+   * Transforma una key técnica en texto legible por humanos.
+   * Ej: 'user.name' -> 'Name' | 'status.PENDIENTE' -> 'Pendiente'
+   */
+  private humanize(key: string): string {
+    if (!key) return '';
+    const parts = key.split('.');
+    const lastPart = parts[parts.length - 1];
+    return lastPart
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/^\w/, (c) => c.toUpperCase());
   }
 
   /**

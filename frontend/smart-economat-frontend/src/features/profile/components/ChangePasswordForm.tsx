@@ -74,13 +74,12 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             fontWeight={600}
             sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
           >
-            Seguridad
+            {t('perfil.seguridad')}
           </Typography>
         </Box>
         <Divider sx={{ mb: { xs: 3, md: 4 } }} />
         <Typography variant="body2" color="text.secondary">
-          La contraseña está protegida. Para cambiarla, activa el modo de
-          edición de la ficha.
+          {t('perfil.contrasenaProtegida')}
         </Typography>
       </Box>
     );
@@ -98,7 +97,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Cambiar Contraseña
+          {t('perfil.cambiarContrasena')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -138,8 +137,8 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
               passwordLengthValid === false
                 ? STRONG_PASSWORD_MESSAGE
                 : passwordLengthValid === true
-                  ? 'Formato fuerte'
-                  : 'Mínimo 8 caracteres, mayúsculas, números y símbolos'
+                  ? t('perfil.formatoFuerte')
+                  : t('perfil.minimoCaracteres')
             }
           />
         </Box>
@@ -156,7 +155,9 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
             InputProps={{ endAdornment: passwordAddon('confirm') }}
             error={passwordsMatch === false}
             helperText={
-              passwordsMatch === false ? 'Las contraseñas no coinciden' : ' '
+              passwordsMatch === false
+                ? t('perfil.contrasenasNoCoinciden')
+                : ' '
             }
           />
         </Box>

@@ -650,25 +650,25 @@ const AlbaranPage: React.FC = () => {
           ]
         : []),
       {
-        title: `Recepciones Vinculadas (${itemToView.albaranPedidoRecepcion?.length ?? 0})`,
+        title: `${t('albaran.detalle.recepcionesVinculadas')} (${itemToView.albaranPedidoRecepcion?.length ?? 0})`,
         fields: itemToView.albaranPedidoRecepcion?.length
           ? itemToView.albaranPedidoRecepcion.map((apr, idx) => ({
-              label: `Recepción ${idx + 1}`,
+              label: `${t('albaran.detalle.recepcion')} ${idx + 1}`,
               value: apr.recepcionPedidoId,
             }))
           : [{ label: t('albaran.detalle.sinRecepciones'), value: '—' }],
       },
       {
-        title: `Productos Vinculados (${productosVinculados.length})`,
+        title: `${t('albaran.detalle.productosVinculados')} (${productosVinculados.length})`,
         fields: productosVinculados.length
           ? productosVinculados.map((linea, idx) => ({
-              label: `Producto ${idx + 1}`,
-              value: `${linea.nombre} · Cantidad recibida: ${linea.cantidadRecibida} ${linea.unidad} · Proveedor: ${linea.proveedor} · Estado: ${linea.estadoProducto} · Recepción: ${linea.recepcionId}`,
+              label: `${t('albaran.detalle.producto')} ${idx + 1}`,
+              value: `${linea.nombre} · ${t('albaran.detalle.cantidadRecibida')}: ${linea.cantidadRecibida} ${linea.unidad} · ${t('albaran.detalle.proveedor')}: ${linea.proveedor} · ${t('albaran.detalle.estado')}: ${linea.estadoProducto} · ${t('albaran.detalle.recepcion')}: ${linea.recepcionId}`,
               fullWidth: true,
             }))
           : [
               {
-                label: 'Sin productos vinculados',
+                label: t('albaran.detalle.sinProductosVinculados'),
                 value: t('albaran.detalle.sinLineas'),
                 fullWidth: true,
               },

@@ -263,7 +263,7 @@ export const UsuariosView: React.FC = () => {
     } finally {
       setIsLoadingRoles(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const loadUsersByRole = useCallback(async () => {
     setIsLoading(true);
@@ -313,7 +313,7 @@ export const UsuariosView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch, statusFilter, toast]);
+  }, [debouncedSearch, statusFilter, t, toast]);
 
   const fetchAllData = useCallback(async () => {
     await loadUsersByRole();
@@ -338,7 +338,6 @@ export const UsuariosView: React.FC = () => {
     if (roleOptions.length > 0) {
       return;
     }
-
     await loadRoles();
   }, [roleOptions.length, loadRoles]);
 
@@ -347,7 +346,6 @@ export const UsuariosView: React.FC = () => {
       setIsLoadingUserDetail(true);
       setUserToEdit(row);
       setIsModalOpen(true);
-
       try {
         await ensureRolesLoaded();
         const response = await usuarioService.getUsuarioById(row.id);
@@ -361,7 +359,7 @@ export const UsuariosView: React.FC = () => {
         setIsLoadingUserDetail(false);
       }
     },
-    [ensureRolesLoaded]
+    [ensureRolesLoaded, usuarioService]
   );
 
   useEffect(() => {
@@ -520,11 +518,16 @@ export const UsuariosView: React.FC = () => {
 
   const columns = useMemo<Column<Usuario>[]>(
     () => [
-      { id: 'username', label: 'Usuario', sortable: true },
-      { id: 'email', label: 'Email', sortable: true, hideOnMobile: true },
+      { id: 'username', label: t('usuarios.columns.usuario'), sortable: true },
+      {
+        id: 'email',
+        label: t('usuarios.columns.email'),
+        sortable: true,
+        hideOnMobile: true,
+      },
       {
         id: 'estado',
-        label: 'Estado',
+        label: t('usuarios.columns.estado'),
         align: 'center',
         render: (row) => (
           <StatusChip
@@ -534,7 +537,7 @@ export const UsuariosView: React.FC = () => {
         ),
       },
     ],
-    []
+    [t]
   );
 
   const renderActions = useCallback(
@@ -644,13 +647,13 @@ export const UsuariosView: React.FC = () => {
                 size="small"
                 onClick={clearNotificationFilters}
               >
-                Quitar filtro
+                {t('usuarios.filtros.quitar')}
               </Button>
             }
           >
             {focus === 'pending-activation'
-              ? 'Mostrando usuarios pendientes de activación abiertos desde notificaciones.'
-              : `Filtro de estado activo: ${statusFilter}.`}
+              ? t('usuarios.filtros.notificacionPendientes')
+              : `${t('usuarios.filtros.estadoActivo')}: ${statusFilter}.`}
           </Alert>
         ) : null}
 
@@ -685,7 +688,7 @@ export const UsuariosView: React.FC = () => {
               disabled={isLoading}
               sx={{ borderRadius: 2 }}
             >
-              Refrescar
+              {t('usuarios.botones.refrescar')}
             </Button>
             {canCreate && (
               <Button
@@ -698,7 +701,7 @@ export const UsuariosView: React.FC = () => {
                 }}
                 sx={{ px: 3, borderRadius: 2 }}
               >
-                Nuevo Usuario
+                {t('usuarios.botones.nuevo')}
               </Button>
             )}
           </Stack>

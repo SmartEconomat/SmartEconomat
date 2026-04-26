@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -29,6 +29,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
+import { useTranslation } from 'react-i18next';
 import {
   fetchProducciones,
   ProduccionLote,
@@ -221,6 +222,7 @@ type MermaIngredienteOption = {
 };
 
 const Preparaciones: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -565,78 +567,83 @@ const Preparaciones: React.FC = () => {
     }
   };
 
-  const columns: Column<ProduccionLote>[] = [
-    {
-      id: 'createdAt',
-      label: 'Fecha creación',
-      render: (row) => formatDateTime(row.createdAt || row.fechaProduccion),
-      hideOnMobile: true,
-    },
-    {
-      id: 'receta',
-      label: 'Receta',
-      render: (row) => row.receta?.nombre ?? '—',
-    },
-    {
-      id: 'cantidadProducida',
-      label: 'Cantidad',
-      align: 'right',
-    },
-    {
-      id: 'costeTotalReal',
-      label: 'Coste Real',
-      align: 'right',
-      render: (row) => `${Number(row.costeTotalReal).toFixed(2)}€`,
-      hideOnMobile: true,
-    },
-    {
-      id: 'usuario',
-      label: 'Cocinero/a',
-      render: (row) => row.usuario?.nombre ?? '—',
-      hideOnMobile: true,
-    },
-    ...(activeTab === 1
-      ? [
-          {
-            id: 'fechaAgotado' as const,
-            label: 'Fecha agotado',
-            render: (row: ProduccionLote) =>
-              row.estado === 'agotado'
-                ? formatDateTime(row.fechaAgotado || null)
-                : '—',
-            hideOnMobile: true,
-          },
-        ]
-      : []),
-    ...(activeTab === 0
-      ? [
-          {
-            id: 'porcionesRestantes' as const,
-            label: 'Raciones disponibles',
-            align: 'right' as const,
-            render: (row: ProduccionLote) => (
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 'bold', color: 'success.main' }}
-              >
-                {formatRations(row.porcionesRestantes)}
-              </Typography>
-            ),
-          },
-        ]
-      : [
-          {
-            id: 'porcionesProducidas' as const,
-            label: 'Raciones preparadas',
-            align: 'right' as const,
-            render: (row: ProduccionLote) => (
-              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                {formatRations(row.porcionesProducidas)}
-              </Typography>
-            ),
-          },
-        ]),
-  ];
+  const columns = useMemo<Column<ProduccionLote>[]>(
+    () => [
+      {
+        id: 'createdAt',
+        label: t('preparaciones.columns.fechaCreacion'),
+        render: (row: ProduccionLote) =>
+          formatDateTime(row.createdAt || row.fechaProduccion),
+        hideOnMobile: true,
+      },
+      {
+        id: 'receta',
+        label: t('preparaciones.columns.receta'),
+        render: (row: ProduccionLote) => row.receta?.nombre ?? '—',
+      },
+      {
+        id: 'cantidadProducida',
+        label: t('preparaciones.columns.cantidad'),
+        align: 'right',
+      },
+      {
+        id: 'costeTotalReal',
+        label: t('preparaciones.columns.costeReal'),
+        align: 'right',
+        render: (row: ProduccionLote) =>
+          `${Number(row.costeTotalReal).toFixed(2)}€`,
+        hideOnMobile: true,
+      },
+      {
+        id: 'usuario',
+        label: t('preparaciones.columns.cocinero'),
+        render: (row: ProduccionLote) => row.usuario?.nombre ?? '—',
+        hideOnMobile: true,
+      },
+      ...(activeTab === 1
+        ? [
+            {
+              id: 'fechaAgotado' as const,
+              label: t('preparaciones.columns.fechaAgotado'),
+              render: (row: ProduccionLote) =>
+                row.estado === 'agotado'
+                  ? formatDateTime(row.fechaAgotado || null)
+                  : '—',
+              hideOnMobile: true,
+            },
+          ]
+        : []),
+      ...(activeTab === 0
+        ? [
+            {
+              id: 'porcionesRestantes' as const,
+              label: t('preparaciones.columns.racionesDisponibles'),
+              align: 'right' as const,
+              render: (row: ProduccionLote) => (
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 'bold', color: 'success.main' }}
+                >
+                  {formatRations(row.porcionesRestantes)}
+                </Typography>
+              ),
+            },
+          ]
+        : [
+            {
+              id: 'porcionesProducidas' as const,
+              label: t('preparaciones.columns.racionesPreparadas'),
+              align: 'right' as const,
+              render: (row: ProduccionLote) => (
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                  {formatRations(row.porcionesProducidas)}
+                </Typography>
+              ),
+            },
+          ]),
+    ],
+    [activeTab, t]
+  );
 
   const renderActions = (row: ProduccionLote) => (
     <Stack direction="row" spacing={1} justifyContent="center">
@@ -758,9 +765,9 @@ const Preparaciones: React.FC = () => {
     <Box>
       <PageToolbar
         id="preparaciones-summary"
-        title="Bolsa de Preparaciones"
+        title={t('preparaciones.title')}
         totalItems={totalItems}
-        totalItemsLabel="preparaciones"
+        totalItemsLabel={t('preparaciones.totalLabel')}
       />
 
       <Paper
@@ -789,12 +796,12 @@ const Preparaciones: React.FC = () => {
           >
             <Tab
               icon={<RestaurantIcon />}
-              label="Disponibles"
+              label={t('preparaciones.tabs.disponibles')}
               id="tab-preparaciones-disponibles"
             />
             <Tab
               icon={<HistoryIcon />}
-              label="Agotadas (Consumidas)"
+              label={t('preparaciones.tabs.historial')}
               id="tab-preparaciones-historial"
             />
           </Tabs>
@@ -819,10 +826,10 @@ const Preparaciones: React.FC = () => {
                   sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
                 />
                 <Typography variant="h6" color="text.secondary">
-                  No hay preparaciones registradas
+                  {t('preparaciones.empty.title')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Ejecuta una receta para ver su historial aquí.
+                  {t('preparaciones.empty.subtitle')}
                 </Typography>
               </Box>
             }

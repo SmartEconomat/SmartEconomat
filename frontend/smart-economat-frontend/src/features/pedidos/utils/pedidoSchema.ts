@@ -17,19 +17,20 @@ const isEditablePedidoStatus = (estado?: unknown): boolean =>
  * @returns Array of DynamicField definitions to pass to DynamicFormModal
  */
 export const getPedidoSchema = (
-  row: Record<string, unknown> | null
+  row: Record<string, unknown> | null,
+  t: (key: string) => string
 ): DynamicField[] => {
   if (!row) {
     return [
       {
         name: 'pedidoProductos',
-        label: 'Detalle de Productos',
+        label: t('pedidos.schema.detalleProductos'),
         type: 'orderLines',
         position: 'bottom',
       },
       {
         name: 'observaciones',
-        label: 'Observaciones Generales',
+        label: t('pedidos.schema.observaciones'),
         type: 'textarea',
         position: 'bottom',
       },
@@ -41,7 +42,7 @@ export const getPedidoSchema = (
   if (row.estado === EstadoPedido.CANCELADO) {
     fields.push({
       name: 'motivoCancelacion',
-      label: 'Motivo de la Cancelación',
+      label: t('pedidos.schema.motivoCancelacion'),
       type: 'textarea',
       disabled: true,
       position: 'bottom',
@@ -51,7 +52,7 @@ export const getPedidoSchema = (
   if (row.estado === EstadoPedido.INCIDENCIA) {
     fields.push({
       name: 'motivoIncidencia',
-      label: 'Motivo de la Incidencia',
+      label: t('pedidos.schema.motivoIncidencia'),
       type: 'textarea',
       disabled: true,
       position: 'bottom',
@@ -60,7 +61,7 @@ export const getPedidoSchema = (
 
   fields.push({
     name: 'pedidoProductos',
-    label: 'Detalle de Productos',
+    label: t('pedidos.schema.detalleProductos'),
     type: 'orderLines',
     position: 'bottom',
     disabled: Boolean(row.estado && !isEditablePedidoStatus(row.estado)),
@@ -68,7 +69,7 @@ export const getPedidoSchema = (
 
   fields.push({
     name: 'observaciones',
-    label: 'Observaciones Generales',
+    label: t('pedidos.schema.observaciones'),
     type: 'textarea',
     position: 'bottom',
     disabled: Boolean(row.estado && !isEditablePedidoStatus(row.estado)),

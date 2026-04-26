@@ -5,7 +5,8 @@
  * Sirve como base para listados como Productos, Usuarios, o Proveedores en la aplicación.
  */
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
@@ -159,10 +160,10 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage = 'No hay datos disponibles.',
+  emptyStateMessage,
   pagination,
   renderActions,
-  actionsLabel = 'Acciones',
+  actionsLabel,
   actionsAlign = 'center',
   actionsWidth,
   renderGridItem,
@@ -183,6 +184,10 @@ export function DataTable<T extends Record<string, any>>({
   onViewModeChange: onControlledViewModeChange,
   id,
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
+  const actualActionsLabel = actionsLabel || t('comun.tabla.acciones');
+  const actualEmptyMessage = emptyStateMessage || t('comun.tabla.noDatos');
+
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -258,10 +263,16 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={handleViewModeChange}
                 size="small"
               >
-                <ToggleButton value="list" aria-label="Vista de lista">
+                <ToggleButton
+                  value="list"
+                  aria-label={t('comun.tabla.vistaLista')}
+                >
                   <ViewListIcon />
                 </ToggleButton>
-                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
+                <ToggleButton
+                  value="grid"
+                  aria-label={t('comun.tabla.vistaCuadricula')}
+                >
                   <ViewModuleIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
@@ -275,10 +286,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a PDF`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a PDF`
+                    ? t('comun.tabla.exportarPdfSeleccionados', {
+                        count: selectedIds.length,
+                      })
+                    : t('comun.tabla.exportarPdfTodos', {
+                        count: pagination?.totalItems ?? data.length,
+                        label:
+                          exportHandlers.exportLabel || t('comun.registros'),
+                      })
                 }
               >
                 <IconButton
@@ -303,10 +318,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a EXCEL`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a EXCEL`
+                    ? t('comun.tabla.exportarExcelSeleccionados', {
+                        count: selectedIds.length,
+                      })
+                    : t('comun.tabla.exportarExcelTodos', {
+                        count: pagination?.totalItems ?? data.length,
+                        label:
+                          exportHandlers.exportLabel || t('comun.registros'),
+                      })
                 }
               >
                 <IconButton
@@ -439,7 +458,7 @@ export function DataTable<T extends Record<string, any>>({
                     align={actionsAlign}
                     sx={{ fontWeight: 'bold', width: actionsWidth }}
                   >
-                    {actionsLabel}
+                    {actualActionsLabel}
                   </TableCell>
                 )}
               </TableRow>
@@ -503,12 +522,12 @@ export function DataTable<T extends Record<string, any>>({
                     align="center"
                     sx={{ py: 6 }}
                   >
-                    {typeof emptyStateMessage === 'string' ? (
+                    {typeof actualEmptyMessage === 'string' ? (
                       <Typography color="text.secondary">
-                        {emptyStateMessage}
+                        {actualEmptyMessage}
                       </Typography>
                     ) : (
-                      emptyStateMessage
+                      actualEmptyMessage
                     )}
                   </TableCell>
                 </TableRow>
@@ -571,9 +590,26 @@ export function DataTable<T extends Record<string, any>>({
                       </TableCell>
                     )}
                     {columns.map((column) => {
+                      const rawValue = row[column.id as keyof T];
+
+                      // Lógica de traducción automática para valores que parecen keys o enums
+                      const translateValue = (val: unknown): ReactNode => {
+                        if (typeof val !== 'string' || !val)
+                          return val as ReactNode;
+
+                        // Si es una key (tiene puntos) o es un Enum/ID técnico (TODO_MAYUSCULAS)
+                        if (val.includes('.') || /^[A-Z0-9_]+$/.test(val)) {
+                          // Intentamos traducir. Si falla, el parseMissingKeyHandler de i18n se encargará de humanizarlo.
+                          const translated = t(val);
+                          return translated as ReactNode;
+                        }
+
+                        return val as ReactNode;
+                      };
+
                       const cellValue = column.render
                         ? column.render(row)
-                        : (row[column.id as keyof T] as ReactNode);
+                        : translateValue(rawValue);
 
                       const colLabel = extractA11yText(column.label);
                       const valText = extractA11yText(cellValue);
@@ -691,7 +727,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 <Spinner size="md" color="primary" />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
-                  Cargando datos...
+                  {t('comun.cargando')}
                 </Typography>
               </Box>
             </Grid>
@@ -699,12 +735,12 @@ export function DataTable<T extends Record<string, any>>({
           {!isLoading && data.length === 0 && (
             <Grid size={{ xs: 12 }}>
               <Box display="flex" justifyContent="center" py={6}>
-                {typeof emptyStateMessage === 'string' ? (
+                {typeof actualEmptyMessage === 'string' ? (
                   <Typography color="text.secondary">
-                    {emptyStateMessage}
+                    {actualEmptyMessage}
                   </Typography>
                 ) : (
-                  emptyStateMessage
+                  actualEmptyMessage
                 )}
               </Box>
             </Grid>
@@ -753,17 +789,21 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Filas por página:"
+            labelRowsPerPage={t('comun.tabla.filasPorPagina')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('comun.tabla.rangoDeTotal', { from, to, count })
             }
             slotProps={{
               select: {
-                'aria-label': 'Cantidad de filas por página',
+                'aria-label': t('comun.tabla.ariaFilasPorPagina'),
               },
               actions: {
-                nextButton: { 'aria-label': 'Página siguiente' },
-                previousButton: { 'aria-label': 'Página anterior' },
+                nextButton: {
+                  'aria-label': t('comun.tabla.ariaPaginaSiguiente'),
+                },
+                previousButton: {
+                  'aria-label': t('comun.tabla.ariaPaginaAnterior'),
+                },
               },
             }}
           />
