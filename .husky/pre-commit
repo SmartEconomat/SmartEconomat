@@ -52,8 +52,8 @@ if [ "$HAS_FRONTEND" -eq 1 ]; then
   echo "📝 [frontend 1/2] Running staged quality checks (eslint + prettier)..."
   node frontend/smart-economat-frontend/scripts/git-hooks/run-staged-quality.mjs
 
-  echo "🧪 [frontend 2/2] Ejecutando tests del frontend..."
-  node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
+  echo "🧪 [frontend 2/2] Ejecutando tests del frontend (sin E2E Playwright)..."
+  SKIP_E2E_IN_HOOKS=1 node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
 else
   echo "ℹ️ No hay cambios staged en frontend."
 fi

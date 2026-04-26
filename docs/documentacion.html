@@ -59,12 +59,16 @@
 
     main {
       width: min(calc(100vw - 2rem), var(--page-width));
+      max-width: 100%;
+      min-width: 0;
       margin: 18mm auto 20mm;
       padding-bottom: 12mm;
     }
 
     section {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       background: var(--paper);
       box-shadow: var(--shadow);
       min-height: var(--page-min-height);
@@ -483,12 +487,16 @@
     }
     /* Mermaid diagram containers */
     .mermaid-wrap {
+      display: block;
+      width: 100%;
+      max-width: 100%;
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 1.2rem 0.8rem;
       margin: 1.4rem 0;
-      overflow-x: auto;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
       page-break-inside: avoid;
     }
     .mermaid-wrap figcaption {
@@ -498,17 +506,28 @@
       margin-bottom: 0.8rem;
       text-align: center;
     }
+    /* El <pre> hereda reglas globales de `pre` (padding, borde, overflow) que recortan el SVG */
+    .mermaid-wrap pre.mermaid {
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      overflow: visible;
+      white-space: normal;
+      break-inside: auto;
+      page-break-inside: auto;
+      max-width: none;
+    }
     .mermaid {
-      display: flex;
-      justify-content: center;
+      display: block;
+      text-align: center;
+      min-height: 220px;
     }
     .mermaid svg {
-      width: 100% !important;
+      display: inline-block;
       max-width: 100%;
       height: auto;
-    }
-    .mermaid-wrap .mermaid {
-      min-height: 220px;
+      vertical-align: top;
     }
     .er-domain-intro {
       margin: 1rem 0 0.5rem;

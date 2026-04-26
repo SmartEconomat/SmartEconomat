@@ -5,5 +5,5 @@ echo "🚀 Running frontend pre-commit hooks"
 echo "📝 [1/2] Running staged quality checks (eslint + prettier)..."
 node frontend/smart-economat-frontend/scripts/git-hooks/run-staged-quality.mjs
 
-echo "🧪 [2/2] Ejecutando tests del frontend..."
-node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
+echo "🧪 [2/2] Ejecutando tests del frontend (sin E2E Playwright)..."
+SKIP_E2E_IN_HOOKS=1 node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs

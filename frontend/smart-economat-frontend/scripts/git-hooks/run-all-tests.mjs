@@ -16,6 +16,14 @@ function isRunnableTestScript(scriptName) {
   return !/:(watch|ui|debug|dev)$/i.test(scriptName);
 }
 
+/** Playwright E2E abre el servidor del reporte y bloquea el commit; se omite con SKIP_E2E_IN_HOOKS=1 (pre-commit). */
+function isExcludedFromGitHook(scriptName) {
+  if (process.env.SKIP_E2E_IN_HOOKS !== '1') {
+    return false;
+  }
+  return /e2e/i.test(scriptName);
+}
+
 function sortScripts(a, b) {
   const priority = new Map([
     ['test', 0],
@@ -63,9 +71,19 @@ function runScript(scriptName, index, total) {
 
 function main() {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  const scripts = filterRedundantScripts(
-    Object.keys(packageJson.scripts ?? {}).filter(isRunnableTestScript)
+  const allRunnable = Object.keys(packageJson.scripts ?? {}).filter(
+    isRunnableTestScript
   );
+  const skippedE2e = allRunnable.filter(isExcludedFromGitHook);
+  const scripts = filterRedundantScripts(
+    allRunnable.filter((name) => !isExcludedFromGitHook(name))
+  );
+
+  if (skippedE2e.length > 0) {
+    console.log(
+      `  ⏭️ Omitidos en hook (E2E/Playwright): ${skippedE2e.join(', ')}`
+    );
+  }
 
   if (scripts.length === 0) {
     console.log('  - No runnable frontend test scripts found');
