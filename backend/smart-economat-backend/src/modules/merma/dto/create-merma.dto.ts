@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MotivoMerma, TipoMerma } from '../enums/merma.enums';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class CreateMermaDto {
   @ApiProperty({ description: 'UUID del producto al que se registra la merma' })
@@ -58,7 +59,7 @@ export class CreateMermaDto {
   @IsString()
   @MaxLength(50)
   @Matches(/^[A-Za-z][A-Za-z0-9_]*$/, {
-    message: 'origenEntidad must be alphanumeric snake-style',
+    message: i18nValidationMessage('validation.ORIGEN_ENTIDAD_SNAKE_CASE'),
   })
   origenEntidad?: string;
 

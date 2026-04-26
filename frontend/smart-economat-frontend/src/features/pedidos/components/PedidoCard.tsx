@@ -36,14 +36,7 @@ interface PedidoCardProps {
 }
 
 /**
- * @description Card representation of a single PedidoListItem for the grid view.
- * Displays key pedido metadata (number, dates, cost, status, creator) and optionally
- * renders inline action buttons and a checkbox for bulk selection.
- * @param props.pedido - The pedido data to display
- * @param props.actions - Optional React node with action buttons rendered in the card footer
- * @param props.onRowClick - Optional click handler; when provided the card becomes interactive
- * @param props.selectionProps - Optional checkbox configuration for bulk-select mode
- * @returns MUI Card component representing a single pedido
+ * Documentación en español.
  */
 const PedidoCard: React.FC<PedidoCardProps> = ({
   pedido,

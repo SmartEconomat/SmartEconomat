@@ -3,9 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file app.e2e-spec.ts
- * @description Pruebas globales de la aplicación y el AppController.
- * Verifica la disponibilidad general del servicio.
+ * Documentación en español.
  */
 describe('AppController (e2e)', () => {
   jest.setTimeout(30000);
@@ -20,9 +18,9 @@ describe('AppController (e2e)', () => {
     /* app compartida, no cerrar */
   });
 
-  /**
-   * @test Debe responder correctamente al endpoint raíz (Hello World).
-   */
+        /**
+     * Documentación en español.
+     */
   it('/ (GET)', () => {
     return request(app.getHttpServer() as string)
       .get('/api/v1')

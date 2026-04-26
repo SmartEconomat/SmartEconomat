@@ -232,10 +232,9 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     return permissionIdByCode;
   }
 
-  /**
-   * Desactiva permisos fantasma que ya no existen en el catálogo
-   * (p.ej. `movimientos:historial`).
-   */
+        /**
+     * Documentación en español.
+     */
   private async deactivateGhostPermissions(
     queryRunner: QueryRunner,
     activeCodes: string[]
@@ -442,14 +441,9 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     ]);
   }
 
-  /**
-   * Elimina permisos restringidos (roles:crear, roles:eliminar,
-   * permisos:crear, permisos:eliminar) del rol ADMIN, su plantilla
-   * y de los permisos adicionales de usuarios ADMIN.
-   *
-   * SUPER_ADMIN y ADMIN no deben poder tener estos permisos editados
-   * desde la UI; esta migración los fuerza.
-   */
+        /**
+     * Documentación en español.
+     */
   private async enforceAdminRestrictions(
     queryRunner: QueryRunner,
     roleIdByName: Map<rolUsuario, string>,

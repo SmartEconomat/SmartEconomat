@@ -1,9 +1,7 @@
 import React, { ReactNode } from 'react';
 
 /**
- * Utilidad heurística para formatear cadenas numéricas largas para lectores de pantalla.
- * Inserta espacios entre cada dígito para forzar la lectura secuencial uno a uno.
- * Se activa para cadenas puramente numéricas de más de 5 dígitos.
+ * Documentación en español.
  */
 export const formatDigitsForSR = (text: string): string => {
   if (!text) return '';
@@ -17,8 +15,7 @@ export const formatDigitsForSR = (text: string): string => {
 };
 
 /**
- * Extrae texto plano de un ReactNode de forma recursiva para etiquetas ARIA.
- * Aplica automáticamente formatDigitsForSR si detecta códigos numéricos.
+ * Documentación en español.
  */
 export const extractA11yText = (node: ReactNode): string => {
   if (!node) return '';

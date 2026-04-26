@@ -1,8 +1,5 @@
 /**
- * @file utils/index.ts
- * @description Exportaciones centralizadas de utilidades de testing
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 export * from './test-helpers';

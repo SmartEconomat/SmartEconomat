@@ -90,21 +90,7 @@ const ALERGENOS_FILES: Record<string, { filename: string; label: string }> = {
 const ALERGENOS_ASSETS_DIR = path.join(process.cwd(), 'src/assets/alergenos');
 
 /**
- * Generates printable recipe data sheets as A4 PDFs, streamed to the HTTP response.
- *
- * Each page contains:
- * - Recipe header (name, difficulty, optional photo).
- * - EU allergen declaration panel (14 allergens from the ingredient list).
- * - Ingredient table with waste-adjusted quantities from the escandallo.
- * - Step-by-step preparation instructions.
- *
- * WebP images are decoded at runtime via `@jsquash/webp` + `jimp` and converted
- * to PNG buffers before being embedded in the PDF. The WebP WASM decoder is
- * initialised lazily and cached as a class-level singleton.
- *
- * @example
- *
- * await recetaPdfService.generatePdf([id1, id2], res, { includeImage: true });
+ * Documentación en español.
  */
 @Injectable()
 export class RecetaPdfService {

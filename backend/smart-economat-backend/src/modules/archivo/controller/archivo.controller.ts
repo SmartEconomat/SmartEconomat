@@ -35,11 +35,7 @@ import { Public } from '../../../common/decorators/public.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that exposes endpoints for file upload, listing, metadata retrieval,
- * content serving and deletion. File content serving is public; all other routes
- * require JWT authentication and appropriate file permissions.
- *
- * @class ArchivoController
+ * Documentación en español.
  */
 @ApiTags('Archivos')
 @ApiBearerAuth()
@@ -48,14 +44,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
-  /**
-   * Uploads a file for the authenticated user. Images are automatically optimised to WebP.
-   *
-   * @param {Express.Multer.File} file - Uploaded file from multipart/form-data.
-   * @param {{ user: Usuario }} req - Express request with authenticated user.
-   * @returns {Promise<{ message: string; data: FileResponseDto }>} Upload confirmation with file metadata.
-   * @throws {BadRequestException} When no file is provided in the request.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('upload')
   @RequirePermissions(PERMISSIONS.archivos.subir)
   @ApiOperation({ summary: 'Subir un nuevo archivo' })
@@ -88,13 +79,9 @@ export class ArchivoController {
     };
   }
 
-  /**
-   * Returns a paginated list of active files, optionally filtered by user ID or MIME type.
-   *
-   * @param {FileListFilterDto} filterDto - Pagination and filter parameters.
-   * @returns {Promise<{ data: FileResponseDto[]; total: number; page: number; limit: number; totalPages: number }>}
-   *   Paginated file list with metadata.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.archivos.listar)
   @ApiOperation({ summary: 'Listar archivos' })
@@ -110,13 +97,9 @@ export class ArchivoController {
     };
   }
 
-  /**
-   * Returns the metadata for a single file by its UUID.
-   *
-   * @param {string} id - UUID of the Archivo to retrieve.
-   * @returns {Promise<FileResponseDto>} File metadata DTO.
-   * @throws {NotFoundException} When no active file with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.archivos.ver)
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
@@ -128,15 +111,9 @@ export class ArchivoController {
     return this.mapToResponseDto(result);
   }
 
-  /**
-   * Serves the binary content of an uploaded file directly from the local storage directory.
-   * This endpoint is publicly accessible — no authentication required.
-   *
-   * @param {string} filename - Filename (without directory components) to serve.
-   * @param {Response} res - Express response used to send the file binary.
-   * @throws {BadRequestException} When the filename resolves outside the upload directory.
-   * @throws {NotFoundException} When the file does not exist on disk.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('content/:filename')
   @Public()
   @ApiOperation({ summary: 'Servir el contenido de un archivo subido' })
@@ -145,18 +122,9 @@ export class ArchivoController {
     res.sendFile(filePath);
   }
 
-  /**
-   * Soft-deletes a file record and removes its physical file(s) from disk.
-   * Only the uploader or elevated-role users may perform this operation.
-   * Returns HTTP 204 No Content on success.
-   *
-   * @param {string} id - UUID of the Archivo to remove.
-   * @param {{ user: Usuario }} req - Express request with authenticated user.
-   * @param {Response} res - Express response used to send the 204 status.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} When no active file with the given ID exists.
-   * @throws {ForbiddenException} When the requesting user is not the uploader and lacks an elevated role.
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.archivos.eliminar)
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
@@ -174,12 +142,9 @@ export class ArchivoController {
     res.status(HttpStatus.NO_CONTENT).send();
   }
 
-  /**
-   * Maps an Archivo entity (or plain object) to the public-facing FileResponseDto.
-   *
-   * @param {any} archivo - Source Archivo entity or plain object.
-   * @returns {FileResponseDto} DTO with all file metadata fields populated.
-   */
+        /**
+     * Documentación en español.
+     */
   private mapToResponseDto(archivo: any): FileResponseDto {
     const dto = new FileResponseDto();
     dto.id = archivo.id;

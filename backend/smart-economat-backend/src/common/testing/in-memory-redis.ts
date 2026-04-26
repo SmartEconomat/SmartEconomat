@@ -1,58 +1,43 @@
 /**
- * @module InMemoryRedis
- * Lightweight in-memory Redis-compatible client used in unit/integration tests
- * to avoid requiring a real Redis instance. Implements the subset of the Redis API
- * that SmartEconomat uses (get, set with optional EX TTL, del, quit, disconnect).
- *
- * @example
- * const redis = createInMemoryRedisClient();
- * await redis.set('key', 'value', 'EX', 60);
- * const val = await redis.get('key');
- * await redis.quit();
+ * Documentación en español.
  */
 
 /**
- * Internal shape of a stored value including an optional expiry timestamp.
- * @private
+ * Documentación en español.
  */
 type StoredValue = {
-  /** The serialised string value. */
+        /**
+     * Documentación en español.
+     */
   value: string;
-  /** Unix ms timestamp after which the entry is considered expired, if set. */
+        /**
+     * Documentación en español.
+     */
   expiresAt?: number;
 };
 
 /**
- * Supported Redis SET mode.
- * Currently only `'EX'` (expire in seconds) is supported.
+ * Documentación en español.
  */
 type RedisSetMode = 'EX';
 
 /**
- * Minimal Redis-like interface implemented by {@link createInMemoryRedisClient}.
- * Compatible with the `ioredis` client API subset used by `@nestjs/throttler`.
+ * Documentación en español.
  */
 export type InMemoryRedisLike = {
-  /** Current connection status. `'ready'` when operational, `'end'` after disconnection. */
+        /**
+     * Documentación en español.
+     */
   status: string;
 
-  /**
-   * Retrieves the value for a given key, respecting TTL expiry.
-   *
-   * @param {string} key - The key to look up.
-   * @returns {Promise<string | null>} The stored value, or `null` if not found or expired.
-   */
+        /**
+     * Documentación en español.
+     */
   get(key: string): Promise<string | null>;
 
-  /**
-   * Stores a key-value pair with an optional TTL.
-   *
-   * @param {string} key                  - The key to set.
-   * @param {string} value                - The value to store.
-   * @param {RedisSetMode} [mode]         - Optional mode; only `'EX'` is recognised.
-   * @param {number} [durationSeconds]    - Time-to-live in seconds (requires `mode = 'EX'`).
-   * @returns {Promise<'OK'>} Always resolves to `'OK'`.
-   */
+        /**
+     * Documentación en español.
+     */
   set(
     key: string,
     value: string,
@@ -60,45 +45,31 @@ export type InMemoryRedisLike = {
     durationSeconds?: number
   ): Promise<'OK'>;
 
-  /**
-   * Deletes a key from the store.
-   *
-   * @param {string} key - The key to delete.
-   * @returns {Promise<number>} `1` if the key existed and was deleted, `0` otherwise.
-   */
+        /**
+     * Documentación en español.
+     */
   del(key: string): Promise<number>;
 
-  /**
-   * Clears all entries and marks the connection as ended.
-   *
-   * @returns {Promise<'OK'>} Always resolves to `'OK'`.
-   */
+        /**
+     * Documentación en español.
+     */
   quit(): Promise<'OK'>;
 
-  /**
-   * Clears all entries and marks the connection as ended synchronously.
-   *
-   * @param {boolean} [reconnect] - Unused; present for API compatibility.
-   */
+        /**
+     * Documentación en español.
+     */
   disconnect(reconnect?: boolean): void;
 };
 
 /**
- * Factory that creates an in-memory Redis-compatible client backed by a `Map`.
- *
- * Entries with an `EX` TTL are lazily purged on access rather than via a background timer,
- * making the implementation deterministic and side-effect-free in test environments.
- *
- * @returns {InMemoryRedisLike} A new isolated in-memory Redis client instance.
+ * Documentación en español.
  */
 export function createInMemoryRedisClient(): InMemoryRedisLike {
   const store = new Map<string, StoredValue>();
 
-  /**
-   * Removes an entry from the store if its TTL has elapsed.
-   *
-   * @param {string} key - The key to check and purge if expired.
-   */
+        /**
+     * Documentación en español.
+     */
   const purgeIfExpired = (key: string): void => {
     const entry = store.get(key);
     if (!entry) return;

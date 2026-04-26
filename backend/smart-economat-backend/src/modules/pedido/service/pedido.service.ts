@@ -27,12 +27,7 @@ import { forwardRef, Inject } from '@nestjs/common';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 
 /**
- * Core service for managing supplier purchase orders (pedidos).
- *
- * Handles the full lifecycle of a Pedido: creation, update, status transitions
- * (approve, cancel, restore, partial/full reception), and soft deletion.
- * All multi-step operations are wrapped in database transactions with automatic
- * rollback on failure.
+ * Documentación en español.
  */
 @Injectable()
 export class PedidoService {
@@ -47,18 +42,9 @@ export class PedidoService {
     private readonly pedidoUsuarioService: PedidoUsuarioService
   ) {}
 
-  /**
-   * Creates a new supplier order for the given user.
-   *
-   * Builds the pedido aggregate (entity + line items) inside a transaction,
-   * reserves the next global order number, persists all records, and tracks
-   * the creation in the movement audit log.
-   *
-   * @param createPedidoDto - Payload containing supplier, product lines, and optional notes
-   * @param userId - ID of the authenticated user creating the order
-   * @returns The newly created Pedido with all relations loaded
-   * @throws ConflictException if the order could not be persisted
-   */
+        /**
+     * Documentación en español.
+     */
   async create(
     createPedidoDto: CreatePedidoDto,
     userId: string
@@ -118,25 +104,18 @@ export class PedidoService {
     }
   }
 
-  /**
-   * Returns a paginated list of all pedidos (including soft-deleted relations).
-   *
-   * @param query - Pagination and filter parameters
-   * @returns Paginated response with pedido rows and total count
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return await this.pedidoRepository.findAllPaginated(query, true);
   }
 
-  /**
-   * Returns a single pedido by ID with all relations loaded.
-   *
-   * @param id - UUID of the pedido
-   * @returns The Pedido entity
-   * @throws NotFoundException if no pedido exists with the given ID
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<Pedido> {
     const pedido = await this.pedidoRepository.findOneWithRelations(id, true);
     if (!pedido) {
@@ -145,21 +124,9 @@ export class PedidoService {
     return pedido;
   }
 
-  /**
-   * Updates an existing pedido's supplier, notes, and/or product lines.
-   *
-   * Line items are replaced atomically: the old set is deleted and the new
-   * set is inserted within the same transaction. The total cost is recalculated
-   * from current ProductoProveedor prices.
-   *
-   * @param id - UUID of the pedido to update
-   * @param updatePedidoDto - Fields to change; `lineas` replaces the full line set
-   * @param userId - ID of the actor making the change (written to `modifiedBy`)
-   * @returns The updated Pedido with all relations loaded
-   * @throws NotFoundException if the pedido or a product-provider reference does not exist
-   * @throws BadRequestException if the new lines array is empty
-   * @throws ConflictException if a product-provider has no price set
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     updatePedidoDto: UpdatePedidoDto,
@@ -273,18 +240,9 @@ export class PedidoService {
     return this.findOne(id);
   }
 
-  /**
-   * Cancels a pending order, recording the cancellation reason.
-   *
-   * Only orders in `PENDIENTE_DE_APROBACION` state with no registered
-   * receptions can be cancelled.
-   *
-   * @param id - UUID of the pedido to cancel
-   * @param dto - Contains the optional `motivoCancelacion` text
-   * @param userId - Actor ID written to `modifiedBy`
-   * @returns The cancelled Pedido
-   * @throws BadRequestException if the order is not in pending state or has receptions
-   */
+        /**
+     * Documentación en español.
+     */
   async cancelarPedido(
     id: string,
     dto: CancelPedidoDto,
@@ -313,14 +271,9 @@ export class PedidoService {
     return await this.pedidoRepository.save(pedido);
   }
 
-  /**
-   * Restores a previously cancelled order back to `PENDIENTE_DE_APROBACION`.
-   *
-   * @param id - UUID of the cancelled pedido
-   * @param userId - Actor ID written to `modifiedBy`
-   * @returns The restored Pedido
-   * @throws BadRequestException if the order is not in `CANCELADO` state
-   */
+        /**
+     * Documentación en español.
+     */
   async restaurarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
@@ -338,14 +291,9 @@ export class PedidoService {
     return await this.pedidoRepository.save(pedido);
   }
 
-  /**
-   * Approves a pending order, transitioning it to `POR_RECEPCIONAR`.
-   *
-   * @param id - UUID of the pedido to approve
-   * @param userId - Actor ID written to `modifiedBy`
-   * @returns The approved Pedido after status transition
-   * @throws BadRequestException if the order is not in `PENDIENTE_DE_APROBACION` state
-   */
+        /**
+     * Documentación en español.
+     */
   async aceptarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
     if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
@@ -361,21 +309,9 @@ export class PedidoService {
     );
   }
 
-  /**
-   * Applies a status transition trigger to a pedido and propagates the change
-   * to any associated PurchaseBatch and PedidoUsuario.
-   *
-   * Can be called both standalone (no `manager`) and within an existing
-   * transaction by passing the caller's `EntityManager`.
-   *
-   * @param pedidoId - UUID of the pedido to transition
-   * @param trigger - Trigger that determines the next state (see `PedidoStatusTrigger`)
-   * @param manager - Optional EntityManager to participate in a parent transaction
-   * @param actorId - ID of the user performing the transition (written to `modifiedBy`)
-   * @returns The updated Pedido after the status change
-   * @throws NotFoundException if the pedido does not exist
-   * @throws BadRequestException if the order is cancelled or the trigger is unsupported
-   */
+        /**
+     * Documentación en español.
+     */
   async handleStatusTransition(
     pedidoId: string,
     trigger: PedidoStatusTrigger,
@@ -424,14 +360,9 @@ export class PedidoService {
     return savedPedido;
   }
 
-  /**
-   * Soft-deletes a pedido.
-   *
-   * Only pedidos in `PENDIENTE_DE_APROBACION` or `CANCELADO` state may be deleted.
-   *
-   * @param id - UUID of the pedido to soft-delete
-   * @throws BadRequestException if the order is in a state that prevents deletion
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const pedido = await this.findOne(id);
 

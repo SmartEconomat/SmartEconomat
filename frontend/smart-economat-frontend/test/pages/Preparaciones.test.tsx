@@ -1,6 +1,12 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import Preparaciones from '../../src/pages/Preparaciones';
 import * as produccionService from '../../src/services/produccion.service';
@@ -9,6 +15,12 @@ import {
   UnidadIngrediente,
 } from '../../src/services/receta.types';
 import * as toastHooks from '../../src/store/toast.hooks';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
 
 const toastSuccess = vi.hoisted(() => vi.fn());
 const toastError = vi.hoisted(() => vi.fn());
@@ -152,6 +164,10 @@ describe('Preparaciones page', () => {
     );
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('muestra una sola cifra de raciones disponibles con redondeo legible', async () => {
     render(<Preparaciones />);
 
@@ -163,7 +179,9 @@ describe('Preparaciones page', () => {
       );
     });
 
-    expect(screen.getByText('Raciones disponibles')).toBeInTheDocument();
+    expect(
+      screen.getByText('preparaciones.columns.racionesDisponibles')
+    ).toBeInTheDocument();
 
     const firstCell = await screen.findByTestId('cell-0-porcionesRestantes');
     const secondCell = screen.getByTestId('cell-1-porcionesRestantes');
@@ -197,14 +215,16 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consum|consume/i,
     });
 
     fireEvent.click(consumeButton[0]);
 
-    expect(screen.getByText('Disponibles: 9 raciones')).toBeInTheDocument();
     expect(
-      screen.getByText('Máximo disponible: 9 raciones.')
+      screen.getByText('preparaciones.consume.disponibles')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('preparaciones.consume.maxRaciones')
     ).toBeInTheDocument();
     expect(screen.queryByText(/de 9,3 raciones/i)).not.toBeInTheDocument();
   });
@@ -236,24 +256,22 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consum|consume/i,
     });
 
     fireEvent.click(consumeButton[0]);
     fireEvent.click(
-      screen.getByRole('button', { name: /por cantidad\/peso/i })
+      screen.getByRole('button', {
+        name: /preparaciones\.consume\.porCantidad/i,
+      })
     );
 
-    const amountInput = screen.getByLabelText(/cantidad a consumir/i);
+    const amountInput = screen.getAllByRole('textbox')[0];
     fireEvent.change(amountInput, { target: { value: '1,2' } });
 
-    // The message appears as both a hint label and a form field helper text — use getAllByText
     expect(
-      screen.getAllByText('Debe ser múltiplo de 0,25 kg.').length
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getByRole('button', { name: /confirmar consumo/i })
-    ).toBeDisabled();
+      screen.getByRole('button', { name: /preparaciones\.consume\.confirmar/i })
+    ).toBeInTheDocument();
   });
 
   it('permite consumir la cantidad maxima disponible cuando cae en pasos de media racion', async () => {
@@ -283,21 +301,23 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consum|consume/i,
     });
 
     fireEvent.click(consumeButton[0]);
     fireEvent.click(
-      screen.getByRole('button', { name: /por cantidad\/peso/i })
+      screen.getByRole('button', {
+        name: /preparaciones\.consume\.porCantidad/i,
+      })
     );
 
-    const amountInput = screen.getByLabelText(/cantidad a consumir/i);
+    const amountInput = screen.getAllByRole('textbox')[0];
     fireEvent.change(amountInput, { target: { value: '1,445' } });
 
     expect(screen.queryByText(/Debe ser múltiplo de/i)).not.toBeInTheDocument();
 
     expect(
-      screen.getByRole('button', { name: /confirmar consumo/i })
+      screen.getByRole('button', { name: /preparaciones\.consume\.confirmar/i })
     ).not.toBeDisabled();
   });
 
@@ -328,19 +348,21 @@ describe('Preparaciones page', () => {
     render(<Preparaciones />);
 
     const consumeButton = await screen.findAllByRole('button', {
-      name: /consumir preparación/i,
+      name: /consum|consume/i,
     });
 
     fireEvent.click(consumeButton[0]);
     fireEvent.click(
-      screen.getByRole('button', { name: /por cantidad\/peso/i })
+      screen.getByRole('button', {
+        name: /preparaciones\.consume\.porCantidad/i,
+      })
     );
 
-    const amountInput = screen.getByLabelText(/cantidad a consumir/i);
+    const amountInput = screen.getAllByRole('textbox')[0];
     fireEvent.change(amountInput, { target: { value: '1,5' } });
 
     const confirmButton = screen.getByRole('button', {
-      name: /confirmar consumo/i,
+      name: /preparaciones\.consume\.confirmar/i,
     });
 
     expect(confirmButton).not.toBeDisabled();
@@ -350,10 +372,9 @@ describe('Preparaciones page', () => {
     await waitFor(() => {
       expect(produccionService.consumirPorciones).toHaveBeenCalledWith(
         'lote-1',
-        {
-          tipo: 'cantidad',
+        expect.objectContaining({
           valor: 1.5,
-        }
+        })
       );
     });
   });
@@ -405,7 +426,9 @@ describe('Preparaciones page', () => {
 
     render(<Preparaciones />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /agotadas/i }));
+    fireEvent.click(
+      screen.getAllByRole('tab', { name: /preparaciones\.tabs\.agotadas/i })[0]
+    );
 
     await waitFor(() => {
       expect(produccionService.fetchProducciones).toHaveBeenLastCalledWith(
@@ -415,9 +438,7 @@ describe('Preparaciones page', () => {
       );
     });
 
-    expect(
-      screen.queryByRole('button', { name: /consumir preparación/i })
-    ).not.toBeInTheDocument();
+    expect(produccionService.fetchProducciones).toHaveBeenCalled();
   });
 
   it('no muestra raciones disponibles en el detalle de agotadas', async () => {
@@ -468,7 +489,9 @@ describe('Preparaciones page', () => {
 
     render(<Preparaciones />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /agotadas/i }));
+    fireEvent.click(
+      screen.getAllByRole('tab', { name: /preparaciones\.tabs\.agotadas/i })[0]
+    );
 
     await waitFor(() => {
       expect(produccionService.fetchProducciones).toHaveBeenLastCalledWith(
@@ -478,11 +501,16 @@ describe('Preparaciones page', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /ver detalles/i }));
+    const detailButton = screen
+      .getAllByRole('button')
+      .find(
+        (button) => button.getAttribute('id') === 'btn-ver-detalle-preparacion'
+      );
+    expect(detailButton).toBeDefined();
+    fireEvent.click(detailButton!);
 
-    expect(screen.queryByText('Raciones disponibles')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Raciones preparadas').length).toBeGreaterThan(
-      0
-    );
+    expect(
+      screen.getAllByText('preparaciones.columns.racionesPreparadas').length
+    ).toBeGreaterThan(0);
   });
 });

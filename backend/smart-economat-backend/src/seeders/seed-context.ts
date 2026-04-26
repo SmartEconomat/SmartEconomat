@@ -35,14 +35,7 @@ export type SeedContextConfig = {
 export { HttpSeedRequestError } from './seed-context.http-utils';
 
 /**
- * @description Central orchestration context used by all database seeders.
- * Gestiona HTTP authentication, concurrency-limited API requests with retry/backoff logic,
- * Docker infrastructure lifecycle, shared in-memory state between seeder steps,
- * and structured HTTP event logging to a file.
- *
- * Construct once per seeder run, call `login()` to obtain a JWT, then use the
- * `getJson`, `postJson`, `patchJson`, `putJson`, `deleteJson`, and `postMultipart`
- * helpers to drive the REST API. Call `close()` when the run is finished.
+ * Documentación en español.
  */
 export class SeedContext {
   private static readonly DEFAULT_API_BASE_URL = 'http://localhost:3000/api/v1';
@@ -95,13 +88,9 @@ export class SeedContext {
     },
   ];
 
-  /**
-   * @description Resuelve a writable directory for the HTTP event log file, trying several
-   * candidate paths in order (`__dirname/logs`, `cwd/logs`, `/tmp/...`).
-   * Creates the directory if necessary and writes a header line to verify writability.
-   * @returns {string} Absolute path to the initialised log file.
-   * @throws {Error} If none of the candidate directories can be created or written to.
-   */
+        /**
+     * Documentación en español.
+     */
   private resolveWritableLogFilePath(): string {
     const candidates = [
       resolve(__dirname, './logs'),
@@ -130,12 +119,9 @@ export class SeedContext {
     );
   }
 
-  /**
-   * @description Crea un nuevo SeedContext and initialises all runtime configuration.
-   * Resuelve the writable log file path as part of construction.
-   * @param {SeedContextConfig} config - Optional configuration overrides.
-   *   Unset or invalid values fall back to their documented defaults.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(config: SeedContextConfig = {}) {
     this.resolveConfig(config);
     this.logFilePath = this.resolveWritableLogFilePath();
@@ -164,13 +150,9 @@ export class SeedContext {
   readonly env = 'development';
   apiBaseUrl = SeedContext.DEFAULT_API_BASE_URL;
 
-  /**
-   * @description Normalises `value` to a positive integer, returning `fallback` for any
-   * non-finite, non-numeric, or non-positive input.
-   * @param {number | undefined} value - Raw numeric value to normalise.
-   * @param {number} fallback - Value to use when `value` is invalid or non-positive.
-   * @returns {number} A positive integer.
-   */
+        /**
+     * Documentación en español.
+     */
   private ensurePositiveInt(
     value: number | undefined,
     fallback: number
@@ -187,13 +169,9 @@ export class SeedContext {
     return normalized;
   }
 
-  /**
-   * @description Normalises `value` to a non-negative integer, returning `fallback` for any
-   * non-finite, non-numeric, or negative input.
-   * @param {number | undefined} value - Raw numeric value to normalise.
-   * @param {number} fallback - Value to use when `value` is invalid or negative.
-   * @returns {number} A non-negative integer (zero is allowed).
-   */
+        /**
+     * Documentación en español.
+     */
   private ensureNonNegativeInt(
     value: number | undefined,
     fallback: number
@@ -210,12 +188,9 @@ export class SeedContext {
     return normalized;
   }
 
-  /**
-   * @description Aplica the provided configuration to the instance properties,
-   * falling back to defaults for any missing or invalid values.
-   * @param {SeedContextConfig} config - Partial configuration object to apply.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   private resolveConfig(config: SeedContextConfig): void {
     this.apiBaseUrl =
       typeof config.apiBaseUrl === 'string' &&
@@ -265,13 +240,9 @@ export class SeedContext {
         : SeedContext.DEFAULT_AUTH_CANDIDATES;
   }
 
-  /**
-   * @description Ensures that the required Docker Compose services are running.
-   * If the process is already running inside a Docker container (`/.dockerenv` present),
-   * this method is a no-op. Otherwise it checks the service status via `docker compose ps`
-   * and runs `docker compose up -d` only for services that are not yet running.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   async ensureDockerInfra(): Promise<void> {
     const isDocker = existsSync('/.dockerenv');
     if (isDocker) {
@@ -342,14 +313,9 @@ export class SeedContext {
     });
   }
 
-  /**
-   * @description Polls the backend health endpoint until it responds with HTTP 2xx
-   * or the maximum retry count is reached.
-   * @param {number} [retries=60] - Maximum number of polling attempts.
-   * @param {number} [delayMs=2000] - Milliseconds to wait between attempts.
-   * @returns {Promise<void>} Resuelve when the backend is reachable.
-   * @throws {Error} If the backend is still unreachable after all retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async waitForBackend(retries = 60, delayMs = 2000): Promise<void> {
     let lastStatusCode: number | undefined;
     let lastErrorMessage = '';
@@ -398,13 +364,9 @@ export class SeedContext {
     );
   }
 
-  /**
-   * @description Normalises potentially incompatible data in the database before seeding.
-   * Currently corrects `producto_proveedor` rows where `precio_unitario <= 0`, which would
-   * violate application-level constraints. Only runs outside Docker and when the `db` service
-   * is managed by this context.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   async ensureDatabaseCompatibility(): Promise<void> {
     await Promise.resolve();
     const isDocker = existsSync('/.dockerenv');
@@ -452,13 +414,9 @@ export class SeedContext {
     }
   }
 
-  /**
-   * @description Authenticates using the configured credential candidates in order.
-   * If all candidates fail a bootstrap admin account is upserted via direct DB access
-   * and authentication is retried. Stores the resulting JWT as the active token.
-   * @returns {Promise<void>}
-   * @throws {Error} If authentication cannot be established after bootstrapping.
-   */
+        /**
+     * Documentación en español.
+     */
   async login(): Promise<void> {
     let lastError: unknown;
 
@@ -535,14 +493,9 @@ export class SeedContext {
       : new Error('[seed] No fue posible autenticarse para ejecutar seeders');
   }
 
-  /**
-   * @description Creates or updates a super-admin user directly in the database using
-   * credentials from environment variables (`SEED_BOOTSTRAP_ADMIN_EMAIL`, etc.) or defaults.
-   * Called automatically by `login()` when all credential candidates fail.
-   * Guards against duplicate execution with `bootstrapAdminAttempted`.
-   * @returns {Promise<void>}
-   * @throws {Error} If the database operation fails.
-   */
+        /**
+     * Documentación en español.
+     */
   private async ensureBootstrapAdminCredentials(): Promise<void> {
     if (this.bootstrapAdminAttempted) {
       return;
@@ -619,30 +572,23 @@ export class SeedContext {
     }
   }
 
-  /**
-   * @description Devuelve el/la currently active JWT bearer token.
-   * @returns {string} The active bearer token string (empty string if not yet authenticated).
-   */
+        /**
+     * Documentación en español.
+     */
   getAccessToken(): string {
     return this.token;
   }
 
-  /**
-   * @description Overrides the active JWT bearer token.
-   * @param {string} token - New bearer token to set as the default for subsequent requests.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   setAccessToken(token: string): void {
     this.token = token;
   }
 
-  /**
-   * @description Stores a named session token for later retrieval.
-   * The key is trimmed; empty keys or empty tokens are silently ignored.
-   * @param {string} sessionKey - Identifier for the session (p. ej. a username).
-   * @param {string} token - JWT bearer token to store under this key.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   setSessionToken(sessionKey: string, token: string): void {
     const normalizedKey = sessionKey.trim();
     if (!normalizedKey || !token) {
@@ -651,21 +597,16 @@ export class SeedContext {
     this.sessions.set(normalizedKey, token);
   }
 
-  /**
-   * @description Retrieves a previously stored session token by key.
-   * @param {string} sessionKey - Identifier used when the token was stored.
-   * @returns {string | undefined} The stored token, or `undefined` if not found.
-   */
+        /**
+     * Documentación en español.
+     */
   getSessionToken(sessionKey: string): string | undefined {
     return this.sessions.get(sessionKey.trim());
   }
 
-  /**
-   * @description Returns a stored session token or throws if the key is not found.
-   * @param {string} sessionKey - Identifier of the session token to retrieve.
-   * @returns {string} The stored token.
-   * @throws {Error} If no token has been stored under `sessionKey`.
-   */
+        /**
+     * Documentación en español.
+     */
   requireSessionToken(sessionKey: string): string {
     const token = this.getSessionToken(sessionKey);
     if (!token) {
@@ -674,11 +615,9 @@ export class SeedContext {
     return token;
   }
 
-  /**
-   * @description Devuelve todos los session tokens whose keys start with the given prefix.
-   * @param {string} prefix - Key prefix to filter sessions by (trimmed).
-   * @returns {string[]} Array of matching token strings (may be empty).
-   */
+        /**
+     * Documentación en español.
+     */
   getSessionTokensByPrefix(prefix: string): string[] {
     const normalizedPrefix = prefix.trim();
     if (!normalizedPrefix) {
@@ -693,15 +632,9 @@ export class SeedContext {
     return tokens;
   }
 
-  /**
-   * @description Logs in with explicit credentials and returns the resulting JWT.
-   * Optionally sets the token as the active bearer token and/or stores it under a session key.
-   * @param {{ email: string; password: string }} credentials - Login credentials.
-   * @param {{ setActiveToken?: boolean; sessionKey?: string }} [options] - Behaviour options.
-   *   `setActiveToken` defaults to `true`; `sessionKey` enables named session storage.
-   * @returns {Promise<string>} The JWT bearer token returned by the API.
-   * @throws {Error} If the login response does not contain a token.
-   */
+        /**
+     * Documentación en español.
+     */
   async loginWithCredentials(
     credentials: {
       email: string;
@@ -737,91 +670,60 @@ export class SeedContext {
     return token;
   }
 
-  /**
-   * @description Devuelve el/la HTTP status code of the most recent API response.
-   * @returns {number | undefined} The last status code, or `undefined` if no request has been made.
-   */
+        /**
+     * Documentación en español.
+     */
   getLastResponseStatusCode(): number | undefined {
     return this.lastResponseStatusCode;
   }
 
-  /**
-   * @description Stores an arbitrary value in the shared in-memory state map.
-   * @param {string} key - Identifier for the stored value.
-   * @param {unknown} value - Value to store (any type).
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   set(key: string, value: unknown): void {
     this.store.set(key, value);
   }
 
-  /**
-   * @description Appends a value to an array stored in the shared state map.
-   * If no array exists for the key, a new one is created automatically.
-   * @template T - Type of the array elements.
-   * @param {string} key - State map key whose value is (or will become) an array.
-   * @param {T} value - Item to append to the array.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   appendToStateArray<T>(key: string, value: T): void {
     const current = this.getState<T[]>(key) || [];
     current.push(value);
     this.store.set(key, current);
   }
 
-  /**
-   * @description Retrieves a value from the shared in-memory state map.
-   * @template T - Expected type of the stored value.
-   * @param {string} key - Identifier of the stored value.
-   * @returns {T | undefined} The stored value cast to `T`, or `undefined` if not present.
-   */
+        /**
+     * Documentación en español.
+     */
   getState<T>(key: string): T | undefined {
     return this.store.get(key) as T | undefined;
   }
 
-  /**
-   * @description Comprueba si a value has been stored in the shared state map.
-   * @param {string} key - Identifier to check.
-   * @returns {boolean} `true` if the key exists in the state map, `false` otherwise.
-   */
+        /**
+     * Documentación en español.
+     */
   hasState(key: string): boolean {
     return this.store.has(key);
   }
 
-  /**
-   * @description Realiza an authenticated GET request and returns the parsed response body.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl` (p. ej. `/productos`).
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async getJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'GET' });
   }
 
-  /**
-   * @description Realiza an authenticated POST request with a JSON body.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {unknown} body - Request payload to serialize as JSON.
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async postJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'POST', body });
   }
 
-  /**
-   * @description Realiza an authenticated POST request with a `multipart/form-data` body.
-   * Useful for file uploads (p. ej. albaran documents). Supports concurrency limiting,
-   * configurable retries, and backoff for 429/5xx responses.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {Record<string, string | Blob>} form - Key-value pairs to include in the FormData.
-   * @param {string} [tokenOverride] - Optional JWT to use instead of the active token.
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {Error} On non-retriable errors or after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async postMultipart<T>(
     path: string,
     form: Record<string, string | Blob>,
@@ -916,50 +818,30 @@ export class SeedContext {
     });
   }
 
-  /**
-   * @description Realiza an authenticated PATCH request with a JSON body.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {unknown} body - Request payload to serialize as JSON.
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async patchJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PATCH', body });
   }
 
-  /**
-   * @description Realiza an authenticated PUT request with a JSON body.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {unknown} body - Request payload to serialize as JSON.
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async putJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PUT', body });
   }
 
-  /**
-   * @description Realiza an authenticated DELETE request.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @returns {Promise<T>} Parsed response body (unwrapped from the data envelope if present).
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async deleteJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 
-  /**
-   * @description Generic JSON request helper that wraps the private `request` method.
-   * Use the typed convenience methods (`getJson`, `postJson`, etc.) when possible.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {{ method: string; body?: unknown; auth?: boolean; tokenOverride?: string }} options - Request options.
-   * @returns {Promise<T>} Parsed response body.
-   * @throws {HttpSeedRequestError} On non-2xx responses after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async requestJson<T>(
     path: string,
     options: {
@@ -972,13 +854,9 @@ export class SeedContext {
     return this.request<T>(path, options);
   }
 
-  /**
-   * @description Executes `task` within the concurrency limiter, queuing it if the
-   * in-flight count has reached `maxConcurrency`.
-   * @template T - Return type of the task.
-   * @param {() => Promise<T>} task - Async task to execute.
-   * @returns {Promise<T>} Result of the task.
-   */
+        /**
+     * Documentación en español.
+     */
   async withConcurrency<T>(task: () => Promise<T>): Promise<T> {
     await this.acquireSlot();
     try {
@@ -988,41 +866,32 @@ export class SeedContext {
     }
   }
 
-  /**
-   * @description Returns a promise that resolves after `ms` milliseconds.
-   * @param {number} ms - Delay duration in milliseconds.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   async delay(ms: number): Promise<void> {
     await new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
   }
 
-  /**
-   * @description Writes a closing footer to the HTTP event log file and resolves.
-   * Should be called once after all seeder operations are complete.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   close(): Promise<void> {
     this.logRaw(`=== SEED HTTP LOG END ${this.nextLogTimestamp()} ===\n\n`);
     return Promise.resolve();
   }
 
-  /**
-   * @description No-op NestJS DI compatibility stub. Always returns `undefined` as `T`.
-   * @template T - Expected type (unused).
-   * @param {unknown} token - Injection token (ignored).
-   * @returns {T} Always `undefined`.
-   */
+        /**
+     * Documentación en español.
+     */
   get<T>(token: unknown): T {
     void token;
     return undefined as T;
   }
 
-  /**
-   * @description Returns a minimal DataSource-like stub for use in seeder utilities
-   * that expect a DataSource interface but should not perform real DB operations.
-   * @returns {any} Stub object with no-op `manager`, `createQueryRunner`, and `getRepository`.
-   */
+        /**
+     * Documentación en español.
+     */
   getDataSource(): any {
     return {
       manager: {},
@@ -1041,13 +910,9 @@ export class SeedContext {
     };
   }
 
-  /**
-   * @description Returns a minimal repository stub for use in seeder utilities.
-   * All operations resolve with empty/null values to prevent real DB writes.
-   * @template T - Expected repository type.
-   * @param {unknown} entity - Entity class (ignored).
-   * @returns {T} Stub repository with no-op `find`, `findOne`, `count`, and `save` methods.
-   */
+        /**
+     * Documentación en español.
+     */
   getRepository<T>(entity: unknown): T {
     void entity;
     return {
@@ -1058,13 +923,9 @@ export class SeedContext {
     } as T;
   }
 
-  /**
-   * @description No-op transaction stub. Invokes `callback` with a minimal queryRunner
-   * stub that provides a no-op `manager.save`. Real transactions are not executed.
-   * @template T - Return type of the callback.
-   * @param {(queryRunner: any) => Promise<T>} callback - Transaction body to execute.
-   * @returns {Promise<T>} Result of the callback.
-   */
+        /**
+     * Documentación en español.
+     */
   async transaction<T>(callback: (queryRunner: any) => Promise<T>): Promise<T> {
     return callback({
       manager: {
@@ -1073,13 +934,9 @@ export class SeedContext {
     });
   }
 
-  /**
-   * @description No-op DTO validation stub. Devuelve el/la payload unmodified as `T`.
-   * @template T - Expected validated type.
-   * @param {unknown} dtoClass - DTO class constructor (ignored).
-   * @param {unknown} payload - Payload to return as-is.
-   * @returns {Promise<T>} The payload cast to `T`.
-   */
+        /**
+     * Documentación en español.
+     */
   validateDto<T extends object>(
     dtoClass: unknown,
     payload: unknown
@@ -1088,62 +945,43 @@ export class SeedContext {
     return Promise.resolve(payload as T);
   }
 
-  /**
-   * @description No-op find stub. Always resolves with an empty array.
-   * @template T - Expected entity type.
-   * @param {unknown} entity - Entity class (ignored).
-   * @param {unknown} [options] - Find options (ignored).
-   * @returns {Promise<T[]>} Always resolves with `[]`.
-   */
+        /**
+     * Documentación en español.
+     */
   find<T>(entity: unknown, options?: unknown): Promise<T[]> {
     void entity;
     void options;
     return Promise.resolve([] as T[]);
   }
 
-  /**
-   * @description No-op findOne stub. Always resolves with `null`.
-   * @template T - Expected entity type.
-   * @param {unknown} entity - Entity class (ignored).
-   * @param {unknown} options - Find options (ignored).
-   * @returns {Promise<T | null>} Always resolves with `null`.
-   */
+        /**
+     * Documentación en español.
+     */
   findOne<T>(entity: unknown, options: unknown): Promise<T | null> {
     void entity;
     void options;
     return Promise.resolve(null);
   }
 
-  /**
-   * @description No-op count stub. Always resolves with `0`.
-   * @param {unknown} entity - Entity class (ignored).
-   * @param {unknown} [where] - Filter options (ignored).
-   * @returns {Promise<number>} Always resolves with `0`.
-   */
+        /**
+     * Documentación en español.
+     */
   count(entity: unknown, where?: unknown): Promise<number> {
     void entity;
     void where;
     return Promise.resolve(0);
   }
 
-  /**
-   * @description Stub that returns an empty string as the seed actor user ID.
-   * @returns {Promise<string>} Always resolves with an empty string.
-   */
+        /**
+     * Documentación en español.
+     */
   getSeedActorUserId(): Promise<string> {
     return Promise.resolve('');
   }
 
-  /**
-   * @description Core HTTP request implementation with concurrency limiting, retry/backoff,
-   * structured logging, and data-envelope unwrapping.
-   * @template T - Expected response type.
-   * @param {string} path - API path relative to `apiBaseUrl`.
-   * @param {{ method: string; body?: unknown; auth?: boolean; tokenOverride?: string }} options - Request options.
-   * @returns {Promise<T>} Parsed and unwrapped response body.
-   * @throws {HttpSeedRequestError} On non-retriable or exhausted-retry HTTP errors.
-   * @throws {Error} On network or timeout errors after exhausting retries.
-   */
+        /**
+     * Documentación en español.
+     */
   private async request<T>(
     path: string,
     options: {
@@ -1258,35 +1096,25 @@ export class SeedContext {
     });
   }
 
-  /**
-   * @description Delegates to `parseSeedResponseBody` to parse the HTTP response.
-   * @param {Response} response - Fetch API Response object.
-   * @returns {Promise<Record<string, unknown> | string | null>} Parsed body or null.
-   */
+        /**
+     * Documentación en español.
+     */
   private async parseResponseBody(
     response: Response
   ): Promise<Record<string, unknown> | string | null> {
     return parseSeedResponseBody(response);
   }
 
-  /**
-   * @description Calcula the exponential back-off delay in milliseconds for a given attempt,
-   * capped at `backoffMaxMs` and with a deterministic jitter term.
-   * @param {number} attempt - Zero-based retry attempt index.
-   * @returns {number} Delay in milliseconds.
-   */
+        /**
+     * Documentación en español.
+     */
   private computeBackoffMs(attempt: number): number {
     return computeSeedBackoffMs(this.backoffBaseMs, this.backoffMaxMs, attempt);
   }
 
-  /**
-   * @description Envuelve the native `fetch` with an `AbortController`-based timeout.
-   * The timeout duration is controlled by `requestTimeoutMs`.
-   * @param {string} url - Full URL to fetch.
-   * @param {RequestInit} init - Fetch init options (merged with the abort signal).
-   * @returns {Promise<Response>} The fetch Response.
-   * @throws {DOMException} If the request times out (abort signal fires).
-   */
+        /**
+     * Documentación en español.
+     */
   private async fetchWithTimeout(
     url: string,
     init: RequestInit
@@ -1307,20 +1135,16 @@ export class SeedContext {
     }
   }
 
-  /**
-   * @description Delegates to `parseSeedRetryAfterMs` to interpret the `Retry-After` header.
-   * @param {string | null} headerValue - Raw `Retry-After` header value.
-   * @returns {number | undefined} Milliseconds to wait, or `undefined` if not parseable.
-   */
+        /**
+     * Documentación en español.
+     */
   private parseRetryAfterMs(headerValue: string | null): number | undefined {
     return parseSeedRetryAfterMs(headerValue);
   }
 
-  /**
-   * @description Acquires a concurrency slot. If the in-flight count has reached `maxConcurrency`,
-   * the caller is queued until a slot is released.
-   * @returns {Promise<void>} Resuelve when a slot is available.
-   */
+        /**
+     * Documentación en español.
+     */
   private async acquireSlot(): Promise<void> {
     if (this.inFlight < this.maxConcurrency) {
       this.inFlight++;
@@ -1335,10 +1159,9 @@ export class SeedContext {
     });
   }
 
-  /**
-   * @description Releases a concurrency slot and dispatches the next queued task if any.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   private releaseSlot(): void {
     this.inFlight = Math.max(0, this.inFlight - 1);
     const next = this.queue.shift();
@@ -1347,21 +1170,16 @@ export class SeedContext {
     }
   }
 
-  /**
-   * @description Appends raw text to the HTTP event log file synchronously.
-   * @param {string} content - Text content to append.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   private logRaw(content: string): void {
     appendFileSync(this.logFilePath, content, 'utf8');
   }
 
-  /**
-   * @description Formatea and appends a structured HTTP event entry to the log file.
-   * Each entry includes method, path, payload, status code, response body, and error details.
-   * @param {{ method: string; path: string; payload?: unknown; statusCode?: number; responseBody?: unknown; error?: string }} event - Event data to log.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   private logEvent(event: {
     method: string;
     path: string;
@@ -1381,20 +1199,16 @@ export class SeedContext {
     this.logRaw(`${lines.join('\n')}\n`);
   }
 
-  /**
-   * @description Delegates to `seedSafeStringify` to convert a value to a log-safe string.
-   * @param {unknown} value - Value to stringify.
-   * @returns {string} String representation safe for log output.
-   */
+        /**
+     * Documentación en español.
+     */
   private safeStringify(value: unknown): string {
     return seedSafeStringify(value);
   }
 
-  /**
-   * @description Returns a deterministic ISO timestamp for the current log event,
-   * advancing the internal `logEventCursor` counter with each call.
-   * @returns {string} ISO 8601 timestamp string derived from the seed reference date and cursor.
-   */
+        /**
+     * Documentación en español.
+     */
   private nextLogTimestamp(): string {
     const timestamp = seedDateIso(0, this.logEventCursor);
     this.logEventCursor += 1;

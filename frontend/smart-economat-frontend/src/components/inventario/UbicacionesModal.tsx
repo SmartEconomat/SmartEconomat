@@ -19,21 +19,20 @@ import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
-/** Props del componente {@link UbicacionesModal}. */
+/**
+ * Documentación en español.
+ */
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Se dispara cada vez que se añade o elimina una ubicación. */
+        /**
+     * Documentación en español.
+     */
   onChanged: () => void;
 }
 
 /**
- * Diálogo modal para gestionar ubicaciones del almacén.
- *
- * Permite añadir nuevas ubicaciones por nombre y eliminar las existentes.
- * La lista se recarga desde la API cada vez que el modal se abre.
- *
- * @param props - {@link Props}
+ * Documentación en español.
  */
 const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
@@ -42,10 +41,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const toast = useToast();
   const { t } = useTranslation();
 
-  /**
-   * Obtiene todas las ubicaciones desde la API y actualiza el estado local.
-   * Muestra un toast de error en caso de fallo.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadUbicaciones = async () => {
     setLoading(true);
     try {
@@ -68,10 +66,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  /**
-   * Crea una nueva ubicación con el valor actual de `newNombre`.
-   * Recarga la lista y notifica al componente padre en caso de éxito.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleAdd = async () => {
     if (!newNombre.trim()) return;
     try {
@@ -86,12 +83,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     }
   };
 
-  /**
-   * Elimina la ubicación identificada por `id`.
-   * Recarga la lista y notifica al componente padre en caso de éxito.
-   *
-   * @param id - UUID de la ubicación a eliminar.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDelete = async (id: string) => {
     try {
       await UbicacionService.remove(id);

@@ -12,11 +12,15 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/main/services/__tests__/**/*.test.ts", "test/**/*.test.ts"],
+    include: ["src/main/services/__tests__        /**
+     * Documentación en español.
+     */*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      include: ["src/main/services/**/*.ts", "src/main/security/**/*.ts"],
+      include: ["src/main/services            /**
+       * Documentación en español.
+       */*.ts"],
       exclude: ["src/main/services/**/__tests__/**"],
     },
   },

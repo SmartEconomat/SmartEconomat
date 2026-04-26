@@ -1,0 +1,382 @@
+{
+  "tutorial": {
+    "routes": {
+      "common": {
+        "help": {
+          "title": "Tutorial de Página",
+          "description": "¿Necesitas ayuda? Haz clic aquí en cualquier momento para iniciar un tutorial interactivo que te explicará paso a paso cómo usar la página actual."
+        }
+      },
+      "root": {
+        "s0": {
+          "title": "¡Bienvenido a Smart Economat!",
+          "description": "Este es tu panel central. Desde aquí tendrás una visión global de todo lo que ocurre en el economato en tiempo real."
+        },
+        "s1": {
+          "title": "Menú de Navegación",
+          "description": "Utiliza la barra lateral para moverte entre las diferentes áreas del sistema. El menú se adapta según tu dispositivo."
+        },
+        "s2": {
+          "title": "Estado del Economato",
+          "description": "Vigila tus KPIs más importantes: stock bajo mínimo, pedidos pendientes e incidencias activas de un vistazo."
+        },
+        "s3": {
+          "title": "Acciones Rápidas",
+          "description": "¿Necesitas crear un pedido o añadir un producto? Accede a las funciones más frecuentes sin navegar por los menús."
+        },
+        "s4": {
+          "title": "Centro de Notificaciones",
+          "description": "Vigila las alertas críticas del sistema: roturas de stock, nuevos usuarios pendientes o discrepancias urgentes."
+        },
+        "s5": {
+          "title": "Actividad Reciente",
+          "description": "Mantente al día con el historial de movimientos de stock y operaciones realizadas recientemente."
+        },
+        "s6": {
+          "title": "Tu Perfil y Preferencias",
+          "description": "Gestiona tus datos personales y notificaciones. Aquí también podrás encontrar esta ayuda cuando la necesites."
+        }
+      },
+      "productos": {
+        "s0": {
+          "title": "Búsqueda Inteligente",
+          "description": "Escribe el nombre, marca o código de barras para localizar productos. ¡Incluso puedes usar el escáner!"
+        },
+        "s1": {
+          "title": "Filtros Avanzados",
+          "description": "Refina tu búsqueda seleccionando categorías específicas para encontrar exactamente lo que necesitas."
+        },
+        "s2": {
+          "title": "Ordenado de Datos",
+          "description": "Pulsa sobre las cabeceras de las columnas para ordenar la lista de forma ascendente o descendente."
+        },
+        "s3": {
+          "title": "Alta de Productos",
+          "description": "Añade nuevos artículos al catálogo. El sistema intentará autocompletar datos si usas el escáner."
+        },
+        "s4": {
+          "title": "Exportación a PDF",
+          "description": "Genera documentos listos para imprimir con el listado actual y sus precios."
+        },
+        "s5": {
+          "title": "Reportes Excel",
+          "description": "Descarga toda la información técnica para trabajarla de forma externa."
+        },
+        "s6": {
+          "title": "Acciones Rápidas",
+          "description": "Desde aquí puedes editar, eliminar o restaurar productos de forma individual."
+        }
+      },
+      "proveedores": {
+        "s0": {
+          "title": "Buscador de Proveedores",
+          "description": "Encuentra cualquier proveedor por su nombre, NIF, persona de contacto o email."
+        },
+        "s1": {
+          "title": "Ordenado Inteligente",
+          "description": "Organiza la lista alfabéticamente por razón social o por cualquier otro campo de contacto."
+        },
+        "s2": {
+          "title": "Registro de Proveedor",
+          "description": "Añade nuevos proveedores a tu catálogo para poder gestionar sus pedidos y productos."
+        },
+        "s3": {
+          "title": "Exportación PDF",
+          "description": "Genera un documento PDF con el listado completo de tus proveedores y sus datos de contacto."
+        },
+        "s4": {
+          "title": "Reporte Excel",
+          "description": "Descarga la base de datos de proveedores para análisis externos o gestión administrativa."
+        },
+        "s5": {
+          "title": "Gestión Individual",
+          "description": "Consulta fichas detalladas, edita información o elimina proveedores directamente desde la fila."
+        }
+      },
+      "recetas": {
+        "s0": {
+          "title": "Inspiración Culinaria",
+          "description": "Explora nuestras sugerencias destacadas y platos de temporada en este carrusel visual."
+        },
+        "s1": {
+          "title": "Buscador de Recetas",
+          "description": "Encuentra cualquier plato por su nombre, ingredientes o incluso por pasos de su elaboración."
+        },
+        "s2": {
+          "title": "Ordenado Ágil",
+          "description": "Organiza tu recetario por dificultad, tiempo de preparación o nombre según necesites."
+        },
+        "s3": {
+          "title": "Creación de Recetas",
+          "description": "Registra nuevas elaboraciones detallando ingredientes, pasos y costes estimados."
+        },
+        "s4": {
+          "title": "¡A Cocinar!",
+          "description": "Usa el botón de preparación para lanzar producciones al instante. También puedes ver fichas técnicas completas."
+        }
+      },
+      "pedidos": {
+        "s0": {
+          "title": "Centro de Pedidos",
+          "description": "Alterna entre tus pedidos personales, el listado global del centro o la gestión de compras a proveedores."
+        },
+        "s1": {
+          "title": "Nuevo Pedido",
+          "description": "Inicia una solicitud de artículos. El sistema te permite buscar y añadir productos de forma ágil."
+        },
+        "s2": {
+          "title": "Recuperar Borradores",
+          "description": "Si dejas un pedido a medias, podrás continuarlo aquí sin perder los productos que ya habías añadido."
+        },
+        "s3": {
+          "title": "Seguimiento del Flujo",
+          "description": "Aquí verás el estado de cada pedido (Pendiente, En Proceso, Recibido) y podrás gestionar sus detalles."
+        },
+        "s4": {
+          "title": "Control por PDF",
+          "description": "Genera listados consolidados para revisar las necesidades de compra del periodo."
+        },
+        "s5": {
+          "title": "Exportación Excel",
+          "description": "Descarga toda la información detallada para trabajarla en hojas de cálculo externas."
+        }
+      },
+      "recepciones": {
+        "s0": {
+          "title": "Asistente de Recepción",
+          "description": "Sigue estos 4 pasos guiados para registrar la entrada de mercancía de forma precisa y organizada."
+        },
+        "s1": {
+          "title": "Borrador Seguro",
+          "description": "Tu progreso se sincroniza automáticamente en la nube. Puedes empezar en un PC y terminar en una Tablet sin perder datos."
+        },
+        "s2": {
+          "title": "Recepción Inteligente",
+          "description": "Escanea el código de barras o busca por nombre para identificar los productos que estás recibiendo."
+        },
+        "s3": {
+          "title": "Conectividad con Báscula",
+          "description": "Si tienes una báscula compatible, conéctala vía USB para capturar pesos automáticamente en tiempo real."
+        },
+        "s4": {
+          "title": "Pasos del Proceso",
+          "description": "Usa los botones de navegación para avanzar entre la selección de pedidos, el conteo y la revisión final."
+        }
+      },
+      "distribucion": {
+        "s0": {
+          "title": "Gestión de Entregas",
+          "description": "Alterna entre los pedidos listos para ser entregados y el historial de distribuciones realizadas."
+        },
+        "s1": {
+          "title": "Búsqueda Rápida",
+          "description": "Localiza entregas específicas buscando por número de pedido, nombre de usuario o aula de destino."
+        },
+        "s2": {
+          "title": "Listado de Pendientes",
+          "description": "Aquí verás todos los productos que ya han sido recepcionados en el almacén y están esperando a ser llevados a su destino final."
+        },
+        "s3": {
+          "title": "Iniciar Entrega",
+          "description": "Haz clic aquí para abrir el asistente de entrega, donde podrás elegir la ubicación destino y las cantidades a traspasar."
+        },
+        "s4": {
+          "title": "Confirmación de Recepción",
+          "description": "Una vez entregada la mercancía, el destinatario debe confirmar la recepción desde el historial para formalizar el movimiento de stock."
+        }
+      },
+      "preparaciones": {
+        "s0": {
+          "title": "Bolsa de Preparaciones",
+          "description": "Aquí gestionas todo lo que sale de cocina. Controla el stock de platos elaborados listos para servir o distribuir."
+        },
+        "s1": {
+          "title": "Estado de Producción",
+          "description": "Cambia entre las preparaciones disponibles en este momento y el historial de aquellas que ya se han agotado."
+        },
+        "s2": {
+          "title": "Registro de Consumo",
+          "description": "Usa este botón cuando envíes raciones al comedor o realices una entrega. El sistema descontará automáticamente el stock del lote."
+        },
+        "s3": {
+          "title": "Gestión de Mermas",
+          "description": "Si se estropea una ración o hay un error en el servicio, regístralo aquí para mantener el inventario cuadrado."
+        },
+        "s4": {
+          "title": "Control Detallado",
+          "description": "Consulta la ficha técnica de la preparación, incluyendo costes reales y fechas de caducidad."
+        }
+      },
+      "albaranes": {
+        "s0": {
+          "title": "Gestión de Albaranes",
+          "description": "En esta sección puedes digitalizar y administrar los albaranes de entrega de tus proveedores."
+        },
+        "s1": {
+          "title": "Registro Manual",
+          "description": "¿No tienes el albarán digitalizado? Créalo manualmente aquí para vincularlo después a tus recepciones."
+        },
+        "s2": {
+          "title": "Almacenamiento Digital",
+          "description": "Sube una foto o PDF del albarán físico para tener siempre el respaldo documental a un clic."
+        },
+        "s3": {
+          "title": "Control de Concordancia",
+          "description": "Verifica de un vistazo si la mercancía recibida coincide con lo indicado en el papel del proveedor."
+        },
+        "s4": {
+          "title": "Historial y Consulta",
+          "description": "Accede al detalle completo para ver qué productos específicos venían en este envío."
+        }
+      },
+      "inventario": {
+        "s0": {
+          "title": "Gestión de Inventario",
+          "description": "Aquí puedes ver y administrar todo el stock disponible en el economato de forma centralizada."
+        },
+        "s1": {
+          "title": "Entrada de Stock",
+          "description": "Utiliza este botón para añadir productos al inventario manualmente si no vienen de un pedido previo."
+        },
+        "s2": {
+          "title": "Configuración de Almacén",
+          "description": "Define y gestiona las estanterías, cámaras y zonas de almacenamiento de tu centro."
+        },
+        "s3": {
+          "title": "Búsqueda e IA",
+          "description": "Busca productos por nombre o usa el escáner de códigos de barras para una gestión mucho más ágil."
+        },
+        "s4": {
+          "title": "Filtros Inteligentes",
+          "description": "Refina la lista por categorías de producto o por ubicaciones específicas para encontrar lo que necesitas."
+        },
+        "s5": {
+          "title": "Ubicaciones y Slots",
+          "description": "Cambia entre la vista global y tus zonas asignadas para ver solo lo que te pertenece."
+        },
+        "s6": {
+          "title": "Acciones de Control",
+          "description": "Desde la tabla podrás ajustar el stock por mermas o auditar los lotes y fechas de caducidad de cada producto."
+        }
+      },
+      "movimientos": {
+        "s0": {
+          "title": "Historial de Movimientos",
+          "description": "Aquí queda registrado cada cambio en el stock: entradas, salidas, mermas y ajustes manuales."
+        },
+        "s1": {
+          "title": "Filtrado por Tipo",
+          "description": "Busca movimientos específicos filtrando por fecha o por el tipo de operación (ej. solo mermas o solo entradas)."
+        },
+        "s2": {
+          "title": "Trazabilidad",
+          "description": "Revisa de un vistazo qué usuario realizó la acción, qué producto se vio afectado y la cantidad exacta."
+        },
+        "s3": {
+          "title": "Detalles de Auditoría",
+          "description": "Accede al detalle completo para ver el lote afectado y, si el movimiento viene de un pedido o distribución, ir directo a su origen."
+        }
+      },
+      "mermas": {
+        "s0": {
+          "title": "Gestión de Mermas",
+          "description": "Desde aquí controlarás todas las pérdidas de stock no planificadas en el inventario."
+        },
+        "s1": {
+          "title": "Reportar Merma",
+          "description": "Registra mermas por rotura, caducidad o robo. Recuerda que esta acción descuenta stock de forma permanente."
+        },
+        "s2": {
+          "title": "Estadísticas de Impacto",
+          "description": "Consulta de un vistazo el volumen total de pérdidas y los motivos más frecuentes para tomar medidas."
+        },
+        "s3": {
+          "title": "Historial de Mermas",
+          "description": "Toda merma queda auditada. Revisa el historial para ver quién reportó la pérdida y el motivo detallado."
+        }
+      },
+      "incidencias": {
+        "s0": {
+          "title": "Centro de Incidencias",
+          "description": "Aquí se centralizan todas las discrepancias detectadas durante la recepción de mercancía."
+        },
+        "s1": {
+          "title": "Reportes y Exportación",
+          "description": "Genera listados oficiales en PDF o Excel para reclamaciones a proveedores o auditorías internas."
+        },
+        "s2": {
+          "title": "Filtrado por Estado",
+          "description": "Organiza tu trabajo separando lo que está pendiente de revisión de aquello que ya ha sido resuelto."
+        },
+        "s3": {
+          "title": "Trazabilidad de Problemas",
+          "description": "Consulta el detalle de qué faltó o qué llegó de más en cada pedido para tomar la decisión correcta."
+        },
+        "s4": {
+          "title": "Ajuste de Discrepancias",
+          "description": "Corrige las cantidades reales recibidas si hubo un error en la toma de datos inicial."
+        },
+        "s5": {
+          "title": "Resolución Final",
+          "description": "Al resolver, el sistema ajustará automáticamente el inventario y cerrará el ciclo de la discrepancia."
+        }
+      },
+      "administracion": {
+        "s0": {
+          "title": "Administración Académica",
+          "description": "Desde este centro de control gestionarás la estructura organizativa del economato y los accesos al sistema."
+        },
+        "s1": {
+          "title": "Módulos de Gestión",
+          "description": "Navega entre la gestión de aulas, el listado de alumnos vinculados, la administración de usuarios y las plantillas de roles."
+        },
+        "s2": {
+          "title": "Control de Usuarios",
+          "description": "Administra cuentas, restablece contraseñas y asigna roles específicos a cada miembro del equipo."
+        },
+        "s3": {
+          "title": "Modo Gestión",
+          "description": "Activa este modo para editar nombres de aulas, capacidades o asignar profesores a clases específicas."
+        }
+      },
+      "perfilProfesor": {
+        "s0": {
+          "title": "Perfil de usuario",
+          "description": "Desde esta tarjeta puedes revisar y editar tus datos personales básicos."
+        },
+        "s1": {
+          "title": "Seguridad y contraseña",
+          "description": "Puedes cambiar tu nombre de usuario y contraseña. El cambio de email requiere autorización de un rol superior."
+        }
+      },
+      "perfilAlumno": {
+        "s0": {
+          "title": "Perfil de usuario",
+          "description": "Aquí puedes consultar tu información personal."
+        }
+      },
+      "default": {
+        "s0": {
+          "title": "Navegación",
+          "description": "Usa el menú lateral para moverte entre las diferentes secciones asignadas a tu rol."
+        },
+        "s1": {
+          "title": "Tu Cuenta",
+          "description": "Gestiona tu perfil, preferencias de tema y cierra sesión desde el menú superior."
+        }
+      }
+    },
+    "ui": {
+      "omitirTourAria": "Omitir tour",
+      "finalizar": "Finalizar",
+      "siguiente": "Siguiente",
+      "atras": "Atrás",
+      "saltarTodo": "Saltar todo el tutorial",
+      "tooltipTitulo": "Tutorial",
+      "tooltipDescList": "Iniciar tutorial interactivo por este módulo",
+      "tooltipDescIcon": "Iniciar tutorial interactivo",
+      "ariaIniciar": "Iniciar tutorial",
+      "listPrimary": "Tutorial"
+    }
+  }
+}

@@ -4,8 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file incidencias.e2e-spec.ts
- * @description Pruebas de integración E2E para el controlador de Incidencias.
+ * Documentación en español.
  */
 describe('IncidenciaController (e2e)', () => {
   jest.setTimeout(20000);

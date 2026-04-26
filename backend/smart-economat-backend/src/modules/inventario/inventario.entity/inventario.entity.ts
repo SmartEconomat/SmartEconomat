@@ -6,17 +6,7 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 /**
- * Entidad Inventario
- *
- * Representa el stock físico de un ProductoProveedor en una ubicación específica.
- * Controla las cantidades actuales, mínimas y máximas, así como la caducidad.
- *
- * Características de integridad:
- * - Version column para concurrencia optimista (alta contención en actualizaciones de stock).
- * - CHECK constraints para asegurar cantidades no negativas y coherencia (max >= min).
- *
- * @class Inventario
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'inventario' })
 @Index(['productoProveedorId'])
@@ -27,19 +17,21 @@ import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 @Check(`"cantidad_minima" >= 0`)
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
 export class Inventario extends BaseEntity {
-  /** Foreign key referencing the ProductoProveedor whose stock this row represents. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-  /** Foreign key referencing the Ubicacion where this stock lot is stored. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'ubicacion_id' })
   ubicacionId!: string;
 
-  /**
-   * ProductoProveedor asociado al inventario.
-   * Representa qué producto concreto (de qué proveedor) está almacenado.
-   * Constraint: RESTRICT evita orphan records si se intenta borrar el proveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -47,12 +39,9 @@ export class Inventario extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
-  /**
-   * Cantidad actual disponible en esta ubicación.
-   * Se actualiza automáticamente mediante Recepciones o Movimientos.
-   * Constraint: No puede ser negativa (CHECK >= 0).
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -62,11 +51,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadActual!: number;
 
-  /**
-   * Cantidad mínima deseada (Stock de Seguridad).
-   * Utilizada para generar alertas de reabastecimiento.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -76,11 +63,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadMinima!: number;
 
-  /**
-   * Capacidad máxima de almacenamiento en esta ubicación.
-   * Constraint: Debe ser mayor o igual a la cantidad mínima.
-   * @type {number | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -91,10 +76,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadMaxima?: number | null;
 
-  /**
-   * Ubicación física dentro del almacén.
-   * Modificado para ser dinámico gestionado en BDD en lugar de enum.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Ubicacion, (ubicacion) => ubicacion.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -102,10 +86,9 @@ export class Inventario extends BaseEntity {
   @JoinColumn({ name: 'ubicacion_id' })
   ubicacion!: Relation<Ubicacion>;
 
-  /**
-   * Fecha en la que este lote entró al inventario.
-   * @type {Date}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -113,12 +96,9 @@ export class Inventario extends BaseEntity {
   })
   fechaEntrada!: Date;
 
-  /**
-   * Fecha de caducidad de este lote específico.
-   * Fundamental para la rotación de stock (FEFO - First Expired, First Out).
-   * Opcional: no todos los productos tienen fecha de caducidad relevante.
-   * @type {Date | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -128,13 +108,9 @@ export class Inventario extends BaseEntity {
 
   /* --- Métodos de Dominio --- */
 
-  /**
-   * Ajusta la cantidad actual de stock de forma segura.
-   * Lanza un error si el stock resultante sería negativo.
-   *
-   * @param {number} delta - Cantidad a sumar (positiva) o restar (negativa).
-   * @throws {Error} Si el stock resultante es menor a 0.
-   */
+        /**
+     * Documentación en español.
+     */
   ajustarCantidad(delta: number): void {
     this.cantidadActual = Number(this.cantidadActual) + delta;
     if (this.cantidadActual < 0) {
@@ -144,21 +120,16 @@ export class Inventario extends BaseEntity {
     }
   }
 
-  /**
-   * Verifica si el stock actual está por debajo del nivel mínimo (punto de pedido).
-   * @returns {boolean} True si se debe reabastecer.
-   */
+        /**
+     * Documentación en español.
+     */
   esBajoStock(): boolean {
     return Number(this.cantidadActual) < Number(this.cantidadMinima);
   }
 
-  /**
-   * Verifica si el lote está próximo a caducar dentro de un umbral de días.
-   * Utilizado para alertas de caducidad próxima.
-   *
-   * @param {number} [diasUmbral=7] - Número de días de margen.
-   * @returns {boolean} True si caduca en 'diasUmbral' o menos (o ya ha caducado).
-   */
+        /**
+     * Documentación en español.
+     */
   proximoACaducar(diasUmbral: number = 7): boolean {
     if (!this.fechaCaducidad) return false;
     const umbralFecha = new Date();

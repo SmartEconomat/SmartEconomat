@@ -3,41 +3,47 @@ import { Box, Autocomplete, TextField, Chip } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { TipoMovimiento } from '../../services/movimiento.types';
 import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 /**
- * Represents the current state of the movimiento filter controls.
+ * Documentación en español.
  */
 export interface MovimientoFiltersState {
-  /** Array of movement types to filter by (empty means show all types). */
+        /**
+     * Documentación en español.
+     */
   types: TipoMovimiento[];
-  /** ISO date string for the start of the date range, or null if not set. */
+        /**
+     * Documentación en español.
+     */
   startDate: string | null;
-  /** ISO date string for the end of the date range, or null if not set. */
+        /**
+     * Documentación en español.
+     */
   endDate: string | null;
 }
 
 /**
- * Props for the {@link MovimientoFilters} component.
+ * Documentación en español.
  */
 interface MovimientoFiltersProps {
-  /** Current filter values. */
+        /**
+     * Documentación en español.
+     */
   filters: MovimientoFiltersState;
-  /** Callback invoked whenever any filter value changes. */
+        /**
+     * Documentación en español.
+     */
   onChange: (filters: MovimientoFiltersState) => void;
 }
 
-/** All available movement type values derived from the TipoMovimiento enum. */
+/**
+ * Documentación en español.
+ */
 const MOVIMIENTO_TYPES = Object.values(TipoMovimiento);
 
 /**
- * Filter toolbar for the movimientos list.
- * Provides a multi-select autocomplete for movement types and two date
- * pickers for the date range.
- *
- * @param {MovimientoFiltersProps} props - Component props.
- * @returns JSX rendered filter toolbar.
- * @example
- * <MovimientoFilters filters={filters} onChange={setFilters} />
+ * Documentación en español.
  */
 const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   filters,
@@ -45,23 +51,19 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  /**
-   * Handles changes to the movement-type multi-select autocomplete.
-   *
-   * @param _ - Unused synthetic event.
-   * @param newValue - The updated array of selected movement types.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleTypeChange = (_: any, newValue: TipoMovimiento[]) => {
+        /**
+     * Documentación en español.
+     */
+  const handleTypeChange = (
+    _: React.SyntheticEvent,
+    newValue: TipoMovimiento[]
+  ) => {
     onChange({ ...filters, types: newValue });
   };
 
-  /**
-   * Returns a change handler for a date field.
-   *
-   * @param field - Which date field to update ('startDate' or 'endDate').
-   * @returns An input change handler that updates the specified date field.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,9 +86,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
         options={MOVIMIENTO_TYPES}
         value={filters.types}
         onChange={handleTypeChange}
-        getOptionLabel={(option) =>
-          option.charAt(0).toUpperCase() + option.slice(1).replace('_', ' ')
-        }
+        getOptionLabel={(option) => getEnumLabel(t, 'movimientoTipo', option)}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -110,7 +110,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip
-              label={option.replace('_', ' ')}
+              label={getEnumLabel(t, 'movimientoTipo', option)}
               size="small"
               {...getTagProps({ index })}
               sx={{

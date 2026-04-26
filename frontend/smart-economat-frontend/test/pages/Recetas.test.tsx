@@ -155,7 +155,7 @@ describe('Recetas toolbar batch actions', () => {
     ).toBe(true);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /seleccionar recetas/i })
+      screen.getAllByRole('button', { name: /seleccionar recetas/i })[0]
     );
 
     await waitFor(() => {
@@ -177,7 +177,7 @@ describe('Recetas toolbar batch actions', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: /seleccionar recetas/i })
+      screen.getAllByRole('button', { name: /seleccionar recetas/i })[0]
     );
 
     const createOrderButton = await screen.findByRole('button', {

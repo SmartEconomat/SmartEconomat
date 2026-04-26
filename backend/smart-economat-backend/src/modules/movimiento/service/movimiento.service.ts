@@ -45,29 +45,9 @@ export class MovimientoService {
     }
   }
 
-  /**
-   * Obtiene el historial de movimientos de un producto o usuario.
-   *
-   * @param dto - DTOs con filtros (entityId, userId, type, startDate, endDate, sortBy, sortOrder)
-   * @returns Array de movimientos ordenados cronológicamente
-   * @throws BadRequestException si no proporciona entityId o userId
-   * @throws NotFoundException si no hay movimientos que coincidan
-   * @throws ForbiddenException si intenta acceder a datos no autorizados
-   *
-   * @example
-   *
-   * getMovimientoHistory({ entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5' })
-   *
-   *
-   * getMovimientoHistory({
-   *   entityId: '019c9b4f-74f8-7a6e-8b5b-96191c30c1e5',
-   *   type: 'ENTRADA',
-   *   startDate: '2026-01-01',
-   *   endDate: '2026-02-28',
-   *   sortBy: 'createdAt',
-   *   sortOrder: 'DESC'
-   * })
-   */
+        /**
+     * Documentación en español.
+     */
   async getMovimientoHistory(
     dto: MovimientoHistoryDto
   ): Promise<PaginatedResponseDto<Movimiento>> {

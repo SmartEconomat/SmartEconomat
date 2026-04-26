@@ -1,7 +1,7 @@
 import { StringToBooleanTransformer } from '../../../src/common/transformers/string-to-boolean.transformer';
 
 /**
- * Tests Unitarios de StringToBooleanTransformer
+ * Documentación en español.
  */
 describe('StringToBooleanTransformer', () => {
   describe('transform()', () => {

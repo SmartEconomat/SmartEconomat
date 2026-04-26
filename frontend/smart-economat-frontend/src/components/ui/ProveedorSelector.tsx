@@ -16,6 +16,7 @@ import { Proveedor } from '../../services/proveedor.types';
 import QuickProveedorModal from './QuickProveedorModal';
 import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
+import { useTranslation } from 'react-i18next';
 
 export interface ProveedorAsociado {
   proveedorId: string;
@@ -44,6 +45,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   masterMarca = '',
   masterBarcode = '',
 }) => {
+  const { t } = useTranslation();
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
 
@@ -99,7 +101,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mt: 1 }}>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Proveedores y Condiciones
+        {t('proveedores.condicionesLabel')}
       </Typography>
 
       <Autocomplete
@@ -111,10 +113,10 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Añadir Proveedor"
+            label={t('proveedores.acciones.anadir')}
             variant="outlined"
             size="small"
-            placeholder="Buscar proveedor..."
+            placeholder={t('proveedores.selectorInline.placeholderBuscar')}
             slotProps={{
               inputLabel: {
                 shrink: true,
@@ -125,7 +127,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                   <React.Fragment>
                     {canCreate && !disabled && (
                       <InputAdornment position="end" sx={{ mr: 1 }}>
-                        <Tooltip title="Crear Nuevo Proveedor">
+                        <Tooltip title={t('proveedores.selectorInline.tooltipCrearRapido')}>
                           <IconButton
                             size="small"
                             color="primary"
@@ -159,7 +161,9 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
               disabled={disabled}
               onClick={() => handleRemove(prov.proveedorId)}
               sx={{ position: 'absolute', top: 8, right: 8 }}
-              aria-label={`Eliminar proveedor ${prov.nombre || ''}`}
+              aria-label={t('proveedores.eliminarAria', {
+                nombre: prov.nombre || '',
+              })}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -171,16 +175,20 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
             >
               {prov.nombre ||
                 proveedores.find((p) => p.id === prov.proveedorId)?.nombre ||
-                'Proveedor Desconocido'}
+                t('proveedores.nombreDesconocido')}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                label="Marca"
+                label={t('proveedores.campoMarca')}
                 size="small"
                 value={prov.marca || ''}
                 placeholder={
-                  masterMarca ? `Ej: ${masterMarca}` : 'Marca específica'
+                  masterMarca
+                    ? t('proveedores.selectorInline.ejemplo', {
+                        valor: masterMarca,
+                      })
+                    : t('proveedores.selectorInline.marcaPlaceholder')
                 }
                 onChange={(e) =>
                   handleChangeField(prov.proveedorId, 'marca', e.target.value)
@@ -190,11 +198,15 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 fullWidth
               />
               <TextField
-                label="Código Barras Prov."
+                label={t('proveedores.campoCodigoBarras')}
                 size="small"
                 value={prov.codigoBarras || ''}
                 placeholder={
-                  masterBarcode ? `Ej: ${masterBarcode}` : 'Ref. específica'
+                  masterBarcode
+                    ? t('proveedores.selectorInline.ejemplo', {
+                        valor: masterBarcode,
+                      })
+                    : t('proveedores.selectorInline.codigoPlaceholder')
                 }
                 onChange={(e) =>
                   handleChangeField(
@@ -208,7 +220,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 fullWidth
               />
               <TextField
-                label="Precio Compra"
+                label={t('proveedores.campoPrecioCompra')}
                 size="small"
                 type="number"
                 slotProps={{

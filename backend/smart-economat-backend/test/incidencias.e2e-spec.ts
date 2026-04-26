@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Interface simple para tipar respuestas del API en tests.
+ * Documentación en español.
  */
 interface TestApiResponse<T = any> {
   success: boolean;
@@ -13,8 +13,7 @@ interface TestApiResponse<T = any> {
 }
 
 /**
- * @file incidencias.e2e-spec.ts
- * @description Pruebas de integración E2E para el controlador de Incidencias.
+ * Documentación en español.
  */
 describe('IncidenciaController (e2e)', () => {
   jest.setTimeout(20000);

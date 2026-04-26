@@ -18,13 +18,7 @@ export type ProductOutput = {
 };
 
 /**
- * Use case that encapsulates the business logic for creating a new product.
- * Validates the product name, delegates persistence to the repository, and
- * returns a minimal output object. This class serves as a reference example
- * for incremental migration to the DDD application layer.
- *
- * @class CreateProductUseCase
- * @implements {UseCase<CreateProductInput, ProductOutput>}
+ * Documentación en español.
  */
 export class CreateProductUseCase implements UseCase<
   CreateProductInput,

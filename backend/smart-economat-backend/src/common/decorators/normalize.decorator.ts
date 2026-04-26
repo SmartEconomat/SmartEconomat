@@ -8,39 +8,11 @@ import { StringToDateTransformer } from '../transformers/string-to-date.transfor
 import { NormalizeArrayTransformer } from '../transformers/normalize-array.transformer';
 
 /**
- * Decoradores de Normalización
- *
- * Facilitan la aplicación de transformaciones comunes en DTOs.
- *
- * @example
- *
- * export class CreateProductoDto {
- *   @NormalizeString()
- *   nombre: string;
- *
- *   @NormalizeString({ uppercase: true })
- *   codigo: string;
- *
- *   @NormalizeString({ lowercase: true })
- *   email: string;
- *
- *   @NormalizeNumber()
- *   precio: number;
- *
- *   @NormalizeBoolean()
- *   activo: boolean;
- *
- *   @NormalizeDate()
- *   fechaCaducidad: Date;
- *
- *   @NormalizeArray()
- *   tags: string[];
- * }
+ * Documentación en español.
  */
 
 /**
- * Normaliza un string con opciones configurables.
- * Por defecto aplica trim.
+ * Documentación en español.
  */
 export function NormalizeString(options?: {
   trim?: boolean;
@@ -71,54 +43,49 @@ export function NormalizeString(options?: {
 }
 
 /**
- * Normaliza un string haciendo trim automático.
- * Alias para NormalizeString({ trim: true }).
+ * Documentación en español.
  */
 export function Trim(): PropertyDecorator {
   return Transform((params) => TrimStringTransformer.transform(params));
 }
 
 /**
- * Normaliza un string a mayúsculas con trim.
+ * Documentación en español.
  */
 export function ToUppercase(): PropertyDecorator {
   return Transform((params) => UppercaseStringTransformer.transform(params));
 }
 
 /**
- * Normaliza un string a minúsculas con trim.
+ * Documentación en español.
  */
 export function ToLowercase(): PropertyDecorator {
   return Transform((params) => LowercaseStringTransformer.transform(params));
 }
 
 /**
- * Normaliza un valor a número.
- * Convierte strings numéricos a números.
+ * Documentación en español.
  */
 export function NormalizeNumber(): PropertyDecorator {
   return Transform((params) => StringToNumberTransformer.transform(params));
 }
 
 /**
- * Normaliza un valor a booleano.
- * Soporta múltiples formatos: 'true', 'false', '1', '0', 'yes', 'no'.
+ * Documentación en español.
  */
 export function NormalizeBoolean(): PropertyDecorator {
   return Transform((params) => StringToBooleanTransformer.transform(params));
 }
 
 /**
- * Normaliza un valor a Date.
- * Soporta ISO 8601, timestamps, y strings de fecha.
+ * Documentación en español.
  */
 export function NormalizeDate(): PropertyDecorator {
   return Transform((params) => StringToDateTransformer.transform(params));
 }
 
 /**
- * Normaliza un array.
- * Convierte strings separados por comas a arrays, aplica trim a elementos.
+ * Documentación en español.
  */
 export function NormalizeArray(): PropertyDecorator {
   return Transform(

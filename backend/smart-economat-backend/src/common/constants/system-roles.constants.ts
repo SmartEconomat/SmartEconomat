@@ -1,8 +1,5 @@
 /**
- * Constantes de roles del sistema.
- *
- * Estos nombres corresponden a los roles creados por las migraciones base.
- * Usar siempre estas constantes en vez de strings literales.
+ * Documentación en español.
  */
 export const SYSTEM_ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
@@ -13,13 +10,17 @@ export const SYSTEM_ROLES = {
 
 export type SystemRoleName = (typeof SYSTEM_ROLES)[keyof typeof SYSTEM_ROLES];
 
-/** Roles con bypass total de permisos. */
+/**
+ * Documentación en español.
+ */
 export const ELEVATED_ROLES: readonly SystemRoleName[] = [
   SYSTEM_ROLES.SUPER_ADMIN,
   SYSTEM_ROLES.ADMIN,
 ] as const;
 
-/** Prioridad de roles (mayor índice = mayor prioridad). */
+/**
+ * Documentación en español.
+ */
 export const ROLE_PRIORITY: Record<string, number> = {
   [SYSTEM_ROLES.ALUMNO]: 0,
   [SYSTEM_ROLES.PROFESOR]: 1,

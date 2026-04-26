@@ -1,15 +1,5 @@
 /**
- * Jest globalSetup - runs ONCE in the main Jest process before all workers start.
- *
- * IMPORTANT: This does NOT share memory with test workers.
- * - Do NOT initialize pg-mem here (workers can't see it).
- * - Do NOT run seeders here (workers have separate processes).
- * - ONLY set process.env variables, which ARE inherited by forked workers.
- *
- * The real per-worker setup (pg-mem, TypeORM patch, seeders, app bootstrap)
- * is handled by test/setup/jest.setup.ts via setupFilesAfterEnv.
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 module.exports = (): void => {

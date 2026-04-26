@@ -4,21 +4,21 @@ import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-res
 import { ProcessRunnerService } from "./process-runner.service";
 
 export interface DockerAutostartStatus {
-  /**
-   * Docker Desktop está configurado para iniciar con el sistema operativo
-   */
+        /**
+     * Documentación en español.
+     */
   autoStartEnabled: boolean;
-  /**
-   * Docker Desktop está instalado en el sistema
-   */
+        /**
+     * Documentación en español.
+     */
   dockerDesktopInstalled: boolean;
-  /**
-   * Ruta al ejecutable de Docker Desktop (si se encontró)
-   */
+        /**
+     * Documentación en español.
+     */
   dockerDesktopPath: string | null;
-  /**
-   * Mensaje descriptivo del estado
-   */
+        /**
+     * Documentación en español.
+     */
   message: string;
 }
 
@@ -29,9 +29,7 @@ export interface DockerAutostartConfigResult {
 }
 
 /**
- * Servicio multiplataforma para gestionar el inicio automático de Docker Desktop.
- * Soporta Windows (Registro + Tarea programada + settings.json),
- * macOS (launchctl) y Linux (systemd).
+ * Documentación en español.
  */
 export class DockerAutostartService {
   private readonly processRunner = new ProcessRunnerService();

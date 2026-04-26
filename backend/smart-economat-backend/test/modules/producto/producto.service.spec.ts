@@ -232,4 +232,29 @@ describe('ProductoService', () => {
       { pmp: 4.5 }
     );
   });
+  it('debe usar el precioUnitario como semilla si el PMP anterior es 0', async () => {
+    const mockPP = {
+      id: 'pp-1',
+      pmp: 0,
+      precioUnitario: 10,
+      producto: { id: 'prod-1' },
+    };
+
+    const em = {
+      findOne: jest.fn().mockResolvedValue(mockPP),
+      find: jest.fn().mockResolvedValue([{ cantidadActual: 101 }]),
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+
+    jest.spyOn(service as any, 'recalcularPmpProducto').mockResolvedValue(undefined);
+
+    const pmp = await service.actualizarPMP('pp-1', 1, 20, em as any);
+
+    expect(pmp).toBeCloseTo(10.099, 3);
+    expect(em.update).toHaveBeenCalledWith(
+      ProductoProveedor,
+      { id: 'pp-1' },
+      { pmp: 10.099 }
+    );
+  });
 });

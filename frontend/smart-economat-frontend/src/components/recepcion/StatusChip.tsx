@@ -6,6 +6,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 interface StatusChipProps {
   status: string;
@@ -19,28 +20,30 @@ const StatusChip: React.FC<StatusChipProps> = ({ status }) => {
 
   const cleanStatus = status.replace(/✅|⚠️|🔵|❌|🆕/g, '').trim();
 
-  if (cleanStatus === 'OK') {
+  const normalized = cleanStatus.toUpperCase().replace(/\s+/g, '_');
+
+  if (normalized === 'OK') {
     color = 'success';
     icon = <CheckCircleIcon fontSize="small" />;
     label = t('recepcion.estadoLinea.ok');
-  } else if (cleanStatus === 'Parcial') {
+  } else if (normalized === 'PARCIAL') {
     color = 'warning';
     icon = <WarningAmberIcon fontSize="small" />;
     label = t('recepcion.estadoLinea.parcial');
-  } else if (cleanStatus === 'Exceso') {
+  } else if (normalized === 'EXCESO') {
     color = 'info';
     icon = <InfoOutlinedIcon fontSize="small" />;
     label = t('recepcion.estadoLinea.exceso');
-  } else if (cleanStatus === 'No entregado') {
+  } else if (normalized === 'NO_ENTREGADO') {
     color = 'error';
     icon = <ErrorOutlineIcon fontSize="small" />;
     label = t('recepcion.estadoLinea.noEntregado');
-  } else if (cleanStatus.toLowerCase() === 'nuevo') {
+  } else if (normalized === 'NUEVO') {
     color = 'success';
     icon = <FiberNewIcon fontSize="small" />;
     label = t('recepcion.estadoLinea.nuevo');
   } else {
-    label = cleanStatus;
+    label = getEnumLabel(t, 'pedidoEstado', cleanStatus);
   }
 
   return (

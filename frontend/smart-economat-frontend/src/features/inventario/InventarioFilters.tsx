@@ -44,8 +44,7 @@ const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
 ];
 
 /**
- * Filtros avanzados para la página de Inventario.
- * Permite filtrar por tipo de producto (Categoría) y ubicación física.
+ * Documentación en español.
  */
 const InventarioFilters: React.FC<InventarioFiltersProps> = ({
   filters,

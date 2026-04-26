@@ -31,17 +31,7 @@ const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
 const CONSUMPTION_PORTION_STEP = 0.5;
 
 /**
- * Service that orchestrates recipe-based food production.
- *
- * Responsibilities:
- * - Execute a production run (`ejecutarProduccion`): consumes ingredient stock
- *   using FEFO order and creates an elaborated-product inventory lot.
- * - Validate ingredient availability (`validarProduccion`, `validarMultiple`).
- * - List and retrieve past production lots.
- * - Consume finished lots in full or by portion (`consumirProduccion`).
- *
- * All write operations run inside a single database transaction with automatic
- * rollback on failure.
+ * Documentación en español.
  */
 @Injectable()
 export class ProduccionService {
@@ -52,22 +42,9 @@ export class ProduccionService {
     private readonly dataSource: DataSource
   ) {}
 
-  /**
-   * Executes a production run for a recipe.
-   *
-   * For each ingredient the method consumes the required quantity from existing
-   * inventory lots (FEFO order — nearest expiry first). It then creates a new
-   * `ProduccionLote` inventory entry for the resulting elaborated product.
-   * Waste (`mermaAplicada`) is factored in per ingredient.
-   *
-   * @param dto - Recipe ID, number of portions to produce, and optional notes
-   * @param userId - ID of the user triggering the production run
-   * @param preparacionId - Optional ID of a linked preparación record
-   * @returns The newly created ProduccionLote with stock and movement records
-   * @throws NotFoundException if the recipe does not exist
-   * @throws BadRequestException if the recipe has no yield, no ingredients, or
-   *   the elaborated-product entry is missing a ProductoProveedor
-   */
+        /**
+     * Documentación en español.
+     */
   async ejecutarProduccion(
     dto: EjecutarProduccionDto,
     userId: string,
@@ -349,13 +326,9 @@ export class ProduccionService {
     });
   }
 
-  /**
-   * Returns a paginated list of production lots, optionally filtered by state
-   * and/or recipe name.
-   *
-   * @param query - Pagination, sort, and optional `estado` / recipe name filters
-   * @returns Paginated response with ProduccionLote rows and total count
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<ProduccionLote>> {
@@ -447,22 +420,9 @@ export class ProduccionService {
     };
   }
 
-  /**
-   * Consumes one or more portions from a production lot.
-   *
-   * Supports two modes:
-   * - `'porcion'` — deducts exactly `dto.porciones` portions from the lot
-   * - `'completo'` — deducts all remaining portions and marks the lot as `AGOTADO`
-   *
-   * The lot is locked with a pessimistic write lock to prevent concurrent
-   * over-consumption.
-   *
-   * @param loteId - UUID of the ProduccionLote to consume from
-   * @param dto - Consumption type and optional number of portions
-   * @returns The updated ProduccionLote
-   * @throws NotFoundException if the lot or its recipe does not exist
-   * @throws BadRequestException if the lot is already depleted or has insufficient portions
-   */
+        /**
+     * Documentación en español.
+     */
   async consumirPorciones(
     loteId: string,
     dto: ConsumirProduccionDto
@@ -577,13 +537,9 @@ export class ProduccionService {
     return Number((pasosRedondeados * CONSUMPTION_PORTION_STEP).toFixed(3));
   }
 
-  /**
-   * Returns a single ProduccionLote by ID with recipe and user relations.
-   *
-   * @param id - UUID of the production lot
-   * @returns The ProduccionLote entity
-   * @throws NotFoundException if the lot does not exist or has been soft-deleted
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<ProduccionLote> {
     const lote = await this.dataSource.getRepository(ProduccionLote).findOne({
       where: { id },
@@ -598,17 +554,9 @@ export class ProduccionService {
     return lote;
   }
 
-  /**
-   * Validates ingredient availability for one or more recipe items.
-   *
-   * For each ingredient across all requested recipes, the method aggregates the
-   * required quantity and compares it against current inventory. It also
-   * identifies the cheapest available ProductoProveedor for any shortfall.
-   *
-   * @param dto - Array of `{ recetaId, porciones }` items to validate
-   * @returns Object with an `ingredients` array, each entry containing
-   *   `requerido`, `disponible`, `isEnough`, and cheapest-provider details
-   */
+        /**
+     * Documentación en español.
+     */
   async validarMultiple(dto: ValidarProduccionDto) {
     const recipeIds = dto.items.map((it) => it.recetaId);
     if (recipeIds.length === 0) return { ingredients: [] };

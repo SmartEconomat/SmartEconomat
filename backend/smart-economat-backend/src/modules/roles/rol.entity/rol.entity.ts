@@ -19,39 +19,39 @@ import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/planti
 @Index('idx_rol_activo', ['activo'])
 @Index('idx_rol_plantilla_rol_id', ['plantillaRolId'])
 export class Rol extends BaseEntity {
-  /**
-   * Nombre único del rol (ej: "Administrador de Economato")
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100, unique: true })
   nombre!: string;
 
-  /**
-   * Descripción detallada del rol
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-  /**
-   * Indica si es un rol de sistema (no editable/eliminable)
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: false, name: 'es_sistema' })
   esSistema!: boolean;
 
-  /**
-   * Estado del rol (activo/inactivo)
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  /**
-   * Plantilla base del rol (opcional)
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'uuid', nullable: true, name: 'plantilla_rol_id' })
   plantillaRolId?: string;
 
-  /**
-   * Relación con la plantilla de permisos de referencia
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => PlantillaRol, (plantilla) => plantilla.roles, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -59,11 +59,9 @@ export class Rol extends BaseEntity {
   @JoinColumn({ name: 'plantilla_rol_id' })
   plantillaRol?: Relation<PlantillaRol>;
 
-  /**
-   * Relación ManyToMany con Permiso
-   * Un rol puede tener múltiples permisos
-   * Un permiso puede pertenecer a múltiples roles
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToMany(() => Permiso, (permiso) => permiso.roles, { cascade: false })
   @JoinTable({
     name: 'rol_permiso',

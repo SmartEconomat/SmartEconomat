@@ -34,9 +34,7 @@ const DEFAULT_STATE: GuardianPersistedState = {
 };
 
 /**
- * Servicio de persistencia para el estado del BootGuardian.
- * Almacena el estado en un archivo JSON en %APPDATA%/SmartEconomatInstaller/
- * para que sobreviva a reinicios de la app Electron.
+ * Documentación en español.
  */
 export class GuardianStateService {
   private readonly stateFilePath: string;

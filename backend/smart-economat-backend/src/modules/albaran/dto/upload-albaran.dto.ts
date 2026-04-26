@@ -5,10 +5,7 @@ import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
 /**
- * DTO para la subida de un documento de albarán (foto o PDF).
- *
- * El archivo se envía como multipart/form-data con el campo 'file'.
- * El DTO valida los metadatos que acompañan al archivo.
+ * Documentación en español.
  */
 export class UploadAlbaranDto {
   @ApiProperty({

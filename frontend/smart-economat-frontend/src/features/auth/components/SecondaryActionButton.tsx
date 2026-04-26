@@ -2,10 +2,7 @@ import React from 'react';
 import { Button, ButtonProps } from '@mui/material';
 
 /**
- * Componente SecondaryActionButton
- *
- * Botón con estilo suavizado para acciones secundarias (ej: "Regístrate aquí").
- * Utiliza la variante outlined con un peso visual reducido.
+ * Documentación en español.
  */
 const SecondaryActionButton: React.FC<ButtonProps> = (props) => {
   return (

@@ -4,24 +4,15 @@ import { CreateMovimientoDto } from '../../modules/movimiento/dto/create-movimie
 import { TipoMovimiento } from '../../modules/movimiento/enums/movimiento.enums';
 
 /**
- * Helper service to track movements across all services
- * This ensures that every user action creates a movimiento record
+ * Documentación en español.
  */
 @Injectable()
 export class MovimientoHelper {
   constructor(private readonly movimientoPort: MovimientoPort) {}
 
-  /**
-   * Create a movement record for any user action
-   * @param userId ID of the user performing the action
-   * @param tipo Type of movement (ENTRADA, SALIDA, AJUSTE, etc.)
-   * @param entidad Entity type that caused the movement
-   * @param entidadId ID of the entity that caused the movement
-   * @param cantidad Quantity moved (always positive)
-   * @param inventarioId ID of the inventory item affected
-   * @param productoProveedorId ID of the product provider affected
-   * @param descripcion Optional description of the movement
-   */
+        /**
+     * Documentación en español.
+     */
   async createMovimiento(
     userId: string,
     tipo: TipoMovimiento,
@@ -48,9 +39,9 @@ export class MovimientoHelper {
     return movimiento;
   }
 
-  /**
-   * Helper to create movement for product creation
-   */
+        /**
+     * Documentación en español.
+     */
   async trackProductoCreation(
     userId: string,
     productoId: string,
@@ -68,9 +59,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for product update
-   */
+        /**
+     * Documentación en español.
+     */
   async trackProductoUpdate(
     userId: string,
     productoId: string,
@@ -88,9 +79,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for product restoration
-   */
+        /**
+     * Documentación en español.
+     */
   async trackProductoRestore(
     userId: string,
     productoId: string,
@@ -108,9 +99,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for product deletion
-   */
+        /**
+     * Documentación en español.
+     */
   async trackProductoDeletion(
     userId: string,
     productoId: string,
@@ -128,9 +119,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for inventory operations
-   */
+        /**
+     * Documentación en español.
+     */
   async trackInventarioMovimiento(
     userId: string,
     inventarioId: string,
@@ -153,9 +144,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for pedido operations
-   */
+        /**
+     * Documentación en español.
+     */
   async trackPedidoCreation(
     userId: string,
     pedidoId: string,
@@ -173,9 +164,9 @@ export class MovimientoHelper {
     );
   }
 
-  /**
-   * Helper to create movement for recepcion operations
-   */
+        /**
+     * Documentación en español.
+     */
   async trackRecepcion(
     userId: string,
     recepcionId: string,

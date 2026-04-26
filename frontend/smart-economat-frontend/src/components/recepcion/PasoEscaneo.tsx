@@ -42,68 +42,90 @@ import {
 } from '../../services/recepcion.types';
 
 /**
- * Props for the PasoEscaneo step component.
+ * Documentación en español.
  */
 interface PasoEscaneoProps {
-  /** Ref to the search input element for auto-focus management. */
+        /**
+     * Documentación en español.
+     */
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-  /** Current value of the barcode/ID search field. */
+        /**
+     * Documentación en español.
+     */
   searchQuery: string;
-  /** Setter for the search query string. */
+        /**
+     * Documentación en español.
+     */
   setSearchQuery: (query: string) => void;
-  /** Callback to trigger a product search, optionally with a specific query. */
+        /**
+     * Documentación en español.
+     */
   onSearch: (query?: string | unknown) => void;
-  /** Whether a search is currently in progress. */
+        /**
+     * Documentación en español.
+     */
   searching: boolean;
-  /** Whether the Web Serial scale API is supported in this browser. */
+        /**
+     * Documentación en español.
+     */
   isScaleSupported: boolean;
-  /** Whether a serial scale device is currently connected. */
+        /**
+     * Documentación en español.
+     */
   isScaleConnected: boolean;
-  /** Whether the scale integration is enabled by the user. */
+        /**
+     * Documentación en español.
+     */
   isScaleEnabled: boolean;
-  /** Setter to enable or disable scale integration. */
+        /**
+     * Documentación en español.
+     */
   setIsScaleEnabled: (enabled: boolean) => void;
-  /** Whether the scale is currently performing a weighing operation. */
+        /**
+     * Documentación en español.
+     */
   isScaleBusy: boolean;
-  /** Callback to request serial port access to connect the scale. */
+        /**
+     * Documentación en español.
+     */
   onRequestScaleAccess: () => void;
-  /** Current reception draft state. */
+        /**
+     * Documentación en español.
+     */
   draft: RecepcionDraft;
-  /** Setter for the reception draft state. */
+        /**
+     * Documentación en español.
+     */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
-  /** ID of the currently expanded accordion panel, or false if none. */
+        /**
+     * Documentación en español.
+     */
   expandedPanel: string | false;
-  /** Setter for the expanded accordion panel. */
+        /**
+     * Documentación en español.
+     */
   setExpandedPanel: (panel: string | false) => void;
-  /**
-   * Callback to update a single field on a reception line.
-   * @param pIdx - Index of the pedido (null for spontaneous products).
-   * @param lIdx - Index of the line within the pedido or spontaneous list.
-   * @param field - Name of the field to update.
-   * @param value - New value for the field.
-   */
+        /**
+     * Documentación en español.
+     */
   onUpdateLinea: (
     pIdx: number | null,
     lIdx: number,
     field: string,
     value: string | number | boolean | undefined
   ) => void;
-  /**
-   * Returns true if the given unit of measure requires weighing (e.g. KG, G).
-   * @param u - Unit of measure string.
-   */
+        /**
+     * Documentación en español.
+     */
   isWeightUnit: (u: string | undefined) => boolean;
-  /**
-   * Opens the weight scale modal for a specific line.
-   * @param pIdx - Index of the pedido (null for spontaneous products).
-   * @param lIdx - Index of the line.
-   */
+        /**
+     * Documentación en español.
+     */
   onOpenWeightScale: (pIdx: number | null, lIdx: number) => void;
 }
 
 /**
- * Prevents typing invalid characters (e, E, +, -) in numeric input fields.
- * @param e - Keyboard event from the number input.
+ * Documentación en español.
  */
 const handleNumberInputKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
   if (['e', 'E', '+', '-'].includes(e.key)) {
@@ -112,10 +134,7 @@ const handleNumberInputKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 };
 
 /**
- * Normalises a raw number string entered by the user.
- * Strips negatives (pasted) and removes redundant leading zeros.
- * @param value - Raw string value from the input.
- * @returns Cleaned numeric string.
+ * Documentación en español.
  */
 const formatNumberInput = (value: string) => {
   let val = value.replace(/-/g, ''); // Fix against pasting negative numbers
@@ -127,12 +146,7 @@ const formatNumberInput = (value: string) => {
 };
 
 /**
- * Step 2 of the reception wizard: scanning and quantity entry.
- *
- * Renders a sticky search bar with optional camera barcode scanner and scale
- * controls. Below the toolbar, ordered-pedido lines are shown in collapsible
- * accordions, and spontaneous (out-of-order) products are listed in a
- * separate table at the bottom.
+ * Documentación en español.
  */
 const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   searchInputRef,
@@ -157,11 +171,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   const { t } = useTranslation();
   const [scannerOpen, setScannerOpen] = React.useState(false);
 
-  /**
-   * Handles a barcode scan result from the camera scanner.
-   * Sets the search query and immediately triggers a product search.
-   * @param code - Scanned barcode string.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleBarcodeScan = (code: string) => {
     setSearchQuery(code);
     onSearch(code);

@@ -2,19 +2,18 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-/** @description Default primary upload directory, relative to the process working directory. */
+/**
+ * Documentación en español.
+ */
 const DEFAULT_PRIMARY_PATH = './uploads';
 
-/** @description Fallback upload directory used when the primary path is not writable. */
+/**
+ * Documentación en español.
+ */
 const DEFAULT_FALLBACK_PATH = './uploads_runtime';
 
 /**
- * @description Checks whether a directory can be used for file storage. Attempts to
- * create the directory (including parents) and verifies write + execute permissions.
- * Also tries to set `0o775` permissions on the directory, silently ignoring any
- * permission-change errors (e.g. when running as a non-owner).
- * @param directory - The absolute or relative directory path to test.
- * @returns `true` if the directory is writable and executable; `false` otherwise.
+ * Documentación en español.
  */
 function canUseDirectory(directory: string): boolean {
   try {
@@ -34,16 +33,7 @@ function canUseDirectory(directory: string): boolean {
 }
 
 /**
- * @description Resolves the first writable local storage path from a prioritised list
- * of candidates: the caller-supplied `configuredPath`, then `./uploads`, then
- * `./uploads_runtime`, and finally a path inside the OS temporary directory.
- * Each candidate is tested with {@link canUseDirectory} before being accepted.
- * @param configuredPath - Optional preferred storage path (e.g. from an environment variable).
- *   Whitespace-only strings are ignored and the default primary path is used instead.
- * @returns The first writable directory path found in the candidate list.
- * @throws {Error} If none of the candidate paths are writable.
- * @example
- * const uploadDir = resolveWritableLocalStoragePath(process.env.UPLOAD_PATH);
+ * Documentación en español.
  */
 export function resolveWritableLocalStoragePath(
   configuredPath?: string

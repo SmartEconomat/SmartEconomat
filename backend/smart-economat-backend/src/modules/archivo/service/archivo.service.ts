@@ -30,12 +30,7 @@ export interface PaginatedFiles {
 type ProcessedImageFormat = 'webp';
 
 /**
- * Servicio que gestiona la subida de archivos, optimización de imágenes, persistencia de metadatos,
- * listado, recuperación, eliminación y limpieza de archivos almacenados localmente.
- * Las imágenes se comprimen automáticamente a WebP usando @jsquash/webp.
- * Admite tanto flujos de compresión registrados (entidad Archivo) como no registrados (independiente).
- *
- * @class ArchivoService
+ * Documentación en español.
  */
 @Injectable()
 export class ArchivoService {
@@ -55,18 +50,9 @@ export class ArchivoService {
     );
   }
 
-  /**
-   * Sube un archivo, optimiza opcionalmente las imágenes a WebP y persiste un registro Archivo.
-   * Para almacenamiento local, la URL del archivo se establece con el patrón `/api/v1/archivos/content/<filename>`.
-   * Cuando el procesamiento de imagen tiene éxito, la subida original se elimina y se reemplaza por la versión optimizada.
-   *
-   * @param {Express.Multer.File} file - Objeto de archivo subido desde Multer.
-   * @param {Usuario} user - Usuario autenticado que está subiendo el archivo.
-   * @param {ImageProcessOptionsDto} [processOptions] - Parámetros opcionales de procesamiento de imagen (calidad, dimensiones, formato).
-   * @param {boolean} [shouldProcess=true] - Si se debe aplicar la optimización de imagen para tipos MIME de imagen.
-   * @returns {Promise<Archivo>} Entidad Archivo persistida con metadatos de URL y tamaño.
-   * @throws {BadRequestException} Cuando no se proporciona ningún archivo.
-   */
+        /**
+     * Documentación en español.
+     */
   async uploadFile(
     file: Express.Multer.File,
     user: Usuario,
@@ -127,18 +113,9 @@ export class ArchivoService {
     return await this.archivoRepository.save(newArchivo);
   }
 
-  /**
-   * Comprime un archivo de imagen (JPEG, PNG, GIF, WebP) al formato WebP
-   * usando los parámetros por defecto del pipeline de optimización.
-   *
-   * - Si el archivo no es una imagen, devuelve los datos originales sin modificar.
-   * - Si la compresión falla, hace fallback al archivo original con un aviso en log.
-   * - El archivo original es eliminado del disco tras una compresión exitosa.
-   *
-   * Este método es la puerta de entrada compartida para cualquier módulo que
-   * necesite comprimir imágenes antes de persistirlas (albaranes, productos, etc.)
-   * sin necesidad de pasar por el registro en la entidad Archivo.
-   */
+        /**
+     * Documentación en español.
+     */
   async compressImageFile(file: Express.Multer.File): Promise<{
     filename: string;
     path: string;
@@ -182,14 +159,9 @@ export class ArchivoService {
     }
   }
 
-  /**
-   * Redimensiona y convierte un archivo de imagen a WebP usando @jsquash/webp.
-   * Aplica restricciones de dimensiones opcionales conservando opcionalmente la relación de aspecto.
-   *
-   * @param {string} inputPath - Ruta absoluta al archivo de imagen de origen.
-   * @param {ImageProcessOptionsDto} options - Opciones de procesamiento: quality, ancho, alto, mantenerAspectRatio, formatoSalida.
-   * @returns {Promise<{ path: string; size: number; mimeType: string }>} Ruta al archivo WebP de salida y su tamaño.
-   */
+        /**
+     * Documentación en español.
+     */
   private async processImage(
     inputPath: string,
     options: ImageProcessOptionsDto
@@ -263,13 +235,9 @@ export class ArchivoService {
     };
   }
 
-  /**
-   * Resuelve el formato de imagen de salida. Actualmente siempre devuelve 'webp' independientemente
-   * del formato solicitado, ya que solo se admite la codificación WebP.
-   *
-   * @param {ImageProcessOptionsDto['formatoSalida']} [requestedFormat] - Formato de salida solicitado (ignorado).
-   * @returns {ProcessedImageFormat} Siempre 'webp'.
-   */
+        /**
+     * Documentación en español.
+     */
   private resolveOutputFormat(
     requestedFormat?: ImageProcessOptionsDto['formatoSalida']
   ): ProcessedImageFormat {
@@ -277,13 +245,9 @@ export class ArchivoService {
     return 'webp';
   }
 
-  /**
-   * Inicializa de forma diferida el codificador WASM de @jsquash/webp (una vez por tiempo de vida del proceso).
-   * Detecta el soporte SIMD y carga el binario WASM apropiado desde el directorio node_modules.
-   * Las llamadas posteriores devuelven la promesa de inicialización en caché sin volver a ejecutar la configuración.
-   *
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async initializeWebpEncoder(): Promise<void> {
     if (!ArchivoService.webpEncoderInitPromise) {
       ArchivoService.webpEncoderInitPromise = (async () => {
@@ -312,27 +276,18 @@ export class ArchivoService {
     return ArchivoService.webpEncoderInitPromise;
   }
 
-  /**
-   * Limita el valor de calidad al rango WebP válido [1, 100].
-   * Por defecto 80 cuando no se proporciona ningún valor.
-   *
-   * @param {number} [quality] - Porcentaje de calidad solicitado.
-   * @returns {number} Valor de calidad limitado entre 1 y 100.
-   */
+        /**
+     * Documentación en español.
+     */
   private normalizeQuality(quality?: number): number {
     const normalized = quality ?? 80;
 
     return Math.max(1, Math.min(100, normalized));
   }
 
-  /**
-   * Importa dinámicamente un módulo ESM y desenvuelve su exportación por defecto cuando está presente.
-   * Se usa para superar la barrera de interoperabilidad CommonJS/ESM para paquetes como @jsquash.
-   *
-   * @template T - Tipo esperado del módulo importado o su exportación por defecto.
-   * @param {string} specifier - Especificador de módulo a importar (p. ej. '@jsquash/webp/encode.js').
-   * @returns {Promise<T>} La exportación por defecto del módulo si tiene una; en caso contrario, el espacio de nombres completo del módulo.
-   */
+        /**
+     * Documentación en español.
+     */
   private async loadEsmModule<T>(specifier: string): Promise<T> {
     const moduleNamespace: unknown = await import(specifier);
 
@@ -347,13 +302,9 @@ export class ArchivoService {
     return moduleNamespace as T;
   }
 
-  /**
-   * Devuelve una lista paginada de registros Archivo activos (no eliminados).
-   * Admite filtrado opcional por ID de usuario y tipo MIME.
-   *
-   * @param {FileListFilterDto} filterDto - Parámetros de paginación y filtro (page, limit, usuarioId, mimeType).
-   * @returns {Promise<PaginatedFiles>} Resultado paginado con los elementos y metadatos de paginación.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
     const { page = 1, limit = 20, usuarioId, mimeType } = filterDto;
 
@@ -386,13 +337,9 @@ export class ArchivoService {
     };
   }
 
-  /**
-   * Devuelve un único registro Archivo activo por su ID, incluida la relación del subidor.
-   *
-   * @param {string} id - UUID del Archivo a recuperar.
-   * @returns {Promise<Archivo>} La entidad Archivo encontrada.
-   * @throws {NotFoundException} Cuando no existe ningún archivo activo con el ID dado.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<Archivo> {
     const archivo = await this.archivoRepository.findOne({
       where: { id, isDeleted: false },
@@ -406,17 +353,9 @@ export class ArchivoService {
     return archivo;
   }
 
-  /**
-   * Resuelve la ruta absoluta del sistema de archivos para un archivo almacenado localmente.
-   * Valida que la ruta resuelta permanezca dentro del directorio de subida configurado
-   * para prevenir ataques de path traversal.
-   *
-   * @param {string} filename - Nombre del archivo a servir (sin componentes de directorio).
-   * @returns {string} Ruta absoluta al archivo para usar con `res.sendFile()`.
-   * @throws {BadRequestException} Cuando el nombre de archivo se resuelve fuera del directorio de subida o
-   *   cuando el tipo de almacenamiento no es 'local'.
-   * @throws {NotFoundException} Cuando el archivo no existe en disco.
-   */
+        /**
+     * Documentación en español.
+     */
   getFileContent(filename: string): string {
     if (this.storageType === 'local') {
       const uploadDirResolved = path.resolve(this.uploadDir);
@@ -438,16 +377,9 @@ export class ArchivoService {
     );
   }
 
-  /**
-   * Realiza un borrado lógico del registro Archivo y elimina físicamente sus archivos asociados del disco.
-   * Solo el subidor o usuarios con roles elevados pueden eliminar un archivo.
-   *
-   * @param {string} id - UUID del Archivo a eliminar.
-   * @param {Usuario} user - Usuario autenticado que realiza la eliminación.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} Cuando no existe ningún archivo activo con el ID dado.
-   * @throws {ForbiddenException} Cuando el usuario solicitante no es el subidor y no tiene un rol elevado.
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
 
@@ -465,14 +397,9 @@ export class ArchivoService {
     await this.archivoRepository.softRemove(archivo);
   }
 
-  /**
-   * Busca un Archivo por su URL (original u optimizada) y lo elimina.
-   * Si no se encuentra ningún registro en la base de datos para la URL, intenta eliminar el archivo físico directamente.
-   * Retorna silenciosamente cuando la URL está vacía.
-   *
-   * @param {string} [fileUrl] - URL del archivo a limpiar (puede ser la variante original u optimizada).
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   async cleanupByUrl(fileUrl?: string): Promise<void> {
     if (!fileUrl?.trim()) {
       return;
@@ -497,12 +424,9 @@ export class ArchivoService {
     await this.deletePhysicalFileFromUrl(trimmedUrl);
   }
 
-  /**
-   * Elimina los archivos físicos (original y optimizado) asociados a un registro Archivo.
-   *
-   * @param {Archivo} archivo - Entidad Archivo cuyos archivos físicos deben eliminarse.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async deleteManagedFiles(archivo: Archivo): Promise<void> {
     await this.deletePhysicalFileFromUrl(archivo.url);
 
@@ -511,14 +435,9 @@ export class ArchivoService {
     }
   }
 
-  /**
-   * Extrae el nombre de archivo de una URL de archivo y elimina el archivo físico correspondiente
-   * del directorio de subida. Omite silenciosamente cuando la URL está vacía, la ruta
-   * se resuelve fuera del directorio de subida o el archivo no existe.
-   *
-   * @param {string} [fileUrl] - URL de la que extraer el nombre de archivo (original u optimizada).
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async deletePhysicalFileFromUrl(fileUrl?: string): Promise<void> {
     const filename = this.extractFilenameFromUrl(fileUrl);
     if (!filename) {
@@ -545,13 +464,9 @@ export class ArchivoService {
     }
   }
 
-  /**
-   * Elimina silenciosamente un archivo local por su ruta absoluta.
-   * Registra una advertencia cuando la eliminación falla pero no lanza excepciones.
-   *
-   * @param {string} [filePath] - Ruta absoluta al archivo a eliminar.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async deleteLocalFileQuietly(filePath?: string): Promise<void> {
     if (!filePath) {
       return;
@@ -570,16 +485,9 @@ export class ArchivoService {
     }
   }
 
-  /**
-   * Extrae el nombre de archivo sin directorio de una URL de archivo.
-   * Gestiona dos patrones de URL:
-   * - `/uploads/<filename>` (ruta Multer heredada)
-   * - `/archivos/content/<filename>` (ruta API actual)
-   * Devuelve null cuando ningún patrón coincide o la URL está vacía.
-   *
-   * @param {string} [fileUrl] - URL de la que extraer el nombre de archivo.
-   * @returns {string | null} El nombre de archivo extraído, o null cuando no se encuentra coincidencia.
-   */
+        /**
+     * Documentación en español.
+     */
   private extractFilenameFromUrl(fileUrl?: string): string | null {
     if (!fileUrl?.trim()) {
       return null;

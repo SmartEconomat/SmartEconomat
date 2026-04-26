@@ -34,27 +34,20 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * REST controller that exposes CRUD endpoints for the Producto resource,
- * along with helpers for EAN-13 generation, price history, and PMP retrieval.
- *
- * @class ProductoController
+ * Documentación en español.
  */
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('productos')
 export class ProductoController {
-  /**
-   * Creates an instance of ProductoController.
-   *
-   * @param {ProductoService} productoService - Service layer for product operations.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly productoService: ProductoService) {}
 
-  /**
-   * Generates a unique EAN-13 barcode that is not yet registered in the system.
-   *
-   * @returns {Promise<{ codigo_barras: string }>} Object containing the generated barcode.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('generar-ean13')
   @RequirePermissions(PERMISSIONS.productos.generar_ean13)
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
@@ -67,14 +60,9 @@ export class ProductoController {
     return { codigo_barras };
   }
 
-  /**
-   * Creates a new product master record with optional allergens and supplier
-   * associations in a single transactional flow.
-   *
-   * @param {CreateProductoDto} createProductoDto - Product creation payload.
-   * @param {{ user: { id: string } }} req - Authenticated request object.
-   * @returns {Promise<Producto>} The newly created product.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.productos.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -112,15 +100,9 @@ export class ProductoController {
     return this.productoService.create(createProductoDto, userId);
   }
 
-  /**
-   * Returns a paginated list of products, applying filters such as barcode,
-   * search term, categories, brands, and allergens. Admin users also receive
-   * soft-deleted records.
-   *
-   * @param {ProductFilterDto} query - Filter, sort, and pagination parameters.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<PaginatedResponseDto<Producto>>} Paginated product list.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.productos.listar)
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
@@ -136,13 +118,9 @@ export class ProductoController {
     return this.productoService.findAll(query, userRole);
   }
 
-  /**
-   * Retrieves a single product by its UUID, including supplier and allergen data.
-   *
-   * @param {string} id - UUID of the product.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<Producto>} The found product entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener un producto por ID' })
@@ -157,14 +135,9 @@ export class ProductoController {
     return this.productoService.findOne(id, userRole);
   }
 
-  /**
-   * Partially updates a product's fields, allergens, and supplier associations.
-   *
-   * @param {string} id - UUID of the product to update.
-   * @param {UpdateProductoDto} updateProductoDto - Fields to update.
-   * @param {{ user: { id: string } }} req - Authenticated request object.
-   * @returns {Promise<Producto>} The updated product entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.productos.editar)
   @ApiOperation({ summary: 'Actualizar un producto' })
@@ -202,13 +175,9 @@ export class ProductoController {
     return this.productoService.remove(id, userId);
   }
 
-  /**
-   * Returns the full price history for a product, optionally filtered by supplier.
-   *
-   * @param {string} id - UUID of the product.
-   * @param {string} [proveedorId] - Optional UUID of a supplier to narrow the results.
-   * @returns {Promise<HistorialPrecio[]>} Array of price history entries ordered by date descending.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id/historial-precios')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
@@ -221,14 +190,9 @@ export class ProductoController {
     return this.productoService.getHistorialPrecios(id, proveedorId);
   }
 
-  /**
-   * Returns the current global PMP (weighted average cost) for a product and
-   * a per-supplier breakdown.
-   *
-   * @param {string} id - UUID of the product.
-   * @returns {Promise<{ pmp: number; porProveedor: { productoProveedorId: string; proveedorId: string; pmp: number }[] }>}
-   *   Object with the global PMP and an array of per-supplier PMP values.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id/pmp')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({

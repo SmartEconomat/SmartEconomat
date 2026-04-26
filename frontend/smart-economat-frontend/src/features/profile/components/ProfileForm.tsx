@@ -17,7 +17,7 @@ interface ProfileFormProps {
 }
 
 /**
- * Sección de Datos Personales para la Ficha de Perfil.
+ * Documentación en español.
  */
 const ProfileForm: React.FC<ProfileFormProps> = ({
   isEditing,
@@ -39,7 +39,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Datos Personales
+          {t('perfil.datosPersonalesTitulo')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -117,7 +117,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                   '&:hover': { color: 'primary.dark' },
                 }}
               >
-                Solicitar cambio
+                {t('perfil.solicitarCambioEmail')}
               </Typography>
             )}
           </Box>

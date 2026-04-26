@@ -146,7 +146,8 @@
       "errorCodigoInvalido": "You must enter a valid class code to complete registration.",
       "errorNoSePudo": "Could not complete the registration.",
       "errorConexion": "Connection error with the server.",
-      "errorValidarCodigo": "Could not validate the class code."
+      "errorValidarCodigo": "Could not validate the class code.",
+      "strongPasswordHint": "Password must be at least 8 characters and include uppercase, lowercase, number and symbol."
     }
   },
   "toast": {
@@ -187,14 +188,20 @@
       "pedidos": "Pending Orders",
       "incidencias": "Incident List",
       "stock": "Products Below Minimum",
-      "proveedores": "Our Suppliers"
+      "proveedores": "Our Suppliers",
+      "sinCategoria": "No category"
     },
     "retry": "Retry",
     "quickActions": {
+      "titulo": "Quick Actions",
       "nuevoPedido": "New Order",
+      "descNuevoPedido": "Register a new request",
       "anadirProducto": "Add Product",
+      "descAnadirProducto": "Register an item in the catalog",
       "registrarRecepcion": "Register Reception",
+      "descRegistrarRecepcion": "Confirm goods reception",
       "nuevaReceta": "New Recipe",
+      "descNuevaReceta": "Create production formula",
       "anadirNuevoProducto": "Add New Product",
       "crearNuevoPedido": "Create New Order",
       "confirmarNuevoPedido": "Are you sure you want to register this new order?"
@@ -228,16 +235,42 @@
     },
     "customizer": {
       "titulo": "Customise Panel",
-      "descripcion": "Select the metric cards you want to see on your Dashboard. At least one must remain active."
+      "descripcion": "Select the metric cards you want to see on your Dashboard. At least one must remain active.",
+      "ariaPersonalizar": "Customize visible metrics"
+    },
+    "metricCard": {
+      "loading": "Loading {{titulo}} metric...",
+      "clickable": "{{titulo}}: {{valor}}. Click to view details.",
+      "static": "{{titulo}}: {{valor}}"
+    },
+    "quickAction": {
+      "ariaWithDesc": "{{titulo}}: {{descripcion}}. Click to run this action.",
+      "ariaNoDesc": "{{titulo}}. Click to run this action."
     }
   },
   "layout": {
+    "logoAlt": "Smart Economat logo",
+    "faviconAlt": "Smart Economat favicon",
+    "headerAria": "Top header",
+    "sidebarAria": "Main side menu",
+    "mainContentAria": "Main content",
+    "pageToolbar": {
+      "ariaConTitulo": "Toolbar: {{titulo}}",
+      "ariaSinTitulo": "Page toolbar",
+      "vistaLista": "List view",
+      "vistaCuadricula": "Grid view"
+    },
+    "userMenu": {
+      "open": "Open user menu",
+      "logout": "Log out"
+    },
     "menu": {
       "inicio": "Home",
       "catalogo": "Catalog",
       "operaciones": "Operations",
       "control": "Control",
       "gestion": "Management",
+      "abrir": "Open menu",
       "minimizar": "Minimize menu",
       "expandir": "Expand menu",
       "navegacionPrincipal": "Main navigation"
@@ -290,13 +323,29 @@
   },
   "recetas": {
     "ingredientes": {
+      "titulo": "Recipe Ingredients",
+      "anadir": "Add Ingredient",
       "empty": "No ingredients registered.",
       "producto": "Product",
       "cantidad": "Quantity",
       "unidad": "Unit",
       "proveedorFav": "Fav. supplier",
       "auto": "Auto",
-      "automatico": "Automatic"
+      "automatico": "Automatic",
+      "alergenosTitulo": "Allergens in this recipe:",
+      "buscarProducto": "Search product...",
+      "buscarAyuda": "Type at least 2 characters to search products.",
+      "sinProductos": "No products available",
+      "sinProveedor": "No supplier available",
+      "autoMasBarato": "Automatically select the cheapest",
+      "proveedorDesconocido": "Unknown supplier",
+      "masBarato": "Cheapest",
+      "columns": {
+        "producto": "Product",
+        "cantidad": "Quantity",
+        "unidad": "Unit",
+        "proveedorFav": "Fav. supplier"
+      }
     },
     "toast": {
       "eliminada": "Recipe \"{{nombre}}\" deleted successfully.",
@@ -309,7 +358,16 @@
       "pedidoGeneradoConInternos": "Order #{{numero}} with {{total}} internal order(s) has been generated to cover the missing items.",
       "pedidoGenerado": "Order #{{numero}} has been generated to cover the missing items.",
       "errorGenerarPedidos": "Error generating orders: {{error}}",
-      "seleccionaUbicacion": "You must select a destination location."
+      "seleccionaUbicacion": "You must select a destination location.",
+      "sinFaltantesParaPedido": "There are no insufficient ingredients to generate a shortage order.",
+      "errorRecetaConNombre": "{{nombre}}: {{error}}",
+      "produccionesExito": "Production runs started successfully",
+      "produccionesParcial": "{{successful}} of {{total}} production runs were processed.",
+      "errorIniciarPreparacion": "Error starting preparation.",
+      "seleccionaRecetasPedido": "Select at least one recipe to generate the order.",
+      "pedidoGeneradoDesdeRecetas_one": "Order #{{numero}} generated successfully from 1 recipe.",
+      "pedidoGeneradoDesdeRecetas_other": "Order #{{numero}} generated successfully from {{count}} recipes.",
+      "errorPedidoDesdeRecetas": "Error generating the order from recipes."
     },
     "prepararAhora": "Prepare now",
     "preparar": "Prepare",
@@ -321,17 +379,154 @@
     "sinGluten": "Gluten Free",
     "sinLacteos": "Dairy Free",
     "incluirImagenReceta": "Include recipe image",
-    "buscarMinLetras": "Type at least 2 characters to search for products."
+    "buscarMinLetras": "Type at least 2 characters to search for products.",
+    "editarReceta": "Edit recipe",
+    "exportPdf": {
+      "titulo": "Export recipes to PDF",
+      "resumen_one": "You are about to export 1 recipe.",
+      "resumen_other": "You are about to export {{count}} recipes.",
+      "imagenAyuda": "If the image is missing, the PDF will still be generated without it.",
+      "exportando": "Exporting...",
+      "botonExportar": "Export PDF"
+    },
+    "preparacionLote": {
+      "tituloMultiples": "Batch production ({{count}} recipes)",
+      "tituloUna": "Prepare recipe: {{nombre}}",
+      "subtitulo": "Set quantities and validate stock before starting.",
+      "seccionRecetas": "Recipes to process",
+      "colReceta": "Recipe",
+      "colCantidad": "Quantity",
+      "colRaciones": "Servings",
+      "colUnidadAbrev": "Unit",
+      "rendimientoBase": "Base yield: {{rendimiento}} {{unidad}}",
+      "verificacionStock": "Stock check",
+      "validandoStock": "Ensuring stock...",
+      "insufTitulo": "INSUFFICIENT INGREDIENTS",
+      "faltaLinea": "{{nombre}}: short by {{cantidad}} {{unidad}}",
+      "provEtiqueta": "(Supplier: {{nombre}})",
+      "lanzarPedidoFaltantes": "Create order for shortages",
+      "stockOk": "All set. Enough stock to process this batch.",
+      "iniciarLote": "Start batch production",
+      "iniciarPreparacion": "Start preparation",
+      "crearPedidoFaltantes": "Create shortage order"
+    },
+    "errors": {
+      "cargaDesconocida": "Unknown error while loading recipes.",
+      "errorEnReceta": "Error in this recipe"
+    },
+    "tiempoMinutos": "{{count}} min",
+    "franjaMinutos": "{{count}} min",
+    "imageAlt": "Image of {{nombre}}",
+    "altImagenDefecto": "Recipe",
+    "listado": {
+      "ingredientesCount_one": "{{count}} ingredient",
+      "ingredientesCount_other": "{{count}} ingredients"
+    },
+    "columns": {
+      "nombre": "Name",
+      "dificultad": "Difficulty",
+      "tiempo": "Time",
+      "ingredientes": "Ingredients"
+    },
+    "toolbar": {
+      "buscarPlaceholder": "Search by name, instructions, ingredients...",
+      "totalItemsLabel": "recipes",
+      "nuevaReceta": "New recipe",
+      "prepararConCount": "Prepare ({{count}})",
+      "prepararSeleccion": "Prepare recipes",
+      "exportarPdfConCount": "Export PDF ({{count}})",
+      "exportarPdf": "Export PDF",
+      "exportarExcel": "Export Excel",
+      "crearPedidoConCount": "Create order ({{count}})",
+      "crearPedido": "Create order"
+    },
+    "empty": {
+      "sinCoincidencias": "No recipes match your search",
+      "sinRegistros": "No recipes registered",
+      "hintBusqueda": "Try other terms or clear the filter.",
+      "hintInicial": "Create the first pantry recipe to get started.",
+      "anadirReceta": "Add recipe"
+    },
+    "rowAria": "Edit recipe {{nombre}}",
+    "confirmEliminarMsj": "Are you sure you want to delete the recipe {{nombre}}? This cannot be undone.",
+    "confirmSiEliminar": "Yes, delete",
+    "detalle": {
+      "ingredientesCount_one": "{{count}} ingredient",
+      "ingredientesCount_other": "{{count}} ingredients",
+      "preparar": "Prepare",
+      "pedido": "Order",
+      "fichaPdf": "PDF sheet",
+      "seccionInformacion": "Information",
+      "dificultad": "Difficulty",
+      "franjaTiempo": "Time band",
+      "tiempoPreparacion": "Preparation time",
+      "seccionInstrucciones": "Instructions",
+      "pasosElaboracion": "Preparation steps",
+      "seccionProduccion": "Production",
+      "rendimiento": "Yield",
+      "diasCaducidad": "Shelf life (days)",
+      "costeEstimado": "Est. cost per unit",
+      "racionesBase": "Servings (base)",
+      "tamanoRacion": "Serving size",
+      "seccionIngredientes": "Ingredients",
+      "alergenosDetectados": "Detected allergens"
+    },
+    "observacionesPedidoAutoStock": "Automatic order for missing stock for: {{lista}}",
+    "observacionesPedidoDesdeRecetas": "Order generated from recipes: {{lista}}"
   },
   "usuarios": {
+    "columns": {
+      "usuario": "User",
+      "email": "Email",
+      "estado": "Status"
+    },
     "empty": {
-      "noUsuariosRol": "No users found for this role and search."
+      "noUsuariosRol": "No users found for this role and search.",
+      "sinRoles": "No roles available"
+    },
+    "filters": {
+      "quitar": "Remove filter",
+      "pendientesInfo": "Showing pending activation users opened from notifications.",
+      "estadoActivo": "Active status filter: {{estado}}."
+    },
+    "actions": {
+      "activar": "Activate",
+      "suspender": "Suspend",
+      "refrescar": "Refresh",
+      "nuevoUsuario": "New User"
+    },
+    "confirm": {
+      "eliminarPregunta": "Are you sure you want to delete",
+      "eliminando": "Deleting...",
+      "contrasenaGenerada": "Generated Password",
+      "resetearContrasena": "Reset Password",
+      "resetearPregunta": "Do you want to reset the password for"
+    },
+    "validation": {
+      "usuarioObligatorio": "Username is required",
+      "rolObligatorio": "You must select a role",
+      "correoObligatorio": "Email is required",
+      "correoInvalido": "Invalid email format",
+      "ultimoAdminRol": "You cannot remove the last active administrator.",
+      "ultimoAdminEstado": "You cannot deactivate the last administrator."
     },
     "buscarPlaceholder": "Search by name or email...",
     "resetPassword": "Reset Password",
     "editarUsuario": "Edit user",
     "eliminarUsuario": "Delete user",
     "gestionTitulo": "Users Management",
+    "estadoCuenta": "Account status",
+    "estadoActiva": "ACCOUNT ACTIVE",
+    "estadoSuspendida": "ACCOUNT SUSPENDED",
+    "inactivos": "Inactive",
+    "sinAula": "No Classroom",
+    "sinUbicacion": "No Location",
+    "clase": "Class",
+    "propio": "Own",
+    "crearNuevaAula": "+ CREATE NEW CLASSROOM",
+    "crearNuevaUbicacion": "+ CREATE NEW LOCATION",
+    "permisosIndividuales": "Additional Individual Permissions",
+    "modulo": "Module",
     "roles": {
       "administradores": "Administrators",
       "profesores": "Professors",
@@ -344,11 +539,15 @@
     "campoEstadoInicial": "Initial Status",
     "campoAulaSlot": "Classroom / Assigned Slot",
     "campoUbicacionAlmacen": "Warehouse Location",
+    "otros": "Others",
     "cargandoRoles": "Loading roles...",
     "toast": {
       "actualizado": "User updated",
       "creado": "User created",
       "eliminado": "User deleted",
+      "activado": "User activated successfully",
+      "suspendido": "User suspended successfully",
+      "errorActualizarEstado": "Error updating user status",
       "errorCargarRoles": "Error loading available roles",
       "errorCargar": "Error loading users",
       "errorEliminar": "Error deleting",
@@ -399,7 +598,8 @@
       "noMovimientos": "No movements",
       "noResultados": "No movements found matching the selected filters.",
       "noRegistros": "No inventory changes have been recorded in the system yet."
-    }
+    },
+    "error": "Unknown error while loading movements."
   },
   "albaran": {
     "titulo": "Delivery Notes",
@@ -460,6 +660,12 @@
       "tamano": "Size",
       "verDocumento": "View document",
       "abrirArchivo": "Open file",
+      "recepcionesVinculadas": "Linked Receptions ({{count}})",
+      "recepcionItem": "Reception {{index}}",
+      "productosVinculados": "Linked Products ({{count}})",
+      "productoItem": "Product {{index}}",
+      "productoResumen": "{{nombre}} · Received quantity: {{cantidadRecibida}} {{unidad}} · Supplier: {{proveedor}} · Status: {{estado}} · Reception: {{recepcionId}}",
+      "sinProductosVinculados": "No linked products",
       "sinRecepciones": "No linked receptions",
       "sinLineas": "No product lines associated with the receptions of this delivery note."
     },
@@ -483,6 +689,7 @@
     "errors": {
       "cargar": "Error loading delivery notes",
       "cargarDetalle": "Could not load the full delivery note detail",
+      "cargarDetalleConFallback": "{{message}}. Available information will be shown.",
       "errorGuardar": "Error saving delivery note",
       "errorEliminar": "Error deleting delivery note",
       "errorSubir": "Error uploading document"
@@ -509,15 +716,21 @@
     "tabs": {
       "abiertas": "Open",
       "cerradas": "Closed",
-      "todas": "All"
+      "todas": "All",
+      "porResolver": "To resolve",
+      "resueltas": "Resolved"
     },
     "filters": {
       "desde": "From",
-      "hasta": "To"
+      "hasta": "To",
+      "quitar": "Clear filter",
+      "dashboardInfo": "You are viewing pending incidents filtered from the Dashboard."
     },
     "actions": {
       "ajustarCantidades": "Adjust quantities",
-      "resolverIncidencia": "Resolve incident"
+      "resolverIncidencia": "Resolve incident",
+      "verDetalle": "View details",
+      "eliminar": "Delete"
     },
     "modal": {
       "detalle": "Incident Detail",
@@ -566,7 +779,11 @@
     "empty": {
       "noCerradas": "No closed incidents",
       "mensajeCerradas": "Closed incidents include resolved, cancelled, and invalid ones.",
-      "noPendientes": "Excellent work! No pending discrepancies detected in recent receptions."
+      "noPendientes": "Excellent work! No pending discrepancies detected in recent receptions.",
+      "noResueltas": "There are no resolved incidents",
+      "noPorResolver": "There are no incidents to resolve",
+      "noSearchMatch": "No incidents matching your search were found.",
+      "noResueltasConFiltros": "No resolved incidents have been recorded with the current filters yet."
     },
     "toast": {
       "marcadaCancelada": "Incident marked as cancelled",
@@ -574,6 +791,51 @@
       "marcadaResuelta": "Incident marked as resolved",
       "actualizada": "Incident updated successfully",
       "eliminada": "Incident deleted successfully"
+    },
+    "errors": {
+      "cargar": "Error loading incidents",
+      "resolver": "Error resolving incident",
+      "eliminar": "Error deleting incident"
+    },
+    "reportes": {
+      "pdf": "PDF report",
+      "excel": "Excel report"
+    },
+    "units": {
+      "default": "unit"
+    },
+    "table": {
+      "fecha": "Date",
+      "proveedor": "Supplier",
+      "productos": "Product(s)",
+      "sinDetalle": "No detail",
+      "lineasCount": "{{count}} line",
+      "lineasCount_plural": "{{count}} lines",
+      "cantidadesPorProducto": "Quantities by product",
+      "cantidadLinea": "{{producto}}: O {{esperada}} {{unidad}} · R {{recibida}} {{unidad}} · P {{pendiente}} {{unidad}}",
+      "masProductos": "+{{count}} product(s)",
+      "estado": "Status"
+    },
+    "detail": {
+      "infoTitle": "Incident information",
+      "fechaRegistro": "Recorded at",
+      "idRecepcion": "Reception ID",
+      "motivo": "Reason",
+      "sinMotivo": "No reason specified",
+      "notasTitle": "Incident notes",
+      "notasRecepcion": "Reception notes",
+      "sinObservaciones": "No notes",
+      "notasResolucion": "Resolution notes",
+      "sinNotasResolucion": "No resolution notes",
+      "resolucion": "Resolution",
+      "resueltaBadge": "INCIDENT RESOLVED",
+      "fechaResolucion": "Resolution date",
+      "productosConDiscrepancia": "Products with discrepancy ({{count}})",
+      "pedida": "Ordered",
+      "recibida": "Received",
+      "diferencia": "Difference",
+      "pendiente": "Pending",
+      "nota": "Note"
     }
   },
   "admin": {
@@ -615,7 +877,8 @@
       "aulaActualizada": "Classroom updated successfully",
       "estadoAlumnoActualizado": "Student status updated",
       "contrasenaReset": "Password reset. New key: {{clave}}",
-      "alumnoEliminado": "Student deleted"
+      "alumnoEliminado": "Student deleted",
+      "permisosProximamente": "Permissions functionality for {{username}} coming soon"
     },
     "confirm": {
       "eliminarClase": "Are you sure you want to delete this class?",
@@ -739,7 +1002,9 @@
       "anadirProveedor": "Add by Supplier",
       "seleccionaProveedor": "Select a supplier",
       "deseleccionarProveedor": "Deselect by Supplier",
-      "pedido": "Order"
+      "pedido": "Order",
+      "desconocido": "Unknown",
+      "descripcionPedido": "Order {{numero}} - {{proveedor}}"
     },
     "bascula": {
       "titulo": "Reception Scale",
@@ -819,6 +1084,29 @@
         "otros": "Other reasons"
       },
       "observaciones": "Observations / Notes"
+    },
+    "tabla": {
+      "fecha": "Date",
+      "producto": "Product",
+      "cantidad": "Quantity",
+      "motivo": "Reason",
+      "registradoPor": "Recorded by",
+      "verNotas": "View notes",
+      "notas": "Notes",
+      "sinNotas": "No notes"
+    },
+    "filtros": {
+      "motivo": "Reason",
+      "todosMotivos": "All reasons",
+      "desde": "From",
+      "hasta": "To"
+    },
+    "motivos": {
+      "rotura": "Breakage",
+      "deterioro": "Deterioration",
+      "hurto": "Theft",
+      "errorPreparacion": "Preparation error",
+      "otros": "Other"
     }
   },
   "usuario": {
@@ -906,7 +1194,37 @@
     },
     "form": {
       "helperNombre": "The name others will see"
-    }
+    },
+    "datosPersonalesTitulo": "Personal details",
+    "noConfigurado": "Not set",
+    "labelIdUsuario": "User ID",
+    "labelCorreoElectronico": "Email",
+    "solicitarCambioEmail": "Request change",
+    "gestionAlumnosTitulo": "My students",
+    "configuraAulasPrimero": "Set up your classrooms first to see your students.",
+    "alumnosSinCursoGrupo": "Students without a course",
+    "cursoClaseCabecera": "Course: {{aula}} — Class {{numeroClase}}",
+    "alumnosDeCapacidad": "{{actual}} students of {{capacidad}} allowed",
+    "sinCodigoSlot": "NO CODE",
+    "claseSinAlumnos": "No students are registered in this class yet.",
+    "alumnoEstadoActivo": "ACTIVE",
+    "alumnoEstadoPendiente": "PENDING",
+    "tooltipAlumnoYaActivo": "Student already activated",
+    "tooltipActivarAlumno": "Activate student",
+    "pendienteActivacionProfesor": "Pending activation by the teacher",
+    "sinClasesConfiguradas": "There are no classes configured to show.",
+    "propietarioDesconocido": "Unknown",
+    "slotCodigoLinea": "CODE: {{codigo}}",
+    "menuCrearNuevaUbicacion": "+ CREATE NEW LOCATION",
+    "capacidadMaxAlumnos": "Max capacity: {{n}} students",
+    "ubicacionConNombre": "Location: {{nombre}}",
+    "profesorConNombre": "Teacher: {{nombre}}",
+    "gestionAulasTitulo": "Classrooms and classes",
+    "configurarNuevaClase": "Set up a new class:",
+    "anadirClase": "Add",
+    "acordeonMisAulas": "MY CLASSROOMS",
+    "acordeonTodasAulas": "ALL CLASSROOMS",
+    "profesorPropioOpcion": "-- Mine (self) --"
   },
   "comun": {
     "acciones": "Actions",
@@ -964,6 +1282,9 @@
     "cantidad": "Quantity",
     "buscarProducto": "Search product...",
     "quitar": "Remove",
+    "restaurar": "Restore",
+    "activos": "Active",
+    "eliminados": "Deleted",
     "proveedorLabel": "Supplier: ",
     "pendiente": "Pending",
     "sinElementos": "No items",
@@ -980,7 +1301,8 @@
     "expandirMenu": "Expand menu",
     "tablaDatos": "Data table",
     "opcionesSistema": "System options",
-    "entendido": "Got it"
+    "entendido": "Got it",
+    "guardando": "Saving..."
   },
   "notificaciones": {
     "abrirCentro": "Open notification center",
@@ -994,7 +1316,36 @@
     "huboProblem": "There was a problem",
     "urgente": "Urgent",
     "pendiente": "Pending",
-    "errorCarga": "Notifications could not be loaded."
+    "errorCarga": "Notifications could not be loaded.",
+    "tarjetas": {
+      "usuarioSinNombre": "Unidentified user",
+      "previewDos": "{{a}} and {{b}}",
+      "previewMas": "{{prefix}} and {{count}} more",
+      "pendientesUsuarios": {
+        "titulo": "Users pending activation",
+        "descripcion_one": "There is 1 new user pending review and activation.",
+        "descripcion_other": "There are {{count}} new users pending review and activation.",
+        "accion": "Go to administration"
+      },
+      "stockBajo": {
+        "titulo": "Products below minimum stock",
+        "descripcion_one": "Review {{nombres}}. There is 1 product below minimum stock.",
+        "descripcion_other": "Review {{nombres}}. There are {{count}} products below minimum stock.",
+        "accion": "Review inventory"
+      },
+      "vencidos": {
+        "titulo": "Expired products",
+        "descripcion_one": "Review {{nombres}}. There is 1 expired product.",
+        "descripcion_other": "Review {{nombres}}. There are {{count}} expired products.",
+        "accion": "Review inventory"
+      },
+      "proximosVencer": {
+        "titulo": "Products nearing expiry",
+        "descripcion_one": "There is 1 product expiring in the next {{days}} days.",
+        "descripcion_other": "There are {{count}} products expiring in the next {{days}} days.",
+        "accion": "View inventory"
+      }
+    }
   },
   "configuracion": {
     "titulo": "Settings",
@@ -1065,7 +1416,11 @@
     "guardarPermisos": "Save permissions",
     "errorCargar": "Could not load role templates",
     "errorActualizar": "Could not update permissions",
-    "actualizadoExito": "Permissions for \"{{nombre}}\" updated successfully.{{sync}}"
+    "actualizadoExito": "Permissions for \"{{nombre}}\" updated successfully.{{sync}}",
+    "syncRoles_one": " One linked role was synchronized.",
+    "syncRoles_other": " {{count}} linked roles were synchronized.",
+    "warningRolesLinked_one": " (1 linked role).",
+    "warningRolesLinked_other": " ({{count}} linked roles)."
   },
   "mermas": {
     "titulo": "Waste Management",
@@ -1114,7 +1469,13 @@
       "marca": "Brand",
       "tipo": "Type",
       "contenido": "Content",
-      "codigoBarras": "Barcode"
+      "codigoBarras": "Barcode",
+      "fechaAlta": "Created"
+    },
+    "marcaGenerica": "Generic",
+    "aria": {
+      "codigoBarras": "Barcode: {{codigo}}",
+      "filaProducto": "Product: {{nombre}}, Brand: {{marca}}"
     },
     "detail": {
       "infoGeneral": "General Information",
@@ -1136,7 +1497,9 @@
       "proveedor": "Supplier",
       "cargandoHistorial": "Loading history...",
       "sinHistorial": "No historical records for this product.",
-      "graficoPreciosPlaceholder": "Structure ready for price evolution chart"
+      "graficoPreciosPlaceholder": "Structure ready for price evolution chart",
+      "clickAmpliar": "Click to enlarge",
+      "zoomAlt": "Enlarged product view"
     },
     "historial": {
       "fecha": "Date",
@@ -1162,11 +1525,16 @@
       "noEncontradoInfo": "Product not found. The code was left in the search.",
       "noEncontradoForm": "Product not found. The form was opened to create it.",
       "errorCatalogo": "Could not check the catalog, but the product creation form was opened.",
-      "errorValidar": "Could not validate the scanned code."
+      "errorValidar": "Could not validate the scanned code.",
+      "eliminadoNombre": "Product \"{{nombre}}\" deleted successfully.",
+      "restaurado": "Product \"{{nombre}}\" restored successfully.",
+      "errorRestaurar": "Could not restore the product."
     },
     "empty": {
       "sinResultados": "No products matching your search or filters",
       "sinProductos": "No products found",
+      "sinEliminados": "No deleted products",
+      "sinEliminadosHint": "No previously deleted products found.",
       "prueba": "Try other terms or clear the filters.",
       "empieza": "Start by adding the first product to your inventory."
     },
@@ -1181,7 +1549,16 @@
     },
     "sinMarca": "No brand",
     "filtros": {
-      "placeholderCategoria": "Filter category..."
+      "placeholderCategoria": "Filter category...",
+      "ariaCategoria": "Filter products by category",
+      "sinResultados": "No results",
+      "limpiar": "Clear filters",
+      "verCategorias": "View categories"
+    },
+    "card": {
+      "eliminado": "Deleted",
+      "sinProveedores": "No Sup.",
+      "sinProveedoresTooltip": "No assigned suppliers"
     }
   },
   "inventario": {
@@ -1195,13 +1572,15 @@
     },
     "searchPlaceholder": "Search by product, type, supplier or location...",
     "tabs": {
-      "misUbicaciones": "My Locations",
-      "inventarioGeneral": "General Inventory"
+      "misUbicaciones": "My locations",
+      "inventarioGeneral": "General Inventory",
+      "ariaLabel": "inventory tabs",
+      "general": "General inventory"
     },
     "columns": {
       "producto": "Product",
       "tipo": "Type",
-      "stockTotal": "Total Stock",
+      "stockTotal": "Total stock",
       "minimo": "Minimum",
       "estado": "Status",
       "proveedores": "Suppliers",
@@ -1214,7 +1593,10 @@
     },
     "actions": {
       "verDetalles": "View Details and Batches",
-      "auditarStock": "Audit stock by adjustment (+/-)"
+      "auditarStock": "Audit stock by adjustment (+/-)",
+      "verDetalleLotes": "View details and batches",
+      "anadirInventario": "Add to inventory",
+      "gestionarUbicaciones": "Manage locations"
     },
     "dialogs": {
       "añadirTitulo": "Add product to inventory",
@@ -1279,6 +1661,14 @@
       "cantMaxMenorMin": "Maximum quantity cannot be less than the minimum.",
       "errorCrearInventario": "Error creating the inventory entry."
     },
+    "crearProductoValidacion": {
+      "nombreObligatorio": "Product name is required.",
+      "contenidoInvalido": "Content must be a number greater than 0.",
+      "unidadInvalida": "Select a valid unit of measure.",
+      "alMenosUnProveedor": "You must link at least one supplier to add this product to inventory.",
+      "precioProveedorInvalido": "Each supplier must have a valid purchase price (a number greater than or equal to 0)."
+    },
+    "ubicacionDesconocida": "Unknown location",
     "empty": {
       "sinResultados": "No products matching your search or filters",
       "sinUbicacionesAsignadas": "You have no assigned locations",
@@ -1286,7 +1676,14 @@
       "sinStockGeneral": "No stock in inventory",
       "prueba": "Try other terms or clear the filters.",
       "contactaProfesor": "Contact your teacher or administrator to assign you a slot.",
-      "registraStock": "Register receptions or create inventory entries to see stock."
+      "registraStock": "Register receptions or create inventory entries to see stock.",
+      "noMatch": "No products match your search or filters",
+      "noAssignedLocations": "You have no assigned locations",
+      "noStockLocations": "No stock in {{locations}}",
+      "noStock": "No stock in inventory",
+      "tryOtherTerms": "Try other terms or clear filters.",
+      "contactAdmin": "Contact your teacher or admin to assign you a slot.",
+      "registraRecepciones": "Register receptions or create inventory entries to see stock."
     },
     "detalle": {
       "auditarTitulo": "Audit Stock by Adjustment",
@@ -1379,6 +1776,48 @@
     "tabsLabel": "Inventory tabs",
     "filtros": {
       "placeholderUbicacion": "Location..."
+    },
+    "errors": {
+      "cargarUbicaciones": "Error loading locations",
+      "buscarProductoProveedor": "Error searching product/supplier.",
+      "cargarInventario": "Unknown error while loading inventory."
+    },
+    "form": {
+      "nombreComercial": "Commercial name",
+      "marca": "Brand",
+      "descripcion": "Description",
+      "contenidoNumerico": "Numeric content",
+      "unidadMedida": "Unit of measure",
+      "categoria": "Category",
+      "codigoBarras": "Barcode",
+      "proveedoresAsociados": "Linked suppliers"
+    },
+    "buscar": "Search by product, type, supplier or location...",
+    "status": {
+      "bajoStock": "Low stock",
+      "ok": "OK"
+    },
+    "scanner": {
+      "titulo": "Scan product to search"
+    },
+    "filters": {
+      "quitar": "Clear filter",
+      "stockBajoInfo": "You are viewing inventory filtered by products with stock below minimum."
+    },
+    "modalCreate": {
+      "titulo": "Add product to inventory",
+      "escribe2": "Type at least 2 characters to search…",
+      "sinResultados": "No results",
+      "productoProveedor": "Product / Supplier",
+      "buscarProductoProveedor": "Search product or supplier…",
+      "opcionValida": "You must select a valid option",
+      "cantidadActual": "Current quantity",
+      "cantidadMinima": "Minimum quantity",
+      "cantidadMaxima": "Maximum quantity (optional)",
+      "numeroMayorIgualCero": "Must be a number >= 0",
+      "maxMenorMin": "Cannot be less than minimum",
+      "ubicacion": "Warehouse location",
+      "fechaCaducidad": "Expiration date (optional)"
     }
   },
   "distribucion": {
@@ -1448,6 +1887,10 @@
       "sinDistribuciones": "No distributions recorded.",
       "sinAula": "No classroom"
     },
+    "tabla": {
+      "aulaClase": "{{aula}} · Class {{numeroClase}}",
+      "resumenPendiente": "{{count}} line(s) · {{total}}"
+    },
     "toast": {
       "distribucionRealizada": "Distribution completed successfully.",
       "distribucionConfirmada": "Distribution confirmed and stock transferred.",
@@ -1473,10 +1916,10 @@
       "agotadas": "Exhausted (Consumed)"
     },
     "columns": {
-      "fechaCreacion": "Creation date",
+      "fechaCreacion": "Created at",
       "receta": "Recipe",
       "cantidad": "Quantity",
-      "costeReal": "Real Cost",
+      "costeReal": "Real cost",
       "cocinero": "Cook",
       "fechaAgotado": "Exhausted date",
       "racionesDisponibles": "Available portions",
@@ -1484,8 +1927,9 @@
     },
     "actions": {
       "verDetalles": "View details",
-      "consumir": "Consume preparation",
-      "merma": "Report ingredient waste"
+      "consumir": "Consume portions or amount",
+      "merma": "Report ingredient waste",
+      "reportarMerma": "Report ingredient waste"
     },
     "detail": {
       "titulo": "Preparation",
@@ -1500,10 +1944,61 @@
       "racionesDisponibles": "Available portions",
       "racionesPreparadas": "Prepared portions",
       "raciones": "portions",
-      "costeTotalReal": "Total Real Cost",
+      "costeTotalReal": "Real total cost",
       "caducidad": "Expiry",
       "noDefinida": "Not defined",
-      "equivalencia": "Equivalence"
+      "equivalencia": "Equivalence",
+      "informacionGeneral": "General information",
+      "racionesValor": "{{count}} portions",
+      "modalTitulo": "Preparation: {{receta}}",
+      "modalSubtitulo": "Executed on {{fecha}}"
+    },
+    "racionEquiv": {
+      "una": "Each portion equals {{amountLabel}} {{unit}}.",
+      "varias": "{{portionsLabel}} portions equal {{totalLabel}} {{unit}}."
+    },
+    "mermaUnits": {
+      "g": {
+        "fullLabel": "grams (g)",
+        "shortLabel": "g",
+        "example": "250"
+      },
+      "kg": {
+        "fullLabel": "kilograms (kg)",
+        "shortLabel": "kg",
+        "example": "0.5"
+      },
+      "ml": {
+        "fullLabel": "millilitres (ml)",
+        "shortLabel": "ml",
+        "example": "200"
+      },
+      "l": {
+        "fullLabel": "litres (l)",
+        "shortLabel": "l",
+        "example": "1"
+      },
+      "cda": {
+        "fullLabel": "tablespoons (tbsp)",
+        "shortLabel": "tbsp",
+        "example": "2"
+      },
+      "cdta": {
+        "fullLabel": "teaspoons (tsp)",
+        "shortLabel": "tsp",
+        "example": "2"
+      },
+      "pieza": {
+        "fullLabel": "units (piece/bunch)",
+        "shortLabel": "unit",
+        "example": "1",
+        "note": "If the ingredient is handled in bunches, count 1 bunch as 1 unit."
+      },
+      "default": {
+        "fullLabel": "ingredient unit",
+        "shortLabel": "unit",
+        "example": "1"
+      }
     },
     "consumir": {
       "titulo": "Consume preparation",
@@ -1544,20 +2039,64 @@
     },
     "empty": {
       "noPreparaciones": "No preparations recorded",
-      "ejecutaReceta": "Run a recipe to see its history here."
+      "ejecutaReceta": "Run a recipe to see its history here.",
+      "titulo": "No preparations registered",
+      "descripcion": "Run a recipe to view its history here."
     },
     "toast": {
       "consumoRegistrado": "Consumption recorded successfully.",
       "errorConsumir": "Error consuming the preparation.",
       "mermaRegistrada": "Production waste recorded successfully.",
       "errorMerma": "Could not record production waste.",
-      "errorCargar": "Error loading preparations"
+      "errorCargar": "Error loading preparations",
+      "maxRaciones": "Only {{count}} portions are available in this batch."
     },
     "errors": {
       "cantidadInvalida": "Enter a valid quantity to consume.",
       "loteInvalido": "Select a valid production batch.",
       "ingredienteInvalido": "Select the ingredient with waste.",
-      "mermaCantidadInvalida": "Enter a waste quantity greater than 0."
+      "mermaCantidadInvalida": "Enter a waste quantity greater than 0.",
+      "cargar": "Error loading preparations"
+    },
+    "merma": {
+      "titulo": "Report production waste",
+      "motivo": "Reason",
+      "observaciones": "Notes",
+      "registrar": "Register waste",
+      "cuantoPerdido": "How much was lost?",
+      "cuantoPerdidoConUnidad": "How much was lost? ({{unidad}})",
+      "numeroMayorCero": "Enter number greater than 0.",
+      "helperConUnidad": "Record waste in {{unidad}}. Example: {{ejemplo}} {{unidadCorta}}.",
+      "seleccionaIngrediente": "Select ingredient first to see waste unit.",
+      "ingrediente": "Ingredient",
+      "errorResolverReceta": "Could not resolve batch recipe to load ingredients.",
+      "errorCargarIngredientes": "Could not load ingredient details to report waste.",
+      "seleccionaLote": "Select a valid production batch.",
+      "seleccionaIngredienteError": "Select ingredient with waste.",
+      "cantidadMayorCero": "Enter waste amount greater than 0.",
+      "ok": "Production waste recorded successfully.",
+      "errorRegistrar": "Could not record production waste."
+    },
+    "consume": {
+      "sinEquivalencia": "This recipe has no valid per-portion equivalence for amount/weight consumption.",
+      "multiploInvalido": "Amount must be multiple of {{step}} {{unidad}}.",
+      "cantidadValida": "Enter valid amount to consume.",
+      "ok": "Consumption recorded successfully.",
+      "error": "Error consuming preparation.",
+      "titulo": "Consume preparation",
+      "descripcion": "You can consume this batch by portions or by total amount/weight.",
+      "disponibles": "Available: {{count}} portions",
+      "cantidadDisponible": "Available amount: {{amount}}",
+      "noAdmiteCantidad": "This recipe does not support amount/weight consumption.",
+      "porRaciones": "By portions",
+      "porCantidad": "By amount/weight",
+      "cantidadRaciones": "Portion amount",
+      "cantidadConsumir": "Amount to consume ({{unidad}})",
+      "maxRaciones": "Maximum available: {{count}} portions.",
+      "multiploHelper": "Must be multiple of {{step}} {{unidad}}.",
+      "maxCantidad": "Maximum available: {{amount}} {{unidad}}.",
+      "confirmar": "Confirm consumption",
+      "cantidadConsumirPreview": "{{amount}} {{unidad}} to consume."
     }
   },
   "pedido": {
@@ -1575,6 +2114,27 @@
       "totalEstimado": "ESTIMATED TOTAL: "
     }
   },
+  "pedidoLineas": {
+    "title": "Order lines",
+    "multiSupplier": "(Multi-supplier enabled)",
+    "columns": {
+      "product": "Product",
+      "supplier": "Supplier",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "subtotal": "Subtotal"
+    },
+    "supplier": "Supplier",
+    "supplierSubtotal": "Supplier subtotal",
+    "autoSupplier": "Automatic supplier",
+    "selectProduct": "Select a product",
+    "selectSupplier": "Select supplier",
+    "newProducts": "New products (select one)",
+    "emptyCart": "No products in the basket yet. Use the \"Add Product\" button to start.",
+    "addProduct": "Add product",
+    "orderLines": "Order lines",
+    "totalEstimated": "ESTIMATED TOTAL"
+  },
   "escaner": {
     "permisosDenegados": "Camera permission denied",
     "permisosDenegadosDesc": "To use the scanner, allow camera access in your browser settings and reload the page.",
@@ -1584,6 +2144,9 @@
     "errorCamaraDesc": "Could not start the scanner. Make sure no other application is using the camera and try again.",
     "solicitandoAcceso": "Requesting camera access…",
     "cerrar": "Close scanner",
+    "tituloDefault": "Scan barcode",
+    "reintentar": "Retry",
+    "camaraSinNombre": "Camera {{id}}",
     "camara": "Camera",
     "ultimoCodigo": "Last scanned code: ",
     "instruccion": "Bring the code close to the frame. Rear cameras, continuous focus and EAN, UPC and Code 128 formats are prioritised.",
@@ -1622,6 +2185,37 @@
     "reenviado": "Resent",
     "pendiente": "Pending",
     "errorCarga": "Could not load the detailed information.",
+    "sinElementos": "No items to display.",
+    "verTodosFallback": "View all {{title}}",
+    "verTodos": {
+      "productos": "View all products",
+      "pedidos": "View all orders",
+      "incidencias": "View all incidents",
+      "stock": "View full inventory",
+      "proveedores": "View all suppliers"
+    },
+    "proveedores": {
+      "sinContacto": "No contact",
+      "productosCount_one": "{{count}} product",
+      "productosCount_other": "{{count}} products",
+      "proveedor": "Supplier"
+    },
+    "incidencias": {
+      "resuelta": "Resolved",
+      "pendiente": "Pending",
+      "lineas_one": "{{count}} line",
+      "lineas_other": "{{count}} lines",
+      "ocultarResumen": "Hide summary",
+      "verResumen": "View summary",
+      "proveedor": "Supplier",
+      "sinProveedor": "No supplier",
+      "observacionesRecepcion": "Reception notes",
+      "sinObservaciones": "No observations recorded.",
+      "detalle": "Incident detail",
+      "lineaResumen": "Expected: {{esperado}} · Received: {{recibido}} · Difference: {{diferencia}}",
+      "reclamacion": "Claim",
+      "nota": "Note"
+    },
     "ver": "View summary",
     "ocultar": "Hide summary",
     "observaciones": "Reception observations",
@@ -1647,7 +2241,18 @@
     "actions": {
       "verDetalle": "View detail",
       "editarProveedor": "Edit supplier",
-      "descargarFicha": "Download Profile"
+      "descargarFicha": "Download Profile",
+      "ariaVerDetalle": "View supplier detail {{nombre}}"
+    },
+    "form": {
+      "nifCuit": "NIF / CUIT",
+      "nifPattern": "NIF only allows alphanumeric characters",
+      "razonSocial": "Business Name",
+      "personaContacto": "Contact Person",
+      "telefono": "Phone",
+      "telefonoPattern": "Phone only allows numbers, spaces, and + prefix",
+      "email": "Email",
+      "direccion": "Address"
     },
     "detail": {
       "infoFiscal": "Fiscal Information",
@@ -1674,12 +2279,14 @@
     "toast": {
       "eliminado": "Supplier deleted successfully.",
       "actualizado": "Supplier updated successfully.",
-      "creado": "Supplier created successfully."
+      "creado": "Supplier created successfully.",
+      "creadoNombre": "Supplier \"{{nombre}}\" created successfully."
     },
     "errors": {
       "errorCargar": "Unknown error loading suppliers.",
       "errorEliminar": "Error deleting the supplier.",
-      "errorGuardar": "Error saving the supplier."
+      "errorGuardar": "Error saving the supplier.",
+      "errorCrear": "Error creating the supplier."
     },
     "empty": {
       "sinResultados": "No suppliers matching your search",
@@ -1692,7 +2299,14 @@
     "campoMarca": "Brand",
     "campoCodigoBarras": "Supplier Barcode",
     "campoPrecioCompra": "Purchase Price",
-    "eliminarAria": "Remove supplier {{nombre}}"
+    "eliminarAria": "Remove supplier {{nombre}}",
+    "selectorInline": {
+      "placeholderBuscar": "Search supplier…",
+      "tooltipCrearRapido": "Create new supplier",
+      "marcaPlaceholder": "Specific brand",
+      "codigoPlaceholder": "Specific reference",
+      "ejemplo": "E.g. {{valor}}"
+    }
   },
   "pedidos": {
     "titulo": "Order Management",
@@ -1702,6 +2316,28 @@
     "acciones": {
       "reportePdf": "PDF Report",
       "exportarExcel": "Export Excel"
+    },
+    "tabs": {
+      "misPedidos": "My Orders",
+      "pedidos": "Orders",
+      "compras": "Purchases"
+    },
+    "columnsList": {
+      "pedidoId": "Order no.",
+      "fechaPedido": "Order date",
+      "fechaEntrega": "Delivery date",
+      "costeTotal": "Total cost",
+      "estado": "Status",
+      "creadoPor": "Created by",
+      "fechaCreacion": "Created date",
+      "nPedidos": "No. of orders",
+      "costeTotalEstimado": "Estimated total cost",
+      "chipPedidoUsuario": "Order",
+      "chipInterno": "Internal"
+    },
+    "dashboardFilter": {
+      "quitar": "Remove filter",
+      "info": "You are viewing your pending orders filtered from the Dashboard."
     },
     "cancelar": {
       "tituloCompra": "Cancel Purchase: {{id}}",
@@ -1750,6 +2386,45 @@
     },
     "fechaEstimadaEntrega": "Estimated delivery date",
     "detalleTitulo": "Order detail",
+    "detalle": {
+      "subtitulo": "Order #{{numero}} · ID {{id}}",
+      "errores": {
+        "descargaPdf": "Could not download the order PDF.",
+        "impresionPdf": "Could not open print preview for the order PDF."
+      },
+      "secciones": {
+        "resumen": "Summary",
+        "lineas": "Order lines",
+        "observaciones": "Observations"
+      },
+      "campos": {
+        "proveedor": "Supplier",
+        "estado": "Status",
+        "creadoPor": "Created by",
+        "costeTotal": "Total cost",
+        "fechaPedido": "Order date",
+        "fechaEntrega": "Estimated delivery date"
+      },
+      "tabla": {
+        "producto": "Product",
+        "cantidad": "Quantity",
+        "precio": "Price",
+        "subtotal": "Subtotal"
+      },
+      "productoNoDisponible": "Product not available",
+      "marca": "Brand: {{marca}}",
+      "unidadFallback": "unit",
+      "sinLineas": "No lines available for this order.",
+      "sinObservaciones": "No observations recorded.",
+      "notaFechaEntrega": "Delivery date is calculated automatically in the backend and cannot be modified manually.",
+      "acciones": {
+        "descargando": "Downloading...",
+        "descargarPdf": "Download PDF",
+        "preparandoImpresion": "Preparing print...",
+        "imprimirPdf": "Print PDF",
+        "editarPedido": "Edit order"
+      }
+    },
     "gestionTitulo": "Orders Management",
     "fechaEntregaDialogMensaje": "The estimated delivery date for this order is {{fecha}}. This value is calculated automatically by the system and cannot be edited manually.",
     "buscarPlaceholder": "Search by supplier, status, user...",
@@ -1784,6 +2459,266 @@
       "errorCargarLote": "Error loading the batch.",
       "errorConsolidar": "Error consolidating orders into a batch.",
       "errorIniciarRecepcion": "Error starting reception from the purchase."
+    },
+    "batchCard": {
+      "batchPrefix": "Batch #",
+      "ref": "Ref:",
+      "providerOrders": "supplier orders",
+      "createdAt": "Created:",
+      "estimatedInvestment": "Estimated investment"
+    },
+    "weeklyBoard": {
+      "infoMessage": "Weekly view of orders grouped by user.",
+      "emptyMessage": "No orders to show for this week.",
+      "warningMessage": "Showing {{count}} orders with current filters.",
+      "invalidWeek": "Invalid week",
+      "weekLabel": "Week {{start}} - {{end}}",
+      "unknownUser": "Unknown user",
+      "selectUserOrders": "Select user orders",
+      "selectOrder": "Select order {{id}}",
+      "usersAndOrders": "{{users}} user(s), {{orders}} order(s)",
+      "totalEstimated": "Estimated total: {{amount}}",
+      "consolidate": "Consolidate week",
+      "ordersCount": "{{count}} order(s)"
+    },
+    "drawer": {
+      "title": "Order details"
+    }
+  },
+  "language": {
+    "select": "Select language",
+    "es": "Spanish",
+    "en": "English"
+  },
+  "table": {
+    "viewMode": {
+      "listAria": "List view",
+      "gridAria": "Grid view"
+    },
+    "export": {
+      "records": "records",
+      "pdfSelected": "Export {{count}} selected records to PDF",
+      "pdfAll": "Export {{count}} {{label}} to PDF",
+      "excelSelected": "Export {{count}} selected records to EXCEL",
+      "excelAll": "Export {{count}} {{label}} to EXCEL"
+    },
+    "pagination": {
+      "displayedRows": "{{from}}–{{to}} of {{count}}",
+      "rowsPerPageAria": "Rows per page",
+      "nextPage": "Next page",
+      "previousPage": "Previous page"
+    }
+  },
+  "forms": {
+    "validation": {
+      "required": "{{label}} is required",
+      "maxLength": "{{label}} cannot exceed {{max}} characters",
+      "minLength": "{{label}} must have at least {{min}} characters",
+      "invalidFormat": "{{label}} has an invalid format",
+      "invalidEmail": "Invalid email format"
+    },
+    "productFallback": "Product {{index}}",
+    "scanField": "Scan {{label}}",
+    "image": {
+      "previewAlt": "Preview",
+      "clickOrDrag": "Click or drag",
+      "changeImage": "Change Image",
+      "uploadImage": "Upload Image"
+    },
+    "discard": {
+      "title": "Discard changes",
+      "message": "You have unsaved changes. If you close now, they will be lost.",
+      "confirm": "Discard",
+      "cancel": "Keep editing"
+    }
+  },
+  "navigation": {
+    "items": {
+      "inicio": {
+        "title": "Home",
+        "description": "View overall summary and economat metrics"
+      },
+      "productos": {
+        "title": "Products",
+        "description": "Manage product catalog and prices"
+      },
+      "proveedores": {
+        "title": "Suppliers",
+        "description": "Manage external supplier information"
+      },
+      "recetas": {
+        "title": "Recipes",
+        "description": "Recipe catalog and costings"
+      },
+      "pedidos": {
+        "title": "Orders",
+        "description": "Manage user and supplier orders"
+      },
+      "recepcion": {
+        "title": "Reception",
+        "description": "Register incoming goods to warehouse"
+      },
+      "distribucion": {
+        "title": "Distribution",
+        "description": "Manage outgoing stock and product distribution"
+      },
+      "preparaciones": {
+        "title": "Preparations",
+        "description": "Recipe production history"
+      },
+      "albaranes": {
+        "title": "Delivery Notes",
+        "description": "Manage and digitize reception delivery notes"
+      },
+      "inventario": {
+        "title": "Inventory",
+        "description": "Control stock and apply inventory adjustments"
+      },
+      "movimientos": {
+        "title": "Movements",
+        "description": "Check stock movement history"
+      },
+      "mermas": {
+        "title": "Waste",
+        "description": "Manage product losses and breakages"
+      },
+      "incidencias": {
+        "title": "Incidents",
+        "description": "Report and manage issues or returns"
+      },
+      "administracion": {
+        "title": "Administration",
+        "description": "Manage classes, students and academic settings"
+      },
+      "miPerfil": {
+        "title": "My Profile",
+        "description": "Configure personal data and security"
+      }
+    }
+  },
+  "batchLineas": {
+    "downloadError": "Could not download the PDF.",
+    "noLines": "No lines available for this order.",
+    "noPedidos": "No orders in this batch.",
+    "observations": "Observations",
+    "unknownSupplier": "Unknown supplier",
+    "consolidatedOrders": "{{count}} consolidated order(s)",
+    "subtotal": "Subtotal",
+    "unknown": "Unknown",
+    "brand": "Brand",
+    "supplierOrders": "Supplier orders",
+    "visibleRef": "Visible reference",
+    "involvedOrders": "Involved orders",
+    "printOptions": "Print options",
+    "includeCancelled": "Include cancelled",
+    "pagePerSupplier": "One page per supplier",
+    "downloadPdf": "Download PDF",
+    "total": "Total",
+    "totalPurchase": "Purchase total",
+    "columns": {
+      "productBrand": "Product / Brand",
+      "orderedBy": "Ordered by",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "subtotal": "Subtotal"
+    },
+    "involvedColumns": {
+      "supplierOrderNo": "Supplier order",
+      "supplier": "Supplier",
+      "visibleRef": "Visible reference",
+      "user": "User",
+      "date": "Date",
+      "status": "Status"
+    }
+  },
+  "enum": {
+    "pedidoEstado": {
+      "PENDIENTE_DE_APROBACION": "Pending approval",
+      "POR_RECEPCIONAR": "Pending reception",
+      "RECEPCIONADO": "Received",
+      "INCIDENCIA": "Incident",
+      "CANCELADO": "Cancelled",
+      "PARCIAL": "Partial"
+    },
+    "pedidoUsuarioEstado": {
+      "BORRADOR": "Draft",
+      "PENDIENTE": "Pending",
+      "APROBADO": "Approved",
+      "CANCELADO": "Cancelled",
+      "CONSOLIDADO": "Consolidated"
+    },
+    "loteEstado": {
+      "PENDIENTE": "Pending",
+      "PARCIAL": "Partial",
+      "COMPLETADO": "Completed",
+      "INCIDENCIA": "Incident",
+      "CANCELADO": "Cancelled"
+    },
+    "incidenciaEstado": {
+      "NUEVA": "New",
+      "EN_AJUSTE": "In adjustment",
+      "PENDIENTE_VALIDACION": "Pending validation",
+      "RESUELTA": "Resolved",
+      "CANCELADA": "Cancelled",
+      "INVALIDA": "Invalid"
+    },
+    "tipoDiferencia": {
+      "FALTANTE": "Missing",
+      "EXCESO": "Excess",
+      "DEFECTUOSO": "Defective"
+    },
+    "estadoReclamacion": {
+      "PENDIENTE": "Pending",
+      "RECLAMADO": "Claimed",
+      "ABONADO": "Credited",
+      "REENVIADO": "Resent"
+    },
+    "movimientoTipo": {
+      "ENTRADA": "Entry",
+      "SALIDA": "Exit",
+      "AJUSTE": "Adjustment",
+      "PEDIDO": "Order",
+      "ENTRADA_COMPRA": "Purchase entry",
+      "SALIDA_DISTRIBUCION": "Distribution exit",
+      "ENTRADA_DISTRIBUCION": "Distribution entry",
+      "SALIDA_ELABORACION": "Production exit"
+    },
+    "mermaMotivo": {
+      "ROTURA": "Breakage",
+      "DETERIORO": "Deterioration",
+      "HURTO": "Theft",
+      "ERROR_PREPARACION": "Preparation error",
+      "OTROS": "Other"
+    },
+    "rolUsuario": {
+      "ADMIN": "Administrator",
+      "SUPER_ADMIN": "Super administrator",
+      "PROFESOR": "Teacher",
+      "ALUMNO": "Student"
+    },
+    "recepcionEstado": {
+      "PENDIENTE": "Pending",
+      "PARCIAL": "Partial",
+      "COMPLETADA": "Completed",
+      "CON_INCIDENCIAS": "With incidents",
+      "CANCELADA": "Cancelled"
+    },
+    "productoCategoria": {
+      "VERDURA": "Vegetable",
+      "FRUTA": "Fruit",
+      "CARNE": "Meat",
+      "PESCADO": "Fish",
+      "MARISCO": "Seafood",
+      "LACTEO": "Dairy",
+      "HUEVO": "Egg",
+      "CEREAL": "Cereal",
+      "LEGUMBRE": "Legume",
+      "FRUTO_SECO": "Nuts",
+      "CONDIMENTO": "Condiment",
+      "ACEITE": "Oil",
+      "AZUCAR": "Sugar",
+      "BEBIDA": "Beverage",
+      "OTRO": "Other"
     }
   }
 }

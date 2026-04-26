@@ -5,9 +5,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file usuarios.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Usuarios.
- * Cubre la gestión de perfil, cambios de contraseña y administración de usuarios.
+ * Documentación en español.
  */
 describe('UsuarioController (e2e)', () => {
   let app: INestApplication;
@@ -31,9 +29,9 @@ describe('UsuarioController (e2e)', () => {
   });
 
   describe('Perfil (Auto-servicio)', () => {
-    /**
-     * @test Debe obtener la información del perfil del usuario logueado.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /usuarios/perfil - Debe obtener mi perfil (200)', async () => {
       await request(app.getHttpServer() as Server)
         .get('/api/v1/usuarios/perfil')
@@ -45,9 +43,9 @@ describe('UsuarioController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe actualizar los datos básicos del perfil.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)', async () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil')
@@ -59,9 +57,9 @@ describe('UsuarioController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe validar la contraseña antigua antes de cambiarla por una nueva.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)', async () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
@@ -90,9 +88,9 @@ describe('UsuarioController (e2e)', () => {
   });
 
   describe('Administración (Solo Admin)', () => {
-    /**
-     * @test Debe listar todos los usuarios del sistema.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /usuarios - Debe listar usuarios (200)', async () => {
       const res = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios')
@@ -112,9 +110,9 @@ describe('UsuarioController (e2e)', () => {
       }
     });
 
-    /**
-     * @test Debe obtener un usuario específico por su ID.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /usuarios/:id - Debe obtener un usuario (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -123,9 +121,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-    /**
-     * @test Debe permitir activar/desactivar un usuario.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -135,9 +133,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-    /**
-     * @test Debe permitir cambiar el rol de un usuario.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /usuarios/:id/rol - Debe cambiar el rol (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -147,9 +145,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-    /**
-     * @test Debe rechazar IDs que no sean UUID válidos.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /usuarios/:id - Debe fallar con UUID inválido (400)', async () => {
       await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/invalid-uuid')

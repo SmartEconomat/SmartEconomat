@@ -38,8 +38,7 @@ import {
 } from './deterministic.seed-data';
 
 /**
- * Flush all user:permissions:* keys from Redis to avoid stale permission cache
- * after direct DB permission assignments in the seed.
+ * Documentación en español.
  */
 async function flushPermissionCache(): Promise<void> {
   const redisHost = process.env.REDIS_HOST || 'localhost';

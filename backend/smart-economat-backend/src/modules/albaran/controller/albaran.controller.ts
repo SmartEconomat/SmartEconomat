@@ -1,8 +1,5 @@
 /**
- * @module AlbaranController
- * REST controller for the /albaranes resource. Exposes endpoints to create,
- * list, retrieve, update, soft-delete albaranes and to upload/serve their
- * associated document files.
+ * Documentación en español.
  */
 import {
   Controller,
@@ -46,26 +43,21 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that handles HTTP requests for delivery notes (albaranes).
- * All routes are protected by JWT authentication and role-based permissions.
- * @class AlbaranController
+ * Documentación en español.
  */
 @ApiTags('Albaranes')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('albaranes')
 export class AlbaranController {
-  /**
-   * Constructs the AlbaranController with its required service dependency.
-   * @param {AlbaranService} albaranService - The service that handles albaran business logic.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly albaranService: AlbaranService) {}
 
-  /**
-   * Creates a new albaran from the request body.
-   * @param {CreateAlbaranDto} dto - Payload containing the fields for the new albaran.
-   * @returns {Promise<Albaran>} The newly created Albaran entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -73,22 +65,9 @@ export class AlbaranController {
     return this.albaranService.create(dto);
   }
 
-  /**
-   * Sube un documento (foto o PDF) asociado a un albarán.
-   *
-   * - El archivo se envía como `multipart/form-data` en el campo `file`.
-   * - `numeroReferencia` es obligatorio y se envía como campo de texto.
-   * - `recepcionId` es opcional; si se incluye, se vincula el albarán a la recepción.
-   *
-   * Tipos soportados: image/jpeg, image/png, image/gif, application/pdf.
-   * Tamaño máximo: configurado en MAX_FILE_SIZE_MB (por defecto 10 MB).
-   * @param {Express.Multer.File} file - The uploaded file provided by Multer.
-   * @param {UploadAlbaranDto} dto - Form data containing the reference number, optional recepcionId and observations.
-   * @returns {Promise<{ message: string; data: Albaran }>} Success message and the updated Albaran.
-   * @throws {BadRequestException} If no file is provided or the type/size is invalid.
-   * @throws {NotFoundException} If the specified recepcionId does not exist.
-   * @throws {ConflictException} If the albaran already has a document attached.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('upload-documento')
   @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -154,15 +133,9 @@ export class AlbaranController {
     };
   }
 
-  /**
-   * Obtiene el archivo físico del albarán.
-   * Requiere permiso PERMISSIONS.albaranes.ver en lugar del general PERMISSIONS.archivos.ver.
-   * @param {string} filename - The filename (not path) of the stored document.
-   * @param {ExpressResponse} res - Express response object used to stream the file.
-   * @returns The file stream sent directly via `res.sendFile`.
-   * @throws {BadRequestException} If the filename contains a path traversal sequence.
-   * @throws {NotFoundException} If the file does not exist on disk.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('documento/:filename')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
   @ApiOperation({
@@ -177,13 +150,9 @@ export class AlbaranController {
     return res.sendFile(filePath);
   }
 
-  /**
-   * Returns a paginated, sorted list of albaranes.
-   * Admin and super-admin users also receive soft-deleted records.
-   * @param {PaginationQueryDto} query - Pagination and sorting parameters.
-   * @param {{ user?: { rol?: string } }} req - Express request object used to extract the user role.
-   * @returns {Promise<PaginatedResponseDto<Albaran>>} Paginated list of albaranes.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   findAll(
@@ -201,13 +170,9 @@ export class AlbaranController {
     return this.albaranService.findAll(query, userRole);
   }
 
-  /**
-   * Retrieves a single albaran by its UUID, including full product detail relations.
-   * @param {string} id - UUIDv7 of the albaran to retrieve.
-   * @param {{ user?: { rol?: string } }} req - Express request object used to extract the user role.
-   * @returns {Promise<Albaran>} The found Albaran entity with all detail relations loaded.
-   * @throws {NotFoundException} If no albaran with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
   findOne(
@@ -218,13 +183,9 @@ export class AlbaranController {
     return this.albaranService.findOne(id, userRole, true);
   }
 
-  /**
-   * Partially updates an albaran identified by its UUID.
-   * @param {string} id - UUIDv7 of the albaran to update.
-   * @param {UpdateAlbaranDto} dto - Partial payload with the fields to update.
-   * @returns {Promise<Albaran>} The updated Albaran entity.
-   * @throws {NotFoundException} If no albaran with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.albaranes.editar)
   update(
@@ -234,12 +195,9 @@ export class AlbaranController {
     return this.albaranService.update(id, dto);
   }
 
-  /**
-   * Soft-deletes an albaran identified by its UUID. Returns HTTP 204 No Content on success.
-   * @param {string} id - UUIDv7 of the albaran to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} If no albaran with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.albaranes.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

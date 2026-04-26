@@ -2,22 +2,27 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from './utils/getCategoryIconFilled';
 import SmartFilterAutocomplete from '../../components/ui/SmartFilterAutocomplete';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos públicos
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Estado que representa los filtros seleccionados actualmente. */
+/**
+ * Documentación en español.
+ */
 export interface ProductFiltersState {
-  /** Lista de categorías seleccionadas. Vacío significa "Todas". */
+        /**
+     * Documentación en español.
+     */
   categorias: CategoriaProducto[];
-  /**
-   * Lista de IDs de alérgenos.
-   * Mantenida por compatibilidad con Productos.tsx pero no se usa en este filtro.
-   */
+        /**
+     * Documentación en español.
+     */
   alergenos: string[];
 }
 
@@ -25,7 +30,9 @@ export interface ProductFiltersProps {
   filters: ProductFiltersState;
   onChange: (filters: ProductFiltersState) => void;
   onClear?: () => void;
-  /** Mantenida por compatibilidad. No tiene efecto visual en esta versión. */
+        /**
+     * Documentación en español.
+     */
   inline?: boolean;
 }
 
@@ -35,36 +42,37 @@ export interface ProductFiltersProps {
 
 interface CategoryOption {
   value: CategoriaProducto;
-  label: string;
 }
 
 const CATEGORIA_OPTIONS: CategoryOption[] = [
-  { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-  { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-  { value: CategoriaProducto.CARNE, label: 'Carne' },
-  { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-  { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-  { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-  { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-  { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-  { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-  { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-  { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-  { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-  { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-  { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-  { value: CategoriaProducto.OTRO, label: 'Otro' },
+  { value: CategoriaProducto.VERDURA },
+  { value: CategoriaProducto.FRUTA },
+  { value: CategoriaProducto.CARNE },
+  { value: CategoriaProducto.PESCADO },
+  { value: CategoriaProducto.MARISCO },
+  { value: CategoriaProducto.LACTEO },
+  { value: CategoriaProducto.HUEVO },
+  { value: CategoriaProducto.CEREAL },
+  { value: CategoriaProducto.LEGUMBRE },
+  { value: CategoriaProducto.FRUTO_SECO },
+  { value: CategoriaProducto.CONDIMENTO },
+  { value: CategoriaProducto.ACEITE },
+  { value: CategoriaProducto.AZUCAR },
+  { value: CategoriaProducto.BEBIDA },
+  { value: CategoriaProducto.OTRO },
 ];
 
 /**
- * ProductFilters
- *
- * Componente que utiliza el SmartFilterAutocomplete atómico para filtrar productos.
+ * Documentación en español.
  */
 const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
+  const getCategoryLabel = (value: CategoriaProducto) =>
+    getEnumLabel(t, 'productoCategoria', value);
+
   // Sincronizar las opciones seleccionadas con el estado externo
   const selected = CATEGORIA_OPTIONS.filter((opt) =>
     filters.categorias.includes(opt.value)
@@ -74,10 +82,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     <SmartFilterAutocomplete<CategoryOption>
       options={CATEGORIA_OPTIONS}
       value={selected}
-      getOptionLabel={(opt) => opt.label}
+      getOptionLabel={(opt) => getCategoryLabel(opt.value)}
       isOptionEqualToValue={(opt, val) => opt.value === val.value}
-      placeholder="Filtrar categoría..."
-      ariaLabel="Filtrar productos por categoría"
+      placeholder={t('productos.filtros.placeholderCategoria')}
+      ariaLabel={t('productos.filtros.ariaCategoria')}
       onChange={(_, newValue) => {
         onChange({
           ...filters,
@@ -116,7 +124,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                   variant="caption"
                   sx={{ fontWeight: 500, lineHeight: 1, fontSize: '0.8rem' }}
                 >
-                  {option.label}
+                  {getCategoryLabel(option.value)}
                 </Typography>
               }
               sx={{
@@ -151,13 +159,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           >
             {getCategoryIconFilled(option.value, { sx: { fontSize: 18 } })}
           </Box>
-          <Typography variant="body2">{option.label}</Typography>
+          <Typography variant="body2">
+            {getCategoryLabel(option.value)}
+          </Typography>
         </Box>
       )}
-      noOptionsText="Sin resultados"
-      clearText="Limpiar filtros"
-      openText="Ver categorías"
-      closeText="Cerrar"
+      noOptionsText={t('productos.filtros.sinResultados')}
+      clearText={t('productos.filtros.limpiar')}
+      openText={t('productos.filtros.verCategorias')}
+      closeText={t('comun.cerrar')}
     />
   );
 };

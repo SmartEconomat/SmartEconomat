@@ -105,8 +105,7 @@ const highContrastLightPalette = {
 };
 
 /**
- * Paleta para el modo de alto contraste oscuro (High Contrast Dark).
- * Sigue la norma de contraste máximo (Blanco sobre Negro puro) sin semitransparencias.
+ * Documentación en español.
  */
 const highContrastDarkPalette = {
   mode: 'dark' as const,
@@ -140,10 +139,7 @@ const highContrastDarkPalette = {
 };
 
 /**
- * Defaults de accesibilidad que se aplican a TODOS los temas.
- * Evitan el warning "Blocked aria-hidden on an element because its
- * descendant retained focus" asegurando que Dialog, Modal, Menu y Drawer
- * gestionen correctamente el focus trap y la limpieza de aria-hidden.
+ * Documentación en español.
  */
 const a11yComponentDefaults = {
   MuiDialog: {
@@ -256,9 +252,9 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
       palette = lightPalette;
   }
 
-  /**
-   * Overrides globales para componentes que se aplican a todos los temas.
-   */
+        /**
+     * Documentación en español.
+     */
   const baseComponents = {
     ...a11yComponentDefaults,
     MuiTabs: {

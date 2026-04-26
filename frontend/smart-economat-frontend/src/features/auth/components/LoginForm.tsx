@@ -32,11 +32,7 @@ const visuallyHidden = {
 } as const;
 
 /**
- * Propiedades del componente LoginForm.
- * @interface LoginFormProps
- * @property {() => void} onToggleForm - Callback para cambiar al modo de registro.
- * @property {(user: User) => void} onLoginSuccess - Callback invocado
- *   cuando el login es exitoso. El padre se encarga de la animación de salida antes de navegar.
+ * Documentación en español.
  */
 interface LoginFormProps {
   onToggleForm: () => void;
@@ -44,9 +40,7 @@ interface LoginFormProps {
 }
 
 /**
- * Formulario de inicio de sesión.
- * Delega la navegación al padre mediante `onLoginSuccess` para permitir la
- * animación de salida antes de llamar a AuthContext.login().
+ * Documentación en español.
  */
 
 const LoginForm: React.FC<LoginFormProps> = ({

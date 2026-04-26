@@ -21,6 +21,7 @@ import { formatCurrency, getBatchTotal } from '../utils/pedidoFormatters';
 import { PedidosViewMode } from '../types/pedidos-ui.types';
 import PurchaseBatchCard from './PurchaseBatchCard';
 import { useTranslation } from 'react-i18next';
+import { formatLocalizedDate } from '../../../utils/intlFormat';
 
 dayjs.extend(isoWeek);
 
@@ -51,18 +52,14 @@ const getWeekRangeLabel = (
   const start = dayjs(referenceDate).startOf('isoWeek');
   const end = dayjs(referenceDate).endOf('isoWeek');
 
-  return weekLabel(start.format('DD/MM'), end.format('DD/MM'));
+  return weekLabel(
+    formatLocalizedDate(start.toDate()),
+    formatLocalizedDate(end.toDate())
+  );
 };
 
 /**
- * @description Weekly accordion board for displaying purchase batches grouped by ISO week.
- * Supports list and grid view modes; shows an empty message when no batches are present.
- * @param props.batches - Array of PurchaseBatch objects to display
- * @param props.isLoading - Whether data is being fetched
- * @param props.viewMode - 'list' or 'grid' display mode
- * @param props.handlers - Action callbacks for each batch row
- * @param props.emptyMessage - Optional message shown when there are no batches
- * @returns Accordion-based weekly board for purchase batches
+ * Documentación en español.
  */
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   batches,
@@ -71,7 +68,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   handlers,
   emptyMessage,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const columns = useMemo(() => buildBatchColumns(), []);
 
@@ -107,7 +104,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
     return Array.from(groups.values()).sort((left, right) =>
       right.weekKey.localeCompare(left.weekKey)
     );
-  }, [batches, t]);
+  }, [batches, t, i18n.language]);
 
   return (
     <Stack spacing={3}>

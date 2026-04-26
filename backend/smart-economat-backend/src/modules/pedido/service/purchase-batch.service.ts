@@ -45,14 +45,7 @@ type PedidoSemanticShape = Pedido & {
 };
 
 /**
- * Service for managing purchase batches (PurchaseBatch / lotes de compra).
- *
- * A PurchaseBatch groups one or more supplier Pedidos that were created or
- * consolidated together. This service handles creation, editing, approval,
- * cancellation, restoration, and status synchronisation for batches.
- *
- * All write operations run inside database transactions and roll back
- * automatically on failure.
+ * Documentación en español.
  */
 @Injectable()
 export class PurchaseBatchService {
@@ -63,18 +56,9 @@ export class PurchaseBatchService {
     private readonly produccionService: ProduccionService
   ) {}
 
-  /**
-   * Creates a new PurchaseBatch, automatically grouping product lines by supplier.
-   *
-   * Each unique supplier in `dto.lineas` gets its own child Pedido inside the
-   * batch. All pedidos start in `POR_RECEPCIONAR` state and are tracked via the
-   * movement audit log.
-   *
-   * @param dto - Product lines and optional observations for the batch
-   * @param userId - ID of the authenticated user creating the batch
-   * @returns The saved PurchaseBatch with all child pedidos loaded
-   * @throws ConflictException if the batch could not be persisted
-   */
+        /**
+     * Documentación en español.
+     */
   async createBatchOrder(
     dto: CreatePurchaseBatchDto,
     userId: string
@@ -193,16 +177,9 @@ export class PurchaseBatchService {
     }
   }
 
-  /**
-   * Creates a PurchaseBatch from a missing-stock analysis.
-   *
-   * Delegates to `buildPedidoUsuarioDtoFromMissingStock` to derive the required
-   * product lines, then calls `createBatchOrder`.
-   *
-   * @param dto - List of recipe items to analyse for missing stock
-   * @param userId - ID of the user initiating the order
-   * @returns The created PurchaseBatch
-   */
+        /**
+     * Documentación en español.
+     */
   async createBatchOrderFromMissingStock(
     dto: CreateMissingStockBatchDto,
     userId: string
@@ -213,17 +190,9 @@ export class PurchaseBatchService {
     return this.createBatchOrder(pedidoUsuarioDto, userId);
   }
 
-  /**
-   * Derives a `CreatePedidoUsuarioDto` by analysing which recipe ingredients are
-   * below required stock levels and which supplier offers the cheapest option.
-   *
-   * Lines with sufficient stock or no valid supplier are silently skipped.
-   * Quantities for the same ProductoProveedor are aggregated across items.
-   *
-   * @param dto - Recipe items and quantities to check
-   * @returns A DTO ready to pass to `createBatchOrder`
-   * @throws BadRequestException if no valid order lines can be derived
-   */
+        /**
+     * Documentación en español.
+     */
   async buildPedidoUsuarioDtoFromMissingStock(
     dto: CreateMissingStockBatchDto
   ): Promise<CreatePedidoUsuarioDto> {
@@ -285,12 +254,9 @@ export class PurchaseBatchService {
     };
   }
 
-  /**
-   * Returns all PurchaseBatches ordered by creation date (newest first),
-   * with pedidos, supplier, pedidoUsuario, and creator relations loaded.
-   *
-   * @returns Array of decorated PurchaseBatch entities
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(): Promise<PurchaseBatch[]> {
     const batches = await this.dataSource.getRepository(PurchaseBatch).find({
       relations: [
@@ -305,15 +271,9 @@ export class PurchaseBatchService {
     return batches.map((batch) => this.decorateBatchIdentity(batch));
   }
 
-  /**
-   * Consolidates multiple PedidoUsuario records into a single PurchaseBatch.
-   *
-   * The consolidated pedidosUsuario transition to `CONSOLIDADO` state.
-   *
-   * @param dto - IDs of pedidosUsuario to consolidate and optional observations
-   * @param userId - ID of the actor performing the consolidation
-   * @returns The newly created PurchaseBatch
-   */
+        /**
+     * Documentación en español.
+     */
   async consolidateExistingOrders(
     dto: ConsolidatePurchaseBatchDto,
     userId: string
@@ -328,15 +288,9 @@ export class PurchaseBatchService {
     );
   }
 
-  /**
-   * Approves a single PedidoUsuario by creating a PurchaseBatch from it.
-   *
-   * The pedidoUsuario transitions to `APROBADO` state.
-   *
-   * @param pedidoUsuarioId - UUID of the PedidoUsuario to approve
-   * @param userId - ID of the actor performing the approval
-   * @returns The created PurchaseBatch
-   */
+        /**
+     * Documentación en español.
+     */
   async approvePedidoUsuario(
     pedidoUsuarioId: string,
     userId: string
@@ -858,16 +812,9 @@ export class PurchaseBatchService {
     }
   }
 
-  /**
-   * Returns a single PurchaseBatch by ID with all relevant relations loaded.
-   *
-   * Also annotates each pedido product line with `hasLinkedMovements` to indicate
-   * whether receptions or incidences reference it.
-   *
-   * @param id - UUID of the PurchaseBatch
-   * @returns The decorated PurchaseBatch
-   * @throws NotFoundException if no batch exists with the given ID
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<PurchaseBatch> {
     const batch = await this.dataSource.getRepository(PurchaseBatch).findOne({
       where: { id },
@@ -892,16 +839,9 @@ export class PurchaseBatchService {
     return this.decorateBatchIdentity(batch);
   }
 
-  /**
-   * Recalculates and persists the batch status derived from its child pedido states.
-   *
-   * Called automatically after any individual pedido status change within the batch.
-   * Can be executed inside an existing transaction by passing `manager`.
-   *
-   * @param batchId - UUID of the PurchaseBatch to sync
-   * @param manager - Optional EntityManager to participate in a parent transaction
-   * @param actorId - ID of the actor triggering the sync (written to `modifiedBy`)
-   */
+        /**
+     * Documentación en español.
+     */
   async syncBatchStatus(
     batchId: string,
     manager?: EntityManager,

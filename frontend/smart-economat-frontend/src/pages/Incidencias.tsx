@@ -52,15 +52,12 @@ import ReporteSelectorModal, {
 } from '../components/ui/ReporteSelectorModal';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-
-const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  [EstadoIncidencia.NUEVA]: 'Nueva',
-  [EstadoIncidencia.EN_AJUSTE]: 'En ajuste',
-  [EstadoIncidencia.PENDIENTE_VALIDACION]: 'Pendiente validación',
-  [EstadoIncidencia.RESUELTA]: 'Resuelta',
-  [EstadoIncidencia.CANCELADA]: 'Cancelada',
-  [EstadoIncidencia.INVALIDA]: 'Inválida',
-};
+import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../i18n/enumPresentation';
+import {
+  formatLocalizedDate,
+  formatLocalizedDateTime,
+} from '../utils/intlFormat';
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
   [EstadoIncidencia.NUEVA]: 'pending',
@@ -74,6 +71,7 @@ const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
 type ResolveDialogMode = 'adjust' | 'resolve';
 
 const Incidencias: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
@@ -136,12 +134,12 @@ const Incidencias: React.FC = () => {
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al cargar incidencias';
+        err instanceof Error ? err.message : t('incidencias.errors.cargar');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, resolucionTab, filters]);
+  }, [page, pageSize, searchTerm, resolucionTab, filters, t]);
 
   useEffect(() => {
     loadData();
@@ -160,8 +158,8 @@ const Incidencias: React.FC = () => {
       });
       toast.success(
         payload.marcarComoResuelta
-          ? 'Incidencia marcada como resuelta'
-          : 'Incidencia actualizada correctamente'
+          ? t('incidencias.toast.marcadaResuelta')
+          : t('incidencias.toast.actualizada')
       );
       setItemToResolve(null);
       if (itemToView?.id === id) {
@@ -170,7 +168,7 @@ const Incidencias: React.FC = () => {
       await loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al resolver la incidencia';
+        err instanceof Error ? err.message : t('incidencias.errors.resolver');
       toast.error(message);
     } finally {
       setIsResolving(false);
@@ -182,12 +180,12 @@ const Incidencias: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeIncidencia(itemToDelete.id);
-      toast.success('Incidencia eliminada correctamente');
+      toast.success(t('incidencias.toast.eliminada'));
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al eliminar la incidencia';
+        err instanceof Error ? err.message : t('incidencias.errors.eliminar');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -216,19 +214,19 @@ const Incidencias: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: 'Fecha',
-        render: (row) => new Date(row.createdAt).toLocaleDateString(),
+        label: t('incidencias.table.fecha'),
+        render: (row) => formatLocalizedDate(row.createdAt),
         sortable: true,
       },
       {
         id: 'proveedorNombre',
-        label: 'Proveedor',
+        label: t('incidencias.table.proveedor'),
         render: (row) => row.proveedorNombre || '—',
         sortable: true,
       },
       {
         id: 'productos',
-        label: 'Producto(s)',
+        label: t('incidencias.table.productos'),
         render: (row) => (
           <Stack spacing={0.35}>
             <Typography variant="body2" fontWeight={600}>
@@ -236,18 +234,19 @@ const Incidencias: React.FC = () => {
                 .map((linea) => linea.nombreProducto)
                 .filter(Boolean)
                 .slice(0, 2)
-                .join(', ') || 'Sin detalle'}
+                .join(', ') || t('incidencias.table.sinDetalle')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {row.lineas?.length || 0} línea
-              {(row.lineas?.length || 0) !== 1 ? 's' : ''}
+              {t('incidencias.table.lineasCount', {
+                count: row.lineas?.length || 0,
+              })}
             </Typography>
           </Stack>
         ),
       },
       {
         id: 'cantidades',
-        label: 'Cantidades por producto',
+        label: t('incidencias.table.cantidadesPorProducto'),
         render: (row) => (
           <Stack spacing={0.35}>
             {(row.lineas || []).slice(0, 3).map((linea) => (
@@ -258,12 +257,16 @@ const Incidencias: React.FC = () => {
                 sx={{ display: 'block' }}
               >
                 {(() => {
-                  const unidad = linea.unidad || 'ud';
+                  const unidad = linea.unidad || t('incidencias.units.default');
                   return (
                     <>
-                      {linea.nombreProducto}: P {linea.cantidadEsperada}{' '}
-                      {unidad} · R {linea.cantidadRecibida} {unidad} · Pe{' '}
-                      {linea.cantidadPendiente} {unidad}
+                      {t('incidencias.table.cantidadLinea', {
+                        producto: linea.nombreProducto,
+                        esperada: linea.cantidadEsperada,
+                        recibida: linea.cantidadRecibida,
+                        pendiente: linea.cantidadPendiente,
+                        unidad,
+                      })}
                     </>
                   );
                 })()}
@@ -271,7 +274,9 @@ const Incidencias: React.FC = () => {
             ))}
             {(row.lineas?.length || 0) > 3 && (
               <Typography variant="caption" color="text.secondary">
-                +{(row.lineas?.length || 0) - 3} producto(s)
+                {t('incidencias.table.masProductos', {
+                  count: (row.lineas?.length || 0) - 3,
+                })}
               </Typography>
             )}
           </Stack>
@@ -279,11 +284,11 @@ const Incidencias: React.FC = () => {
       },
       {
         id: 'estado',
-        label: 'Estado',
+        label: t('incidencias.table.estado'),
         render: (row) => (
           <StatusChip
             status={INCIDENCIA_STATUS_CHIP[row.estado]}
-            label={INCIDENCIA_STATUS_LABEL[row.estado]}
+            label={getEnumLabel(t, 'incidenciaEstado', row.estado)}
             icon={
               row.resuelta ? <CheckCircleIcon /> : <ReportProblemOutlinedIcon />
             }
@@ -291,7 +296,7 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    []
+    [t, i18n.language]
   );
 
   const renderActions = (row: Incidencia) => (
@@ -301,7 +306,7 @@ const Incidencias: React.FC = () => {
       sx={{ minWidth: 160, justifyContent: 'flex-start' }}
     >
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="Ver detalle">
+        <Tooltip title={t('incidencias.actions.verDetalle')}>
           <IconButton
             color="primary"
             onClick={(e) => {
@@ -316,13 +321,13 @@ const Incidencias: React.FC = () => {
       </Box>
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.resuelta && canResolve && (
-          <Tooltip title="Ajustar cantidades">
+          <Tooltip title={t('incidencias.actions.ajustarCantidades')}>
             <IconButton
               onClick={() => openResolveModal(row, 'adjust')}
               size="small"
               color="warning"
               id="btn-ajustar-incidencia"
-              aria-label="Ajustar cantidades"
+              aria-label={t('incidencias.actions.ajustarCantidades')}
             >
               <TuneIcon fontSize="small" />
             </IconButton>
@@ -331,13 +336,13 @@ const Incidencias: React.FC = () => {
       </Box>
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.resuelta && canResolve && (
-          <Tooltip title="Resolver incidencia">
+          <Tooltip title={t('incidencias.actions.resolverIncidencia')}>
             <IconButton
               onClick={() => openResolveModal(row, 'resolve')}
               size="small"
               color="success"
               id="btn-resolver-incidencia"
-              aria-label="Resolver incidencia"
+              aria-label={t('incidencias.actions.resolverIncidencia')}
             >
               <CheckCircleIcon fontSize="small" />
             </IconButton>
@@ -346,7 +351,7 @@ const Incidencias: React.FC = () => {
       </Box>
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {canDelete && (
-          <Tooltip title="Eliminar">
+          <Tooltip title={t('incidencias.actions.eliminar')}>
             <IconButton
               onClick={() => setItemToDelete(row)}
               size="small"
@@ -364,37 +369,47 @@ const Incidencias: React.FC = () => {
     if (!itemToView) return [];
     return [
       {
-        title: 'Información de la Incidencia',
+        title: t('incidencias.detail.infoTitle'),
         fields: [
-          { label: 'Proveedor', value: itemToView.proveedorNombre || '—' },
           {
-            label: 'Fecha de Registro',
-            value: new Date(itemToView.createdAt).toLocaleString(),
+            label: t('incidencias.table.proveedor'),
+            value: itemToView.proveedorNombre || '—',
           },
           {
-            label: 'Estado',
-            value: INCIDENCIA_STATUS_LABEL[itemToView.estado],
+            label: t('incidencias.detail.fechaRegistro'),
+            value: formatLocalizedDateTime(itemToView.createdAt),
           },
-          { label: 'ID Recepción', value: itemToView.recepcionId || '—' },
           {
-            label: 'Motivo',
-            value: itemToView.motivoIncidencia || 'Sin motivo especificado',
+            label: t('incidencias.table.estado'),
+            value: getEnumLabel(t, 'incidenciaEstado', itemToView.estado),
+          },
+          {
+            label: t('incidencias.detail.idRecepcion'),
+            value: itemToView.recepcionId || '—',
+          },
+          {
+            label: t('incidencias.detail.motivo'),
+            value:
+              itemToView.motivoIncidencia || t('incidencias.detail.sinMotivo'),
             fullWidth: true,
           },
         ],
       },
       {
-        title: 'Notas de Incidencia',
+        title: t('incidencias.detail.notasTitle'),
         fields: [
           {
-            label: 'Notas de Recepción',
-            value: itemToView.observacionesRecepcion || 'Sin observaciones',
+            label: t('incidencias.detail.notasRecepcion'),
+            value:
+              itemToView.observacionesRecepcion ||
+              t('incidencias.detail.sinObservaciones'),
             fullWidth: true,
           },
           {
-            label: 'Notas de Resolución',
+            label: t('incidencias.detail.notasResolucion'),
             value:
-              itemToView.observacionesResolucion || 'Sin notas de resolución',
+              itemToView.observacionesResolucion ||
+              t('incidencias.detail.sinNotasResolucion'),
             fullWidth: true,
           },
         ],
@@ -402,7 +417,7 @@ const Incidencias: React.FC = () => {
       ...(itemToView.resuelta
         ? [
             {
-              title: 'Resolución',
+              title: t('incidencias.detail.resolucion'),
               fullWidth: true,
               content: (
                 <Box
@@ -426,7 +441,7 @@ const Incidencias: React.FC = () => {
                       color="success.main"
                       fontWeight={700}
                     >
-                      INCIDENCIA RESUELTA
+                      {t('incidencias.detail.resueltaBadge')}
                     </Typography>
                   </Stack>
                   <Stack spacing={2}>
@@ -436,13 +451,13 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        Fecha de Resolución
+                        {t('incidencias.detail.fechaResolucion')}
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
                         {itemToView.fechaResolucion
-                          ? new Date(
+                          ? formatLocalizedDateTime(
                               itemToView.fechaResolucion
-                            ).toLocaleString()
+                            )
                           : '—'}
                       </Typography>
                     </Box>
@@ -452,7 +467,7 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        Notas de Resolución
+                        {t('incidencias.detail.notasResolucion')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                         {itemToView.observacionesResolucion || '—'}
@@ -465,7 +480,9 @@ const Incidencias: React.FC = () => {
           ]
         : []),
       {
-        title: `Productos con Discrepancia (${itemToView.lineas?.length || 0})`,
+        title: t('incidencias.detail.productosConDiscrepancia', {
+          count: itemToView.lineas?.length || 0,
+        }),
         fullWidth: true,
         content: (
           <Box sx={{ mt: 1 }}>
@@ -497,12 +514,20 @@ const Incidencias: React.FC = () => {
                           ? 'error'
                           : 'warning'
                       }
-                      label={linea.tipoDiferencia}
+                      label={getEnumLabel(
+                        t,
+                        'tipoDiferencia',
+                        linea.tipoDiferencia
+                      )}
                       size="small"
                     />
                     <StatusChip
                       status={linea.estadoReclamacion}
-                      label={linea.estadoReclamacion}
+                      label={getEnumLabel(
+                        t,
+                        'estadoReclamacion',
+                        linea.estadoReclamacion
+                      )}
                       size="small"
                     />
                   </Stack>
@@ -510,23 +535,25 @@ const Incidencias: React.FC = () => {
                 <Stack direction="row" spacing={3}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Pedida
+                      {t('incidencias.detail.pedida')}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      {linea.cantidadEsperada} {linea.unidad || 'ud'}
+                      {linea.cantidadEsperada}{' '}
+                      {linea.unidad || t('incidencias.units.default')}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Recibido
+                      {t('incidencias.detail.recibida')}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      {linea.cantidadRecibida} {linea.unidad || 'ud'}
+                      {linea.cantidadRecibida}{' '}
+                      {linea.unidad || t('incidencias.units.default')}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Diferencia
+                      {t('incidencias.detail.diferencia')}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -536,13 +563,13 @@ const Incidencias: React.FC = () => {
                       }
                     >
                       {linea.diferencia > 0
-                        ? `+${linea.diferencia} ${linea.unidad || 'ud'}`
-                        : `${linea.diferencia} ${linea.unidad || 'ud'}`}
+                        ? `+${linea.diferencia} ${linea.unidad || t('incidencias.units.default')}`
+                        : `${linea.diferencia} ${linea.unidad || t('incidencias.units.default')}`}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Pendiente
+                      {t('incidencias.detail.pendiente')}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -553,7 +580,8 @@ const Incidencias: React.FC = () => {
                           : 'success.main'
                       }
                     >
-                      {linea.cantidadPendiente} {linea.unidad || 'ud'}
+                      {linea.cantidadPendiente}{' '}
+                      {linea.unidad || t('incidencias.units.default')}
                     </Typography>
                   </Box>
                 </Stack>
@@ -562,7 +590,7 @@ const Incidencias: React.FC = () => {
                     variant="caption"
                     sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}
                   >
-                    Nota: {linea.observaciones}
+                    {t('incidencias.detail.nota')}: {linea.observaciones}
                   </Typography>
                 )}
               </Box>
@@ -571,24 +599,24 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-  }, [itemToView, theme]);
+  }, [itemToView, theme, t, i18n.language]);
 
   return (
     <Box>
       <PageToolbar
         id="incidencias-toolbar"
-        title="Centro de Incidencias"
+        title={t('incidencias.titulo')}
         totalItems={totalItems}
-        totalItemsLabel="incidencias"
+        totalItemsLabel={t('incidencias.totalItemsLabel')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por proveedor u observaciones..."
+        searchPlaceholder={t('incidencias.buscar')}
         extraActions={[
           {
-            label: 'Reporte PDF',
+            label: t('incidencias.reportes.pdf'),
             onClick: () => openReporteModal('pdf'),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-incidencias-pdf',
@@ -596,7 +624,7 @@ const Incidencias: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Reporte Excel',
+            label: t('incidencias.reportes.excel'),
             onClick: () => openReporteModal('excel'),
             icon: <FileDownloadOutlinedIcon />,
             id: 'btn-reporte-incidencias-excel',
@@ -643,12 +671,12 @@ const Incidencias: React.FC = () => {
           >
             <Tab
               value="por_resolver"
-              label="Por resolver"
+              label={t('incidencias.tabs.porResolver')}
               icon={<PendingActionsIcon />}
             />
             <Tab
               value="resueltas"
-              label="Resueltas"
+              label={t('incidencias.tabs.resueltas')}
               icon={<CheckCircleOutlineIcon />}
             />
           </Tabs>
@@ -673,7 +701,7 @@ const Incidencias: React.FC = () => {
                   startIcon={<ClearIcon />}
                   sx={{ fontWeight: 700 }}
                 >
-                  Quitar filtro
+                  {t('incidencias.filters.quitar')}
                 </Button>
               }
               sx={{
@@ -685,8 +713,7 @@ const Incidencias: React.FC = () => {
                 '& .MuiAlert-message': { fontWeight: 500 },
               }}
             >
-              Estas visualizando las incidencias pendientes filtradas desde el
-              Dashboard.
+              {t('incidencias.filters.dashboardInfo')}
             </Alert>
           )}
 
@@ -703,8 +730,8 @@ const Incidencias: React.FC = () => {
                 />
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   {resolucionTab === 'resueltas'
-                    ? 'No hay incidencias resueltas'
-                    : 'No hay incidencias por resolver'}
+                    ? t('incidencias.empty.noResueltas')
+                    : t('incidencias.empty.noPorResolver')}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -712,10 +739,10 @@ const Incidencias: React.FC = () => {
                   sx={{ maxWidth: 400, mx: 'auto' }}
                 >
                   {searchTerm
-                    ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                    ? t('incidencias.empty.noSearchMatch')
                     : resolucionTab === 'resueltas'
-                      ? 'Aún no se han registrado incidencias resueltas con los filtros aplicados.'
-                      : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                      ? t('incidencias.empty.noResueltasConFiltros')
+                      : t('incidencias.empty.noPendientes')}
                 </Typography>
               </Box>
             }
@@ -736,7 +763,7 @@ const Incidencias: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle de Incidencia"
+        title={t('incidencias.modal.detalle')}
         subtitle={itemToView?.proveedorNombre}
         sections={detailSections}
         size="md"
@@ -753,7 +780,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Ajustar cantidades
+                {t('incidencias.actions.ajustarCantidades')}
               </Button>
               <Button
                 variant="contained"
@@ -765,7 +792,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Resolver incidencia
+                {t('incidencias.actions.resolverIncidencia')}
               </Button>
             </Stack>
           ) : undefined
@@ -776,9 +803,9 @@ const Incidencias: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title="Eliminar Incidencia"
-        message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
-        confirmText="Eliminar"
+        title={t('incidencias.confirm.titulo')}
+        message={t('incidencias.confirm.mensaje')}
+        confirmText={t('incidencias.confirm.eliminar')}
         isLoading={isDeleting}
       />
 

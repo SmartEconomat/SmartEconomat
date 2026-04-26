@@ -24,10 +24,9 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
     this.smartLogger.log('SmartAuthThrottlerGuard successfully initialized');
   }
 
-  /**
-   * Identifica unívocamente al cliente, priorizando su identidad lógica (email)
-   * sobre su IP física para no penalizar a usuarios bajo la misma red (NAT).
-   */
+        /**
+     * Documentación en español.
+     */
   protected async getTracker(req: Record<string, any>): Promise<string> {
     await Promise.resolve();
     if (req.user?.id) {

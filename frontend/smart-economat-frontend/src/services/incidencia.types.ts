@@ -1,164 +1,278 @@
 /**
- * Describes the type of quantity discrepancy found during a reception.
+ * Documentación en español.
  */
 export enum TipoDiferencia {
-  /** Fewer units were received than ordered. */
+        /**
+     * Documentación en español.
+     */
   FALTANTE = 'FALTANTE',
-  /** More units were received than ordered. */
+        /**
+     * Documentación en español.
+     */
   EXCESO = 'EXCESO',
-  /** Units were received but are damaged or defective. */
+        /**
+     * Documentación en español.
+     */
   DEFECTUOSO = 'DEFECTUOSO',
 }
 
 /**
- * Tracks the claim/resolution status of a single incidence line.
+ * Documentación en español.
  */
 export enum EstadoReclamacion {
-  /** No action taken yet. */
+        /**
+     * Documentación en español.
+     */
   PENDIENTE = 'PENDIENTE',
-  /** A formal claim has been submitted to the supplier. */
+        /**
+     * Documentación en español.
+     */
   RECLAMADO = 'RECLAMADO',
-  /** The supplier has issued a credit note. */
+        /**
+     * Documentación en español.
+     */
   ABONADO = 'ABONADO',
-  /** The supplier has reshipped the missing/defective items. */
+        /**
+     * Documentación en español.
+     */
   REENVIADO = 'REENVIADO',
 }
 
 /**
- * Overall lifecycle state of an incidence record.
+ * Documentación en español.
  */
 export enum EstadoIncidencia {
-  /** Newly created, not yet reviewed. */
+        /**
+     * Documentación en español.
+     */
   NUEVA = 'nueva',
-  /** Under review; at least one line has an active claim. */
+        /**
+     * Documentación en español.
+     */
   EN_AJUSTE = 'en_ajuste',
-  /** All lines have been acted on; awaiting final validation. */
+        /**
+     * Documentación en español.
+     */
   PENDIENTE_VALIDACION = 'pendiente_validacion',
-  /** Incidence fully resolved. */
+        /**
+     * Documentación en español.
+     */
   RESUELTA = 'resuelta',
-  /** Incidence cancelled by a user. */
+        /**
+     * Documentación en español.
+     */
   CANCELADA = 'cancelada',
-  /** Incidence marked as invalid (e.g. data entry error). */
+        /**
+     * Documentación en español.
+     */
   INVALIDA = 'invalida',
 }
 
 /**
- * Represents a single product line within an incidence.
+ * Documentación en español.
  */
 export interface IncidenciaLinea {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Foreign key referencing the original order product. */
+        /**
+     * Documentación en español.
+     */
   pedidoProductoId: string;
-  /** Optional product identifier (populated when the relation is loaded). */
+        /**
+     * Documentación en español.
+     */
   productoId?: string;
-  /** Display name of the product. */
+        /**
+     * Documentación en español.
+     */
   nombreProducto: string;
-  /** Unit of measure for the product. */
+        /**
+     * Documentación en español.
+     */
   unidad?: string;
-  /** Quantity that was expected according to the order. */
+        /**
+     * Documentación en español.
+     */
   cantidadEsperada: number;
-  /** Quantity that was actually received. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecibida: number;
-  /** Remaining quantity not yet received or resolved (cantidadEsperada - cantidadRecibida). */
+        /**
+     * Documentación en español.
+     */
   cantidadPendiente: number;
-  /** Signed difference (cantidadRecibida - cantidadEsperada). */
+        /**
+     * Documentación en español.
+     */
   diferencia: number;
-  /** Type of discrepancy (shortage, excess, defective). */
+        /**
+     * Documentación en español.
+     */
   tipoDiferencia: TipoDiferencia;
-  /** Current claim status for this line. */
+        /**
+     * Documentación en español.
+     */
   estadoReclamacion: EstadoReclamacion;
-  /** Optional free-text observations. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
 }
 
 /**
- * Represents a full incidence record as used in the frontend.
+ * Documentación en español.
  */
 export interface Incidencia {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Identifier of the reception that triggered this incidence. */
+        /**
+     * Documentación en español.
+     */
   recepcionId: string;
-  /** Optional identifier of the associated pedido. */
+        /**
+     * Documentación en español.
+     */
   pedidoId: string | null;
-  /** Display name of the supplier involved. */
+        /**
+     * Documentación en español.
+     */
   proveedorNombre: string;
-  /** Human-readable summary of why the incidence was raised. */
+        /**
+     * Documentación en español.
+     */
   motivoIncidencia: string;
-  /** Current lifecycle state. */
+        /**
+     * Documentación en español.
+     */
   estado: EstadoIncidencia;
-  /** Optional observations recorded at reception time. */
+        /**
+     * Documentación en español.
+     */
   observacionesRecepcion?: string;
-  /** Optional observations recorded when the incidence was resolved. */
+        /**
+     * Documentación en español.
+     */
   observacionesResolucion?: string;
-  /** Whether the incidence has been fully resolved. */
+        /**
+     * Documentación en español.
+     */
   resuelta: boolean;
-  /** ISO timestamp when the incidence was resolved, if applicable. */
+        /**
+     * Documentación en español.
+     */
   fechaResolucion?: string;
-  /** Sum of cantidadEsperada across all lines. */
+        /**
+     * Documentación en español.
+     */
   cantidadPedidaTotal: number;
-  /** Sum of cantidadRecibida across all lines. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecibidaTotal: number;
-  /** Sum of cantidadPendiente across all lines. */
+        /**
+     * Documentación en español.
+     */
   cantidadPendienteTotal: number;
-  /** Individual product lines. */
+        /**
+     * Documentación en español.
+     */
   lineas: IncidenciaLinea[];
-  /** ISO timestamp when the incidence was created. */
+        /**
+     * Documentación en español.
+     */
   createdAt: string;
 }
 
 /**
- * Adjustment data for a single line when resolving an incidence.
+ * Documentación en español.
  */
 export interface ResolveIncidenciaLineaAdjustment {
-  /** Line identifier (required when updating an existing line). */
+        /**
+     * Documentación en español.
+     */
   id?: string;
-  /** Foreign key of the pedido product to adjust. */
+        /**
+     * Documentación en español.
+     */
   pedidoProductoId?: string;
-  /** Delta to apply to the received quantity. */
+        /**
+     * Documentación en español.
+     */
   ajusteCantidad?: number;
-  /** Absolute received quantity to set. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecibida?: number;
-  /** New claim status for the line. */
+        /**
+     * Documentación en español.
+     */
   estadoReclamacion?: EstadoReclamacion;
-  /** Free-text observations for the line. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
 }
 
 /**
- * Payload for the resolve-incidence endpoint.
+ * Documentación en español.
  */
 export interface ResolveIncidenciaPayload {
-  /** Optional identifier of the user performing the resolution. */
+        /**
+     * Documentación en español.
+     */
   usuarioId?: string;
-  /** Free-text observations about the resolution. */
+        /**
+     * Documentación en español.
+     */
   observacionesResolucion?: string;
-  /** Whether to mark the incidence as fully resolved. */
+        /**
+     * Documentación en español.
+     */
   marcarComoResuelta?: boolean;
-  /** Desired final state of the incidence. */
+        /**
+     * Documentación en español.
+     */
   estadoFinal?:
     | EstadoIncidencia.RESUELTA
     | EstadoIncidencia.CANCELADA
     | EstadoIncidencia.INVALIDA;
-  /** Individual line adjustments to apply. */
+        /**
+     * Documentación en español.
+     */
   lineas?: ResolveIncidenciaLineaAdjustment[];
 }
 
 /**
- * Query parameters accepted by the paginated incidencias list endpoint.
+ * Documentación en español.
  */
 export interface IncidenciasQueryParams {
-  /** Page number (1-based). */
+        /**
+     * Documentación en español.
+     */
   page?: number;
-  /** Number of items per page. */
+        /**
+     * Documentación en español.
+     */
   limit?: number;
-  /** Free-text search term. */
+        /**
+     * Documentación en español.
+     */
   searchTerm?: string;
-  /** Filter by resolution state. */
+        /**
+     * Documentación en español.
+     */
   resuelta?: boolean;
-  /** ISO start date for date range filter. */
+        /**
+     * Documentación en español.
+     */
   startDate?: string;
-  /** ISO end date for date range filter. */
+        /**
+     * Documentación en español.
+     */
   endDate?: string;
 }

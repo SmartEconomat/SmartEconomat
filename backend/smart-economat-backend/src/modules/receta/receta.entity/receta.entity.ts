@@ -6,25 +6,26 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
 /**
- * Represents a Recipe (Receta) entity stored in the `receta` table.
- * A recipe defines the preparation instructions, ingredients, and production
- * parameters (yield, portion size, cost) for a dish or elaborated product.
- *
- * @class Receta
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Index(['dificultad', 'tiempoEstimadoMinutos'])
 @Entity('receta')
 export class Receta extends BaseEntity {
-  /** Name of the recipe. Maximum 150 characters. */
+        /**
+     * Documentación en español.
+     */
   @Column({ length: 150 })
   nombre!: string;
 
-  /** Step-by-step preparation instructions (free text). */
+        /**
+     * Documentación en español.
+     */
   @Column('text')
   instrucciones!: string;
 
-  /** Estimated preparation time in minutes. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'integer',
     name: 'tiempo_estimado_minutos',
@@ -32,7 +33,9 @@ export class Receta extends BaseEntity {
   })
   tiempoEstimadoMinutos!: number;
 
-  /** Difficulty level of the recipe (FACIL, MEDIA, DIFICIL). */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: DificultadReceta,
@@ -40,11 +43,15 @@ export class Receta extends BaseEntity {
   })
   dificultad!: DificultadReceta;
 
-  /** Relative path or URL of the recipe image (original). */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'path_img' })
   pathImg?: string;
 
-  /** Relative path or URL of the optimized (compressed/resized) recipe image. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 255,
@@ -53,10 +60,9 @@ export class Receta extends BaseEntity {
   })
   pathImgOptimized?: string;
 
-  /**
-   * Total yield of the recipe expressed in `unidadResultado`.
-   * Used to calculate unit cost: costeUnitarioEstimado = costTotal / rendimiento.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -67,7 +73,9 @@ export class Receta extends BaseEntity {
   })
   rendimiento?: number | null;
 
-  /** Unit of measure for the recipe yield (e.g. kg, l, pieza). */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: UnidadIngrediente,
@@ -76,7 +84,9 @@ export class Receta extends BaseEntity {
   })
   unidadResultado?: UnidadIngrediente | null;
 
-  /** Number of days before the produced batch expires. Used to set `fechaCaducidad` on the inventory lot. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'integer',
     nullable: true,
@@ -84,10 +94,9 @@ export class Receta extends BaseEntity {
   })
   diasCaducidad?: number | null;
 
-  /**
-   * Estimated unit cost (cost per unit of `rendimiento`).
-   * Recalculated automatically each time the recipe ingredients or their prices change.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -98,7 +107,9 @@ export class Receta extends BaseEntity {
   })
   costeUnitarioEstimado?: number | null;
 
-  /** Number of portions this recipe yields by default. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -110,7 +121,9 @@ export class Receta extends BaseEntity {
   })
   raciones?: number | null;
 
-  /** Size of each portion expressed in the same unit as `unidadResultado`. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -121,7 +134,9 @@ export class Receta extends BaseEntity {
   })
   tamanioRacion?: number | null;
 
-  /** List of ingredients (with quantities and units) that compose this recipe. */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
   ingredientes!: Relation<RecetaIngrediente[]>;
 }

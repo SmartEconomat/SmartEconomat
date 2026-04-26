@@ -19,6 +19,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Pedido, EstadoPedido } from '../../services/pedido.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
+import { getEnumLabel } from '../../i18n/enumPresentation';
+import { formatLocalizedDate } from '../../utils/intlFormat';
 
 interface PasoSeleccionPedidosProps {
   loadingPedidos: boolean;
@@ -129,10 +131,10 @@ const PasoSeleccionPedidos: React.FC<PasoSeleccionPedidosProps> = ({
                   />
                   <ListItemText
                     primary={`${pedido.proveedor?.nombre} - ${t('recepcion.seleccion.pedido')} ${formatPedidoListNumber(pedido, 'pedido-proveedor')}`}
-                    secondary={`${t('comun.id')}${pedido.id} | Fecha: ${new Date(pedido.fechaPedido).toLocaleDateString()} | ${t('comun.estado')}: ${pedido.estado}`}
+                    secondary={`${t('comun.id')}${pedido.id} | ${t('batchLineas.involvedColumns.date')}: ${formatLocalizedDate(pedido.fechaPedido)} | ${t('comun.estado')}: ${getEnumLabel(t, 'pedidoEstado', pedido.estado)}`}
                   />
                   <Chip
-                    label={pedido.estado}
+                    label={getEnumLabel(t, 'pedidoEstado', pedido.estado)}
                     color={
                       pedido.estado === EstadoPedido.POR_RECEPCIONAR
                         ? 'primary'

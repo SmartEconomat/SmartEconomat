@@ -13,10 +13,7 @@ export interface NormalizedPedidoLine {
 }
 
 /**
- * @description Extracts, coerces, and filters valid order lines from the pedido form values.
- * Lines missing a productoProveedorId, proveedorId, or with a non-positive cantidad are dropped.
- * @param formData - Raw form values from the pedido form
- * @returns Array of normalized, validated order lines ready for API calls
+ * Documentación en español.
  */
 export const extractPedidoLines = (
   formData: PedidoFormValues
@@ -63,11 +60,7 @@ export const extractPedidoLines = (
 };
 
 /**
- * @description Groups normalized pedido lines by their provider ID.
- * Lines without a resolved provider ID are silently skipped.
- * @param lines - Normalized order lines to group
- * @param fallbackProviderId - Optional provider ID to use when a line has no explicit provider
- * @returns Map from proveedorId to the list of lines belonging to that provider
+ * Documentación en español.
  */
 export const groupPedidoLinesByProvider = (
   lines: NormalizedPedidoLine[],
@@ -91,11 +84,7 @@ export const groupPedidoLinesByProvider = (
 };
 
 /**
- * @description Builds the API payload for updating an existing pedido.
- * @param proveedorId - The provider ID associated with the order
- * @param observaciones - Optional general observations for the order
- * @param lines - Normalized lines to include in the update
- * @returns UpdatePedidoPayload ready to be sent to the API
+ * Documentación en español.
  */
 export const buildPedidoUpdatePayload = (
   proveedorId: string,
@@ -111,11 +100,7 @@ export const buildPedidoUpdatePayload = (
 });
 
 /**
- * @description Builds the API payload for creating a new pedido for a single provider.
- * @param proveedorId - The provider ID for the new order
- * @param observaciones - Optional general observations for the order
- * @param lines - Normalized lines to include in the new order
- * @returns CreatePedidoPayload ready to be sent to the API
+ * Documentación en español.
  */
 export const buildCreatePedidoPayload = (
   proveedorId: string,
@@ -131,11 +116,7 @@ export const buildCreatePedidoPayload = (
 });
 
 /**
- * @description Builds the API payload for creating or updating a purchase batch (lote de compra).
- * Preserves existing line IDs so the backend can perform upsert operations.
- * @param observaciones - Optional observations for the batch
- * @param lines - Normalized lines (with optional existing IDs) to include
- * @returns CreatePurchaseBatchPayload ready to be sent to the API
+ * Documentación en español.
  */
 export const buildPurchaseBatchPayload = (
   observaciones: string | undefined,

@@ -4,31 +4,37 @@ import dayjs from 'dayjs';
 import { Box } from '@mui/material';
 
 /**
- * Props for the {@link DatePicker} component.
+ * Documentación en español.
  */
 interface DatePickerProps {
-  /** Visible label for the date input. */
+        /**
+     * Documentación en español.
+     */
   label: string;
-  /** Current value in `YYYY-MM-DD` format, or an empty string for no value. */
+        /**
+     * Documentación en español.
+     */
   value: string;
-  /** Callback invoked with `(name, formattedDate)` when the date changes. */
+        /**
+     * Documentación en español.
+     */
   onChange: (name: string, value: string) => void;
-  /** Field name used as the first argument of `onChange`. */
+        /**
+     * Documentación en español.
+     */
   name: string;
-  /** If `true`, the field is marked as required. */
+        /**
+     * Documentación en español.
+     */
   required?: boolean;
-  /** If `true`, the picker is read-only and disabled. */
+        /**
+     * Documentación en español.
+     */
   disabled?: boolean;
 }
 
 /**
- * Controlled date picker wrapping MUI X's `DatePicker`.
- *
- * Formats the selected date as `YYYY-MM-DD` and passes it to `onChange`
- * together with the field `name`, making it compatible with generic
- * form-state handlers.  A "clear" action is included in the picker toolbar.
- *
- * @param props - See {@link DatePickerProps}.
+ * Documentación en español.
  */
 const DatePicker: React.FC<DatePickerProps> = ({
   label,

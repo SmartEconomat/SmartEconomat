@@ -27,19 +27,32 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useBreakpoints } from '../../utils/useBreakpoints';
+import { useTranslation } from 'react-i18next';
 
 export interface PageToolbarProps {
-  /** Título de la sección */
+        /**
+     * Documentación en español.
+     */
   title?: string;
-  /** Icono opcional al lado del título */
+        /**
+     * Documentación en español.
+     */
   icon?: React.ReactNode;
-  /** Valor del campo de búsqueda */
+        /**
+     * Documentación en español.
+     */
   searchValue?: string;
-  /** Callback cuando cambia la búsqueda */
+        /**
+     * Documentación en español.
+     */
   onSearchChange?: (value: string) => void;
-  /** Placeholder para la búsqueda */
+        /**
+     * Documentación en español.
+     */
   searchPlaceholder?: string;
-  /** ID para el input de búsqueda */
+        /**
+     * Documentación en español.
+     */
   searchId?: string;
   primaryAction?: {
     label: string;
@@ -49,7 +62,9 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
-  /** Acción secundaria (botón outline, ej: Gestionar Ubicaciones) */
+        /**
+     * Documentación en español.
+     */
   secondaryAction?: {
     label: string;
     onClick: () => void;
@@ -58,21 +73,37 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
-  /** Filtros adicionales (Autocomplete, Selects, etc.) */
+        /**
+     * Documentación en español.
+     */
   filters?: React.ReactNode;
-  /** Conteo total de elementos */
+        /**
+     * Documentación en español.
+     */
   totalItems?: number;
-  /** Etiqueta para el total (ej: "productos", "usuarios") */
+        /**
+     * Documentación en español.
+     */
   totalItemsLabel?: string;
-  /** Modo de vista actual (si aplica) */
+        /**
+     * Documentación en español.
+     */
   viewMode?: 'list' | 'grid';
-  /** Callback para cambiar modo de vista */
+        /**
+     * Documentación en español.
+     */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
-  /** Callback para escanear código de barras/QR */
+        /**
+     * Documentación en español.
+     */
   onScanBarcode?: () => void; // Added onScanBarcode prop
-  /** Si es true, enfoca automáticamente el campo de búsqueda */
+        /**
+     * Documentación en español.
+     */
   autoFocusSearch?: boolean;
-  /** Si es true, el toolbar se mantiene arriba al hacer scroll */
+        /**
+     * Documentación en español.
+     */
   sticky?: boolean;
   extraActions?: {
     label: string;
@@ -91,14 +122,14 @@ export interface PageToolbarProps {
       | 'inherit';
     variant?: 'text' | 'outlined' | 'contained';
   }[];
-  /** ID único para identificación (ej: en tours) */
+        /**
+     * Documentación en español.
+     */
   id?: string;
 }
 
 /**
- * PageToolbar: Componente unificado para cabeceras de página.
- * Incluye Título, Búsqueda, Filtros y Controles de Tabla (Paginación/Vista)
- * siguiendo un diseño premium y responsive.
+ * Documentación en español.
  */
 const PageToolbar: React.FC<PageToolbarProps> = ({
   title,
@@ -120,6 +151,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   extraActions = [],
   id,
 }) => {
+  const { t } = useTranslation();
   const { isMobile, isTabletOrBelow } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -131,7 +163,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
       id={id}
       elevation={0}
       component="section"
-      aria-label={`Barra de herramientas de ${title || 'la página'}`}
+      aria-label={
+        title
+          ? t('layout.pageToolbar.ariaConTitulo', { titulo: title })
+          : t('layout.pageToolbar.ariaSinTitulo')
+      }
       sx={{
         p: { xs: 1.5, sm: 2 },
         mb: 2.5,
@@ -269,11 +305,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   input: {
                     startAdornment: onScanBarcode && (
                       <InputAdornment position="start">
-                        <Tooltip title="Escanear con cámara">
+                        <Tooltip title={t('comun.escanearCamara')}>
                           <IconButton
                             size="small"
                             onClick={onScanBarcode}
-                            aria-label="Escanear código"
+                            aria-label={t('comun.escanearCodigo')}
                             color="primary"
                             sx={{
                               '&:hover': {
@@ -300,7 +336,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => onSearchChange?.('')}
-                              aria-label="Limpiar búsqueda"
+                              aria-label={t('comun.limpiarBusqueda')}
                             >
                               <ClearIcon fontSize="small" />
                             </IconButton>
@@ -358,10 +394,16 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                   '& .MuiToggleButton-root': { py: 0.5, px: 1 },
                 }}
               >
-                <ToggleButton value="list" aria-label="Vista de lista">
+                <ToggleButton
+                  value="list"
+                  aria-label={t('layout.pageToolbar.vistaLista')}
+                >
                   <ViewListIcon fontSize="small" />
                 </ToggleButton>
-                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
+                <ToggleButton
+                  value="grid"
+                  aria-label={t('layout.pageToolbar.vistaCuadricula')}
+                >
                   <ViewModuleIcon fontSize="small" />
                 </ToggleButton>
               </ToggleButtonGroup>

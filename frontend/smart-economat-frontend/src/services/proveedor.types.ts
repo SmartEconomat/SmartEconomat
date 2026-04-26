@@ -1,35 +1,59 @@
 /**
- * Minimal product information as seen from a supplier's product list.
+ * Documentación en español.
  */
 export interface ProductoDelProveedor {
-  /** Unique identifier of the product-supplier relation. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Optional brand name of the product for this supplier. */
+        /**
+     * Documentación en español.
+     */
   marca?: string;
-  /** Optional barcode associated with this supplier's product. */
+        /**
+     * Documentación en español.
+     */
   codigoBarras?: string;
-  /** Unit price charged by this supplier. */
+        /**
+     * Documentación en español.
+     */
   precioUnitario: number;
 }
 
 /**
- * Represents a supplier (proveedor) entity as returned by the API.
+ * Documentación en español.
  */
 export interface Proveedor {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Legal or commercial name of the supplier. */
+        /**
+     * Documentación en español.
+     */
   nombre: string;
-  /** Name of the contact person at the supplier. */
+        /**
+     * Documentación en español.
+     */
   contacto?: string;
-  /** Contact phone number. */
+        /**
+     * Documentación en español.
+     */
   telefono?: string;
-  /** Contact email address. */
+        /**
+     * Documentación en español.
+     */
   email?: string;
-  /** Postal address of the supplier. */
+        /**
+     * Documentación en español.
+     */
   direccion?: string;
-  /** Tax identification number (NIF/CIF). */
+        /**
+     * Documentación en español.
+     */
   nif?: string;
-  /** Products supplied, if loaded with the relation. */
+        /**
+     * Documentación en español.
+     */
   productos?: ProductoDelProveedor[];
 }

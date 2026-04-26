@@ -1,9 +1,5 @@
 /**
- * Ruta por defecto del runtime del instalador.
- * Debe coincidir con la lógica de resolución en `boot-guardian.service.ts`.
- *
- * @param platform — `process.platform` en main/preload/renderer (Electron).
- * @param homeDir — directorio home del usuario (p. ej. `app.getPath("home")` o `HOME`).
+ * Documentación en español.
  */
 export function getDefaultRuntimePath(
   platform: NodeJS.Platform,

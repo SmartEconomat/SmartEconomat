@@ -33,6 +33,7 @@ import { mermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
 import { fetchAllProductos } from '../../services/producto.service';
+import { formatLocalizedDate } from '../../utils/intlFormat';
 
 const AUDIT_MANUAL_REASON = 'Ajuste de auditoria desde inventario';
 
@@ -542,7 +543,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                         <TableCell>{lote.ubicacion?.nombre || '—'}</TableCell>
                         <TableCell>
                           {lote.fechaCaducidad
-                            ? new Date(lote.fechaCaducidad).toLocaleDateString()
+                            ? formatLocalizedDate(lote.fechaCaducidad)
                             : '—'}
                         </TableCell>
 

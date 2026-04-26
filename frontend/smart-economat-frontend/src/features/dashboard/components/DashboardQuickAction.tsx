@@ -1,5 +1,6 @@
 import React from 'react';
 import { Paper, Box, Typography, useTheme, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardQuickActionProps {
   title: string;
@@ -16,6 +17,7 @@ const DashboardQuickAction: React.FC<DashboardQuickActionProps> = ({
   onClick,
   description,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -32,7 +34,14 @@ const DashboardQuickAction: React.FC<DashboardQuickActionProps> = ({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      aria-label={`${title}${description ? `: ${description}` : ''}. Haz clic para ejecutar esta acción.`}
+      aria-label={
+        description
+          ? t('dashboard.quickAction.ariaWithDesc', {
+              titulo: title,
+              descripcion: description,
+            })
+          : t('dashboard.quickAction.ariaNoDesc', { titulo: title })
+      }
       sx={{
         p: 2.5,
         border: '1px solid',

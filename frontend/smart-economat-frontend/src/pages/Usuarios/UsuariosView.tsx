@@ -170,15 +170,7 @@ const UserAccordion = React.memo(
 UserAccordion.displayName = 'UserAccordion';
 
 /**
- * Vista principal de gestión de usuarios del sistema.
- *
- * Muestra los usuarios agrupados por rol en acordeones expandibles.
- * Permite buscar, crear, editar, bloquear/desbloquear y eliminar usuarios,
- * así como cambiar contraseñas. Las acciones se protegen por permisos.
- *
- * @returns {JSX.Element} Vista completa de gestión de usuarios.
- * @example
- * <Route path="/usuarios" element={<UsuariosView />} />
+ * Documentación en español.
  */
 export const UsuariosView: React.FC = () => {
   const { t } = useTranslation();
@@ -520,11 +512,16 @@ export const UsuariosView: React.FC = () => {
 
   const columns = useMemo<Column<Usuario>[]>(
     () => [
-      { id: 'username', label: 'Usuario', sortable: true },
-      { id: 'email', label: 'Email', sortable: true, hideOnMobile: true },
+      { id: 'username', label: t('usuarios.columns.usuario'), sortable: true },
+      {
+        id: 'email',
+        label: t('usuarios.columns.email'),
+        sortable: true,
+        hideOnMobile: true,
+      },
       {
         id: 'estado',
-        label: 'Estado',
+        label: t('usuarios.columns.estado'),
         align: 'center',
         render: (row) => (
           <StatusChip
@@ -534,7 +531,7 @@ export const UsuariosView: React.FC = () => {
         ),
       },
     ],
-    []
+    [t]
   );
 
   const renderActions = useCallback(
@@ -549,20 +546,24 @@ export const UsuariosView: React.FC = () => {
                 await usuarioService.setUserActivation(row.id, shouldActivate);
                 toast.success(
                   shouldActivate
-                    ? 'Usuario activado correctamente'
-                    : 'Usuario suspendido correctamente'
+                    ? t('usuarios.toast.activado')
+                    : t('usuarios.toast.suspendido')
                 );
                 fetchAllData();
               } catch (error) {
                 const message =
                   error instanceof Error
                     ? error.message
-                    : 'Error al actualizar el estado del usuario';
+                    : t('usuarios.toast.errorActualizarEstado');
                 toast.error(message);
               }
             }}
             size="small"
-            title={row.estado === 'Activo' ? 'Suspender' : 'Activar'}
+            title={
+              row.estado === 'Activo'
+                ? t('usuarios.actions.suspender')
+                : t('usuarios.actions.activar')
+            }
           >
             {row.estado === 'Activo' ? (
               <BlockIcon fontSize="small" />
@@ -644,13 +645,13 @@ export const UsuariosView: React.FC = () => {
                 size="small"
                 onClick={clearNotificationFilters}
               >
-                Quitar filtro
+                {t('usuarios.filters.quitar')}
               </Button>
             }
           >
             {focus === 'pending-activation'
-              ? 'Mostrando usuarios pendientes de activación abiertos desde notificaciones.'
-              : `Filtro de estado activo: ${statusFilter}.`}
+              ? t('usuarios.filters.pendientesInfo')
+              : t('usuarios.filters.estadoActivo', { estado: statusFilter })}
           </Alert>
         ) : null}
 
@@ -685,7 +686,7 @@ export const UsuariosView: React.FC = () => {
               disabled={isLoading}
               sx={{ borderRadius: 2 }}
             >
-              Refrescar
+              {t('usuarios.actions.refrescar')}
             </Button>
             {canCreate && (
               <Button
@@ -698,7 +699,7 @@ export const UsuariosView: React.FC = () => {
                 }}
                 sx={{ px: 3, borderRadius: 2 }}
               >
-                Nuevo Usuario
+                {t('usuarios.actions.nuevoUsuario')}
               </Button>
             )}
           </Stack>
@@ -766,11 +767,13 @@ export const UsuariosView: React.FC = () => {
         title={t('usuarios.eliminarUsuario')}
         message={
           <>
-            ¿Seguro que quieres eliminar a{' '}
+            {t('usuarios.confirm.eliminarPregunta')}{' '}
             <strong>{userToDelete?.username}</strong>?
           </>
         }
-        confirmText={isDeleting ? 'Eliminando...' : 'Eliminar'}
+        confirmText={
+          isDeleting ? t('usuarios.confirm.eliminando') : t('comun.eliminar')
+        }
         isLoading={isDeleting}
       />
 
@@ -789,7 +792,9 @@ export const UsuariosView: React.FC = () => {
             : handlePasswordReset
         }
         title={
-          generatedPassword ? 'Contraseña Generada' : 'Resetear Contraseña'
+          generatedPassword
+            ? t('usuarios.confirm.contrasenaGenerada')
+            : t('usuarios.confirm.resetearContrasena')
         }
         message={
           generatedPassword ? (
@@ -815,12 +820,14 @@ export const UsuariosView: React.FC = () => {
             </Box>
           ) : (
             <>
-              ¿Deseas resetear la contraseña de{' '}
+              {t('usuarios.confirm.resetearPregunta')}{' '}
               <strong>{userToReset?.username}</strong>?
             </>
           )
         }
-        confirmText={generatedPassword ? 'Cerrar' : 'Confirmar'}
+        confirmText={
+          generatedPassword ? t('comun.cerrar') : t('comun.confirmar')
+        }
         isLoading={isResetting}
       />
     </Box>

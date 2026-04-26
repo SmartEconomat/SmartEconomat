@@ -2,43 +2,39 @@ import React from 'react';
 import { TextField, TextFieldProps, MenuItem } from '@mui/material';
 
 /**
- * A single option displayed inside {@link SelectField}.
+ * Documentación en español.
  */
 export type SelectOption = {
-  /** Underlying form value. */
+        /**
+     * Documentación en español.
+     */
   value: string | number;
-  /** Human-readable label; accepts any React node for rich content. */
+        /**
+     * Documentación en español.
+     */
   label: string | React.ReactNode;
 };
 
 /**
- * Props for the {@link SelectField} component.
- * `id` and `label` are required to guarantee proper accessibility.
+ * Documentación en español.
  */
 export type SelectFieldProps = Omit<TextFieldProps, 'select' | 'children'> & {
-  /** Menu options rendered as `MenuItem` elements. */
+        /**
+     * Documentación en español.
+     */
   options: SelectOption[];
-  /** HTML element ID — also used as the ARIA label target. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Visible label text — also injected as `aria-label` on the native input. */
+        /**
+     * Documentación en español.
+     */
   label: string;
 };
 
 /**
- * Accessible MUI `TextField` select wrapper.
- *
- * Injects `aria-label` on the underlying native input element so that screen
- * readers announce the field label correctly, working around MUI's default
- * behaviour of relying solely on `InputLabel` for labelling.
- *
- * @param props - See {@link SelectFieldProps}.
- * @returns JSX element rendering an accessible MUI select field.
- * @example
- * <SelectField
- *   id="categoria"
- *   label="Categoría"
- *   options={[{ value: 'verdura', label: 'Verdura' }]}
- * />
+ * Documentación en español.
  */
 const SelectField: React.FC<SelectFieldProps> = ({
   options,

@@ -240,10 +240,9 @@ export class DockerOrchestratorService {
     return this.commandResult(result, "Stack iniciado", "DOCKER_START_FAILED");
   }
 
-  /**
-   * Levanta el stack de forma ligera: `up -d` sin --build ni --force-recreate.
-   * Útil para la recuperación graduada Nivel 2 del Boot Guardian.
-   */
+        /**
+     * Documentación en español.
+     */
   async softStartStack(
     runtimePath: string,
     onLogLine?: (event: RuntimeLogEvent) => void,

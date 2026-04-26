@@ -5,28 +5,22 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 /**
- * Entidad HistorialPrecio
- *
- * Mantiene un registro histórico de los cambios de precio de un ProductoProveedor.
- * Permite analizar la evolución de costes y auditar cambios.
- * Se debe crear un nuevo registro cada vez que cambia 'precioUnitario' en ProductoProveedor.
- *
- * @class HistorialPrecio
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'historial_precio' })
 @Index(['productoProveedorId'])
 @Index(['fecha'])
 @Check(`"precio" > 0`)
 export class HistorialPrecio extends BaseEntity {
-  /** Foreign key referencing the ProductoProveedor this price history belongs to. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-  /**
-   * ProductoProveedor al que pertenece este histórico.
-   * La relación es CASCADE deletion porque es un dato dependiente fuerte.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.historialPrecios, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -34,11 +28,9 @@ export class HistorialPrecio extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
-  /**
-   * Precio registrado en ese momento histórico.
-   * Constraint: > 0.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -48,11 +40,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   precio!: number;
 
-  /**
-   * Cantidad asociada a este registro histórico.
-   * Representa la cantidad que se recibió al precio unitario especificado.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -62,10 +52,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   cantidad?: number;
 
-  /**
-   * Identificador del documento de origen (Nº Albarán, etc.) que generó esta entrada.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 50,
@@ -74,9 +63,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   documentoOrigen?: string;
 
-  /**
-   * Identificador de la recepción asociada que generó este cambio.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'uuid',
     nullable: true,
@@ -84,10 +73,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   recepcionId?: string;
 
-  /**
-   * Fecha en la que se registró (o entró en vigor) este precio.
-   * @type {Date}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',

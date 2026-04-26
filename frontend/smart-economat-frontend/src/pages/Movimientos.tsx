@@ -33,14 +33,18 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { usePermission } from '../store/auth.hooks'; // Original import path
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../i18n/enumPresentation';
+import {
+  formatLocalizedDate,
+  formatLocalizedDateTime,
+  formatLocalizedTime,
+} from '../utils/intlFormat';
 
 type MovimientosLocationState = {
   prefillSearchTerm?: string;
   prefillTypes?: TipoMovimiento[];
 };
-
-const capitalize = (text: string) =>
-  text.charAt(0).toUpperCase() + text.slice(1).replace(/_/g, ' ');
 
 const getMovimientoNombreProducto = (row: Movimiento) => {
   return (
@@ -51,6 +55,7 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 };
 
 const Movimientos: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
@@ -119,14 +124,12 @@ const Movimientos: React.FC = () => {
       setTotalPages(dataLoad.totalPages);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar movimientos.';
+        err instanceof Error ? err.message : t('movimientos.error');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, filters]);
+  }, [page, pageSize, searchTerm, filters, t]);
 
   useEffect(() => {
     loadData();
@@ -155,17 +158,14 @@ const Movimientos: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: 'Fecha',
+        label: t('movimientos.columns.fecha'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {new Date(row.createdAt).toLocaleDateString()}
+              {formatLocalizedDate(row.createdAt)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {new Date(row.createdAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatLocalizedTime(row.createdAt)}
             </Typography>
           </Box>
         ),
@@ -173,11 +173,12 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: 'Tipo',
+        label: t('movimientos.columns.tipo'),
         render: (row: Movimiento) => (
-          <Tooltip title={capitalize(row.tipo)}>
+          <Tooltip title={getEnumLabel(t, 'movimientoTipo', row.tipo)}>
             <StatusChip
               status={row.tipo}
+              label={getEnumLabel(t, 'movimientoTipo', row.tipo)}
               icon={getMovementIcon(row.tipo)}
               variant="outlined"
               sx={{
@@ -193,7 +194,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'cantidad',
-        label: 'Cant.',
+        label: t('movimientos.columns.cantidad'),
         render: (row: Movimiento) => {
           const isNegative =
             row.tipo === TipoMovimiento.SALIDA ||
@@ -216,7 +217,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'producto',
-        label: 'Descripción',
+        label: t('movimientos.columns.descripcion'),
         render: (row: Movimiento) => (
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -242,7 +243,7 @@ const Movimientos: React.FC = () => {
       },
       {
         id: 'usuario',
-        label: 'Usuario',
+        label: t('movimientos.columns.usuario'),
         render: (row: Movimiento) => {
           const displayName = getMovimientoUsuarioDisplayName(row.usuario);
 
@@ -271,7 +272,7 @@ const Movimientos: React.FC = () => {
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
-    [theme]
+    [theme, t, i18n.language]
   );
 
   const handleViewClick = (row: Movimiento) => {
@@ -280,11 +281,11 @@ const Movimientos: React.FC = () => {
 
   const renderActions = (row: Movimiento) => (
     <Stack direction="row" spacing={0.5} justifyContent="center">
-      <Tooltip title="Ver detalle">
+      <Tooltip title={t('movimientos.verDetalle')}>
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
-          aria-label="Ver detalle"
+          aria-label={t('movimientos.verDetalle')}
           id="btn-ver-detalle-movimiento"
           sx={{ color: 'text.secondary' }}
         >
@@ -299,27 +300,30 @@ const Movimientos: React.FC = () => {
 
     return [
       {
-        title: 'Información General',
+        title: t('movimientos.detalle.general'),
         fields: [
-          { label: 'Tipo', value: capitalize(itemToView.tipo) },
           {
-            label: 'Cantidad',
+            label: t('movimientos.columns.tipo'),
+            value: getEnumLabel(t, 'movimientoTipo', itemToView.tipo),
+          },
+          {
+            label: t('movimientos.columns.cantidad'),
             value:
               itemToView.cantidad > 0
                 ? `+${itemToView.cantidad}`
                 : itemToView.cantidad.toString(),
           },
           {
-            label: 'Fecha',
-            value: new Date(itemToView.createdAt).toLocaleString(),
+            label: t('movimientos.columns.fecha'),
+            value: formatLocalizedDateTime(itemToView.createdAt),
           },
         ],
       },
       {
-        title: 'Contexto',
+        title: t('movimientos.detalle.contexto'),
         fields: [
           {
-            label: 'Producto / Descripción',
+            label: t('movimientos.detalle.productoDescripcion'),
             value:
               getMovimientoNombreProducto(itemToView) ||
               itemToView.descripcion ||
@@ -327,25 +331,31 @@ const Movimientos: React.FC = () => {
             fullWidth: true,
           },
           {
-            label: 'Usuario',
+            label: t('movimientos.columns.usuario'),
             value: getMovimientoUsuarioDisplayName(itemToView.usuario),
           },
         ],
       },
       {
-        title: 'Seguimiento',
+        title: t('movimientos.detalle.seguimiento'),
         fields: [
-          { label: 'Lote', value: itemToView.inventario?.lote || '—' },
-          { label: 'Origen (Entidad)', value: itemToView.entidad || '—' },
           {
-            label: 'ID Entidad',
+            label: t('movimientos.detalle.lote'),
+            value: itemToView.inventario?.lote || '—',
+          },
+          {
+            label: t('movimientos.detalle.origenEntidad'),
+            value: itemToView.entidad || '—',
+          },
+          {
+            label: t('movimientos.detalle.idEntidad'),
             value: itemToView.entidadId || '—',
             fullWidth: true,
           },
         ],
       },
     ];
-  }, [itemToView]);
+  }, [itemToView, t, i18n.language]);
 
   const detailActions = useMemo(() => {
     if (!itemToView?.entidadId) {
@@ -366,21 +376,21 @@ const Movimientos: React.FC = () => {
             setItemToView(null);
           }}
         >
-          Ver Distribución
+          {t('movimientos.verDistribucion')}
         </Button>
       );
     }
 
     return null;
-  }, [itemToView, navigate]);
+  }, [itemToView, navigate, t]);
 
   return (
     <Box>
       <PageToolbar
         id="movimientos-toolbar"
-        title="Historial de Movimientos"
+        title={t('movimientos.titulo')}
         totalItems={totalItems}
-        totalItemsLabel="movimientos"
+        totalItemsLabel={t('movimientos.totalItemsLabel')}
         searchValue={searchTerm}
         onSearchChange={(val) => {
           setSearchTerm(val);
@@ -415,7 +425,7 @@ const Movimientos: React.FC = () => {
           <Box sx={{ py: 8, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              No hay movimientos
+              {t('movimientos.empty.noMovimientos')}
             </Typography>
             <Typography
               variant="body2"
@@ -426,8 +436,8 @@ const Movimientos: React.FC = () => {
               filters.types.length > 0 ||
               filters.startDate ||
               filters.endDate
-                ? 'No se encontraron movimientos que coincidan con los filtros seleccionados.'
-                : 'Aún no se han registrado alteraciones de inventario en el sistema.'}
+                ? t('movimientos.empty.noResultados')
+                : t('movimientos.empty.noRegistros')}
             </Typography>
           </Box>
         }
@@ -445,8 +455,8 @@ const Movimientos: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle del Movimiento"
-        subtitle={`ID: ${itemToView?.id || ''}`}
+        title={t('movimientos.detalle.titulo')}
+        subtitle={t('movimientos.detalle.id', { id: itemToView?.id || '' })}
         size="md"
         sections={detailSections}
         actions={detailActions}

@@ -19,22 +19,7 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 
 /**
- * Global NestJS module that wires together all authentication and authorization
- * infrastructure for the application.
- *
- * Provides and exports:
- * - JWT signing/verification via `@nestjs/jwt` (secret and expiry from config).
- * - Passport strategy (`jwt`) via `@nestjs/passport`.
- * - In-memory cache (TTL 300 s, max 1 000 entries) for permission look-ups.
- * - {@link AuthService}, {@link AuthPermissionsService}, {@link MailService}.
- * - {@link JwtStrategy} — Passport strategy that validates JWT payloads.
- * - {@link SherlockJwtAuthGuard}, {@link SherlockRolesGuard}, {@link SherlockPermissionsGuard}.
- * - {@link AuthController} — exposes login, register, and password-management endpoints.
- *
- * Marked `@Global()` so that its exports are available throughout the application
- * without explicitly importing this module in every feature module.
- *
- * @class SherlockAuthModule
+ * Documentación en español.
  */
 @Global()
 @Module({

@@ -3,8 +3,7 @@ import { newDb } from 'pg-mem';
 import { AddRolPlantillaRolIdColumn1775250000000 } from '../../src/migrations/1775250000000-add-rol-plantilla-rol-id-column';
 
 /**
- * Aislado de jest.setup / pg-mem global: valida SQL de migración contra memoria limpia.
- * Evita restore de snapshot tras cambiar esquema (limitación pg-mem).
+ * Documentación en español.
  */
 describe('AddRolPlantillaRolIdColumn1775250000000 (pg-mem aislado)', () => {
   it('up añade columna, FK, backfill por nombre (equivale a fix 42703 login)', async () => {
@@ -33,8 +32,9 @@ describe('AddRolPlantillaRolIdColumn1775250000000 (pg-mem aislado)', () => {
 
     const migration = new AddRolPlantillaRolIdColumn1775250000000();
     const queryRunner = {
-      query: (sql: string, parameters?: unknown[]) =>
-        db.public.none(sql, parameters as never[] | undefined),
+      query: (sql: string) => {
+        db.public.none(sql);
+      },
     };
 
     await migration.up(queryRunner as import('typeorm').QueryRunner);

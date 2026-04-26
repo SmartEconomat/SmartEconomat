@@ -1,8 +1,5 @@
 /**
- * @fileoverview Componente genérico DataTable para la visualización de listas tabulares o mosaicos de datos.
- * Esta tabla es altamente personalizable, con soporte para paginación integrada,
- * acciones por fila, cambio de vista dinámica (Grid/List) y ordenamiento de columnas.
- * Sirve como base para listados como Productos, Usuarios, o Proveedores en la aplicación.
+ * Documentación en español.
  */
 
 import React, { ReactNode, useState } from 'react';
@@ -37,22 +34,35 @@ import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { Tooltip } from './Tooltip';
 import Spinner from './Spinner';
+import { useTranslation } from 'react-i18next';
 
 /**
- * Representa la configuración de una columna en la tabla.
+ * Documentación en español.
  */
 export interface Column<T> {
-  /** Identificador único o key del objeto de la fila */
+        /**
+     * Documentación en español.
+     */
   id: keyof T | string;
-  /** Etiqueta visual que va en el encabezado de la columna */
+        /**
+     * Documentación en español.
+     */
   label: ReactNode;
-  /** Renderizado personalizado opcional para la celda. Si no se pasa, inyecta `row[id]` directamente */
+        /**
+     * Documentación en español.
+     */
   render?: (row: T) => ReactNode;
-  /** Alineación del texto en la columna */
+        /**
+     * Documentación en español.
+     */
   align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-  /** Si es true, esta columna no se renderiza en pantallas pequeñas (xs) */
+        /**
+     * Documentación en español.
+     */
   hideOnMobile?: boolean;
-  /** Control granular de visualización por breakpoint (MUI System object, ej: { xs: 'none', md: 'table-cell' }) */
+        /**
+     * Documentación en español.
+     */
   responsiveDisplay?: {
     xs?: string;
     sm?: string;
@@ -61,95 +71,160 @@ export interface Column<T> {
     xl?: string;
     [key: string]: string | undefined;
   };
-  /** Si es true, la columna permite ordenar de manera ascendente/descendente */
+        /**
+     * Documentación en español.
+     */
   sortable?: boolean;
-  /** Anchura sugerida de la columna */
+        /**
+     * Documentación en español.
+     */
   width?: number | string;
-  /** Anchura mínima de la columna */
+        /**
+     * Documentación en español.
+     */
   minWidth?: number | string;
-  /** Estilos extra para la cabecera */
+        /**
+     * Documentación en español.
+     */
   headerSx?: SxProps<Theme>;
-  /** Estilos extra para las celdas */
+        /**
+     * Documentación en español.
+     */
   cellSx?: SxProps<Theme>;
 }
 
 export interface ExportHandlers {
   onExportPdf?: () => void;
   onExportExcel?: () => void;
-  /** Label para el tooltip (ej: "productos filtrados") */
+        /**
+     * Documentación en español.
+     */
   exportLabel?: string;
 }
 
 export interface DataTableProps<T> {
-  /** Configuración de columnas de la tabla. */
+        /**
+     * Documentación en español.
+     */
   columns: Column<T>[];
-  /** Array de datos a mostrar. */
+        /**
+     * Documentación en español.
+     */
   data: T[];
-  /** Indica si los datos están cargando. */
+        /**
+     * Documentación en español.
+     */
   isLoading?: boolean;
-  /** Componente personalizado o string para mostrar cuando no hay datos. */
+        /**
+     * Documentación en español.
+     */
   emptyStateMessage?: ReactNode;
-  /** Configuración para paginación opcional. */
+        /**
+     * Documentación en español.
+     */
   pagination?: {
     currentPage: number;
     totalPages: number;
-    /** Total de items en todos los datos (para mostrar en TablePagination). Si no se provee, se estima. */
+                /**
+         * Documentación en español.
+         */
     totalItems?: number;
     onPageChange: (event: React.ChangeEvent<unknown>, page: number) => void;
     pageSize?: number;
     onPageSizeChange?: (event: SelectChangeEvent<number>) => void;
     pageSizeOptions?: number[];
   };
-  /** Callback para renderizar botones de acciones al final de la fila. */
+        /**
+     * Documentación en español.
+     */
   renderActions?: (row: T) => ReactNode;
-  /** String que se usará para generar la columna extra de acciones. */
+        /**
+     * Documentación en español.
+     */
   actionsLabel?: string;
-  /** Alineación de la columna de acciones. */
+        /**
+     * Documentación en español.
+     */
   actionsAlign?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-  /** Anchura sugerida de la columna de acciones. */
+        /**
+     * Documentación en español.
+     */
   actionsWidth?: number | string;
-  /** Función para renderizar un item en vista de cuadrícula (mosaico) */
+        /**
+     * Documentación en español.
+     */
   renderGridItem?: (row: T) => ReactNode;
-  /** Modo de vista por defecto (list o grid). Si renderGridItem existe, se puede cambiar */
+        /**
+     * Documentación en español.
+     */
   defaultViewMode?: 'list' | 'grid';
-  /** Modo de vista actual (controlado externamente) */
+        /**
+     * Documentación en español.
+     */
   viewMode?: 'list' | 'grid';
-  /** Callback para cambiar modo de vista (controlado externamente) */
+        /**
+     * Documentación en español.
+     */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
-  /** Configuración actual de ordenamiento */
+        /**
+     * Documentación en español.
+     */
   sortConfig?: {
     key: keyof T | string;
     direction: 'asc' | 'desc';
   };
-  /** Función disparada al clickear la cabecera de una columna ordenable */
+        /**
+     * Documentación en español.
+     */
   onSort?: (key: keyof T | string) => void;
-  /** Componente opcional que se pintará a la izquierda en la cabecera (ej: botón Nuevo) */
+        /**
+     * Documentación en español.
+     */
   leftHeaderAction?: ReactNode;
-  /** Componente opcional que se pintará a la derecha en la cabecera (ej: botón Nuevo) */
+        /**
+     * Documentación en español.
+     */
   rightHeaderAction?: ReactNode;
-  /** Si es true, oculta la barra superior interna de la tabla (usado con PageToolbar externo) */
+        /**
+     * Documentación en español.
+     */
   hideTopBar?: boolean;
-  /** Si es true, habilita la selección de filas con checkboxes */
+        /**
+     * Documentación en español.
+     */
   selectable?: boolean;
-  /** Array de IDs seleccionados (referenciados por la propiedad definida en uniqueKey o 'id') */
+        /**
+     * Documentación en español.
+     */
   selectedIds?: string[];
-  /** Callback disparado al cambiar la selección */
+        /**
+     * Documentación en español.
+     */
   onSelectionChange?: (ids: string[]) => void;
-  /** Propiedad del dato que sirve como ID único. Por defecto 'id'. */
+        /**
+     * Documentación en español.
+     */
   uniqueKey?: keyof T | string;
-  /** Handlers opcionales para exportación de datos */
+        /**
+     * Documentación en español.
+     */
   exportHandlers?: ExportHandlers;
-  /** Callback opcional al pulsar una fila de la tabla */
+        /**
+     * Documentación en español.
+     */
   onRowClick?: (row: T) => void;
-  /** Etiqueta accesible opcional para filas interactivas */
+        /**
+     * Documentación en español.
+     */
   getRowAriaLabel?: (row: T) => string;
-  /** ID único para identificación (ej: en tours) */
+        /**
+     * Documentación en español.
+     */
   id?: string;
 }
 
 /**
- * Componente genérico para mostrar listas tabulares de datos
- * con soporte para estado de carga, paginación unificada (TablePagination), acciones y vista en mosaico.
+ * Documentación en español.
  */
 
 // Eliminada la utilidad extractText local para usar la global en a11y-format.ts
@@ -159,10 +234,10 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   isLoading = false,
-  emptyStateMessage = 'No hay datos disponibles.',
+  emptyStateMessage,
   pagination,
   renderActions,
-  actionsLabel = 'Acciones',
+  actionsLabel,
   actionsAlign = 'center',
   actionsWidth,
   renderGridItem,
@@ -183,6 +258,7 @@ export function DataTable<T extends Record<string, any>>({
   onViewModeChange: onControlledViewModeChange,
   id,
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -190,6 +266,8 @@ export function DataTable<T extends Record<string, any>>({
   );
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [minHeight, setMinHeight] = useState<number | undefined>(undefined);
+  const resolvedEmptyStateMessage = emptyStateMessage ?? t('comun.sinDatos');
+  const resolvedActionsLabel = actionsLabel ?? t('comun.acciones');
 
   // Capturar la altura del contenedor antes de que cambie el contenido (prevención de CLS)
   React.useLayoutEffect(() => {
@@ -258,10 +336,10 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={handleViewModeChange}
                 size="small"
               >
-                <ToggleButton value="list" aria-label="Vista de lista">
+                <ToggleButton value="list" aria-label={t('table.viewMode.listAria')}>
                   <ViewListIcon />
                 </ToggleButton>
-                <ToggleButton value="grid" aria-label="Vista de cuadrícula">
+                <ToggleButton value="grid" aria-label={t('table.viewMode.gridAria')}>
                   <ViewModuleIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
@@ -275,10 +353,11 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a PDF`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a PDF`
+                    ? t('table.export.pdfSelected', { count: selectedIds.length })
+                    : t('table.export.pdfAll', {
+                        count: pagination?.totalItems ?? data.length,
+                        label: exportHandlers.exportLabel || t('table.export.records'),
+                      })
                 }
               >
                 <IconButton
@@ -303,10 +382,11 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? `Exportar los ${selectedIds.length} registros seleccionados a EXCEL`
-                    : `Exportar los ${pagination?.totalItems ?? data.length} ${
-                        exportHandlers.exportLabel || 'registros'
-                      } a EXCEL`
+                    ? t('table.export.excelSelected', { count: selectedIds.length })
+                    : t('table.export.excelAll', {
+                        count: pagination?.totalItems ?? data.length,
+                        label: exportHandlers.exportLabel || t('table.export.records'),
+                      })
                 }
               >
                 <IconButton
@@ -356,7 +436,7 @@ export function DataTable<T extends Record<string, any>>({
               minWidth: { xs: '100%', md: 650 },
               tableLayout: hasSizedColumns ? 'fixed' : 'auto',
             }}
-            aria-label="data table"
+            aria-label={t('comun.tablaDatos')}
           >
             <TableHead>
               <TableRow>
@@ -439,7 +519,7 @@ export function DataTable<T extends Record<string, any>>({
                     align={actionsAlign}
                     sx={{ fontWeight: 'bold', width: actionsWidth }}
                   >
-                    {actionsLabel}
+                    {resolvedActionsLabel}
                   </TableCell>
                 )}
               </TableRow>
@@ -503,12 +583,12 @@ export function DataTable<T extends Record<string, any>>({
                     align="center"
                     sx={{ py: 6 }}
                   >
-                    {typeof emptyStateMessage === 'string' ? (
+                    {typeof resolvedEmptyStateMessage === 'string' ? (
                       <Typography color="text.secondary">
-                        {emptyStateMessage}
+                        {resolvedEmptyStateMessage}
                       </Typography>
                     ) : (
-                      emptyStateMessage
+                      resolvedEmptyStateMessage
                     )}
                   </TableCell>
                 </TableRow>
@@ -691,7 +771,7 @@ export function DataTable<T extends Record<string, any>>({
               >
                 <Spinner size="md" color="primary" />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
-                  Cargando datos...
+                  {t('comun.cargando')}
                 </Typography>
               </Box>
             </Grid>
@@ -699,12 +779,12 @@ export function DataTable<T extends Record<string, any>>({
           {!isLoading && data.length === 0 && (
             <Grid size={{ xs: 12 }}>
               <Box display="flex" justifyContent="center" py={6}>
-                {typeof emptyStateMessage === 'string' ? (
+                {typeof resolvedEmptyStateMessage === 'string' ? (
                   <Typography color="text.secondary">
-                    {emptyStateMessage}
+                    {resolvedEmptyStateMessage}
                   </Typography>
                 ) : (
-                  emptyStateMessage
+                  resolvedEmptyStateMessage
                 )}
               </Box>
             </Grid>
@@ -753,17 +833,17 @@ export function DataTable<T extends Record<string, any>>({
               }
             }}
             rowsPerPageOptions={pagination.pageSizeOptions ?? [5, 10, 15, 20]}
-            labelRowsPerPage="Filas por página:"
+            labelRowsPerPage={t('comun.porPagina')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('table.pagination.displayedRows', { from, to, count })
             }
             slotProps={{
               select: {
-                'aria-label': 'Cantidad de filas por página',
+                'aria-label': t('table.pagination.rowsPerPageAria'),
               },
               actions: {
-                nextButton: { 'aria-label': 'Página siguiente' },
-                previousButton: { 'aria-label': 'Página anterior' },
+                nextButton: { 'aria-label': t('table.pagination.nextPage') },
+                previousButton: { 'aria-label': t('table.pagination.previousPage') },
               },
             }}
           />

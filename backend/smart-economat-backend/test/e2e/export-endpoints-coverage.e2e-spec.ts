@@ -1,5 +1,5 @@
 /**
- * Llamadas explícitas a rutas GET de exportación para el inventario E2E.
+ * Documentación en español.
  */
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';

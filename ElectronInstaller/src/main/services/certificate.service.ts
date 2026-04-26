@@ -18,15 +18,13 @@ interface CertificatePaths {
 
 interface EnsureCertificateOptions {
   overwrite: boolean;
-  /**
-   * Instalar el certificado en el almacén de certificados de Windows
-   * para que sea confiado por el sistema y los navegadores.
-   * Por defecto true en Windows.
-   */
+        /**
+     * Documentación en español.
+     */
   installToTrustStore?: boolean;
-  /**
-   * El dominio para el cual se generarán los certificados.
-   */
+        /**
+     * Documentación en español.
+     */
   domain?: string;
 }
 
@@ -232,17 +230,9 @@ export class CertificateService {
 
   // ── Windows Trust Store Management ────────────────────────────
 
-  /**
-   * Instala el certificado en el almacén de certificados raíz de confianza
-   * en Windows usando X509Store (convierte PEM → DER en memoria).
-   *
-   * Estrategia:
-   *  1. Intentar CurrentUser\Root (no requiere elevación).
-   *  2. Si el proceso ya corre elevado, intentar también LocalMachine\Root.
-   *
-   * El certificado local no debe bloquear la instalación: si Windows impide
-   * escribir en el trust store, el instalador continúa con advertencia.
-   */
+        /**
+     * Documentación en español.
+     */
   private async installCertificateToWindowsTrustStore(
     certPath: string,
   ): Promise<OperationResult> {
@@ -380,10 +370,9 @@ export class CertificateService {
     return result.ok && result.stdout.trim().toLowerCase() === "true";
   }
 
-  /**
-   * Verifica si el certificado de SmartEconomat ya está instalado
-   * en el almacén de certificados de confianza.
-   */
+        /**
+     * Documentación en español.
+     */
   private async isCertificateInTrustStore(): Promise<boolean> {
     if (process.platform !== "win32") {
       return false;
@@ -424,11 +413,9 @@ export class CertificateService {
     return result.ok;
   }
 
-  /**
-   * Elimina los certificados de SmartEconomat del almacén de confianza.
-   * Usa Get-ChildItem + Remove-Item que es el método correcto en PowerShell
-   * para eliminar del Root store sin lanzar AccessDenied como X509Store.Remove().
-   */
+        /**
+     * Documentación en español.
+     */
   private async removeCertificateFromWindowsTrustStore(): Promise<boolean> {
     if (process.platform !== "win32") {
       return true;
@@ -465,10 +452,9 @@ export class CertificateService {
     return result.ok;
   }
 
-  /**
-   * Reinstala el certificado en el trust store de Windows.
-   * Útil para reparar problemas de confianza del certificado.
-   */
+        /**
+     * Documentación en español.
+     */
   async reinstallCertificateToTrustStore(
     runtimePath: string,
   ): Promise<OperationResult> {

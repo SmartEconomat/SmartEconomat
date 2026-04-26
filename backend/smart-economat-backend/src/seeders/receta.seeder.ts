@@ -1,7 +1,5 @@
 /**
- * @module seeders/receta
- * Direct database seeder that inserts recipe records with ingredients using
- * deterministic data from the recipe template catalog.
+ * Documentación en español.
  */
 import { SeedContext } from './seed-context';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
@@ -20,10 +18,7 @@ import {
 import type { DataSource, Repository } from 'typeorm';
 
 /**
- * Maps a product unit string to its corresponding ingredient unit enum value.
- * Defaults to {@link UnidadIngrediente.PIEZA} for unrecognised unit strings.
- * @param {Producto['unidad']} unidad - The raw unit value from the Producto entity.
- * @returns {UnidadIngrediente} The mapped ingredient unit.
+ * Documentación en español.
  */
 function mapUnidadProducto(unidad: Producto['unidad']): UnidadIngrediente {
   switch (String(unidad).toUpperCase()) {

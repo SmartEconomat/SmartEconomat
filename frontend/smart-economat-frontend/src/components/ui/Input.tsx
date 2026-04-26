@@ -1,30 +1,45 @@
 import React from 'react';
 import { TextField, TextFieldProps } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 /**
- * Extended props for the {@link Input} component.
+ * Documentación en español.
  */
 type InputProps = TextFieldProps & {
-  /** Visible label for the text field. */
+        /**
+     * Documentación en español.
+     */
   label: string;
-  /** HTML `name` attribute — also used as the element `id`. */
+        /**
+     * Documentación en español.
+     */
   name: string;
-  /** HTML input type. Defaults to `'text'`. */
+        /**
+     * Documentación en español.
+     */
   type?: string;
-  /** Current value of the input. */
+        /**
+     * Documentación en español.
+     */
   value?: unknown;
-  /** Change event handler. */
+        /**
+     * Documentación en español.
+     */
   onChange?: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement>;
 };
 
 /**
- * Thin wrapper around MUI's `TextField` that enforces `label` and `name`
- * as required props and sets sensible defaults (`margin="normal"`, `fullWidth`).
- *
- * All additional `TextFieldProps` are forwarded to the underlying `TextField`.
- *
- * @param props - See {@link InputProps}.
+ * Documentación en español.
  */
+/** Oculta el control nativo de revelar contraseña (Edge/Chromium en Windows) para no duplicar el icono de MUI. */
+const hideNativePasswordRevealSx: SxProps<Theme> = {
+  '& input[type="password"]::-ms-reveal': { display: 'none' },
+  '& input[type="password"]::-ms-clear': { display: 'none' },
+  '& input[type="password"]::-webkit-textfield-decoration-container': {
+    display: 'none',
+  },
+};
+
 const Input: React.FC<InputProps> = ({
   label,
   name,
@@ -32,9 +47,22 @@ const Input: React.FC<InputProps> = ({
   value,
   onChange,
   required = false,
+  sx,
+  InputProps,
   ...props
 }) => {
   const autoComplete = props.autoComplete ?? undefined;
+
+  /** Solo si ya hay icono propio: el navegador añadiría un segundo control nativo. */
+  const suppressNativePasswordReveal =
+    type === 'password' && Boolean(InputProps?.endAdornment);
+
+  const mergedSx: SxProps<Theme> | undefined = suppressNativePasswordReveal
+    ? [
+        hideNativePasswordRevealSx,
+        ...(sx == null ? [] : Array.isArray(sx) ? sx : [sx]),
+      ]
+    : sx;
 
   return (
     <TextField
@@ -53,6 +81,8 @@ const Input: React.FC<InputProps> = ({
           shrink: true,
         },
       }}
+      InputProps={InputProps}
+      sx={mergedSx}
       {...props}
     />
   );

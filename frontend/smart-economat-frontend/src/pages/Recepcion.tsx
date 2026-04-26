@@ -58,17 +58,10 @@ import RecepcionDraftConflictDialog from '../components/recepcion/RecepcionDraft
 import { useRecepcionDraft } from '../hooks/useRecepcionDraft';
 import { delay, serialService } from '../services/serial.service';
 import { formatPedidoListNumber } from '../features/pedidos/utils/pedidoFormatters';
+import { formatLocalizedDateTime } from '../utils/intlFormat';
 
 /**
- * Computes the reception state for a line based on received vs. ordered quantities.
- *
- * These return values are state-machine tokens used throughout the app's logic
- * (comparisons, API payloads, etc.) and must NOT be translated. Display
- * translations are handled separately via `recepcion.estados.*` i18n keys.
- *
- * @param rec - Quantity actually received.
- * @param ped - Quantity originally ordered.
- * @returns One of the `LineaDraft['estado']` discriminated-union literals.
+ * Documentación en español.
  */
 const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
   if (rec === 0) return 'No entregado';
@@ -78,11 +71,7 @@ const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
 };
 
 /**
- * Returns `true` when the given unit of measure represents a weight-based unit
- * (kilograms, grams or milligrams), which requires the scale workflow instead
- * of integer counting.
- *
- * @param unidad - The unit-of-measure string to test, e.g. `'kg'`, `'uds'`.
+ * Documentación en español.
  */
 const isWeightUnit = (unidad: string | undefined): boolean => {
   if (!unidad) return false;
@@ -91,32 +80,19 @@ const isWeightUnit = (unidad: string | undefined): boolean => {
 };
 
 /**
- * Returns `true` when `value` is a non-empty, non-whitespace-only string.
- * Used to check whether free-text draft fields (observations, dates, etc.)
- * actually contain meaningful user input.
- *
- * @param value - Optional string to test.
+ * Documentación en español.
  */
 const hasDraftText = (value?: string): boolean =>
   typeof value === 'string' && value.trim().length > 0;
 
 /**
- * Returns `true` when the draft line has a non-empty `cantidadAlbaran` field,
- * meaning the user has entered a delivery-note quantity for this product line.
- *
- * @param linea - The `LineaDraft` to inspect.
+ * Documentación en español.
  */
 const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
   linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
 
 /**
- * Returns `true` when a draft line is considered "active" — i.e. the user has
- * touched it in some way that must be serialised and validated before submission.
- * A line is active if it has been manually intervened, has a positive received
- * quantity, has an albaran quantity, has free-text fields filled in, or has a
- * non-optimal visual state.
- *
- * @param linea - The `LineaDraft` to inspect.
+ * Documentación en español.
  */
 const isLineaDraftActiva = (linea: LineaDraft): boolean =>
   Boolean(
@@ -207,18 +183,7 @@ const getScaleHeaderChipConfig = (
 };
 
 /**
- * Wizard page that guides the user through the goods-reception process in four
- * sequential steps:
- *
- * 1. **Order Selection** — choose which pending purchase orders to receive.
- * 2. **Scanning & Counting** — scan barcodes or search by name to log received
- *    quantities, optionally using a Web Serial weight scale.
- * 3. **Review & Adjustment** — verify quantities, enter observations and expiry
- *    dates, validate business rules before submission.
- * 4. **Result** — displays the outcome of the completed reception transaction.
- *
- * The component persists a draft to the server in real time and can recover an
- * interrupted reception from a previous session via the recovery dialog.
+ * Documentación en español.
  */
 const Recepcion: React.FC = () => {
   const { t } = useTranslation();
@@ -330,10 +295,9 @@ const Recepcion: React.FC = () => {
     let cancelled = false;
     const serialNavigator = navigator as SerialNavigator;
 
-    /**
-     * Checks whether the browser already has an authorized serial port saved
-     * from a previous session and updates scale-status state accordingly.
-     */
+                /**
+         * Documentación en español.
+         */
     const checkAuthorizedScale = async () => {
       setIsScaleBusy(true);
 
@@ -361,14 +325,18 @@ const Recepcion: React.FC = () => {
       }
     };
 
-    /** Handles the Web Serial `connect` event — marks the scale as active. */
+                /**
+         * Documentación en español.
+         */
     const handleConnect = () => {
       setIsScaleConnected(true);
       setIsScaleEnabled(true);
       setScaleStatusText(t('recepcion.bascula.conectada'));
     };
 
-    /** Handles the Web Serial `disconnect` event — stops reading and resets state. */
+                /**
+         * Documentación en español.
+         */
     const handleDisconnect = () => {
       serialService.stopContinuousRead();
       setIsScaleConnected(false);
@@ -400,10 +368,9 @@ const Recepcion: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Sets the scale status chip to "disconnected" text.
-   * Only disables the scale toggle if the user did not manually disable it.
-   */
+        /**
+     * Documentación en español.
+     */
   const setIsScaleStatusDisconnected = () => {
     setScaleStatusText(t('recepcion.bascula.desconectada'));
     if (!scaleManuallyDisabledRef.current) {
@@ -411,12 +378,9 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Handles the user toggling the scale on or off from the UI switch.
-   * When disabled, stops any ongoing continuous read and resets weighing state.
-   *
-   * @param enabled - Whether the user is enabling (`true`) or disabling (`false`) the scale.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleScaleToggle = (enabled: boolean) => {
     scaleManuallyDisabledRef.current = !enabled;
     setIsScaleEnabled(enabled);
@@ -438,11 +402,9 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Triggers the browser's native Web Serial port-selection dialog so the user
-   * can authorise a new scale device. On success, opens the serial connection
-   * and enables the scale. On failure, sets an error message.
-   */
+        /**
+     * Documentación en español.
+     */
   const requestScaleAccess = async () => {
     if (!isScaleSupported) {
       setError(t('recepcion.errors.webSerialNoSoportado'));
@@ -490,11 +452,9 @@ const Recepcion: React.FC = () => {
 
   // --- 2. Acciones del Backend ---
 
-  /**
-   * Fetches all purchase orders in `POR_RECEPCIONAR` state from the backend,
-   * paginating automatically until all pages are retrieved (up to 50 pages of
-   * 50 items). Deduplicates results by ID and stores them in state.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadPedidos = async () => {
     setLoadingPedidos(true);
     try {
@@ -535,18 +495,15 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Maps a `Pedido` (purchase order) into an array of `LineaDraft` objects with
-   * zero received quantities, ready to be populated during the scanning step.
-   *
-   * @param pedido - The purchase order to convert.
-   */
+        /**
+     * Documentación en español.
+     */
   const mapPedidoToDraft = (pedido: Pedido): LineaDraft[] =>
     (pedido.pedidoProductos || []).map((pp: PedidoProducto) => ({
       pedidoProductoId: pp.id,
       idProducto: pp.productoProveedor?.producto?.id,
       codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
-      nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
+      nombreProducto: pp.productoProveedor?.producto?.nombre || t('comun.producto'),
       cantidadPedida: Number(pp.cantidad),
       cantidadAlbaran: '',
       cantidadRecibida: 0,
@@ -559,23 +516,22 @@ const Recepcion: React.FC = () => {
       unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
     }));
 
-  /**
-   * Creates the draft representation of a pedido (with its lines) to store in
-   * the wizard draft state. Builds the human-readable description from the order
-   * number and supplier name.
-   *
-   * @param pedido - The purchase order to wrap.
-   */
+        /**
+     * Documentación en español.
+     */
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
-    descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${pedido.proveedor?.nombre}`,
-    proveedor: pedido.proveedor?.nombre || 'Desconocido',
+    descripcion: t('recepcion.seleccion.descripcionPedido', {
+      numero: formatPedidoListNumber(pedido, 'pedido-proveedor'),
+      proveedor: pedido.proveedor?.nombre || t('recepcion.seleccion.desconocido'),
+    }),
+    proveedor: pedido.proveedor?.nombre || t('recepcion.seleccion.desconocido'),
     lineas: mapPedidoToDraft(pedido),
   });
 
-  /**
-   * Selects all available purchase orders that are not already in the draft.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSelectAll = () => {
     setDraft((prevDraft) => {
       const newDraftPedidos = [...prevDraft.pedidosSeleccionados];
@@ -588,20 +544,16 @@ const Recepcion: React.FC = () => {
     });
   };
 
-  /**
-   * Removes all selected purchase orders from the draft.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDeselectAll = () => {
     setDraft((prevDraft) => ({ ...prevDraft, pedidosSeleccionados: [] }));
   };
 
-  /**
-   * Selects all orders from the given supplier (by provider name) that are not
-   * already in the draft.
-   *
-   * @param e - The change event from a select/dropdown control whose `value` is
-   *   the provider name string.
-   */
+        /**
+     * Documentación en español.
+     */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSelectProvider = (e: any) => {
     const providerName = e.target.value as string;
@@ -622,12 +574,9 @@ const Recepcion: React.FC = () => {
     setDraft({ ...draft, pedidosSeleccionados: newDraftPedidos });
   };
 
-  /**
-   * Removes all draft orders that belong to the given supplier.
-   *
-   * @param e - The change event from a select/dropdown control whose `value` is
-   *   the provider name string.
-   */
+        /**
+     * Documentación en español.
+     */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeselectProvider = (e: any) => {
     const providerName = e.target.value as string;
@@ -641,11 +590,9 @@ const Recepcion: React.FC = () => {
     });
   };
 
-  /**
-   * Toggles a single purchase order in/out of the draft selection.
-   *
-   * @param pedido - The purchase order to toggle.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleTogglePedido = (pedido: Pedido) => {
     setDraft((prevDraft) => {
       const isSelected = prevDraft.pedidosSeleccionados.some(
@@ -665,20 +612,9 @@ const Recepcion: React.FC = () => {
 
   // --- 3. Lógica de Escaneo (Paso 2) ---
 
-  /**
-   * Performs a product lookup for the current `searchQuery` (or an overriding
-   * query string). The lookup sequence is:
-   * 1. Local draft (already scanned lines).
-   * 2. Backend product database by barcode.
-   * 3. OpenFoodFacts (if the query looks like a barcode).
-   * 4. Backend product database by name.
-   * 5. New-product creation modal (fallback).
-   *
-   * Concurrent calls are debounced via `isSearchingRef`.
-   *
-   * @param overrideQuery - Optional query to use instead of `searchQuery`
-   *   (useful when called programmatically, e.g. from a barcode scanner event).
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSearch = async (overrideQuery?: string | unknown) => {
     // Si ya estamos buscando o hay un modal abierto, ignoramos la nueva petición
     if (isSearchingRef.current || searching || openModal || weightModalOpen)
@@ -797,13 +733,9 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Processes a successfully resolved product: increments its received quantity
-   * in the matching draft line (or spontaneous-product list), handling the weight
-   * scale flow for weight-based units.
-   *
-   * @param prod - Minimal product descriptor returned by the lookup functions.
-   */
+        /**
+     * Documentación en español.
+     */
   const processProductFound = (prod: {
     id: string;
     codigoBarras?: string;
@@ -938,17 +870,9 @@ const Recepcion: React.FC = () => {
     });
   };
 
-  /**
-   * Updates a single field on a draft line (either in a selected pedido or in
-   * the spontaneous-products list). Recalculates the line's `estado` and
-   * `intervenida` flag as needed.
-   *
-   * @param pIdx - Index of the parent pedido in `pedidosSeleccionados`, or
-   *   `null` for spontaneous products.
-   * @param lIdx - Index of the line within the pedido (or spontaneous list).
-   * @param field - Name of the `LineaDraft` field to update.
-   * @param value - New value for the field.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleUpdateLinea = (
     pIdx: number | null,
     lIdx: number,
@@ -1032,13 +956,9 @@ const Recepcion: React.FC = () => {
     });
   };
 
-  /**
-   * Opens the weight-scale modal for the specified draft line.
-   * Does nothing if the scale is not currently connected.
-   *
-   * @param pIdx - Parent pedido index, or `null` for spontaneous products.
-   * @param lIdx - Line index within the pedido or spontaneous list.
-   */
+        /**
+     * Documentación en español.
+     */
   const openWeightScale = (pIdx: number | null, lIdx: number) => {
     // Si la báscula no está conectada, no abrimos el modal (opcional, pero ayuda a la fluidez)
     if (!isScaleConnected) return;
@@ -1048,11 +968,9 @@ const Recepcion: React.FC = () => {
     void startWeighing();
   };
 
-  /**
-   * Starts a continuous weight read from the connected serial scale.
-   * Updates `capturedWeight` as new readings arrive and sets `isWeighing` state
-   * during the read loop. On error or disconnection, cleans up all related state.
-   */
+        /**
+     * Documentación en español.
+     */
   const startWeighing = async () => {
     if (!isScaleConnected || !isScaleEnabled) {
       setError(t('recepcion.errors.basculaNoActiva'));
@@ -1096,10 +1014,9 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Commits the current `capturedWeight` to the target draft line and closes the
-   * weight-scale modal. No-op if `capturedWeight` or `weightTarget` is null.
-   */
+        /**
+     * Documentación en español.
+     */
   const confirmWeight = () => {
     if (capturedWeight !== null && weightTarget) {
       const { pIdx, lIdx } = weightTarget;
@@ -1109,10 +1026,9 @@ const Recepcion: React.FC = () => {
     closeWeightScale();
   };
 
-  /**
-   * Stops any ongoing serial read and closes the weight-scale modal, resetting
-   * all weighing-related state.
-   */
+        /**
+     * Documentación en español.
+     */
   const closeWeightScale = () => {
     serialService.stopContinuousRead();
     setWeightModalOpen(false);
@@ -1126,16 +1042,9 @@ const Recepcion: React.FC = () => {
 
   // --- 5. Validación y Envío (Paso 3) ---
 
-  /**
-   * Validates the current draft state before submission. Checks:
-   * - At least one product has a positive received quantity.
-   * - All active lines with discrepancies have mandatory observations filled in.
-   * - All spontaneous (unplanned) products have observations filled in.
-   *
-   * Sets `error` state and returns `false` on validation failure.
-   *
-   * @returns `true` if the draft is valid and ready to submit; `false` otherwise.
-   */
+        /**
+     * Documentación en español.
+     */
   const validarDraft = (): boolean => {
     const errores: Record<string, string[]> = {};
     const isValid = true;
@@ -1193,12 +1102,9 @@ const Recepcion: React.FC = () => {
     return isValid;
   };
 
-  /**
-   * Validates the draft and submits it to the backend via `createRecepcion`.
-   * On success, advances to the result step and clears the remote draft.
-   * On failure, sets a descriptive error message. Handles the special case
-   * where the referenced order no longer exists (ORDER_NOT_FOUND).
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmit = async () => {
     if (!validarDraft()) return;
 
@@ -1279,13 +1185,11 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  // --- 5. Render Helpers ---
+  // --- 5. Utilidades de render ---
 
-  /**
-   * Returns the JSX content for the currently active wizard step.
-   *
-   * @param step - Zero-based step index.
-   */
+        /**
+     * Documentación en español.
+     */
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -1305,7 +1209,9 @@ const Recepcion: React.FC = () => {
     new Set(pedidosDisponibles.map((p) => p.proveedor?.nombre).filter(Boolean))
   ) as string[];
 
-  /** Renders Step 1 — Order Selection. */
+        /**
+     * Documentación en español.
+     */
   const renderStep1 = () => (
     <PasoSeleccionPedidos
       loadingPedidos={loadingPedidos}
@@ -1320,7 +1226,9 @@ const Recepcion: React.FC = () => {
     />
   );
 
-  /** Renders Step 2 — Scanning & Counting. */
+        /**
+     * Documentación en español.
+     */
   const renderStep2 = () => (
     <PasoEscaneo
       searchInputRef={searchInputRef}
@@ -1344,7 +1252,9 @@ const Recepcion: React.FC = () => {
     />
   );
 
-  /** Renders Step 3 — Review & Adjustment. */
+        /**
+     * Documentación en español.
+     */
   const renderStep3 = () => (
     <PasoRevision
       draft={draft}
@@ -1355,15 +1265,16 @@ const Recepcion: React.FC = () => {
     />
   );
 
-  /** Renders Step 4 — Result. */
+        /**
+     * Documentación en español.
+     */
   const renderStep4 = () => (
     <PasoResultado resultado={resultado} onResetWizard={resetWizard} />
   );
 
-  /**
-   * Resets the entire wizard back to step 0: clears the remote draft, resets
-   * local result/error state and reloads the available purchase orders.
-   */
+        /**
+     * Documentación en español.
+     */
   const resetWizard = async () => {
     await clearRemoteDraft();
     setActiveStep(0);
@@ -1372,28 +1283,26 @@ const Recepcion: React.FC = () => {
     await loadPedidos();
   };
 
-  /**
-   * Applies the pending recovery draft and closes the recovery dialog.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleRecoverDraft = () => {
     applyPendingRecoveryDraft();
     setIsRecoveryDialogOpen(false);
   };
 
-  /**
-   * Discards the pending recovery draft and resets the wizard to a clean state.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDiscardRecoveredDraft = () => {
     setIsRecoveryDialogOpen(false);
     recoveryHandledRef.current = true;
     void resetWizard();
   };
 
-  /**
-   * Advances the wizard to the next step.
-   * If on the last editable step (step 2), triggers form submission instead.
-   * Guards against advancing from step 0 when no orders are selected.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleNext = () => {
     if (activeStep === 0 && draft.pedidosSeleccionados.length === 0) return;
     if (activeStep === 2) {
@@ -1413,10 +1322,9 @@ const Recepcion: React.FC = () => {
     }
   };
 
-  /**
-   * Returns the wizard to the previous step and updates the draft's `paso`
-   * field accordingly.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleBack = () => {
     const prevStep = activeStep - 1;
     setActiveStep(prevStep);
@@ -1442,12 +1350,9 @@ const Recepcion: React.FC = () => {
     codigoBarras: '',
   });
 
-  /**
-   * Handles confirmation from the new-product modal: creates a new spontaneous
-   * `LineaDraft` and appends it to `productosEspontaneos`. If the product is
-   * weight-based and the scale is active, opens the weighing modal after a short
-   * delay to allow the modal to close first.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleConfirmNewProduct = () => {
     const isWeight = isWeightUnit(modalData.unidad);
     const newLinea: LineaDraft = {
@@ -1458,7 +1363,7 @@ const Recepcion: React.FC = () => {
       unidad: modalData.unidad,
       cantidadPedida: 0,
       cantidadAlbaran: '',
-      cantidadRecibida: isWeight ? 0 : 1, // Start at 0 for weighable items until weighed
+      cantidadRecibida: isWeight ? 0 : 1, // Empieza en 0 hasta capturar peso con báscula.
       isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
@@ -1763,7 +1668,7 @@ const Recepcion: React.FC = () => {
                   return t('recepcion.recovery.fechaDesconocida');
                 }
 
-                return parsed.toLocaleString('es-ES');
+                return formatLocalizedDateTime(parsed);
               })()}
             </strong>
           </>

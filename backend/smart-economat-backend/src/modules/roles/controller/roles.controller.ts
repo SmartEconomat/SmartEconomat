@@ -28,6 +28,9 @@ import { GetUser } from '../../sherlock-auth/decorators/get-user.decorator';
 @Controller('roles')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Roles(rolUsuario.ADMIN)
+/**
+ * Documentación en español.
+ */
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 

@@ -699,7 +699,7 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                               event.target.value as string
                             )
                           }
-                          placeholder="Selecciona proveedor"
+                          placeholder={t('pedidoLineas.selectSupplier')}
                           SelectProps={{
                             displayEmpty: true,
                           }}

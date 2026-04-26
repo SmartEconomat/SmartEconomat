@@ -1,6 +1,5 @@
 /**
- * Public API barrel for the mermas feature module.
- * Re-exports the main table and statistics components.
+ * Documentación en español.
  */
 export { default as MermasTable } from './MermasTable';
 export { default as MermaStats } from './MermaStats';

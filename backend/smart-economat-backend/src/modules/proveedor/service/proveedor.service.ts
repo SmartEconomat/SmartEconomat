@@ -13,28 +13,18 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 /**
- * Service responsible for managing supplier (Proveedor) data, including
- * creation, retrieval, update, and soft-deletion with duplicate-name/NIF guards.
- *
- * @class ProveedorService
+ * Documentación en español.
  */
 @Injectable()
 export class ProveedorService {
-  /**
-   * Creates an instance of ProveedorService.
-   *
-   * @param {ProveedorRepository} proveedorRepository - Custom repository for the Proveedor entity.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly proveedorRepository: ProveedorRepository) {}
 
-  /**
-   * Creates a new supplier after verifying that neither the name nor the NIF
-   * is already registered in the system.
-   *
-   * @param {CreateProveedorDto} createProveedorDto - DTO containing supplier creation data.
-   * @returns {Promise<Proveedor>} The newly created supplier entity.
-   * @throws {BadRequestException} If the name or NIF already exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(createProveedorDto: CreateProveedorDto): Promise<Proveedor> {
     const { nombre, nif } = createProveedorDto;
 
@@ -58,14 +48,9 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-  /**
-   * Returns a paginated list of suppliers, supporting full-text search across
-   * name, NIF, contact, and email fields. Admin users also receive soft-deleted records.
-   *
-   * @param {PaginationQueryDto} query - Pagination, sorting, and search parameters.
-   * @param {string} [userRole] - Role of the requesting user; admins see deleted records.
-   * @returns {Promise<PaginatedResponseDto<Proveedor>>} Paginated supplier list.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -105,15 +90,9 @@ export class ProveedorService {
     return { data: processedData, total, page, limit, totalPages };
   }
 
-  /**
-   * Retrieves a single supplier by UUID, including its associated products.
-   * Admin users can also access soft-deleted suppliers.
-   *
-   * @param {string} id - UUID of the supplier to retrieve.
-   * @param {string} [userRole] - Role of the requesting user; admins see deleted records.
-   * @returns {Promise<Proveedor>} The found supplier entity.
-   * @throws {NotFoundException} If no supplier with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string, userRole?: string): Promise<Proveedor> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -135,16 +114,9 @@ export class ProveedorService {
     };
   }
 
-  /**
-   * Updates an existing supplier's fields after checking for name and NIF
-   * uniqueness conflicts.
-   *
-   * @param {string} id - UUID of the supplier to update.
-   * @param {UpdateProveedorDto} updateProveedorDto - DTO with the fields to update.
-   * @returns {Promise<Proveedor>} The updated supplier entity.
-   * @throws {NotFoundException} If the supplier does not exist.
-   * @throws {BadRequestException} If the new name or NIF is already in use by another supplier.
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     updateProveedorDto: UpdateProveedorDto
@@ -174,14 +146,9 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-  /**
-   * Soft-deletes a supplier after verifying it has no associated products or orders.
-   *
-   * @param {string} id - UUID of the supplier to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} If the supplier does not exist.
-   * @throws {BadRequestException} If the supplier has linked products or orders.
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id },
@@ -204,12 +171,9 @@ export class ProveedorService {
     await this.proveedorRepository.softDelete(id);
   }
 
-  /**
-   * Returns a deduplicated, alphabetically sorted list of suppliers that have
-   * at least one associated purchase order.
-   *
-   * @returns {Promise<Proveedor[]>} Array of suppliers with at least one order.
-   */
+        /**
+     * Documentación en español.
+     */
   async findWithOrders(): Promise<Proveedor[]> {
     return await this.proveedorRepository
       .createQueryBuilder('proveedor')

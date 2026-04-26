@@ -23,9 +23,7 @@ import { CategoriaProducto } from '../../../services/producto.types';
 const defaultIconProps: SvgIconProps = { sx: { fontSize: 20 } };
 
 /**
- * Devuelve el icono MUI **filled** correspondiente a la categoría del producto.
- * Cada categoría tiene su propio icono único.
- * Pensado para toasts y espacios reducidos donde el trazo filled se ve mejor.
+ * Documentación en español.
  */
 export function getCategoryIconFilled(
   tipo: CategoriaProducto | undefined,

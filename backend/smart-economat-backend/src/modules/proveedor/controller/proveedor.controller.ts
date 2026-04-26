@@ -25,26 +25,19 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * REST controller that exposes CRUD endpoints for the Proveedor (supplier) resource.
- *
- * @class ProveedorController
+ * Documentación en español.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('proveedor')
 export class ProveedorController {
-  /**
-   * Creates an instance of ProveedorController.
-   *
-   * @param {ProveedorService} proveedorService - Service layer for supplier operations.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly proveedorService: ProveedorService) {}
 
-  /**
-   * Creates a new supplier record.
-   *
-   * @param {CreateProveedorDto} dto - Supplier creation payload.
-   * @returns {Promise<Proveedor>} The newly created supplier.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.proveedores.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -52,14 +45,9 @@ export class ProveedorController {
     return this.proveedorService.create(dto);
   }
 
-  /**
-   * Returns a paginated list of suppliers with optional search and sort parameters.
-   * Admin users also receive soft-deleted records.
-   *
-   * @param {PaginationQueryDto} query - Pagination, sort, and search parameters.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<PaginatedResponseDto<Proveedor>>} Paginated supplier list.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findAll(
@@ -80,24 +68,18 @@ export class ProveedorController {
     return this.proveedorService.findAll(query, userRole);
   }
 
-  /**
-   * Returns suppliers that have at least one associated purchase order.
-   *
-   * @returns {Promise<Proveedor[]>} Array of suppliers with orders.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('con-pedidos')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findWithOrders(): Promise<Proveedor[]> {
     return this.proveedorService.findWithOrders();
   }
 
-  /**
-   * Retrieves a single supplier by UUID.
-   *
-   * @param {string} id - UUID of the supplier.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<Proveedor>} The found supplier entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findOne(
@@ -108,13 +90,9 @@ export class ProveedorController {
     return this.proveedorService.findOne(id, userRole);
   }
 
-  /**
-   * Partially updates a supplier's fields.
-   *
-   * @param {string} id - UUID of the supplier to update.
-   * @param {UpdateProveedorDto} dto - Fields to update.
-   * @returns {Promise<Proveedor>} The updated supplier entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.proveedores.editar)
   update(
@@ -124,12 +102,9 @@ export class ProveedorController {
     return this.proveedorService.update(id, dto);
   }
 
-  /**
-   * Soft-deletes a supplier. Returns HTTP 204 No Content on success.
-   *
-   * @param {string} id - UUID of the supplier to delete.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.proveedores.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

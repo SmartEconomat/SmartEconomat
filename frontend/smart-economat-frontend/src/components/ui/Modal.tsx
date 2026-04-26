@@ -25,8 +25,7 @@ export interface ModalProps {
 }
 
 /**
- * Mapeo de los tamaños semánticos de modal a valores concretos de `maxWidth` CSS.
- * Se usa en las `PaperProps` del `Dialog` de MUI.
+ * Documentación en español.
  */
 const sizeToPaperMaxWidth: Record<ModalSize, string> = {
   sm: '400px',
@@ -37,11 +36,7 @@ const sizeToPaperMaxWidth: Record<ModalSize, string> = {
 };
 
 /**
- * Modal genérico basado en el `Dialog` de MUI.
- * Soporta distintos tamaños, título personalizable y botón de cierre accesible.
- *
- * @param props - Propiedades del componente definidas en {@link ModalProps}.
- * @returns Diálogo modal con cabecera y área de contenido desplazable.
+ * Documentación en español.
  */
 const Modal = ({
   isOpen,

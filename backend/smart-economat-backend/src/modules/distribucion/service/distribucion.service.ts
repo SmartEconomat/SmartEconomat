@@ -1,8 +1,5 @@
 /**
- * @module DistribucionService
- * Service layer for managing stock distributions between warehouse locations.
- * Handles listing, retrieval, availability computation, creation, confirmation
- * (with FEFO stock transfer) and cancellation of Distribucion records.
+ * Documentación en español.
  */
 import {
   BadRequestException,
@@ -38,25 +35,13 @@ import { DataSource } from 'typeorm';
 import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-producto-state.util';
 
 /**
- * Service responsible for the distribution workflow:
- * preparing distributions from warehouse to classroom/slot locations,
- * confirming them (which moves stock via FEFO), and cancelling them.
- * @class DistribucionService
+ * Documentación en español.
  */
 @Injectable()
 export class DistribucionService {
-  /**
-   * Constructs the DistribucionService with its required dependencies.
-   * @param {Repository<Distribucion>} distribucionRepository - Repository for Distribucion entities.
-   * @param {Repository<DistribucionLinea>} distribucionLineaRepository - Repository for DistribucionLinea entities.
-   * @param {Repository<PedidoUsuario>} pedidoUsuarioRepository - Repository for user orders (pedidosUsuario).
-   * @param {Repository<RecepcionProducto>} recepcionProductoRepository - Repository for received product lines.
-   * @param {Repository<Ubicacion>} ubicacionRepository - Repository for warehouse location entities.
-   * @param {Repository<AlumnoSlot>} alumnoSlotRepository - Repository for student classroom slots.
-   * @param {Repository<Inventario>} inventarioRepository - Repository for stock inventory records.
-   * @param {Repository<Movimiento>} movimientoRepository - Repository for stock movement audit records.
-   * @param {DataSource} dataSource - TypeORM DataSource used to run transactions.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     @InjectRepository(Distribucion)
     private readonly distribucionRepository: Repository<Distribucion>,
@@ -77,14 +62,9 @@ export class DistribucionService {
     private readonly dataSource: DataSource
   ) {}
 
-  /**
-   * Returns a paginated, filterable list of distributions with their associated entities.
-   * Admin roles also see soft-deleted records. Supports search by order number, user,
-   * destination location, product name, and filter by estado.
-   * @param {PaginationQueryDto} query - Pagination, search and estado filter parameters.
-   * @param {string} [userRole] - Role of the requesting user.
-   * @returns {Promise<PaginatedResponseDto<Distribucion>>} Paginated distributions.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -137,13 +117,9 @@ export class DistribucionService {
     };
   }
 
-  /**
-   * Retrieves a single distribution by its UUID with all detail relations loaded.
-   * @param {string} id - UUID of the distribution to retrieve.
-   * @param {string} [userRole] - Role of the requesting user; admins can retrieve soft-deleted records.
-   * @returns {Promise<Distribucion>} The found Distribucion entity with all relations.
-   * @throws {NotFoundException} If no distribution with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string, userRole?: string): Promise<Distribucion> {
     const isAdmin = isSherlockElevatedRole(userRole);
     const distribucion = await this.distribucionRepository.findOne({
@@ -177,13 +153,9 @@ export class DistribucionService {
     return distribucion;
   }
 
-  /**
-   * Returns the list of user orders (pedidosUsuario) that have at least one product
-   * line with pending quantity to distribute (received but not yet distributed).
-   * Results are enriched with slot/location suggestions and pending quantity summaries.
-   * @param {PaginationQueryDto} query - Pagination and optional search term parameters.
-   * @returns {Promise<DistribucionDisponibleDto[]>} Array of distributable order summaries.
-   */
+        /**
+     * Documentación en español.
+     */
   async findDisponibles(
     query: PaginationQueryDto
   ): Promise<DistribucionDisponibleDto[]> {
@@ -230,21 +202,9 @@ export class DistribucionService {
     return disponibles;
   }
 
-  /**
-   * Creates a new distribution in PREPARADA state inside a transaction.
-   * Validates that:
-   * - No duplicate lines are included.
-   * - The referenced pedidoUsuario exists.
-   * - The origin location exists (or defaults to "Almacén Principal").
-   * - The destination location can be resolved from the DTO or the student slot.
-   * - The origin and destination are different.
-   * - Each requested line quantity does not exceed the available pending quantity.
-   * @param {CreateDistribucionDto} dto - Payload describing the distribution to create.
-   * @param {string} userId - ID of the authenticated user creating the distribution.
-   * @returns {Promise<Distribucion>} The newly created Distribucion with all relations.
-   * @throws {BadRequestException} If any validation rule is violated.
-   * @throws {NotFoundException} If the pedidoUsuario, origin or destination location is not found.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(
     dto: CreateDistribucionDto,
     userId: string
@@ -368,18 +328,9 @@ export class DistribucionService {
     });
   }
 
-  /**
-   * Confirms a PREPARADA or BORRADOR distribution inside a transaction.
-   * Transfers stock from origin to destination for each line using FEFO order,
-   * records SALIDA_DISTRIBUCION and ENTRADA_DISTRIBUCION movements, then marks
-   * the distribution as ENTREGADA.
-   * @param {string} id - UUID of the distribution to confirm.
-   * @param {string} userId - ID of the authenticated user confirming the distribution.
-   * @returns {Promise<Distribucion>} The confirmed Distribucion with updated estado and fechaEntrega.
-   * @throws {NotFoundException} If no distribution with the given ID exists.
-   * @throws {BadRequestException} If the distribution is not in PREPARADA or BORRADOR state.
-   * @throws {BadRequestException} If any line has insufficient stock at the origin location.
-   */
+        /**
+     * Documentación en español.
+     */
   async confirmar(id: string, userId: string): Promise<Distribucion> {
     return this.dataSource.transaction(async (manager) => {
       const distribucion = await manager.findOne(Distribucion, {
@@ -436,16 +387,9 @@ export class DistribucionService {
     });
   }
 
-  /**
-   * Cancels a distribution that has not yet been confirmed (delivered).
-   * Sets all lines to CANCELADA and records the cancellation reason.
-   * @param {string} id - UUID of the distribution to cancel.
-   * @param {CancelDistribucionDto} dto - DTO containing the cancellation reason.
-   * @param {string} [userId] - Optional ID of the user performing the cancellation.
-   * @returns {Promise<Distribucion>} The cancelled Distribucion with updated state.
-   * @throws {NotFoundException} If no distribution with the given ID exists.
-   * @throws {BadRequestException} If the distribution is already ENTREGADA or PARCIAL.
-   */
+        /**
+     * Documentación en español.
+     */
   async cancelar(
     id: string,
     dto: CancelDistribucionDto,
@@ -487,15 +431,9 @@ export class DistribucionService {
     return this.findOne(distribucion.id);
   }
 
-  /**
-   * Resolves the origin location for a distribution.
-   * If an explicit `ubicacionOrigenId` is provided, it is validated and returned.
-   * Otherwise defaults to the "Almacén Principal" location, creating it if absent.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {string} [ubicacionOrigenId] - Optional UUID of the requested origin location.
-   * @returns {Promise<Ubicacion>} The resolved origin Ubicacion entity.
-   * @throws {NotFoundException} If the requested origin location does not exist.
-   */
+        /**
+     * Documentación en español.
+     */
   private async resolveOrigen(
     manager: EntityManager,
     ubicacionOrigenId?: string
@@ -527,15 +465,9 @@ export class DistribucionService {
     return defaultUbicacion;
   }
 
-  /**
-   * Resolves the target AlumnoSlot for a distribution.
-   * Prefers the explicitly requested slot; falls back to the student slot linked
-   * to the pedidoUsuario's user. Returns `null` if no slot can be determined.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {CreateDistribucionDto} dto - The distribution creation DTO.
-   * @param {PedidoUsuario} pedidoUsuario - The loaded user order with user and alumno relations.
-   * @returns {Promise<AlumnoSlot | null>} The resolved AlumnoSlot or `null`.
-   */
+        /**
+     * Documentación en español.
+     */
   private async resolveTargetSlot(
     manager: EntityManager,
     dto: CreateDistribucionDto,
@@ -574,17 +506,9 @@ export class DistribucionService {
     return null;
   }
 
-  /**
-   * Resolves the destination Ubicacion for a distribution.
-   * Prefers the explicitly requested destination; falls back to the slot's linked
-   * location. Throws if neither source yields a valid location.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {CreateDistribucionDto} dto - The distribution creation DTO.
-   * @param {AlumnoSlot | null} targetSlot - The resolved target slot (may be `null`).
-   * @returns {Promise<Ubicacion>} The resolved destination Ubicacion entity.
-   * @throws {BadRequestException} If no destination ID can be determined.
-   * @throws {NotFoundException} If the destination location does not exist in the database.
-   */
+        /**
+     * Documentación en español.
+     */
   private async resolveDestino(
     manager: EntityManager,
     dto: CreateDistribucionDto,
@@ -623,15 +547,9 @@ export class DistribucionService {
     );
   }
 
-  /**
-   * Computes pending distribution quantities for a set of pedidoUsuario line IDs.
-   * Combines recepcionado (received) and distribuido (already distributed) amounts
-   * to derive the `cantidadPendiente` for each line.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {string[]} pedidoUsuarioLineaIds - Array of pedidoUsuario line UUIDs to evaluate.
-   * @returns {Promise<Map<string, { cantidadRecepcionada: number; cantidadDistribuida: number; cantidadPendiente: number }>>}
-   *   A map keyed by pedidoUsuarioLineaId with aggregated quantity data.
-   */
+        /**
+     * Documentación en español.
+     */
   private async calculatePendingByPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -680,13 +598,9 @@ export class DistribucionService {
     return result;
   }
 
-  /**
-   * Aggregates received quantities per pedidoUsuario line, excluding receipt lines
-   * whose product state does not count as received (e.g. ROTO).
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {string[]} pedidoUsuarioLineaIds - Line IDs to query.
-   * @returns {Promise<Map<string, number>>} Map of pedidoUsuarioLineaId → total received quantity.
-   */
+        /**
+     * Documentación en español.
+     */
   private async getRecepcionadoPorPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -722,15 +636,9 @@ export class DistribucionService {
     return result;
   }
 
-  /**
-   * Aggregates already-distributed quantities per pedidoUsuario line.
-   * For ENTREGADA/PARCIAL distributions the `cantidadEntregada` is used;
-   * for BORRADOR/PREPARADA the `cantidadADistribuir` is used (reserved).
-   * Cancelled distributions are excluded.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {string[]} pedidoUsuarioLineaIds - Line IDs to query.
-   * @returns {Promise<Map<string, number>>} Map of pedidoUsuarioLineaId → total distributed quantity.
-   */
+        /**
+     * Documentación en español.
+     */
   private async getDistribuidoPorPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -772,13 +680,9 @@ export class DistribucionService {
     return result;
   }
 
-  /**
-   * Builds a `DistribucionDisponibleDto` for a given pedidoUsuario by computing
-   * pending quantities for each line and enriching with slot/location suggestions.
-   * Lines with zero pending quantity are filtered out.
-   * @param {PedidoUsuario} pedidoUsuario - A loaded PedidoUsuario with all required relations.
-   * @returns {Promise<DistribucionDisponibleDto>} The distributable summary DTO.
-   */
+        /**
+     * Documentación en español.
+     */
   private async buildDistribucionDisponible(
     pedidoUsuario: PedidoUsuario
   ): Promise<DistribucionDisponibleDto> {
@@ -853,13 +757,9 @@ export class DistribucionService {
     };
   }
 
-  /**
-   * Derives the list of unique delivery locations associated with a pedidoUsuario.
-   * For students, returns the single slot location. For teachers, collects all
-   * unique slot locations sorted alphabetically by name.
-   * @param {PedidoUsuario} pedidoUsuario - A loaded PedidoUsuario with user/alumno/profesor relations.
-   * @returns {Array<{ id: string; nombre: string }>} Array of unique location summaries.
-   */
+        /**
+     * Documentación en español.
+     */
   private resolvePedidoUsuarioUbicaciones(
     pedidoUsuario: PedidoUsuario
   ): Array<{ id: string; nombre: string }> {
@@ -893,13 +793,9 @@ export class DistribucionService {
     );
   }
 
-  /**
-   * Resolves the primary AlumnoSlot for a pedidoUsuario.
-   * Returns the student's own slot, or the first professor slot sorted by aula
-   * and numeroClase. Returns `null` if no slot is associated.
-   * @param {PedidoUsuario} pedidoUsuario - A loaded PedidoUsuario with user/alumno/profesor relations.
-   * @returns {AlumnoSlot | null} The primary slot, or `null`.
-   */
+        /**
+     * Documentación en español.
+     */
   private resolvePedidoUsuarioSlot(
     pedidoUsuario: PedidoUsuario
   ): AlumnoSlot | null {
@@ -928,22 +824,9 @@ export class DistribucionService {
     })[0];
   }
 
-  /**
-   * Transfers the stock for a single distribution line from origin to destination
-   * using FEFO (First-Expired First-Out) order.
-   * For each origin inventory batch consumed:
-   * - Decrements the origin inventory.
-   * - Finds or creates a matching destination inventory batch (same product + expiry date).
-   * - Increments the destination inventory.
-   * - Records SALIDA_DISTRIBUCION and ENTRADA_DISTRIBUCION movement entries.
-   * Marks the line as ENTREGADA after the full quantity has been transferred.
-   * @param {EntityManager} manager - Active EntityManager within the enclosing transaction.
-   * @param {Distribucion} distribucion - The parent distribution with ubicacionOrigen/Destino loaded.
-   * @param {DistribucionLinea} linea - The distribution line to process.
-   * @param {string} userId - ID of the user confirming the distribution.
-   * @returns {Promise<void>}
-   * @throws {BadRequestException} If total stock at origin is insufficient for the requested quantity.
-   */
+        /**
+     * Documentación en español.
+     */
   private async transferirLinea(
     manager: EntityManager,
     distribucion: Distribucion,

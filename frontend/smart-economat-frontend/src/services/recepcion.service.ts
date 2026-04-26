@@ -80,8 +80,7 @@ export async function downloadReporteIncidenciasExcel(
 }
 
 /**
- * Obtiene todas las recepciones registradas en el sistema.
- * El endpoint subyacente devolverá las entidades Recepcion con sus relaciones principales.
+ * Documentación en español.
  */
 export async function fetchRecepciones(): Promise<unknown[]> {
   const response = await baseFetch('/recepciones?limit=50');
@@ -95,8 +94,7 @@ export async function fetchRecepciones(): Promise<unknown[]> {
 }
 
 /**
- * Procesa un lote (Wizard) de recepción contra uno o varios Pedidos.
- * Endpoint atómico. Genera inventario, actualiza pedido y crea incidencias automáticamente.
+ * Documentación en español.
  */
 export async function createRecepcion(
   payload: CreateRecepcionDto
@@ -127,8 +125,7 @@ export async function createRecepcion(
 }
 
 /**
- * Elimina una nota de entrega / recepción.
- * OJO: El backend actual probablemente impida esto si afecta inventario cerrado.
+ * Documentación en español.
  */
 export async function deleteRecepcion(id: string): Promise<void> {
   const response = await baseFetch(`/recepciones/${id}`, {

@@ -17,26 +17,16 @@ import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/re
 import { EstadoIncidencia } from '../enums/incidencia.enums';
 
 /**
- * Entidad Incidencia
- *
- * Representa un problema o discrepancia detectada durante la recepción de un pedido.
- * Almacena una copia inmutable de los datos originales (JSONB) para auditoría.
- * Permite registrar la resolución y el usuario responsable.
- *
- * Optimización: Utiliza índice GIN en datos_originales para consultas eficientes sobre el JSON.
- *
- * @class Incidencia
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'incidencia' })
 @Index(['recepcionId'])
 @Index(['pedidoId'])
 @Index(['usuarioResolutorId'])
 export class Incidencia extends BaseEntity {
-  /**
-   * Campos derivados para serialización de respuesta API.
-   * No se persisten en base de datos.
-   */
+        /**
+     * Documentación en español.
+     */
   estado?: EstadoIncidencia;
   resuelta?: boolean;
 
@@ -49,10 +39,9 @@ export class Incidencia extends BaseEntity {
   @Column({ name: 'usuario_resolutor_id', nullable: true })
   usuarioResolutorId?: string;
 
-  /**
-   * Recepción donde se generó la incidencia.
-   * CASCADE onDelete: Si se borra la recepción, es lógico eliminar sus incidencias.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Recepcion, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -60,10 +49,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'recepcion_id' })
   recepcion!: Relation<Recepcion>;
 
-  /**
-   * Pedido en el que se detectó la discrepancia.
-   * Esto vincula la incidencia directamente con un proveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Pedido, {
     onDelete: 'RESTRICT',
     nullable: true,
@@ -71,11 +59,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'pedido_id' })
   pedido?: Relation<Pedido>;
 
-  /**
-   * Usuario que resolvió la incidencia.
-   * La relación es SET NULL para mantener el histórico de resolución.
-   * @type {Usuario | null}
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, (usuario) => usuario.incidenciasResueltas, {
     onDelete: 'SET NULL',
     nullable: true,
@@ -83,9 +69,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'usuario_resolutor_id' })
   usuarioResolutor?: Relation<Usuario>;
 
-  /**
-   * Líneas de discrepancia detectadas. Relación con IncidenciaLinea.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => IncidenciaLinea, (linea) => linea.incidencia, {
     cascade: true,
   })
@@ -97,24 +83,21 @@ export class Incidencia extends BaseEntity {
   )
   recepcionProducto?: Relation<RecepcionProducto>;
 
-  /**
-   * Observaciones generales de la recepción relativas a esta incidencia.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'observaciones_recepcion' })
   observacionesRecepcion?: string;
 
-  /**
-   * Notas o comentarios añadidos al resolver la incidencia.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'observaciones_resolucion' })
   observacionesResolucion?: string;
 
-  /**
-   * Fecha y hora en la que se resolvió la incidencia.
-   * Null indica que la incidencia está PENDIENTE.
-   * @type {Date | null}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -124,12 +107,9 @@ export class Incidencia extends BaseEntity {
 
   /* --- Métodos de Dominio --- */
 
-  /**
-   * Marca la incidencia como resuelta, asignando fecha, responsable y observaciones.
-   *
-   * @param {string} usuarioId - ID del usuario que resuelve.
-   * @param {string} [observaciones] - Comentarios opcionales sobre la resolución.
-   */
+        /**
+     * Documentación en español.
+     */
   resolver(usuarioId: string, observaciones?: string): void {
     this.fechaResolucion = new Date();
     this.usuarioResolutorId = usuarioId;
@@ -138,10 +118,9 @@ export class Incidencia extends BaseEntity {
     }
   }
 
-  /**
-   * Verifica si la incidencia ya ha sido resuelta.
-   * @returns {boolean} True si tiene fecha de resolución.
-   */
+        /**
+     * Documentación en español.
+     */
   estaResuelta(): boolean {
     return this.fechaResolucion !== null && this.fechaResolucion !== undefined;
   }

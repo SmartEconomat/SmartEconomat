@@ -4,11 +4,7 @@ export const PERMISSIONS_KEY = 'permissions';
 export const PERMISSIONS_MODE_KEY = 'permissions_mode';
 
 /**
- * Decorador para exigir uno o varios permisos específicos.
- * Se utiliza applyDecorators para asegurar que múltiples metadatos se registren
- * correctamente y sean detectables por Reflector.getAllAndOverride.
- *
- * @param permissions Lista de códigos de permiso (ej. PERMISSIONS.productos.crear)
+ * Documentación en español.
  */
 export const RequirePermissions = (...permissions: string[]) =>
   applyDecorators(
@@ -17,7 +13,7 @@ export const RequirePermissions = (...permissions: string[]) =>
   );
 
 /**
- * Decorador para exigir al menos uno de los permisos listados.
+ * Documentación en español.
  */
 export const RequireAnyPermission = (...permissions: string[]) =>
   applyDecorators(
@@ -26,7 +22,7 @@ export const RequireAnyPermission = (...permissions: string[]) =>
   );
 
 /**
- * Decorador de clase para definir permisos base requeridos en todo el controlador.
+ * Documentación en español.
  */
 export const ControllerPermissions = (...permissions: string[]) =>
   applyDecorators(

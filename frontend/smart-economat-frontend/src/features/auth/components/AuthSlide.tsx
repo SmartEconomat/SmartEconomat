@@ -9,9 +9,7 @@ import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 // ─────────────────────────────────────────────
 
 /**
- * Estructura de cada slide del carrusel informativo.
- *
- * @interface SlideData
+ * Documentación en español.
  */
 interface SlideData {
   title: string;
@@ -23,10 +21,7 @@ interface SlideData {
 // ─────────────────────────────────────────────
 
 /**
- * Propiedades del componente AuthSlide.
- *
- * @interface AuthSlideProps
- * @property {boolean} isLogin - Indica si se muestra el modo de inicio de sesión o de registro.
+ * Documentación en español.
  */
 interface AuthSlideProps {
   isLogin: boolean;
@@ -37,24 +32,15 @@ interface AuthSlideProps {
 // ─────────────────────────────────────────────
 
 /**
- * Panel informativo lateral animado de la pantalla de autenticación.
- *
- * - Rellena el 100% del alto de su contenedor padre (posicionado de forma absoluta desde Login.tsx).
- * - Usa dos capas de gradiente superpuestas animadas por `opacity` para transicionar los colores:
- *   una basada en `primary.main` del tema MUI y otra en `secondary.main`.
- * - Muestra un carrusel de 3 slides informativos con dots de navegación fijados al fondo del panel.
- * - El icono (candado / agregar usuario) cambia con una animación de spin suave y llega
- *   siempre en posición vertical (0 deg).
- * - Los textos de los slides se obtienen del sistema i18n.
- *
- * @param {AuthSlideProps} props - Propiedades del componente.
- * @returns {JSX.Element} Panel lateral de autenticación.
+ * Documentación en español.
  */
 const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
-  /** Slides que se muestran en modo inicio de sesión. */
+        /**
+     * Documentación en español.
+     */
   const LOGIN_SLIDES: SlideData[] = [
     {
       title: t('auth.slide.login.slide1.title'),
@@ -70,7 +56,9 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
     },
   ];
 
-  /** Slides que se muestran en modo registro. */
+        /**
+     * Documentación en español.
+     */
   const REGISTER_SLIDES: SlideData[] = [
     {
       title: t('auth.slide.register.slide1.title'),
@@ -89,26 +77,30 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const slides = isLogin ? LOGIN_SLIDES : REGISTER_SLIDES;
 
   const [activeSlide, setActiveSlide] = useState(0);
-  /** slideKey es incrementado para disparar la animación del texto en cada cambio. */
+        /**
+     * Documentación en español.
+     */
   const [slideKey, setSlideKey] = useState(0);
 
-  /**
-   * Navega a un slide concreto y dispara la animación de texto.
-   *
-   * @param {number} index - Índice del slide al que navegar.
-   */
+        /**
+     * Documentación en español.
+     */
   const goToSlide = useCallback((index: number) => {
     setActiveSlide(index);
     setSlideKey((k) => k + 1);
   }, []);
 
-  /** Al cambiar de modo (login ↔ registro), resetea al primer slide. */
+        /**
+     * Documentación en español.
+     */
   useEffect(() => {
     setActiveSlide(0);
     setSlideKey((k) => k + 1);
   }, [isLogin]);
 
-  /** Auto-avance cada 4 s; se reinicia cuando el modo cambia. */
+        /**
+     * Documentación en español.
+     */
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveSlide((prev) => {

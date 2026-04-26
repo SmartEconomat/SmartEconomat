@@ -5,9 +5,7 @@ import { Usuario } from '../../src/modules/usuario/usuario.entity/usuario.entity
 import { rolUsuario } from '../../src/modules/usuario/enums/usuario.enums';
 
 /**
- * @file pg-mem-example.e2e-spec.ts
- * @description Ejemplo de tests optimizados utilizando pg-mem y snapshots.
- * Muestra cómo los tests son aislados entre sí sin recrear el schema de la BD.
+ * Documentación en español.
  */
 describe('Ejemplo pg-mem (e2e)', () => {
   let app: INestApplication;
@@ -25,9 +23,9 @@ describe('Ejemplo pg-mem (e2e)', () => {
     /* app compartida globalmente, se limpia al final de todo el proceso en globalTeardown.ts */
   });
 
-  /**
-   * En este test, insertamos un dato en la base de datos.
-   */
+        /**
+     * Documentación en español.
+     */
   it('Test 1 - Debe insertar un usuario temporal', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 
@@ -55,10 +53,9 @@ describe('Ejemplo pg-mem (e2e)', () => {
     console.log('Test 1 completado. Usuario insertado en memoria.');
   });
 
-  /**
-   * En este test, verificamos que el dato insertado en el test anterior NO EXISTE.
-   * Esto prueba que `jest.setup.ts` restauró el snapshot de pg-mem en el `beforeEach` global.
-   */
+        /**
+     * Documentación en español.
+     */
   it('Test 2 - Debe verificar que el estado se reseteó automáticamente (snapshot restore)', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 

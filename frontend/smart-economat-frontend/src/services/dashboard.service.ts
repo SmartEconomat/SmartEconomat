@@ -35,9 +35,7 @@ export interface DashboardStats {
 }
 
 /**
- * @description Fetches aggregated dashboard statistics including products, suppliers, inventory, orders, and recent movements.
- * @returns {Promise<DashboardStats>} The current dashboard statistics.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const response = await baseFetch('/dashboard/stats');

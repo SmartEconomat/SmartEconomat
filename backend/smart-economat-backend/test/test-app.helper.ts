@@ -12,8 +12,7 @@ import { GlobalExceptionFilter } from '../src/common/filters/global-exception.fi
 const g = global as any;
 
 /**
- * Devuelve la instancia compartida de la app NestJS.
- * Se crea una sola vez y se reutiliza en todos los test suites.
+ * Documentación en español.
  */
 export async function getTestApp(): Promise<INestApplication> {
   if (g.__TEST_APP__) return g.__TEST_APP__ as INestApplication;

@@ -14,31 +14,28 @@ import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Props for the {@link MermaStatsView} component.
+ * Documentación en español.
  */
 interface MermaStatsProps {
-  /** Aggregated merma statistics, or null while loading. */
+        /**
+     * Documentación en español.
+     */
   stats: MermaStats | null;
-  /** Whether statistics data is currently being fetched. */
+        /**
+     * Documentación en español.
+     */
   isLoading?: boolean;
 }
 
 /**
- * Displays aggregated merma (waste/loss) statistics including totals and a
- * breakdown by motivo (reason) shown as labelled progress bars.
- *
- * Renders a loading indicator while data is being fetched and nothing when
- * stats are null after loading.
- *
- * @param {MermaStatsProps} props - Component props.
- * @returns JSX rendered statistics panel, a progress bar, or null.
- * @example
- * <MermaStats stats={mermaStats} isLoading={isLoading} />
+ * Documentación en español.
  */
 const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
   const { t } = useTranslation();
 
-  /** Localised labels keyed by MotivoMerma enum value. */
+        /**
+     * Documentación en español.
+     */
   const MOTIVO_LABELS: Record<string, string> = {
     [MotivoMerma.ROTURA]: t('merma.form.motivoOpciones.roturaEnvase'),
     [MotivoMerma.DETERIORO]: t('merma.form.motivoOpciones.deterioroCaducidad'),

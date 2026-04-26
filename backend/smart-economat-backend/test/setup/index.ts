@@ -1,19 +1,5 @@
 /**
- * @file setup/index.ts
- * @description Exportaciones centralizadas del sistema de testing
- *
- * Este archivo facilita los imports en tests:
- *
- * ```typescript
- * // En lugar de:
- * import { getTestApp } from './setup/test-app';
- * import { loginAndGetToken } from './utils/test-helpers';
- *
- * // Puedes usar:
- * import { getTestApp, loginAndGetToken } from './setup';
- * ```
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 // ============================================================================

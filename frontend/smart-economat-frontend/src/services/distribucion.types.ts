@@ -1,40 +1,64 @@
 /**
- * A single product line within a distributable pedido-usuario.
+ * Documentación en español.
  */
 export interface DistribucionDisponibleLinea {
-  /** Unique identifier of the pedido-usuario line. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuarioLineaId: string;
-  /** Identifier of the product-supplier relation. */
+        /**
+     * Documentación en español.
+     */
   productoProveedorId: string;
-  /** Display name of the product. */
+        /**
+     * Documentación en español.
+     */
   productoNombre: string;
-  /** Quantity the user originally ordered. */
+        /**
+     * Documentación en español.
+     */
   cantidadPedida: number;
-  /** Quantity that has been received/validated in warehouse. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecepcionada: number;
-  /** Quantity already assigned to previous distributions. */
+        /**
+     * Documentación en español.
+     */
   cantidadDistribuida: number;
-  /** Remaining quantity available for distribution. */
+        /**
+     * Documentación en español.
+     */
   cantidadPendiente: number;
 }
 
 /**
- * Summary of a pedido-usuario that is available for distribution.
+ * Documentación en español.
  */
 export interface DistribucionDisponible {
-  /** Identifier of the pedido-usuario. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuarioId: string;
-  /** Human-readable global order number. */
+        /**
+     * Documentación en español.
+     */
   numeroGlobal: string;
-  /** Current order status. */
+        /**
+     * Documentación en español.
+     */
   estado: string;
-  /** The user who placed the order, if available. */
+        /**
+     * Documentación en español.
+     */
   usuario: {
     id?: string;
     nombre?: string;
     username?: string;
   } | null;
-  /** Classroom slot assigned to the student, if applicable. */
+        /**
+     * Documentación en español.
+     */
   alumnoSlot: {
     id: string;
     aula: string;
@@ -42,45 +66,73 @@ export interface DistribucionDisponible {
     ubicacionId?: string;
     ubicacionNombre?: string;
   } | null;
-  /** Suggested destination location derived from the student slot. */
+        /**
+     * Documentación en español.
+     */
   ubicacionDestinoSugerida: {
     id: string;
     nombre: string;
   } | null;
-  /** All storage locations associated with the user. */
+        /**
+     * Documentación en español.
+     */
   ubicacionesUsuario: Array<{
     id: string;
     nombre: string;
   }>;
-  /** Product lines available for distribution. */
+        /**
+     * Documentación en español.
+     */
   lineas: DistribucionDisponibleLinea[];
 }
 
 /**
- * A single product line within a created distribution record.
+ * Documentación en español.
  */
 export interface DistribucionLinea {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Identifier of the originating pedido-usuario line. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuarioLineaId: string;
-  /** Identifier of the product-supplier relation. */
+        /**
+     * Documentación en español.
+     */
   productoProveedorId: string;
-  /** Quantity originally ordered. */
+        /**
+     * Documentación en español.
+     */
   cantidadPedida: number;
-  /** Quantity attributed from the reception. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecepcionadaAtribuida: number;
-  /** Quantity already distributed prior to this record. */
+        /**
+     * Documentación en español.
+     */
   cantidadYaDistribuida: number;
-  /** Quantity planned for distribution in this record. */
+        /**
+     * Documentación en español.
+     */
   cantidadADistribuir: number;
-  /** Quantity actually delivered. */
+        /**
+     * Documentación en español.
+     */
   cantidadEntregada: number;
-  /** Line status (e.g. 'pendiente', 'entregado'). */
+        /**
+     * Documentación en español.
+     */
   estado: string;
-  /** Optional observations for this line. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
-  /** Optional populated product-supplier relation. */
+        /**
+     * Documentación en español.
+     */
   productoProveedor?: {
     id: string;
     producto?: {
@@ -91,24 +143,40 @@ export interface DistribucionLinea {
 }
 
 /**
- * Represents a distribution (entrega) record as returned by the API.
+ * Documentación en español.
  */
 export interface Distribucion {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Identifier of the pedido-usuario being distributed. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuarioId: string;
-  /** Current status (e.g. 'preparacion', 'entregado', 'cancelado'). */
+        /**
+     * Documentación en español.
+     */
   estado: string;
-  /** ISO timestamp when distribution preparation started. */
+        /**
+     * Documentación en español.
+     */
   fechaPreparacion: string;
-  /** ISO timestamp when the delivery was completed. */
+        /**
+     * Documentación en español.
+     */
   fechaEntrega?: string;
-  /** Optional free-text observations. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
-  /** Reason provided when the distribution was cancelled. */
+        /**
+     * Documentación en español.
+     */
   motivoCancelacion?: string;
-  /** Optional populated pedido-usuario relation. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuario?: {
     id: string;
     numeroGlobal: string;
@@ -119,17 +187,23 @@ export interface Distribucion {
       username?: string;
     };
   };
-  /** Storage location from which the items are dispatched. */
+        /**
+     * Documentación en español.
+     */
   ubicacionOrigen?: {
     id: string;
     nombre: string;
   };
-  /** Storage location where the items are delivered. */
+        /**
+     * Documentación en español.
+     */
   ubicacionDestino?: {
     id: string;
     nombre: string;
   };
-  /** Classroom slot receiving the delivery, if applicable. */
+        /**
+     * Documentación en español.
+     */
   alumnoSlot?: {
     id: string;
     aula: string;
@@ -139,25 +213,39 @@ export interface Distribucion {
       nombre: string;
     };
   };
-  /** Individual product lines included in the distribution. */
+        /**
+     * Documentación en español.
+     */
   lineas?: DistribucionLinea[];
 }
 
 /**
- * Payload for creating a new distribution record.
+ * Documentación en español.
  */
 export interface CreateDistribucionPayload {
-  /** Identifier of the pedido-usuario to distribute. */
+        /**
+     * Documentación en español.
+     */
   pedidoUsuarioId: string;
-  /** Optional source location identifier. */
+        /**
+     * Documentación en español.
+     */
   ubicacionOrigenId?: string;
-  /** Optional destination location identifier. */
+        /**
+     * Documentación en español.
+     */
   ubicacionDestinoId?: string;
-  /** Optional classroom slot identifier. */
+        /**
+     * Documentación en español.
+     */
   alumnoSlotId?: string;
-  /** Optional free-text observations. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
-  /** Product lines with their quantities to distribute. */
+        /**
+     * Documentación en español.
+     */
   lineas: Array<{
     pedidoUsuarioLineaId: string;
     cantidad: number;

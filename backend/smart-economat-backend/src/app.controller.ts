@@ -2,21 +2,18 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
 /**
- * @description Controlador raíz de la aplicación.
- * Gestiona las peticiones al endpoint raíz y delega en AppService.
+ * Documentación en español.
  */
 @Controller()
 export class AppController {
-  /**
-   * @description Construye el controlador con la dependencia AppService.
-   * @param {AppService} appService - Servicio que proporciona el mensaje de saludo raíz.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly appService: AppService) {}
 
-  /**
-   * @description Devuelve una cadena de saludo proporcionada por el servicio de la aplicación.
-   * @returns {string} El mensaje de saludo (p. ej. "Hello World!").
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   getHello(): string {
     return this.appService.getHello();

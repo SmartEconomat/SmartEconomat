@@ -1,6 +1,7 @@
 import React, { useState, useCallback, ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { tutorialConfig, TutorialStep } from '../utils/config/tutorialData';
+import { buildTutorialConfig, TutorialStep } from '../utils/config/tutorialData';
+import i18n from '../i18n/index';
 import { TutorialContext } from './tutorial.context';
 import { useAuth } from './auth.hooks';
 
@@ -17,6 +18,7 @@ export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
 
   const startTour = useCallback(
     (path: string, role?: string) => {
+      const tutorialConfig = buildTutorialConfig(i18n.t);
       const config = tutorialConfig[path] || tutorialConfig['default'];
       const roleToUse = role || userRole;
 

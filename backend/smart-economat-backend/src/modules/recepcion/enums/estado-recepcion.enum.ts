@@ -1,9 +1,5 @@
 /**
- * Estados posibles de una Recepcion.
- *
- * COMPLETADA     — Todos los ítems recibidos correctamente (cant_recibida == cant_pedida).
- * CON_INCIDENCIAS — Al menos un ítem con diferencia (exceso, falta o cantidad=0).
- *                   Se generan registros en la tabla `incidencia` automáticamente.
+ * Documentación en español.
  */
 export enum EstadoRecepcion {
   COMPLETADA = 'COMPLETADA',

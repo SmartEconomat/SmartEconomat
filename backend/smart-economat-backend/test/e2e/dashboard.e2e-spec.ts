@@ -4,9 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file dashboard.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Dashboard.
- * Verifica la obtención de estadísticas y KPIs.
+ * Documentación en español.
  */
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
@@ -29,9 +27,9 @@ describe('DashboardController (e2e)', () => {
   });
 
   describe('Estadísticas', () => {
-    /**
-     * @test Debe obtener las estadísticas generales del dashboard.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')
@@ -45,9 +43,9 @@ describe('DashboardController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe denegar el acceso a las estadísticas si no hay token.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /api/v1/dashboard/stats - Debe fallar sin token (401)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')

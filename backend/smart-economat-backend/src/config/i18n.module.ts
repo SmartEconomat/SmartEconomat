@@ -8,21 +8,7 @@ import {
 import * as path from 'path';
 
 /**
- * @description NestJS module that configures internationalisation (i18n) for the application
- * using `nestjs-i18n`. Supports multiple languages through JSON translation files located
- * under `src/i18n/` (development) or `dist/i18n/` (production).
- *
- * Configuration summary:
- * - **Default language:** Spanish (`es`).
- * - **Translation file location:** resolved automatically from `dist/i18n/` (if it exists),
- *   then `src/i18n/`, with a fallback to the environment-appropriate path.
- * - **Language resolvers (in priority order):**
- *   1. Query parameter: `?lang=es`
- *   2. `Accept-Language` HTTP header (standard browser header).
- *   3. `x-lang` custom HTTP header.
- * - File watching is enabled in non-production, non-test environments for hot-reload of translations.
- *
- * @module I18nConfigModule
+ * Documentación en español.
  */
 
 import * as fs from 'fs';
@@ -46,9 +32,7 @@ if (!i18nPath) {
 console.log(`[i18n] Cargando traducciones desde: ${i18nPath}`);
 
 /**
- * @description Configures and exports the `nestjs-i18n` `I18nModule` with Spanish as
- * the fallback language and three language resolvers (query param, Accept-Language header,
- * and custom `x-lang` header). Import this module in `AppModule` to enable i18n globally.
+ * Documentación en español.
  */
 @Module({
   imports: [

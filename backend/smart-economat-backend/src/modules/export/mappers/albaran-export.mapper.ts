@@ -2,8 +2,7 @@ import { Albaran } from '../../albaran/albaran.entity/albaran.entity';
 import { ExportColumn } from './producto-export.mapper';
 
 /**
- * @description Column definitions used when exporting Albaran data to Excel/CSV.
- * Each entry specifies the column header label, the data key, and the column width.
+ * Documentación en español.
  */
 export const ALBARAN_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
@@ -15,11 +14,7 @@ export const ALBARAN_COLUMNS: ExportColumn[] = [
 ];
 
 /**
- * @description Maps an Albaran entity to a flat key-value record suitable for an Excel row.
- * Boolean concordancia is converted to 'Sí'/'No', dates are formatted as ISO date strings
- * (YYYY-MM-DD), and the number of linked recepciones is resolved from the relation array.
- * @param albaran - The Albaran entity to map (requires `albaranPedidoRecepcion` relation loaded for nRecepciones).
- * @returns A plain record whose keys match the keys declared in {@link ALBARAN_COLUMNS}.
+ * Documentación en español.
  */
 export function mapAlbaranToExcelRow(
   albaran: Albaran

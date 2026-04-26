@@ -34,11 +34,7 @@ export interface ComparacionProveedoresResponse {
 }
 
 /**
- * Service for managing the supplier–product relationship ({@link ProductoProveedor}).
- *
- * Provides price updates (with automatic history tracking), waste-factor updates,
- * paginated price history retrieval, and a supplier comparison endpoint that ranks
- * suppliers by effective unit cost (price × (1 + mermaEsperada / 100)).
+ * Documentación en español.
  */
 @Injectable()
 export class ProductoProveedorService {

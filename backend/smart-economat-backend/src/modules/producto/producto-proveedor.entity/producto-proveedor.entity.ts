@@ -18,15 +18,7 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 
 /**
- * Entidad ProductoProveedor
- *
- * Representa la relación entre un Producto y un Proveedor.
- * Almacena datos específicos del suministro, como el precio pactado,
- * el código de referencia interno del proveedor, y la marca específica si aplica.
- * Actúa como AGGREGATE ROOT para la gestión de stocks (Inventario) y precios (HistorialPrecio).
- *
- * @class ProductoProveedor
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Unique(['productoId', 'proveedorId'])
 @Entity({ name: 'producto_proveedor' })
@@ -34,18 +26,21 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Index(['proveedorId'])
 @Check(`"precio_unitario" IS NULL OR "precio_unitario" > 0`)
 export class ProductoProveedor extends BaseEntity {
-  /** Foreign key referencing the base Producto. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
-  /** Foreign key referencing the Proveedor. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'proveedor_id' })
   proveedorId!: string;
 
-  /**
-   * Referencia al Producto base.
-   * Constraint: No se puede eliminar el producto si tiene proveedores vinculados (RESTRICT).
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -53,18 +48,15 @@ export class ProductoProveedor extends BaseEntity {
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
-  /**
-   * Marca específica que ofrece este proveedor para el producto.
-   * Puede diferir de la marca genérica del producto base.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
-  /**
-   * Código de barras específico del proveedor.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 130,
@@ -73,11 +65,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   codigoBarras?: string;
 
-  /**
-   * Precio unitario actual pactado con el proveedor.
-   * Constraint: Debe ser mayor a 0 cuando existe.
-   * @type {number | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -88,11 +78,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   precioUnitario?: number;
 
-  /**
-   * Expected waste percentage for this product-supplier combination.
-   * Used as a default when the recipe ingredient does not define its own merma.
-   * @type {number | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 5,
@@ -104,12 +92,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   mermaEsperada?: number;
 
-  /**
-   * Precio Medio Ponderado (PMP) de este producto para este proveedor concreto.
-   * Se recalcula automáticamente en cada recepción de mercancía.
-   * Fuente de verdad del PMP a nivel producto-proveedor.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -120,10 +105,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   pmp!: number;
 
-  /**
-   * Referencia al Proveedor.
-   * Constraint: No se puede eliminar el proveedor si tiene productos vinculados (RESTRICT).
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -131,21 +115,21 @@ export class ProductoProveedor extends BaseEntity {
   @JoinColumn({ name: 'proveedor_id' })
   proveedor!: Relation<Proveedor>;
 
-  /**
-   * Relación con el inventario físico (stock) de este producto-proveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
   inventarios!: Relation<Inventario[]>;
 
-  /**
-   * Historial de variaciones de precio.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
   historialPrecios!: Relation<HistorialPrecio[]>;
 
-  /**
-   * Pedidos realizados de este producto a este proveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: Relation<PedidoProducto[]>;
 }

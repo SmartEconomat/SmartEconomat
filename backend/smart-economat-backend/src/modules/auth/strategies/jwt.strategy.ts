@@ -11,12 +11,7 @@ import { getRolPrincipal } from '../../sherlock-auth/utils/access.utils';
 import type { Request } from 'express';
 
 /**
- * Extracts the JWT access token from the HTTP-only `access_token` cookie.
- * Returns null when no cookie is present so PassportStrategy can fall back
- * to the Authorization header extractor.
- *
- * @param {Request} req - Incoming Express request.
- * @returns {string | null} Raw JWT string or null if the cookie is absent.
+ * Documentación en español.
  */
 const cookieExtractor = (req: Request): string | null => {
   let token = null;
@@ -27,13 +22,7 @@ const cookieExtractor = (req: Request): string | null => {
 };
 
 /**
- * Passport strategy that validates JWT tokens for the application.
- * Accepts tokens from both the `Authorization: Bearer <token>` header
- * and the `access_token` HTTP-only cookie.
- * On successful validation it enriches the request with the user's id,
- * username and resolved principal role.
- *
- * @class JwtStrategy
+ * Documentación en español.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -52,14 +41,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  /**
-   * Called by Passport after the JWT signature and expiry have been verified.
-   * Loads the full user record from the database to confirm the account is still active.
-   *
-   * @param {JwtPayload} payload - Decoded JWT payload containing `sub`, `username` and `role`.
-   * @returns {Promise<{ id: string; username: string; rol: string }>} Minimal user object attached to `req.user`.
-   * @throws {UnauthorizedException} When the user no longer exists or is not in ACTIVE status.
-   */
+        /**
+     * Documentación en español.
+     */
   async validate(payload: JwtPayload) {
     const user = await this.usuarioRepo.findOne({
       where: { id: payload.sub, status: UserStatus.ACTIVE },

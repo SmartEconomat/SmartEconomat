@@ -2,32 +2,41 @@ import React from 'react';
 import { Box, CircularProgress, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
-/** Available size tokens for {@link Spinner}. */
+/**
+ * Documentación en español.
+ */
 type SpinnerSize = 'sm' | 'md' | 'lg';
 
-/** Available colour tokens for {@link Spinner}. */
+/**
+ * Documentación en español.
+ */
 type SpinnerColor = 'primary' | 'white' | 'gray' | 'inherit';
 
 /**
- * Props for the {@link Spinner} component.
+ * Documentación en español.
  */
 export interface SpinnerProps {
-  /** Size of the spinner. Defaults to `'md'`. */
+        /**
+     * Documentación en español.
+     */
   size?: SpinnerSize;
-  /** Colour of the spinner. Defaults to `'primary'`. */
+        /**
+     * Documentación en español.
+     */
   color?: SpinnerColor;
-  /**
-   * When set, the spinner is wrapped in a semi-transparent overlay.
-   * `'container'` uses `position: absolute` (relative to the nearest positioned ancestor);
-   * `'screen'` uses `position: fixed` to cover the entire viewport.
-   * Defaults to `false`.
-   */
+        /**
+     * Documentación en español.
+     */
   overlay?: boolean | 'container' | 'screen';
-  /** Additional CSS class applied to the outermost element. */
+        /**
+     * Documentación en español.
+     */
   className?: string;
 }
 
-/** Maps size tokens to pixel dimensions for `CircularProgress`. */
+/**
+ * Documentación en español.
+ */
 const sizeMap: Record<SpinnerSize, number> = {
   sm: 24,
   md: 40,
@@ -35,19 +44,7 @@ const sizeMap: Record<SpinnerSize, number> = {
 };
 
 /**
- * Animated circular loading indicator.
- *
- * Can be rendered inline or as a semi-transparent overlay over a container
- * or the full screen. Supports themed colour tokens and three size presets.
- *
- * @param props - See {@link SpinnerProps}.
- * @returns JSX element rendering a `CircularProgress`, optionally wrapped in an overlay box.
- * @example
- * // Inline spinner
- * <Spinner size="sm" color="inherit" />
- *
- * // Full-screen overlay spinner
- * <Spinner overlay="screen" />
+ * Documentación en español.
  */
 const Spinner: React.FC<SpinnerProps> = ({
   size = 'md',

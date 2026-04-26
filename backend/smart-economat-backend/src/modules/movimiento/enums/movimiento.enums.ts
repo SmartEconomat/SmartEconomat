@@ -1,46 +1,72 @@
 /**
- * All possible movement types that can be recorded in the inventory audit log.
- *
- * @enum {string}
+ * Documentación en español.
  */
 export enum TipoMovimiento {
-  /** Generic manual stock entry (increases inventory). */
+        /**
+     * Documentación en español.
+     */
   ENTRADA = 'entrada',
-  /** Generic manual stock exit (decreases inventory). */
+        /**
+     * Documentación en español.
+     */
   SALIDA = 'salida',
-  /** Stock quantity adjustment without a clear entry/exit direction. */
+        /**
+     * Documentación en español.
+     */
   AJUSTE = 'ajuste',
-  /** Stock reservation linked to a purchase order. */
+        /**
+     * Documentación en español.
+     */
   PEDIDO = 'pedido',
-  /** Stock entry from a supplier reception (goods received). */
+        /**
+     * Documentación en español.
+     */
   ENTRADA_COMPRA = 'entrada_compra',
-  /** Stock exit due to internal distribution to another location. */
+        /**
+     * Documentación en español.
+     */
   SALIDA_DISTRIBUCION = 'salida_distribucion',
-  /** Stock entry from an incoming internal distribution. */
+        /**
+     * Documentación en español.
+     */
   ENTRADA_DISTRIBUCION = 'entrada_distribucion',
-  /** Stock exit caused by a recipe elaboration (ingredient consumption). */
+        /**
+     * Documentación en español.
+     */
   SALIDA_ELABORACION = 'salida_elaboracion',
-  /** Stock exit for ingredients consumed during a production batch. */
+        /**
+     * Documentación en español.
+     */
   PRODUCCION_CONSUMO = 'produccion_consumo',
-  /** Stock entry for the finished product resulting from a production batch. */
+        /**
+     * Documentación en español.
+     */
   PRODUCCION_RESULTADO = 'produccion_resultado',
-  /** Manual downward stock adjustment (loss, discard, correction). */
+        /**
+     * Documentación en español.
+     */
   SALIDA_AJUSTE = 'salida_ajuste',
-  /** Stock exit due to waste (merma) registration. */
+        /**
+     * Documentación en español.
+     */
   MERMA = 'merma',
 }
 
 /**
- * Subset of TipoMovimiento values that operators are allowed to create manually via the API.
- *
- * @enum {string}
+ * Documentación en español.
  */
 export enum TipoMovimientoManual {
-  /** Manual stock entry. */
+        /**
+     * Documentación en español.
+     */
   ENTRADA = TipoMovimiento.ENTRADA,
-  /** Generic stock adjustment. */
+        /**
+     * Documentación en español.
+     */
   AJUSTE = TipoMovimiento.AJUSTE,
-  /** Manual downward stock adjustment. */
+        /**
+     * Documentación en español.
+     */
   SALIDA_AJUSTE = TipoMovimiento.SALIDA_AJUSTE,
 }
 

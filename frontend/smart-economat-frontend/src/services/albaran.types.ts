@@ -1,175 +1,278 @@
 /**
- * Associates an albaran with a specific reception-pedido pair.
+ * Documentación en español.
  */
 export interface AlbaranPedidoRecepcion {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Foreign key referencing the parent albaran. */
+        /**
+     * Documentación en español.
+     */
   albaranId: string;
-  /** Foreign key referencing the recepcion-pedido junction record. */
+        /**
+     * Documentación en español.
+     */
   recepcionPedidoId: string;
-  /** Optional populated recepcion-pedido relation. */
+        /**
+     * Documentación en español.
+     */
   recepcionPedido?: AlbaranRecepcionPedido;
-  /** ISO timestamp when the association was created. */
+        /**
+     * Documentación en español.
+     */
   createdAt?: string;
 }
 
 /**
- * Junction record linking a recepcion with a pedido.
+ * Documentación en español.
  */
 export interface AlbaranRecepcionPedido {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Foreign key referencing the recepcion. */
+        /**
+     * Documentación en español.
+     */
   recepcionId: string;
-  /** Foreign key referencing the pedido. */
+        /**
+     * Documentación en español.
+     */
   pedidoId: string;
-  /** Optional populated recepcion relation. */
+        /**
+     * Documentación en español.
+     */
   recepcion?: AlbaranRecepcion;
 }
 
 /**
- * Minimal recepcion data embedded in albaran relations.
+ * Documentación en español.
  */
 export interface AlbaranRecepcion {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** ISO date when the reception took place. */
+        /**
+     * Documentación en español.
+     */
   fechaRecepcion?: string;
-  /** Current status of the reception. */
+        /**
+     * Documentación en español.
+     */
   estado?: string;
-  /** Whether an incident was raised during this reception. */
+        /**
+     * Documentación en español.
+     */
   incidencia?: boolean;
-  /** Line items received during this reception. */
+        /**
+     * Documentación en español.
+     */
   recepcionProductos?: AlbaranRecepcionProducto[];
 }
 
 /**
- * A single product line within a reception record.
+ * Documentación en español.
  */
 export interface AlbaranRecepcionProducto {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Foreign key referencing the pedido product. */
+        /**
+     * Documentación en español.
+     */
   pedidoProductoId: string;
-  /** Quantity actually received. */
+        /**
+     * Documentación en español.
+     */
   cantidadRecibida?: number;
-  /** Visual status of the received product. */
+        /**
+     * Documentación en español.
+     */
   estadoProducto?: string;
-  /** Free-text observations about this line. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
-  /** Optional populated pedido product relation. */
+        /**
+     * Documentación en español.
+     */
   pedidoProducto?: AlbaranPedidoProducto;
 }
 
 /**
- * Minimal pedido product information used inside albaran line items.
+ * Documentación en español.
  */
 export interface AlbaranPedidoProducto {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Ordered quantity. */
+        /**
+     * Documentación en español.
+     */
   cantidad?: number;
-  /** Unit price at time of order. */
+        /**
+     * Documentación en español.
+     */
   precioUnitario?: number;
-  /** Optional populated product-supplier relation. */
+        /**
+     * Documentación en español.
+     */
   productoProveedor?: AlbaranProductoProveedor;
 }
 
 /**
- * Product-supplier pairing embedded in albaran line items.
+ * Documentación en español.
  */
 export interface AlbaranProductoProveedor {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Optional populated product. */
+        /**
+     * Documentación en español.
+     */
   producto?: AlbaranProducto;
-  /** Optional populated supplier. */
+        /**
+     * Documentación en español.
+     */
   proveedor?: AlbaranProveedor;
 }
 
 /**
- * Minimal product data used inside albaran relations.
+ * Documentación en español.
  */
 export interface AlbaranProducto {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Product name. */
+        /**
+     * Documentación en español.
+     */
   nombre?: string;
-  /** Unit of measure (e.g. KG, UNIDAD). */
+        /**
+     * Documentación en español.
+     */
   unidad?: string;
 }
 
 /**
- * Minimal supplier data used inside albaran relations.
+ * Documentación en español.
  */
 export interface AlbaranProveedor {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Supplier name. */
+        /**
+     * Documentación en español.
+     */
   nombre?: string;
 }
 
 /**
- * Represents a delivery note (albarán) entity as returned by the API.
+ * Documentación en español.
  */
 export interface Albaran {
-  /** Unique identifier. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Delivery note reference number provided by the supplier. */
+        /**
+     * Documentación en español.
+     */
   nAlbaran: string;
-  /** Whether the albaran quantities match the corresponding order. */
+        /**
+     * Documentación en español.
+     */
   concordancia?: boolean;
-  /** ISO date of the delivery note. */
+        /**
+     * Documentación en español.
+     */
   fecha?: string;
-  /** URL of the scanned or uploaded document. */
+        /**
+     * Documentación en español.
+     */
   documentoUrl?: string;
-  /** Original filename of the uploaded document. */
+        /**
+     * Documentación en español.
+     */
   documentoNombre?: string;
-  /** MIME type of the uploaded document. */
+        /**
+     * Documentación en español.
+     */
   documentoMimeType?: string;
-  /** File size of the uploaded document in bytes. */
+        /**
+     * Documentación en español.
+     */
   documentoTamano?: number;
-  /** Associated reception-pedido relations. */
+        /**
+     * Documentación en español.
+     */
   albaranPedidoRecepcion?: AlbaranPedidoRecepcion[];
-  /** ISO timestamp when the record was created. */
+        /**
+     * Documentación en español.
+     */
   createdAt: string;
-  /** ISO timestamp of the last update. */
+        /**
+     * Documentación en español.
+     */
   updatedAt: string;
-  /** ISO timestamp when the record was soft-deleted, if applicable. */
+        /**
+     * Documentación en español.
+     */
   deletedAt?: string;
 }
 
 /**
- * Payload for creating a new albaran.
+ * Documentación en español.
  */
 export interface CreateAlbaranDto {
-  /** Supplier's delivery note reference number. */
+        /**
+     * Documentación en español.
+     */
   nAlbaran: string;
-  /** Whether the delivered quantities match the order. */
+        /**
+     * Documentación en español.
+     */
   concordancia?: boolean;
-  /** ISO date of the delivery. */
+        /**
+     * Documentación en español.
+     */
   fecha?: string;
 }
 
 /**
- * Payload for partially updating an existing albaran.
- * All fields are optional.
+ * Documentación en español.
  */
 export type UpdateAlbaranDto = Partial<CreateAlbaranDto>;
 
 /**
- * Query parameters accepted by the paginated albaranes list endpoint.
+ * Documentación en español.
  */
 export interface AlbaranQueryParams {
-  /** Page number (1-based). */
+        /**
+     * Documentación en español.
+     */
   page?: number;
-  /** Number of items per page. */
+        /**
+     * Documentación en español.
+     */
   limit?: number;
-  /** Free-text search term. */
+        /**
+     * Documentación en español.
+     */
   searchTerm?: string;
-  /** Field name to sort by. */
+        /**
+     * Documentación en español.
+     */
   sortBy?: string;
-  /** Sort direction. */
+        /**
+     * Documentación en español.
+     */
   order?: 'ASC' | 'DESC';
 }

@@ -1,7 +1,5 @@
 /**
- * Matriz de capturas obligatorias para documentación visual y gate de CI.
- * Cada `relativePath` es relativo a `ElectronInstaller/screenshots/`.
- * El mock usado es [installer-bridge.mock.js](fixtures/installer-bridge.mock.js) (mismo que E2E web).
+ * Documentación en español.
  */
 export type ScreenshotCategory = "wizard" | "admin" | "debug";
 

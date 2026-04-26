@@ -8,14 +8,7 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 
 /**
- * Entidad Movimiento
- *
- * Representa una transacción de cambio en el inventario (Entrada, Salida, Ajuste).
- * Implementa un patrón de auditoría extendido registrando el usuario, tipo, y entidad origen.
- * Soporta polimorfismo referencial (entidad_id + entidad_tipo) para trazar el origen (Pedido, Recepción, Ajuste Manual).
- *
- * @class Movimiento
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'movimiento' })
 @Index(['tipo'])
@@ -28,31 +21,33 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 @Index(['createdAt'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
-  /** Foreign key referencing the User who performed the movement. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-  /** Foreign key referencing the Inventario lot affected by this movement. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'inventario_id', nullable: true })
   inventarioId?: string;
 
-  /** Foreign key referencing the ProductoProveedor for quick product-level queries. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'producto_proveedor_id', nullable: true })
   productoProveedorId?: string;
 
-  /**
-   * Tipo de movimiento (ENTRADA, SALIDA, DEVOLUCION, etc.).
-   * Determina si suma o resta al inventario.
-   * @type {TipoMovimiento}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'enum', enum: TipoMovimiento })
   tipo!: TipoMovimiento;
 
-  /**
-   * Cantidad de unidades movidas.
-   * Siempre se almacena como valor absoluto positivo. La dirección depende del 'tipo'.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -61,10 +56,9 @@ export class Movimiento extends BaseEntity {
   })
   cantidad!: number;
 
-  /**
-   * Usuario que realizó (o autorizó) el movimiento.
-   * @type {Usuario | null}
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -72,11 +66,9 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-  /**
-   * Inventario afectado por el movimiento.
-   * Permite conocer el lote exacto y ubicación.
-   * ON DELETE SET NULL permite mantener el historial aunque se borre el inventario físico.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Inventario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -84,10 +76,9 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'inventario_id' })
   inventario?: Relation<Inventario>;
 
-  /**
-   * ProductoProveedor asociado.
-   * Facilita consultar "todos los movimientos de Coca-Cola" sin joins complejos.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => ProductoProveedor, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -95,25 +86,21 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor?: Relation<ProductoProveedor>;
 
-  /**
-   * Tipo de entidad origen que causó el movimiento ('Recepcion', 'Pedido', 'AjusteManual').
-   * Parte del polimorfismo para trazabilidad.
-   * @type {string}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 50, name: 'entidad_tipo' })
   entidad!: string;
 
-  /**
-   * ID (UUID) de la entidad origen que causó el movimiento.
-   * @type {string}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'uuid', name: 'entidad_id' })
   entidadId!: string;
 
-  /**
-   * Descripción o justificación del movimiento.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 }

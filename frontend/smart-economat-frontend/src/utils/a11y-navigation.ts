@@ -1,13 +1,9 @@
 /**
- * Utilidades de navegación para accesibilidad (A11y).
+ * Documentación en español.
  */
 
 /**
- * Mueve el foco de forma segura y desplaza la vista a un elemento específico por su ID.
- * Implementa el patrón estándar de Skip Links y gestión de foco accesible.
- *
- * @param targetId ID del elemento destino.
- * @returns true si se encontró, desplazó la vista y enfocó el elemento, false en caso contrario.
+ * Documentación en español.
  */
 export const navigateToElement = (targetId: string): boolean => {
   const element = document.getElementById(targetId);

@@ -1,7 +1,5 @@
 /**
- * @fileoverview Modal genérico y animado para presentar el detalle en formato de solo lectura de cualquier entidad.
- * Este componente incluye la capacidad de transmutar (morphing) de la vista de solo lectura
- * a un formulario interactivo de edición usando form schemas reutilizando el contexto visual sin perder la ubicación.
+ * Documentación en español.
  */
 
 import React, { useState } from 'react';
@@ -32,16 +30,24 @@ import { useTranslation } from 'react-i18next';
 // ─────────────────────────────────────────────────────────
 
 /**
- * Represents a single key-value field in a detail section.
+ * Documentación en español.
  */
 export interface DetailField {
-  /** Caption displayed above the value. */
+        /**
+     * Documentación en español.
+     */
   label: string;
-  /** Text, number or any ReactNode (chip, icon, …). */
+        /**
+     * Documentación en español.
+     */
   value: React.ReactNode;
-  /** If `true`, the field spans the full row width (grid column `1 / -1`). */
+        /**
+     * Documentación en español.
+     */
   fullWidth?: boolean;
-  /** Number of grid columns the field occupies on medium/large screens. Defaults to 1. */
+        /**
+     * Documentación en español.
+     */
   colSpan?: number;
 }
 

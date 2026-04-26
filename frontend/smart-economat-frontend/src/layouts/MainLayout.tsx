@@ -46,6 +46,7 @@ import LogoBlanco from '../assets/images/SVG/logo-smart-economat-blanco.svg';
 import LogoNegro from '../assets/images/SVG/logo-smart-economat-negro.svg';
 import Favicon from '../assets/icons/SVG/favicon.svg';
 import FaviconInv from '../assets/icons/SVG/favicon-inv.svg';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 240;
 
@@ -174,6 +175,7 @@ const SidebarContent = React.memo(
     theme,
     visibleMenuItems,
   }: SidebarContentProps) => {
+    const { t } = useTranslation();
     if (!theme || !location || !visibleMenuItems) {
       return null;
     }
@@ -197,11 +199,11 @@ const SidebarContent = React.memo(
       'inicio' | 'catalogo' | 'operaciones' | 'control' | 'gestion',
       string
     > = {
-      inicio: 'Inicio',
-      catalogo: 'Catálogo',
-      operaciones: 'Operaciones',
-      control: 'Control',
-      gestion: 'Gestión',
+      inicio: t('layout.menu.inicio'),
+      catalogo: t('layout.menu.catalogo'),
+      operaciones: t('layout.menu.operaciones'),
+      control: t('layout.menu.control'),
+      gestion: t('layout.menu.gestion'),
     };
 
     return (
@@ -221,7 +223,7 @@ const SidebarContent = React.memo(
               <Box
                 component="img"
                 src={getLogo(false)}
-                alt="Smart Economat Logo"
+                alt={t('layout.logoAlt')}
                 sx={{
                   height: { xs: 52, sm: 64 },
                   maxWidth: '80%',
@@ -241,7 +243,7 @@ const SidebarContent = React.memo(
               <Box
                 component="img"
                 src={getLogo(true)}
-                alt="Favicon"
+                alt={t('layout.faviconAlt')}
                 sx={{
                   height: 36,
                   width: 36,
@@ -252,7 +254,7 @@ const SidebarContent = React.memo(
           )}
         </DrawerHeader>
         <Divider />
-        <List aria-label="Navegación principal">
+        <List aria-label={t('layout.menu.navegacionPrincipal')}>
           {visibleMenuItems.map((item, index) => {
             const previousGroup =
               index > 0 ? visibleMenuItems[index - 1].group : null;
@@ -296,12 +298,20 @@ const SidebarContent = React.memo(
                 )}
 
                 <ListItem disablePadding sx={{ display: 'block' }}>
+                  {(() => {
+                    const itemTitle = item.title.startsWith('navigation.')
+                      ? t(item.title)
+                      : item.title;
+                    const itemDescription = item.description.startsWith('navigation.')
+                      ? t(item.description)
+                      : item.description;
+                    return (
                   <Tooltip
                     title={getTooltipContent(
                       isExpanded,
                       isLearningMode || false,
-                      item.title,
-                      item.description
+                      itemTitle,
+                      itemDescription
                     )}
                     describeChild
                   >
@@ -331,7 +341,7 @@ const SidebarContent = React.memo(
                         {item.icon}
                       </ListItemIcon>
                       <ListItemText
-                        primary={item.title}
+                        primary={itemTitle}
                         sx={{
                           display: isExpanded ? 'block' : 'none',
                           opacity: isExpanded ? 1 : 0,
@@ -348,6 +358,8 @@ const SidebarContent = React.memo(
                       />
                     </ListItemButton>
                   </Tooltip>
+                    );
+                  })()}
                 </ListItem>
               </React.Fragment>
             );
@@ -355,7 +367,7 @@ const SidebarContent = React.memo(
         </List>
         <Box sx={{ marginTop: 'auto' }}>
           <Divider />
-          <List aria-label="Opciones del sistema">
+          <List aria-label={t('comun.opcionesSistema')}>
             <ListItem disablePadding sx={{ display: 'block' }}>
               <TutorialHelper mode="listitem" isOpen={isExpanded} />
             </ListItem>
@@ -375,6 +387,7 @@ const SidebarContent = React.memo(
 SidebarContent.displayName = 'SidebarContent';
 
 export default function MainLayout() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { isMobile, isTablet, isDesktop, isLargeDesktop, isXLarge } =
     useBreakpoints();
@@ -466,10 +479,9 @@ export default function MainLayout() {
       return true;
     });
 
-  /**
-   * Componente interno para renderizar el contenido del menú lateral.
-   * Props necesarios para cada caso de uso.
-   */
+        /**
+     * Documentación en español.
+     */
   const renderSidebarContent = (isExpanded: boolean) => (
     <SidebarContent
       isExpanded={isExpanded}
@@ -494,7 +506,7 @@ export default function MainLayout() {
         elevation={1}
         component="header"
         role="banner"
-        aria-label="Cabecera superior"
+        aria-label={t('layout.headerAria')}
       >
         <Toolbar
           sx={{
@@ -506,20 +518,20 @@ export default function MainLayout() {
           <Tooltip
             title={
               isMobile
-                ? 'Abrir menú'
+                ? t('layout.menu.abrir')
                 : sidebarExpanded
-                  ? 'Minimizar menú'
-                  : 'Expandir menú'
+                  ? t('layout.menu.minimizar')
+                  : t('layout.menu.expandir')
             }
           >
             <IconButton
               color="inherit"
               aria-label={
                 isMobile
-                  ? 'Abrir menú'
+                  ? t('layout.menu.abrir')
                   : sidebarExpanded
-                    ? 'Minimizar menú'
-                    : 'Expandir menú'
+                    ? t('layout.menu.minimizar')
+                    : t('layout.menu.expandir')
               }
               onClick={isMobile ? handleMobileDrawerOpen : handleSidebarToggle}
               edge="start"
@@ -553,7 +565,7 @@ export default function MainLayout() {
               id="user-menu-button"
               onClick={handleUserMenuOpen}
               sx={{ p: 0 }}
-              aria-label="Abrir menú de usuario"
+              aria-label={t('layout.userMenu.open')}
             >
               <Avatar
                 sx={{
@@ -588,14 +600,14 @@ export default function MainLayout() {
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Mi Perfil</Typography>
+                <Typography textAlign="center">{t('perfil.miPerfil')}</Typography>
               </MuiMenuItem>
               <Divider />
               <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Cerrar Sesión</Typography>
+                <Typography textAlign="center">{t('layout.userMenu.logout')}</Typography>
               </MuiMenuItem>
             </Menu>
           </Box>
@@ -609,7 +621,7 @@ export default function MainLayout() {
           open={mobileOpen}
           onClose={handleMobileDrawerClose}
           component="nav"
-          aria-label="Menú principal lateral"
+          aria-label={t('layout.sidebarAria')}
           PaperProps={{
             id: 'sidebar-nav',
             tabIndex: -1,
@@ -644,7 +656,7 @@ export default function MainLayout() {
           variant="permanent"
           open={sidebarExpanded}
           component="nav"
-          aria-label="Menú principal lateral"
+          aria-label={t('layout.sidebarAria')}
           PaperProps={{
             id: 'sidebar-nav',
             tabIndex: -1,
@@ -660,7 +672,7 @@ export default function MainLayout() {
         component="main"
         id="main-content"
         role="main"
-        aria-label="Contenido principal"
+        aria-label={t('layout.mainContentAria')}
         tabIndex={-1}
         sx={{
           flexGrow: 1,

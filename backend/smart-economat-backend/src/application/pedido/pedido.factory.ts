@@ -17,25 +17,7 @@ export type BuiltPedido = {
 };
 
 /**
- * Builds and validates a Pedido aggregate from a CreatePedidoDto inside a TypeORM transaction.
- * Validates that every order line references an existing ProductoProveedor belonging to the
- * specified proveedor and that a unit price is set. Calculates the total cost and constructs
- * the Pedido entity ready to be saved (not persisted yet).
- *
- * Supports both EntityManager instances that expose `find` (TypeORM >= 0.3)
- * and those that only expose `findOne` (tests / legacy adapters).
- *
- * @param {EntityManager} manager - Active TypeORM EntityManager from a transaction context.
- * @param {CreatePedidoDto} dto - Payload containing lineas, proveedorId and optional observaciones.
- * @param {string} userId - ID of the authenticated user placing the order.
- * @param {string} initialStatus - Initial EstadoPedido value for the new order.
- * @param {() => Date} calculateFechaEntrega - Factory function that returns the estimated delivery date.
- * @returns {Promise<BuiltPedido>} Constructed Pedido, its PedidoProducto line items, and the computed total cost.
- * @throws {BadRequestException} When the lineas array is empty.
- * @throws {NotFoundException} When a referenced ProductoProveedor ID does not exist.
- * @throws {BadRequestException} When a ProductoProveedor does not belong to the order's proveedor.
- * @throws {ConflictException} When a ProductoProveedor has no unit price or when the EntityManager
- *   does not expose a supported query method.
+ * Documentación en español.
  */
 export async function buildPedidoAggregate(
   manager: EntityManager,

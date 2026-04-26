@@ -8,75 +8,58 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 import { Merma } from '../../merma/merma.entity/merma.entity';
 
 /**
- * Entidad Producto
- *
- * Representa la definición base de un producto en el sistema (ficha técnica).
- * Un producto puede ser suministrado por múltiples proveedores (ver ProductoProveedor).
- *
- * @class Producto
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'producto' })
 @Index(['nombre'])
 @Index(['codigoBarras'])
 @Check(`"fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"`)
 export class Producto extends BaseEntity {
-  /**
-   * Nombre comercial del producto.
-   * @type {string}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;
 
-  /**
-   * Marca o fabricante del producto.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
-  /**
-   * Descripción detallada del producto (ingredientes, características).
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-  /**
-   * Unidad de medida base del producto (KILOGRAMO, LITRO, UNIDAD).
-   * Define cómo se interpreta el campo 'cantidad'.
-   * @type {UnidadMedida | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'enum', enum: UnidadMedida, nullable: true })
   unidad?: UnidadMedida;
 
-  /**
-   * Fecha de caducidad del lote actual or referencia general.
-   * Constraint: Debe ser mayor a la fecha de creación.
-   * @type {Date | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_caducidad' })
   fechaCaducidad?: Date;
 
-  /**
-   * Ruta relativa o URL de la imagen del producto.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 200, nullable: true, name: 'path_img' })
   pathImg?: string;
 
-  /**
-   * Categoría o tipo de producto (PERECEDERO, LIMPIEZA, etc.).
-   * @type {TipoProducto | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'enum', enum: TipoProducto, nullable: true })
   tipo?: TipoProducto;
 
-  /**
-   * Código de barras único (EAN/UPC).
-   * Identificador global del producto.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 130,
@@ -86,11 +69,9 @@ export class Producto extends BaseEntity {
   })
   codigoBarras?: string;
 
-  /**
-   * Cantidad numérica que, junto con la unidad, define el tamaño del producto.
-   * Ejemplo: Si contenido=1 y unidad=KILOGRAMO -> 1kg.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
 
   @Column({
     type: 'numeric',
@@ -102,11 +83,9 @@ export class Producto extends BaseEntity {
   })
   contenido!: number;
 
-  /**
-   * Precio Medio Ponderado (PMP) del producto.
-   * Se recalcula automáticamente en cada recepción.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -117,23 +96,23 @@ export class Producto extends BaseEntity {
   })
   pmp!: number;
 
-  /**
-   * Relación con los alérgenos que contiene el producto.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {
     cascade: true,
   })
   alergenos?: Relation<ProductoAlergeno[]>;
 
-  /**
-   * Relación con los proveedores que suministran este producto.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
   proveedores!: Relation<ProductoProveedor[]>;
 
-  /**
-   * Historial de mermas registradas para el producto.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => Merma, (merma) => merma.producto)
   mermas?: Relation<Merma[]>;
 }

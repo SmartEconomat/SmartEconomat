@@ -2,15 +2,7 @@ import React from 'react';
 import { SvgIcon, SvgIconProps } from '@mui/material';
 
 /**
- * Inline SVG barcode icon wrapped in MUI's {@link SvgIcon}.
- *
- * Accepts all standard {@link SvgIconProps} (color, fontSize, sx, etc.) so it
- * integrates seamlessly as a button `startIcon` or standalone decorative element.
- *
- * @param props - Standard MUI {@link SvgIconProps}.
- * @returns An SVG barcode glyph inside an MUI SvgIcon container.
- * @example
- * <BarcodeIcon color="primary" fontSize="large" />
+ * Documentación en español.
  */
 const BarcodeIcon: React.FC<SvgIconProps> = (props) => (
   <SvgIcon {...props}>

@@ -1,7 +1,7 @@
 import { TrimStringTransformer } from '../../../src/common/transformers/trim-string.transformer';
 
 /**
- * Tests Unitarios de TrimStringTransformer
+ * Documentación en español.
  */
 describe('TrimStringTransformer', () => {
   describe('transform()', () => {

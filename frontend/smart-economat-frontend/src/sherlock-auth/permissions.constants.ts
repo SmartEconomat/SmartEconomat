@@ -1,8 +1,5 @@
 /**
- * Catálogo centralizado de permisos del sistema.
- *
- * Mirror del backend: backend/.../common/constants/permissions.constants.ts
- * Mantener sincronizado manualmente al añadir/eliminar permisos.
+ * Documentación en español.
  */
 export const PERMISSIONS = {
   usuarios: {
@@ -133,7 +130,9 @@ export const PERMISSIONS = {
   },
 } as const;
 
-/** Unión de todos los códigos de permiso del sistema. */
+/**
+ * Documentación en español.
+ */
 export type PermissionCode =
   (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]] extends infer V
     ? V extends string
@@ -141,5 +140,7 @@ export type PermissionCode =
       : never
     : never;
 
-/** Nombres de módulos del catálogo de permisos. */
+/**
+ * Documentación en español.
+ */
 export type PermissionModule = keyof typeof PERMISSIONS;

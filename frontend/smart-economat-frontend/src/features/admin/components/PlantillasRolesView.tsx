@@ -41,22 +41,17 @@ import { useToast } from '../../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Props for the {@link PlantillasRolesView} component.
+ * Documentación en español.
  */
 interface PlantillasRolesViewProps {
-  /** Whether the current user has permission to edit role templates. */
+        /**
+     * Documentación en español.
+     */
   canEdit: boolean;
 }
 
 /**
- * Extracts a human-readable error message from an unknown error value.
- *
- * Prefers the message from {@link ApiError} or generic `Error`, falling back
- * to the provided `fallback` string when neither is available.
- *
- * @param error - The unknown error to inspect.
- * @param fallback - Default message when no specific message can be extracted.
- * @returns A non-empty error message string.
+ * Documentación en español.
  */
 function getApiErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -70,16 +65,18 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Well-known template names that are shown in the UI. */
+/**
+ * Documentación en español.
+ */
 const KNOWN_TEMPLATE_NAMES = ['SUPER_ADMIN', 'ADMIN', 'PROFESOR', 'ALUMNO'];
 
-/** Keywords used to detect the superadmin template by name. */
+/**
+ * Documentación en español.
+ */
 const SUPERADMIN_KEYWORDS = ['SUPERADMIN', 'SUPER_ADMIN'];
 
 /**
- * Returns `true` when the given template name belongs to the Superadmin role.
- *
- * @param nombre - The template name to test (case-insensitive).
+ * Documentación en español.
  */
 function isSuperadminPlantilla(nombre: string): boolean {
   const upper = nombre.toUpperCase();
@@ -87,14 +84,7 @@ function isSuperadminPlantilla(nombre: string): boolean {
 }
 
 /**
- * View component for managing role template permissions.
- *
- * Displays a table of known role templates (SUPER_ADMIN, ADMIN, PROFESOR,
- * ALUMNO) and allows users with `canEdit` access to open a dialog and toggle
- * individual permissions per module. Changes are synchronised to all roles
- * linked to the modified template via the back-end.
- *
- * @param props - {@link PlantillasRolesViewProps}
+ * Documentación en español.
  */
 const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   canEdit,
@@ -118,10 +108,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   );
   const [isReadonly, setIsReadonly] = useState(false);
 
-  /**
-   * Loads all role templates, roles, and permissions from the API.
-   * Filters to only show templates whose names appear in `KNOWN_TEMPLATE_NAMES`.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -155,9 +144,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     void loadData();
   }, [loadData]);
 
-  /**
-   * Memoised map from plantillaRolId → count of roles linked to that template.
-   */
+        /**
+     * Documentación en español.
+     */
   const rolesCountByPlantillaId = useMemo(() => {
     const counts = new Map<string, number>();
 
@@ -173,10 +162,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     return counts;
   }, [roles]);
 
-  /**
-   * Memoised list of [moduleName, Permiso[]] pairs, sorted alphabetically by
-   * module and then by permission name within each module.
-   */
+        /**
+     * Documentación en español.
+     */
   const groupedPermissions = useMemo(() => {
     const grouped = new Map<string, Permiso[]>();
 
@@ -203,10 +191,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     return entries;
   }, [permisos]);
 
-  /**
-   * Toggles a single permission ID in/out of the current selection set.
-   * @param permisoId - The permission to toggle.
-   */
+        /**
+     * Documentación en español.
+     */
   const togglePermisoSelection = useCallback((permisoId: string) => {
     setSelectedPermisoIds((prev) => {
       const next = new Set(prev);
@@ -219,12 +206,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     });
   }, []);
 
-  /**
-   * Toggles all permissions in a module: selects all when none or some are
-   * selected, deselects all when every permission in the module is selected.
-   *
-   * @param modulePermisos - The list of permissions belonging to the module.
-   */
+        /**
+     * Documentación en español.
+     */
   const toggleModuleSelection = useCallback((modulePermisos: Permiso[]) => {
     setSelectedPermisoIds((prev) => {
       const moduleIds = modulePermisos.map((p) => p.id);
@@ -241,13 +225,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     });
   }, []);
 
-  /**
-   * Opens the edit/view dialog for the given template and pre-selects its
-   * current permissions. Superadmin templates open in read-only mode with all
-   * permissions pre-selected.
-   *
-   * @param plantilla - The role template to edit or view.
-   */
+        /**
+     * Documentación en español.
+     */
   const openEditDialog = useCallback(
     (plantilla: PlantillaRol) => {
       const isSuperadmin = isSuperadminPlantilla(plantilla.nombre);
@@ -265,10 +245,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     [permisos]
   );
 
-  /**
-   * Closes the dialog and resets its internal state.
-   * Does nothing while a save is in progress.
-   */
+        /**
+     * Documentación en español.
+     */
   const closeDialog = () => {
     if (saving) {
       return;
@@ -280,10 +259,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     setIsReadonly(false);
   };
 
-  /**
-   * Submits the current permission selection to the API and updates the local
-   * template list on success.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmit = async () => {
     if (!editingPlantilla || isReadonly) {
       return;
@@ -300,7 +278,12 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
       const linkedRoles = rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0;
       const syncMessage =
         linkedRoles > 0
-          ? ` Se sincronizaron ${linkedRoles} rol(es) vinculado(s).`
+          ? t(
+              linkedRoles === 1
+                ? 'plantillasRoles.syncRoles_one'
+                : 'plantillasRoles.syncRoles_other',
+              { count: linkedRoles }
+            )
           : '';
 
       toast.success(
@@ -475,9 +458,18 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
               <Alert severity="warning" variant="outlined">
                 {t('plantillasRoles.warningGuardar')}
                 {editingPlantilla
-                  ? ` (${rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0} rol(es))`
+                  ? t(
+                      (rolesCountByPlantillaId.get(editingPlantilla.id) ??
+                        0) === 1
+                        ? 'plantillasRoles.warningRolesLinked_one'
+                        : 'plantillasRoles.warningRolesLinked_other',
+                      {
+                        count:
+                          rolesCountByPlantillaId.get(editingPlantilla.id) ??
+                          0,
+                      }
+                    )
                   : ''}
-                .
               </Alert>
             )}
 

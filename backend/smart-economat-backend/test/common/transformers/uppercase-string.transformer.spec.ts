@@ -1,7 +1,7 @@
 import { UppercaseStringTransformer } from '../../../src/common/transformers/uppercase-string.transformer';
 
 /**
- * Tests Unitarios de UppercaseStringTransformer
+ * Documentación en español.
  */
 describe('UppercaseStringTransformer', () => {
   describe('transform()', () => {

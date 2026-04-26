@@ -34,8 +34,7 @@ async function firstExistingPath(candidates: string[]): Promise<string | null> {
 }
 
 /**
- * PowerShell: localiza Docker Desktop.exe (PF, LocalAppData\Programs, WOW6432Node, registro Uninstall).
- * Salida: primera línea FOUND|NOTFOUND; si FOUND, segunda línea = ruta absoluta del ejecutable.
+ * Documentación en español.
  */
 export function buildWindowsDockerDesktopResolveCommand(): string {
   return [
@@ -113,8 +112,7 @@ export function buildWindowsDockerDesktopResolveCommand(): string {
 }
 
 /**
- * PowerShell: localiza docker.exe aunque Docker Desktop no haya añadido PATH.
- * Salida: primera línea FOUND|NOTFOUND; si FOUND, segunda línea = ruta absoluta.
+ * Documentación en español.
  */
 export function buildWindowsDockerCliResolveCommand(): string {
   return [

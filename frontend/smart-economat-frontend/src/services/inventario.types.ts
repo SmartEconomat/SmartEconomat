@@ -1,42 +1,72 @@
 /**
- * Respuesta del endpoint /alertas/stock con información enriquecida.
+ * Documentación en español.
  */
 export interface AlertaStock {
-  /** Unique identifier of the inventory item triggering the alert. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Current quantity in stock. */
+        /**
+     * Documentación en español.
+     */
   cantidadActual: number;
-  /** Minimum quantity threshold. */
+        /**
+     * Documentación en español.
+     */
   cantidadMinima: number;
-  /** Display name of the product. */
+        /**
+     * Documentación en español.
+     */
   nombreProducto: string;
-  /** Unit of measure (e.g. KG, UNIDAD). */
+        /**
+     * Documentación en español.
+     */
   unidad?: string;
-  /** Name of the supplier for this stock item. */
+        /**
+     * Documentación en español.
+     */
   proveedorNombre?: string;
-  /** Name of the storage location for this stock item. */
+        /**
+     * Documentación en español.
+     */
   ubicacionNombre?: string;
 }
 
 /**
- * Respuesta cruda del API de inventario (registros por lote/ubicación).
+ * Documentación en español.
  */
 export interface InventarioItem {
-  /** Unique identifier of the inventory lot record. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** ISO timestamp when the record was soft-deleted, or null if active. */
+        /**
+     * Documentación en español.
+     */
   deletedAt?: string | null;
-  /** Current quantity in this lot. */
+        /**
+     * Documentación en español.
+     */
   cantidadActual: number;
-  /** Minimum quantity threshold for this lot. */
+        /**
+     * Documentación en español.
+     */
   cantidadMinima: number;
-  /** Optional maximum quantity limit for this lot. */
+        /**
+     * Documentación en español.
+     */
   cantidadMaxima?: number | null;
-  /** Storage location where this lot is kept. */
+        /**
+     * Documentación en español.
+     */
   ubicacion?: { id: string; nombre: string; descripcion?: string };
-  /** Expiry date of this lot, or null if no expiry applies. */
+        /**
+     * Documentación en español.
+     */
   fechaCaducidad?: string | null;
-  /** Product-supplier relation for this lot. */
+        /**
+     * Documentación en español.
+     */
   productoProveedor?: {
     id: string;
     producto?: {
@@ -52,54 +82,82 @@ export interface InventarioItem {
 }
 
 /**
- * Tipos permitidos para ajustes manuales de stock desde inventario.
+ * Documentación en español.
  */
 export type TipoMovimientoManualAjuste = 'entrada' | 'salida_ajuste';
 
 /**
- * Payload para registrar un ajuste manual por delta sobre un lote de inventario.
+ * Documentación en español.
  */
 export interface CreateAjusteManualInventarioPayload {
-  /** Identifier of the inventory lot to adjust. */
+        /**
+     * Documentación en español.
+     */
   inventarioId: string;
-  /** Direction of the adjustment (entry or exit). */
+        /**
+     * Documentación en español.
+     */
   tipo: TipoMovimientoManualAjuste;
-  /** Absolute quantity delta to apply (positive). */
+        /**
+     * Documentación en español.
+     */
   ajuste: number;
-  /** Required reason for the adjustment. */
+        /**
+     * Documentación en español.
+     */
   motivo: string;
-  /** Optional free-text observations. */
+        /**
+     * Documentación en español.
+     */
   observaciones?: string;
 }
 
 /**
- * Vista agregada por producto: un solo registro por producto con stock total sumado.
- * Los productos no se duplican; se suman las cantidades de todos los lotes/proveedores.
+ * Documentación en español.
  */
 export interface InventarioPorProducto {
-  /** Unique product identifier. */
+        /**
+     * Documentación en español.
+     */
   productoId: string;
-  /** Product display name. */
+        /**
+     * Documentación en español.
+     */
   nombre: string;
-  /** Optional barcode of the product. */
+        /**
+     * Documentación en español.
+     */
   codigoBarras?: string;
-  /** Unit of measure. */
+        /**
+     * Documentación en español.
+     */
   unidad?: string;
-  /** Content quantity per unit (e.g. grams per pack). */
+        /**
+     * Documentación en español.
+     */
   contenidoPorUnidad?: number;
-  /** Product category / type. */
+        /**
+     * Documentación en español.
+     */
   tipo?: string;
-  /** Total current quantity across all lots and suppliers. */
+        /**
+     * Documentación en español.
+     */
   cantidadTotal: number;
-  /** Sum of minimum thresholds across all lots. */
+        /**
+     * Documentación en español.
+     */
   cantidadMinima: number;
-  /** Whether at least one lot is below its minimum threshold. */
+        /**
+     * Documentación en español.
+     */
   bajoStock: boolean;
-  /** Names of suppliers that have stock for this product. */
+        /**
+     * Documentación en español.
+     */
   proveedores: string[];
-  /**
-   * Ubicaciones donde existe stock del producto (agregado de todos los lotes).
-   * Se usa sobre todo para filtros/ búsquedas en el cliente.
-   */
+        /**
+     * Documentación en español.
+     */
   ubicaciones?: string[];
 }

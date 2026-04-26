@@ -290,7 +290,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
 
     // El modal de recuperación NO debería estar
     expect(
-      screen.queryByText('Recuperar Pedido Pendiente')
+      screen.queryByText('pedidos.recovery.titulo')
     ).not.toBeInTheDocument();
 
     // 3. Simular que se guarda un borrador
@@ -304,7 +304,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     // El modal de recuperación NO debería haber aparecido porque hasPromptedRef.current es true
     // (Ya sea porque se puso a true al terminar la carga inicial sin draft, o al hacer click en Nuevo Pedido)
     expect(
-      screen.queryByText('Recuperar Pedido Pendiente')
+      screen.queryByText('pedidos.recovery.titulo')
     ).not.toBeInTheDocument();
   });
 
@@ -337,7 +337,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     // Esperar a que el modal aparezca
     await waitFor(() => {
       expect(
-        screen.getByText('Recuperar Pedido Pendiente')
+        screen.getByText('pedidos.recovery.titulo')
       ).toBeInTheDocument();
     });
   });

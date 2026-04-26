@@ -2,11 +2,7 @@ import React from 'react';
 import { navigateToElement } from '../../utils/a11y-navigation';
 
 /**
- * SkipLinks: Enlaces de salto para accesibilidad (WCAG 2.4.1).
- * Estos enlaces permiten a los usuarios de teclado saltar directamente
- * a las secciones principales evitando la repetición de elementos.
- *
- * Implementación con gestión de foco manual para máxima fiabilidad en SPAs.
+ * Documentación en español.
  */
 const SkipLinks: React.FC = () => {
   const handleSkip =

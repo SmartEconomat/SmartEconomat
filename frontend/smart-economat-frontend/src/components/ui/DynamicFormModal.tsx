@@ -38,6 +38,38 @@ import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import { resolveStoredFileUrl } from '../../services/api.service';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
+import { useTranslation } from 'react-i18next';
+
+const createStableSnapshot = (value: unknown): string => {
+  const normalize = (input: unknown): unknown => {
+    if (input instanceof File) {
+      return {
+        __type: 'File',
+        name: input.name,
+        size: input.size,
+        type: input.type,
+        lastModified: input.lastModified,
+      };
+    }
+
+    if (Array.isArray(input)) {
+      return input.map((item) => normalize(item));
+    }
+
+    if (input && typeof input === 'object') {
+      return Object.entries(input as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .reduce<Record<string, unknown>>((acc, [key, nested]) => {
+          acc[key] = normalize(nested);
+          return acc;
+        }, {});
+    }
+
+    return input;
+  };
+
+  return JSON.stringify(normalize(value));
+};
 
 export type FieldType =
   | 'text'
@@ -112,8 +144,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   initialData = {},
   onSubmit,
   onCancel,
-  submitLabel = 'Aceptar',
-  cancelLabel = 'Cancelar',
+  submitLabel,
+  cancelLabel,
   isSubmitting = false,
   requireConfirmation = false,
   onBarcodeFetch,
@@ -126,6 +158,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   onSecondarySubmit,
   secondarySubmitColor = 'success',
 }) => {
+  const { t } = useTranslation();
+  const resolvedSubmitLabel = submitLabel ?? t('comun.aceptar');
+  const resolvedCancelLabel = cancelLabel ?? t('comun.cancelar');
   const [formData, setFormData] = useState<FormDataRecord>({});
   const formDataRef = useRef<FormDataRecord>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,6 +176,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [generatingBarcodeField, setGeneratingBarcodeField] = useState<
     string | null
   >(null);
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const pendingCloseReasonRef = useRef<ModalCloseReason | undefined>(undefined);
+  const initialSnapshotRef = useRef<string>('');
 
   const selectedProveedorId =
     typeof formData.proveedorId === 'string'
@@ -178,6 +216,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       });
       formDataRef.current = dataToSet;
       setFormData(dataToSet);
+      initialSnapshotRef.current = createStableSnapshot(dataToSet);
       setShowOFFResults(false);
       setOffResults([]);
       if (onValuesChange) onValuesChange(dataToSet);
@@ -205,6 +244,27 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       onValuesChange(formData);
     }
   }, [formData, isOpen, onValuesChange]);
+
+  const isDirty = useMemo(() => {
+    if (!isOpen) return false;
+    return createStableSnapshot(formData) !== initialSnapshotRef.current;
+  }, [formData, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isDirty) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isOpen, isDirty]);
 
   const handleTextChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -247,21 +307,21 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     const stringValue = value != null ? String(value).trim() : '';
 
     if (required && !stringValue) {
-      return `${label} es obligatorio`;
+      return t('forms.validation.required', { label });
     }
 
     if (stringValue) {
       if (maxLength && stringValue.length > maxLength) {
-        return `${label} no puede superar los ${maxLength} caracteres`;
+        return t('forms.validation.maxLength', { label, max: maxLength });
       }
       if (minLength && stringValue.length < minLength) {
-        return `${label} debe tener al menos ${minLength} caracteres`;
+        return t('forms.validation.minLength', { label, min: minLength });
       }
       if (pattern) {
         try {
           const regex = new RegExp(pattern);
           if (!regex.test(stringValue)) {
-            return patternMessage || `${label} no tiene un formato válido`;
+            return patternMessage || t('forms.validation.invalidFormat', { label });
           }
         } catch {
           console.error(`Invalid regex for field ${field.name}:`, pattern);
@@ -270,7 +330,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       if (field.type === 'email') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(stringValue)) {
-          return 'Formato de correo electrónico no válido';
+          return t('forms.validation.invalidEmail');
         }
       }
     }
@@ -366,17 +426,42 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     }
   };
 
-  const handleCancel = () => {
+  const closeWithoutPrompt = (reason?: ModalCloseReason) => {
     if (onCancel) {
       onCancel();
       return;
     }
 
-    onClose('backdropClick');
+    onClose(reason);
+  };
+
+  const requestClose = (reason?: ModalCloseReason) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (isDirty) {
+      pendingCloseReasonRef.current = reason;
+      setIsDiscardConfirmOpen(true);
+      return;
+    }
+
+    closeWithoutPrompt(reason);
+  };
+
+  const handleCancel = () => {
+    requestClose('cancelAction');
+  };
+
+  const handleConfirmDiscard = () => {
+    setIsDiscardConfirmOpen(false);
+    const reason = pendingCloseReasonRef.current;
+    pendingCloseReasonRef.current = undefined;
+    closeWithoutPrompt(reason);
   };
 
   const handleModalClose = (reason?: ModalCloseReason) => {
-    onClose(reason);
+    requestClose(reason);
   };
 
   const [isDragOver, setIsDragOver] = useState(false);
@@ -641,7 +726,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Tooltip title="Escanear con cámara">
+                      <Tooltip title={t('comun.escanearCamara')}>
                         <IconButton
                           size="small"
                           onClick={() => setActiveBarcodeField(name)}
@@ -665,7 +750,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     <InputAdornment position="end">
                       <Stack direction="row" spacing={0.5}>
                         {onBarcodeGenerate && (
-                          <Tooltip title="Generar codigo EAN-13">
+                          <Tooltip title={t('comun.generarEan13')}>
                             <span>
                               <IconButton
                                 size="small"
@@ -695,7 +780,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                           </Tooltip>
                         )}
                         {onOFFSearch && (
-                          <Tooltip title="Buscar en OpenFoodFacts">
+                          <Tooltip title={t('comun.buscarOpenFoodFacts')}>
                             <span>
                               <IconButton
                                 size="small"
@@ -790,7 +875,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                         primary={
                           (result['nombre'] as string) ||
                           (result['name'] as string) ||
-                          `Producto ${idx + 1}`
+                          t('forms.productFallback', { index: idx + 1 })
                         }
                         secondary={
                           (result['marca'] as string) ||
@@ -818,7 +903,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                   }
                 }
               }}
-              title={`Escanear ${label}`}
+              title={t('forms.scanField', { label })}
             />
           </Box>
         );
@@ -930,7 +1015,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                       {previewUrl ? (
                         <img
                           src={previewUrl}
-                          alt="Preview"
+                          alt={t('forms.image.previewAlt')}
                           style={{
                             width: '100%',
                             height: '100%',
@@ -945,7 +1030,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                             color="text.secondary"
                             textAlign="center"
                           >
-                            Haga clic o arrastre
+                            {t('forms.image.clickOrDrag')}
                           </Typography>
                         </Stack>
                       )}
@@ -972,7 +1057,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                             sx={{ fontSize: 40, mb: 1 }}
                           />
                           <Typography variant="button">
-                            {previewUrl ? 'Cambiar Imagen' : 'Cargar Imagen'}
+                            {previewUrl
+                              ? t('forms.image.changeImage')
+                              : t('forms.image.uploadImage')}
                           </Typography>
                         </Box>
                       )}
@@ -1034,14 +1121,14 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         <Box
           sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
         >
-          {Boolean(cancelLabel) && (
+          {Boolean(resolvedCancelLabel) && (
             <Button
               onClick={handleCancel}
               variant="outlined"
               fullWidth={false}
               sx={{ mt: 0, mb: 0 }}
             >
-              {cancelLabel}
+              {resolvedCancelLabel}
             </Button>
           )}
           {secondarySubmitLabel && onSecondarySubmit && (
@@ -1063,7 +1150,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
             fullWidth={false}
             sx={{ mt: 0, mb: 0 }}
           >
-            {submitLabel}
+            {resolvedSubmitLabel}
           </Button>
         </Box>
       </form>
@@ -1072,14 +1159,26 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmSubmit}
-        title="Confirmar acción"
+        title={t('comun.confirmarAccion')}
         message={
-          confirmationMessage ||
-          '¿Estás seguro de que deseas guardar estos datos?'
+          confirmationMessage || t('comun.confirmarGuardar')
         }
-        confirmText="Guardar"
-        cancelText="Cerrar"
+        confirmText={t('comun.guardar')}
+        cancelText={t('comun.cerrar')}
         confirmColor="primary"
+      />
+      <ConfirmDialog
+        isOpen={isDiscardConfirmOpen}
+        onClose={() => {
+          pendingCloseReasonRef.current = undefined;
+          setIsDiscardConfirmOpen(false);
+        }}
+        onConfirm={handleConfirmDiscard}
+        title={t('forms.discard.title')}
+        message={t('forms.discard.message')}
+        confirmText={t('forms.discard.confirm')}
+        cancelText={t('forms.discard.cancel')}
+        confirmColor="warning"
       />
     </Modal>
   );

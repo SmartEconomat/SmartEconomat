@@ -15,14 +15,7 @@ import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.ent
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 
 /**
- * Entidad Recepcion
- *
- * Representa el acto de recepción de mercancía en el almacén.
- * Actúa como AGGREGATE ROOT para la entrada de stock.
- * Puede corresponder a uno o varios pedidos (aunque típicamente uno).
- *
- * @class Recepcion
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'recepcion' })
 @Index(['usuarioId'])
@@ -32,11 +25,9 @@ export class Recepcion extends BaseEntity {
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-  /**
-   * Usuario que realiza la recepción.
-   * La relación es SET NULL para mantener el histórico.
-   * @type {Usuario | null}
-   */
+        /**
+     * Documentación en español.
+     */
   @Exclude()
   @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
     nullable: true,
@@ -45,10 +36,9 @@ export class Recepcion extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-  /**
-   * Fecha y hora en que se recibió la mercancía.
-   * @type {Date}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -56,15 +46,9 @@ export class Recepcion extends BaseEntity {
   })
   fechaRecepcion!: Date;
 
-  /**
-   * Estado resultante de la recepción, calculado al finalizar la transacción.
-   *
-   * - COMPLETADA:      Todas las cantidades recibidas coinciden con lo pedido.
-   * - CON_INCIDENCIAS: Al menos un ítem con diferencia (exceso, falta, cantidad=0).
-   *                    Se generan registros en `incidencia` automáticamente.
-   *
-   * @type {EstadoRecepcion}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: EstadoRecepcion,
@@ -72,26 +56,25 @@ export class Recepcion extends BaseEntity {
   })
   estado!: EstadoRecepcion;
 
-  /**
-   * Observaciones generales sobre la recepción (ej: "Cajas golpeadas").
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
   @Column({ default: false })
   incidencia: boolean;
 
-  /**
-   * Relación con los pedidos que se están recepcionando.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion, {
     cascade: true,
   })
   recepcionesPedidos!: Relation<RecepcionPedido[]>;
 
-  /**
-   * Detalle de los productos recibidos.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion, {
     cascade: true,
   })

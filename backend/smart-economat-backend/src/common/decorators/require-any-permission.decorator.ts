@@ -1,14 +1,5 @@
 /**
- * @module RequireAnyPermissionDecorator
- * Re-exports permission-related symbols from the Sherlock Auth module so that
- * feature modules can import `@RequireAnyPermission` from the common decorators
- * barrel without depending directly on the auth module path.
- *
- * Exported symbols:
- * - `PERMISSIONS_KEY`      – metadata key used to store required permissions
- * - `PERMISSIONS_MODE_KEY` – metadata key used to store the permission evaluation mode
- * - `RequireAnyPermission` – decorator that grants access when the user holds *any* of
- *   the listed permissions (OR logic)
+ * Documentación en español.
  */
 
 export {

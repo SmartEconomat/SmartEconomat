@@ -31,6 +31,9 @@ type PlantillasRolesCrudContract = {
 @Controller('plantillas-roles')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Roles(rolUsuario.ADMIN)
+/**
+ * Documentación en español.
+ */
 export class PlantillasRolesController {
   constructor(
     private readonly plantillasRolesService: PlantillasRolesService

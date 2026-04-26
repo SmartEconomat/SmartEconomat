@@ -107,10 +107,7 @@ function sanitizeMovimientoPayload(
 }
 
 /**
- * @description Fetches a paginated list of stock movement records.
- * @param {MovimientosQueryParams} [params] - Optional filter, sort, and pagination options.
- * @returns {Promise<PaginatedData<Movimiento>>} Paginated movement records.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchMovimientos(
   params: MovimientosQueryParams = {}
@@ -151,10 +148,7 @@ export async function fetchMovimientos(
 }
 
 /**
- * @description Creates a new stock movement record.
- * @param {CreateMovimientoPayload} movimiento - Movement details including type, quantity, and entity references.
- * @returns {Promise<Movimiento>} The created movement record.
- * @throws {Error} When validation fails or the API returns an error response.
+ * Documentación en español.
  */
 export async function createMovimiento(
   movimiento: CreateMovimientoPayload
@@ -176,11 +170,7 @@ export async function createMovimiento(
 }
 
 /**
- * @description Partially updates an existing stock movement record.
- * @param {string} id - The movement UUID to update.
- * @param {UpdateMovimientoPayload} movimiento - Fields to update.
- * @returns {Promise<Movimiento>} The updated movement record.
- * @throws {Error} When validation fails or the API returns an error response.
+ * Documentación en español.
  */
 export async function updateMovimiento(
   id: string,

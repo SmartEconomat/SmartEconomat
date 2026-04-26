@@ -1,6 +1,5 @@
 /**
- * @module seeders/merma
- * Direct database seeder that inserts waste (merma) records using deterministic data.
+ * Documentación en español.
  */
 import { SeedContext } from './seed-context';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
@@ -18,12 +17,7 @@ import {
 const NUM_MERMAS = process.env.NODE_ENV === 'test' ? 3 : 20;
 
 /**
- * Seeds merma (waste) records directly into the database using deterministic data.
- * Picks products and optionally associates a user with each waste entry.
- * @param {SeedContext} context - The active seed context providing repository access.
- * @returns {Promise<void>}
- * @example
- * await runSeeder(context);
+ * Documentación en español.
  */
 export const runSeeder = async (context: SeedContext) => {
   const dataSource = context.getDataSource();

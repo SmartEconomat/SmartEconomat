@@ -3,17 +3,7 @@ import request from 'supertest';
 import { getTestApp } from '../setup/test-app';
 
 /**
- * @file movimientos.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Movimientos de Stock.
- * Cubre la visualización, gestión y trazabilidad de movimientos.
- *
- * Casos de prueba:
- * - Listado general de movimientos
- * - Historial/trazabilidad de movimientos por producto o usuario
- * - Filtrado por tipo, rango de fechas
- * - Validación de entrada (DTOs)
- * - Códigos de error HTTP correctos (403, 404, 400)
- * - CRUD completo de movimientos
+ * Documentación en español.
  */
 describe('MovimientoController (e2e)', () => {
   let app: INestApplication;
@@ -42,10 +32,9 @@ describe('MovimientoController (e2e)', () => {
   });
 
   describe('Listado General', () => {
-    /**
-     * @test Debe listar todos los movimientos registrados.
-     * @roles ADMIN, PROFESOR, ALUMNO
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos - Debe listar movimientos (200)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos')
@@ -76,10 +65,9 @@ describe('MovimientoController (e2e)', () => {
   });
 
   describe('Trazabilidad de Movimientos (Caso de Uso Principal)', () => {
-    /**
-     * @test Debe retornar historial de movimientos sin parámetros (debe fallar con 400)
-     * - Validación: entityId o userId son obligatorios
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial - Sin parámetros debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -89,11 +77,9 @@ describe('MovimientoController (e2e)', () => {
       expect(response.body.message).toContain('entityId');
     });
 
-    /**
-     * @test Debe retornar historial filtrado por producto (entityId)
-     * - Flujo: Auditor busca 'Tomate Frito'
-     * - Resultado esperado: Ve Compra, Uso en receta, Merma, Ajuste
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?entityId=<uuid> - Debe retornar historial por producto (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -111,10 +97,9 @@ describe('MovimientoController (e2e)', () => {
       }
     });
 
-    /**
-     * @test Debe retornar historial filtrado por usuario
-     * - Validación: Solo administradores y profesores
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?userId=<uuid> - Debe retornar historial por usuario (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -124,9 +109,9 @@ describe('MovimientoController (e2e)', () => {
       expect([200, 400, 404]).toContain(response.status);
     });
 
-    /**
-     * @test Debe filtrar por tipo de movimiento
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?entityId=<uuid>&type=entrada - Debe filtrar por tipo (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -146,9 +131,9 @@ describe('MovimientoController (e2e)', () => {
       }
     });
 
-    /**
-     * @test Debe filtrar por rango de fechas válido
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?entityId=<uuid>&startDate=2026-01-01&endDate=2026-02-28 - Debe filtrar por rango (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -162,9 +147,9 @@ describe('MovimientoController (e2e)', () => {
       expect([200, 400, 404]).toContain(response.status);
     });
 
-    /**
-     * @test Debe validar que startDate no sea mayor que endDate
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial - Fechas inválidas deben fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -178,9 +163,9 @@ describe('MovimientoController (e2e)', () => {
       expect(response.status).toBe(400);
     });
 
-    /**
-     * @test Debe validar UUID válido en entityId
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?entityId=invalid - UUID inválido debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -190,9 +175,9 @@ describe('MovimientoController (e2e)', () => {
       expect(response.status).toBe(400);
     });
 
-    /**
-     * @test Solo ADMIN y PROFESOR pueden acceder
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial - Sin autorización debe fallar (403)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -201,9 +186,9 @@ describe('MovimientoController (e2e)', () => {
       expect(response.status).toBe(401);
     });
 
-    /**
-     * @test Debe soportar ordenamiento personalizado
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/historial?sortBy=cantidad&sortOrder=ASC - Debe ordenar personalizadamente', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/historial')
@@ -219,9 +204,9 @@ describe('MovimientoController (e2e)', () => {
   });
 
   describe('Detalle y Operaciones CRUD', () => {
-    /**
-     * @test Debe obtener un movimiento por ID
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/:id - Debe retornar detalles del movimiento (200 o 404)', async () => {
       const listResponse = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos')
@@ -242,9 +227,9 @@ describe('MovimientoController (e2e)', () => {
       }
     });
 
-    /**
-     * @test Debe fallar con UUID inexistente
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /movimientos/:id - UUID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
@@ -253,9 +238,9 @@ describe('MovimientoController (e2e)', () => {
       expect(response.status).toBe(404);
     });
 
-    /**
-     * @test Solo ADMIN puede eliminar
-     */
+                /**
+         * Documentación en español.
+         */
     it('DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)', async () => {
       if (testMovimientoId) {
         const response = await request(app.getHttpServer() as string)
@@ -266,9 +251,9 @@ describe('MovimientoController (e2e)', () => {
       }
     });
 
-    /**
-     * @test Debe fallar al eliminar con ID inexistente
-     */
+                /**
+         * Documentación en español.
+         */
     it('DELETE /movimientos/:id - ID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
         .delete('/api/v1/movimientos/00000000-0000-0000-0000-000000000000')
@@ -279,9 +264,9 @@ describe('MovimientoController (e2e)', () => {
   });
 
   describe('Validación de DTOs', () => {
-    /**
-     * @test Debe rechazar entityId inválido en MovimientoHistoryDto
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /movimientos - DTO inválido debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .post('/api/v1/movimientos')

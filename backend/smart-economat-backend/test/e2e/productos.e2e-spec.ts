@@ -17,10 +17,9 @@ describe('ProductoController (e2e)', () => {
     adminToken = await loginAndGetToken(app);
   });
 
-  /**
-   * Helper: Crear producto de test
-   * Usa nombre único para evitar colisiones en tests paralelos
-   */
+        /**
+     * Documentación en español.
+     */
   async function createProducto(nombre?: string) {
     const productoNombre = nombre || generateUniqueName('Producto');
 

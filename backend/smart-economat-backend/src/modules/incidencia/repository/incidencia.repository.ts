@@ -4,6 +4,9 @@ import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
 
+/**
+ * Documentación en español.
+ */
 function normalizeDateBoundary(
   value: string,
   boundary: 'start' | 'end'
@@ -18,11 +21,17 @@ function normalizeDateBoundary(
 }
 
 @Injectable()
+/**
+ * Documentación en español.
+ */
 export class IncidenciaRepository extends Repository<Incidencia> {
   constructor(private dataSource: DataSource) {
     super(Incidencia, dataSource.createEntityManager());
   }
 
+        /**
+     * Documentación en español.
+     */
   findOneWithRelations(
     id: string,
     userRole?: string
@@ -48,6 +57,9 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     });
   }
 
+        /**
+     * Documentación en español.
+     */
   findAllWithRelations(): Promise<Incidencia[]> {
     return this.find({
       relations: [
@@ -65,6 +77,9 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     });
   }
 
+        /**
+     * Documentación en español.
+     */
   async findAllPaginated(
     query: IncidenciaQueryDto,
     userRole?: string

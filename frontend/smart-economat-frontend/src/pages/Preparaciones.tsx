@@ -45,22 +45,16 @@ import {
   parseLocalizedNumber,
   sanitizeLocalizedDecimalInput,
 } from '../utils/numberUtils';
+import {
+  formatLocalizedDate,
+  formatLocalizedDateTime,
+} from '../utils/intlFormat';
+import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../i18n/enumPresentation';
+import i18n from '../i18n';
 
 const formatAmount = (value?: number): string =>
   formatLocalizedNumber(value ?? 0, 3);
-
-const formatDateTime = (value?: string | null): string => {
-  if (!value) {
-    return '—';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '—';
-  }
-
-  return parsed.toLocaleString();
-};
 
 const RATION_STEP = 0.5;
 const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
@@ -147,8 +141,12 @@ const formatRationInfo = (
   const portionsLabel = formatRations(safePortions);
 
   return safePortions === 1
-    ? `Cada ración equivale a ${amountLabel} ${unit}.`
-    : `${portionsLabel} raciones equivalen a ${totalLabel} ${unit}.`;
+    ? i18n.t('preparaciones.racionEquiv.una', { amountLabel, unit })
+    : i18n.t('preparaciones.racionEquiv.varias', {
+        portionsLabel,
+        totalLabel,
+        unit,
+      });
 };
 
 type MermaUnitInfo = {
@@ -158,60 +156,42 @@ type MermaUnitInfo = {
   note?: string;
 };
 
-const getMermaUnitInfo = (rawUnit?: string): MermaUnitInfo => {
-  const unit = rawUnit?.toLowerCase();
+const MERMA_I18N_UNIT_KEYS = [
+  'g',
+  'kg',
+  'ml',
+  'l',
+  'cda',
+  'cdta',
+  'pieza',
+] as const;
 
-  switch (unit) {
-    case 'g':
-      return {
-        fullLabel: 'gramos (g)',
-        shortLabel: 'g',
-        example: '250',
-      };
-    case 'kg':
-      return {
-        fullLabel: 'kilogramos (kg)',
-        shortLabel: 'kg',
-        example: '0,5',
-      };
-    case 'ml':
-      return {
-        fullLabel: 'mililitros (ml)',
-        shortLabel: 'ml',
-        example: '200',
-      };
-    case 'l':
-      return {
-        fullLabel: 'litros (l)',
-        shortLabel: 'l',
-        example: '1',
-      };
-    case 'cda':
-      return {
-        fullLabel: 'cucharadas (cda)',
-        shortLabel: 'cda',
-        example: '2',
-      };
-    case 'cdta':
-      return {
-        fullLabel: 'cucharaditas (cdta)',
-        shortLabel: 'cdta',
-        example: '2',
-      };
-    case 'pieza':
-      return {
-        fullLabel: 'unidades (pieza/manojo)',
-        shortLabel: 'unidad',
-        example: '1',
-        note: 'Si el ingrediente se maneja por manojos, cuenta 1 manojo como 1 unidad.',
-      };
-    default:
-      return {
-        fullLabel: 'unidad del ingrediente',
-        shortLabel: 'unidad',
-        example: '1',
-      };
+type MermaI18nUnitKey = (typeof MERMA_I18N_UNIT_KEYS)[number];
+
+const resolveMermaUnitKey = (rawUnit?: string): MermaI18nUnitKey | 'default' => {
+  const unit = rawUnit?.toLowerCase();
+  if (
+    unit &&
+    (MERMA_I18N_UNIT_KEYS as readonly string[]).includes(unit)
+  ) {
+    return unit as MermaI18nUnitKey;
   }
+  return 'default';
+};
+
+const getMermaUnitInfo = (rawUnit?: string): MermaUnitInfo => {
+  const key = resolveMermaUnitKey(rawUnit);
+  const base = `preparaciones.mermaUnits.${key}`;
+  const info: MermaUnitInfo = {
+    fullLabel: i18n.t(`${base}.fullLabel`),
+    shortLabel: i18n.t(`${base}.shortLabel`),
+    example: i18n.t(`${base}.example`),
+  };
+  const noteKey = `${base}.note`;
+  if (i18n.exists(noteKey)) {
+    info.note = i18n.t(noteKey);
+  }
+  return info;
 };
 
 type MermaIngredienteOption = {
@@ -221,6 +201,7 @@ type MermaIngredienteOption = {
 };
 
 const Preparaciones: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -261,12 +242,12 @@ const Preparaciones: React.FC = () => {
       setTotalItems(response.total);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : 'Error al cargar preparaciones'
+        err instanceof Error ? err.message : t('preparaciones.errors.cargar')
       );
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, activeTab]);
+  }, [page, pageSize, activeTab, t]);
 
   useEffect(() => {
     loadData();
@@ -321,19 +302,27 @@ const Preparaciones: React.FC = () => {
     mermaCantidadInput.length > 0 &&
     (mermaCantidad === null || mermaCantidad <= 0);
   const mermaCantidadLabel = selectedMermaIngrediente
-    ? `¿Cuánto se perdió? (${selectedMermaUnitInfo.fullLabel})`
-    : '¿Cuánto se perdió?';
+    ? t('preparaciones.merma.cuantoPerdidoConUnidad', {
+        unidad: selectedMermaUnitInfo.fullLabel,
+      })
+    : t('preparaciones.merma.cuantoPerdido');
   const mermaCantidadHelperText = isMermaCantidadInvalid
-    ? 'Introduce un número mayor que 0.'
+    ? t('preparaciones.merma.numeroMayorCero')
     : selectedMermaIngrediente
-      ? `Registra la merma en ${selectedMermaUnitInfo.fullLabel}. Ejemplo: ${selectedMermaUnitInfo.example} ${selectedMermaUnitInfo.shortLabel}.`
-      : 'Selecciona primero el ingrediente para ver en qué medida registrar la merma.';
+      ? t('preparaciones.merma.helperConUnidad', {
+          unidad: selectedMermaUnitInfo.fullLabel,
+          ejemplo: selectedMermaUnitInfo.example,
+          unidadCorta: selectedMermaUnitInfo.shortLabel,
+        })
+      : t('preparaciones.merma.seleccionaIngrediente');
 
   const notifyExceededMax = useCallback(
     (mode: TipoConsumoProduccion) => {
       if (mode === 'raciones') {
         toast.warning(
-          `Solo hay ${formatRations(availablePortions)} raciones disponibles en este lote.`
+          t('preparaciones.toast.maxRaciones', {
+            count: formatRations(availablePortions),
+          })
         );
         return;
       }
@@ -347,6 +336,7 @@ const Preparaciones: React.FC = () => {
       consumingItem?.receta?.unidadResultado,
       maxConsumableAmount,
       toast,
+      t,
     ]
   );
 
@@ -404,15 +394,16 @@ const Preparaciones: React.FC = () => {
 
     if (isCurrentValueInvalid || currentValue === null) {
       if (isAmountModeWithoutEquivalence) {
-        toast.error(
-          'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
-        );
+        toast.error(t('preparaciones.consume.sinEquivalencia'));
         return;
       }
 
       if (isAmountMultipleInvalid && rationAmount) {
         toast.error(
-          `La cantidad debe ser múltiplo de ${formatAmount(rationAmount)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
+          t('preparaciones.consume.multiploInvalido', {
+            step: formatAmount(rationAmount),
+            unidad: consumingItem?.receta?.unidadResultado || t('comun.unidad'),
+          })
         );
         return;
       }
@@ -424,7 +415,7 @@ const Preparaciones: React.FC = () => {
       ) {
         notifyExceededMax(consumeMode);
       } else {
-        toast.error('Introduce una cantidad válida para consumir.');
+        toast.error(t('preparaciones.consume.cantidadValida'));
       }
       return;
     }
@@ -434,16 +425,14 @@ const Preparaciones: React.FC = () => {
         tipo: consumeMode,
         valor: currentValue,
       });
-      toast.success('Consumo registrado correctamente.');
+      toast.success(t('preparaciones.consume.ok'));
       setConsumingId(null);
       setPortionsInput('1');
       setAmountInput('1');
       await loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error al consumir la preparación.';
+        err instanceof Error ? err.message : t('preparaciones.consume.error');
 
       if (/no hay suficientes/i.test(message)) {
         toast.warning(message);
@@ -478,7 +467,8 @@ const Preparaciones: React.FC = () => {
         .filter((item) => Boolean(item?.producto?.id))
         .map((item) => ({
           productoId: String(item.producto?.id),
-          productoNombre: item.producto?.nombre || 'Ingrediente',
+          productoNombre:
+            item.producto?.nombre || t('preparaciones.merma.ingrediente'),
           unidad: item.unidad,
         }));
 
@@ -490,9 +480,7 @@ const Preparaciones: React.FC = () => {
 
       const recetaId = lote.recetaId || lote.receta?.id;
       if (!recetaId) {
-        setMermaLoadError(
-          'No se pudo resolver la receta del lote para cargar ingredientes.'
-        );
+        setMermaLoadError(t('preparaciones.merma.errorResolverReceta'));
         return;
       }
 
@@ -516,28 +504,28 @@ const Preparaciones: React.FC = () => {
         const message =
           err instanceof Error && err.message
             ? err.message
-            : 'No se pudo cargar el detalle de ingredientes para reportar merma.';
+            : t('preparaciones.merma.errorCargarIngredientes');
         setMermaLoadError(message);
       } finally {
         setIsLoadingMermaDetalle(false);
       }
     },
-    [resetMermaForm]
+    [resetMermaForm, t]
   );
 
   const handleSubmitMerma = async () => {
     if (!mermaLote) {
-      toast.error('Selecciona un lote de producción válido.');
+      toast.error(t('preparaciones.merma.seleccionaLote'));
       return;
     }
 
     if (!mermaProductoId) {
-      toast.error('Selecciona el ingrediente con merma.');
+      toast.error(t('preparaciones.merma.seleccionaIngredienteError'));
       return;
     }
 
     if (mermaCantidad === null || mermaCantidad <= 0) {
-      toast.error('Introduce una cantidad de merma mayor que 0.');
+      toast.error(t('preparaciones.merma.cantidadMayorCero'));
       return;
     }
 
@@ -551,14 +539,14 @@ const Preparaciones: React.FC = () => {
         notas: mermaNotas.trim() || undefined,
       });
 
-      toast.success('Merma de producción registrada correctamente.');
+      toast.success(t('preparaciones.merma.ok'));
       closeMermaDialog();
       await loadData();
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
-          : 'No se pudo registrar la merma de producción.';
+          : t('preparaciones.merma.errorRegistrar');
       toast.error(message);
     } finally {
       setIsSubmittingMerma(false);
@@ -568,30 +556,30 @@ const Preparaciones: React.FC = () => {
   const columns: Column<ProduccionLote>[] = [
     {
       id: 'createdAt',
-      label: 'Fecha creación',
-      render: (row) => formatDateTime(row.createdAt || row.fechaProduccion),
+      label: t('preparaciones.columns.fechaCreacion'),
+      render: (row) => formatLocalizedDateTime(row.createdAt || row.fechaProduccion),
       hideOnMobile: true,
     },
     {
       id: 'receta',
-      label: 'Receta',
+      label: t('preparaciones.columns.receta'),
       render: (row) => row.receta?.nombre ?? '—',
     },
     {
       id: 'cantidadProducida',
-      label: 'Cantidad',
+      label: t('preparaciones.columns.cantidad'),
       align: 'right',
     },
     {
       id: 'costeTotalReal',
-      label: 'Coste Real',
+      label: t('preparaciones.columns.costeReal'),
       align: 'right',
       render: (row) => `${Number(row.costeTotalReal).toFixed(2)}€`,
       hideOnMobile: true,
     },
     {
       id: 'usuario',
-      label: 'Cocinero/a',
+      label: t('preparaciones.columns.cocinero'),
       render: (row) => row.usuario?.nombre ?? '—',
       hideOnMobile: true,
     },
@@ -599,10 +587,10 @@ const Preparaciones: React.FC = () => {
       ? [
           {
             id: 'fechaAgotado' as const,
-            label: 'Fecha agotado',
+            label: t('preparaciones.columns.fechaAgotado'),
             render: (row: ProduccionLote) =>
               row.estado === 'agotado'
-                ? formatDateTime(row.fechaAgotado || null)
+                ? formatLocalizedDateTime(row.fechaAgotado || null)
                 : '—',
             hideOnMobile: true,
           },
@@ -612,7 +600,7 @@ const Preparaciones: React.FC = () => {
       ? [
           {
             id: 'porcionesRestantes' as const,
-            label: 'Raciones disponibles',
+            label: t('preparaciones.columns.racionesDisponibles'),
             align: 'right' as const,
             render: (row: ProduccionLote) => (
               <Typography
@@ -627,7 +615,7 @@ const Preparaciones: React.FC = () => {
       : [
           {
             id: 'porcionesProducidas' as const,
-            label: 'Raciones preparadas',
+            label: t('preparaciones.columns.racionesPreparadas'),
             align: 'right' as const,
             render: (row: ProduccionLote) => (
               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -640,7 +628,7 @@ const Preparaciones: React.FC = () => {
 
   const renderActions = (row: ProduccionLote) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalles">
+      <Tooltip title={t('preparaciones.actions.verDetalles')}>
         <IconButton
           color="primary"
           onClick={(e) => {
@@ -648,14 +636,14 @@ const Preparaciones: React.FC = () => {
             setItemToView(row);
           }}
           size="small"
-          aria-label="Ver detalles"
+          aria-label={t('preparaciones.actions.verDetalles')}
           id="btn-ver-detalle-preparacion"
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {activeTab === 0 && row.estado === 'disponible' && (
-        <Tooltip title="Consumir raciones o cantidad">
+        <Tooltip title={t('preparaciones.actions.consumir')}>
           <IconButton
             color="success"
             onClick={(e) => {
@@ -668,7 +656,7 @@ const Preparaciones: React.FC = () => {
               setConsumeMode('raciones');
             }}
             size="small"
-            aria-label="Consumir preparación"
+            aria-label={t('preparaciones.actions.consumir')}
             id="btn-consumir-preparacion"
           >
             <LocalDiningIcon fontSize="small" />
@@ -676,7 +664,7 @@ const Preparaciones: React.FC = () => {
         </Tooltip>
       )}
       {activeTab === 0 && row.estado === 'disponible' && (
-        <Tooltip title="Reportar merma de ingrediente">
+        <Tooltip title={t('preparaciones.actions.reportarMerma')}>
           <IconButton
             color="warning"
             onClick={(e) => {
@@ -684,7 +672,7 @@ const Preparaciones: React.FC = () => {
               void openMermaDialog(row);
             }}
             size="small"
-            aria-label="Reportar merma de ingrediente"
+            aria-label={t('preparaciones.actions.reportarMerma')}
             id="btn-merma-preparacion"
           >
             <ReportProblemIcon fontSize="small" />
@@ -697,57 +685,66 @@ const Preparaciones: React.FC = () => {
   const viewSections: DetailSection[] = itemToView
     ? [
         {
-          title: 'Información General',
+          title: t('preparaciones.detail.informacionGeneral'),
           columns: 3,
           fields: [
-            { label: 'Receta', value: itemToView.receta?.nombre },
             {
-              label: 'Fecha de ejecución',
-              value: formatDateTime(itemToView.fechaProduccion),
+              label: t('preparaciones.columns.receta'),
+              value: itemToView.receta?.nombre,
             },
             {
-              label: 'Fecha de creación',
-              value: formatDateTime(
+              label: t('preparaciones.detail.fechaEjecucion'),
+              value: formatLocalizedDateTime(itemToView.fechaProduccion),
+            },
+            {
+              label: t('preparaciones.columns.fechaCreacion'),
+              value: formatLocalizedDateTime(
                 itemToView.createdAt || itemToView.fechaProduccion
               ),
             },
             {
-              label: 'Fecha de agotado',
+              label: t('preparaciones.columns.fechaAgotado'),
               value:
                 itemToView.estado === 'agotado'
-                  ? formatDateTime(itemToView.fechaAgotado || null)
-                  : 'Aún disponible',
+                  ? formatLocalizedDateTime(itemToView.fechaAgotado || null)
+                  : t('preparaciones.detail.aunDisponible'),
             },
             {
-              label: 'Cantidad Producida',
+              label: t('preparaciones.columns.cantidad'),
               value: itemToView.cantidadProducida,
             },
             ...(activeTab === 0
               ? [
                   {
-                    label: 'Raciones disponibles',
-                    value: `${formatRations(itemToView.porcionesRestantes)} raciones`,
+                    label: t('preparaciones.columns.racionesDisponibles'),
+                    value: t('preparaciones.detail.racionesValor', {
+                      count: formatRations(itemToView.porcionesRestantes),
+                    }),
                   },
                 ]
               : [
                   {
-                    label: 'Raciones preparadas',
-                    value: `${formatRations(itemToView.porcionesProducidas)} raciones`,
+                    label: t('preparaciones.columns.racionesPreparadas'),
+                    value: t('preparaciones.detail.racionesValor', {
+                      count: formatRations(itemToView.porcionesProducidas),
+                    }),
                   },
                 ]),
             {
-              label: 'Coste Total Real',
+              label: t('preparaciones.detail.costeTotalReal'),
               value: `${Number(itemToView.costeTotalReal).toFixed(4)}€`,
             },
             {
-              label: 'Caducidad',
+              label: t('preparaciones.detail.caducidad'),
               value: itemToView.fechaCaducidad
-                ? new Date(itemToView.fechaCaducidad).toLocaleDateString()
-                : 'No definida',
+                ? formatLocalizedDate(itemToView.fechaCaducidad)
+                : t('preparaciones.detail.noDefinida'),
             },
             {
-              label: 'Equivalencia',
-              value: formatRationInfo(itemToView) ?? 'No definida',
+              label: t('preparaciones.detail.equivalencia'),
+              value:
+                formatRationInfo(itemToView) ??
+                t('preparaciones.detail.noDefinida'),
             },
           ],
         },
@@ -758,9 +755,9 @@ const Preparaciones: React.FC = () => {
     <Box>
       <PageToolbar
         id="preparaciones-summary"
-        title="Bolsa de Preparaciones"
+        title={t('preparaciones.titulo')}
         totalItems={totalItems}
-        totalItemsLabel="preparaciones"
+        totalItemsLabel={t('preparaciones.totalItemsLabel')}
       />
 
       <Paper
@@ -789,12 +786,12 @@ const Preparaciones: React.FC = () => {
           >
             <Tab
               icon={<RestaurantIcon />}
-              label="Disponibles"
+              label={t('preparaciones.tabs.disponibles')}
               id="tab-preparaciones-disponibles"
             />
             <Tab
               icon={<HistoryIcon />}
-              label="Agotadas (Consumidas)"
+              label={t('preparaciones.tabs.agotadas')}
               id="tab-preparaciones-historial"
             />
           </Tabs>
@@ -819,10 +816,10 @@ const Preparaciones: React.FC = () => {
                   sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
                 />
                 <Typography variant="h6" color="text.secondary">
-                  No hay preparaciones registradas
+                  {t('preparaciones.empty.titulo')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Ejecuta una receta para ver su historial aquí.
+                  {t('preparaciones.empty.descripcion')}
                 </Typography>
               </Box>
             }
@@ -842,22 +839,23 @@ const Preparaciones: React.FC = () => {
           <DetailModal
             isOpen={!!itemToView}
             onClose={() => setItemToView(null)}
-            title={`Preparación: ${itemToView?.receta?.nombre}`}
-            subtitle={`Ejecutada el ${
-              itemToView
-                ? new Date(itemToView.fechaProduccion).toLocaleDateString()
-                : ''
-            }`}
+            title={t('preparaciones.detail.modalTitulo', {
+              receta: itemToView?.receta?.nombre || '—',
+            })}
+            subtitle={t('preparaciones.detail.modalSubtitulo', {
+              fecha: itemToView
+                ? formatLocalizedDate(itemToView.fechaProduccion)
+                : '',
+            })}
             size="md"
             sections={viewSections}
           />
 
           <Dialog open={!!consumingId} onClose={() => setConsumingId(null)}>
-            <DialogTitle>Consumir preparación</DialogTitle>
+            <DialogTitle>{t('preparaciones.consume.titulo')}</DialogTitle>
             <DialogContent>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                Puedes consumir este lote por raciones o por cantidad/peso
-                total.
+                {t('preparaciones.consume.descripcion')}
               </Typography>
               {consumingItem && (
                 <Box
@@ -869,8 +867,9 @@ const Preparaciones: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    Disponibles:{' '}
-                    {formatRations(consumingItem.porcionesRestantes)} raciones
+                    {t('preparaciones.consume.disponibles', {
+                      count: formatRations(consumingItem.porcionesRestantes),
+                    })}
                   </Typography>
                   {getAvailableAmountLabel(consumingItem) && (
                     <Typography
@@ -878,7 +877,7 @@ const Preparaciones: React.FC = () => {
                       color="text.secondary"
                       sx={{ display: 'block', mt: 0.5 }}
                     >
-                      Cantidad disponible:{' '}
+                      {t('preparaciones.consume.cantidadDisponible')}{' '}
                       {getAvailableAmountLabel(consumingItem)}
                     </Typography>
                   )}
@@ -902,10 +901,19 @@ const Preparaciones: React.FC = () => {
                           parsedPortions ?? undefined
                         )
                       : isAmountModeWithoutEquivalence
-                        ? 'Esta receta no admite consumo por cantidad o peso.'
+                        ? t('preparaciones.consume.noAdmiteCantidad')
                         : isAmountMultipleInvalid && amountConsumptionStep
-                          ? `La cantidad debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem.receta?.unidadResultado || 'unidad'}.`
-                          : `${formatAmount(parsedAmount ?? 0)} ${consumingItem.receta?.unidadResultado || ''} a consumir.`}
+                          ? t('preparaciones.consume.multiploInvalido', {
+                              step: formatAmount(amountConsumptionStep),
+                              unidad:
+                                consumingItem.receta?.unidadResultado ||
+                                t('comun.unidad'),
+                            })
+                          : t('preparaciones.consume.cantidadConsumirPreview', {
+                              amount: formatAmount(parsedAmount ?? 0),
+                              unidad:
+                                consumingItem.receta?.unidadResultado || '',
+                            })}
                   </Typography>
                 </Box>
               )}
@@ -923,9 +931,11 @@ const Preparaciones: React.FC = () => {
                 }}
                 sx={{ mb: 2 }}
               >
-                <ToggleButton value="raciones">Por raciones</ToggleButton>
+                <ToggleButton value="raciones">
+                  {t('preparaciones.consume.porRaciones')}
+                </ToggleButton>
                 <ToggleButton value="cantidad" disabled={rationAmount === null}>
-                  Por cantidad/peso
+                  {t('preparaciones.consume.porCantidad')}
                 </ToggleButton>
               </ToggleButtonGroup>
               <TextField
@@ -933,8 +943,12 @@ const Preparaciones: React.FC = () => {
                 type="text"
                 label={
                   consumeMode === 'raciones'
-                    ? 'Cantidad de Raciones'
-                    : `Cantidad a consumir (${consumingItem?.receta?.unidadResultado || 'unidad'})`
+                    ? t('preparaciones.consume.cantidadRaciones')
+                    : t('preparaciones.consume.cantidadConsumir', {
+                        unidad:
+                          consumingItem?.receta?.unidadResultado ||
+                          t('comun.unidad'),
+                      })
                 }
                 value={consumeMode === 'raciones' ? portionsInput : amountInput}
                 onChange={(e) => {
@@ -943,26 +957,39 @@ const Preparaciones: React.FC = () => {
                 error={isCurrentValueInvalid}
                 helperText={
                   consumeMode === 'raciones'
-                    ? `Máximo disponible: ${formatRations(availablePortions)} raciones.`
+                    ? t('preparaciones.consume.maxRaciones', {
+                        count: formatRations(availablePortions),
+                      })
                     : isAmountModeWithoutEquivalence
-                      ? 'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
+                      ? t('preparaciones.consume.sinEquivalencia')
                       : isAmountMultipleInvalid && amountConsumptionStep
-                        ? `Debe ser múltiplo de ${formatAmount(amountConsumptionStep)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
-                        : `Máximo disponible: ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
+                        ? t('preparaciones.consume.multiploHelper', {
+                            step: formatAmount(amountConsumptionStep),
+                            unidad:
+                              consumingItem?.receta?.unidadResultado ||
+                              t('comun.unidad'),
+                          })
+                        : t('preparaciones.consume.maxCantidad', {
+                            amount: formatAmount(maxConsumableAmount ?? 0),
+                            unidad:
+                              consumingItem?.receta?.unidadResultado || '',
+                          })
                 }
                 inputProps={{ inputMode: 'decimal' }}
                 margin="dense"
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setConsumingId(null)}>Cancelar</Button>
+              <Button onClick={() => setConsumingId(null)}>
+                {t('comun.cancelar')}
+              </Button>
               <Button
                 variant="contained"
                 color="success"
                 onClick={handleConsume}
                 disabled={isCurrentValueInvalid}
               >
-                Confirmar Consumo
+                {t('preparaciones.consume.confirmar')}
               </Button>
             </DialogActions>
           </Dialog>
@@ -973,7 +1000,7 @@ const Preparaciones: React.FC = () => {
             fullWidth
             maxWidth="sm"
           >
-            <DialogTitle>Reportar merma de producción</DialogTitle>
+            <DialogTitle>{t('preparaciones.merma.titulo')}</DialogTitle>
             <DialogContent>
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Registra la merma real de un ingrediente usado en esta
@@ -1068,26 +1095,36 @@ const Preparaciones: React.FC = () => {
                   />
 
                   <FormControl fullWidth margin="dense">
-                    <InputLabel id="merma-motivo-label">Motivo</InputLabel>
+                    <InputLabel id="merma-motivo-label">
+                      {t('preparaciones.merma.motivo')}
+                    </InputLabel>
                     <Select
                       labelId="merma-motivo-label"
-                      label="Motivo"
+                      label={t('preparaciones.merma.motivo')}
                       value={mermaMotivo}
                       onChange={(event) =>
                         setMermaMotivo(event.target.value as MotivoMerma)
                       }
                     >
                       <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
-                        Error de preparación
+                        {getEnumLabel(
+                          t,
+                          'mermaMotivo',
+                          MotivoMerma.ERROR_PREPARACION
+                        )}
                       </MenuItem>
-                      <MenuItem value={MotivoMerma.ROTURA}>Rotura</MenuItem>
+                      <MenuItem value={MotivoMerma.ROTURA}>
+                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.ROTURA)}
+                      </MenuItem>
                       <MenuItem value={MotivoMerma.DETERIORO}>
-                        Deterioro / Caducidad
+                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.DETERIORO)}
                       </MenuItem>
                       <MenuItem value={MotivoMerma.HURTO}>
-                        Hurto / Pérdida
+                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.HURTO)}
                       </MenuItem>
-                      <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
+                      <MenuItem value={MotivoMerma.OTROS}>
+                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.OTROS)}
+                      </MenuItem>
                     </Select>
                   </FormControl>
 
@@ -1097,7 +1134,7 @@ const Preparaciones: React.FC = () => {
                     multiline
                     minRows={2}
                     maxRows={4}
-                    label="Observaciones"
+                    label={t('preparaciones.merma.observaciones')}
                     value={mermaNotas}
                     onChange={(event) => setMermaNotas(event.target.value)}
                   />
@@ -1106,7 +1143,7 @@ const Preparaciones: React.FC = () => {
             </DialogContent>
             <DialogActions>
               <Button onClick={closeMermaDialog} disabled={isSubmittingMerma}>
-                Cancelar
+                {t('comun.cancelar')}
               </Button>
               <Button
                 variant="contained"
@@ -1114,7 +1151,7 @@ const Preparaciones: React.FC = () => {
                 onClick={handleSubmitMerma}
                 disabled={isMermaFormInvalid}
               >
-                Registrar merma
+                {t('preparaciones.merma.registrar')}
               </Button>
             </DialogActions>
           </Dialog>

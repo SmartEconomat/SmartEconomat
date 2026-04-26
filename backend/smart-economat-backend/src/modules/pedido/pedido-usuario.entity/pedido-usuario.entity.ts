@@ -18,14 +18,7 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuario-linea.entity';
 
 /**
- * Represents a user-initiated purchase request stored in the `pedido_usuario` table.
- * A PedidoUsuario groups product request lines submitted by a user (e.g. a student or teacher)
- * and is later consolidated by an administrator into one or more Pedido purchase orders.
- *
- * State machine: BORRADOR → PENDIENTE → APROBADO → CONSOLIDADO | CANCELADO
- *
- * @class PedidoUsuario
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'pedido_usuario' })
 @Index(['usuarioId'])
@@ -34,16 +27,22 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Index(['fechaPedido'])
 @Check(`"coste_total" >= 0`)
 export class PedidoUsuario extends BaseEntity {
-  /** Foreign key referencing the User who submitted the request. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-  /** Auto-incremented global sequential reference number for this user order. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   @Generated('increment')
   numeroGlobal!: string;
 
-  /** Date and time when the order was submitted. Defaults to the current timestamp. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -51,18 +50,21 @@ export class PedidoUsuario extends BaseEntity {
   })
   fechaPedido!: Date;
 
-  /** Expected or requested delivery date. Optional. */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
-  /** Optional free-text notes or special instructions for the order. */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-  /**
-   * Total estimated cost of all request lines.
-   * Constraint: >= 0. Updated when lines are added, modified, or removed.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 14,
@@ -73,7 +75,9 @@ export class PedidoUsuario extends BaseEntity {
   })
   costeTotal!: number;
 
-  /** Current lifecycle state of the user order. */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: EstadoPedidoUsuario,
@@ -82,14 +86,15 @@ export class PedidoUsuario extends BaseEntity {
   })
   estado!: EstadoPedidoUsuario;
 
-  /** Foreign key for the suggested delivery location. Nullable. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'ubicacion_entrega_sugerida_id', nullable: true })
   ubicacionEntregaSugeridaId?: string;
 
-  /**
-   * The user who submitted the request.
-   * ON DELETE SET NULL preserves historical data if the user is removed.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -97,10 +102,9 @@ export class PedidoUsuario extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-  /**
-   * Suggested delivery location for this order.
-   * ON DELETE SET NULL keeps the order intact if the location is removed.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Ubicacion, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -108,13 +112,17 @@ export class PedidoUsuario extends BaseEntity {
   @JoinColumn({ name: 'ubicacion_entrega_sugerida_id' })
   ubicacionEntregaSugerida?: Relation<Ubicacion>;
 
-  /** Product request lines belonging to this user order. Cascade insert/update. */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => PedidoUsuarioLinea, (linea) => linea.pedidoUsuario, {
     cascade: true,
   })
   lineas!: Relation<PedidoUsuarioLinea[]>;
 
-  /** Purchase orders (Pedidos) generated from this user request after consolidation. */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => Pedido, (pedido) => pedido.pedidoUsuario)
   pedidos!: Relation<Pedido[]>;
 }

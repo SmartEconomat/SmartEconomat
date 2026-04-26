@@ -1,36 +1,21 @@
 /**
- * @module LowercaseStringTransformer
- * class-transformer compatible transformer that converts string values to lowercase.
- * Applies `trim()` before lowercasing. Handles `null` and `undefined` gracefully.
+ * Documentación en español.
  */
 
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
-/** Subset of `TransformFnParams` that this transformer requires. */
+/**
+ * Documentación en español.
+ */
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
 /**
- * Transformer that converts a string to lowercase after trimming whitespace.
- *
- * Use with the `@Transform` decorator from `class-transformer`:
- *
- * @example
- * import { Transform } from 'class-transformer';
- * import { LowercaseStringTransformer } from '../transformers';
- *
- * export class CreateUsuarioDto {
- *   \@Transform(LowercaseStringTransformer.transform)
- *   email: string;
- * }
+ * Documentación en español.
  */
 export class LowercaseStringTransformer {
-  /**
-   * Transforms a value to a trimmed, lowercase string.
-   *
-   * @param {TransformValueParams} params - Transform parameters provided by `class-transformer`.
-   * @returns {string | undefined} The lowercased string, or the original value if it is
-   *   `null`, `undefined`, or not a string.
-   */
+        /**
+     * Documentación en español.
+     */
   static transform(params: TransformValueParams): string | undefined {
     const value = params.value as string;
     if (value == null) return value;

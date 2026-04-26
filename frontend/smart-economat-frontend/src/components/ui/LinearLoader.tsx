@@ -1,16 +1,16 @@
 import React from 'react';
 import { LinearProgress, Box, alpha, useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface LinearLoaderProps {
   fixed?: boolean;
 }
 
 /**
- * Componente de carga lineal premium.
- * Proporciona un indicador de progreso discreto en la parte superior.
- * Ideal para ser usado junto con Skeletons para evitar pantallas blancas.
+ * Documentación en español.
  */
 const LinearLoader: React.FC<LinearLoaderProps> = ({ fixed = false }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [progress, setProgress] = React.useState(0);
 
@@ -49,7 +49,7 @@ const LinearLoader: React.FC<LinearLoaderProps> = ({ fixed = false }) => {
         variant="determinate"
         value={progress}
         role="status"
-        aria-label="Cargando"
+        aria-label={t('comun.cargando')}
         sx={{
           height: 3,
           backgroundColor: alpha(theme.palette.primary.main, 0.05),

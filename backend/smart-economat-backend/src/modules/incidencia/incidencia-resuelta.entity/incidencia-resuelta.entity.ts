@@ -6,14 +6,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { TipoResolucion } from '../enums/incidencia.enums';
 
 /**
- * Entidad IncidenciaResuelta
- *
- * Registra el detalle de la resolución de una incidencia.
- * Cada incidencia puede tener como máximo una resolución.
- * Mantiene el histórico del usuario responsable y el tipo de resolución aplicada.
- *
- * @class IncidenciaResuelta
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'incidencia_resuelta' })
 @Index(['incidenciaId'])
@@ -25,10 +18,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @Column({ name: 'usuario_resolutor_id', nullable: true })
   usuarioResolutorId?: string;
 
-  /**
-   * Incidencia a la que pertenece esta resolución.
-   * CASCADE onDelete: si se borra la incidencia, se elimina su resolución.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Incidencia, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -36,10 +28,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @JoinColumn({ name: 'incidencia_id' })
   incidencia!: Relation<Incidencia>;
 
-  /**
-   * Usuario que realizó la resolución.
-   * SET NULL para mantener el histórico aunque el usuario sea eliminado.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, {
     onDelete: 'SET NULL',
     nullable: true,
@@ -47,9 +38,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @JoinColumn({ name: 'usuario_resolutor_id' })
   usuarioResolutor?: Relation<Usuario>;
 
-  /**
-   * Tipo de resolución aplicada (aceptada, rechazada, parcial, devolución).
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: TipoResolucion,
@@ -57,18 +48,18 @@ export class IncidenciaResuelta extends BaseEntity {
   })
   tipoResolucion!: TipoResolucion;
 
-  /**
-   * Fecha y hora en la que se registró la resolución.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     name: 'fecha_resolucion',
   })
   fechaResolucion!: Date;
 
-  /**
-   * Observaciones opcionales sobre la resolución.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 }

@@ -14,26 +14,25 @@ import { Producto } from '../producto.entity/producto.entity';
 import { Alergeno } from '../enums/producto.enums';
 
 /**
- * Represents the junction table between Producto and allergens, stored in `producto_alergeno`.
- * Uses a composite primary key (productoId + alergeno) instead of extending BaseEntity,
- * so each Producto–Alergeno pair is unique.
- *
- * @class ProductoAlergeno
+ * Documentación en español.
  */
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
-  /** UUID of the product (part of the composite primary key). */
+        /**
+     * Documentación en español.
+     */
   @PrimaryColumn('uuid', { name: 'producto_id' })
   productoId!: string;
 
-  /** Allergen type (part of the composite primary key). */
+        /**
+     * Documentación en español.
+     */
   @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
   alergeno!: Alergeno;
 
-  /**
-   * Parent Product. Hidden from serialized responses (@Exclude).
-   * ON DELETE CASCADE removes allergen rows when the product is deleted.
-   */
+        /**
+     * Documentación en español.
+     */
   @Exclude()
   @ManyToOne(() => Producto, (producto) => producto.alergenos, {
     onDelete: 'CASCADE',
@@ -41,19 +40,27 @@ export class ProductoAlergeno {
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
-  /** Timestamp when the allergen association was created. */
+        /**
+     * Documentación en español.
+     */
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   readonly createdAt!: Date;
 
-  /** Timestamp of the last update to this record. */
+        /**
+     * Documentación en español.
+     */
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   readonly updatedAt!: Date;
 
-  /** Soft-delete timestamp. Null when the record is active. */
+        /**
+     * Documentación en español.
+     */
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at', nullable: true })
   deletedAt?: Date | null;
 
-  /** Optimistic concurrency version counter. */
+        /**
+     * Documentación en español.
+     */
   @VersionColumn({ name: 'version', default: 1 })
   version!: number;
 }

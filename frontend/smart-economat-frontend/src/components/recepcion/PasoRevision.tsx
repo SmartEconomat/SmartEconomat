@@ -28,24 +28,19 @@ import {
 } from '../../services/recepcion.types';
 
 /**
- * Returns true if the given string value is non-empty after trimming.
- * @param value - Optional string to check.
+ * Documentación en español.
  */
 const hasDraftText = (value?: string): boolean =>
   typeof value === 'string' && value.trim().length > 0;
 
 /**
- * Returns true if the line has a delivery-note quantity set.
- * @param linea - Reception draft line to check.
+ * Documentación en español.
  */
 const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
   linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
 
 /**
- * Determines whether a draft line should be shown in the revision step.
- * A line is visible when it has been interacted with (quantity entered,
- * notes written, expiry set, or physical state changed from OPTIMO).
- * @param linea - Reception draft line to evaluate.
+ * Documentación en español.
  */
 const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
   Boolean(
@@ -58,24 +53,28 @@ const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
   );
 
 /**
- * Props for the PasoRevision step component.
+ * Documentación en español.
  */
 interface PasoRevisionProps {
-  /** Current reception draft state. */
+        /**
+     * Documentación en español.
+     */
   draft: RecepcionDraft;
-  /** Setter for the reception draft state. */
+        /**
+     * Documentación en español.
+     */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
-  /** ID of the currently expanded accordion panel, or false if none. */
+        /**
+     * Documentación en español.
+     */
   expandedPanel: string | false;
-  /** Setter for the expanded accordion panel. */
+        /**
+     * Documentación en español.
+     */
   setExpandedPanel: (panel: string | false) => void;
-  /**
-   * Callback to update a single field on a reception line.
-   * @param pIdx - Index of the pedido (null for spontaneous products).
-   * @param lIdx - Index of the line within the pedido or spontaneous list.
-   * @param field - Name of the field to update.
-   * @param value - New value for the field.
-   */
+        /**
+     * Documentación en español.
+     */
   onUpdateLinea: (
     pIdx: number | null,
     lIdx: number,
@@ -85,14 +84,7 @@ interface PasoRevisionProps {
 }
 
 /**
- * Step 3 of the reception wizard: review and adjustment.
- *
- * Displays only the lines that were touched during scanning (received
- * quantities, albaran differences, or status changes). Each pedido is
- * shown in a collapsible accordion with an editable delivery-note number
- * field. Spontaneous products are listed at the bottom with a mandatory
- * justification note. A global observations / signature field sits below
- * all accordion sections.
+ * Documentación en español.
  */
 const PasoRevision: React.FC<PasoRevisionProps> = ({
   draft,

@@ -10,11 +10,7 @@ interface PedidoDeliveryDateDialogProps {
 }
 
 /**
- * @description Informational dialog showing the estimated delivery date for a pedido.
- * The date is read-only and computed automatically by the system.
- * @param props.pedido - The pedido whose delivery date should be displayed, or null when closed
- * @param props.onClose - Callback invoked when the user dismisses the dialog
- * @returns ConfirmDialog with a single confirm button displaying the delivery date
+ * Documentación en español.
  */
 const PedidoDeliveryDateDialog: React.FC<PedidoDeliveryDateDialogProps> = ({
   pedido,

@@ -2,11 +2,7 @@ import { ApiError, extractApiMessage } from '../services/api.service';
 import i18n from '../i18n';
 
 /**
- * @module authErrorMessages
- * Mapeo de errores de autenticación a claves i18n.
- *
- * Convierte mensajes de error raw de la API en cadenas localizadas
- * según la acción que originó el error.
+ * Documentación en español.
  */
 
 type AuthAction =
@@ -51,10 +47,7 @@ const actionMessageMap: Record<AuthAction, Array<[RegExp, string]>> = {
 };
 
 /**
- * Normaliza un error desconocido a un mensaje de texto plano.
- *
- * @param {unknown} error - Error capturado en un bloque catch.
- * @returns {string | null} Mensaje legible o `null` si no se puede extraer.
+ * Documentación en español.
  */
 function normalizeErrorMessage(error: unknown): string | null {
   if (typeof error === 'string' && error.trim()) {
@@ -73,17 +66,7 @@ function normalizeErrorMessage(error: unknown): string | null {
 }
 
 /**
- * Obtiene el mensaje de error localizado para una acción de autenticación.
- *
- * Recorre el mapa de patrones de la acción hasta encontrar una coincidencia
- * con el mensaje raw. Si no hay coincidencia devuelve el fallback.
- *
- * @param {unknown} error - Error capturado (string, ApiError, Error u objeto).
- * @param {AuthAction} action - Acción que originó el error (p. ej. `'login'`).
- * @param {string} fallbackMessage - Mensaje a mostrar si no hay coincidencia.
- * @returns {string} Cadena traducida o el fallback.
- * @example
- * getAuthErrorMessage(err, 'login', t('toast.error')) // => 'Usuario o contraseña inválidos.'
+ * Documentación en español.
  */
 export function getAuthErrorMessage(
   error: unknown,

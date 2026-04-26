@@ -1,10 +1,5 @@
 /**
- * Catálogo centralizado de permisos del sistema.
- *
- * Cada módulo agrupa sus acciones disponibles.
- * Los valores siguen el formato `modulo:accion` y son inmutables (`as const`).
- *
- * Usar siempre estas constantes en `@RequirePermissions()` y en seeds/migraciones.
+ * Documentación en español.
  */
 export const PERMISSIONS = {
   usuarios: {
@@ -135,7 +130,9 @@ export const PERMISSIONS = {
   },
 } as const;
 
-/** Unión de todos los códigos de permiso del sistema. */
+/**
+ * Documentación en español.
+ */
 export type PermissionCode =
   (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]] extends infer V
     ? V extends string
@@ -143,10 +140,14 @@ export type PermissionCode =
       : never
     : never;
 
-/** Nombres de módulos del catálogo de permisos. */
+/**
+ * Documentación en español.
+ */
 export type PermissionModule = keyof typeof PERMISSIONS;
 
-/** Todos los códigos de permiso como array plano (útil para seeds). */
+/**
+ * Documentación en español.
+ */
 export const ALL_PERMISSION_CODES: PermissionCode[] = Object.values(
   PERMISSIONS
 ).flatMap((mod) => Object.values(mod)) as PermissionCode[];

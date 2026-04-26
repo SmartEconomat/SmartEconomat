@@ -188,7 +188,7 @@ export class CreateProductoDto {
     ),
   })
   @ArrayUnique({
-    message: 'No se pueden repetir alérgenos en la misma solicitud.',
+    message: i18nValidationMessage('validation.NO_SE_PUEDEN_REPETIR_ALERGENOS'),
   })
   @IsEnum(Alergeno, {
     each: true,
@@ -209,8 +209,9 @@ export class CreateProductoDto {
   @ArrayUnique(
     (proveedor: AddProveedorToProductoDto) => proveedor.proveedorId,
     {
-      message:
-        'No se puede vincular el mismo proveedor más de una vez al producto.',
+      message: i18nValidationMessage(
+        'validation.NO_SE_PUEDE_VINCULAR_EL_MISMO_PROVEEDOR'
+      ),
     }
   )
   @ValidateNested({ each: true })

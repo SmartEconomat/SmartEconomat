@@ -10,63 +10,59 @@ import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/planti
 @Index('idx_permiso_modulo', ['modulo'])
 @Index('idx_permiso_activo', ['activo'])
 export class Permiso extends BaseEntity {
-  /**
-   * Código único del permiso (formato: modulo:accion)
-   * Ejemplo: "usuarios:listar", "productos:crear"
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100, unique: true })
   codigo!: string;
 
-  /**
-   * Nombre legible del permiso
-   * Ejemplo: "Listar usuarios", "Crear productos"
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 150 })
   nombre!: string;
 
-  /**
-   * Descripción detallada del permiso
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-  /**
-   * Módulo o recurso al que pertenece
-   * Ejemplo: "usuarios", "productos", "inventario"
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 50 })
   modulo!: string;
 
-  /**
-   * Acción que representa el permiso
-   * Ejemplo: "listar", "crear", "editar", "eliminar"
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 50 })
   accion!: string;
 
-  /**
-   * Estado del permiso (activo/inactivo)
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  /**
-   * Relación ManyToMany con Rol (inversa)
-   */
+        /**
+     * Documentación en español.
+     */
   @Exclude()
   @ManyToMany(() => Rol, (rol) => rol.permisos)
   roles!: Rol[];
 
-  /**
-   * Usuarios que tienen este permiso asignado de forma individual
-   */
+        /**
+     * Documentación en español.
+     */
   @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosAdicionales)
   usuariosAdicionales: Relation<Usuario>[];
 
-  /**
-   * Usuarios que tienen este permiso explícitamente revocado
-   */
+        /**
+     * Documentación en español.
+     */
   @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosExcluidos)
   usuariosExcluidos: Relation<Usuario>[];

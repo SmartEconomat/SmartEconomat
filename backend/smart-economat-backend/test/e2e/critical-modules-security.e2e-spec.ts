@@ -1,6 +1,5 @@
 /**
- * Matriz mínima de seguridad en módulos críticos (401 sin token, 403 rol inadecuado, 400 payload inválido).
- * Complementa rbac.e2e-spec y casos dispersos en otros ficheros.
+ * Documentación en español.
  */
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';

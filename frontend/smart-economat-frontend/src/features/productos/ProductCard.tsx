@@ -15,6 +15,7 @@ import type { SxProps, Theme } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
+import { useTranslation } from 'react-i18next';
 
 import { Producto } from '../../services/producto.types';
 import { resolveStoredFileUrl } from '../../services/api.service';
@@ -43,6 +44,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   actions,
   sx,
 }) => {
+  const { t } = useTranslation();
   // Alérgenos presentes en el producto
   const alergenoIds = producto.alergenos?.map((a) => a.alergeno) ?? [];
   const alergenosActivos = EU_ALLERGENS.filter((a: Allergen) =>
@@ -85,7 +87,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             boxShadow: 2,
           }}
         >
-          Eliminado
+          {t('productos.card.eliminado')}
         </Box>
       )}
       {(!producto.proveedores || producto.proveedores.length === 0) && (
@@ -97,9 +99,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             zIndex: 2,
           }}
         >
-          <Tooltip title="Sin proveedores asignados">
+          <Tooltip title={t('productos.card.sinProveedoresTooltip')}>
             <Chip
-              label="Sin Prov."
+              label={t('productos.card.sinProveedores')}
               size="small"
               color="warning"
               sx={{
@@ -165,7 +167,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Marca */}
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            {producto.marca || 'Sin marca'}
+            {producto.marca || t('productos.sinMarca')}
           </Typography>
 
           {/* Chip de tipo — centrado, espacio siempre reservado */}
@@ -257,36 +259,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {actions ?? (
           <>
             {onEdit && (
-              <Tooltip title="Editar">
+              <Tooltip title={t('productos.actions.editar')}>
                 <IconButton
                   color="secondary"
                   onClick={() => onEdit(producto)}
                   size="small"
-                  aria-label="Editar"
+                  aria-label={t('productos.actions.editar')}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onDelete && !isDeleted && (
-              <Tooltip title="Eliminar">
+              <Tooltip title={t('productos.actions.eliminar')}>
                 <IconButton
                   color="error"
                   onClick={() => onDelete(producto)}
                   size="small"
-                  aria-label="Borrar"
+                  aria-label={t('productos.actions.eliminar')}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
             {onRestore && isDeleted && (
-              <Tooltip title="Restaurar">
+              <Tooltip title={t('comun.restaurar')}>
                 <IconButton
                   color="success"
                   onClick={() => onRestore(producto)}
                   size="small"
-                  aria-label="Restaurar"
+                  aria-label={t('comun.restaurar')}
                 >
                   <RestoreFromTrashIcon fontSize="small" />
                 </IconButton>

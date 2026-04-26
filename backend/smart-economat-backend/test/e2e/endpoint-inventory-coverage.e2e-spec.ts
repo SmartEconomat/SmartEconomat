@@ -1,7 +1,5 @@
 /**
- * @file endpoint-inventory-coverage.e2e-spec.ts
- * @description Ejercita endpoints que el inventario E2E marcaba como sin llamada explícita en supertest.
- * Objetivo: al menos una petición por ruta (200/201/204 preferible; 400/404 aceptables si el contrato lo exige).
+ * Documentación en español.
  */
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';

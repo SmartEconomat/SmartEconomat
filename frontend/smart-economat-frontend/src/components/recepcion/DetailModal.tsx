@@ -20,10 +20,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 /**
- * The category of detail information to display inside {@link DetailModal}.
- * - `'movimientos'` — warehouse movement summary with a link to the movement log.
- * - `'inventarios'` — physical inventory entries with a link to the inventory module.
- * - `'nuevos_productos'` — list of spontaneously created products from unknown barcodes.
+ * Documentación en español.
  */
 export type DetailType =
   | 'movimientos'
@@ -32,35 +29,29 @@ export type DetailType =
   | null;
 
 /**
- * Props for the recepcion {@link DetailModal} component.
+ * Documentación en español.
  */
 interface DetailModalProps {
-  /** Whether the dialog is open. */
+        /**
+     * Documentación en español.
+     */
   open: boolean;
-  /** Which category of detail to display. */
+        /**
+     * Documentación en español.
+     */
   type: DetailType;
-  /** Reception result data used to populate the dialog content. */
+        /**
+     * Documentación en español.
+     */
   resultado: RecepcionResultado | null;
-  /** Callback to close the dialog. */
+        /**
+     * Documentación en español.
+     */
   onClose: () => void;
 }
 
 /**
- * Detail dialog for a completed goods reception.
- *
- * Renders contextual information about a reception result depending on the
- * `type` prop: warehouse movements, new inventory entries, or spontaneously
- * created products. Returns `null` when `resultado` is not provided.
- *
- * @param props - See {@link DetailModalProps}.
- * @returns JSX element with a MUI `Dialog`, or `null` if `resultado` is absent.
- * @example
- * <DetailModal
- *   open={isOpen}
- *   type="movimientos"
- *   resultado={recepcionResultado}
- *   onClose={handleClose}
- * />
+ * Documentación en español.
  */
 const DetailModal: React.FC<DetailModalProps> = ({
   open,

@@ -20,11 +20,7 @@ const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
 };
 
 /**
- * @description Maps the product lines of a Pedido into RecepcionDraft LineaDraft objects.
- * Initialises all reception quantities to zero and sets the initial estado via calculateEstado.
- * Logs a warning when the pedido has no product lines.
- * @param pedido - The Pedido whose pedidoProductos should be mapped
- * @returns Array of LineaDraft objects ready for use in a RecepcionDraft
+ * Documentación en español.
  */
 export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
   const lineas = pedido.pedidoProductos || [];
@@ -56,10 +52,7 @@ export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
 };
 
 /**
- * @description Creates a RecepcionDraft from a PurchaseBatch, pre-selecting only the pedidos
- * that are in a receivable state (POR_RECEPCIONAR).
- * @param batch - The PurchaseBatch to convert into a reception draft
- * @returns A fully initialised RecepcionDraft ready to be persisted and resumed in the reception flow
+ * Documentación en español.
  */
 export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch

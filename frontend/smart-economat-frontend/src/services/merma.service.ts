@@ -8,9 +8,7 @@ import {
 } from './merma.types';
 
 /**
- * @description Builds a URL query string from merma filter/pagination parameters.
- * @param {MermasQueryParams} [params] - Optional filter and sort options.
- * @returns {string} A query string prefixed with `?`, or an empty string.
+ * Documentación en español.
  */
 function buildMermasQueryString(params?: MermasQueryParams): string {
   const search = new URLSearchParams();
@@ -27,10 +25,7 @@ function buildMermasQueryString(params?: MermasQueryParams): string {
 }
 
 /**
- * @description Fetches a paginated list of merma (waste) records.
- * @param {MermasQueryParams} [params] - Optional filter, sort, and pagination options.
- * @returns {Promise<PaginatedData<Merma>>} Paginated merma records.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchMermas(
   params?: MermasQueryParams
@@ -45,10 +40,7 @@ export async function fetchMermas(
 }
 
 /**
- * @description Creates a new merma record for a manual waste entry.
- * @param {CreateMermaPayload} payload - Merma data including product, quantity, and reason.
- * @returns {Promise<Merma>} The created merma record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createMerma(payload: CreateMermaPayload): Promise<Merma> {
   const response = await baseFetch('/merma', {
@@ -67,10 +59,7 @@ export async function createMerma(payload: CreateMermaPayload): Promise<Merma> {
 }
 
 /**
- * @description Reports a waste event that originated from a production run.
- * @param {CreateMermaProduccionPayload} payload - Produccion-linked merma data.
- * @returns {Promise<Merma>} The created merma record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createMermaProduccion(
   payload: CreateMermaProduccionPayload
@@ -94,9 +83,7 @@ export async function createMermaProduccion(
 }
 
 /**
- * @description Fetches aggregated merma statistics (totals by category, time period, etc.).
- * @returns {Promise<MermaStats>} The current merma statistics.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchMermaStats(): Promise<MermaStats> {
   const response = await baseFetch('/merma/stats');

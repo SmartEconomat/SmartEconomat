@@ -4,9 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file proveedores.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Proveedores.
- * Cubre el ciclo de vida completo (CRUD) de un proveedor.
+ * Documentación en español.
  */
 describe('ProveedorController (e2e)', () => {
   let app: INestApplication;
@@ -39,9 +37,9 @@ describe('ProveedorController (e2e)', () => {
   });
 
   describe('CRUD de Proveedores', () => {
-    /**
-     * @test Debe crear un nuevo proveedor.
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /proveedor - Debe crear un proveedor (201)', async () => {
       const res = await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
@@ -56,9 +54,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(true);
     });
 
-    /**
-     * @test No debe permitir crear un proveedor con el mismo nombre.
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /proveedor - Debe fallar si el nombre ya existe (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
@@ -83,9 +81,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(false);
     });
 
-    /**
-     * @test No debe permitir crear un proveedor con el mismo NIF.
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /proveedor - Debe fallar si el NIF ya existe (400)', async () => {
       const nifFijo = 'B33333333';
       await request(app.getHttpServer() as string)
@@ -102,9 +100,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(false);
     });
 
-    /**
-     * @test Debe listar proveedores.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /proveedor - Debe listar proveedores (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/proveedor')
@@ -115,9 +113,9 @@ describe('ProveedorController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe actualizar un proveedor.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /proveedor/:id - Debe actualizar proveedor (200)', () => {
       return request(app.getHttpServer() as string)
         .patch(`/api/v1/proveedor/${proveedorId}`)
@@ -126,9 +124,9 @@ describe('ProveedorController (e2e)', () => {
         .expect(200);
     });
 
-    /**
-     * @test Debe eliminar un proveedor (admin).
-     */
+                /**
+         * Documentación en español.
+         */
     it('DELETE /proveedor/:id - Debe eliminar proveedor (204)', () => {
       return request(app.getHttpServer() as string)
         .delete(`/api/v1/proveedor/${proveedorId}`)
@@ -136,9 +134,9 @@ describe('ProveedorController (e2e)', () => {
         .expect(204);
     });
 
-    /**
-     * @test No debe permitir eliminar un proveedor con pedidos asociados.
-     */
+                /**
+         * Documentación en español.
+         */
     it('DELETE /proveedor/:id - Debe fallar si tiene pedidos (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/proveedor')

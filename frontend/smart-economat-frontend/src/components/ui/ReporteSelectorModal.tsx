@@ -48,13 +48,7 @@ const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
 };
 
 /**
- * Modal para seleccionar el rango de fechas y opciones de un reporte
- * (pedidos o incidencias) y descargarlo en formato PDF o Excel.
- *
- * @param props.isOpen - Controla la visibilidad del modal.
- * @param props.onClose - Callback para cerrar el modal.
- * @param props.tipo - Tipo de reporte: `'pedido'` o `'incidencias'`.
- * @param props.formato - Formato de descarga: `'pdf'` (por defecto) o `'excel'`.
+ * Documentación en español.
  */
 const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   isOpen,

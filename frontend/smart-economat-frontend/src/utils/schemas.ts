@@ -3,24 +3,11 @@ import { MotivoMerma } from '../services/merma.types';
 import i18n from '../i18n';
 
 /**
- * @module schemas
- * Definiciones de esquemas de formularios dinámicos.
- *
- * Los esquemas se generan como funciones para poder usar traducciones i18n
- * actualizadas en el momento de la llamada, de modo que reflejan el idioma
- * activo cuando se renderiza el formulario.
+ * Documentación en español.
  */
 
 /**
- * Genera el esquema de campos para el formulario de registro de merma.
- *
- * Se define como función (no como constante) para que las etiquetas
- * se traduzcan según el idioma activo en el momento de la llamada.
- *
- * @returns {DynamicField[]} Array de definiciones de campos del formulario.
- * @example
- * const fields = getMermaSchema();
- * // => [{ name: 'productoId', label: 'Producto', ... }, ...]
+ * Documentación en español.
  */
 export function getMermaSchema(): DynamicField[] {
   const t = i18n.t.bind(i18n);
@@ -76,9 +63,6 @@ export function getMermaSchema(): DynamicField[] {
 }
 
 /**
- * Esquema de merma con etiquetas estáticas.
- *
- * @deprecated Usar `getMermaSchema()` para obtener etiquetas traducidas.
- * Mantenido por compatibilidad con consumidores existentes.
+ * Documentación en español.
  */
 export const mermaSchema: DynamicField[] = getMermaSchema();

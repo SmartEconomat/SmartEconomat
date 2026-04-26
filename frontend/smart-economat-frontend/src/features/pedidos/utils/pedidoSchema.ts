@@ -9,12 +9,7 @@ const isEditablePedidoStatus = (estado?: unknown): boolean =>
   estado === EstadoPedidoUsuario.PENDIENTE;
 
 /**
- * @description Returns the DynamicFormModal field schema for a pedido based on its current state.
- * When row is null (creation mode) a minimal schema is returned.
- * For existing pedidos the schema includes conditional fields for cancellation / incidence reasons
- * and disables the editable fields when the pedido is in a non-editable state.
- * @param row - Existing pedido data used to drive field visibility/disabled state, or null for creation
- * @returns Array of DynamicField definitions to pass to DynamicFormModal
+ * Documentación en español.
  */
 export const getPedidoSchema = (
   row: Record<string, unknown> | null

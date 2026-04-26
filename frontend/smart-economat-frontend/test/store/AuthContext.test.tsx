@@ -161,4 +161,62 @@ describe('AuthProvider', () => {
       expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('keeps protected session resolved during visibility background refresh', async () => {
+    let releaseBackgroundRequest: (() => void) | null = null;
+
+    mockedAuthService.getCurrentUser
+      .mockResolvedValueOnce({
+        id: 'user-1',
+        name: 'Valid User',
+        email: 'valid@example.com',
+        rol: 'ADMIN',
+        permisos: ['usuarios:listar'],
+      })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseBackgroundRequest = () =>
+              resolve({
+                id: 'user-1',
+                name: 'Valid User',
+                email: 'valid@example.com',
+                rol: 'ADMIN',
+                permisos: ['usuarios:listar'],
+              });
+          })
+      );
+
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    render(
+      <AuthProvider>
+        <AuthConsumer />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('true');
+      expect(screen.getByTestId('resolved')).toHaveTextContent('true');
+      expect(screen.getByTestId('verified')).toHaveTextContent('true');
+    });
+
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await waitFor(() => {
+      expect(mockedAuthService.getCurrentUser).toHaveBeenCalledTimes(2);
+      expect(screen.getByTestId('resolved')).toHaveTextContent('true');
+    });
+
+    expect(releaseBackgroundRequest).not.toBeNull();
+    (releaseBackgroundRequest as (() => void) | null)?.();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('resolved')).toHaveTextContent('true');
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('true');
+    });
+  });
 });

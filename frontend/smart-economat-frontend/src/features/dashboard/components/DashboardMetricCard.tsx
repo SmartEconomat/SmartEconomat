@@ -30,7 +30,7 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
   isLoading = false,
 }) => {
   const theme = useTheme();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Manejador de teclado para accesibilidad
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -49,10 +49,16 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
       onKeyDown={handleKeyDown}
       aria-label={
         isLoading
-          ? `Cargando métrica de ${title}...`
+          ? t('dashboard.metricCard.loading', { titulo: title })
           : onClick
-            ? `${title}: ${value}. Haz clic para ver detalles.`
-            : `${title}: ${value}`
+            ? t('dashboard.metricCard.clickable', {
+                titulo: title,
+                valor: String(value),
+              })
+            : t('dashboard.metricCard.static', {
+                titulo: title,
+                valor: String(value),
+              })
       }
       sx={{
         height: '100%',

@@ -5,16 +5,7 @@ import { ToastOptions } from './toast.types';
 import i18n from '../i18n';
 
 /**
- * Hook que expone helpers para lanzar notificaciones toast internacionalizadas.
- *
- * Traduce la clave i18n proporcionada antes de pasarla al contexto,
- * por lo que el componente consumidor no necesita llamar a `t()` de forma explícita.
- *
- * @returns {{ success, error, info, warning }} Objeto con un método por tipo de toast.
- * @throws {Error} Si se usa fuera del `ToastProvider`.
- * @example
- * const toast = useToast();
- * toast.success('recetas.toast.creada', undefined, { nombre: 'Carbonara' });
+ * Documentación en español.
  */
 export const useToast = () => {
   const context = useContext(ToastContext);
@@ -24,15 +15,9 @@ export const useToast = () => {
 
   const { addToast } = context;
 
-  /**
-   * Lanza un toast traduciendo la clave i18n indicada.
-   *
-   * @param {string} key - Clave i18n del mensaje.
-   * @param {'success'|'error'|'info'|'warning'} type - Nivel visual del toast.
-   * @param {number} [dur] - Duración en milisegundos.
-   * @param {ToastOptions} [options] - Opciones adicionales de interpolación.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   function showToast(
     key: string,
     type: 'success' | 'error' | 'info' | 'warning',
@@ -63,13 +48,7 @@ export const useToast = () => {
 };
 
 /**
- * Hook de solo lectura que expone la lista de toasts activos y el método
- * para eliminarlos.
- *
- * @returns {{ toasts: Toast[], removeToast: (id: string) => void }}
- * @throws {Error} Si se usa fuera del `ToastProvider`.
- * @example
- * const { toasts, removeToast } = useToastList();
+ * Documentación en español.
  */
 export const useToastList = () => {
   const context = useContext(ToastContext);

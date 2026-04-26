@@ -4,9 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file producto-proveedor.e2e-spec.ts
- * @description Pruebas de integración para el controlador de relación entre Producto y Proveedor.
- * Verifica la actualización de precios e histórico.
+ * Documentación en español.
  */
 describe('ProductoProveedorController (e2e)', () => {
   let app: INestApplication;
@@ -29,9 +27,9 @@ describe('ProductoProveedorController (e2e)', () => {
   });
 
   describe('Precios e Historial', () => {
-    /**
-     * @test Debe fallar al intentar actualizar el precio de una vinculación inexistente.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /api/v1/producto-proveedor/:id/precio - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)
         .patch(
@@ -42,9 +40,9 @@ describe('ProductoProveedorController (e2e)', () => {
         .expect(404);
     });
 
-    /**
-     * @test Debe fallar al intentar obtener el historial de una vinculación inexistente.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /api/v1/producto-proveedor/:id/historial - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)
         .get(

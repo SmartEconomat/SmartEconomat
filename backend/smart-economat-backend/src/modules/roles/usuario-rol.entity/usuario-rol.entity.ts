@@ -21,35 +21,34 @@ export class UsuarioRol {
   @PrimaryColumn({ type: 'uuid', name: 'rol_id' })
   rolId!: string;
 
-  /**
-   * Fecha en que se asignó el rol al usuario
-   */
+        /**
+     * Documentación en español.
+     */
   @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
-  /**
-   * ID del usuario que realizó la asignación
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'uuid', nullable: true, name: 'asignado_por' })
   asignadoPor?: string;
 
-  /**
-   * Estado de la asignación (activo/inactivo)
-   * Permite desactivar temporalmente un rol sin eliminarlo
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  /**
-   * Relación con Usuario
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'usuario_id' })
   usuario!: Usuario;
 
-  /**
-   * Relación con Rol
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Rol, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'rol_id' })
   rol!: Rol;

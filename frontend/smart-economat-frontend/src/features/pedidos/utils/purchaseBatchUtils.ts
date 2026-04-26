@@ -25,11 +25,7 @@ export interface NextActionMetadata {
 }
 
 /**
- * @description Determines the next logical action for a purchase batch based on its current estado.
- * State machine: PENDIENTE → tramitar | PARCIAL → recepcion | COMPLETADO → distribucion | else → none.
- * @param batch - The PurchaseBatch whose next action should be resolved
- * @param options - Optional flags to refine the action (e.g. whether distribution is available)
- * @returns NextActionMetadata containing label, icon, color, action type, and optional tooltip/disabled state
+ * Documentación en español.
  */
 export const getNextBatchAction = (
   batch: PurchaseBatch,

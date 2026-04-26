@@ -8,9 +8,7 @@ import {
 } from '../../src/modules/producto/enums/producto.enums';
 
 /**
- * @file recetas.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Recetas.
- * Cubre el CRUD de recetas y sus validaciones.
+ * Documentación en español.
  */
 describe('RecetaController (e2e)', () => {
   jest.setTimeout(60000);
@@ -70,9 +68,9 @@ describe('RecetaController (e2e)', () => {
   });
 
   describe('CRUD de Recetas', () => {
-    /**
-     * @test Debe crear una receta con todos los campos obligatorios.
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /recetas - Debe crear una receta (201)', async () => {
       const res = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas')
@@ -101,9 +99,9 @@ describe('RecetaController (e2e)', () => {
       recetaId = res.body.data.id;
     });
 
-    /**
-     * @test Debe listar las recetas registradas.
-     */
+                /**
+         * Documentación en español.
+         */
     it('GET /recetas - Debe listar recetas (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/recetas')
@@ -111,9 +109,9 @@ describe('RecetaController (e2e)', () => {
         .expect(200);
     });
 
-    /**
-     * @test Debe actualizar los datos de una receta.
-     */
+                /**
+         * Documentación en español.
+         */
     it('PATCH /recetas/:id - Debe actualizar receta (200)', () => {
       return request(app.getHttpServer() as string)
         .patch(`/api/v1/recetas/${recetaId}`)
@@ -128,9 +126,9 @@ describe('RecetaController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe eliminar una receta (solo admin).
-     */
+                /**
+         * Documentación en español.
+         */
     it('DELETE /recetas/:id - Debe eliminar receta (204)', () => {
       return request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${recetaId}`)
@@ -144,9 +142,9 @@ describe('RecetaController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe duplicar una receta.
-     */
+                /**
+         * Documentación en español.
+         */
     it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
       const originalName = `Receta Original ${Date.now()}_${Math.random()}`;
       const duplicatedName = `Receta Duplicada ${Date.now()}_${Math.random()}`;

@@ -21,44 +21,48 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Props for the {@link UploadDocumentoModal} component.
+ * Documentación en español.
  */
 interface UploadDocumentoModalProps {
-  /** Whether the dialog is open. */
+        /**
+     * Documentación en español.
+     */
   isOpen: boolean;
-  /** Callback to close the dialog. */
+        /**
+     * Documentación en español.
+     */
   onClose: () => void;
-  /**
-   * Callback invoked when the user submits a file.
-   *
-   * @param file - The selected file to upload.
-   * @param numeroReferencia - Reference number of the albaran.
-   * @param recepcionId - Optional UUID of the reception to link.
-   * @param observaciones - Optional notes about the document.
-   */
+        /**
+     * Documentación en español.
+     */
   onUpload: (
     file: File,
     numeroReferencia: string,
     recepcionId?: string,
     observaciones?: string
   ) => Promise<void>;
-  /** Whether an upload is in progress. */
+        /**
+     * Documentación en español.
+     */
   isLoading?: boolean;
-  /** Pre-populated albaran reference number. */
+        /**
+     * Documentación en español.
+     */
   defaultNumeroReferencia?: string;
 }
 
-/** MIME types accepted by the file input. */
+/**
+ * Documentación en español.
+ */
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/gif,application/pdf';
 
-/** Maximum allowed file size in megabytes. */
+/**
+ * Documentación en español.
+ */
 const MAX_SIZE_MB = 10;
 
 /**
- * Formats a byte count as a human-readable file-size string.
- *
- * @param bytes - File size in bytes.
- * @returns Formatted string such as "1.2 MB" or "512 KB".
+ * Documentación en español.
  */
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -67,18 +71,7 @@ const formatSize = (bytes: number): string => {
 };
 
 /**
- * Modal dialog that lets the user upload a document (image or PDF) and
- * associate it with an albaran via its reference number and optional
- * reception UUID.
- *
- * @param {UploadDocumentoModalProps} props - Component props.
- * @returns JSX rendered upload dialog.
- * @example
- * <UploadDocumentoModal
- *   isOpen={open}
- *   onClose={handleClose}
- *   onUpload={handleUpload}
- * />
+ * Documentación en español.
  */
 const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
   isOpen,
@@ -109,11 +102,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
     }
   }, [isOpen, defaultNumeroReferencia]);
 
-  /**
-   * Handles file selection from the hidden file input, validating size.
-   *
-   * @param e - The input change event carrying the selected files.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFileError(null);
@@ -129,9 +120,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
     setSelectedFile(file);
   };
 
-  /**
-   * Validates the form and triggers the {@link onUpload} callback.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmit = async () => {
     if (!selectedFile) {
       setFileError(t('albaran.upload.errorSinArchivo'));

@@ -16,13 +16,7 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 /**
- * Entidad RecepcionProducto
- *
- * Detalle de productos recibidos en una recepción.
- * Vincula la recepción con la línea de pedido original para cotejar lo pedido vs recibido.
- *
- * @class RecepcionProducto
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'recepcion_producto' })
 @Index(['recepcionId'])
@@ -39,10 +33,9 @@ export class RecepcionProducto extends BaseEntity {
   @Column({ name: 'incidencia_id', nullable: true })
   incidenciaId?: string;
 
-  /**
-   * Recepción a la que pertenece este detalle.
-   * CASCADE onDelete para borrar los detalles si se borra la cabecera.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionProductos, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -50,10 +43,9 @@ export class RecepcionProducto extends BaseEntity {
   @JoinColumn({ name: 'recepcion_id' })
   recepcion!: Relation<Recepcion>;
 
-  /**
-   * Línea de pedido original que se está recibiendo.
-   * Permite calcular diferencias (pedido - recibido).
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => PedidoProducto, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -68,11 +60,9 @@ export class RecepcionProducto extends BaseEntity {
   @JoinColumn({ name: 'incidencia_id' })
   incidencia?: Relation<Incidencia>;
 
-  /**
-   * Cantidad realmente recibida.
-   * Constraint: >= 0.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,

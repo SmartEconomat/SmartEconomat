@@ -4,6 +4,7 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { useTranslation } from 'react-i18next';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 export type StatusType =
   | 'success'
@@ -28,15 +29,16 @@ export type StatusType =
   | 'unknown';
 
 /**
- * Props for the {@link StatusChip} component.
+ * Documentación en español.
  */
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
-  /**
-   * Status or category value used to derive the chip colour and default label.
-   * Accepts any {@link StatusType} string or a {@link CategoriaProducto} value.
-   */
+        /**
+     * Documentación en español.
+     */
   status: StatusType | string;
-  /** Override for the displayed label. When omitted, the status is translated automatically. */
+        /**
+     * Documentación en español.
+     */
   label?: string;
 }
 
@@ -50,16 +52,7 @@ const isCategoriaProducto = (status: string): status is CategoriaProducto =>
   CATEGORIA_VALUES.has(status.toLowerCase());
 
 /**
- * Maps a status string to a MUI semantic colour.
- *
- * Normalises the input to lower-case before matching against known status
- * tokens. Returns `'default'` for unrecognised values.
- *
- * @param status - The raw status string to evaluate.
- * @returns A MUI colour string suitable for `Chip`'s `color` prop.
- * @example
- * getStatusColor('completed'); // 'success'
- * getStatusColor('cancelled'); // 'error'
+ * Documentación en español.
  */
 export const getStatusColor = (
   status: string
@@ -116,66 +109,6 @@ export const getStatusColor = (
   }
 };
 
-const statusTranslations: Record<string, string> = {
-  success: 'Éxito',
-  completed: 'Completado',
-  delivered: 'En almacén',
-  entregado: 'En almacén',
-  en_almacen: 'En almacén',
-  approved: 'Aprobado',
-  error: 'Error',
-  failed: 'Fallido',
-  cancelled: 'Cancelado',
-  cancelado: 'Cancelado',
-  rejected: 'Rechazado',
-  warning: 'Advertencia',
-  pending: 'Pendiente',
-  pendiente: 'Pendiente',
-  in_progress: 'En progreso',
-  en_proceso: 'En proceso',
-  recibido: 'Recibido',
-  review: 'En revisión',
-  info: 'Info',
-  active: 'Activo',
-  archived: 'Archivado',
-  fácil: 'Fácil',
-  media: 'Media',
-  difícil: 'Difícil',
-  unknown: 'Desconocido',
-  default: 'Por defecto',
-  entrada: 'Entrada',
-  salida: 'Salida',
-  ajuste: 'Ajuste',
-  pedido: 'Pedido',
-  entrada_compra: 'Entrada compra',
-  entrada_distribucion: 'Entrada distribución',
-  salida_distribucion: 'Salida distribución',
-  salida_elaboracion: 'Salida elaboración',
-  parcial: 'Parcial',
-  completado: 'Completado',
-  preparada: 'Por recoger',
-  preparado: 'Por recoger',
-  entregada: 'Entregada',
-};
-
-const categoriaTranslations: Record<CategoriaProducto, string> = {
-  [CategoriaProducto.VERDURA]: 'Verdura',
-  [CategoriaProducto.FRUTA]: 'Fruta',
-  [CategoriaProducto.CARNE]: 'Carne',
-  [CategoriaProducto.PESCADO]: 'Pescado',
-  [CategoriaProducto.MARISCO]: 'Marisco',
-  [CategoriaProducto.LACTEO]: 'Lácteo',
-  [CategoriaProducto.HUEVO]: 'Huevo',
-  [CategoriaProducto.CEREAL]: 'Cereal',
-  [CategoriaProducto.LEGUMBRE]: 'Legumbre',
-  [CategoriaProducto.FRUTO_SECO]: 'Fruto seco',
-  [CategoriaProducto.CONDIMENTO]: 'Condimento',
-  [CategoriaProducto.ACEITE]: 'Aceite',
-  [CategoriaProducto.AZUCAR]: 'Azúcar',
-  [CategoriaProducto.BEBIDA]: 'Bebida',
-  [CategoriaProducto.OTRO]: 'Otro',
-};
-
 const capitalize = (text: string) => {
   if (!text) return '';
   const spacedText = text.replace(/[_]/g, ' ');
@@ -184,29 +117,11 @@ const capitalize = (text: string) => {
 
 const getTranslatedStatus = (status: string) => {
   if (!status) return '—';
-  const normalized =
-    typeof status === 'string'
-      ? status.toLowerCase()
-      : String(status).toLowerCase();
-  if (statusTranslations[normalized]) {
-    return statusTranslations[normalized];
-  }
   return capitalize(String(status));
 };
 
 /**
- * Versatile status/category chip component.
- *
- * Automatically resolves the MUI colour, translated label, and icon based on
- * the `status` value. Works for workflow statuses (e.g. `'completed'`, `'cancelled'`)
- * as well as product category values from {@link CategoriaProducto}.
- *
- * @param props - See {@link StatusChipProps}.
- * @returns JSX element rendering a styled MUI `Chip`.
- * @example
- * <StatusChip status="completed" />
- * <StatusChip status={CategoriaProducto.VERDURA} />
- * <StatusChip status="pending" label="Awaiting review" />
+ * Documentación en español.
  */
 export const StatusChip: React.FC<StatusChipProps> = ({
   status,
@@ -224,18 +139,29 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   const getI18nLabel = (s: string): string => {
     if (!s) return '—';
     const normalized = s.toLowerCase();
-    // Try status namespace first, then categoria
-    const statusKey = `status.${s}`;
-    const statusTranslated = t(statusKey, { defaultValue: '' });
-    if (statusTranslated) return statusTranslated;
     if (isCategoria) {
-      const catKey = `categoria.${s.toUpperCase()}`;
-      const catTranslated = t(catKey, { defaultValue: '' });
-      if (catTranslated) return catTranslated;
-      return (
-        categoriaTranslations[normalized as CategoriaProducto] || capitalize(s)
-      );
+      return getEnumLabel(t, 'productoCategoria', s);
     }
+
+    if (
+      normalized.includes('entrada') ||
+      normalized.includes('salida') ||
+      normalized === 'ajuste' ||
+      normalized === 'pedido'
+    ) {
+      return getEnumLabel(t, 'movimientoTipo', s);
+    }
+
+    if (['faltante', 'exceso', 'defectuoso'].includes(normalized)) {
+      return getEnumLabel(t, 'tipoDiferencia', s);
+    }
+
+    if (
+      ['pendiente', 'reclamado', 'abonado', 'reenviado'].includes(normalized)
+    ) {
+      return getEnumLabel(t, 'estadoReclamacion', s);
+    }
+
     return getTranslatedStatus(normalized);
   };
 

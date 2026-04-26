@@ -12,8 +12,7 @@ interface ServiceResponse<T> {
 }
 
 /**
- * @description Service object for managing role permission templates (PlantillaRol).
- * Provides CRUD operations and permission management for role templates.
+ * Documentación en español.
  */
 export const plantillaRolService = {
   async getPlantillas(): Promise<ServiceResponse<PlantillaRol[]>> {

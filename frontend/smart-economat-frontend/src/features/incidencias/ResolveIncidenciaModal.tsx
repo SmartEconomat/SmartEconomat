@@ -35,30 +35,37 @@ import {
 } from '../../services/incidencia.types';
 
 /**
- * Props for the {@link ResolveIncidenciaModal} component.
+ * Documentación en español.
  */
 interface ResolveIncidenciaModalProps {
-  /** Whether the dialog is open. */
+        /**
+     * Documentación en español.
+     */
   isOpen: boolean;
-  /** Callback to close the dialog. */
+        /**
+     * Documentación en español.
+     */
   onClose: () => void;
-  /**
-   * Callback invoked when the user submits the resolution form.
-   *
-   * @param payload - The resolution payload containing adjustments and status.
-   */
+        /**
+     * Documentación en español.
+     */
   onResolve: (payload: ResolveIncidenciaPayload) => Promise<void>;
-  /** Whether a resolution operation is in progress. */
+        /**
+     * Documentación en español.
+     */
   isLoading: boolean;
-  /** The incidencia being resolved, or null/undefined when not yet loaded. */
+        /**
+     * Documentación en español.
+     */
   incidencia?: Incidencia | null;
-  /** Whether the "mark as resolved" checkbox should be checked by default. */
+        /**
+     * Documentación en español.
+     */
   defaultMarkResolved?: boolean;
 }
 
 /**
- * Internal representation of an incidencia line with editable adjustment
- * and observation fields for the resolution form.
+ * Documentación en español.
  */
 interface EditableLinea {
   id: string;
@@ -75,32 +82,21 @@ interface EditableLinea {
 }
 
 /**
- * Normalises a string for case- and whitespace-insensitive comparison.
- *
- * @param value - The string to normalise.
- * @returns Trimmed, lower-cased string, or empty string if undefined.
+ * Documentación en español.
  */
 function normalizeText(value?: string): string {
   return value?.trim().toLowerCase() || '';
 }
 
 /**
- * Formats a quantity number to three decimal places.
- *
- * @param value - The numeric quantity.
- * @returns Fixed-precision string, e.g. "1.500".
+ * Documentación en español.
  */
 function formatCantidad(value: number): string {
   return Number.isFinite(value) ? value.toFixed(3) : '0.000';
 }
 
 /**
- * Parses a raw adjustment input string (which may use comma as decimal
- * separator) into a finite number, returning 0 for intermediate / invalid
- * states.
- *
- * @param value - Raw input string from the user.
- * @returns Parsed numeric value, or 0 if the string is incomplete/invalid.
+ * Documentación en español.
  */
 function parseAjusteInput(value: string): number {
   const normalized = value.replace(',', '.').trim();
@@ -119,16 +115,13 @@ function parseAjusteInput(value: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Tolerance used to determine whether two quantities are effectively equal. */
+/**
+ * Documentación en español.
+ */
 const CANTIDAD_EPSILON = 0.0005;
 
 /**
- * Returns true when the absolute difference between expected and received
- * quantities exceeds the tolerance threshold.
- *
- * @param cantidadEsperada - Expected quantity.
- * @param cantidadRecibida - Received quantity.
- * @returns Whether a discrepancy exists.
+ * Documentación en español.
  */
 function hasDiscrepancia(
   cantidadEsperada: number,
@@ -138,21 +131,7 @@ function hasDiscrepancia(
 }
 
 /**
- * Modal dialog for resolving or adjusting quantities on an incidencia.
- * Displays all product lines, allows per-line quantity adjustments for lines
- * with discrepancies, and optionally marks the incidencia as closed with a
- * chosen final state.
- *
- * @param {ResolveIncidenciaModalProps} props - Component props.
- * @returns JSX rendered resolution dialog.
- * @example
- * <ResolveIncidenciaModal
- *   isOpen={open}
- *   onClose={handleClose}
- *   onResolve={handleResolve}
- *   isLoading={isSubmitting}
- *   incidencia={selectedIncidencia}
- * />
+ * Documentación en español.
  */
 const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   isOpen,
@@ -203,7 +182,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   }, [isOpen, incidencia, defaultMarkResolved]);
 
-  /** Lines sorted so that those with discrepancies appear first, then alphabetically. */
+        /**
+     * Documentación en español.
+     */
   const lineasOrdenadas = useMemo(
     () =>
       [...lineas].sort((a, b) => {
@@ -225,7 +206,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     [lineas]
   );
 
-  /** Lines filtered by the product search term. */
+        /**
+     * Documentación en español.
+     */
   const lineasFiltradas = useMemo(() => {
     const term = normalizeText(busquedaProducto);
 
@@ -242,13 +225,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     setPage(0);
   }, [busquedaProducto]);
 
-  /** Slice of filtered lines for the current pagination page. */
+        /**
+     * Documentación en español.
+     */
   const lineasPaginadas = useMemo(() => {
     const start = page * rowsPerPage;
     return lineasFiltradas.slice(start, start + rowsPerPage);
   }, [lineasFiltradas, page, rowsPerPage]);
 
-  /** Summary counts of adjustable, non-adjustable, and total lines. */
+        /**
+     * Documentación en español.
+     */
   const resumenLineas = useMemo(() => {
     const ajustables = lineas.filter((linea) =>
       hasDiscrepancia(linea.cantidadEsperada, linea.cantidadRecibidaOriginal)
@@ -263,7 +250,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
 
   const hasLineasAjustables = resumenLineas.ajustables > 0;
 
-  /** True when at least one adjustable line has a non-zero adjustment or changed notes. */
+        /**
+     * Documentación en español.
+     */
   const hasLineUpdates = useMemo(
     () =>
       lineas.some((linea) => {
@@ -287,13 +276,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   const canSubmit = marcarComoResuelta || hasLineUpdates;
   const hasLineas = lineas.length > 0;
 
-  /**
-   * Computes the permitted adjustment bounds for a line based on its original
-   * balance (received – expected).
-   *
-   * @param linea - The editable line to compute bounds for.
-   * @returns Object with `min` and `max` adjustment values.
-   */
+        /**
+     * Documentación en español.
+     */
   const getAjusteBounds = (linea: EditableLinea) => {
     const balanceOriginal =
       linea.cantidadRecibidaOriginal - linea.cantidadEsperada;
@@ -318,25 +303,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     };
   };
 
-  /**
-   * Clamps an adjustment value to the permitted bounds for a line.
-   *
-   * @param linea - The line whose bounds define the clamp range.
-   * @param ajuste - The raw adjustment value to clamp.
-   * @returns The clamped adjustment value.
-   */
+        /**
+     * Documentación en español.
+     */
   const clampAjuste = (linea: EditableLinea, ajuste: number): number => {
     const bounds = getAjusteBounds(linea);
     return Math.min(bounds.max, Math.max(bounds.min, ajuste));
   };
 
-  /**
-   * Returns true when the input string represents an intermediate / incomplete
-   * numeric entry that should not yet be clamped.
-   *
-   * @param value - Raw input string.
-   * @returns Whether the value is an intermediate entry.
-   */
+        /**
+     * Documentación en español.
+     */
   const isIntermedioAjuste = (value: string): boolean => {
     const normalized = value.replace(',', '.').trim();
     return (
@@ -348,13 +325,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-  /**
-   * Updates the ajusteInput for a specific line, clamping once a complete
-   * numeric value has been entered.
-   *
-   * @param lineaId - ID of the line to update.
-   * @param value - New raw input string.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleAjusteChange = (lineaId: string, value: string) => {
     setLineas((current) =>
       current.map((linea) =>
@@ -383,11 +356,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-  /**
-   * Formats and clamps the ajusteInput when the user leaves the field (blur).
-   *
-   * @param lineaId - ID of the line whose input was blurred.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleAjusteBlur = (lineaId: string) => {
     setLineas((current) =>
       current.map((linea) => {
@@ -406,12 +377,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-  /**
-   * Updates the observation text for a specific line.
-   *
-   * @param lineaId - ID of the line to update.
-   * @param value - New observation string.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleObservacionLineaChange = (lineaId: string, value: string) => {
     setLineas((current) =>
       current.map((linea) =>
@@ -420,12 +388,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-  /**
-   * Handles form submission: builds the resolution payload from the edited
-   * lines and calls {@link onResolve}.
-   *
-   * @param e - The form submit event.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasLineas || !canSubmit) return;

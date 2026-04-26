@@ -12,7 +12,9 @@ export const INSTALLER_BRIDGE_MOCK_PATH = path.join(
   "installer-bridge.mock.js",
 );
 
-/** Contadores expuestos por el mock en `window.__bridgeCalls`. */
+/**
+ * Documentación en español.
+ */
 export type InstallerBridgeCallCounts = {
   runPreflight: number;
   startInstallation: number;
@@ -50,8 +52,7 @@ export async function readBridgeCalls(
 }
 
 /**
- * Preflight OK y primera pantalla de configuración (sin avanzar a SMTP).
- * Replica checkbox/hora de `goToControlPanel` hasta quedar en el formulario.
+ * Documentación en español.
  */
 export async function navigateToConfigStep(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Iniciar instalación guiada" }).click();
@@ -76,7 +77,9 @@ export async function navigateToConfigStep(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
-/** Wizard hasta panel de control (mismo flujo que `installer.spec.ts`). */
+/**
+ * Documentación en español.
+ */
 export async function goToControlPanel(page: Page): Promise<void> {
   await expect(
     page.getByRole("button", { name: "Iniciar instalación guiada" }),

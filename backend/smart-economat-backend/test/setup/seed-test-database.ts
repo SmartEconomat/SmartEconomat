@@ -21,22 +21,11 @@ type TestSetupGlobal = typeof globalThis & {
 const g = global as TestSetupGlobal;
 
 /**
- * @file seed-test-database.ts
- * @description Sistema de seeders optimizado para tests.
- *
- * Estrategia:
- * 1. Inicializar pg-mem y DataSource (schema creado via synchronize:true)
- * 2. Inicializar app NestJS (ya tiene un DataSource listo)
- * 3. Ejecutar seeders con la app disponible para servicios de DI
- * 4. Crear snapshot
- * 5. En cada test restaurar snapshot (instantáneo)
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 /**
- * Fase 1: Inicializa pg-mem + DataSource (sin correr seeders).
- * Debe llamarse ANTES de crear la app NestJS.
+ * Documentación en español.
  */
 export async function initTestDataSource(): Promise<DataSource> {
   const existingDataSource = peekTestDataSource();
@@ -72,8 +61,7 @@ export async function initTestDataSource(): Promise<DataSource> {
 }
 
 /**
- * Fase 2: Ejecuta seeders (requiere que la app NestJS ya esté creada).
- * El seeder de roles-permisos necesita context.get() con servicios de NestJS.
+ * Documentación en español.
  */
 export async function runTestSeeders(): Promise<DataSource> {
   const seedSnapshot = getSeedSnapshot();
@@ -110,8 +98,7 @@ export async function runTestSeeders(): Promise<DataSource> {
 }
 
 /**
- * Función de compatibilidad: inicializa DataSource + seeders en un solo paso.
- * Solo usar cuando no se necesite DI de NestJS en los seeders.
+ * Documentación en español.
  */
 export async function seedTestDatabase(): Promise<DataSource> {
   const ds = await initTestDataSource();
@@ -125,8 +112,7 @@ export async function seedTestDatabase(): Promise<DataSource> {
 }
 
 /**
- * Restaura la base de datos al estado post-seeders.
- * Esta operación es instantánea (~0ms).
+ * Documentación en español.
  */
 export function restoreToSeedState(): void {
   const seedSnapshot = getSeedSnapshot();
@@ -142,7 +128,7 @@ export function restoreToSeedState(): void {
 }
 
 /**
- * Obtiene el DataSource de TypeORM para uso en tests.
+ * Documentación en español.
  */
 export function getSeededDataSource(): DataSource {
   const dataSource = peekTestDataSource();

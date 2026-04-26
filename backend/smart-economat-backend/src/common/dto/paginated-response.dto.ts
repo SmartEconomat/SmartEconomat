@@ -1,37 +1,33 @@
 /**
- * @module PaginatedResponseDto
- * Generic DTO that wraps paginated list results returned by the API.
- * Used consistently across all list endpoints that support pagination.
+ * Documentación en español.
  */
 
 /**
- * Generic paginated response container.
- *
- * @template T - The type of each item in the `data` array.
- *
- * @example
- *
- * const result: PaginatedResponseDto<ProductoDto> = {
- *   data: [...],
- *   total: 150,
- *   page: 2,
- *   limit: 20,
- *   totalPages: 8,
- * };
+ * Documentación en español.
  */
 export class PaginatedResponseDto<T> {
-  /** Array of items for the current page. */
+        /**
+     * Documentación en español.
+     */
   data: T[];
 
-  /** Total number of records matching the query (across all pages). */
+        /**
+     * Documentación en español.
+     */
   total: number;
 
-  /** Current page number (1-based). */
+        /**
+     * Documentación en español.
+     */
   page: number;
 
-  /** Maximum number of items per page. */
+        /**
+     * Documentación en español.
+     */
   limit: number;
 
-  /** Total number of pages calculated as `Math.ceil(total / limit)`. */
+        /**
+     * Documentación en español.
+     */
   totalPages: number;
 }

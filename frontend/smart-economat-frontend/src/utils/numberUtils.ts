@@ -1,3 +1,5 @@
+import { getResolvedLocale } from './intlFormat';
+
 export const parseLocalizedNumber = (
   value: string | number | null | undefined
 ): number | null => {
@@ -28,7 +30,7 @@ export const formatLocalizedNumber = (
     return '0';
   }
 
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat(getResolvedLocale(), {
     minimumFractionDigits: 0,
     maximumFractionDigits: maxFractionDigits,
   }).format(value);

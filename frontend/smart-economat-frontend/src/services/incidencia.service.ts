@@ -9,31 +9,41 @@ import {
 } from './incidencia.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-/** Minimal supplier data from the raw API payload. */
+/**
+ * Documentación en español.
+ */
 interface RawProveedor {
   nombre?: string | null;
 }
 
-/** Minimal product data from the raw API payload. */
+/**
+ * Documentación en español.
+ */
 interface RawProducto {
   id?: string;
   nombre?: string | null;
   unidad?: string | null;
 }
 
-/** Raw product-supplier pairing from the API. */
+/**
+ * Documentación en español.
+ */
 interface RawProductoProveedor {
   producto?: RawProducto | null;
   proveedor?: RawProveedor | null;
 }
 
-/** Raw pedido product data embedded in incidence lines. */
+/**
+ * Documentación en español.
+ */
 interface RawPedidoProducto {
   id?: string;
   productoProveedor?: RawProductoProveedor | null;
 }
 
-/** Raw incidence line as returned by the API before normalisation. */
+/**
+ * Documentación en español.
+ */
 interface RawIncidenciaLinea {
   id?: string;
   pedidoProductoId?: string;
@@ -47,14 +57,18 @@ interface RawIncidenciaLinea {
   pedidoProducto?: RawPedidoProducto | null;
 }
 
-/** Raw pedido summary embedded in incidence records. */
+/**
+ * Documentación en español.
+ */
 interface RawPedido {
   id?: string;
   motivoIncidencia?: string | null;
   proveedor?: RawProveedor | null;
 }
 
-/** Raw incidence record as returned by the API before normalisation. */
+/**
+ * Documentación en español.
+ */
 interface RawIncidencia {
   id?: string;
   recepcionId?: string;
@@ -71,11 +85,7 @@ interface RawIncidencia {
 }
 
 /**
- * Converts an unknown value to a finite number, returning `fallback` when not possible.
- *
- * @param {unknown} value - The value to convert.
- * @param {number} [fallback=0] - Fallback value when conversion fails.
- * @returns {number} A finite number.
+ * Documentación en español.
  */
 function toFiniteNumber(value: unknown, fallback = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -93,10 +103,7 @@ function toFiniteNumber(value: unknown, fallback = 0): number {
 }
 
 /**
- * Trims a string value and returns it, or `undefined` when empty/non-string.
- *
- * @param {unknown} value - The value to normalise.
- * @returns {string | undefined} Trimmed string or undefined.
+ * Documentación en español.
  */
 function toOptionalText(value: unknown): string | undefined {
   if (typeof value !== 'string') {
@@ -108,10 +115,7 @@ function toOptionalText(value: unknown): string | undefined {
 }
 
 /**
- * Normalises an unknown value to a valid `TipoDiferencia` enum member.
- *
- * @param {unknown} value - Raw value from the API.
- * @returns {TipoDiferencia} Normalised type, defaulting to FALTANTE.
+ * Documentación en español.
  */
 function normalizeTipoDiferencia(value: unknown): TipoDiferencia {
   if (value === TipoDiferencia.EXCESO) return TipoDiferencia.EXCESO;
@@ -120,10 +124,7 @@ function normalizeTipoDiferencia(value: unknown): TipoDiferencia {
 }
 
 /**
- * Normalises an unknown value to a valid `EstadoReclamacion` enum member.
- *
- * @param {unknown} value - Raw value from the API.
- * @returns {EstadoReclamacion} Normalised state, defaulting to PENDIENTE.
+ * Documentación en español.
  */
 function normalizeEstadoReclamacion(value: unknown): EstadoReclamacion {
   if (value === EstadoReclamacion.RECLAMADO) {
@@ -142,10 +143,7 @@ function normalizeEstadoReclamacion(value: unknown): EstadoReclamacion {
 }
 
 /**
- * Returns a human-readable motive string derived from the discrepancy type.
- *
- * @param {TipoDiferencia} tipo - The type of discrepancy.
- * @returns {string} Localised motive description.
+ * Documentación en español.
  */
 function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
   if (tipo === TipoDiferencia.EXCESO) {
@@ -160,11 +158,7 @@ function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
 }
 
 /**
- * Normalises a raw estado value to a valid `EstadoIncidencia` enum member.
- * Returns `null` when the value cannot be mapped.
- *
- * @param {unknown} value - Raw estado string from the API.
- * @returns {EstadoIncidencia | null} Normalised state or null.
+ * Documentación en español.
  */
 function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
   if (typeof value !== 'string') {
@@ -203,13 +197,7 @@ function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
 }
 
 /**
- * Derives the incidence state from its lines and resolution data when the
- * API does not provide a mappable `estado` value.
- *
- * @param {IncidenciaLinea[]} lineas - Normalised incidence lines.
- * @param {boolean} resuelta - Whether the incidence has been resolved.
- * @param {string} [observacionesResolucion] - Optional resolution notes.
- * @returns {EstadoIncidencia} The inferred state.
+ * Documentación en español.
  */
 function resolveEstadoIncidenciaFallback(
   lineas: IncidenciaLinea[],
@@ -250,12 +238,7 @@ function resolveEstadoIncidenciaFallback(
 }
 
 /**
- * Maps a raw incidence line from the API to the normalised `IncidenciaLinea` shape.
- *
- * @param {RawIncidenciaLinea} rawLinea - Raw line data.
- * @param {string} incidenciaId - Parent incidence identifier (used for fallback IDs).
- * @param {number} index - Zero-based index within the parent incidence's lines array.
- * @returns {IncidenciaLinea} Normalised line.
+ * Documentación en español.
  */
 function mapLinea(
   rawLinea: RawIncidenciaLinea,
@@ -317,11 +300,7 @@ function mapLinea(
 }
 
 /**
- * Constructs the human-readable motive string for an incidence from raw data.
- *
- * @param {RawIncidencia} raw - Raw incidence record.
- * @param {IncidenciaLinea[]} lineas - Already-normalised incidence lines.
- * @returns {string} The motive string.
+ * Documentación en español.
  */
 function buildMotivoIncidencia(
   raw: RawIncidencia,
@@ -344,10 +323,7 @@ function buildMotivoIncidencia(
 }
 
 /**
- * Maps a raw incidence record from the API to the normalised `Incidencia` shape.
- *
- * @param {RawIncidencia} raw - Raw incidence data.
- * @returns {Incidencia} Normalised incidence.
+ * Documentación en español.
  */
 function mapIncidencia(raw: RawIncidencia): Incidencia {
   const incidenciaId = toOptionalText(raw.id) || 'incidencia-sin-id';
@@ -414,10 +390,7 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
 }
 
 /**
- * Normalises a paginated or plain-array incidencias payload to a `PaginatedData<Incidencia>` shape.
- *
- * @param {PaginatedData<RawIncidencia> | RawIncidencia[]} payload - Raw API data.
- * @returns {PaginatedData<Incidencia>} Normalised paginated incidencias.
+ * Documentación en español.
  */
 function mapPaginatedIncidencias(
   payload: PaginatedData<RawIncidencia> | RawIncidencia[]
@@ -443,13 +416,7 @@ function mapPaginatedIncidencias(
 }
 
 /**
- * Fetches a paginated list of incidencias, normalising each record.
- *
- * @param {IncidenciasQueryParams} [params] - Filter and pagination options.
- * @returns {Promise<PaginatedData<Incidencia>>} Paginated incidencias.
- * @throws {Error} If the API returns a non-OK response.
- * @example
- * const result = await fetchIncidencias({ page: 1, resuelta: false });
+ * Documentación en español.
  */
 export async function fetchIncidencias(
   params: IncidenciasQueryParams = {}
@@ -478,14 +445,7 @@ export async function fetchIncidencias(
 }
 
 /**
- * Resolves an incidence by applying line adjustments and optionally marking it as resolved.
- *
- * @param {string} id - The incidence UUID to resolve.
- * @param {ResolveIncidenciaPayload} dto - Resolution details and line adjustments.
- * @returns {Promise<Incidencia>} The updated and normalised incidence.
- * @throws {Error} If the API returns an error response.
- * @example
- * const resolved = await resolveIncidencia('abc-123', { marcarComoResuelta: true });
+ * Documentación en español.
  */
 export async function resolveIncidencia(
   id: string,
@@ -507,13 +467,7 @@ export async function resolveIncidencia(
 }
 
 /**
- * Soft-deletes an incidence record.
- *
- * @param {string} id - The incidence UUID to remove.
- * @returns {Promise<void>}
- * @throws {Error} If the API returns an error response.
- * @example
- * await removeIncidencia('abc-123');
+ * Documentación en español.
  */
 export async function removeIncidencia(id: string): Promise<void> {
   const response = await baseFetch(`/incidencias/${id}`, {

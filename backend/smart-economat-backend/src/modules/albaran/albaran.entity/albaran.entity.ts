@@ -19,10 +19,9 @@ export class Albaran extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   fecha?: Date;
 
-  /**
-   * URL/ruta relativa del documento escaneado del albarán (foto o PDF).
-   * El archivo físico se almacena en disco; aquí solo se guarda la referencia.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 500,
@@ -31,9 +30,9 @@ export class Albaran extends BaseEntity {
   })
   documentoUrl?: string;
 
-  /**
-   * Nombre original del archivo subido (ej: "albaran_firmado.pdf").
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 255,
@@ -42,9 +41,9 @@ export class Albaran extends BaseEntity {
   })
   documentoNombre?: string;
 
-  /**
-   * Tipo MIME del documento (image/jpeg, image/png, application/pdf, etc.).
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'varchar',
     length: 100,
@@ -53,9 +52,9 @@ export class Albaran extends BaseEntity {
   })
   documentoMimeType?: string;
 
-  /**
-   * Tamaño del archivo en bytes.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'int', nullable: true, name: 'documento_tamano' })
   documentoTamano?: number;
 

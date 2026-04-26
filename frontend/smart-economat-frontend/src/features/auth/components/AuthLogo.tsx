@@ -10,10 +10,7 @@ interface AuthLogoProps {
 }
 
 /**
- * Componente AuthLogo
- *
- * Renderiza el logo de SmartEconomat con tamaños responsivos predefinidos.
- * @param {boolean} condensed - Si es true, usa un tamaño más pequeño (adecuado para flujos de registro o móviles).
+ * Documentación en español.
  */
 const AuthLogo: React.FC<AuthLogoProps> = ({ condensed = false }) => {
   const { currentThemeName } = useThemeContext();

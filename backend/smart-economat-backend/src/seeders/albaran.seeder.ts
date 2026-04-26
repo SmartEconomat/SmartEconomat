@@ -1,16 +1,11 @@
 /**
- * @module seeders/albaran
- * HTTP seeder that populates albaran (delivery note) records via the REST API.
+ * Documentación en español.
  */
 import { SeedContext } from './seed-context';
 import { runNamedHttpSeeder } from './http-seed.catalog';
 
 /**
- * Seeds albaran data through the named HTTP seeder catalog.
- * @param {SeedContext} context - The active seed context providing HTTP helpers and state.
- * @returns {Promise<void>}
- * @example
- * await runSeeder(context);
+ * Documentación en español.
  */
 export const runSeeder = async (context: SeedContext) => {
   await runNamedHttpSeeder('albaran', context);

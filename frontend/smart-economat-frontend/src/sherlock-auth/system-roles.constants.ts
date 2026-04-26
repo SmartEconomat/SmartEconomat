@@ -1,7 +1,5 @@
 /**
- * Constantes de roles del sistema.
- *
- * Mirror del backend: backend/.../common/constants/system-roles.constants.ts
+ * Documentación en español.
  */
 export const SYSTEM_ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
@@ -12,13 +10,17 @@ export const SYSTEM_ROLES = {
 
 export type SystemRoleName = (typeof SYSTEM_ROLES)[keyof typeof SYSTEM_ROLES];
 
-/** Roles con bypass total de permisos. */
+/**
+ * Documentación en español.
+ */
 export const ELEVATED_ROLES: readonly string[] = [
   SYSTEM_ROLES.SUPER_ADMIN,
   SYSTEM_ROLES.ADMIN,
 ] as const;
 
-/** Prioridad de roles (mayor índice = mayor prioridad). */
+/**
+ * Documentación en español.
+ */
 export const ROLE_PRIORITY: Record<string, number> = {
   [SYSTEM_ROLES.ALUMNO]: 0,
   [SYSTEM_ROLES.PROFESOR]: 1,
@@ -27,8 +29,7 @@ export const ROLE_PRIORITY: Record<string, number> = {
 };
 
 /**
- * Resuelve el rol principal a partir de un array de roles.
- * Devuelve el nombre del rol con mayor prioridad.
+ * Documentación en español.
  */
 export const getRolPrincipal = (
   roles?: Array<{ nombre: string }> | null,

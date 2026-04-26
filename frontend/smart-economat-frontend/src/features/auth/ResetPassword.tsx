@@ -23,13 +23,7 @@ import {
 import { getAuthErrorMessage } from '../../utils/authErrorMessages';
 
 /**
- * Page component for resetting a user's password via a token link.
- *
- * The reset token is read from the URL path parameter (`:token`) or, as a
- * fallback, from the `token` query-string parameter. Validates that the two
- * password fields match and that the new password meets the strength policy
- * before calling the API. On success the user is redirected to `/login` after
- * a short delay.
+ * Documentación en español.
  */
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -50,26 +44,16 @@ const ResetPassword: React.FC = () => {
     formData.password.length === 0 ||
     formData.confirmPassword.length === 0;
 
-  /**
-   * Generic controlled-input change handler.
-   * Updates the matching field in `formData` state using the input's `name` attribute.
-   *
-   * @param e - The change event from the password or confirmPassword input.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /**
-   * Handles form submission for the password reset flow.
-   *
-   * Validates that a token is present, that both password fields match and
-   * that the new password satisfies the strength policy. On success a
-   * localised success message is shown and the user is redirected to `/login`
-   * after 4 seconds. Displays localised error messages for all failure cases.
-   *
-   * @param e - The form submit event.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');

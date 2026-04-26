@@ -41,13 +41,7 @@ interface UsePedidoActionsParams {
 }
 
 /**
- * Hook personalizado que centraliza todas las acciones mutantes del módulo de pedidos:
- * guardar, eliminar, aprobar, cancelar, obtener detalles, consolidar e iniciar recepción.
- *
- * @param params - Callbacks para recargar datos y reaccionar a efectos secundarios
- * @returns Objeto con los callbacks de acción y sus indicadores individuales de carga
- * @example
- * const { savePedido, deletePedidoById, isSaving } = usePedidoActions({ reload, discardDraft });
+ * Documentación en español.
  */
 export function usePedidoActions({
   reload,

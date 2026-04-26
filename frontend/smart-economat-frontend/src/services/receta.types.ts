@@ -54,9 +54,13 @@ export interface Receta {
   id: string;
   nombre: string;
   instrucciones: string;
-  /** Franja de tiempo (opcional, usada en la UI) */
+        /**
+     * Documentación en español.
+     */
   tiempo?: TiempoReceta;
-  /** Texto libre con el tiempo de preparación (ej. "30 minutos") */
+        /**
+     * Documentación en español.
+     */
   tiempoPreparacion?: string;
   tiempoEstimadoMinutos: number;
   dificultad: DificultadReceta;

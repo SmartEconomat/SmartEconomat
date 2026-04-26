@@ -16,7 +16,9 @@ import type {
   InstallerStateSnapshot,
 } from "@shared/contracts";
 
-/** True mientras el state machine del instalador no está en un estado terminal (defensa si `busy` se desincroniza). */
+/**
+ * Documentación en español.
+ */
 function isInstallerPipelineRunning(
   snapshot: InstallerStateSnapshot | null,
 ): boolean {

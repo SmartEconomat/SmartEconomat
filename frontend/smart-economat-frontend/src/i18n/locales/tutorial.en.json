@@ -1,0 +1,382 @@
+{
+  "tutorial": {
+    "routes": {
+      "common": {
+        "help": {
+          "title": "Page tutorial",
+          "description": "Need help? Click here anytime to start an interactive walkthrough of the current page."
+        }
+      },
+      "root": {
+        "s0": {
+          "title": "Welcome to Smart Economat!",
+          "description": "This is your central dashboard. From here you get a real-time overview of everything happening in the pantry."
+        },
+        "s1": {
+          "title": "Navigation menu",
+          "description": "Use the sidebar to move between areas. The menu adapts to your device."
+        },
+        "s2": {
+          "title": "Pantry status",
+          "description": "Watch key KPIs at a glance: low stock, pending orders, and active incidents."
+        },
+        "s3": {
+          "title": "Quick actions",
+          "description": "Need to create an order or add a product? Reach frequent actions without digging through menus."
+        },
+        "s4": {
+          "title": "Notification center",
+          "description": "Monitor critical alerts: stock-outs, pending users, or urgent discrepancies."
+        },
+        "s5": {
+          "title": "Recent activity",
+          "description": "Stay up to date with recent stock movements and operations."
+        },
+        "s6": {
+          "title": "Your profile and preferences",
+          "description": "Manage your personal data and notifications. You can also reopen this help when you need it."
+        }
+      },
+      "productos": {
+        "s0": {
+          "title": "Smart search",
+          "description": "Search by name, brand, or barcode—even with the scanner."
+        },
+        "s1": {
+          "title": "Advanced filters",
+          "description": "Refine results with specific categories."
+        },
+        "s2": {
+          "title": "Sorting",
+          "description": "Click column headers to sort ascending or descending."
+        },
+        "s3": {
+          "title": "Add products",
+          "description": "Add catalog items; the scanner can autocomplete data."
+        },
+        "s4": {
+          "title": "Export to PDF",
+          "description": "Print-ready documents with the current list and prices."
+        },
+        "s5": {
+          "title": "Excel reports",
+          "description": "Download technical data for external analysis."
+        },
+        "s6": {
+          "title": "Row actions",
+          "description": "Edit, delete, or restore products individually."
+        }
+      },
+      "proveedores": {
+        "s0": {
+          "title": "Supplier search",
+          "description": "Find suppliers by name, tax ID, contact, or email."
+        },
+        "s1": {
+          "title": "Smart sorting",
+          "description": "Sort by company name or other contact fields."
+        },
+        "s2": {
+          "title": "Register supplier",
+          "description": "Add suppliers to manage their orders and products."
+        },
+        "s3": {
+          "title": "PDF export",
+          "description": "PDF with the full supplier list and contact data."
+        },
+        "s4": {
+          "title": "Excel report",
+          "description": "Download supplier data for analysis or admin work."
+        },
+        "s5": {
+          "title": "Individual management",
+          "description": "Open details, edit, or delete from each row."
+        }
+      },
+      "recetas": {
+        "s0": {
+          "title": "Culinary inspiration",
+          "description": "Browse featured suggestions and seasonal dishes in the carousel."
+        },
+        "s1": {
+          "title": "Recipe search",
+          "description": "Find dishes by name, ingredients, or preparation steps."
+        },
+        "s2": {
+          "title": "Quick sorting",
+          "description": "Sort by difficulty, prep time, or name."
+        },
+        "s3": {
+          "title": "Create recipes",
+          "description": "Record preparations with ingredients, steps, and estimated costs."
+        },
+        "s4": {
+          "title": "Let's cook!",
+          "description": "Use prepare to start production runs instantly, or open full technical sheets."
+        }
+      },
+      "pedidos": {
+        "s0": {
+          "title": "Order hub",
+          "description": "Switch between personal orders, global lists, and supplier purchasing."
+        },
+        "s1": {
+          "title": "New order",
+          "description": "Start a request and add products quickly."
+        },
+        "s2": {
+          "title": "Resume drafts",
+          "description": "Continue partially saved orders without losing lines."
+        },
+        "s3": {
+          "title": "Flow tracking",
+          "description": "See each order status and manage details."
+        },
+        "s4": {
+          "title": "PDF control",
+          "description": "Generate consolidated lists for the period."
+        },
+        "s5": {
+          "title": "Excel export",
+          "description": "Download detailed data for spreadsheets."
+        }
+      },
+      "recepciones": {
+        "s0": {
+          "title": "Reception assistant",
+          "description": "Follow four guided steps to register incoming goods accurately."
+        },
+        "s1": {
+          "title": "Safe draft",
+          "description": "Progress syncs to the cloud—continue on another device."
+        },
+        "s2": {
+          "title": "Smart receiving",
+          "description": "Scan barcodes or search by name for items you receive."
+        },
+        "s3": {
+          "title": "Scale connectivity",
+          "description": "Connect a compatible USB scale to capture weights live."
+        },
+        "s4": {
+          "title": "Process steps",
+          "description": "Navigate between order selection, counting, and final review."
+        }
+      },
+      "distribucion": {
+        "s0": {
+          "title": "Delivery management",
+          "description": "Switch between ready-to-deliver orders and distribution history."
+        },
+        "s1": {
+          "title": "Quick search",
+          "description": "Find deliveries by order number, user, or destination classroom."
+        },
+        "s2": {
+          "title": "Pending list",
+          "description": "Items received in the warehouse waiting for final delivery."
+        },
+        "s3": {
+          "title": "Start delivery",
+          "description": "Open the delivery assistant to pick destination and quantities."
+        },
+        "s4": {
+          "title": "Receipt confirmation",
+          "description": "Recipients confirm from history to finalize stock movement."
+        }
+      },
+      "preparaciones": {
+        "s0": {
+          "title": "Preparations bag",
+          "description": "Manage kitchen output and ready-to-serve prepared stock."
+        },
+        "s1": {
+          "title": "Production status",
+          "description": "Toggle between current preparations and depleted history."
+        },
+        "s2": {
+          "title": "Consumption log",
+          "description": "When servings go to dining or delivery, stock is deducted from the batch."
+        },
+        "s3": {
+          "title": "Waste handling",
+          "description": "Register spoiled servings or service errors to keep inventory accurate."
+        },
+        "s4": {
+          "title": "Detailed control",
+          "description": "View technical sheet, real costs, and expiry dates."
+        }
+      },
+      "albaranes": {
+        "s0": {
+          "title": "Delivery notes",
+          "description": "Digitize and manage supplier delivery notes."
+        },
+        "s1": {
+          "title": "Manual entry",
+          "description": "Create a note manually if you do not have a digital copy yet."
+        },
+        "s2": {
+          "title": "Digital storage",
+          "description": "Upload a photo or PDF of the paper note for one-click backup."
+        },
+        "s3": {
+          "title": "Match control",
+          "description": "Check at a glance if received goods match the supplier paperwork."
+        },
+        "s4": {
+          "title": "History and lookup",
+          "description": "Open full detail of products in each shipment."
+        }
+      },
+      "inventario": {
+        "s0": {
+          "title": "Inventory management",
+          "description": "View and manage all pantry stock centrally."
+        },
+        "s1": {
+          "title": "Stock intake",
+          "description": "Add inventory manually when not coming from a prior order."
+        },
+        "s2": {
+          "title": "Warehouse setup",
+          "description": "Define shelves, cold rooms, and storage zones."
+        },
+        "s3": {
+          "title": "Search and scanner",
+          "description": "Search by name or use the barcode scanner for faster work."
+        },
+        "s4": {
+          "title": "Smart filters",
+          "description": "Filter by product category or specific locations."
+        },
+        "s5": {
+          "title": "Locations and slots",
+          "description": "Switch between global view and your assigned zones."
+        },
+        "s6": {
+          "title": "Control actions",
+          "description": "Adjust stock for waste or audit lots and expiry from the table."
+        }
+      },
+      "movimientos": {
+        "s0": {
+          "title": "Movement history",
+          "description": "Every stock change is logged: in, out, waste, and adjustments."
+        },
+        "s1": {
+          "title": "Filter by type",
+          "description": "Filter by date or operation type (e.g. only waste or only entries)."
+        },
+        "s2": {
+          "title": "Traceability",
+          "description": "See who acted, which product, and exact quantity."
+        },
+        "s3": {
+          "title": "Audit details",
+          "description": "Full detail including lot and drill-back to order or distribution."
+        }
+      },
+      "mermas": {
+        "s0": {
+          "title": "Waste management",
+          "description": "Track unplanned inventory losses."
+        },
+        "s1": {
+          "title": "Report waste",
+          "description": "Log breakage, expiry, or theft—this permanently reduces stock."
+        },
+        "s2": {
+          "title": "Impact statistics",
+          "description": "See total loss volume and top reasons to act."
+        },
+        "s3": {
+          "title": "Waste history",
+          "description": "Every loss is audited with reporter and reason."
+        }
+      },
+      "incidencias": {
+        "s0": {
+          "title": "Incidents hub",
+          "description": "Centralize discrepancies found during goods receipt."
+        },
+        "s1": {
+          "title": "Reports and export",
+          "description": "Official PDF/Excel lists for supplier claims or audits."
+        },
+        "s2": {
+          "title": "Status filtering",
+          "description": "Separate pending review from resolved work."
+        },
+        "s3": {
+          "title": "Problem traceability",
+          "description": "See shortages or overages per order to decide correctly."
+        },
+        "s4": {
+          "title": "Discrepancy adjustment",
+          "description": "Correct received quantities if initial capture was wrong."
+        },
+        "s5": {
+          "title": "Final resolution",
+          "description": "Resolving adjusts inventory and closes the discrepancy cycle."
+        }
+      },
+      "administracion": {
+        "s0": {
+          "title": "Academic administration",
+          "description": "Manage organizational structure and system access."
+        },
+        "s1": {
+          "title": "Management modules",
+          "description": "Rooms, linked students, users, and role templates."
+        },
+        "s2": {
+          "title": "User control",
+          "description": "Manage accounts, reset passwords, and assign roles."
+        },
+        "s3": {
+          "title": "Management mode",
+          "description": "Edit room names, capacities, or assign teachers to classes."
+        }
+      },
+      "perfilProfesor": {
+        "s0": {
+          "title": "User profile",
+          "description": "Review and edit your basic personal data."
+        },
+        "s1": {
+          "title": "Security and password",
+          "description": "Change username and password; email changes need higher-role approval."
+        }
+      },
+      "perfilAlumno": {
+        "s0": {
+          "title": "User profile",
+          "description": "View your personal information."
+        }
+      },
+      "default": {
+        "s0": {
+          "title": "Navigation",
+          "description": "Use the sidebar to move between sections for your role."
+        },
+        "s1": {
+          "title": "Your account",
+          "description": "Manage profile, theme preferences, and sign out from the top menu."
+        }
+      }
+    },
+    "ui": {
+      "omitirTourAria": "Skip tour",
+      "finalizar": "Finish",
+      "siguiente": "Next",
+      "atras": "Back",
+      "saltarTodo": "Skip entire tutorial",
+      "tooltipTitulo": "Tutorial",
+      "tooltipDescList": "Start interactive tutorial for this module",
+      "tooltipDescIcon": "Start interactive tutorial",
+      "ariaIniciar": "Start tutorial",
+      "listPrimary": "Tutorial"
+    }
+  }
+}

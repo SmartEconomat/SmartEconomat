@@ -18,32 +18,21 @@ import { ChangeProfesorDto } from '../dto/change-profesor.dto';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 
 /**
- * Servicio que gestiona el registro de alumnos, la resolución de slots de aula,
- * los cambios de asignación de profesor y las operaciones de consulta de soporte.
- * Todas las operaciones de escritura se ejecutan dentro de transacciones de base de datos para garantizar la consistencia.
- * @class AlumnoService
+ * Documentación en español.
  */
 @Injectable()
 export class AlumnoService {
-  /**
-   * @description Construye el servicio con sus dependencias requeridas.
-   * @param {Repository<Alumno>} alumnoRepo - Repositorio TypeORM para la entidad Alumno.
-   * @param {DataSource} dataSource - DataSource de TypeORM utilizado para ejecutar transacciones de base de datos.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     @InjectRepository(Alumno) private readonly alumnoRepo: Repository<Alumno>,
     private readonly dataSource: DataSource
   ) {}
 
-  /**
-   * Resuelve el AlumnoSlot correcto para el registro de un nuevo alumno.
-   * Cuando se proporciona dto.codigoClase, el slot se localiza por su código único.
-   * De lo contrario, el slot se busca o se crea a partir de dto.cialProfesor, dto.aula y dto.numeroClase.
-   * @param {{ findOne: (...args: unknown[]) => Promise<unknown>; create: (...args: unknown[]) => unknown; save: (entity: unknown) => Promise<unknown> }} manager - Gestor de entidades transaccional.
-   * @param {RegisterAlumnoDto} dto - Carga útil del registro.
-   * @returns {Promise<AlumnoSlot>} AlumnoSlot resuelto o recién creado con las relaciones cargadas.
-   * @throws {NotFoundException} Cuando el código de slot o el CIAL del profesor no coincide con ningún registro.
-   */
+        /**
+     * Documentación en español.
+     */
   private async resolveSlotForRegistration(
     manager: {
       findOne: (...args: unknown[]) => Promise<unknown>;
@@ -109,13 +98,9 @@ export class AlumnoService {
     return resolvedSlot;
   }
 
-  /**
-   * Busca un AlumnoSlot por su código de clase único (sin distinguir mayúsculas/minúsculas).
-   * @param {{ findOne: (...args: unknown[]) => Promise<unknown> }} manager - Gestor de entidades transaccional.
-   * @param {string} codigoClase - Código de clase a buscar (normalizado a mayúsculas).
-   * @param {boolean} [includeStudents=false] - Si se debe incluir la relación alumnos en el resultado.
-   * @returns {Promise<AlumnoSlot | null>} Slot encontrado o null.
-   */
+        /**
+     * Documentación en español.
+     */
   private async findSlotByCode(
     manager: {
       findOne: (...args: unknown[]) => Promise<unknown>;
@@ -133,13 +118,9 @@ export class AlumnoService {
     })) as AlumnoSlot | null;
   }
 
-  /**
-   * Cuenta el número de alumnos actualmente matriculados en un slot dado.
-   * Usa manager.count cuando está disponible; recurre a la longitud del array alumnos cargado.
-   * @param {{ count?: (entity: typeof Alumno, options: unknown) => Promise<number> }} manager - Gestor de entidades transaccional.
-   * @param {Partial<AlumnoSlot> & { id?: string; alumnos?: Alumno[]; alumno?: Alumno | null }} slot - Entidad slot (puede tener alumnos cargados o no).
-   * @returns {Promise<number>} Número de alumnos en el slot.
-   */
+        /**
+     * Documentación en español.
+     */
   private async countStudentsInSlot(
     manager: {
       count?: (entity: typeof Alumno, options: unknown) => Promise<number>;
@@ -163,16 +144,9 @@ export class AlumnoService {
     return slot.alumno ? 1 : 0;
   }
 
-  /**
-   * Registra una nueva cuenta de alumno dentro de una transacción de base de datos.
-   * Resuelve el slot correcto, valida la capacidad, crea un Usuario con estado INACTIVE
-   * y lo vincula a un registro Alumno.
-   * @param {RegisterAlumnoDto} dto - Carga útil del registro con credenciales y detalles del slot.
-   * @returns {Promise<{ id: string; username: string; status: UserStatus; message: string }>} Resumen de la cuenta creada.
-   * @throws {NotFoundException} Cuando no se puede resolver el slot o el profesor.
-   * @throws {BadRequestException} Cuando el slot ha alcanzado su capacidad.
-   * @throws {ConflictException} Cuando el nombre de usuario ya está en uso.
-   */
+        /**
+     * Documentación en español.
+     */
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
       const slot = await this.resolveSlotForRegistration(manager, dto);
@@ -229,12 +203,9 @@ export class AlumnoService {
     });
   }
 
-  /**
-   * Devuelve información resumida sobre un slot de clase identificado por su código.
-   * @param {string} codigoClase - Código de clase a buscar (normalizado a mayúsculas).
-   * @returns {Promise<{ codigoClase: string; aula: string; numeroClase: number; profesor: string; cialProfesor: string }>} Resumen del slot.
-   * @throws {NotFoundException} Cuando ningún slot coincide con el código dado.
-   */
+        /**
+     * Documentación en español.
+     */
   async getSlotByCode(codigoClase: string) {
     const normalizedCode = codigoClase.trim().toUpperCase();
     const slot = await this.dataSource.getRepository(AlumnoSlot).findOne({
@@ -259,18 +230,9 @@ export class AlumnoService {
     };
   }
 
-  /**
-   * Cambia el profesor y la asignación de slot de un alumno dentro de una transacción.
-   * Los admins pueden reasignar cualquier alumno; los profesores solo pueden reasignar alumnos de sus propios slots;
-   * los alumnos solo pueden reasignarse a sí mismos.
-   * @param {string} alumnoUserId - ID de usuario del alumno cuyo slot se está cambiando.
-   * @param {string} reqUserId - ID de usuario del solicitante (usado para comprobaciones de permisos).
-   * @param {rolUsuario} reqUserRole - Rol del solicitante.
-   * @param {ChangeProfesorDto} dto - Nuevo CIAL del profesor, aula y numeroClase.
-   * @returns {Promise<{ message: string }>} Mensaje de éxito.
-   * @throws {NotFoundException} Cuando no se puede encontrar el alumno, el nuevo profesor o el nuevo slot.
-   * @throws {BadRequestException} Cuando el solicitante no tiene permiso o el nuevo slot está lleno.
-   */
+        /**
+     * Documentación en español.
+     */
   async changeProfesor(
     alumnoUserId: string,
     reqUserId: string,
@@ -353,10 +315,9 @@ export class AlumnoService {
     });
   }
 
-  /**
-   * Devuelve una lista deduplicada y ordenada de todos los identificadores de aula que tienen slots.
-   * @returns {Promise<string[]>} Array ordenado de valores únicos de aula.
-   */
+        /**
+     * Documentación en español.
+     */
   async getAulas() {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       select: ['aula'],
@@ -365,11 +326,9 @@ export class AlumnoService {
     return aulas.sort();
   }
 
-  /**
-   * Devuelve una lista deduplicada y ordenada numéricamente de números de clase dentro de un aula dada.
-   * @param {string} aula - Identificador del aula por el que filtrar.
-   * @returns {Promise<number[]>} Array ordenado de valores únicos de numeroClase.
-   */
+        /**
+     * Documentación en español.
+     */
   async getClasesByAula(aula: string) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       where: { aula },
@@ -379,13 +338,9 @@ export class AlumnoService {
     return clases.sort((a: number, b: number) => a - b);
   }
 
-  /**
-   * Devuelve los profesores (con CIAL, nombre de usuario y código de slot) que imparten en una combinación
-   * específica de aula y número de clase.
-   * @param {string} aula - Identificador del aula.
-   * @param {number} numeroClase - Número de clase dentro del aula.
-   * @returns {Promise<Array<{ cial: string; nombre: string; codigoSlot: string }>>} Array de resúmenes de profesores.
-   */
+        /**
+     * Documentación en español.
+     */
   async getProfesoresBySlot(aula: string, numeroClase: number) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       where: { aula, numeroClase },

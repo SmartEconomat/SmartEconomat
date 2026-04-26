@@ -156,9 +156,7 @@ const normalizePedidoUsuario = (
 });
 
 /**
- * @description Maps a `PedidoUsuario` entity to a display row shape suitable for table rendering.
- * @param {PedidoUsuario} pedidoUsuario - The source pedido-usuario record.
- * @returns {PedidoUsuarioRow} The normalised row with denormalized provider summary and product lines.
+ * Documentación en español.
  */
 export const mapPedidoUsuarioToVisibleRow = (
   pedidoUsuario: PedidoUsuario
@@ -181,14 +179,7 @@ export const mapPedidoUsuarioToVisibleRow = (
 };
 
 /**
- * @description Fetches a paginated list of provider-level pedido records.
- * @param {number} [page=1] - The page number to retrieve.
- * @param {number} [limit=10] - Number of records per page.
- * @param {string} [searchTerm=''] - Optional text search filter.
- * @param {string} [estado=''] - Optional status filter.
- * @param {FetchPedidosOptions} [options={}] - Additional filter and sort options.
- * @returns {Promise<PaginatedData<Pedido>>} Paginated pedido records.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchPedidos(
   page: number = 1,
@@ -228,14 +219,7 @@ export async function fetchPedidos(
 }
 
 /**
- * @description Fetches a paginated list of user-level pedido (PedidoUsuario) records.
- * @param {number} [page=1] - The page number to retrieve.
- * @param {number} [limit=10] - Number of records per page.
- * @param {string} [searchTerm=''] - Optional text search filter.
- * @param {string} [estado=''] - Optional status filter.
- * @param {FetchPedidoUsuariosOptions} [options={}] - Additional filter and sort options.
- * @returns {Promise<PaginatedData<PedidoUsuario>>} Paginated pedido-usuario records.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchPedidoUsuarios(
   page: number = 1,
@@ -276,10 +260,7 @@ export async function fetchPedidoUsuarios(
 }
 
 /**
- * @description Creates a new provider-level pedido.
- * @param {CreatePedidoPayload} pedido - Pedido data including supplier, notes, and product lines.
- * @returns {Promise<Pedido>} The created pedido record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPedido(
   pedido: CreatePedidoPayload
@@ -306,11 +287,7 @@ export async function createPedido(
 }
 
 /**
- * @description Partially updates an existing provider-level pedido.
- * @param {string} id - The pedido UUID to update.
- * @param {UpdatePedidoPayload} pedido - Fields to update.
- * @returns {Promise<Pedido>} The updated pedido record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function updatePedido(
   id: string,
@@ -338,11 +315,7 @@ export async function updatePedido(
 }
 
 /**
- * @description Cancels a provider-level pedido with a mandatory cancellation reason.
- * @param {string} id - The pedido UUID to cancel.
- * @param {CancelPedidoPayload} payload - Contains the cancellation reason string.
- * @returns {Promise<Pedido>} The updated pedido record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function cancelPedido(
   id: string,
@@ -371,10 +344,7 @@ export async function cancelPedido(
 }
 
 /**
- * @description Marks a provider-level pedido as accepted by the manager.
- * @param {string} id - The pedido UUID to accept.
- * @returns {Promise<Pedido>} The updated pedido record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function aceptarPedido(id: string): Promise<Pedido> {
   const response = await baseFetch(`/pedidos/${id}/aceptar`, {
@@ -398,10 +368,7 @@ export async function aceptarPedido(id: string): Promise<Pedido> {
 }
 
 /**
- * @description Creates a new purchase batch (lote de compra) with manual product lines.
- * @param {CreatePurchaseBatchPayload} payload - Optional notes and product lines.
- * @returns {Promise<PurchaseBatch>} The created purchase batch.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPurchaseBatch(
   payload: CreatePurchaseBatchPayload
@@ -428,10 +395,7 @@ export async function createPurchaseBatch(
 }
 
 /**
- * @description Creates a user-level pedido automatically from missing stock items for one or more recipes.
- * @param {CreateMissingStockBatchPayload} payload - Recipe IDs and quantities to cover.
- * @returns {Promise<PedidoUsuario>} The created pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPedidoUsuarioFromMissingStock(
   payload: CreateMissingStockBatchPayload
@@ -458,10 +422,7 @@ export async function createPedidoUsuarioFromMissingStock(
 }
 
 /**
- * @description Creates a new user-level pedido with explicit product lines.
- * @param {CreatePurchaseBatchPayload} payload - Optional notes and product lines.
- * @returns {Promise<PedidoUsuario>} The created pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPedidoUsuario(
   payload: CreatePurchaseBatchPayload
@@ -488,10 +449,7 @@ export async function createPedidoUsuario(
 }
 
 /**
- * @description Creates a provider-level pedido automatically from a list of recipe IDs.
- * @param {CreatePedidoFromRecetasPayload} payload - Recipe IDs and optional notes.
- * @returns {Promise<Pedido>} The created pedido.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPedidoFromRecetas(
   payload: CreatePedidoFromRecetasPayload
@@ -518,10 +476,7 @@ export async function createPedidoFromRecetas(
 }
 
 /**
- * @description Creates a user-level pedido automatically from a list of recipe IDs.
- * @param {CreatePedidoFromRecetasPayload} payload - Recipe IDs and optional notes.
- * @returns {Promise<PedidoUsuario>} The created pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function createPedidoUsuarioFromRecetas(
   payload: CreatePedidoFromRecetasPayload
@@ -548,10 +503,7 @@ export async function createPedidoUsuarioFromRecetas(
 }
 
 /**
- * @description Consolidates multiple user-level pedidos into a single purchase batch.
- * @param {ConsolidatePurchaseBatchPayload} payload - IDs of the pedido-usuarios and optional notes.
- * @returns {Promise<PurchaseBatch>} The consolidated purchase batch.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function consolidatePurchaseBatch(
   payload: ConsolidatePurchaseBatchPayload
@@ -578,9 +530,7 @@ export async function consolidatePurchaseBatch(
 }
 
 /**
- * @description Fetches all purchase batches (lotes de compra).
- * @returns {Promise<PurchaseBatch[]>} List of all purchase batches.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
   const response = await baseFetch('/purchase-batches');
@@ -592,10 +542,7 @@ export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
 }
 
 /**
- * @description Fetches the full detail of a user-level pedido by its ID.
- * @param {string} id - The pedido-usuario UUID.
- * @returns {Promise<PedidoUsuario>} The pedido-usuario detail.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchPedidoUsuarioById(
   id: string
@@ -611,10 +558,7 @@ export async function fetchPedidoUsuarioById(
 }
 
 /**
- * @description Fetches the full detail of a purchase batch by its ID.
- * @param {string} id - The purchase batch UUID.
- * @returns {Promise<PurchaseBatch>} The purchase batch detail.
- * @throws {Error} When the API returns a non-OK response.
+ * Documentación en español.
  */
 export async function fetchPurchaseBatchById(
   id: string
@@ -628,11 +572,7 @@ export async function fetchPurchaseBatchById(
 }
 
 /**
- * @description Partially updates an existing purchase batch.
- * @param {string} id - The purchase batch UUID to update.
- * @param {UpdatePurchaseBatchPayload} payload - Optional notes and product lines to update.
- * @returns {Promise<PurchaseBatch>} The updated purchase batch.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function updatePurchaseBatch(
   id: string,
@@ -660,11 +600,7 @@ export async function updatePurchaseBatch(
 }
 
 /**
- * @description Partially updates an existing user-level pedido.
- * @param {string} id - The pedido-usuario UUID to update.
- * @param {UpdatePurchaseBatchPayload} payload - Optional notes and product lines to update.
- * @returns {Promise<PedidoUsuario>} The updated pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function updatePedidoUsuario(
   id: string,
@@ -692,10 +628,7 @@ export async function updatePedidoUsuario(
 }
 
 /**
- * @description Marks a purchase batch as accepted by the manager.
- * @param {string} id - The purchase batch UUID to accept.
- * @returns {Promise<PurchaseBatch>} The updated purchase batch.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
   const response = await baseFetch(`/purchase-batches/${id}/aceptar`, {
@@ -719,10 +652,7 @@ export async function aceptarPurchaseBatch(id: string): Promise<PurchaseBatch> {
 }
 
 /**
- * @description Marks a user-level pedido as accepted by the manager.
- * @param {string} id - The pedido-usuario UUID to accept.
- * @returns {Promise<PedidoUsuario>} The updated pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
   const response = await baseFetch(`/pedido-usuarios/${id}/aceptar`, {
@@ -747,11 +677,7 @@ export async function aceptarPedidoUsuario(id: string): Promise<PedidoUsuario> {
 }
 
 /**
- * @description Cancels a purchase batch with a mandatory cancellation reason.
- * @param {string} id - The purchase batch UUID to cancel.
- * @param {CancelPedidoPayload} payload - Contains the cancellation reason string.
- * @returns {Promise<PurchaseBatch>} The updated purchase batch.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function cancelPurchaseBatch(
   id: string,
@@ -780,11 +706,7 @@ export async function cancelPurchaseBatch(
 }
 
 /**
- * @description Cancels a user-level pedido with a mandatory cancellation reason.
- * @param {string} id - The pedido-usuario UUID to cancel.
- * @param {CancelPedidoPayload} payload - Contains the cancellation reason string.
- * @returns {Promise<PedidoUsuario>} The updated pedido-usuario record.
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function cancelPedidoUsuario(
   id: string,
@@ -823,9 +745,7 @@ function getPedidoPdfPath(id: string): string {
 }
 
 /**
- * @description Downloads the PDF report for a provider-level pedido.
- * @param {string} id - The pedido UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function downloadPedidoPdf(id: string): Promise<void> {
   await downloadFile(getPedidoPdfPath(id), `pedido-${id.slice(0, 8)}.pdf`);
@@ -836,9 +756,7 @@ function getPurchaseBatchPdfPath(id: string): string {
 }
 
 /**
- * @description Downloads the PDF report for a purchase batch.
- * @param {string} id - The purchase batch UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function downloadPurchaseBatchPdf(id: string): Promise<void> {
   await downloadFile(
@@ -852,9 +770,7 @@ function getPedidoUsuarioPdfPath(id: string): string {
 }
 
 /**
- * @description Downloads the PDF report for a user-level pedido.
- * @param {string} id - The pedido-usuario UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function downloadPedidoUsuarioPdf(id: string): Promise<void> {
   await downloadFile(
@@ -864,27 +780,21 @@ export async function downloadPedidoUsuarioPdf(id: string): Promise<void> {
 }
 
 /**
- * @description Opens a print dialog for the PDF of a user-level pedido.
- * @param {string} id - The pedido-usuario UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function printPedidoUsuarioPdf(id: string): Promise<void> {
   await printPdfFile(getPedidoUsuarioPdfPath(id));
 }
 
 /**
- * @description Opens a print dialog for the PDF of a purchase batch.
- * @param {string} id - The purchase batch UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function printPurchaseBatchPdf(id: string): Promise<void> {
   await printPdfFile(getPurchaseBatchPdfPath(id));
 }
 
 /**
- * @description Opens a print dialog for the PDF of a provider-level pedido.
- * @param {string} id - The pedido UUID.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 export async function printPedidoPdf(id: string): Promise<void> {
   await printPdfFile(getPedidoPdfPath(id));

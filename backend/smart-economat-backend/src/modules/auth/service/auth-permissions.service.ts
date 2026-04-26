@@ -13,14 +13,7 @@ import {
 import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 /**
- * Servicio centralizado de gestión de permisos con caching agresivo.
- * Responsable de:
- * - Cargar permisos de usuarios desde BD con consultas optimizadas
- * - Gestionar cache de permisos (Redis o memoria)
- * - Invalidar cache cuando cambian roles/permisos
- * - Validar permisos en < 5ms (con cache)
- *
- * @class AuthPermissionsService
+ * Documentación en español.
  */
 @Injectable()
 export class AuthPermissionsService {
@@ -37,13 +30,9 @@ export class AuthPermissionsService {
     private readonly cacheManager: Cache
   ) {}
 
-  /**
-   * Obtiene todos los permisos de un usuario (desde cache o BD).
-   * Utiliza consulta optimizada con QueryBuilder.
-   *
-   * @param userId - ID del usuario
-   * @returns Array de códigos de permisos (ej: ['usuarios:listar', 'productos:crear'])
-   */
+        /**
+     * Documentación en español.
+     */
   async getUserPermissions(userId: string): Promise<string[]> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
 
@@ -75,13 +64,9 @@ export class AuthPermissionsService {
     }
   }
 
-  /**
-   * Carga los permisos del usuario desde la base de datos considerando:
-   * (Permisos de Roles Activos) + (Permisos Adicionales) - (Permisos Excluidos)
-   *
-   * @param userId - ID del usuario
-   * @returns Array de códigos de permisos únicos
-   */
+        /**
+     * Documentación en español.
+     */
   private async loadUserPermissionsFromDB(userId: string): Promise<string[]> {
     const usuario = await this.usuarioRepo.findOne({
       where: { id: userId, activo: true },
@@ -161,13 +146,9 @@ export class AuthPermissionsService {
     return result;
   }
 
-  /**
-   * Valida si un usuario tiene TODOS los permisos especificados (AND).
-   *
-   * @param userId - ID del usuario
-   * @param requiredPermissions - Array de permisos requeridos
-   * @returns true si tiene todos los permisos, false en caso contrario
-   */
+        /**
+     * Documentación en español.
+     */
   async userHasAllPermissions(
     userId: string,
     requiredPermissions: string[]
@@ -182,13 +163,9 @@ export class AuthPermissionsService {
     );
   }
 
-  /**
-   * Valida si un usuario tiene AL MENOS UNO de los permisos especificados (OR).
-   *
-   * @param userId - ID del usuario
-   * @param requiredPermissions - Array de permisos requeridos
-   * @returns true si tiene al menos uno de los permisos, false en caso contrario
-   */
+        /**
+     * Documentación en español.
+     */
   async userHasAnyPermission(
     userId: string,
     requiredPermissions: string[]
@@ -203,12 +180,9 @@ export class AuthPermissionsService {
     );
   }
 
-  /**
-   * Invalida el cache de permisos de un usuario específico.
-   * Se debe llamar cuando se modifican los roles o permisos del usuario.
-   *
-   * @param userId - ID del usuario
-   */
+        /**
+     * Documentación en español.
+     */
   async invalidateUserCache(userId: string): Promise<void> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
     try {
@@ -222,12 +196,9 @@ export class AuthPermissionsService {
     }
   }
 
-  /**
-   * Invalida el cache de permisos de múltiples usuarios.
-   * Se debe llamar cuando se modifican permisos de un rol que afecta a múltiples usuarios.
-   *
-   * @param userIds - Array de IDs de usuarios
-   */
+        /**
+     * Documentación en español.
+     */
   async invalidateUsersCache(userIds: string[]): Promise<void> {
     try {
       await Promise.all(
@@ -242,10 +213,9 @@ export class AuthPermissionsService {
     }
   }
 
-  /**
-   * Invalida todo el cache de permisos.
-   * Se debe llamar cuando hay cambios masivos en el sistema de permisos.
-   */
+        /**
+     * Documentación en español.
+     */
   async invalidateAllCache(): Promise<void> {
     try {
       const cache = this.cacheManager as unknown as {
@@ -263,12 +233,9 @@ export class AuthPermissionsService {
     }
   }
 
-  /**
-   * Precarga los permisos de un usuario en el cache.
-   * Útil para optimizar la primera petición después del login.
-   *
-   * @param userId - ID del usuario
-   */
+        /**
+     * Documentación en español.
+     */
   async preloadUserPermissions(userId: string): Promise<string[]> {
     const permisos = await this.loadUserPermissionsFromDB(userId);
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;

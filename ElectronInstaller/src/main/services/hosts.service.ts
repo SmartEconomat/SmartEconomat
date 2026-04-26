@@ -3,11 +3,9 @@ import { ProcessRunnerService } from "./process-runner.service";
 export class HostsService {
   private readonly processRunner = new ProcessRunnerService();
 
-  /**
-   * Garantiza que una entrada exista en el archivo hosts de Windows.
-   * Si el host ya existe apuntando a otra IP, la actualiza.
-   * Si no existe, la añade.
-   */
+        /**
+     * Documentación en español.
+     */
   async ensureHostEntry(host: string, ip: string = "127.0.0.1"): Promise<void> {
     if (process.platform !== "win32") {
       return;
@@ -64,9 +62,9 @@ export class HostsService {
     });
   }
 
-  /**
-   * Elimina las entradas automáticas creadas por SmartEconomat.
-   */
+        /**
+     * Documentación en español.
+     */
   async removeSmartEconomatEntries(): Promise<void> {
     if (process.platform !== "win32") {
       return;

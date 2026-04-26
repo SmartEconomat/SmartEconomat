@@ -15,8 +15,7 @@ const defaultIconProps = {
 };
 
 /**
- * Devuelve el icono MUI correspondiente a la categoría (tipo) del producto.
- * Se usa como placeholder cuando el producto no tiene imagen (pathImg).
+ * Documentación en español.
  */
 export function getCategoryIcon(
   tipo: CategoriaProducto | undefined,

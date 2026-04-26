@@ -1,23 +1,5 @@
 /**
- * @fileoverview Hook centralizado de breakpoints responsivos para SmartEconomat.
- *
- * Expone flags booleanos derivados de los breakpoints MUI del proyecto.
- * Todos los componentes deben IMPORTAR ESTE HOOK en vez de llamar a
- * `useMediaQuery` directamente, para garantizar consistencia total.
- *
- * ## Tabla de breakpoints del proyecto
- * | Token        | Rango exacto         | Dispositivos típicos          |
- * |--------------|----------------------|-------------------------------|
- * | xs (mobile)  | 0 – 599 px           | Móviles en vertical           |
- * | sm (tablet)  | 600 – 899 px         | Móviles horizontal / tablets  |
- * | md (desktop) | 900 – 1199 px        | Tablets grandes / portátiles  |
- * | lg (large)   | 1200 – 1535 px       | Monitores estándar            |
- * | xl (xlarge)  | ≥ 1536 px            | Pantallas grandes / 4K        |
- *
- * ## Convención de uso
- * ```tsx
- * const { isMobile, isTabletOrBelow, isDesktop } = useBreakpoints();
- * ```
+ * Documentación en español.
  */
 
 import { useTheme } from '@mui/material/styles';
@@ -28,30 +10,50 @@ import { useMediaQuery } from '@mui/material';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Breakpoints {
-  /** true en xs (0–599px): móviles en vertical */
+        /**
+     * Documentación en español.
+     */
   isMobile: boolean;
-  /** true en sm (600–899px): móviles horizontal / tablets pequeñas */
+        /**
+     * Documentación en español.
+     */
   isTablet: boolean;
-  /** true en md (900–1199px): tablets grandes / portátiles */
+        /**
+     * Documentación en español.
+     */
   isDesktop: boolean;
-  /** true en lg (1200–1535px): monitores estándar */
+        /**
+     * Documentación en español.
+     */
   isLargeDesktop: boolean;
-  /** true en xl (≥1536px): pantallas grandes */
+        /**
+     * Documentación en español.
+     */
   isXLarge: boolean;
 
   // ── Rangos compuestos (los más usados en condiciones responsive) ──
 
-  /** true si xs o sm (< 900px): dispositivos táctiles */
+        /**
+     * Documentación en español.
+     */
   isMobileOrTablet: boolean;
-  /** true si sm o superior (≥ 600px) */
+        /**
+     * Documentación en español.
+     */
   isTabletOrAbove: boolean;
-  /** true si xs o sm o md (< 1200px) */
+        /**
+     * Documentación en español.
+     */
   isTabletOrBelow: boolean;
-  /** true si md o superior (≥ 900px) */
+        /**
+     * Documentación en español.
+     */
   isDesktopOrAbove: boolean;
 
   // ── Valor numérico del ancho actual (útil para lógica JS pura) ──
-  /** Anchura de pantalla en píxeles (window.innerWidth) */
+        /**
+     * Documentación en español.
+     */
   screenWidth: number;
 }
 
@@ -60,15 +62,7 @@ export interface Breakpoints {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Hook que devuelve los flags de breakpoint actuales del viewport.
- * Se reactualiza automáticamente cuando el viewport cambia de tamaño.
- *
- * @example
- * ```tsx
- * const { isMobile, isDesktop } = useBreakpoints();
- *
- * return isMobile ? <MobileLayout /> : <DesktopLayout />;
- * ```
+ * Documentación en español.
  */
 export function useBreakpoints(): Breakpoints {
   const theme = useTheme();

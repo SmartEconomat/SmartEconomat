@@ -12,7 +12,9 @@ import {
 import { pushStateValue, removeStateValue } from './massive.state';
 import { SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES } from '../common/constants/system-role-template.constants';
 
-/** Base template names that must never be picked for destructive/mutating seed operations */
+/**
+ * Documentación en español.
+ */
 const PROTECTED_PLANTILLA_NAMES = SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES;
 
 export function collectStateFromResponse(

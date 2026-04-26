@@ -2,6 +2,8 @@ import { fetchAlertasStock, fetchInventario } from './inventario.service';
 import { usuarioService } from './usuarioService';
 import type { AlertaStock, InventarioItem } from './inventario.types';
 import type { Usuario } from '../types/usuario';
+import { formatLocalizedDate } from '../utils/intlFormat';
+import i18n from '../i18n';
 
 export type NotificationPriority = 'urgent' | 'pending';
 
@@ -33,8 +35,22 @@ const inFlightRequests = new Map<string, Promise<AppNotification[]>>();
 
 const buildProductPreview = (names: string[]): string => {
   if (names.length === 0) return '';
-  if (names.length <= 2) return names.join(' y ');
-  return `${names.slice(0, 2).join(', ')} y ${names.length - 2} más`;
+  if (names.length === 1) return names[0];
+  if (names.length === 2) {
+    return String(
+      i18n.t('notificaciones.tarjetas.previewDos', {
+        a: names[0],
+        b: names[1],
+      })
+    );
+  }
+  const prefix = `${names[0]}, ${names[1]}`;
+  return String(
+    i18n.t('notificaciones.tarjetas.previewMas', {
+      prefix,
+      count: names.length - 2,
+    })
+  );
 };
 
 const normalizeDate = (value?: string | null): Date | null => {
@@ -91,14 +107,19 @@ async function getPendingUsersNotification(): Promise<AppNotification | null> {
 
   return {
     id: 'pending-users',
-    title: 'Usuarios pendientes de activación',
-    description:
-      pendingUsers === 1
-        ? 'Hay 1 usuario nuevo pendiente de revisión y activación.'
-        : `Hay ${pendingUsers} usuarios nuevos pendientes de revisión y activación.`,
+    title: String(
+      i18n.t('notificaciones.tarjetas.pendientesUsuarios.titulo')
+    ),
+    description: String(
+      i18n.t('notificaciones.tarjetas.pendientesUsuarios.descripcion', {
+        count: pendingUsers,
+      })
+    ),
     priority: 'urgent',
     count: pendingUsers,
-    actionLabel: 'Ir a administración',
+    actionLabel: String(
+      i18n.t('notificaciones.tarjetas.pendientesUsuarios.accion')
+    ),
     actionPath:
       '/administracion?tab=usuarios&estado=Inactivo&focus=pending-activation',
     details: latestPendingUsers,
@@ -107,11 +128,14 @@ async function getPendingUsersNotification(): Promise<AppNotification | null> {
 
 const buildPendingUserPreview = (user: Usuario): string => {
   const displayName =
-    user.username || user.nombre || user.email || 'Usuario sin identificar';
+    user.username ||
+    user.nombre ||
+    user.email ||
+    String(i18n.t('notificaciones.tarjetas.usuarioSinNombre'));
   const roleLabel = user.rol ? ` · ${user.rol}` : '';
   const registrationDate = normalizeDate(user.fecha_registro ?? undefined);
   const registrationLabel = registrationDate
-    ? ` · ${registrationDate.toLocaleDateString('es-ES')}`
+    ? ` · ${formatLocalizedDate(registrationDate)}`
     : '';
 
   return `${displayName}${roleLabel}${registrationLabel}`;
@@ -172,14 +196,16 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
   if (lowStockNames.length > 0) {
     notifications.push({
       id: 'low-stock-products',
-      title: 'Productos bajo minimo',
-      description:
-        lowStockNames.length === 1
-          ? `Revisa ${buildProductPreview(lowStockNames)}. Hay 1 producto por debajo del stock minimo.`
-          : `Revisa ${buildProductPreview(lowStockNames)}. Hay ${lowStockNames.length} productos por debajo del stock minimo.`,
+      title: String(i18n.t('notificaciones.tarjetas.stockBajo.titulo')),
+      description: String(
+        i18n.t('notificaciones.tarjetas.stockBajo.descripcion', {
+          count: lowStockNames.length,
+          nombres: buildProductPreview(lowStockNames),
+        })
+      ),
       priority: 'urgent',
       count: lowStockNames.length,
-      actionLabel: 'Revisar inventario',
+      actionLabel: String(i18n.t('notificaciones.tarjetas.stockBajo.accion')),
       actionPath: '/inventario',
       details: lowStockNames.slice(0, 5),
     });
@@ -193,11 +219,16 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
   if (expiredNames.length > 0) {
     notifications.push({
       id: 'expired-products',
-      title: 'Productos vencidos',
-      description: `Revisa ${buildProductPreview(expiredNames)}. Hay ${expiredNames.length} producto${expiredNames.length !== 1 ? 's' : ''} vencido${expiredNames.length !== 1 ? 's' : ''}.`,
+      title: String(i18n.t('notificaciones.tarjetas.vencidos.titulo')),
+      description: String(
+        i18n.t('notificaciones.tarjetas.vencidos.descripcion', {
+          count: expiredNames.length,
+          nombres: buildProductPreview(expiredNames),
+        })
+      ),
       priority: 'urgent',
       count: expiredNames.length,
-      actionLabel: 'Revisar inventario',
+      actionLabel: String(i18n.t('notificaciones.tarjetas.vencidos.accion')),
       actionPath: '/inventario',
     });
   }
@@ -205,11 +236,18 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
   if (expiringNames.length > 0) {
     notifications.push({
       id: 'expiring-products',
-      title: 'Productos próximos a vencer',
-      description: `Hay ${expiringNames.length} producto${expiringNames.length !== 1 ? 's' : ''} que caducan en los próximos ${EXPIRING_SOON_DAYS} días.`,
+      title: String(i18n.t('notificaciones.tarjetas.proximosVencer.titulo')),
+      description: String(
+        i18n.t('notificaciones.tarjetas.proximosVencer.descripcion', {
+          count: expiringNames.length,
+          days: EXPIRING_SOON_DAYS,
+        })
+      ),
       priority: 'pending',
       count: expiringNames.length,
-      actionLabel: 'Ver inventario',
+      actionLabel: String(
+        i18n.t('notificaciones.tarjetas.proximosVencer.accion')
+      ),
       actionPath: '/inventario',
     });
   }
@@ -218,12 +256,7 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
 }
 
 /**
- * @description Fetches application notifications (pending users, low stock, expiring products)
- * with in-memory caching and in-flight deduplication.
- * @param {FetchNotificationsOptions} options - Flags controlling which notification categories to include.
- * @returns {Promise<AppNotification[]>} Sorted list of notifications (urgent first).
- * @example
- * const notifications = await fetchAppNotifications({ includePendingUsers: true, includeInventoryAlerts: true });
+ * Documentación en español.
  */
 export async function fetchAppNotifications(
   options: FetchNotificationsOptions

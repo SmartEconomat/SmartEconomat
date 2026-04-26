@@ -1,4 +1,5 @@
 import { Box, alpha, useTheme, Tab, Tabs } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
@@ -13,6 +14,7 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
   value,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   return (
@@ -54,7 +56,7 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
         >
           <Tab
             value="por_resolver"
-            label="POR RESOLVER"
+            label={t('incidencias.tabs.porResolver')}
             icon={<PendingActionsIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
             disableRipple
@@ -70,6 +72,7 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
               fontWeight: 800,
               gap: 0.5,
               letterSpacing: '0.02em',
+              textTransform: 'uppercase',
               color: theme.palette.text.secondary,
               transition: 'all 0.2s',
               display: 'flex',
@@ -85,7 +88,7 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
           />
           <Tab
             value="resueltas"
-            label="RESUELTAS"
+            label={t('incidencias.tabs.resueltas')}
             icon={<CheckCircleOutlineIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
             disableRipple
@@ -101,6 +104,7 @@ const IncidenciasStatusTabs: React.FC<IncidenciasStatusTabsProps> = ({
               fontWeight: 800,
               gap: 0.5,
               letterSpacing: '0.02em',
+              textTransform: 'uppercase',
               color: theme.palette.text.secondary,
               transition: 'all 0.2s',
               display: 'flex',

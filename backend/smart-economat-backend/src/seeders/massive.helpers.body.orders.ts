@@ -5,14 +5,18 @@ import { getStateArray, pickRequiredStateValue } from './massive.state';
 
 const SEED_BASE_FECHA = new Date('2026-01-05T08:00:00.000Z');
 
-/** Devuelve una fecha ISO añadiendo `daysOffset` días a la base fija del seed. */
+/**
+ * Documentación en español.
+ */
 function seedDate(daysOffset: number): string {
   return new Date(
     SEED_BASE_FECHA.getTime() + daysOffset * 24 * 60 * 60 * 1000
   ).toISOString();
 }
 
-/** Cada 5 iteraciones (pedidos) se avanza una semana. */
+/**
+ * Documentación en español.
+ */
 function seedWeekOffset(iteration: number): number {
   return Math.floor(iteration / 5) * 7;
 }

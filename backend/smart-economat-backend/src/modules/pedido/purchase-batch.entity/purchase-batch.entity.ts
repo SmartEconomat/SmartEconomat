@@ -14,10 +14,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Pedido } from '../pedido.entity/pedido.entity';
 
 /**
- * Entidad PurchaseBatch (Lote de Compra)
- *
- * Representa una compra agrupada que puede incluir varios pedidos del mismo día,
- * siempre manteniendo un único proveedor por pedido.
+ * Documentación en español.
  */
 @Entity({ name: 'purchase_batch' })
 @Index(['numeroGlobal'], { unique: true })
@@ -26,33 +23,37 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 @Index(['createdAt'])
 @Index(['usuarioId'])
 export class PurchaseBatch extends BaseEntity {
-  /** Auto-incremented global sequential reference number for this purchase batch. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
-  /** Human-readable unique reference code for the batch (e.g. BATCH-2024-00001). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'referencia', type: 'varchar', length: 32, unique: true })
   referencia!: string;
 
-  /**
-   * Transient alias for `numeroGlobal`. Not persisted.
-   * Provided for compatibility with older display code.
-   */
+        /**
+     * Documentación en español.
+     */
   numeroLote?: string;
 
-  /**
-   * Transient alias for `referencia`. Not persisted.
-   * Provided for compatibility with older display code.
-   */
+        /**
+     * Documentación en español.
+     */
   referenciaLote?: string;
 
-  /** Foreign key referencing the User who created the batch. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-  /**
-   * Usuario que creó el lote de pedidos.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -60,21 +61,21 @@ export class PurchaseBatch extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-  /**
-   * Indica si el lote ha sido aprobado por un responsable.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ default: false, name: 'is_aprobado' })
   isAprobado: boolean;
 
-  /**
-   * Observaciones generales para el lote.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-  /**
-   * Estado agregado del lote en función de sus pedidos.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: ESTADO_LOTE_DB_VALUES,
@@ -83,9 +84,9 @@ export class PurchaseBatch extends BaseEntity {
   })
   estado!: EstadoLote;
 
-  /**
-   * Lista de pedidos que componen este lote.
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => Pedido, (pedido) => pedido.batch, {
     cascade: true,
   })
@@ -93,12 +94,9 @@ export class PurchaseBatch extends BaseEntity {
 
   /* --- Lógica de Dominio --- */
 
-  /**
-   * Calcula el estado agregado basado en el estado de los pedidos vinculados.
-   *
-   * @param {Pedido[]} pedidos - Lista opcional de pedidos (si ya están cargados).
-   * @returns {EstadoLote} - El estado calculado.
-   */
+        /**
+     * Documentación en español.
+     */
   static calcularEstadoLote(pedidos: Pedido[]): EstadoLote {
     if (!pedidos || pedidos.length === 0) {
       return EstadoLote.PENDIENTE;

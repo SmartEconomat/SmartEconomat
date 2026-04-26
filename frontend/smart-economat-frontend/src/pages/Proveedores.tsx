@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -37,50 +37,8 @@ import AddIcon from '@mui/icons-material/Add';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { DownloadService } from '../services/download.service';
 
-const proveedorSchema: DynamicField[] = [
-  {
-    name: 'nif',
-    label: 'NIF / CUIT',
-    required: true,
-    width: 4,
-    maxLength: 20,
-    pattern: '^[a-zA-Z0-9]+$',
-    patternMessage: 'NIF solo permite caracteres alfanuméricos',
-  },
-  {
-    name: 'nombre',
-    label: 'Razón Social',
-    required: true,
-    width: 8,
-    maxLength: 100,
-  },
-  {
-    name: 'contacto',
-    label: 'Persona de Contacto',
-    maxLength: 100,
-  },
-  {
-    name: 'telefono',
-    label: 'Teléfono',
-    width: 6,
-    maxLength: 50,
-    pattern: '^[+]?[0-9\\s]*$',
-    patternMessage: 'El teléfono solo permite números, espacios y el prefijo +',
-  },
-  {
-    name: 'email',
-    label: 'Email',
-    type: 'email',
-    width: 6,
-    maxLength: 255,
-  },
-  { name: 'direccion', label: 'Dirección' },
-];
-
 /**
- * @description Page component for managing suppliers (proveedores).
- * Implements full CRUD with a searchable, sortable table and export capabilities.
- * @returns The Proveedores React page element.
+ * Documentación en español.
  */
 const Proveedores: React.FC = () => {
   const { t } = useTranslation();
@@ -103,11 +61,9 @@ const Proveedores: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-  /**
-   * @description Fetches the paginated and filtered list of suppliers from the API.
-   * Updates data, totalPages, and totalItems state. Sets an error message on failure.
-   * @returns Promise that resolves when supplier data is loaded.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -137,11 +93,9 @@ const Proveedores: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  /**
-   * @description Confirms and executes deletion of the currently selected supplier.
-   * Removes the supplier from local state on success and shows a toast notification.
-   * @returns Promise that resolves when deletion is complete.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -163,12 +117,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Handles saving a supplier — either creating a new one or updating an existing one.
-   * Calls the appropriate API endpoint based on presence of formData.id.
-   * @param formData - Form values with supplier fields and optional id for updates.
-   * @returns Promise that resolves when the supplier is saved.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
@@ -201,36 +152,32 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Opens the edit modal pre-populated with the given supplier's data.
-   * @param row - The supplier row to edit.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleEditClick = (row: Proveedor) => {
     setItemToEdit({ ...row } as unknown as Record<string, unknown>);
   };
 
-  /**
-   * @description Opens the detail view modal for the given supplier.
-   * @param row - The supplier row to view.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleViewClick = (row: Proveedor) => {
     setItemToView(row);
   };
 
-  /**
-   * @description Handles column sort toggling. Alternates between asc/desc for the same column.
-   * @param key - The column key to sort by.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSort = (key: string | keyof Proveedor) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
     setSortOrder(isAsc ? 'desc' : 'asc');
     setSortBy(key as string);
   };
 
-  /**
-   * @description Triggers a PDF export of the current filtered suppliers list.
-   * @returns Promise that resolves when the download is initiated.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleExportPdf = async () => {
     try {
       await DownloadService.downloadFile(
@@ -242,10 +189,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Triggers an Excel export of the current filtered suppliers list.
-   * @returns Promise that resolves when the download is initiated.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleExportExcel = async () => {
     try {
       await DownloadService.downloadFile(
@@ -257,11 +203,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-  /**
-   * @description Exports a single supplier's record as a PDF using its NIF or name as the search filter.
-   * @param proveedor - The supplier whose individual PDF will be downloaded.
-   * @returns Promise that resolves when the download is initiated.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleExportIndividualPdf = async (proveedor: Proveedor) => {
     try {
       // Usamos el searchTerm con el NIF para filtrar solo este proveedor
@@ -278,6 +222,48 @@ const Proveedores: React.FC = () => {
   const canEdit = usePermission(PERMISSIONS.proveedores.editar);
   const canDelete = usePermission(PERMISSIONS.proveedores.eliminar);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
+  const proveedorSchema: DynamicField[] = useMemo(
+    () => [
+      {
+        name: 'nif',
+        label: t('proveedores.form.nifCuit'),
+        required: true,
+        width: 4,
+        maxLength: 20,
+        pattern: '^[a-zA-Z0-9]+$',
+        patternMessage: t('proveedores.form.nifPattern'),
+      },
+      {
+        name: 'nombre',
+        label: t('proveedores.form.razonSocial'),
+        required: true,
+        width: 8,
+        maxLength: 100,
+      },
+      {
+        name: 'contacto',
+        label: t('proveedores.form.personaContacto'),
+        maxLength: 100,
+      },
+      {
+        name: 'telefono',
+        label: t('proveedores.form.telefono'),
+        width: 6,
+        maxLength: 50,
+        pattern: '^[+]?[0-9\\s]*$',
+        patternMessage: t('proveedores.form.telefonoPattern'),
+      },
+      {
+        name: 'email',
+        label: t('proveedores.form.email'),
+        type: 'email',
+        width: 6,
+        maxLength: 255,
+      },
+      { name: 'direccion', label: t('proveedores.form.direccion') },
+    ],
+    [t]
+  );
 
   const columns: Column<Proveedor>[] = [
     { id: 'nombre', label: t('proveedores.columns.nombre'), sortable: true },
@@ -311,11 +297,9 @@ const Proveedores: React.FC = () => {
     },
   ];
 
-  /**
-   * @description Renders the action buttons (view, edit, delete) for a supplier table row.
-   * @param row - The supplier row for which to render actions.
-   * @returns A Stack of icon buttons appropriate for the user's permissions.
-   */
+        /**
+     * Documentación en español.
+     */
   const renderActions = (row: Proveedor) => (
     <Stack direction="row" spacing={1} justifyContent="center">
       <Tooltip title={t('proveedores.actions.verDetalle')}>
@@ -401,7 +385,9 @@ const Proveedores: React.FC = () => {
           sortConfig={{ key: sortBy || '', direction: sortOrder }}
           defaultViewMode="list"
           onRowClick={handleViewClick}
-          getRowAriaLabel={(row) => `Ver detalle de proveedor ${row.nombre}`}
+          getRowAriaLabel={(row) =>
+            t('proveedores.actions.ariaVerDetalle', { nombre: row.nombre })
+          }
           emptyStateMessage={
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <StorefrontOutlinedIcon

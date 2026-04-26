@@ -32,35 +32,35 @@ import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * REST controller that exposes endpoints for managing goods receipts (Recepcion),
- * including stock processing, paginated listing, PDF report generation, and CRUD operations.
- *
- * @class RecepcionController
+ * Documentación en español.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepciones')
 export class RecepcionController {
-  /**
-   * Creates an instance of RecepcionController.
-   *
-   * @param {RecepcionService} recepcionService - Service for receipt CRUD operations.
-   * @param {RecepcionStockService} recepcionStockService - Service that processes stock updates on receipt.
-   * @param {PdfReportService} pdfReportService - Service for generating PDF receipt reports.
-   */
+  private withRecepcionLabels<T extends { estado?: string | null }>(
+    recepcion: T
+  ): T & { estadoLabelKey?: string } {
+    if (!recepcion?.estado) {
+      return recepcion;
+    }
+
+    return {
+      ...recepcion,
+      estadoLabelKey: `enum.recepcionEstado.${String(recepcion.estado).toUpperCase()}`,
+    };
+  }
+        /**
+     * Documentación en español.
+     */
   constructor(
     private readonly recepcionService: RecepcionService,
     private readonly recepcionStockService: RecepcionStockService,
     private readonly pdfReportService: PdfReportService
   ) {}
 
-  /**
-   * Processes a new goods receipt, updating inventory stock accordingly.
-   * If no user is specified in the payload, the authenticated user is used.
-   *
-   * @param {CreateRecepcionDto} dto - Receipt creation payload.
-   * @param {{ user: { id: string } }} req - Authenticated request object.
-   * @returns {Promise<RecepcionResultadoDto>} Result object summarising the processed receipt.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -73,14 +73,9 @@ export class RecepcionController {
     return this.recepcionStockService.procesarRecepcion(dto);
   }
 
-  /**
-   * Returns a paginated list of goods receipts. Admin users also receive
-   * soft-deleted records.
-   *
-   * @param {PaginationQueryDto} query - Pagination and sort parameters.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<PaginatedResponseDto<Recepcion>>} Paginated receipt list.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   findAll(
@@ -89,17 +84,15 @@ export class RecepcionController {
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Recepcion>> {
     const userRole = req.user?.rol;
-    return this.recepcionService.findAll(query, userRole);
+    return this.recepcionService.findAll(query, userRole).then((result) => ({
+      ...result,
+      data: result.data.map((recepcion) => this.withRecepcionLabels(recepcion)),
+    }));
   }
 
-  /**
-   * Generates and streams a PDF report of receipts matching the provided filters.
-   * The response is sent with appropriate PDF headers for file download.
-   *
-   * @param {RecepcionReportePdfDto} filters - Date-range and other filter parameters for the report.
-   * @param {Response} res - Express response object used for streaming the PDF.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('reporte-pdf')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   async reportePdf(
@@ -114,13 +107,9 @@ export class RecepcionController {
     await this.pdfReportService.generateReport(filters, res);
   }
 
-  /**
-   * Retrieves a single goods receipt by UUID with full relation data.
-   *
-   * @param {string} id - UUID v7 of the receipt.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<Recepcion>} The found receipt entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recepciones.ver)
   findOne(
@@ -128,17 +117,14 @@ export class RecepcionController {
     @Req() req: { user?: { rol?: string } }
   ): Promise<Recepcion> {
     const userRole = req.user?.rol;
-    return this.recepcionService.findOne(id, userRole);
+    return this.recepcionService
+      .findOne(id, userRole)
+      .then((recepcion) => this.withRecepcionLabels(recepcion));
   }
 
-  /**
-   * Partially updates a goods receipt's editable fields.
-   *
-   * @param {string} id - UUID v7 of the receipt to update.
-   * @param {UpdateRecepcionDto} dto - Fields to update.
-   * @param {{ user: { id: string } }} req - Authenticated request object.
-   * @returns {Promise<Recepcion>} The updated receipt entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recepciones.editar)
   update(
@@ -146,15 +132,14 @@ export class RecepcionController {
     @Body() dto: UpdateRecepcionDto,
     @Req() req: { user: { id: string } }
   ): Promise<Recepcion> {
-    return this.recepcionService.update(id, dto, req.user.id);
+    return this.recepcionService
+      .update(id, dto, req.user.id)
+      .then((recepcion) => this.withRecepcionLabels(recepcion));
   }
 
-  /**
-   * Soft-deletes a goods receipt. Returns HTTP 204 No Content on success.
-   *
-   * @param {string} id - UUID v7 of the receipt to delete.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recepciones.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

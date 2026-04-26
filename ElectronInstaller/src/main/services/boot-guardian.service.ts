@@ -29,49 +29,36 @@ import { computeBackoffInterval, shouldRunRecovery } from "./supervisor-policy";
 
 export interface BootGuardianOptions {
   onLog: (message: string) => void;
-  /**
-   * Intervalo base en ms para verificar salud de contenedores.
-   * Se usa como base para el backoff exponencial. Por defecto 30 000 (30 s).
-   */
+        /**
+     * Documentación en español.
+     */
   baseHealthCheckIntervalMs?: number;
-  /**
-   * Intervalo máximo en ms para el backoff exponencial. Por defecto 1 800 000 (30 min).
-   */
+        /**
+     * Documentación en español.
+     */
   maxHealthCheckIntervalMs?: number;
-  /**
-   * Máximo de reintentos por nivel de recuperación antes de escalar.
-   * Por defecto 3.
-   */
+        /**
+     * Documentación en español.
+     */
   maxRetriesPerLevel?: number;
-  /**
-   * Habilitar configuración automática de Docker Desktop para iniciar con el SO.
-   * Por defecto true.
-   */
+        /**
+     * Documentación en español.
+     */
   enableDockerAutostart?: boolean;
-  /**
-   * Tiempo máximo de espera para que Docker Desktop arranque (ms).
-   * Por defecto 120 000 (2 minutos).
-   */
+        /**
+     * Documentación en español.
+     */
   dockerStartupTimeoutMs?: number;
-  /**
-   * Delay en ms después de un resume del SO antes de verificar salud.
-   * Por defecto 20 000 (20 s).
-   */
+        /**
+     * Documentación en español.
+     */
   postResumeDelayMs?: number;
   onSnapshot?: (snapshot: SupervisorSnapshot) => void;
   onTrayStateChange?: (state: "healthy" | "recovering" | "degraded") => void;
 }
 
 /**
- * Servicio que garantiza la alta disponibilidad del stack Docker.
- *
- * Mejoras sobre la versión anterior:
- * - Recuperación graduada en 3 niveles (restart service → stack up → full recreate).
- * - Backoff exponencial: el watchdog NUNCA se detiene permanentemente.
- * - Soporte multi-OS para arrancar Docker Desktop (Windows, macOS, Linux).
- * - Persistencia de estado en disco (sobrevive a reinicios de Electron).
- * - Health broadcast al renderer via IPC push.
- * - Preparado para eventos de power (sleep/resume) inyectados desde index.ts.
+ * Documentación en español.
  */
 export class BootGuardianService {
   private readonly dockerOrchestrator = new DockerOrchestratorService();
@@ -131,16 +118,16 @@ export class BootGuardianService {
     this.onTrayStateChange = options.onTrayStateChange;
   }
 
-  /**
-   * Permite al proceso principal inyectar la ventana para health push.
-   */
+        /**
+     * Documentación en español.
+     */
   setMainWindow(window: BrowserWindow | null): void {
     this.mainWindow = window;
   }
 
-  /**
-   * Retorna el estado actual del watchdog para consultas on-demand.
-   */
+        /**
+     * Documentación en español.
+     */
   getStatus(): HealthUpdateEvent {
     return {
       health: this.lastHealth,
@@ -195,15 +182,9 @@ export class BootGuardianService {
     };
   }
 
-  /**
-   * Ejecuta la secuencia completa de arranque automático:
-   * 1. Carga estado persistido previo.
-   * 2. Verifica y configura Docker Desktop para inicio automático.
-   * 3. Resuelve la ruta runtime de la instalación.
-   * 4. Espera a que Docker Desktop esté operativo.
-   * 5. Levanta el stack si no está corriendo.
-   * 6. Inicia el watchdog periódico con backoff exponencial.
-   */
+        /**
+     * Documentación en español.
+     */
   async bootstrap(): Promise<void> {
     if (this.running) {
       this.log(
@@ -261,9 +242,9 @@ export class BootGuardianService {
     this.log("[BOOT-GUARDIAN] Watchdog de alta disponibilidad activado ✅");
   }
 
-  /**
-   * Detiene el watchdog y libera recursos.
-   */
+        /**
+     * Documentación en español.
+     */
   stop(): void {
     if (this.watchdogTimer) {
       clearTimeout(this.watchdogTimer);
@@ -275,10 +256,9 @@ export class BootGuardianService {
     this.log("[BOOT-GUARDIAN] Watchdog detenido.");
   }
 
-  /**
-   * Llamado desde index.ts cuando el SO se reanuda tras sleep/hibernate.
-   * Espera un delay prudencial y luego fuerza un ciclo de health check.
-   */
+        /**
+     * Documentación en español.
+     */
   async onSystemResume(): Promise<void> {
     if (!this.running || !this.runtimePath) {
       return;
@@ -295,9 +275,9 @@ export class BootGuardianService {
     await this.watchdogCycle();
   }
 
-  /**
-   * Llamado desde index.ts cuando el SO entra en suspensión.
-   */
+        /**
+     * Documentación en español.
+     */
   onSystemSuspend(): void {
     this.log(
       "[BOOT-GUARDIAN] Sistema entrando en suspensión. Registrando evento.",
@@ -369,10 +349,9 @@ export class BootGuardianService {
     }
   }
 
-  /**
-   * Verifica si Docker Engine responde. Si no, intenta arrancarlo según la
-   * plataforma (Windows, macOS, Linux) y espera hasta que esté disponible.
-   */
+        /**
+     * Documentación en español.
+     */
   private async ensureDockerDesktopRunning(): Promise<boolean> {
     const initialProbe = await this.dockerReadiness.probe({
       source: "boot-guardian",
@@ -437,15 +416,9 @@ export class BootGuardianService {
 
   // ── Graduated Recovery ────────────────────────────────────────
 
-  /**
-   * Verifica salud y aplica recuperación graduada:
-   * - Nivel 1: reinicio de servicio puntual.
-   * - Nivel 2: docker compose up -d.
-   * - Nivel 3: recreate completo.
-   * - Nivel 4: prune + recreate.
-   * - Nivel 5: reinicio Docker Desktop.
-   * - Nivel 6: escalado a intervención guiada.
-   */
+        /**
+     * Documentación en español.
+     */
   private async ensureStackHealthy(runtimePath: string): Promise<void> {
     const healthResult = await this.dockerOrchestrator.getHealth(runtimePath);
 
@@ -629,9 +602,9 @@ export class BootGuardianService {
     }
   }
 
-  /**
-   * Nivel 1: Reinicia solo los servicios individuales que están unhealthy.
-   */
+        /**
+     * Documentación en español.
+     */
   private async performRecoveryLevel1(
     runtimePath: string,
     downServices: ServiceHealth[],
@@ -675,9 +648,9 @@ export class BootGuardianService {
     return false;
   }
 
-  /**
-   * Nivel 2: docker compose up -d (sin --build ni --force-recreate).
-   */
+        /**
+     * Documentación en español.
+     */
   private async performRecoveryLevel2(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 2: compose up -d");
     this.log(
@@ -704,9 +677,9 @@ export class BootGuardianService {
     return false;
   }
 
-  /**
-   * Nivel 3: Full startStack (down + up --build --force-recreate).
-   */
+        /**
+     * Documentación en español.
+     */
   private async performRecoveryLevel3(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 3: compose down && up -d --build");
     this.log(
@@ -802,11 +775,9 @@ export class BootGuardianService {
     }, intervalMs);
   }
 
-  /**
-   * Calcula el intervalo actual con backoff exponencial.
-   * Fórmula: min(baseInterval × 2^failures, maxInterval)
-   * Reset a baseInterval cuando todos los servicios están healthy.
-   */
+        /**
+     * Documentación en español.
+     */
   private computeCurrentInterval(): number {
     if (this.consecutiveFailures === 0) {
       return this.baseIntervalMs;

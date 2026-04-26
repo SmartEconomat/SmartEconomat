@@ -19,6 +19,7 @@ import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
 import { fetchAllProductos } from '../services/producto.service';
+import { useTranslation } from 'react-i18next';
 
 const formatProductoMedidaLabel = (
   contenido?: number,
@@ -32,6 +33,7 @@ const formatProductoMedidaLabel = (
 };
 
 const MermasPage: React.FC = () => {
+  const { t } = useTranslation();
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [stats, setStats] = useState<IMermaStats | null>(null);
   const [total, setTotal] = useState(0);
@@ -72,7 +74,7 @@ const MermasPage: React.FC = () => {
       setStats(statsData);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al cargar datos de mermas';
+        err instanceof Error ? err.message : t('mermas.toast.errorCargar');
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -106,12 +108,12 @@ const MermasPage: React.FC = () => {
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success('Merma registrada correctamente');
+      toast.success(t('mermas.toast.registrada'));
       setIsModalOpen(false);
       loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al registrar merma';
+        err instanceof Error ? err.message : t('mermas.toast.errorRegistrar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -129,12 +131,12 @@ const MermasPage: React.FC = () => {
     <Box>
       <PageToolbar
         id="mermas-toolbar"
-        title="Gestión de Mermas"
+        title={t('mermas.titulo')}
         icon={<BrokenImageOutlinedIcon />}
         totalItems={total}
-        totalItemsLabel="registros"
+        totalItemsLabel={t('mermas.totalItemsLabel')}
         primaryAction={{
-          label: 'Reportar Merma',
+          label: t('mermas.acciones.registrar'),
           id: 'btn-reportar-merma',
           icon: <AddIcon />,
           onClick: () => setIsModalOpen(true),
@@ -152,7 +154,7 @@ const MermasPage: React.FC = () => {
           sx={{ p: 3, borderRadius: 2 }}
         >
           <Typography variant="h6" fontWeight={600} mb={3}>
-            Historial de Mermas
+            {t('mermas.historial')}
           </Typography>
           <MermasTable
             data={mermas}
@@ -171,12 +173,12 @@ const MermasPage: React.FC = () => {
       <DynamicFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Registrar Merma de Producto"
+        title={t('mermas.modal.titulo')}
         fields={dynamicSchema}
         onSubmit={handleCreateMerma}
         isSubmitting={isSaving}
         requireConfirmation={true}
-        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+        confirmationMessage={t('mermas.modal.confirmacion')}
       />
     </Box>
   );

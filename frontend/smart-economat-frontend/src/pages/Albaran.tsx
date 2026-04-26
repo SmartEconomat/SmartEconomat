@@ -49,14 +49,15 @@ import AlbaranFilters, {
   AlbaranFiltersState,
 } from '../features/albaranes/AlbaranFilters';
 import UploadDocumentoModal from '../features/albaranes/UploadDocumentoModal';
+import {
+  formatLocalizedDate,
+  formatLocalizedDateTime,
+} from '../utils/intlFormat';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * Formats a byte count into a human-readable file size string.
- * Returns '—' when no value is provided.
- * @param bytes - File size in bytes.
- * @returns Formatted string such as '1.2 KB' or '3.4 MB'.
+ * Documentación en español.
  */
 const formatFileSize = (bytes?: number): string => {
   if (!bytes) return '—';
@@ -78,20 +79,17 @@ interface ProductoAlbaranDetalle {
 // ─── Componente principal ────────────────────────────────────────────────────
 
 /**
- * Page component for managing Albaranes (delivery notes).
- * Provides listing, creation, editing, deletion, and document upload
- * functionality with permission-based action visibility.
+ * Documentación en español.
  */
 const AlbaranPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
 
   // ─── Esquema del formulario ────────────────────────────────────────────────
 
-  /**
-   * Dynamic field definitions for the Albaran create/edit form.
-   * Defined inside the component so `t()` can be used for labels.
-   */
+        /**
+     * Documentación en español.
+     */
   const ALBARAN_FORM_FIELDS: DynamicField[] = [
     {
       name: 'nAlbaran',
@@ -155,10 +153,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Carga de datos ──────────────────────────────────────────────────────
 
-  /**
-   * Fetches the paginated list of Albaranes from the API and updates
-   * component state. Re-runs whenever page, pageSize, or searchTerm changes.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -188,10 +185,9 @@ const AlbaranPage: React.FC = () => {
   // ─── Filtrado local (concordancia y fechas) ──────────────────────────────
   // El backend no implementa estos filtros, se aplican sobre la página actual.
 
-  /**
-   * Locally filtered subset of `data` applying concordancia and date range
-   * filters that are not handled by the backend.
-   */
+        /**
+     * Documentación en español.
+     */
   const filteredData = useMemo(() => {
     let result = data;
 
@@ -215,28 +211,25 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Handlers de CRUD ───────────────────────────────────────────────────
 
-  /**
-   * Opens the creation form modal with an empty state.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleOpenCreate = () => {
     setItemToEdit(null);
     setIsFormOpen(true);
   };
 
-  /**
-   * Opens the edit form modal pre-populated with the given albaran's data.
-   * @param albaran - The Albaran record to edit.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleOpenEdit = (albaran: Albaran) => {
     setItemToEdit(albaran);
     setIsFormOpen(true);
   };
 
-  /**
-   * Fetches the full detail of an albaran and opens the detail modal.
-   * Falls back to the list-level data if the detail fetch fails.
-   * @param albaran - The Albaran record to view.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleOpenView = async (albaran: Albaran) => {
     if (!canView) {
       setItemToView(albaran);
@@ -249,17 +242,16 @@ const AlbaranPage: React.FC = () => {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : t('albaran.errors.cargarDetalle');
-      toast.error(`${message}. Se mostrará la información disponible.`);
+      toast.error(
+        t('albaran.errors.cargarDetalleConFallback', { message })
+      );
       setItemToView(albaran);
     }
   };
 
-  /**
-   * Handles submission of the create/edit form.
-   * Converts the concordancia string value back to boolean/undefined and
-   * dispatches either a create or update API call accordingly.
-   * @param formData - Key-value map of form field values.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleFormSubmit = async (formData: Record<string, unknown>) => {
     setIsSubmitting(true);
     try {
@@ -303,10 +295,9 @@ const AlbaranPage: React.FC = () => {
     }
   };
 
-  /**
-   * Deletes the albaran currently staged in `itemToDelete`.
-   * Shows a success or error toast and refreshes the list on completion.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -324,13 +315,9 @@ const AlbaranPage: React.FC = () => {
     }
   };
 
-  /**
-   * Uploads a document file and associates it with the current albaran.
-   * @param file - The file to upload.
-   * @param numeroReferencia - The albaran reference number.
-   * @param recepcionId - Optional reception ID to link the document to.
-   * @param observaciones - Optional free-text observations.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleUploadDocumento = async (
     file: File,
     numeroReferencia: string,
@@ -359,10 +346,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Datos iniciales del formulario de edición ───────────────────────────
 
-  /**
-   * Derives the initial form values from `itemToEdit`.
-   * Returns an empty object when creating a new albaran.
-   */
+        /**
+     * Documentación en español.
+     */
   const formInitialData = useMemo(() => {
     if (!itemToEdit) return {};
     return {
@@ -420,10 +406,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Columnas de la tabla ────────────────────────────────────────────────
 
-  /**
-   * Column definitions for the Albaranes data table.
-   * Each column specifies an id, translated label, and optional render function.
-   */
+        /**
+     * Documentación en español.
+     */
   const columns: Column<Albaran>[] = useMemo(
     () => [
       {
@@ -440,7 +425,7 @@ const AlbaranPage: React.FC = () => {
         id: 'fecha',
         label: t('albaran.columns.fecha'),
         render: (row) =>
-          row.fecha ? new Date(row.fecha).toLocaleDateString('es-ES') : '—',
+          row.fecha ? formatLocalizedDate(row.fecha) : '—',
         sortable: true,
       },
       {
@@ -500,17 +485,14 @@ const AlbaranPage: React.FC = () => {
         ),
       },
     ],
-    [t]
+    [t, i18n.language]
   );
 
   // ─── Acciones por fila ───────────────────────────────────────────────────
 
-  /**
-   * Renders the action buttons (view, upload, edit, delete) for a table row.
-   * Visibility of each button is controlled by the user's permissions.
-   * @param row - The Albaran record for which to render actions.
-   * @returns A stack of icon buttons.
-   */
+        /**
+     * Documentación en español.
+     */
   const renderActions = (row: Albaran) => (
     <Stack
       direction="row"
@@ -582,11 +564,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Secciones del modal de detalle ─────────────────────────────────────
 
-  /**
-   * Builds the section/field structure consumed by `DetailModal`.
-   * Includes albaran info, optional document details, linked receptions,
-   * and linked product lines.
-   */
+        /**
+     * Documentación en español.
+     */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
 
@@ -598,7 +578,7 @@ const AlbaranPage: React.FC = () => {
           {
             label: t('albaran.detalle.fecha'),
             value: itemToView.fecha
-              ? new Date(itemToView.fecha).toLocaleDateString('es-ES')
+              ? formatLocalizedDate(itemToView.fecha)
               : '—',
           },
           {
@@ -612,7 +592,7 @@ const AlbaranPage: React.FC = () => {
           },
           {
             label: t('albaran.detalle.fechaRegistro'),
-            value: new Date(itemToView.createdAt).toLocaleString('es-ES'),
+            value: formatLocalizedDateTime(itemToView.createdAt),
           },
         ],
       },
@@ -650,32 +630,43 @@ const AlbaranPage: React.FC = () => {
           ]
         : []),
       {
-        title: `Recepciones Vinculadas (${itemToView.albaranPedidoRecepcion?.length ?? 0})`,
+        title: t('albaran.detalle.recepcionesVinculadas', {
+          count: itemToView.albaranPedidoRecepcion?.length ?? 0,
+        }),
         fields: itemToView.albaranPedidoRecepcion?.length
           ? itemToView.albaranPedidoRecepcion.map((apr, idx) => ({
-              label: `Recepción ${idx + 1}`,
+              label: t('albaran.detalle.recepcionItem', { index: idx + 1 }),
               value: apr.recepcionPedidoId,
             }))
           : [{ label: t('albaran.detalle.sinRecepciones'), value: '—' }],
       },
       {
-        title: `Productos Vinculados (${productosVinculados.length})`,
+        title: t('albaran.detalle.productosVinculados', {
+          count: productosVinculados.length,
+        }),
         fields: productosVinculados.length
           ? productosVinculados.map((linea, idx) => ({
-              label: `Producto ${idx + 1}`,
-              value: `${linea.nombre} · Cantidad recibida: ${linea.cantidadRecibida} ${linea.unidad} · Proveedor: ${linea.proveedor} · Estado: ${linea.estadoProducto} · Recepción: ${linea.recepcionId}`,
+              label: t('albaran.detalle.productoItem', { index: idx + 1 }),
+              value: t('albaran.detalle.productoResumen', {
+                nombre: linea.nombre,
+                cantidadRecibida: linea.cantidadRecibida,
+                unidad: linea.unidad,
+                proveedor: linea.proveedor,
+                estado: linea.estadoProducto,
+                recepcionId: linea.recepcionId,
+              }),
               fullWidth: true,
             }))
           : [
               {
-                label: 'Sin productos vinculados',
+                label: t('albaran.detalle.sinProductosVinculados'),
                 value: t('albaran.detalle.sinLineas'),
                 fullWidth: true,
               },
             ],
       },
     ];
-  }, [itemToView, productosVinculados, t]);
+  }, [itemToView, productosVinculados, t, i18n.language]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 

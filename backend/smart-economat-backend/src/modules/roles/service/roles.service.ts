@@ -20,8 +20,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 
 /**
- * Servicio para la gestión de roles y asignaciones.
- * Incluye invalidación de cache cuando hay cambios.
+ * Documentación en español.
  */
 @Injectable()
 export class RolesService {
@@ -37,9 +36,9 @@ export class RolesService {
     private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
-  /**
-   * Crear un nuevo rol
-   */
+        /**
+     * Documentación en español.
+     */
   async create(dto: CreateRolDto): Promise<Rol> {
     const existente = await this.rolRepo.findOne({
       where: { nombre: dto.nombre },
@@ -127,9 +126,9 @@ export class RolesService {
     return this.findOne(rol.id);
   }
 
-  /**
-   * Listar todos los roles con paginación
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(query: PaginationQueryDto): Promise<PaginatedResponseDto<Rol>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 10, 50);
@@ -152,9 +151,9 @@ export class RolesService {
     };
   }
 
-  /**
-   * Obtener todos los roles sin paginación (para selectores)
-   */
+        /**
+     * Documentación en español.
+     */
   async findAllNoPagination(): Promise<Rol[]> {
     return this.rolRepo.find({
       where: { activo: true },
@@ -162,9 +161,9 @@ export class RolesService {
     });
   }
 
-  /**
-   * Obtener un rol por ID con sus permisos
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<Rol> {
     const rol = await this.rolRepo.findOne({
       where: { id },
@@ -180,9 +179,9 @@ export class RolesService {
     return rol;
   }
 
-  /**
-   * Actualizar un rol
-   */
+        /**
+     * Documentación en español.
+     */
   async update(id: string, dto: UpdateRolDto): Promise<Rol> {
     const rol = await this.findOne(id);
 
@@ -220,9 +219,9 @@ export class RolesService {
     return this.findOne(id);
   }
 
-  /**
-   * Eliminar un rol (soft delete)
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const rol = await this.findOne(id);
 
@@ -244,9 +243,9 @@ export class RolesService {
     await this.rolRepo.softDelete(id);
   }
 
-  /**
-   * Asignar permisos a un rol
-   */
+        /**
+     * Documentación en español.
+     */
   async assignPermissions(
     rolId: string,
     dto: AssignPermissionsDto,
@@ -285,9 +284,9 @@ export class RolesService {
     return this.findOne(rolId);
   }
 
-  /**
-   * Asignar un rol a un usuario
-   */
+        /**
+     * Documentación en español.
+     */
   async assignRoleToUser(
     dto: AssignRoleToUserDto,
     asignadoPor?: string
@@ -326,9 +325,9 @@ export class RolesService {
     return saved;
   }
 
-  /**
-   * Remover un rol de un usuario
-   */
+        /**
+     * Documentación en español.
+     */
   async removeRoleFromUser(usuarioId: string, rolId: string): Promise<void> {
     const usuarioRol = await this.usuarioRolRepo.findOne({
       where: { usuarioId, rolId },
@@ -345,9 +344,9 @@ export class RolesService {
     await this.authPermissionsService.invalidateUserCache(usuarioId);
   }
 
-  /**
-   * Obtener roles de un usuario
-   */
+        /**
+     * Documentación en español.
+     */
   async getUserRoles(usuarioId: string): Promise<Rol[]> {
     const usuario = await this.usuarioRepo.findOne({
       where: { id: usuarioId },
@@ -363,9 +362,9 @@ export class RolesService {
     return usuario.roles || [];
   }
 
-  /**
-   * Invalidar cache de todos los usuarios que tengan un rol específico
-   */
+        /**
+     * Documentación en español.
+     */
   private async invalidateCacheForRole(rolId: string): Promise<void> {
     const usuarioRoles = await this.usuarioRolRepo.find({
       where: { rolId, activo: true },

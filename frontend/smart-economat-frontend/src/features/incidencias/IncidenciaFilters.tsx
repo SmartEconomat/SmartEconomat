@@ -3,33 +3,35 @@ import { Box, TextField } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Represents the current state of the incidencia date-range filters.
+ * Documentación en español.
  */
 export interface IncidenciaFiltersState {
-  /** ISO date string for the start of the filter range, or null if not set. */
+        /**
+     * Documentación en español.
+     */
   startDate: string | null;
-  /** ISO date string for the end of the filter range, or null if not set. */
+        /**
+     * Documentación en español.
+     */
   endDate: string | null;
 }
 
 /**
- * Props for the {@link IncidenciaFilters} component.
+ * Documentación en español.
  */
 interface IncidenciaFiltersProps {
-  /** Current filter values. */
+        /**
+     * Documentación en español.
+     */
   filters: IncidenciaFiltersState;
-  /** Callback invoked whenever a filter value changes. */
+        /**
+     * Documentación en español.
+     */
   onChange: (filters: IncidenciaFiltersState) => void;
 }
 
 /**
- * Date-range filter toolbar for the incidencias list.
- * Renders "desde" (from) and "hasta" (to) date pickers.
- *
- * @param {IncidenciaFiltersProps} props - Component props.
- * @returns JSX rendered filter toolbar.
- * @example
- * <IncidenciaFilters filters={filters} onChange={setFilters} />
+ * Documentación en español.
  */
 const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
   filters,
@@ -37,12 +39,9 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  /**
-   * Returns a change handler for a date field.
-   *
-   * @param field - Which date field to update ('startDate' or 'endDate').
-   * @returns An input change handler that updates the specified date field.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {

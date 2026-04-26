@@ -1,39 +1,41 @@
 import { SxProps, Theme } from '@mui/material';
 import StatusChip from './StatusChip';
 import { ROLE_COLORS } from '../../utils/theme/roleColors';
+import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
-/** Valid role names; any other string is also accepted. */
+/**
+ * Documentación en español.
+ */
 export type RolType = 'Administrador' | 'Profesor' | 'Alumno' | string;
 
 /**
- * Props for the {@link RoleBadge} component.
+ * Documentación en español.
  */
 export interface RoleBadgeProps {
-  /** Role name displayed in the badge. Drives the background colour selection. */
+        /**
+     * Documentación en español.
+     */
   rol: RolType;
-  /** Size of the underlying chip. Defaults to `'small'`. */
+        /**
+     * Documentación en español.
+     */
   size?: 'small' | 'medium';
-  /** Additional MUI `sx` styles forwarded to the chip. */
+        /**
+     * Documentación en español.
+     */
   sx?: SxProps<Theme>;
 }
 
 /**
- * Coloured chip badge that displays a user role.
- *
- * Background colour is resolved from {@link ROLE_COLORS} based on whether the
- * role name contains "admin", "profesor", or "alumno" (case-insensitive).
- * All other roles fall back to the default colour.
- *
- * @param props - See {@link RoleBadgeProps}.
- * @returns JSX element rendering a {@link StatusChip} styled for the given role.
- * @example
- * <RoleBadge rol="Administrador" />
+ * Documentación en español.
  */
 export const RoleBadge: React.FC<RoleBadgeProps> = ({
   rol,
   size = 'small',
   sx,
 }) => {
+  const { t } = useTranslation();
   const getRolColor = (rolName: string) => {
     if (rolName.toLowerCase().includes('admin'))
       return ROLE_COLORS.Administrador;
@@ -47,7 +49,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
   return (
     <StatusChip
       status="default"
-      label={rol}
+      label={getEnumLabel(t, 'rolUsuario', rol)}
       size={size}
       sx={{
         width: '130px',

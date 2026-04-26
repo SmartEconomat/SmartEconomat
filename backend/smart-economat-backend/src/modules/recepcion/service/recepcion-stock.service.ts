@@ -88,20 +88,7 @@ type RecepcionLineaProcesada = RecepcionLineDto & {
 };
 
 /**
- * Core stock-reception service that processes incoming goods into inventory.
- *
- * Supports two flows:
- * - **`procesarRecepcionMasiva`** — batch reception for a single purchase order.
- * - **`procesarRecepcion`** — standard reception for one or many orders with
- *   optional new-product registration.
- *
- * Both flows run inside a database transaction and:
- * 1. Create {@link Recepcion} + {@link RecepcionPedido} + {@link Albaran} records.
- * 2. Upsert {@link Inventario} lots (FEFO-safe) and write {@link Movimiento} audit entries.
- * 3. Record a {@link HistorialPrecio} entry and update the PMP on the {@link ProductoProveedor}.
- * 4. Detect quantity/quality discrepancies and auto-create {@link Incidencia} records.
- * 5. Advance the order status machine via {@link PedidoService.handleStatusTransition}.
- * 6. Emit a `recepcion.completada` event on commit.
+ * Documentación en español.
  */
 @Injectable()
 export class RecepcionStockService {
@@ -322,6 +309,7 @@ export class RecepcionStockService {
         await queryRunner.manager.save(batchMovimientos);
         movimientosGenerados = batchMovimientos.length;
 
+        const pmpUpdatesPending = new Map<string, { totalQty: number, weightedSum: number }>();
         for (const item of lineasConInventario) {
           const precioUnitario = Number(item.ppRef.precioUnitario);
           if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
@@ -342,14 +330,17 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const productoProveedorIdPMP = item.ppRef.productoProveedorId;
-          if (productoProveedorIdPMP && this.productoService?.actualizarPMP) {
-            await this.productoService.actualizarPMP(
-              productoProveedorIdPMP,
-              cantidadRecibida,
-              precioUnitario,
-              queryRunner.manager
-            );
+          const pmpData = pmpUpdatesPending.get(item.ppRef.productoProveedorId) || { totalQty: 0, weightedSum: 0 };
+          pmpUpdatesPending.set(item.ppRef.productoProveedorId, {
+            totalQty: pmpData.totalQty + cantidadRecibida,
+            weightedSum: pmpData.weightedSum + (cantidadRecibida * precioUnitario)
+          });
+        }
+
+        for (const [ppId, data] of pmpUpdatesPending.entries()) {
+          if (this.productoService?.actualizarPMP) {
+            const avgPrice = data.weightedSum / data.totalQty;
+            await this.productoService.actualizarPMP(ppId, data.totalQty, avgPrice, queryRunner.manager);
           }
         }
       }
@@ -684,6 +675,7 @@ export class RecepcionStockService {
       }
 
       const sumadoRecibidoPorPP = new Map<string, number>();
+      const pmpUpdatesPending = new Map<string, { totalQty: number, weightedSum: number }>();
       const detallesRecibidos = new Map<string, RecepcionLineaProcesada[]>();
       const pedidoPorPedidoProducto = new Map<string, Pedido>();
 
@@ -862,15 +854,18 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const productoProveedorIdPMP = ppRef.productoProveedorId;
-          if (productoProveedorIdPMP && this.productoService?.actualizarPMP) {
-            await this.productoService.actualizarPMP(
-              productoProveedorIdPMP,
-              cantidadRecibida,
-              precioUnitario,
-              queryRunner.manager
-            );
-          }
+          const pmpData = pmpUpdatesPending.get(ppRef.productoProveedorId) || { totalQty: 0, weightedSum: 0 };
+          pmpUpdatesPending.set(ppRef.productoProveedorId, {
+            totalQty: pmpData.totalQty + cantidadRecibida,
+            weightedSum: pmpData.weightedSum + (cantidadRecibida * precioUnitario)
+          });
+        }
+      }
+
+      for (const [ppId, data] of pmpUpdatesPending.entries()) {
+        if (this.productoService?.actualizarPMP) {
+          const avgPrice = data.weightedSum / data.totalQty;
+          await this.productoService.actualizarPMP(ppId, data.totalQty, avgPrice, queryRunner.manager);
         }
       }
 
@@ -1165,9 +1160,9 @@ export class RecepcionStockService {
     return updatedPedido.estado;
   }
 
-  /**
-   * Obtiene el número de albarán proporcionado o genera uno automático.
-   */
+        /**
+     * Documentación en español.
+     */
   private async getOrGenerateAlbaranNumber(
     nAlbaran?: string,
     manager?: EntityManager

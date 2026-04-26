@@ -31,19 +31,7 @@ interface NewProductModalProps {
 }
 
 /**
- * Modal dialog for adding a new product during the reception flow.
- *
- * Two modes are supported:
- * - **Auto-filled** (product found in the global catalogue): pre-populated
- *   fields are shown for the user to review before confirming.
- * - **Unknown product**: empty form where the user enters the basic product
- *   details manually.
- *
- * @param props.open - Whether the modal is visible.
- * @param props.onClose - Callback invoked when the user dismisses the modal.
- * @param props.modalData - Current form field values.
- * @param props.setModalData - Setter to update individual form fields.
- * @param props.onConfirm - Callback invoked when the user confirms the addition.
+ * Documentación en español.
  */
 const NewProductModal: React.FC<NewProductModalProps> = ({
   open,

@@ -2,10 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Formulario de login internacionalizado
- * @returns {JSX.Element} Formulario de autenticación
- * @example
- * <LoginForm />
+ * Documentación en español.
  */
 export const LoginForm: React.FC = () => {
   const { t } = useTranslation();

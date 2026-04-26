@@ -25,7 +25,7 @@ interface ChangePasswordFormProps {
 }
 
 /**
- * Sección de Seguridad para la Ficha de Perfil.
+ * Documentación en español.
  */
 const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
   isEditing,

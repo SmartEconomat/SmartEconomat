@@ -1,3 +1,6 @@
+/**
+ * Documentación en español.
+ */
 export {
   SherlockPermissionsGuard as AuthPermissionsGuard,
   SherlockPermissionsGuard as PermisosGuard,

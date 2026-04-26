@@ -1,24 +1,25 @@
 /**
- * @module LanguageEnum
- * Supported language codes for the SmartEconomat application.
- * Used to configure locale-specific behavior such as i18n and number formatting.
+ * Documentación en español.
  */
 
 /**
- * Enumeration of supported ISO 639-1 language codes.
- *
- * @constant
- * @example
- * import { LanguageEnum } from './language.enum';
- * const lang = LanguageEnum.ES;
+ * Documentación en español.
  */
 export const LanguageEnum = {
-  /** Spanish */
+        /**
+     * Documentación en español.
+     */
   ES: 'es',
-  /** English */
+        /**
+     * Documentación en español.
+     */
   EN: 'en',
-  /** French */
+        /**
+     * Documentación en español.
+     */
   FR: 'fr',
-  /** German */
+        /**
+     * Documentación en español.
+     */
   DE: 'de',
 };

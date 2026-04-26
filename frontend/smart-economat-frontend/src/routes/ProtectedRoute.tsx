@@ -12,6 +12,9 @@ interface ProtectedRouteProps {
   requiredAnyPermissions?: string[];
 }
 
+/**
+ * Documentación en español.
+ */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredPermission,

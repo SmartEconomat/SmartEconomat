@@ -4,7 +4,10 @@ const { existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+/** Ruta al CLI JS de ts-node (spawn directo de .cmd vía npx falla con EINVAL en Windows + Node reciente). */
+function resolveTsNodeBinJs(cwd) {
+  return resolve(cwd, 'node_modules/ts-node/dist/bin.js');
+}
 
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
@@ -27,9 +30,10 @@ function runSeed() {
   const distCliPath = resolve(cwd, 'dist/seeders/seed.cli.js');
   const passthroughArgs = process.argv.slice(2);
 
-  if (existsSync(tsCliPath)) {
-    runCommand(NPX, [
-      'ts-node',
+  const tsNodeBinJs = resolveTsNodeBinJs(cwd);
+  if (existsSync(tsCliPath) && existsSync(tsNodeBinJs)) {
+    runCommand(process.execPath, [
+      tsNodeBinJs,
       '-r',
       'tsconfig-paths/register',
       '-r',
@@ -38,6 +42,13 @@ function runSeed() {
       ...passthroughArgs,
     ]);
     return;
+  }
+
+  if (existsSync(tsCliPath)) {
+    console.error(
+      '[seed-runner] Falta ts-node. Ejecuta npm install en smart-economat-backend.'
+    );
+    process.exit(1);
   }
 
   if (existsSync(distCliPath)) {

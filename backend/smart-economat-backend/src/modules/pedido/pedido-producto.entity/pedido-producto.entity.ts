@@ -7,14 +7,7 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuario-linea.entity';
 
 /**
- * Entidad PedidoProducto
- *
- * Representa una línea de detalle dentro de un pedido.
- * Vincula un ProductoProveedor específico con la cantidad y precio en el momento de la compra.
- * Mantiene el histórico de precios (precioUnitario) aunque el proveedor cambie sus tarifas luego.
- *
- * @class PedidoProducto
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'pedido_producto' })
 @Index(['pedidoId'])
@@ -23,28 +16,32 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Check(`"cantidad" > 0`)
 @Check(`"precio_unitario" >= 0`)
 export class PedidoProducto extends BaseEntity {
-  /**
-   * Transient flag (not persisted) indicating whether this line has associated
-   * inventory movements. Populated by the service layer for display purposes.
-   */
+        /**
+     * Documentación en español.
+     */
   hasLinkedMovements?: boolean;
 
-  /** Foreign key referencing the parent Pedido. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'pedido_id' })
   pedidoId!: string;
 
-  /** Foreign key referencing the ProductoProveedor for this line. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-  /** Foreign key referencing the originating PedidoUsuarioLinea, if consolidated from a user order. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'pedido_usuario_linea_id', nullable: true })
   pedidoUsuarioLineaId?: string;
 
-  /**
-   * Pedido al que pertenece esta línea.
-   * Constraint: RESTRICT para mantener el histórico de compras.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Pedido, (pedido) => pedido.pedidoProductos, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -52,10 +49,9 @@ export class PedidoProducto extends BaseEntity {
   @JoinColumn({ name: 'pedido_id' })
   pedido!: Relation<Pedido>;
 
-  /**
-   * ProductoProveedor solicitado.
-   * Identifica unívocamente producto + proveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.pedidoProductos, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -70,11 +66,9 @@ export class PedidoProducto extends BaseEntity {
   @JoinColumn({ name: 'pedido_usuario_linea_id' })
   pedidoUsuarioLinea?: Relation<PedidoUsuarioLinea>;
 
-  /**
-   * Cantidad solicitada.
-   * Constraint: Debe ser mayor a 0 (CHECK > 0).
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -83,12 +77,9 @@ export class PedidoProducto extends BaseEntity {
   })
   cantidad!: number;
 
-  /**
-   * Precio unitario acordado en el momento del pedido.
-   * Se congela al crear el pedido para no verse afectado por cambios futuros de tarifas.
-   * Constraint: >= 0.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -98,17 +89,17 @@ export class PedidoProducto extends BaseEntity {
   })
   precioUnitario!: number;
 
-  /** Optional free-text observations for this line (e.g. special packaging requirements). */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 
   /* --- Métodos de Dominio --- */
 
-  /**
-   * Computes the line subtotal as `cantidad * precioUnitario`.
-   *
-   * @returns {number} The line subtotal.
-   */
+        /**
+     * Documentación en español.
+     */
   get subtotal(): number {
     return Number(this.cantidad) * Number(this.precioUnitario);
   }

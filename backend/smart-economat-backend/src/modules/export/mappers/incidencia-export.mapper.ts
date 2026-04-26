@@ -2,8 +2,7 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { ExportColumn } from './producto-export.mapper';
 
 /**
- * @description Column definitions used when exporting Incidencia data to Excel/CSV.
- * Each entry specifies the column header label, the data key, and the column width.
+ * Documentación en español.
  */
 export const INCIDENCIA_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
@@ -18,12 +17,7 @@ export const INCIDENCIA_COLUMNS: ExportColumn[] = [
 ];
 
 /**
- * @description Maps an Incidencia entity to a flat key-value record suitable for an Excel row.
- * Resolution status is derived via `incidencia.estaResuelta()`, nested relation names are
- * resolved with null-safe access, and dates are formatted as ISO date strings (YYYY-MM-DD).
- * @param incidencia - The Incidencia entity to map (requires `pedido.proveedor`, `usuarioResolutor`,
- *   and `lineas` relations loaded for accurate output).
- * @returns A plain record whose keys match the keys declared in {@link INCIDENCIA_COLUMNS}.
+ * Documentación en español.
  */
 export function mapIncidenciaToExcelRow(
   incidencia: Incidencia

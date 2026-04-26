@@ -1,8 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Asegura columna `rol.plantilla_rol_id` (entidad Rol) y FK a `plantilla_rol`.
- * Baseline + SherlockAuth no creaban esta columna; login fallaba con 42703.
+ * Documentación en español.
  */
 export class AddRolPlantillaRolIdColumn1775250000000 implements MigrationInterface {
   name = 'addRolPlantillaRolIdColumn1775250000000';

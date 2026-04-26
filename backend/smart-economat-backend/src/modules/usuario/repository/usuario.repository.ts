@@ -13,6 +13,9 @@ import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 @Injectable()
+/**
+ * Documentación en español.
+ */
 export class UsuarioRepository {
   constructor(
     @InjectRepository(Usuario)
@@ -23,6 +26,9 @@ export class UsuarioRepository {
     private readonly dataSource: DataSource
   ) {}
 
+        /**
+     * Documentación en español.
+     */
   private async resolveRolesForUserRole(role?: Usuario['rol']) {
     if (!role) return undefined;
 
@@ -30,6 +36,9 @@ export class UsuarioRepository {
     return systemRole ? [systemRole] : [];
   }
 
+        /**
+     * Documentación en español.
+     */
   async createUsuario(data: Partial<Usuario>) {
     if (data.status !== undefined && data.activo === undefined) {
       data.activo = data.status === UserStatus.ACTIVE;
@@ -42,6 +51,9 @@ export class UsuarioRepository {
     return this.repo.save(this.repo.create(data));
   }
 
+        /**
+     * Documentación en español.
+     */
   private resolveStatusFilter(
     estado?: string
   ): Pick<Usuario, 'status' | 'activo'> | null {
@@ -66,6 +78,9 @@ export class UsuarioRepository {
     return null;
   }
 
+        /**
+     * Documentación en español.
+     */
   findAll(query: PaginationQueryDto, userRole?: string) {
     const page = query.page ?? 1;
     const paginationOptions = buildFindManyOptions<Usuario>(query, 'username');
@@ -145,6 +160,9 @@ export class UsuarioRepository {
       });
   }
 
+        /**
+     * Documentación en español.
+     */
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
@@ -164,6 +182,9 @@ export class UsuarioRepository {
     });
   }
 
+        /**
+     * Documentación en español.
+     */
   findAllMinimal() {
     return this.repo
       .createQueryBuilder('usuario')
@@ -179,6 +200,9 @@ export class UsuarioRepository {
       .getMany();
   }
 
+        /**
+     * Documentación en español.
+     */
   findByIdWithPassword(id: string) {
     return this.repo
       .createQueryBuilder('usuario')
@@ -187,6 +211,9 @@ export class UsuarioRepository {
       .getOne();
   }
 
+        /**
+     * Documentación en español.
+     */
   async updateUsuario(id: string, data: Partial<Usuario>) {
     const usuario = await this.findById(id);
     if (!usuario) return null;
@@ -218,6 +245,9 @@ export class UsuarioRepository {
     return this.findById(id);
   }
 
+        /**
+     * Documentación en español.
+     */
   async deleteUsuario(id: string) {
     const usuario = await this.findById(id);
     if (!usuario) return null;

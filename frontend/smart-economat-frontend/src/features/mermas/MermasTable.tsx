@@ -11,34 +11,52 @@ import DataTable, { Column } from '../../components/ui/DataTable';
 import StatusChip from '../../components/ui/StatusChip';
 import { Merma, MotivoMerma } from '../../services/merma.types';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { formatLocalizedDateTime } from '../../utils/intlFormat';
 
 /**
- * Props for the {@link MermasTable} component.
+ * Documentación en español.
  */
 interface MermasTableProps {
-  /** Array of merma records to display. */
+        /**
+     * Documentación en español.
+     */
   data: Merma[];
-  /** Total number of records (used for pagination). */
+        /**
+     * Documentación en español.
+     */
   total: number;
-  /** Zero-based current page index. */
+        /**
+     * Documentación en español.
+     */
   page: number;
-  /** Number of rows per page. */
+        /**
+     * Documentación en español.
+     */
   pageSize: number;
-  /** Callback invoked when the user navigates to a different page. */
+        /**
+     * Documentación en español.
+     */
   onPageChange: (newPage: number) => void;
-  /** Callback invoked when the user changes the rows-per-page value. */
+        /**
+     * Documentación en español.
+     */
   onPageSizeChange: (newPageSize: number) => void;
-  /** Whether data is currently being fetched. */
+        /**
+     * Documentación en español.
+     */
   isLoading?: boolean;
-  /** Current filter values applied to the table. */
+        /**
+     * Documentación en español.
+     */
   filters: {
     motivo: string;
     startDate: string;
     endDate: string;
   };
-  /** Callback invoked when any filter value changes. */
+        /**
+     * Documentación en español.
+     */
   onFiltersChange: (newFilters: {
     motivo: string;
     startDate: string;
@@ -47,22 +65,7 @@ interface MermasTableProps {
 }
 
 /**
- * Paginated table for displaying merma (waste/loss) records with inline
- * filters for motivo (reason) and date range.
- *
- * @param {MermasTableProps} props - Component props.
- * @returns JSX rendered mermas table with filter controls.
- * @example
- * <MermasTable
- *   data={mermas}
- *   total={total}
- *   page={page}
- *   pageSize={pageSize}
- *   onPageChange={setPage}
- *   onPageSizeChange={setPageSize}
- *   filters={filters}
- *   onFiltersChange={setFilters}
- * />
+ * Documentación en español.
  */
 const MermasTable: React.FC<MermasTableProps> = ({
   data,
@@ -81,7 +84,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
     {
       id: 'createdAt',
       label: t('merma.tabla.fecha'),
-      render: (row) => dayjs(row.createdAt).format('DD/MM/YYYY HH:mm'),
+      render: (row) => formatLocalizedDateTime(row.createdAt),
     },
     {
       id: 'producto',

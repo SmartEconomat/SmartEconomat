@@ -28,25 +28,13 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta-ingrediente.entity';
 
 /**
- * Service responsible for managing product (Producto) data, including
- * creation, retrieval, update, removal, barcode generation, allergen
- * management, supplier relationships, and weighted average cost (PMP)
- * calculations.
- *
- * @class ProductoService
+ * Documentación en español.
  */
 @Injectable()
 export class ProductoService {
-  /**
-   * Crea una instancia de ProductoService.
-   *
-   * @param {ProductoRepository} productoRepository - Custom repository for Producto entity.
-   * @param {Repository<ProductoProveedor>} productoProveedorRepository - Repository for ProductoProveedor entity.
-   * @param {Repository<ProductoAlergeno>} productoAlergenoRepository - Repository for ProductoAlergeno entity.
-   * @param {ArchivoService} archivoService - Service for managing file/image cleanup.
-   * @param {MovimientoHelper} movimientoHelper - Helper for tracking stock movement audit events.
-   * @param {DataSource} dataSource - TypeORM data source for transactions.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     private readonly productoRepository: ProductoRepository,
     @InjectRepository(ProductoProveedor)
@@ -59,17 +47,9 @@ export class ProductoService {
     private readonly dataSource: DataSource
   ) {}
 
-  /**
-   * Crea un nuevo product with optional allergens and supplier associations
-   * in a single transactional operation. Valida or auto-generates the barcode.
-   *
-   * @param {CreateProductoDto} createProductoDto - DTO containing product creation data.
-   * @param {string} userId - ID of the user performing the creation.
-   * @returns {Promise<Producto>} The newly created product with relations loaded.
-   * @throws {BadRequestException} If the provided barcode is invalid.
-   * @throws {ConflictException} If the barcode is already registered.
-   * @throws {NotFoundException} If any referenced supplier does not exist.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(
     createProductoDto: CreateProductoDto,
     userId: string
@@ -134,15 +114,9 @@ export class ProductoService {
     });
   }
 
-  /**
-   * Retrieves a paginated list of products with optional filters such as
-   * barcode, search term, categories, brands, allergens, and minimum stock.
-   * Admin users also receive soft-deleted records.
-   *
-   * @param {ProductFilterDto} query - Filtering, sorting, and pagination parameters.
-   * @param {string} [userRole] - Role of the requesting user; los administradores ven registros eliminados.
-   * @returns {Promise<PaginatedResponseDto<Producto>>} Paginated list of products.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: ProductFilterDto,
     userRole?: string
@@ -231,14 +205,9 @@ export class ProductoService {
     return { data: processedData, total, page, limit, totalPages };
   }
 
-  /**
-   * Retrieves a single product by its ID, including supplier and allergen relations.
-   *
-   * @param {string} id - UUID of the product to retrieve.
-   * @param {string} [_userRole] - Role of the requesting user (reserved for future use).
-   * @returns {Promise<Producto>} The found product entity.
-   * @throws {NotFoundException} If no product with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string, _userRole?: string): Promise<Producto> {
     void _userRole;
 
@@ -256,18 +225,9 @@ export class ProductoService {
     };
   }
 
-  /**
-   * Actualiza an existing product's scalar fields, allergens, and supplier
-   * associations in a single transaction. Cleans up the old image if replaced.
-   *
-   * @param {string} id - UUID of the product to update.
-   * @param {UpdateProductoDto} updateProductoDto - DTO with the fields to update.
-   * @param {string} userId - ID of the user performing the update.
-   * @returns {Promise<Producto>} The updated product with all relations loaded.
-   * @throws {NotFoundException} If the product does not exist.
-   * @throws {BadRequestException} If the new barcode is invalid.
-   * @throws {ConflictException} If the new barcode is already in use by another product.
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     updateProductoDto: UpdateProductoDto,
@@ -411,13 +371,9 @@ export class ProductoService {
     }
   }
 
-  /**
-   * Genera a unique EAN-13 barcode by retrying up to a maximum number
-   * of attempts until a non-colliding code is found.
-   *
-   * @returns {Promise<string>} A unique EAN-13 barcode string.
-   * @throws {InternalServerErrorException} If a unique code cannot be generated after the maximum retries.
-   */
+        /**
+     * Documentación en español.
+     */
   async generateUniqueEan13(): Promise<string> {
     const MAX_RETRIES = 5;
     for (let i = 0; i < MAX_RETRIES; i++) {
@@ -432,16 +388,9 @@ export class ProductoService {
     );
   }
 
-  /**
-   * Recalculates and persists the weighted average price (PMP) for a given
-   * ProductoProveedor record, then propagates the change to the parent Producto.
-   *
-   * @param {string} productoProveedorId - UUID of the ProductoProveedor record.
-   * @param {number} nuevaCantidad - Quantity being added in the current operation.
-   * @param {number} nuevoPrecio - Unit price of the incoming stock.
-   * @param {EntityManager} [manager] - Optional transaction entity manager.
-   * @returns {Promise<number>} The updated PMP value for the ProductoProveedor.
-   */
+        /**
+     * Documentación en español.
+     */
   async actualizarPMP(
     productoProveedorId: string,
     nuevaCantidad: number,
@@ -453,6 +402,7 @@ export class ProductoService {
     const pp = await em.findOne(ProductoProveedor, {
       where: { id: productoProveedorId },
       relations: ['producto'],
+      lock: { mode: 'pessimistic_write' },
     });
 
     if (!pp) {
@@ -468,7 +418,13 @@ export class ProductoService {
       0
     );
     const stockAnteriorPP = Math.max(0, stockTotalPP - nuevaCantidad);
-    const pmpAnteriorPP = Number(pp.pmp) || 0;
+    let pmpAnteriorPP = Number(pp.pmp);
+
+    // Fallback: Si el PMP es 0 pero tenemos precio unitario pactado, lo usamos como semilla
+    // para evitar que el stock previo sin valorar hunda el PMP en la primera compra.
+    if (pmpAnteriorPP <= 0) {
+      pmpAnteriorPP = Number(pp.precioUnitario) || 0;
+    }
 
     const divisorPP = stockAnteriorPP + nuevaCantidad;
     const nuevoPmpPP =
@@ -493,15 +449,9 @@ export class ProductoService {
     return pp.pmp;
   }
 
-  /**
-   * Recalcula el campo Producto.pmp como media ponderada del PMP de todos
-   * sus ProductoProveedor activos, ponderada por el stock de cada uno.
-   * Este campo es derivado y se usa para consultas rápidas y reportes.
-   *
-   * @param {string} productoId - UUID of the parent Producto.
-   * @param {EntityManager} em - Entity manager to use for database operations.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async recalcularPmpProducto(
     productoId: string,
     em: EntityManager
@@ -509,6 +459,7 @@ export class ProductoService {
     const producto = await em.findOne(Producto, {
       where: { id: productoId },
       relations: ['proveedores'],
+      lock: { mode: 'pessimistic_write' },
     });
     if (!producto) return;
 
@@ -550,13 +501,9 @@ export class ProductoService {
     );
   }
 
-  /**
-   * Devuelve el historial de precios for a product, opcionalmente filtrados por proveedor.
-   *
-   * @param {string} productoId - UUID of the product.
-   * @param {string} [proveedorId] - Optional UUID of a specific supplier to filter by.
-   * @returns {Promise<HistorialPrecio[]>} Array of price history records ordered by date descending.
-   */
+        /**
+     * Documentación en español.
+     */
   async getHistorialPrecios(
     productoId: string,
     proveedorId?: string
@@ -577,13 +524,9 @@ export class ProductoService {
     return query.getMany();
   }
 
-  /**
-   * Deduplicates an allergen array and throws if duplicates are detected.
-   *
-   * @param {ProductoAlergeno['alergeno'][]} [alergenos] - Array of allergen values to validate.
-   * @returns {ProductoAlergeno['alergeno'][] | undefined} Deduplicated array or undefined if not provided.
-   * @throws {ConflictException} If the input array contains duplicate allergen entries.
-   */
+        /**
+     * Documentación en español.
+     */
   private ensureUniqueAlergenos(
     alergenos?: ProductoAlergeno['alergeno'][]
   ): ProductoAlergeno['alergeno'][] | undefined {
@@ -602,14 +545,9 @@ export class ProductoService {
     return uniqueAlergenos;
   }
 
-  /**
-   * Valida that the given unit price is strictly greater than zero.
-   *
-   * @param {number} precioUnitario - The unit price to validate.
-   * @param {string} proveedorId - UUID of the supplier, used in the error message.
-   * @returns {void}
-   * @throws {BadRequestException} If the price is zero or negative.
-   */
+        /**
+     * Documentación en español.
+     */
   private validatePrecioMayorQueCero(
     precioUnitario: number,
     proveedorId: string
@@ -621,17 +559,9 @@ export class ProductoService {
     }
   }
 
-  /**
-   * Records a new price entry in the HistorialPrecio table and returns
-   * the latest effective price for the given ProductoProveedor relationship.
-   *
-   * @param {EntityManager} manager - Entity manager for the current transaction.
-   * @param {string} productoProveedorId - UUID of the ProductoProveedor record.
-   * @param {number} precio - Price to record.
-   * @returns {Promise<number>} The most recent price resolved from the history.
-   * @throws {BadRequestException} If the price is not greater than zero.
-   * @throws {InternalServerErrorException} If the price cannot be resolved from history.
-   */
+        /**
+     * Documentación en español.
+     */
   private async registrarPrecioYResolverPrecioActual(
     manager: EntityManager,
     productoProveedorId: string,
@@ -664,19 +594,9 @@ export class ProductoService {
     return latestHistorial.precio;
   }
 
-  /**
-   * Valida the supplier payload before creating or updating product-supplier
-   * associations: checks for duplicate supplier IDs, validates barcodes, verifies
-   * that required prices are present, and confirms all referenced suppliers exist in DB.
-   *
-   * @param {EntityManager} manager - Entity manager for the current transaction.
-   * @param {AddProveedorToProductoDto[]} [proveedores] - Array of supplier association DTOs.
-   * @param {boolean} [requirePrecioUnitario=false] - si a unit price is mandatory.
-   * @returns {Promise<void>}
-   * @throws {ConflictException} If the same supplier appears more than once.
-   * @throws {BadRequestException} If a barcode is invalid or a required price is missing.
-   * @throws {NotFoundException} If any supplier ID does not exist in the database.
-   */
+        /**
+     * Documentación en español.
+     */
   private async validateProveedorPayload(
     manager: EntityManager,
     proveedores?: AddProveedorToProductoDto[],
@@ -750,15 +670,9 @@ export class ProductoService {
     }
   }
 
-  /**
-   * Replaces all allergen associations for a product by deleting existing
-   * records and inserting the new set within the current transaction.
-   *
-   * @param {EntityManager} manager - Entity manager for the current transaction.
-   * @param {string} productoId - UUID of the product whose allergens are being replaced.
-   * @param {ProductoAlergeno['alergeno'][]} alergenos - New list of allergen values.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async replaceAlergenosWithManager(
     manager: EntityManager,
     productoId: string,
@@ -785,16 +699,9 @@ export class ProductoService {
     await manager.save(ProductoAlergeno, relations);
   }
 
-  /**
-   * Synchronises the supplier associations for a product within the current
-   * transaction: inserts new relationships, updates changed prices/metadata,
-   * and soft-deletes removed ones.
-   *
-   * @param {EntityManager} manager - Entity manager for the current transaction.
-   * @param {string} productoId - UUID of the product being synchronised.
-   * @param {AddProveedorToProductoDto[]} proveedores - Desired final set of supplier associations.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   private async syncProveedoresWithManager(
     manager: EntityManager,
     productoId: string,
@@ -824,7 +731,7 @@ export class ProductoService {
           precioUnitario: p.precioUnitario,
           marca: p.marcaEspecifica,
           codigoBarras: p.codigoBarras,
-          pmp: 0,
+          pmp: p.precioUnitario || 0,
         })
       );
 

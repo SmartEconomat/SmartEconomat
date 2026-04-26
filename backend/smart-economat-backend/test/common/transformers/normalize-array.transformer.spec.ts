@@ -1,7 +1,7 @@
 import { NormalizeArrayTransformer } from '../../../src/common/transformers/normalize-array.transformer';
 
 /**
- * Tests Unitarios de NormalizeArrayTransformer
+ * Documentación en español.
  */
 describe('NormalizeArrayTransformer', () => {
   describe('transform()', () => {

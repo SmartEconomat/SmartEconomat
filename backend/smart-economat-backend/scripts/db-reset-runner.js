@@ -4,7 +4,9 @@ const { existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+function resolveTsNodeBinJs(cwd) {
+  return resolve(cwd, 'node_modules/ts-node/dist/bin.js');
+}
 
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
@@ -22,28 +24,27 @@ function runCommand(command, args) {
 }
 
 function runTsReset(cwd) {
+  const tsNodeBinJs = resolveTsNodeBinJs(cwd);
   const typeormCliPath = resolve(cwd, 'node_modules/typeorm/cli.js');
   const typeormConfigPath = 'src/config/typeorm.config.ts';
 
-  runCommand(NPX, [
-    'ts-node',
-    '-r',
-    'tsconfig-paths/register',
-    typeormCliPath,
-    'schema:drop',
-    '-d',
-    typeormConfigPath,
-  ]);
+  if (!existsSync(tsNodeBinJs)) {
+    console.error(
+      '[db-reset-runner] Falta ts-node. Ejecuta npm install en smart-economat-backend.'
+    );
+    process.exit(1);
+  }
 
-  runCommand(NPX, [
-    'ts-node',
+  const baseArgs = [
+    tsNodeBinJs,
     '-r',
     'tsconfig-paths/register',
     typeormCliPath,
-    'schema:sync',
-    '-d',
-    typeormConfigPath,
-  ]);
+  ];
+
+  runCommand(process.execPath, [...baseArgs, 'schema:drop', '-d', typeormConfigPath]);
+
+  runCommand(process.execPath, [...baseArgs, 'schema:sync', '-d', typeormConfigPath]);
 }
 
 async function runDistReset(cwd) {

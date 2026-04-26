@@ -56,11 +56,7 @@ const EU_ALLERGEN_IDS = new Set([
 ]);
 
 /**
- * @description Normalizes raw OpenFoodFacts allergen tags to EU-standard allergen identifiers.
- * @param {string[]} tags - Raw allergen tag strings from the OpenFoodFacts API.
- * @returns {string[]} Deduplicated list of EU allergen IDs (e.g. 'GLUTEN', 'LACTEOS').
- * @example
- * normalizeOFFAllergens(['en:gluten', 'en:milk']); // ['GLUTEN', 'LACTEOS']
+ * Documentación en español.
  */
 export function normalizeOFFAllergens(tags: string[]): string[] {
   const result = new Set<string>();
@@ -74,11 +70,7 @@ export function normalizeOFFAllergens(tags: string[]): string[] {
 }
 
 /**
- * @description Looks up a product in the OpenFoodFacts database by its barcode.
- * @param {string} code - The EAN/UPC barcode string.
- * @returns {Promise<OFFProduct | null>} Product data if found, or `null` on failure or not-found.
- * @example
- * const product = await searchByBarcode('8410000');
+ * Documentación en español.
  */
 export async function searchByBarcode(
   code: string
@@ -103,11 +95,7 @@ export async function searchByBarcode(
 }
 
 /**
- * @description Searches the OpenFoodFacts database by product name.
- * @param {string} name - The product name to search.
- * @returns {Promise<OFFProduct[]>} Matching products, or an empty array on failure.
- * @example
- * const results = await searchByName('leche entera');
+ * Documentación en español.
  */
 export async function searchByName(name: string): Promise<OFFProduct[]> {
   const trimmedName = name.trim();

@@ -15,11 +15,7 @@ export interface PedidoDraftRecord {
 }
 
 /**
- * @description Creates or updates the current user's pedido draft in the backend (upsert).
- * @param {Record<string, unknown>} payload - The draft content to persist.
- * @param {number} [version] - Optional version number for optimistic-lock concurrency control.
- * @returns {Promise<PedidoDraftRecord>} The created or updated draft record.
- * @throws {ApiError} When the API returns an error response (including 409 conflicts).
+ * Documentación en español.
  */
 export async function upsertPedidoDraft(
   payload: Record<string, unknown>,
@@ -37,9 +33,7 @@ export async function upsertPedidoDraft(
 }
 
 /**
- * @description Retrieves the most recent pedido draft for the current user.
- * @returns {Promise<PedidoDraftRecord | null>} The latest draft record, or `null` if none exists.
- * @throws {ApiError} When the API returns an unexpected error.
+ * Documentación en español.
  */
 export async function fetchLatestPedidoDraft(): Promise<PedidoDraftRecord | null> {
   const response = await baseFetch(BASE_PATH);
@@ -51,9 +45,7 @@ export async function fetchLatestPedidoDraft(): Promise<PedidoDraftRecord | null
 }
 
 /**
- * @description Deletes the current user's pedido draft from the backend.
- * @returns {Promise<void>}
- * @throws {Error} When the API returns an error response.
+ * Documentación en español.
  */
 export async function deletePedidoDraft(): Promise<void> {
   const response = await baseFetch(BASE_PATH, {
@@ -65,9 +57,7 @@ export async function deletePedidoDraft(): Promise<void> {
 }
 
 /**
- * @description Finalizes the current pedido draft, creating a purchase batch from its contents.
- * @returns {Promise<PurchaseBatch>} The resulting purchase batch.
- * @throws {ApiError} When the API returns an error response.
+ * Documentación en español.
  */
 export async function finalizePedidoFromDraft(): Promise<PurchaseBatch> {
   const response = await baseFetch(`${BASE_PATH}/finalize`, {

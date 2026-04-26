@@ -7,13 +7,7 @@ import {
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
 /**
- * Fetches a paginated list of albaranes (delivery notes).
- *
- * @param {AlbaranQueryParams} params - Pagination, search and sort options.
- * @returns {Promise<PaginatedData<Albaran>>} Paginated list of albaranes.
- * @throws {Error} If the API returns a non-OK response.
- * @example
- * const result = await fetchAlbaranes({ page: 1, limit: 10 });
+ * Documentación en español.
  */
 export async function fetchAlbaranes(
   params: AlbaranQueryParams = {}
@@ -48,13 +42,7 @@ export async function fetchAlbaranes(
 }
 
 /**
- * Fetches a single albaran by its unique identifier.
- *
- * @param {string} id - The albaran UUID.
- * @returns {Promise<Albaran>} The requested albaran.
- * @throws {Error} If the albaran is not found or the API returns an error.
- * @example
- * const albaran = await fetchAlbaranById('abc-123');
+ * Documentación en español.
  */
 export async function fetchAlbaranById(id: string): Promise<Albaran> {
   const response = await baseFetch(`/albaranes/${id}`);
@@ -70,13 +58,7 @@ export async function fetchAlbaranById(id: string): Promise<Albaran> {
 }
 
 /**
- * Creates a new albaran.
- *
- * @param {CreateAlbaranDto} dto - Data for the new albaran.
- * @returns {Promise<Albaran>} The created albaran.
- * @throws {Error} If the API returns an error response.
- * @example
- * const albaran = await createAlbaran({ nAlbaran: 'ALB-001', concordancia: true });
+ * Documentación en español.
  */
 export async function createAlbaran(dto: CreateAlbaranDto): Promise<Albaran> {
   const response = await baseFetch('/albaranes', {
@@ -96,14 +78,7 @@ export async function createAlbaran(dto: CreateAlbaranDto): Promise<Albaran> {
 }
 
 /**
- * Partially updates an existing albaran.
- *
- * @param {string} id - The albaran UUID to update.
- * @param {UpdateAlbaranDto} dto - Fields to update.
- * @returns {Promise<Albaran>} The updated albaran.
- * @throws {Error} If the API returns an error response.
- * @example
- * const updated = await updateAlbaran('abc-123', { concordancia: false });
+ * Documentación en español.
  */
 export async function updateAlbaran(
   id: string,
@@ -126,13 +101,7 @@ export async function updateAlbaran(
 }
 
 /**
- * Soft-deletes an albaran by its unique identifier.
- *
- * @param {string} id - The albaran UUID to remove.
- * @returns {Promise<void>}
- * @throws {Error} If the API returns an error response.
- * @example
- * await removeAlbaran('abc-123');
+ * Documentación en español.
  */
 export async function removeAlbaran(id: string): Promise<void> {
   const response = await baseFetch(`/albaranes/${id}`, {
@@ -148,16 +117,7 @@ export async function removeAlbaran(id: string): Promise<void> {
 }
 
 /**
- * Uploads a scanned document and associates it with a new or existing albaran.
- *
- * @param {File} file - The document file to upload.
- * @param {string} numeroReferencia - The delivery note reference number.
- * @param {string} [recepcionId] - Optional reception UUID to link.
- * @param {string} [observaciones] - Optional free-text observations.
- * @returns {Promise<Albaran>} The albaran created or updated with the document.
- * @throws {Error} If the upload or API call fails.
- * @example
- * const albaran = await uploadDocumentoAlbaran(file, 'ALB-001', recepcionId);
+ * Documentación en español.
  */
 export async function uploadDocumentoAlbaran(
   file: File,

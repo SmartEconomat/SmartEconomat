@@ -43,11 +43,7 @@ import { DistribucionModule } from './modules/distribucion/distribucion.module';
 import { I18nConfigModule } from './config/i18n.module';
 
 /**
- * @description Root application module for SmartEconomat.
- * Bootstraps all feature modules, configures global infrastructure (TypeORM, Redis throttling,
- * Sentry, caching, event emitter, config), and registers global guards and interceptors.
- *
- * In `test` environments the TypeORM datasource is replaced with an in-memory pg-mem instance.
+ * Documentación en español.
  */
 @Module({
   imports: [

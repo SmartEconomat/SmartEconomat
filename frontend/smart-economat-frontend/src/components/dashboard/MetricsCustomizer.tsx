@@ -29,14 +29,7 @@ interface MetricsCustomizerProps {
 }
 
 /**
- * Dialog that lets the user choose which metric cards are visible on the
- * Dashboard. At least one metric must remain active at all times.
- *
- * @param props.isOpen - Whether the dialog is open.
- * @param props.onClose - Callback to close the dialog (also used as the "Save" action).
- * @param props.availableMetrics - Full list of metrics the user can toggle.
- * @param props.visibleMetrics - IDs of the metrics currently displayed.
- * @param props.onUpdate - Callback invoked with the updated list of visible metric IDs.
+ * Documentación en español.
  */
 const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
   isOpen,

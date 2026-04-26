@@ -31,6 +31,7 @@ import {
   formatPedidoId,
   formatPedidoListNumber,
 } from '../../features/pedidos/utils/pedidoFormatters';
+import { formatLocalizedDate } from '../../utils/intlFormat';
 
 type PedidoWithAggregate = Pedido & {
   pedidoUsuario?: Pick<PedidoUsuario, 'id' | 'numeroGlobal'>;
@@ -69,16 +70,7 @@ interface BatchPedidoLineasViewerProps {
 }
 
 /**
- * Viewer for the product lines of a purchase batch or user order.
- *
- * Groups products by supplier, aggregates quantities across individual orders,
- * and optionally shows a summary table of all involved orders. Provides PDF
- * download with configurable options (include cancelled orders, page per supplier).
- *
- * @param props - See {@link BatchPedidoLineasViewerProps}.
- * @returns JSX element with grouped product tables, optional order summary, and print controls.
- * @example
- * <BatchPedidoLineasViewer batch={purchaseBatch} mode="batch" />
+ * Documentación en español.
  */
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,
@@ -440,7 +432,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                     </TableCell>
                     <TableCell>{p.usuario || '—'}</TableCell>
                     <TableCell>
-                      {new Date(p.fecha).toLocaleDateString('es-ES')}
+                      {formatLocalizedDate(p.fecha)}
                     </TableCell>
                     <TableCell align="center">
                       <StatusChip status={p.estado} size="small" />

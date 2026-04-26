@@ -1,53 +1,53 @@
 import { baseFetch } from './api.service';
 
 /**
- * Servicio centralizado para la descarga de archivos (PDF/Excel)
- * con manejo de timeouts, blobs y notificaciones de progreso.
+ * Documentación en español.
  */
 
 const EXPORT_TIMEOUT_MS = 30000;
 
 /**
- * Options accepted by the download and blob helper methods.
+ * Documentación en español.
  */
 export interface DownloadOptions {
-  /** Filename (including extension) to use when saving the downloaded file. */
+        /**
+     * Documentación en español.
+     */
   filename: string;
-  /** Toast notification callbacks used to report progress. */
+        /**
+     * Documentación en español.
+     */
   toast: {
-    /** Called when the download succeeds. */
+                /**
+         * Documentación en español.
+         */
     success: (msg: string) => void;
-    /** Called when the download fails. */
+                /**
+         * Documentación en español.
+         */
     error: (msg: string) => void;
-    /** Called when the download starts. */
+                /**
+         * Documentación en español.
+         */
     info: (msg: string) => void;
   };
 }
 
-/** Internal type for error objects with an optional name and message. */
+/**
+ * Documentación en español.
+ */
 interface ApiError {
   name?: string;
   message?: string;
 }
 
 /**
- * Centralised service for downloading files (PDF / Excel) from the backend
- * with timeout handling, blob management, and toast-based progress feedback.
+ * Documentación en español.
  */
 export class DownloadService {
-  /**
-   * Descarga un archivo desde el backend manejando el estado del toast y el timeout.
-   *
-   * @param {string} path - API path relative to the base URL.
-   * @param {DownloadOptions} options - Filename and toast notification callbacks.
-   * @returns {Promise<void>}
-   * @throws {Error} If the download times out or the server returns an error.
-   * @example
-   * await DownloadService.downloadFile('/recetas/export/pdf?ids=1,2', {
-   *   filename: 'recetas.pdf',
-   *   toast: { success, error, info },
-   * });
-   */
+        /**
+     * Documentación en español.
+     */
   static async downloadFile(
     path: string,
     options: DownloadOptions
@@ -106,15 +106,9 @@ export class DownloadService {
     }
   }
 
-  /**
-   * Abre un PDF en una nueva pestaña.
-   *
-   * @param {Blob} blob - The PDF blob to open.
-   * @returns {void}
-   * @example
-   * const blob = await DownloadService.getBlob('/recetas/1/pdf', toast);
-   * DownloadService.openPdfInNewTab(blob);
-   */
+        /**
+     * Documentación en español.
+     */
   static openPdfInNewTab(blob: Blob) {
     const url = window.URL.createObjectURL(blob);
     window.open(url, '_blank');
@@ -122,16 +116,9 @@ export class DownloadService {
     // Navegadores modernos suelen manejar esto, pero es una limitación de blobs.
   }
 
-  /**
-   * Helper que envuelve baseFetch para obtener un blob directamente con feedback.
-   *
-   * @param {string} path - API path relative to the base URL.
-   * @param {DownloadOptions['toast']} toast - Toast notification callbacks.
-   * @returns {Promise<Blob>} The response blob.
-   * @throws {Error} If the request times out or the server returns an error.
-   * @example
-   * const blob = await DownloadService.getBlob('/recetas/export/pdf?ids=1', toast);
-   */
+        /**
+     * Documentación en español.
+     */
   static async getBlob(
     path: string,
     toast: DownloadOptions['toast']

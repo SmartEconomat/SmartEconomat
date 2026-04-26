@@ -1,6 +1,5 @@
 /**
- * Mock de `window.smartEconomat` para capturas E2E (preload capture) y referencia
- * alineada con `test/e2e/fixtures/installer-bridge.mock.js` (Playwright web).
+ * Documentación en español.
  */
 import type {
   BackupMetadata,

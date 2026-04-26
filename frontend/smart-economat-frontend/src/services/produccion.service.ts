@@ -45,12 +45,7 @@ export interface ConsumirProduccionDto {
 }
 
 /**
- * @description Fetches a paginated list of production batch records.
- * @param {number} [page=1] - Page number to retrieve.
- * @param {number} [limit=20] - Number of records per page.
- * @param {string} [estado] - Optional status filter (e.g. 'disponible', 'agotado').
- * @returns {Promise<PaginatedData<ProduccionLote>>} Paginated production batch records.
- * @throws {ApiError} When the API returns an error response.
+ * Documentación en español.
  */
 export async function fetchProducciones(
   page: number = 1,
@@ -80,10 +75,7 @@ export async function fetchProducciones(
 }
 
 /**
- * @description Executes a production run for a recipe, consuming ingredients and generating a production batch.
- * @param {EjecutarProduccionDto} dto - Production parameters including recipe ID, quantity, and optional expiry date.
- * @returns {Promise<ProduccionLote>} The resulting production batch record.
- * @throws {ApiError} When the API returns an error response.
+ * Documentación en español.
  */
 export async function ejecutarProduccion(
   dto: EjecutarProduccionDto
@@ -101,11 +93,7 @@ export async function ejecutarProduccion(
 }
 
 /**
- * @description Records consumption of portions or quantity from a specific production batch.
- * @param {string} id - The production batch UUID to consume from.
- * @param {ConsumirProduccionDto} dto - Consumption type ('raciones' | 'cantidad') and amount.
- * @returns {Promise<ProduccionLote>} The updated production batch record.
- * @throws {ApiError} When the API returns an error response.
+ * Documentación en español.
  */
 export async function consumirPorciones(
   id: string,
@@ -142,10 +130,7 @@ export interface StockValidationResult {
 }
 
 /**
- * @description Validates whether sufficient stock exists to produce the requested recipe quantities.
- * @param {ValidarStockDto} dto - List of recipe IDs and quantities to validate.
- * @returns {Promise<StockValidationResult>} Per-ingredient availability with cheapest supplier info.
- * @throws {ApiError} When the API returns an error response.
+ * Documentación en español.
  */
 export async function validarStock(
   dto: ValidarStockDto

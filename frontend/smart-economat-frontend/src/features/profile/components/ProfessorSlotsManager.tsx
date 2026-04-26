@@ -67,24 +67,7 @@ interface ProfessorSlotsManagerProps {
 }
 
 /**
- * @description Manages professor-student slot assignments in the profile view.
- * Provides accordion-grouped pagination, inline editing of individual slots,
- * and an admin mode for assigning slots across all professors and locations.
- * @param props.isEditing - Whether the form is in edit mode (enables actions)
- * @param props.slots - Current user's slot assignments
- * @param props.allSlots - All slots (admin mode only)
- * @param props.allProfesores - All professors available for assignment (admin mode)
- * @param props.ubicaciones - Available storage locations for new slots
- * @param props.isLoading - Whether slot data is being fetched
- * @param props.isSaving - Whether a save operation is in progress
- * @param props.newSlot - Draft state for the slot creation form
- * @param props.onNewSlotChange - Callback for changes to the new-slot form
- * @param props.onCreateSlot - Callback to create a new slot
- * @param props.onDeleteSlot - Callback to delete a slot by ID
- * @param props.onUpdateSlot - Callback to update the current user's slot
- * @param props.onAdminUpdateSlot - Callback to update any slot (admin mode)
- * @param props.onRefreshUbicaciones - Optional callback to refresh the ubicaciones list
- * @returns Accordion-based slot manager component
+ * Documentación en español.
  */
 const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   isEditing,
@@ -185,7 +168,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           align="center"
           sx={{ py: 3, fontStyle: 'italic' }}
         >
-          No hay clases configuradas para mostrar.
+          {t('perfil.sinClasesConfiguradas')}
         </Typography>
       );
     }
@@ -200,7 +183,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             const ownerName =
               slot.profesor?.user?.nombre ||
               slot.profesor?.user?.username ||
-              'Desconocido';
+              t('perfil.propietarioDesconocido');
 
             return (
               <ListItem
@@ -256,7 +239,10 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                             }
                           }}
                         >
-                          CÓDIGO: {slot.codigoSlot || 'PENDIENTE'}
+                          {t('perfil.slotCodigoLinea', {
+                            codigo:
+                              slot.codigoSlot || t('perfil.codigoPendiente'),
+                          })}
                         </Box>
 
                         <IconButton
@@ -351,7 +337,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                           disabled={isSaving}
                         >
                           <MenuItem value="">
-                            <em>Sin ubicación</em>
+                            <em>{t('perfil.sinUbicacion')}</em>
                           </MenuItem>
                           {ubicaciones.map((u) => (
                             <MenuItem key={u.id} value={u.id}>
@@ -363,7 +349,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                             value="CREATE_NEW_LOC"
                             sx={{ color: 'primary.main', fontWeight: 'bold' }}
                           >
-                            + CREAR NUEVA UBICACIÓN
+                            {t('perfil.menuCrearNuevaUbicacion')}
                           </MenuItem>
                         </Select>
                       </FormControl>
@@ -409,7 +395,10 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                   </Box>
                 ) : (
                   <ListItemText
-                    primary={`Curso: ${slot.aula} — Clase ${slot.numeroClase}`}
+                    primary={t('perfil.cursoClaseCabecera', {
+                      aula: slot.aula,
+                      numeroClase: slot.numeroClase,
+                    })}
                     secondary={
                       <Box component="span" sx={{ display: 'block' }}>
                         <Typography
@@ -417,14 +406,19 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                           variant="caption"
                           sx={{ display: 'block' }}
                         >
-                          Capacidad máx: {slot.capacidad} alumnos
+                          {t('perfil.capacidadMaxAlumnos', {
+                            n: slot.capacidad,
+                          })}
                         </Typography>
                         <Typography
                           component="span"
                           variant="caption"
                           sx={{ display: 'block' }}
                         >
-                          Ubicación: {slot.ubicacion?.nombre || 'Sin asignar'}
+                          {t('perfil.ubicacionConNombre', {
+                            nombre:
+                              slot.ubicacion?.nombre || t('perfil.sinAsignar'),
+                          })}
                         </Typography>
                         {showOwner && (
                           <Box
@@ -443,7 +437,9 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                               variant="caption"
                               fontWeight={600}
                             >
-                              Profesor: {ownerName}
+                              {t('perfil.profesorConNombre', {
+                                nombre: ownerName,
+                              })}
                             </Typography>
                           </Box>
                         )}
@@ -483,9 +479,9 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               onPageChange(0);
             }}
             rowsPerPageOptions={[5, 10, 15, 20]}
-            labelRowsPerPage="Por página:"
+            labelRowsPerPage={t('comun.porPagina')}
             labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} de ${count}`
+              t('table.pagination.displayedRows', { from, to, count })
             }
           />
         </Box>
@@ -505,7 +501,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           fontWeight={600}
           sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
         >
-          Gestión de Aulas y Clases
+          {t('perfil.gestionAulasTitulo')}
         </Typography>
       </Box>
       <Divider sx={{ mb: { xs: 3, md: 4 } }} />
@@ -517,7 +513,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           sx={{ mb: 4, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}
         >
           <Typography variant="subtitle2" gutterBottom color="text.secondary">
-            Configurar nueva clase:
+            {t('perfil.configurarNuevaClase')}
           </Typography>
           <Box
             display="flex"
@@ -591,7 +587,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                   sx={{ bgcolor: 'background.paper' }}
                 >
                   <MenuItem value="">
-                    <em>Sin ubicación</em>
+                    <em>{t('perfil.sinUbicacion')}</em>
                   </MenuItem>
                   {ubicaciones.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
@@ -603,7 +599,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     value="CREATE_NEW_LOC"
                     sx={{ color: 'primary.main', fontWeight: 'bold' }}
                   >
-                    + CREAR NUEVA UBICACIÓN
+                    {t('perfil.menuCrearNuevaUbicacion')}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -641,7 +637,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                     sx={{ bgcolor: 'background.paper' }}
                   >
                     <MenuItem value="">
-                      <em>-- Mío (Propio) --</em>
+                      <em>{t('perfil.profesorPropioOpcion')}</em>
                     </MenuItem>
                     {allProfesores.map((p) => (
                       <MenuItem key={p.id} value={p.id}>
@@ -660,7 +656,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               sx={{ py: 1.5, minWidth: 120, width: { xs: '100%', md: 'auto' } }}
               startIcon={<AddCircleIcon />}
             >
-              Añadir
+              {t('perfil.anadirClase')}
             </Button>
           </Box>
         </Box>
@@ -682,7 +678,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           sx={{ bgcolor: 'action.hover' }}
         >
           <Typography variant="subtitle1" fontWeight={700}>
-            MIS AULAS
+            {t('perfil.acordeonMisAulas')}
             <Chip
               label={slots.length}
               size="small"
@@ -718,7 +714,7 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
             sx={{ bgcolor: 'action.hover' }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
-              TODAS LAS AULAS
+              {t('perfil.acordeonTodasAulas')}
               <Chip
                 label={allSlots.length}
                 size="small"

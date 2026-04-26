@@ -1,8 +1,5 @@
 /**
- * @module IncidenciaResuelaService
- * Service layer for managing resolved-incidencia records (IncidenciaResuelta).
- * Handles creation, listing, retrieval, update and soft-deletion of resolution records
- * while keeping the parent Incidencia entity in sync.
+ * Documentación en español.
  */
 import {
   BadRequestException,
@@ -21,33 +18,22 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 /**
- * Service that manages the lifecycle of IncidenciaResuelta records.
- * Each resolution record is linked to a parent Incidencia and a resolving user.
- * Creating a resolution also closes the parent incidencia; removing a resolution reopens it.
- * @class IncidenciaResuelaService
+ * Documentación en español.
  */
 @Injectable()
 export class IncidenciaResuelaService {
-  /**
-   * Constructs the IncidenciaResuelaService with its required dependencies.
-   * @param {IncidenciaResuelaRepository} incidenciaResuelaRepository - Custom repository for IncidenciaResuelta with pagination support.
-   * @param {Repository<Incidencia>} incidenciaRepository - TypeORM repository for Incidencia, used to read and update parent records.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     private readonly incidenciaResuelaRepository: IncidenciaResuelaRepository,
     @InjectRepository(Incidencia)
     private readonly incidenciaRepository: Repository<Incidencia>
   ) {}
 
-  /**
-   * Creates a resolution record for an existing open incidencia.
-   * Also calls `incidencia.resolver()` and saves the parent entity to mark it closed.
-   * @param {CreateIncidenciaResuelaDto} dto - Payload containing the incidencia ID, resolver user ID,
-   *   resolution type and optional observations.
-   * @returns {Promise<IncidenciaResuelta>} The newly created resolution record.
-   * @throws {NotFoundException} If no incidencia with `dto.idIncidencia` exists.
-   * @throws {BadRequestException} If the incidencia is already resolved.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(dto: CreateIncidenciaResuelaDto): Promise<IncidenciaResuelta> {
     const incidencia = await this.incidenciaRepository.findOne({
       where: { id: dto.idIncidencia },
@@ -80,13 +66,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.save(resolucion);
   }
 
-  /**
-   * Returns a paginated list of resolution records.
-   * Admin and super-admin roles can also see soft-deleted records.
-   * @param {PaginationQueryDto} query - Pagination and sorting parameters.
-   * @param {string} [userRole] - Role of the requesting user.
-   * @returns {Promise<PaginatedResponseDto<IncidenciaResuelta>>} Paginated result of resolution records.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -94,14 +76,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.findAllPaginated(query, userRole);
   }
 
-  /**
-   * Finds a single resolution record by its UUID, loading `incidencia` and `usuarioResolutor` relations.
-   * Admin and super-admin users can retrieve soft-deleted records.
-   * @param {string} id - UUID of the resolution record to retrieve.
-   * @param {string} [userRole] - Role of the requesting user.
-   * @returns {Promise<IncidenciaResuelta>} The found resolution record with relations.
-   * @throws {NotFoundException} If no resolution record with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string, userRole?: string): Promise<IncidenciaResuelta> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -122,13 +99,9 @@ export class IncidenciaResuelaService {
     return resolucion;
   }
 
-  /**
-   * Updates mutable fields of an existing resolution record (type, observations, resolver).
-   * @param {string} id - UUID of the resolution record to update.
-   * @param {UpdateIncidenciaResuelaDto} dto - Partial payload with the fields to change.
-   * @returns {Promise<IncidenciaResuelta>} The updated resolution record.
-   * @throws {NotFoundException} If no resolution record with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     dto: UpdateIncidenciaResuelaDto
@@ -146,13 +119,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.save(resolucion);
   }
 
-  /**
-   * Soft-deletes a resolution record and reopens the parent incidencia by clearing
-   * its `fechaResolucion`, `usuarioResolutor` and `observacionesResolucion` fields.
-   * @param {string} id - UUID of the resolution record to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} If no resolution record with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const resolucion = await this.findOne(id);
 

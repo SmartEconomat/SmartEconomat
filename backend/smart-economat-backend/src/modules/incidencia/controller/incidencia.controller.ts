@@ -1,7 +1,5 @@
 /**
- * @module IncidenciaController
- * REST controller for the /incidencias resource. Exposes endpoints for
- * creating, listing, retrieving, updating, deleting and resolving incidencias.
+ * Documentación en español.
  */
 import {
   Body,
@@ -35,38 +33,44 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that handles HTTP requests for incidencias (supply discrepancies).
- * All routes are protected by JWT authentication and role-based permissions.
- * @class IncidenciaController
+ * Documentación en español.
  */
 @ApiTags('incidencias')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias')
 export class IncidenciaController {
-  /**
-   * Constructs the IncidenciaController with its required service dependency.
-   * @param {IncidenciaService} incidenciaService - Service that handles incidencia business logic.
-   */
+  private withIncidenciaLabels<T extends { estado?: string | null }>(
+    incidencia: T
+  ): T & { estadoLabelKey?: string } {
+    if (!incidencia?.estado) {
+      return incidencia;
+    }
+
+    return {
+      ...incidencia,
+      estadoLabelKey: `enum.incidenciaEstado.${String(incidencia.estado).toUpperCase()}`,
+    };
+  }
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly incidenciaService: IncidenciaService) {}
 
-  /**
-   * Creates a new incidencia with its associated product lines.
-   * @param {CreateIncidenciaDto} dto - Payload describing the incidencia and its lines.
-   * @returns {Promise<Incidencia>} The newly created Incidencia entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateIncidenciaDto): Promise<Incidencia> {
-    return this.incidenciaService.create(dto);
+    return this.incidenciaService
+      .create(dto)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-  /**
-   * Returns a paginated list of incidencias, optionally filtered and sorted.
-   * @param {IncidenciaQueryDto} query - Filtering, pagination and sorting parameters.
-   * @param {{ user?: { rol?: string } }} req - Express request object used to extract the user role.
-   * @returns {Promise<PaginatedResponseDto<Incidencia>>} Paginated result with computed estados.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
@@ -78,16 +82,17 @@ export class IncidenciaController {
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Incidencia>> {
     const userRole = req.user?.rol;
-    return this.incidenciaService.findAll(query, userRole);
+    return this.incidenciaService.findAll(query, userRole).then((result) => ({
+      ...result,
+      data: result.data.map((incidencia) =>
+        this.withIncidenciaLabels(incidencia)
+      ),
+    }));
   }
 
-  /**
-   * Retrieves a single incidencia by its UUID with all relations loaded.
-   * @param {string} id - UUIDv7 of the incidencia to retrieve.
-   * @param {{ user?: { rol?: string } }} req - Express request object used to extract the user role.
-   * @returns {Promise<Incidencia>} The found Incidencia with computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
@@ -95,33 +100,28 @@ export class IncidenciaController {
     @Req() req: { user?: { rol?: string } }
   ): Promise<Incidencia> {
     const userRole = req.user?.rol;
-    return this.incidenciaService.findOne(id, userRole);
+    return this.incidenciaService
+      .findOne(id, userRole)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-  /**
-   * Partially updates the header fields of an open incidencia.
-   * @param {string} id - UUIDv7 of the incidencia to update.
-   * @param {UpdateIncidenciaDto} dto - Partial payload with the fields to update.
-   * @returns {Promise<Incidencia>} The updated Incidencia with computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.incidencias.editar)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateIncidenciaDto
   ): Promise<Incidencia> {
-    return this.incidenciaService.update(id, dto);
+    return this.incidenciaService
+      .update(id, dto)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-  /**
-   * Permanently removes an open incidencia. Returns HTTP 204 No Content on success.
-   * @param {string} id - UUIDv7 of the incidencia to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved.
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.incidencias.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -129,16 +129,9 @@ export class IncidenciaController {
     return this.incidenciaService.remove(id);
   }
 
-  /**
-   * Resolves an incidencia, optionally applying line-level quantity adjustments.
-   * Delegates to the service's `resolverIncidencia` method.
-   * @param {string} id - UUIDv7 of the incidencia to resolve.
-   * @param {ResolverIncidenciaDto} dto - Resolution payload with optional adjustments and final state.
-   * @param {string} usuarioId - ID of the authenticated user, extracted from the JWT token.
-   * @returns {Promise<Incidencia>} The resolved Incidencia with updated estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved or has no lines.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
   resolver(
@@ -146,16 +139,14 @@ export class IncidenciaController {
     @Body() dto: ResolverIncidenciaDto,
     @GetUser('id') usuarioId: string
   ): Promise<Incidencia> {
-    return this.incidenciaService.resolverIncidencia(id, dto, usuarioId);
+    return this.incidenciaService
+      .resolverIncidencia(id, dto, usuarioId)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-  /**
-   * Automatically reports a new incidencia by detecting discrepancies in a recepcion's lines.
-   * @param {ReportIncidenciaDto} dto - DTO containing the recepcionId and the reported incidencia type.
-   * @returns {Promise<Incidencia>} The newly created Incidencia.
-   * @throws {NotFoundException} If the referenced Recepcion does not exist.
-   * @throws {BadRequestException} If no product lines show a discrepancy.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('reportar')
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @ApiOperation({
@@ -166,19 +157,14 @@ export class IncidenciaController {
     description: 'Incidencia reportada correctamente',
   })
   reportar(@Body() dto: ReportIncidenciaDto): Promise<Incidencia> {
-    return this.incidenciaService.reportarIncidencia(dto);
+    return this.incidenciaService
+      .reportarIncidencia(dto)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-  /**
-   * Resolves an incidencia using the legacy transactional flow (creates an
-   * IncidenciaResuelta record and optionally registers a stock movement).
-   * @param {string} id - UUIDv7 of the incidencia to resolve.
-   * @param {ResolveIncidenciaDto} dto - Resolution data including the action type and observations.
-   * @param {string} usuarioId - ID of the authenticated user, extracted from the JWT token.
-   * @returns {Promise<Incidencia>} The resolved Incidencia with computed estado.
-   * @throws {NotFoundException} If no incidencia with the given ID exists.
-   * @throws {BadRequestException} If the incidencia is already resolved or has no lines.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
   @ApiOperation({ summary: 'Resuelve una incidencia de forma transaccional' })
@@ -191,10 +177,8 @@ export class IncidenciaController {
     @Body() dto: ResolveIncidenciaDto,
     @GetUser('id') usuarioId: string
   ): Promise<Incidencia> {
-    return this.incidenciaService.resolverIncidenciaTransaccional(
-      id,
-      dto,
-      usuarioId
-    );
+    return this.incidenciaService
+      .resolverIncidenciaTransaccional(id, dto, usuarioId)
+      .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 }

@@ -4,29 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { EU_ALLERGENS } from '../../utils/constants';
 
 /**
- * Props for the {@link AllergenSelector} component.
+ * Documentación en español.
  */
 export interface AllergenSelectorProps {
-  /** Currently selected allergen IDs (e.g. `['GLUTEN', 'LACTEOS']`). */
+        /**
+     * Documentación en español.
+     */
   value: string[];
-  /** Called with the updated selection whenever a tile is toggled. */
+        /**
+     * Documentación en español.
+     */
   onChange: (newValue: string[]) => void;
-  /** When `true` all tiles are non-interactive and visually dimmed. */
+        /**
+     * Documentación en español.
+     */
   disabled?: boolean;
 }
 
 /**
- * Interactive allergen picker rendered as a responsive grid of icon tiles.
- *
- * Displays all 14 EU-regulated allergens from {@link EU_ALLERGENS}. Each tile
- * toggles the corresponding allergen ID in/out of `value`. Selected tiles are
- * highlighted with the primary colour; deselected tiles use a neutral style.
- *
- * @param props - See {@link AllergenSelectorProps}.
- * @returns A labelled grid of toggleable allergen tiles.
- * @example
- * const [selected, setSelected] = useState<string[]>([]);
- * <AllergenSelector value={selected} onChange={setSelected} />
+ * Documentación en español.
  */
 const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   value = [],

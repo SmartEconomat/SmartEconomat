@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { RecepcionDraftEnvelope } from '../../services/recepcion.types';
+import { formatLocalizedDateTime } from '../../utils/intlFormat';
 
 interface RecepcionDraftConflictDialogProps {
   open: boolean;
@@ -32,7 +33,7 @@ const RecepcionDraftConflictDialog: React.FC<
         <Typography variant="body2" color="text.secondary">
           {t('recepcion.conflicto.ultimaVersion')}{' '}
           {remoteDraft?.updatedAt
-            ? new Date(remoteDraft.updatedAt).toLocaleString('es-ES')
+            ? formatLocalizedDateTime(remoteDraft.updatedAt)
             : t('recepcion.conflicto.desconocida')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

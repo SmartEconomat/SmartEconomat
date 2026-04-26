@@ -1,7 +1,7 @@
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 /**
- * Servicio API genérico y reutilizable con manejo global de errores.
+ * Documentación en español.
  */
 
 const API_BASE = '/api/v1';
@@ -18,6 +18,9 @@ function isInvalidIdToken(value: string): boolean {
   );
 }
 
+/**
+ * Documentación en español.
+ */
 function parseJsonBody(body: BodyInit | null | undefined): unknown | null {
   if (!body || typeof body !== 'string') {
     return null;
@@ -84,6 +87,9 @@ function findInvalidIdInValue(
   return null;
 }
 
+/**
+ * Documentación en español.
+ */
 function findInvalidIdInPath(path: string): string | null {
   const [pathname, rawQuery = ''] = path.split('?');
   const pathSegments = pathname.split('/');
@@ -146,6 +152,9 @@ function getRequestContractIssue(
   return findInvalidIdInValue(jsonBody);
 }
 
+/**
+ * Documentación en español.
+ */
 export function resolveStoredFileUrl(filePath?: string | null): string {
   if (!filePath) return '';
 
@@ -171,8 +180,7 @@ export function resolveStoredFileUrl(filePath?: string | null): string {
 // ─── Tipos compartidos de la API ────────────────────────────────────────────
 
 /**
- * Envoltorio estándar del interceptor global del backend.
- * Todos los endpoints devuelven `{ success, message, data }`.
+ * Documentación en español.
  */
 export interface ApiResponse<T> {
   success: boolean;
@@ -194,8 +202,7 @@ export class ApiError extends Error {
 }
 
 /**
- * Forma que devuelven los endpoints paginados del backend.
- * Las respuestas de listado tienen la forma `{ data: T[], total, page, limit, totalPages }`.
+ * Documentación en español.
  */
 export interface PaginatedData<T> {
   data: T[];
@@ -206,13 +213,7 @@ export interface PaginatedData<T> {
 }
 
 /**
- * Extrae el array de items de una respuesta que puede ser:
- *  - Un array directo: `T[]`
- *  - Un wrapper paginado: `PaginatedData<T>` (donde los items están en `.data`)
- *
- * Esto es necesario porque el interceptor global envuelve la respuesta en
- * `{ success, message, data }`, y los endpoints paginados añaden otro nivel:
- * `{ data: { data: T[], total, page, ... } }`.
+ * Documentación en español.
  */
 export function unwrapList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
@@ -282,7 +283,7 @@ export async function parseApiResponse<T>(
 }
 
 /**
- * Helper para obtener el valor de una cookie por nombre.
+ * Documentación en español.
  */
 function getCookie(name: string): string | null {
   const value = `; ${document.cookie}`;
@@ -291,10 +292,10 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// ─── Helpers de fetch ───────────────────────────────────────────────────────
+// ─── Utilidades de `fetch` ──────────────────────────────────────────────────
 
 /**
- * Wrapper de fetch que maneja errores comunes (como 401 Unauthorized).
+ * Documentación en español.
  */
 export async function baseFetch(
   path: string,
@@ -353,14 +354,7 @@ export async function baseFetch(
 }
 
 /**
- * Elimina un recurso en la API mediante su ruta relativa.
- *
- * @param resourcePath - Ruta relativa al recurso, p. ej. `/productos/abc-123`
- * @throws Error si la respuesta HTTP no es 2xx (excepto 204)
- *
- * @example
- * await deleteResource(`/productos/${id}`);
- * await deleteResource(`/proveedores/${id}`);
+ * Documentación en español.
  */
 export async function downloadFile(
   path: string,
@@ -388,6 +382,9 @@ export async function downloadFile(
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Documentación en español.
+ */
 export async function openPdfInNewTab(path: string): Promise<void> {
   const response = await baseFetch(path);
 
@@ -412,6 +409,9 @@ export async function openPdfInNewTab(path: string): Promise<void> {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+/**
+ * Documentación en español.
+ */
 export async function printPdfFile(path: string): Promise<void> {
   const response = await baseFetch(path);
 
@@ -458,6 +458,9 @@ export async function printPdfFile(path: string): Promise<void> {
   document.body.appendChild(iframe);
 }
 
+/**
+ * Documentación en español.
+ */
 export async function deleteResource(resourcePath: string): Promise<void> {
   const response = await baseFetch(resourcePath, {
     method: 'DELETE',
@@ -473,8 +476,7 @@ export async function deleteResource(resourcePath: string): Promise<void> {
 }
 
 /**
- * Sube un archivo al backend (/archivos/upload).
- * Utiliza FormData (baseFetch gestiona correctamente los headers para FormData).
+ * Documentación en español.
  */
 export async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();

@@ -17,42 +17,39 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 @Index('idx_plantilla_nombre', ['nombre'])
 @Index('idx_plantilla_activo', ['activo'])
 export class PlantillaRol extends BaseEntity {
-  /**
-   * Nombre único de la plantilla
-   * Ejemplo: "SUPER_ADMIN", "ADMIN", "PROFESOR", "ALUMNO"
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'varchar', length: 100, unique: true })
   nombre!: string;
 
-  /**
-   * Descripción de la plantilla
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-  /**
-   * Indica si la plantilla es editable
-   * Las plantillas de sistema (SUPER_ADMIN) no son editables
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: true, name: 'es_editable' })
   esEditable!: boolean;
 
-  /**
-   * Estado de la plantilla (activa/inactiva)
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  /**
-   * ID de la plantilla padre (para herencia)
-   * Permite que una plantilla extienda permisos de otra
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'uuid', nullable: true, name: 'plantilla_padre_id' })
   plantillaPadreId?: string;
 
-  /**
-   * Relación con la plantilla padre (self-reference)
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => PlantillaRol, (plantilla) => plantilla.plantillasHijas, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -60,22 +57,21 @@ export class PlantillaRol extends BaseEntity {
   @JoinColumn({ name: 'plantilla_padre_id' })
   plantillaPadre?: Relation<PlantillaRol>;
 
-  /**
-   * Plantillas que heredan de esta (inversa)
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => PlantillaRol, (plantilla) => plantilla.plantillaPadre)
   plantillasHijas!: Relation<PlantillaRol[]>;
 
-  /**
-   * Roles derivados que usan esta plantilla como base
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => Rol, (rol) => rol.plantillaRol)
   roles!: Relation<Rol[]>;
 
-  /**
-   * Relación ManyToMany con Permiso
-   * Una plantilla contiene un conjunto base de permisos
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToMany(() => Permiso, (permiso) => permiso.plantillasRoles, {
     cascade: false,
   })

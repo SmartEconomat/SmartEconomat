@@ -1,7 +1,5 @@
 /**
- * @module DashboardController
- * REST controller for the /dashboard resource.
- * Exposes KPI statistic endpoints consumed by the front-end dashboard.
+ * Documentación en español.
  */
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { UseInterceptors, Controller, Get, UseGuards } from '@nestjs/common';
@@ -19,27 +17,21 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that exposes dashboard KPI endpoints.
- * Responses are cached for 60 seconds via the NestJS cache manager.
- * All routes are protected by JWT authentication and role-based permissions.
- * @class DashboardController
+ * Documentación en español.
  */
 @ApiTags('Dashboard')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('dashboard')
 export class DashboardController {
-  /**
-   * Constructs the DashboardController with its required service dependency.
-   * @param {DashboardService} dashboardService - Service that computes the dashboard KPI statistics.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly dashboardService: DashboardService) {}
 
-  /**
-   * Returns aggregated KPI statistics for the main dashboard.
-   * The response is cached for 60 000 ms (1 minute) to reduce database load.
-   * @returns {Promise<DashboardStatsDto>} DTO containing inventory, order, alert and movement stats.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.dashboard.ver_estadisticas)
   @UseInterceptors(CacheInterceptor)

@@ -1,10 +1,5 @@
 /**
- * @fileoverview Página principal para la gestión del catálogo de Productos.
- *
- * Implementa las operaciones CRUD completas y conectadas al backend para manejar
- * el inventario de artículos disponibles. Utiliza DataTable para la visualización
- * y delegación de estado, ProductFilters para las búsquedas complejas,
- * y ventanas flotantes/modales (DetailModal, DynamicFormModal) para creación y detalles.
+ * Documentación en español.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -35,6 +30,8 @@ import {
   Tab,
 } from '@mui/material';
 import { formatDigitsForSR } from '../utils/a11y-format';
+import { formatLocalizedNumber } from '../utils/numberUtils';
+import { formatLocalizedDate } from '../utils/intlFormat';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -103,11 +100,10 @@ const BarcodeScanner = React.lazy(
 import { searchByBarcode } from '../services/openfoodfacts.service';
 import LinearLoader from '../components/ui/LinearLoader';
 import { Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
- * Interfaz para los valores del formulario de producto.
- * Define la estructura exacta que maneja el componente ProductoFormModal,
- * evitando el uso de Record<string, unknown> y proporcionando tipado estricto.
+ * Documentación en español.
  */
 interface ProductoFormValues {
   [key: string]: unknown;
@@ -141,6 +137,7 @@ const resolveProveedorId = (proveedor: ProductoProveedor): string | undefined =>
   proveedor.proveedor?.id ?? proveedor.proveedorId;
 
 const Productos: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(1);
@@ -242,7 +239,7 @@ const Productos: React.FC = () => {
         const message =
           err instanceof Error
             ? err.message
-            : 'Error desconocido al cargar datos.';
+            : t('productos.errors.errorCargar');
         setError(message);
       })
       .finally(() => setIsLoading(false));
@@ -254,6 +251,7 @@ const Productos: React.FC = () => {
     sortBy,
     sortOrder,
     activeTab,
+    t,
   ]);
 
   useEffect(() => {
@@ -271,7 +269,9 @@ const Productos: React.FC = () => {
       await deleteResource(`/productos/${productToDelete.id}`);
       setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
       toast.success(
-        `Producto "${productToDelete.nombre}" eliminado correctamente.`,
+        t('productos.toast.eliminadoNombre', {
+          nombre: productToDelete.nombre,
+        }),
         undefined,
         {
           productCategory: productToDelete.tipo,
@@ -301,13 +301,13 @@ const Productos: React.FC = () => {
       if (formData.id) {
         console.log('[DEBUG] Actualizando producto con ID:', formData.id);
         await updateProducto(formData.id, payload);
-        toast.success('Producto actualizado correctamente.', undefined, {
+        toast.success(t('productos.toast.actualizado'), undefined, {
           productCategory: category,
         });
       } else {
         console.log('[DEBUG] Creando nuevo producto');
         await createProducto(payload);
-        toast.success('Producto creado correctamente.', undefined, {
+        toast.success(t('productos.toast.creado'), undefined, {
           productCategory: category,
         });
       }
@@ -317,7 +317,7 @@ const Productos: React.FC = () => {
     } catch (err: unknown) {
       console.error('[DEBUG] Error al guardar producto:', err);
       const message =
-        err instanceof Error ? err.message : 'Error al guardar el producto.';
+        err instanceof Error ? err.message : t('productos.toast.errorGuardar');
       toast.error(message, undefined, {
         productCategory: (formData as { tipo?: CategoriaProducto }).tipo,
       });
@@ -329,11 +329,13 @@ const Productos: React.FC = () => {
   const handleRestoreProduct = async (product: Producto) => {
     try {
       await restoreProducto(product.id);
-      toast.success(`Producto "${product.nombre}" restaurado correctamente.`);
+      toast.success(
+        t('productos.toast.restaurado', { nombre: product.nombre })
+      );
       await loadData();
     } catch (error) {
       console.error('Error restaurando producto:', error);
-      toast.error('No se pudo restaurar el producto.');
+      toast.error(t('productos.toast.errorRestaurar'));
     }
   };
 
@@ -341,7 +343,7 @@ const Productos: React.FC = () => {
     const allColumns: Column<Producto>[] = [
       {
         id: 'nombre',
-        label: 'Nombre',
+        label: t('productos.columns.nombre'),
         sortable: true,
         minWidth: 280,
         render: (row) => (
@@ -350,9 +352,9 @@ const Productos: React.FC = () => {
               {row.nombre}
             </Typography>
             {(!row.proveedores || row.proveedores.length === 0) && (
-              <Tooltip title="Producto sin proveedores asignados">
+              <Tooltip title={t('productos.card.sinProveedoresTooltip')}>
                 <Chip
-                  label="Sin Prov."
+                  label={t('productos.card.sinProveedores')}
                   size="small"
                   color="warning"
                   variant="outlined"
@@ -365,7 +367,7 @@ const Productos: React.FC = () => {
       },
       {
         id: 'marca',
-        label: 'Marca',
+        label: t('productos.columns.marca'),
         render: (row) => row.marca ?? '—',
         hideOnMobile: true,
         sortable: true,
@@ -374,7 +376,7 @@ const Productos: React.FC = () => {
       },
       {
         id: 'tipo',
-        label: 'Tipo',
+        label: t('productos.columns.tipo'),
         render: (row) =>
           row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
         hideOnMobile: true,
@@ -383,7 +385,7 @@ const Productos: React.FC = () => {
       },
       {
         id: 'contenido',
-        label: 'Contenido',
+        label: t('productos.columns.contenido'),
         align: 'right',
         render: (row) =>
           row.unidad ? `${row.contenido} ${row.unidad}` : `${row.contenido}`,
@@ -391,11 +393,13 @@ const Productos: React.FC = () => {
       },
       {
         id: 'codigoBarras',
-        label: 'Cód. Barras',
+        label: t('productos.columns.codigoBarras'),
         render: (row) => (
           <Typography
             variant="body2"
-            aria-label={`Código de barras: ${formatDigitsForSR(row.codigoBarras || '')}`}
+            aria-label={t('productos.aria.codigoBarras', {
+              codigo: formatDigitsForSR(row.codigoBarras || ''),
+            })}
           >
             {row.codigoBarras ?? '—'}
           </Typography>
@@ -406,13 +410,8 @@ const Productos: React.FC = () => {
       },
       {
         id: 'createdAt',
-        label: 'Alta',
-        render: (row) =>
-          new Date(row.createdAt).toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          }),
+        label: t('productos.columns.fechaAlta'),
+        render: (row) => formatLocalizedDate(row.createdAt),
         hideOnMobile: true,
         sortable: true,
         width: 120,
@@ -427,7 +426,7 @@ const Productos: React.FC = () => {
     }
 
     return allColumns;
-  }, [isSidebarActuallyExpanded, screenWidth]);
+  }, [isSidebarActuallyExpanded, screenWidth, t]);
 
   const handleSort = (key: string | keyof Producto) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -489,31 +488,25 @@ const Productos: React.FC = () => {
 
       if (existingProduct) {
         setProductToEdit(buildEditData(existingProduct));
-        toast.success('Producto localizado. Abriendo su ficha para editar.');
+        toast.success(t('productos.toast.localizado'));
         return;
       }
 
       if (!canCreate) {
-        toast.info(
-          'No se encontró el producto. Se dejó el código en la búsqueda.'
-        );
+        toast.info(t('productos.toast.noEncontradoInfo'));
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.info(
-        'Producto no encontrado. Se abrió el formulario para crearlo.'
-      );
+      toast.info(t('productos.toast.noEncontradoForm'));
     } catch {
       if (!canCreate) {
-        toast.error('No se pudo validar el código escaneado.');
+        toast.error(t('productos.toast.errorValidar'));
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.warning(
-        'No se pudo comprobar el catálogo, pero se abrió el alta del producto.'
-      );
+      toast.warning(t('productos.toast.errorCatalogo'));
     }
   };
 
@@ -564,33 +557,33 @@ const Productos: React.FC = () => {
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
       {activeTab === 'active' && canEdit && (
-        <Tooltip title="Editar">
+        <Tooltip title={t('productos.actions.editar')}>
           <IconButton
             color="secondary"
             onClick={() => {
               setProductToEdit(buildEditData(row));
             }}
             size="small"
-            aria-label="Editar"
+            aria-label={t('productos.actions.editar')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {activeTab === 'active' && canDelete && (
-        <Tooltip title="Eliminar">
+        <Tooltip title={t('productos.actions.eliminar')}>
           <IconButton
             color="error"
             onClick={() => setProductToDelete(row)}
             size="small"
-            aria-label="Borrar"
+            aria-label={t('productos.actions.eliminar')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {activeTab === 'deleted' && (
-        <Tooltip title="Restaurar Producto">
+        <Tooltip title={t('comun.restaurar')}>
           <IconButton
             color="success"
             onClick={(e) => {
@@ -598,7 +591,7 @@ const Productos: React.FC = () => {
               handleRestoreProduct(row);
             }}
             size="small"
-            aria-label="Restaurar"
+            aria-label={t('comun.restaurar')}
           >
             <RestoreFromTrashIcon fontSize="small" />
           </IconButton>
@@ -616,21 +609,21 @@ const Productos: React.FC = () => {
     <Box>
       {(isLoading || isSaving) && <LinearLoader fixed />}
       <PageToolbar
-        title="Gestión de Productos"
+        title={t('productos.titulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, marca, código de barras..."
+        searchPlaceholder={t('productos.searchPlaceholder')}
         searchId="search-productos"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel="productos"
+        totalItemsLabel={t('productos.totalItemsLabel')}
         primaryAction={
           canCreate
             ? {
-                label: 'Nuevo Producto',
+                label: t('productos.acciones.nuevo'),
                 onClick: () => {
                   setProductToEdit({});
                 },
@@ -642,7 +635,7 @@ const Productos: React.FC = () => {
         onViewModeChange={setViewMode}
         extraActions={[
           {
-            label: 'Exportar PDF',
+            label: t('productos.acciones.exportarPdf'),
             onClick: () => {
               void handleExportPdf();
             },
@@ -652,7 +645,7 @@ const Productos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('productos.acciones.exportarExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -694,7 +687,7 @@ const Productos: React.FC = () => {
           onScan={(code) => {
             void handleSearchScannerResult(code);
           }}
-          title="Escanear Producto para Buscar"
+          title={t('productos.acciones.escanear')}
         />
       </Suspense>
 
@@ -723,16 +716,16 @@ const Productos: React.FC = () => {
             variant="fullWidth"
             textColor="primary"
             indicatorColor="primary"
-            aria-label="pestañas de catálogo"
+            aria-label={t('productos.titulo')}
           >
             <Tab
               icon={<Inventory2OutlinedIcon />}
-              label="Activos"
+              label={t('comun.activos')}
               value="active"
             />
             <Tab
               icon={<DeleteSweepOutlinedIcon />}
-              label="Eliminados"
+              label={t('comun.eliminados')}
               value="deleted"
             />
           </Tabs>
@@ -756,7 +749,10 @@ const Productos: React.FC = () => {
             sortConfig={{ key: sortBy || '', direction: sortOrder }}
             actionsWidth={120}
             getRowAriaLabel={(row) =>
-              `Producto: ${row.nombre}, Marca: ${row.marca ?? 'Genérica'}`
+              t('productos.aria.filaProducto', {
+                nombre: row.nombre,
+                marca: row.marca ?? t('productos.marcaGenerica'),
+              })
             }
             emptyStateMessage={
               <Box
@@ -796,10 +792,10 @@ const Productos: React.FC = () => {
                   sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
                 >
                   {hasSearchOrFilters
-                    ? 'Sin coincidencias'
+                    ? t('productos.empty.sinResultados')
                     : activeTab === 'deleted'
-                      ? 'Sin productos eliminados'
-                      : 'Catálogo vacío'}
+                      ? t('productos.empty.sinEliminados')
+                      : t('productos.empty.sinProductos')}
                 </Typography>
                 <Typography
                   variant="body1"
@@ -807,10 +803,10 @@ const Productos: React.FC = () => {
                   sx={{ mb: 4 }}
                 >
                   {hasSearchOrFilters
-                    ? 'Prueba a ajustar tus filtros o el término de búsqueda para encontrar lo que necesitas.'
+                    ? t('productos.empty.prueba')
                     : activeTab === 'deleted'
-                      ? 'No hay registros de productos que hayan sido borrados anteriormente.'
-                      : 'Empieza a digitalizar tu inventario añadiendo tu primer producto hoy mismo.'}
+                      ? t('productos.empty.sinEliminadosHint')
+                      : t('productos.empty.empieza')}
                 </Typography>
                 {!hasSearchOrFilters && canCreate && activeTab === 'active' && (
                   <Button
@@ -827,7 +823,7 @@ const Productos: React.FC = () => {
                         `0 8px 20px ${alpha(theme.palette.primary.main, 0.25)}`,
                     }}
                   >
-                    Nuevo Producto
+                    {t('productos.acciones.nuevo')}
                   </Button>
                 )}
               </Box>
@@ -865,7 +861,7 @@ const Productos: React.FC = () => {
         isOpen={!!productToDelete}
         onClose={() => !isDeleting && setProductToDelete(null)}
         onConfirm={() => void handleDeleteConfirm()}
-        title="Eliminar producto"
+        title={t('productos.confirm.eliminarTitulo')}
         message={
           <>
             ¿Estás seguro de que deseas eliminar el producto{' '}
@@ -873,8 +869,8 @@ const Productos: React.FC = () => {
             deshacer.
           </>
         }
-        confirmText="Sí, eliminar"
-        cancelText="Cancelar"
+        confirmText={t('productos.confirm.eliminarConfirm')}
+        cancelText={t('productos.confirm.cancelar')}
         isLoading={isDeleting}
       />
 
@@ -911,7 +907,7 @@ const Productos: React.FC = () => {
               size="md"
               editLabel={
                 canEdit && activeTab === 'active'
-                  ? 'Editar producto'
+                  ? t('productos.acciones.editarProducto')
                   : undefined
               }
               onEdit={
@@ -924,7 +920,7 @@ const Productos: React.FC = () => {
               }
               headerMedia={
                 imageUrl ? (
-                  <Tooltip title="Click para ampliar" arrow>
+                  <Tooltip title={t('productos.detail.clickAmpliar')} arrow>
                     <Box
                       component="img"
                       src={imageUrl}
@@ -955,11 +951,11 @@ const Productos: React.FC = () => {
               }
               sections={[
                 {
-                  title: 'Información general',
+                  title: t('productos.detail.infoGeneral'),
                   columns: 3,
                   fields: [
                     {
-                      label: 'Tipo',
+                      label: t('productos.detail.tipo'),
                       value: p.tipo ? (
                         <StatusChip
                           status={p.tipo}
@@ -969,15 +965,15 @@ const Productos: React.FC = () => {
                       ) : undefined,
                     },
                     {
-                      label: 'Contenido',
+                      label: t('productos.detail.contenido'),
                       value: `${p.contenido}${p.unidad ? ' ' + p.unidad : ''}`,
                     },
                     {
-                      label: 'Código de barras',
+                      label: t('productos.detail.codigoBarras'),
                       value: p.codigoBarras ?? undefined,
                     },
                     {
-                      label: 'PMP Actual',
+                      label: t('productos.detail.pmp'),
                       value: (
                         <Typography
                           variant="body2"
@@ -989,7 +985,7 @@ const Productos: React.FC = () => {
                       ),
                     },
                     {
-                      label: 'Descripción',
+                      label: t('productos.detail.descripcion'),
                       value: p.descripcion
                         ? p.descripcion
                             .replace(
@@ -1005,7 +1001,7 @@ const Productos: React.FC = () => {
                 ...(alergenosActivos.length > 0
                   ? [
                       {
-                        title: 'Alérgenos',
+                        title: t('productos.detail.alergenos'),
                         content: (
                           <Box
                             sx={{
@@ -1051,7 +1047,7 @@ const Productos: React.FC = () => {
                 ...(proveedoresAsociados.length > 0
                   ? [
                       {
-                        title: 'Proveedores asociados',
+                        title: t('productos.detail.proveedores'),
                         content: (
                           <Stack spacing={1.5}>
                             {proveedoresAsociados.map((pv, idx: number) => {
@@ -1059,7 +1055,7 @@ const Productos: React.FC = () => {
                               const providerName =
                                 pv.proveedor?.nombre ??
                                 pv.nombre ??
-                                `Proveedor ${idx + 1}`;
+                                t('forms.productFallback', { index: idx + 1 });
 
                               return (
                                 <Paper
@@ -1098,14 +1094,23 @@ const Productos: React.FC = () => {
                                         <Chip
                                           label={
                                             pv.ahorroAbsolutoPct != null
-                                              ? `Mejor Opción · -${pv.ahorroAbsolutoPct.toFixed(1)}%`
-                                              : 'Mejor Opción'
+                                              ? t(
+                                                  'productos.detail.mejorOpcionConAhorro',
+                                                  {
+                                                    pct: pv.ahorroAbsolutoPct.toFixed(
+                                                      1
+                                                    ),
+                                                  }
+                                                )
+                                              : t('productos.detail.mejorOpcion')
                                           }
                                           size="small"
                                           color="success"
                                         />
                                       )}
-                                      <Tooltip title="Ver histórico de este proveedor">
+                                      <Tooltip
+                                        title={t('productos.actions.verHistorico')}
+                                      >
                                         <span>
                                           <IconButton
                                             size="small"
@@ -1115,7 +1120,12 @@ const Productos: React.FC = () => {
                                                 providerId
                                               );
                                             }}
-                                            aria-label={`Ver histórico de ${providerName}`}
+                                            aria-label={t(
+                                              'productos.actions.ariaVerHistorico',
+                                              {
+                                                nombre: providerName,
+                                              }
+                                            )}
                                             disabled={!providerId}
                                           >
                                             <HistoryOutlinedIcon fontSize="small" />
@@ -1144,7 +1154,7 @@ const Productos: React.FC = () => {
                                             mb: 0.25,
                                           }}
                                         >
-                                          Precio
+                                          {t('productos.detail.precio')}
                                         </Typography>
                                         <Typography variant="body2">
                                           {pv.precioUnitario.toFixed(2)} €
@@ -1164,7 +1174,7 @@ const Productos: React.FC = () => {
                                             mb: 0.25,
                                           }}
                                         >
-                                          Merma
+                                          {t('productos.detail.merma')}
                                         </Typography>
                                         <Typography variant="body2">
                                           {pv.mermaEsperada.toFixed(1)} %
@@ -1184,7 +1194,7 @@ const Productos: React.FC = () => {
                                             mb: 0.25,
                                           }}
                                         >
-                                          Coste Real
+                                          {t('productos.detail.costeReal')}
                                         </Typography>
                                         <Typography
                                           variant="body2"
@@ -1208,9 +1218,10 @@ const Productos: React.FC = () => {
                                       sx={{ mt: 1, display: 'block' }}
                                     >
                                       {[
-                                        pv.marca && `Marca: ${pv.marca}`,
+                                        pv.marca &&
+                                          `${t('proveedores.campoMarca')}: ${pv.marca}`,
                                         pv.codigoBarras &&
-                                          `Cód. Barras: ${pv.codigoBarras}`,
+                                          `${t('productos.columns.codigoBarras')}: ${pv.codigoBarras}`,
                                       ]
                                         .filter(Boolean)
                                         .join(' · ')}
@@ -1225,7 +1236,7 @@ const Productos: React.FC = () => {
                     ]
                   : []),
                 {
-                  title: 'Histórico de precios',
+                  title: t('productos.detail.historicoPrecios'),
                   content: (
                     <Box ref={historySectionRef}>
                       <Box
@@ -1237,19 +1248,19 @@ const Productos: React.FC = () => {
                       >
                         <FormControl size="small" sx={{ minWidth: 200 }}>
                           <InputLabel id="history-provider-filter-label">
-                            Filtro por Proveedor
+                            {t('productos.detail.filtroProveedor')}
                           </InputLabel>
                           <Select
                             labelId="history-provider-filter-label"
                             id="history-provider-filter"
                             value={historyProviderFilter}
-                            label="Filtro por Proveedor"
+                            label={t('productos.detail.filtroProveedor')}
                             onChange={(e) =>
                               setHistoryProviderFilter(e.target.value)
                             }
                           >
                             <MenuItem value="all">
-                              Todos los proveedores
+                              {t('productos.detail.todosProveedores')}
                             </MenuItem>
                             {p.proveedores?.map((pp) => {
                               const providerId = resolveProveedorId(pp);
@@ -1262,7 +1273,7 @@ const Productos: React.FC = () => {
                                 >
                                   {pp.proveedor?.nombre ??
                                     pp.nombre ??
-                                    'Proveedor'}
+                                    t('productos.detail.proveedor')}
                                 </MenuItem>
                               );
                             })}
@@ -1288,7 +1299,7 @@ const Productos: React.FC = () => {
                             }}
                           />
                           <Typography variant="body2" color="text.secondary">
-                            Consultando evolución de precios...
+                            {t('productos.detail.cargandoHistorial')}
                           </Typography>
                         </Box>
                       ) : priceHistory.length > 0 ? (
@@ -1303,7 +1314,7 @@ const Productos: React.FC = () => {
                         >
                           <Table
                             size="small"
-                            aria-label="Histórico de precios del producto"
+                            aria-label={t('productos.detail.historicoPrecios')}
                           >
                             <TableHead>
                               <TableRow
@@ -1324,7 +1335,7 @@ const Productos: React.FC = () => {
                                     py: 1.5,
                                   }}
                                 >
-                                  Fecha
+                                  {t('productos.historial.fecha')}
                                 </TableCell>
                                 <TableCell
                                   sx={{
@@ -1336,20 +1347,7 @@ const Productos: React.FC = () => {
                                     py: 1.5,
                                   }}
                                 >
-                                  Proveedor
-                                </TableCell>
-                                <TableCell
-                                  align="right"
-                                  sx={{
-                                    fontWeight: 700,
-                                    fontSize: '0.7rem',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 1,
-                                    color: 'text.secondary',
-                                    py: 1.5,
-                                  }}
-                                >
-                                  Cantidad
+                                  {t('productos.historial.proveedor')}
                                 </TableCell>
                                 <TableCell
                                   align="right"
@@ -1362,7 +1360,20 @@ const Productos: React.FC = () => {
                                     py: 1.5,
                                   }}
                                 >
-                                  Precio Unit.
+                                  {t('productos.historial.cantidad')}
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: 1,
+                                    color: 'text.secondary',
+                                    py: 1.5,
+                                  }}
+                                >
+                                  {t('productos.historial.precio')}
                                 </TableCell>
                               </TableRow>
                             </TableHead>
@@ -1387,14 +1398,9 @@ const Productos: React.FC = () => {
                                       fontWeight: 500,
                                     }}
                                   >
-                                    {new Date(h.fecha).toLocaleDateString(
-                                      undefined,
-                                      {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric',
-                                      }
-                                    )}
+                                    {formatLocalizedDate(h.fecha, {
+                                      month: 'short',
+                                    })}
                                   </TableCell>
                                   <TableCell sx={{ py: 1.5 }}>
                                     <Typography
@@ -1410,14 +1416,17 @@ const Productos: React.FC = () => {
                                         color="text.secondary"
                                         display="block"
                                       >
-                                        Doc: {h.documentoOrigen}
+                                        {t('productos.historial.documento')}: {h.documentoOrigen}
                                       </Typography>
                                     )}
                                   </TableCell>
                                   <TableCell align="right" sx={{ py: 1.5 }}>
                                     <Typography variant="body2">
                                       {h.cantidad != null
-                                        ? Number(h.cantidad).toLocaleString()
+                                        ? formatLocalizedNumber(
+                                            Number(h.cantidad),
+                                            0
+                                          )
                                         : '—'}
                                     </Typography>
                                   </TableCell>
@@ -1456,7 +1465,7 @@ const Productos: React.FC = () => {
                             borderRadius: 1,
                           }}
                         >
-                          No hay registros históricos para este producto.
+                          {t('productos.detail.sinHistorial')}
                         </Typography>
                       )}
 
@@ -1473,8 +1482,7 @@ const Productos: React.FC = () => {
                           }}
                         >
                           <Typography variant="caption" color="text.secondary">
-                            Estructura preparada para gráfico de evolución de
-                            precios
+                            {t('productos.detail.graficoPreciosPlaceholder')}
                           </Typography>
                         </Box>
                       )}
@@ -1528,7 +1536,7 @@ const Productos: React.FC = () => {
             <Box
               component="img"
               src={zoomedImage ?? undefined}
-              alt="Vista ampliada del producto"
+              alt={t('productos.detail.zoomAlt')}
               sx={{
                 maxWidth: '100%',
                 maxHeight: '85vh',

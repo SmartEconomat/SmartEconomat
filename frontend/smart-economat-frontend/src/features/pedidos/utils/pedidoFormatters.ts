@@ -1,5 +1,9 @@
-import dayjs from 'dayjs';
 import { PedidoListItem, PurchaseBatch } from '../../../services/pedido.types';
+import {
+  formatLocalizedCurrencyEUR,
+  formatLocalizedDate,
+  formatLocalizedDateTime,
+} from '../../../utils/intlFormat';
 
 export type PedidoNumberContext =
   | 'auto'
@@ -7,38 +11,28 @@ export type PedidoNumberContext =
   | 'pedido-visible';
 
 /**
- * @description Formats a date string for display in the pedidos UI.
- * @param value - ISO date string to format; returns '—' if absent or invalid
- * @param format - 'date' renders DD/MM/YYYY; 'datetime' appends HH:mm
- * @returns Formatted date string or '—' when the value is missing/invalid
+ * Documentación en español.
  */
 export const formatPedidoDate = (
   value?: string,
   format: 'date' | 'datetime' = 'date'
 ): string => {
-  if (!value || !dayjs(value).isValid()) return '—';
-  return dayjs(value).format(
-    format === 'datetime' ? 'DD/MM/YYYY HH:mm' : 'DD/MM/YYYY'
-  );
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return format === 'datetime'
+    ? formatLocalizedDateTime(d)
+    : formatLocalizedDate(d);
 };
 
 /**
- * @description Formats a numeric or string value as a Spanish-locale Euro currency string.
- * @param value - Numeric or string amount; defaults to 0 when absent
- * @returns Locale-formatted string ending with ' €' (e.g. '1.234,56 €')
+ * Documentación en español.
  */
-export const formatCurrency = (value?: number | string | null): string => {
-  const amount = Number(value || 0);
-  return `${amount.toLocaleString('es-ES', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} €`;
-};
+export const formatCurrency = (value?: number | string | null): string =>
+  formatLocalizedCurrencyEUR(value);
 
 /**
- * @description Returns a short display identifier from a full UUID by taking the first segment.
- * @param id - Full UUID string; returns '—' when absent
- * @returns First UUID segment (before the first '-'), or the full id if no dash is present
+ * Documentación en español.
  */
 export const formatPedidoId = (id?: string): string => {
   if (!id) return '—';
@@ -65,12 +59,7 @@ const resolvePedidoVisibleNumber = (pedido: {
 };
 
 /**
- * @description Resolves the most appropriate human-readable number to display for a pedido row.
- * Priority order depends on the context: 'pedido-proveedor', 'pedido-visible', or 'auto'.
- * Falls back through various number fields to the short UUID when nothing else is available.
- * @param pedido - Partial pedido row that may carry different number fields
- * @param context - Strategy for number resolution; defaults to 'auto'
- * @returns The best available display number string
+ * Documentación en español.
  */
 export const formatPedidoListNumber = (
   pedido: Pick<PedidoListItem, 'id' | 'numeroGlobal'> & {
@@ -126,9 +115,7 @@ export const formatPedidoListNumber = (
 };
 
 /**
- * @description Formats the sequential number for a purchase batch.
- * @param batch - PurchaseBatch object with optional numeroLote / numeroGlobal fields
- * @returns Numeric string or a short UUID fallback when no number is available
+ * Documentación en español.
  */
 export const formatBatchNumber = (batch: PurchaseBatch): string => {
   const numeroLote = batch.numeroLote || batch.numeroGlobal;
@@ -136,10 +123,7 @@ export const formatBatchNumber = (batch: PurchaseBatch): string => {
 };
 
 /**
- * @description Returns the human-readable reference for a purchase batch.
- * Prefers explicit reference fields and generates a zero-padded 'LC-XXXXXX' code as fallback.
- * @param batch - PurchaseBatch object
- * @returns Reference string for display (e.g. 'LC-000042')
+ * Documentación en español.
  */
 export const formatBatchReference = (batch: PurchaseBatch): string => {
   if (batch.referenciaLote) {
@@ -159,27 +143,21 @@ export const formatBatchReference = (batch: PurchaseBatch): string => {
 };
 
 /**
- * @description Resolves the display name of the user who created a pedido.
- * @param pedido - Pedido row carrying the nested usuario object
- * @returns Full name or username; '—' when no user information is available
+ * Documentación en español.
  */
 export const getPedidoCreatorName = (
   pedido: Pick<PedidoListItem, 'usuario'>
 ): string => pedido.usuario?.nombre || pedido.usuario?.username || '—';
 
 /**
- * @description Resolves the display name of the provider associated with a pedido.
- * @param pedido - Pedido row carrying the nested proveedor object
- * @returns Provider name or '—' when absent
+ * Documentación en español.
  */
 export const getPedidoProviderName = (
   pedido: Pick<PedidoListItem, 'proveedor'>
 ): string => pedido.proveedor?.nombre || '—';
 
 /**
- * @description Builds a comma-separated summary of unique provider names present in a batch.
- * @param batch - PurchaseBatch containing nested pedidos with proveedor data
- * @returns Comma-separated provider names, or '—' when none are found
+ * Documentación en español.
  */
 export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
   const uniqueProviders = Array.from(
@@ -192,18 +170,14 @@ export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
 };
 
 /**
- * @description Returns the total number of pedidos included in a purchase batch.
- * @param batch - PurchaseBatch object
- * @returns Count of nested pedidos (0 when the array is absent)
+ * Documentación en español.
  */
 export const getBatchPedidosCount = (batch: PurchaseBatch): number => {
   return (batch.pedidos || []).length;
 };
 
 /**
- * @description Calculates the total estimated cost of all pedidos in a purchase batch.
- * @param batch - PurchaseBatch object with nested pedidos containing costeTotal
- * @returns Sum of all pedido costs as a number (0 when no pedidos are present)
+ * Documentación en español.
  */
 export const getBatchTotal = (batch: PurchaseBatch): number =>
   batch.pedidos?.reduce(

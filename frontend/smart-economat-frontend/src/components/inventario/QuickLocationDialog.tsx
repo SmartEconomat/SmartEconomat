@@ -14,22 +14,20 @@ import type { Ubicacion } from '../../services/ubicacion.types';
 import { useToast } from '../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
-/** Props for the {@link QuickLocationDialog} component. */
+/**
+ * Documentación en español.
+ */
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
-  /** Called with the newly created location object after a successful save. */
+        /**
+     * Documentación en español.
+     */
   onSuccess: (newLocation: Ubicacion) => void;
 }
 
 /**
- * Compact dialog that lets the user quickly create a new warehouse location
- * without leaving their current workflow.
- *
- * On successful creation the `onSuccess` callback receives the new location
- * so the parent can immediately select or use it.
- *
- * @param props - {@link QuickLocationDialogProps}
+ * Documentación en español.
  */
 const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   open,
@@ -41,12 +39,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const toast = useToast();
   const { t } = useTranslation();
 
-  /**
-   * Validates the name, calls the API to create the location, and handles
-   * success/error feedback via toasts.
-   *
-   * @param e - Optional form submit event (prevents default if provided).
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 

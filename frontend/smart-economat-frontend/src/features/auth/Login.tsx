@@ -23,21 +23,23 @@ import { useTranslation } from 'react-i18next';
 const SLIDE_W = 58;
 const FORM_W = 100 - SLIDE_W; // 42
 
-/** Duración base del efecto Elastic Wall Peel (ms). */
+/**
+ * Documentación en español.
+ */
 const PEEL_DURATION = 1000;
 
-/** Duración de la animación de salida en login/registro (ms). */
+/**
+ * Documentación en español.
+ */
 const EXIT_DURATION = 2000;
 
-/** Tiempo de espera de la pantalla de confirmación de registro (ms). */
+/**
+ * Documentación en español.
+ */
 const REGISTER_MSG_MS = 2500;
 
 /**
- * Fases de la pantalla de autenticación.
- * - `idle`            → Pantalla en reposo mostrando login o registro.
- * - `login-exit`      → El layout se desliza hacia la izquierda y desaparece tras un login exitoso.
- * - `register-exit`   → El layout sale hacia la derecha tras un registro exitoso.
- * - `register-return` → El layout vuelve desde la izquierda (vuelta a login).
+ * Documentación en español.
  */
 type AuthPhase = 'idle' | 'login-exit' | 'register-exit' | 'register-return';
 
@@ -111,23 +113,7 @@ const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 // ─────────────────────────────────────────────
 
 /**
- * Página principal de Autenticación.
- *
- * Gestiona tres estados visuales principales:
- *
- * 1. **Login exitoso** (`login-exit`):
- *    El layout completo se desliza hacia la izquierda con fade-out.
- *    Aparece un overlay blanco con "✋ ¡Bienvenido!" mientras se navega al dashboard.
- *
- * 2. **Registro exitoso** (`register-exit`):
- *    El layout sale hacia la derecha con fade-out.
- *    Aparece un overlay blanco con "✅ ¡Registro exitoso!" y el mensaje de confirmación.
- *    Tras 3.5 s el overlay desaparece y el layout vuelve en modo login.
- *
- * 3. **Idle / toggle** (`idle`):
- *    Los paneles intercambian posición con el efecto Elastic Wall Peel.
- *
- * @returns {JSX.Element} Vista controladora de autenticación.
+ * Documentación en español.
  */
 export default function Login() {
   const { t } = useTranslation();
@@ -140,17 +126,20 @@ export default function Login() {
   const [phase, setPhase] = useState<AuthPhase>('idle');
   const hasToggled = useRef(false);
 
-  /**
-   * Datos del usuario almacenados temporalmente hasta que termina
-   * la animación de salida del login, momento en que se llama a `login()`.
-   */
+        /**
+     * Documentación en español.
+     */
   const pendingAuth = useRef<{ user: User } | null>(null);
 
-  /** Posición final de cada panel según el modo activo. */
+        /**
+     * Documentación en español.
+     */
   const slideLeft = isLogin ? '0%' : `${FORM_W}%`;
   const formLeft = isLogin ? `${SLIDE_W}%` : '0%';
 
-  /** Nombre de los keyframes del peel según la dirección del viaje. */
+        /**
+     * Documentación en español.
+     */
   const animated = hasToggled.current && phase === 'idle';
   const formAnim = animated
     ? isLogin
@@ -186,12 +175,9 @@ export default function Login() {
   // Caso 1: Login exitoso
   // ─────────────────────────────────────────
 
-  /**
-   * Recibe los datos base del usuario tras un login correcto.
-   * Activa la animación de salida del layout y, cuando termina, navega al dashboard.
-   *
-   * @param {User} user - Datos del usuario.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleLoginSuccess = (user: User) => {
     pendingAuth.current = { user };
     setPhase('login-exit');
@@ -207,10 +193,9 @@ export default function Login() {
   // Caso 2: Registro exitoso
   // ─────────────────────────────────────────
 
-  /**
-   * Activa la animación de salida hacia la derecha y muestra el mensaje de confirmación.
-   * Tras `REGISTER_MSG_MS` ms, hace volver el layout en modo login.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleRegisterSuccess = () => {
     setPhase('register-exit');
     setTimeout(() => {
@@ -224,7 +209,9 @@ export default function Login() {
     }, EXIT_DURATION + REGISTER_MSG_MS);
   };
 
-  /** Indica si hay que mostrar el overlay de feedback (login o registro). */
+        /**
+     * Documentación en español.
+     */
   const showOverlay =
     phase === 'login-exit' ||
     phase === 'register-exit' ||

@@ -1,6 +1,7 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 import { authService } from '../services/auth.service';
+import { ApiError } from '../services/api.service';
 
 import { useAppDispatch } from '../store/hooks';
 import {
@@ -29,46 +30,68 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const refreshPromiseRef = React.useRef<Promise<User | null> | null>(null);
   const dispatch = useAppDispatch();
 
-  const refreshUser = React.useCallback(async () => {
-    if (refreshPromiseRef.current) {
-      return refreshPromiseRef.current;
+  const isUnauthorizedError = React.useCallback((error: unknown): boolean => {
+    if (error instanceof ApiError) {
+      return error.status === 401;
     }
 
-    setIsAuthResolved(false);
+    if (error instanceof Error) {
+      return /unauthorized|no autorizad|sesi[oó]n expirada/i.test(
+        error.message
+      );
+    }
 
-    const refreshPromise = authService
-      .getCurrentUser()
-      .then((refreshedUser) => {
-        setUser(refreshedUser);
-        if (refreshedUser?.permisos) {
-          dispatch(setPermissions(refreshedUser.permisos));
-        } else {
-          dispatch(resetPermissions());
-        }
-        setIsSessionVerified(true);
-        setIsAuthResolved(true);
-        localStorage.setItem('sm_has_session', 'true');
+    return false;
+  }, []);
 
-        return refreshedUser;
-      })
-      .catch(() => {
-        clearPersistedSessionArtifacts();
-        setIsSessionVerified(false);
-        setIsAuthResolved(true);
-        localStorage.removeItem('sm_has_session');
-        setUser(null);
-        // No resetear permisos aquí para evitar navegación inesperada en vistas protegidas
-        // dispatch(resetPermissions()); // Comentado para preservar permisos hasta logout
-        return null;
-      })
-      .finally(() => {
-        refreshPromiseRef.current = null;
-      });
+  const refreshUser = React.useCallback(
+    async (options?: { background?: boolean }) => {
+      if (refreshPromiseRef.current) {
+        return refreshPromiseRef.current;
+      }
 
-    refreshPromiseRef.current = refreshPromise;
+      const isBackgroundRefresh = options?.background === true;
+      if (!isBackgroundRefresh) {
+        setIsAuthResolved(false);
+      }
 
-    return refreshPromise;
-  }, [dispatch]);
+      const refreshPromise = authService
+        .getCurrentUser()
+        .then((refreshedUser) => {
+          setUser(refreshedUser);
+          if (refreshedUser?.permisos) {
+            dispatch(setPermissions(refreshedUser.permisos));
+          } else {
+            dispatch(resetPermissions());
+          }
+          setIsSessionVerified(true);
+          setIsAuthResolved(true);
+          localStorage.setItem('sm_has_session', 'true');
+
+          return refreshedUser;
+        })
+        .catch((error: unknown) => {
+          if (isUnauthorizedError(error)) {
+            clearPersistedSessionArtifacts();
+            setIsSessionVerified(false);
+            localStorage.removeItem('sm_has_session');
+            setUser(null);
+            // No resetear permisos aquí para evitar navegación inesperada en vistas protegidas
+            // dispatch(resetPermissions()); // Comentado para preservar permisos hasta logout
+          }
+          setIsAuthResolved(true);
+          return null;
+        })
+        .finally(() => {
+          refreshPromiseRef.current = null;
+        });
+
+      refreshPromiseRef.current = refreshPromise;
+
+      return refreshPromise;
+    },
+    [dispatch, isUnauthorizedError]
+  );
 
   const logout = React.useCallback(async () => {
     refreshPromiseRef.current = null;
@@ -122,12 +145,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     const handleFocus = () => {
       if (document.visibilityState === 'visible' && isSessionVerified) {
-        void refreshUser();
+        void refreshUser({ background: true });
       }
     };
 
+    const handleRefreshUser = () => {
+      void refreshUser({ background: true });
+    };
+
     eventBus.on(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
-    eventBus.on(AUTH_EVENTS.REFRESH_USER, refreshUser);
+    eventBus.on(AUTH_EVENTS.REFRESH_USER, handleRefreshUser);
 
     document.addEventListener('visibilitychange', handleFocus);
 
@@ -136,13 +163,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     if (isSessionVerified) {
       syncTimer = setInterval(() => {
-        void refreshUser();
+        void refreshUser({ background: true });
       }, SYNC_INTERVAL);
     }
 
     return () => {
       eventBus.off(AUTH_EVENTS.UNAUTHORIZED, handleUnauthorized);
-      eventBus.off(AUTH_EVENTS.REFRESH_USER, refreshUser);
+      eventBus.off(AUTH_EVENTS.REFRESH_USER, handleRefreshUser);
       document.removeEventListener('visibilitychange', handleFocus);
       if (syncTimer) clearInterval(syncTimer);
     };

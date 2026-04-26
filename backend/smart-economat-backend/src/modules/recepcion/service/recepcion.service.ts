@@ -15,21 +15,13 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 /**
- * Service responsible for managing goods receipt (Recepcion) records,
- * including creation with audit tracking, paginated retrieval, updates,
- * and guarded soft-deletion.
- *
- * @class RecepcionService
+ * Documentación en español.
  */
 @Injectable()
 export class RecepcionService {
-  /**
-   * Creates an instance of RecepcionService.
-   *
-   * @param {Repository<Recepcion>} recepcionRepository - TypeORM repository for Recepcion.
-   * @param {Repository<Usuario>} usuarioRepository - Repository used to validate user references.
-   * @param {MovimientoHelper} movimientoHelper - Helper for recording stock movement audit events.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     @InjectRepository(Recepcion)
     private readonly recepcionRepository: Repository<Recepcion>,
@@ -39,14 +31,9 @@ export class RecepcionService {
     private readonly movimientoHelper: MovimientoHelper
   ) {}
 
-  /**
-   * Creates a new goods receipt record and registers an audit movement entry.
-   *
-   * @param {CreateRecepcionDto} dto - Receipt creation payload.
-   * @param {string} userId - UUID of the user performing the action.
-   * @returns {Promise<Recepcion>} The newly created receipt entity.
-   * @throws {BadRequestException} If the referenced user (dto.usuarioId) does not exist.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(dto: CreateRecepcionDto, userId: string): Promise<Recepcion> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id: dto.usuarioId },
@@ -77,14 +64,9 @@ export class RecepcionService {
     return savedRecepcion;
   }
 
-  /**
-   * Returns a paginated list of goods receipts ordered by reception date.
-   * Admin users also receive soft-deleted records.
-   *
-   * @param {PaginationQueryDto} query - Pagination and sort parameters.
-   * @param {string} [userRole] - Role of the requesting user; admins see deleted records.
-   * @returns {Promise<PaginatedResponseDto<Recepcion>>} Paginated receipt list.
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -108,15 +90,9 @@ export class RecepcionService {
     return { data, total, page, limit, totalPages };
   }
 
-  /**
-   * Retrieves a single receipt by UUID with full relations, including linked
-   * orders and product details. Admin users can also access soft-deleted records.
-   *
-   * @param {string} id - UUID of the receipt to retrieve.
-   * @param {string} [userRole] - Role of the requesting user; admins see deleted records.
-   * @returns {Promise<Recepcion>} The found receipt entity with all relations loaded.
-   * @throws {NotFoundException} If no receipt with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string, userRole?: string): Promise<Recepcion> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -144,17 +120,9 @@ export class RecepcionService {
     return recepcion;
   }
 
-  /**
-   * Updates an existing receipt's fields. If a new user reference is provided,
-   * it is validated before being applied.
-   *
-   * @param {string} id - UUID of the receipt to update.
-   * @param {UpdateRecepcionDto} dto - Fields to update.
-   * @param {string} [userId] - UUID of the user performing the update (for modifiedBy tracking).
-   * @returns {Promise<Recepcion>} The updated receipt entity.
-   * @throws {NotFoundException} If the receipt does not exist.
-   * @throws {BadRequestException} If the referenced user (dto.usuarioId) does not exist.
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     dto: UpdateRecepcionDto,
@@ -184,14 +152,9 @@ export class RecepcionService {
     return await this.recepcionRepository.save(recepcion);
   }
 
-  /**
-   * Soft-deletes a receipt after verifying it has no associated orders or products.
-   *
-   * @param {string} id - UUID of the receipt to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} If the receipt does not exist.
-   * @throws {BadRequestException} If the receipt has linked orders or received products.
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },

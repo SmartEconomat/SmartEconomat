@@ -4,9 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * @file auth.e2e-spec.ts
- * @description Pruebas de integración para el controlador de Autenticación.
- * Cubre registro de usuarios, inicio de sesión y validaciones de seguridad.
+ * Documentación en español.
  */
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -26,9 +24,9 @@ describe('AuthController (e2e)', () => {
       password: 'Password123!',
     };
 
-    /**
-     * @test Debe registrar un nuevo usuario y denegar duplicados.
-     */
+                /**
+         * Documentación en español.
+         */
     it('Debe registrar un nuevo usuario (201) y no permitir duplicados (409)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
@@ -41,9 +39,9 @@ describe('AuthController (e2e)', () => {
         .expect(409);
     });
 
-    /**
-     * @test Debe validar que el password cumpla con los requisitos mínimos.
-     */
+                /**
+         * Documentación en español.
+         */
     it('Debe fallar si el password es débil (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
@@ -53,9 +51,9 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-    /**
-     * @test Debe permitir el acceso con credenciales correctas.
-     */
+                /**
+         * Documentación en español.
+         */
     it('Debe loguear correctamente (200)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
@@ -70,9 +68,9 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    /**
-     * @test Debe denegar el acceso con contraseña incorrecta.
-     */
+                /**
+         * Documentación en español.
+         */
     it('Debe fallar con password erróneo (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
@@ -83,9 +81,9 @@ describe('AuthController (e2e)', () => {
         .expect(400);
     });
 
-    /**
-     * @test Debe fallar con un email no registrado.
-     */
+                /**
+         * Documentación en español.
+         */
     it('Debe fallar con email inexistente (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')

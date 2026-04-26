@@ -26,34 +26,20 @@ import { MermaKpiResponse, MermaService } from '../service/merma.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that exposes REST endpoints for managing waste (merma) events,
- * including registration, production-linked reporting, KPI aggregation, and listing.
- * All routes require JWT authentication and permission-based authorization.
- *
- * @class MermaController
+ * Documentación en español.
  */
 @ApiTags('Merma')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('merma')
 export class MermaController {
-  /**
-   * Creates an instance of MermaController.
-   *
-   * @param {MermaService} mermaService - Service handling merma business logic and inventory deduction.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(private readonly mermaService: MermaService) {}
 
-  /**
-   * Registers a new waste event and deducts the specified quantity from inventory using FEFO ordering.
-   *
-   * @param {CreateMermaDto} dto - Body containing productoId, cantidad, motivo, and optional metadata.
-   * @param {string} userId - ID of the authenticated user extracted from the JWT token.
-   * @returns {Promise<Merma>} The created merma record with product and user relations.
-   * @throws {NotFoundException} When the referenced product does not exist.
-   * @throws {BadRequestException} When there is insufficient stock to cover the requested quantity.
-   * @example
-   * POST /merma
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.merma.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -73,19 +59,9 @@ export class MermaController {
     return this.mermaService.create(dto, userId);
   }
 
-  /**
-   * Registers a waste event linked to a specific production batch ingredient.
-   * Validates that the product is part of the batch's recipe before recording.
-   *
-   * @param {CreateMermaProduccionDto} dto - Body containing produccionLoteId, productoId, cantidad, and optional metadata.
-   * @param {string} userId - ID of the authenticated user extracted from the JWT token.
-   * @returns {Promise<Merma>} The created merma record with product and user relations.
-   * @throws {NotFoundException} When the production batch does not exist.
-   * @throws {BadRequestException} When the product is not an ingredient of the batch's recipe,
-   *   or when there is insufficient stock.
-   * @example
-   * POST /merma/produccion/reportar
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('produccion/reportar')
   @RequirePermissions(PERMISSIONS.merma.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -106,15 +82,9 @@ export class MermaController {
     return this.mermaService.createFromProduccion(dto, userId);
   }
 
-  /**
-   * Returns aggregated KPI metrics for waste events, optionally filtered by date range and product.
-   *
-   * @param {MermaKpiQueryDto} query - Optional query filters: startDate, endDate, productoId.
-   * @returns {Promise<MermaKpiResponse>} Aggregated waste KPI data including percentage and breakdowns.
-   * @throws {BadRequestException} When date parameters are invalid or startDate is after endDate.
-   * @example
-   * GET /merma/kpis?startDate=2026-01-01&endDate=2026-03-31
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('kpis')
   @RequirePermissions(PERMISSIONS.merma.stats)
   @ApiOperation({
@@ -126,13 +96,9 @@ export class MermaController {
     return this.mermaService.getKpis(query);
   }
 
-  /**
-   * Returns summary statistics for waste records grouped by reason (motivo) and by product.
-   *
-   * @returns {Promise<{ porMotivo: unknown[]; porProducto: unknown[] }>} Aggregated waste stats.
-   * @example
-   * GET /merma/stats
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.merma.stats)
   @ApiOperation({
@@ -143,14 +109,9 @@ export class MermaController {
     return this.mermaService.getStats();
   }
 
-  /**
-   * Returns a paginated list of all waste records.
-   *
-   * @param {PaginationQueryDto} query - Pagination and sorting parameters.
-   * @returns {Promise<PaginatedResponseDto<Merma>>} Paginated collection of merma records.
-   * @example
-   * GET /merma?page=1&limit=20&sortBy=createdAt&order=DESC
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.merma.listar)
   @ApiOperation({ summary: 'Listar todas las mermas con paginación' })
@@ -162,15 +123,9 @@ export class MermaController {
     return this.mermaService.findAll(query);
   }
 
-  /**
-   * Retrieves a single waste record by its UUID.
-   *
-   * @param {string} id - UUID v7 of the merma to retrieve.
-   * @returns {Promise<Merma>} The found merma with product and user relations loaded.
-   * @throws {NotFoundException} When no merma exists with the given ID.
-   * @example
-   * GET /merma/:id
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.merma.ver)
   @ApiOperation({ summary: 'Obtener una merma por ID' })

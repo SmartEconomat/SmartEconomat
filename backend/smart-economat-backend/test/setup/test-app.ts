@@ -9,34 +9,13 @@ import { useContainer } from 'class-validator';
 import { runTestSeeders } from './seed-test-database';
 
 /**
- * @file test-app.ts
- * @description Aplicación NestJS singleton para tests.
- *
- * Estrategia:
- * - La aplicación NestJS se crea UNA SOLA VEZ por worker de Jest
- * - Se reutiliza en todos los tests del worker
- * - Esto evita el costoso bootstrap de NestJS en cada test
- *
- * Reducción de tiempo: de ~2-5s por test a ~0ms
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 const g = global as any;
 
 /**
- * Obtiene o crea la instancia singleton de la aplicación NestJS para tests.
- *
- * La aplicación se configura con:
- * - Validación global con whitelist y transform
- * - Interceptores de serialización y transformación
- * - Filtro global de excepciones
- * - Prefijo de API /api/v1
- * - Logger configurado (puede ser deshabilitado para tests silenciosos)
- *
- * @param options Opciones de configuración
- * @param options.silent Si es true, deshabilita los logs de NestJS
- * @returns Instancia de INestApplication configurada
+ * Documentación en español.
  */
 export async function getTestApp(
   options: { silent?: boolean } = {}
@@ -90,8 +69,7 @@ export async function getTestApp(
 }
 
 /**
- * Cierra la aplicación NestJS y limpia recursos.
- * Debe ser llamado en globalTeardown.
+ * Documentación en español.
  */
 export async function closeTestApp(): Promise<void> {
   if (!g.__TEST_APP__) {
@@ -116,16 +94,14 @@ export async function closeTestApp(): Promise<void> {
 }
 
 /**
- * Verifica si la aplicación de test está inicializada
- * @returns true si la aplicación está inicializada
+ * Documentación en español.
  */
 export function isTestAppInitialized(): boolean {
   return !!g.__TEST_APP__;
 }
 
 /**
- * Obtiene el servidor HTTP de la aplicación para tests con supertest
- * @returns Servidor HTTP
+ * Documentación en español.
  */
 export function getTestServer() {
   if (!g.__TEST_APP__) {

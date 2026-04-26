@@ -24,10 +24,7 @@ import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * REST controller that exposes CRUD endpoints for warehouse locations (Ubicacion),
- * extending BaseController and adding a restore endpoint for soft-deleted records.
- *
- * @class UbicacionController
+ * Documentación en español.
  */
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
@@ -39,21 +36,16 @@ export class UbicacionController extends BaseController<
   UpdateUbicacionDto,
   UbicacionService
 > {
-  /**
-   * Creates an instance of UbicacionController.
-   *
-   * @param {UbicacionService} service - Service layer for location operations.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(service: UbicacionService) {
     super(service);
   }
 
-  /**
-   * Creates a new warehouse location.
-   *
-   * @param {CreateUbicacionDto} createUbicacionDto - Location creation payload.
-   * @returns {Promise<Ubicacion>} The newly created location entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.ubicaciones.crear)
   @ApiOperation({ summary: 'Crear nueva ubicación' })
@@ -61,14 +53,9 @@ export class UbicacionController extends BaseController<
     return super.create(createUbicacionDto);
   }
 
-  /**
-   * Returns a paginated list of warehouse locations. Admin users also see
-   * soft-deleted records.
-   *
-   * @param {PaginationQueryDto} query - Pagination and sort parameters.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<PaginatedResponseDto<Ubicacion>>} Paginated location list.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
@@ -79,13 +66,9 @@ export class UbicacionController extends BaseController<
     return super.findAll(query, req);
   }
 
-  /**
-   * Retrieves a single warehouse location by UUID.
-   *
-   * @param {string} id - UUID v7 of the location.
-   * @param {{ user?: { rol?: string } }} req - Authenticated request object.
-   * @returns {Promise<Ubicacion>} The found location entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.ver)
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
@@ -96,13 +79,9 @@ export class UbicacionController extends BaseController<
     return super.findOne(id, req);
   }
 
-  /**
-   * Partially updates a warehouse location's fields.
-   *
-   * @param {string} id - UUID v7 of the location to update.
-   * @param {UpdateUbicacionDto} updateUbicacionDto - Fields to update.
-   * @returns {Promise<Ubicacion>} The updated location entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.editar)
   @ApiOperation({ summary: 'Actualizar una ubicación' })
@@ -113,12 +92,9 @@ export class UbicacionController extends BaseController<
     return super.update(id, updateUbicacionDto);
   }
 
-  /**
-   * Soft-deletes a warehouse location (logical delete).
-   *
-   * @param {string} id - UUID v7 of the location to delete.
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.eliminar)
   @ApiOperation({ summary: 'Eliminar una ubicación lógica' })
@@ -126,12 +102,9 @@ export class UbicacionController extends BaseController<
     return super.remove(id);
   }
 
-  /**
-   * Restores a previously soft-deleted warehouse location.
-   *
-   * @param {string} id - UUID v7 of the location to restore.
-   * @returns {Promise<Ubicacion>} The restored location entity.
-   */
+        /**
+     * Documentación en español.
+     */
   @Post(':id/restore')
   @RequirePermissions(PERMISSIONS.ubicaciones.restaurar)
   @ApiOperation({ summary: 'Restaurar una ubicación eliminada' })

@@ -1,54 +1,54 @@
 /**
- * @module ApiResponseInterface
- * Defines the standard envelope shape for every HTTP response produced by the
- * SmartEconomat API. The {@link TransformInterceptor} wraps all controller
- * return values in this structure before they are serialised to JSON.
+ * Documentación en español.
  */
 
 /**
- * Standard API response envelope used throughout the application.
- *
- * @template T - The type of the `data` payload.
- *
- * @example
- *
- * const res: ApiResponse<ProductoDto[]> = {
- *   success: true,
- *   message: 'Operación exitosa',
- *   data: [...],
- *   meta: { app: 'SmartEconomat', version: '1.0.0', timestamp: '...', environment: 'production', requestId: '...' },
- * };
+ * Documentación en español.
  */
 export interface ApiResponse<T> {
-  /** Whether the operation completed without errors. */
+        /**
+     * Documentación en español.
+     */
   success: boolean;
 
-  /** Human-readable status message, or `null` when no message applies. */
+        /**
+     * Documentación en español.
+     */
   message: string | null;
 
-  /**
-   * The response payload.
-   * `null` on error responses or when the operation returns no content.
-   */
+        /**
+     * Documentación en español.
+     */
   data: T | null;
 
-  /**
-   * Optional error detail attached to non-successful responses.
-   * Intentionally typed as `unknown` to accommodate structured and unstructured errors.
-   */
+        /**
+     * Documentación en español.
+     */
   error?: unknown;
 
-  /** Request-scoped metadata useful for logging, tracing, and client diagnostics. */
+        /**
+     * Documentación en español.
+     */
   meta: {
-    /** Application name identifier. */
+                /**
+         * Documentación en español.
+         */
     app: string;
-    /** Running application version (semver). */
+                /**
+         * Documentación en español.
+         */
     version: string;
-    /** ISO 8601 timestamp of when the response was generated. */
+                /**
+         * Documentación en español.
+         */
     timestamp: string;
-    /** Runtime environment (`development`, `production`, `test`, etc.). */
+                /**
+         * Documentación en español.
+         */
     environment: string;
-    /** Unique request identifier — echoed from the `x-request-id` header or auto-generated. */
+                /**
+         * Documentación en español.
+         */
     requestId: string;
   };
 }

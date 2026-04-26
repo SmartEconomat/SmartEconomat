@@ -383,7 +383,7 @@
     "C_DIGO_DE_BARRAS_ESCANEADO": "Código de barras escaneado",
     "C_DIGO_GENERADO_CORRECTAMENTE": "Código generado correctamente",
     "C_DIGO_NICO_DEL_PERMISO_FORMATO_MODULO_A": "Código único del permiso (formato: modulo:accion)",
-    "DASHBOARD_STATISTICS_RETRIEVED_SUCCESSFU": "Dashboard statistics retrieved successfully.",
+    "DASHBOARD_STATISTICS_RETRIEVED_SUCCESSFU": "Estadísticas del panel obtenidas correctamente.",
     "DATOS_INMUTABLES_CAPTURADOS_EN_EL_MOMENT": "Datos inmutables capturados en el momento de la recepción",
     "DATOS_INV_LIDOS": "Datos inválidos",
     "DATOS_INV_LIDOS_O_C_DIGO_DE_BARRAS_DUPLI": "Datos inválidos o código de barras duplicado",
@@ -436,7 +436,7 @@
     "ID_DE_LA_PLANTILLA_PADRE_HERENCIA": "ID de la plantilla padre (herencia)",
     "ID_DE_LA_RECEPCI_N_DONDE_SE_DETECT": "ID de la recepción donde se detectó",
     "ID_NICO_DEL_ARCHIVO": "ID único del archivo",
-    "ID_OF_THE_SOURCE_RECIPE_TO_DUPLICATE": "ID of the source recipe to duplicate",
+    "ID_OF_THE_SOURCE_RECIPE_TO_DUPLICATE": "ID de la receta de origen a duplicar",
     "INCIDENCIAS_GENERADAS_AUTOM_TICAMENTE_PO": "Incidencias generadas automáticamente por discrepancias de cantidades",
     "INDICA_SI_EL_PESO_FUE_CAPTURADO_POR_B_SC": "Indica si el peso fue capturado por báscula.",
     "INDICA_SI_EL_PESO_SE_OBTUVO_DESDE_LA_B_S": "Indica si el peso se obtuvo desde la báscula conectada",
@@ -457,7 +457,7 @@
     "MOVIMIENTO_ENCONTRADO": "Movimiento encontrado",
     "MOVIMIENTO_NO_ENCONTRADO": "Movimiento no encontrado",
     "M_DULO_O_RECURSO_AL_QUE_PERTENECE": "Módulo o recurso al que pertenece",
-    "NAME_FOR_THE_NEW_DUPLICATED_RECIPE": "Name for the new duplicated recipe",
+    "NAME_FOR_THE_NEW_DUPLICATED_RECIPE": "Nombre para la nueva receta duplicada",
     "NOMBRE_DEL_PRODUCTO": "Nombre del producto",
     "NOMBRE_DE_LA_UBICACI_N": "Nombre de la ubicación",
     "NOMBRE_INTRODUCIDO_POR_EL_OPERARIO": "Nombre introducido por el operario",
@@ -495,7 +495,7 @@
     "SOLO_ADMIN_PUEDEN_ACTUALIZAR_M": "Solo ADMIN puede actualizar movimientos",
     "SOLO_ADMIN_PUEDEN_ELIMINAR_MOV": "Solo ADMIN puede eliminar movimientos",
     "SOLO_ADMIN_Y_PROFESORES_PUEDEN": "Solo ADMIN y PROFESOR pueden crear movimientos",
-    "STOCK_INSUFICIENTE_OR_RECETA_INV_LIDA": "Stock insuficiente or receta inválida",
+    "STOCK_INSUFICIENTE_OR_RECETA_INV_LIDA": "Stock insuficiente o receta inválida",
     "TAMA_O_DEL_ARCHIVO_EN_BYTES": "Tamaño del archivo en bytes",
     "TIPO_DE_MOVIMIENTO_A_FILTRAR": "Tipo de movimiento a filtrar",
     "TIPO_DE_PRODUCTO": "Tipo de producto",
@@ -529,12 +529,12 @@
     "PROFESOR_REGISTRADO_CON_XITO_ESPERANDO_A": "Profesor registrado con éxito. Esperando activación por un administrador.",
     "PROFESOR_Y_SLOT_CAMBIADOS_CON_XITO": "Profesor y slot cambiados con éxito",
     "SI_EL_CORREO_EST_REGISTRADO_RECIBIR_S_UN": "Si el correo está registrado, recibirás un enlace de recuperación.",
-    "USER_ACTIVATED_SUCCESSFULLY": "User activated successfully"
+    "USER_ACTIVATED_SUCCESSFULLY": "Usuario activado correctamente"
   },
   "logs": {
     "ERROR_AL_INVALIDAR_CACHE_DE_USUARIOS": "Error al invalidar cache de usuarios:",
     "ERROR_AL_INVALIDAR_TODO_EL_CACHE": "Error al invalidar todo el cache:",
-    "FETCHING_DASHBOARD_STATISTICS": "Fetching dashboard statistics...",
+    "FETCHING_DASHBOARD_STATISTICS": "Obteniendo estadísticas del panel...",
     "TODO_EL_CACHE_DE_PERMISOS_HA_SIDO_INVALI": "TODO el cache de permisos ha sido invalidado"
   },
   "exceptions": {}

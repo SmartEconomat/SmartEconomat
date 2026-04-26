@@ -7,26 +7,17 @@ import { RecetaIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
 
 /**
- * Props for the {@link RecetaAlergenos} component.
+ * Documentación en español.
  */
 interface RecetaAlergenosProps {
-  /** List of recipe ingredients whose products are scanned for allergens. */
+        /**
+     * Documentación en español.
+     */
   ingredientes?: RecetaIngrediente[];
 }
 
 /**
- * Allergen panel for a recipe.
- *
- * Derives the complete set of allergens present in the recipe by inspecting
- * each ingredient's product allergen list. Renders:
- * - Quick gluten-free / dairy-free badge chips.
- * - A success alert when no allergens are detected.
- * - A responsive grid of all 14 EU allergen tiles (highlighted if present).
- *
- * @param props - See {@link RecetaAlergenosProps}.
- * @returns JSX element with allergen summary chips and an allergen grid.
- * @example
- * <RecetaAlergenos ingredientes={receta.ingredientes} />
+ * Documentación en español.
  */
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],

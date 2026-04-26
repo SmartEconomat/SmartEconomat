@@ -1,17 +1,5 @@
 /**
- * @module TransformersBarrel
- * Barrel export for all custom class-transformer transformers used for normalising
- * incoming DTO data in the SmartEconomat application.
- *
- * Exported transformers:
- * - {@link TrimStringTransformer}       – removes leading/trailing whitespace from strings
- * - {@link UppercaseStringTransformer}  – converts strings to uppercase after trim
- * - {@link LowercaseStringTransformer}  – converts strings to lowercase after trim
- * - {@link StringToNumberTransformer}   – coerces string values to numbers
- * - {@link StringToBooleanTransformer}  – coerces string/number values to booleans
- * - {@link StringToDateTransformer}     – coerces string/number values to Date objects
- * - {@link NormalizeArrayTransformer}   – normalises arrays (split CSV strings, trim items)
- * - {@link ColumnNumericTransformer}    – TypeORM column transformer for numeric DB columns
+ * Documentación en español.
  */
 
 export { TrimStringTransformer } from './trim-string.transformer';

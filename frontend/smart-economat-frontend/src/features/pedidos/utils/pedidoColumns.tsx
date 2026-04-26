@@ -28,86 +28,78 @@ import {
 import { isPedidoUsuarioRow } from './pedidoOwnOrders';
 
 /**
- * @description Builds the column definitions for the main pedidos DataTable.
- * @returns Array of Column<PedidoListItem> objects with render functions for each column
+ * Documentación en español.
  */
 export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
   {
     id: 'pedidoId',
-    label: 'Nº de pedido',
+    label: i18n.t('pedidos.columnsList.pedidoId'),
     render: (row) => formatPedidoListNumber(row),
   },
   {
     id: 'fechaPedido',
-    label: 'Fecha Pedido',
+    label: i18n.t('pedidos.columnsList.fechaPedido'),
     render: (row) => formatPedidoDate(row.fechaPedido),
   },
   {
     id: 'fechaEntrega',
-    label: 'Fecha Entrega',
+    label: i18n.t('pedidos.columnsList.fechaEntrega'),
     render: (row) => formatPedidoDate(row.fechaEntrega),
     hideOnMobile: true,
   },
   {
     id: 'costeTotal',
-    label: 'Coste Total',
+    label: i18n.t('pedidos.columnsList.costeTotal'),
     align: 'right',
     render: (row) => formatCurrency(row.costeTotal),
   },
   {
     id: 'estado',
-    label: 'Estado',
+    label: i18n.t('pedidos.columnsList.estado'),
     render: (row) => <StatusChip status={row.estado} />,
   },
   {
     id: 'usuario',
-    label: 'Creado Por',
+    label: i18n.t('pedidos.columnsList.creadoPor'),
     render: (row) => getPedidoCreatorName(row),
     hideOnMobile: true,
   },
 ];
 
 /**
- * @description Builds the column definitions for the purchase batches DataTable.
- * @returns Array of Column<PurchaseBatch> objects with render functions for each column
+ * Documentación en español.
  */
 export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   {
     id: 'createdAt',
-    label: 'Fecha Creación',
+    label: i18n.t('pedidos.columnsList.fechaCreacion'),
     render: (row) => formatPedidoDate(row.createdAt, 'datetime'),
   },
   {
     id: 'pedidos',
-    label: 'Nº Pedidos',
+    label: i18n.t('pedidos.columnsList.nPedidos'),
     render: (row) => getBatchPedidosCount(row),
   },
   {
     id: 'costeTotal',
-    label: 'Coste Total Estimado',
+    label: i18n.t('pedidos.columnsList.costeTotalEstimado'),
     align: 'right',
     render: (row) => formatCurrency(getBatchTotal(row)),
   },
   {
     id: 'estado',
-    label: 'Estado',
+    label: i18n.t('pedidos.columnsList.estado'),
     render: (row) => <StatusChip status={String(row.estado)} />,
   },
   {
     id: 'usuario',
-    label: 'Creado Por',
+    label: i18n.t('pedidos.columnsList.creadoPor'),
     render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
   },
 ];
 
 /**
- * @description Renders the inline action buttons for a pedido row.
- * Approve, cancel, and edit buttons are shown conditionally based on permissions and order status.
- * For non-user (internal) orders a read-only chip is shown instead.
- * @param row - The pedido row to render actions for
- * @param permissions - Permission flags controlling which buttons are visible
- * @param handlers - Callbacks invoked when action buttons are clicked
- * @returns React node containing the action buttons or status chip
+ * Documentación en español.
  */
 export const renderPedidoActions = (
   row: PedidoListItem,
@@ -163,7 +155,11 @@ export const renderPedidoActions = (
           size="small"
           color="default"
           variant="outlined"
-          label={<Typography variant="caption">Pedido</Typography>}
+          label={
+            <Typography variant="caption">
+              {i18n.t('pedidos.columnsList.chipPedidoUsuario')}
+            </Typography>
+          }
         />
       )}
     </Stack>
@@ -173,16 +169,17 @@ export const renderPedidoActions = (
         size="small"
         color="default"
         variant="outlined"
-        label={<Typography variant="caption">Interno</Typography>}
+        label={
+          <Typography variant="caption">
+            {i18n.t('pedidos.columnsList.chipInterno')}
+          </Typography>
+        }
       />
     </Stack>
   );
 
 /**
- * @description Renders the inline action button for a purchase batch row (initiate reception).
- * @param row - The PurchaseBatch to render the action for
- * @param handlers - Callbacks invoked when action buttons are clicked
- * @returns React node containing the reception action button
+ * Documentación en español.
  */
 export const renderBatchActions = (
   row: PurchaseBatch,

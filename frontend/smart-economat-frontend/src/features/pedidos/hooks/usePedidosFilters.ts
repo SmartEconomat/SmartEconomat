@@ -18,11 +18,7 @@ const isMisPedidosStatusFilter = (
   value === 'pendientes' || value === 'activos' || value === 'finalizados';
 
 /**
- * @description Custom hook for managing pedidos page filter state via URL search params.
- * Keeps search term, view mode, active tab, and own-orders status in sync with the URL.
- * @returns Memoized object with current filter values and their setter callbacks
- * @example
- * const { searchTerm, setSearchTerm, tabIndex, setTabIndex, viewMode } = usePedidosFilters();
+ * Documentación en español.
  */
 export function usePedidosFilters() {
   const [searchParams, setSearchParams] = useSearchParams();

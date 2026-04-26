@@ -6,26 +6,42 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
 /**
- * Represents a single slide in the {@link RecipeCarousel}.
+ * Documentación en español.
  */
 interface CarouselItem {
-  /** Unique identifier for the slide. */
+        /**
+     * Documentación en español.
+     */
   id: string;
-  /** Recipe name displayed as the slide title. */
+        /**
+     * Documentación en español.
+     */
   title: string;
-  /** Brief description of the recipe. */
+        /**
+     * Documentación en español.
+     */
   description: string;
-  /** Path to the background image. */
+        /**
+     * Documentación en español.
+     */
   image: string;
-  /** Estimated preparation time (e.g. `'45 min'`). */
+        /**
+     * Documentación en español.
+     */
   time: string;
-  /** Difficulty level (e.g. `'Fácil'`, `'Media'`). */
+        /**
+     * Documentación en español.
+     */
   difficulty: string;
-  /** Cuisine or dietary category badge label. */
+        /**
+     * Documentación en español.
+     */
   category: string;
 }
 
-/** Static demo slides shown in the carousel. */
+/**
+ * Documentación en español.
+ */
 const ITEMS: CarouselItem[] = [
   {
     id: '1',
@@ -60,14 +76,7 @@ const ITEMS: CarouselItem[] = [
 ];
 
 /**
- * Auto-advancing image carousel showcasing featured recipes.
- *
- * Cycles through {@link ITEMS} every 5 seconds with a cross-fade transition.
- * Includes previous/next navigation buttons and dot indicators for manual control.
- *
- * @returns JSX element rendering the recipe carousel with animated slides.
- * @example
- * <RecipeCarousel />
+ * Documentación en español.
  */
 const RecipeCarousel: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);

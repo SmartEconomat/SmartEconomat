@@ -3,13 +3,7 @@ import request from 'supertest';
 import { getTestApp } from '../setup/test-app';
 
 /**
- * @file test-helpers.ts
- * @description Utilidades comunes para tests E2E.
- *
- * Este archivo proporciona funciones helper que simplifican
- * la escritura de tests y reducen código duplicado.
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 export interface LoginCredentials {
@@ -34,11 +28,7 @@ export const DEFAULT_CREDENTIALS = {
 };
 
 /**
- * Realiza login y obtiene el token de acceso.
- *
- * @param app Aplicación NestJS
- * @param credentials Credenciales de login (por defecto: admin)
- * @returns Token de acceso
+ * Documentación en español.
  */
 export async function loginAndGetToken(
   app: INestApplication,
@@ -58,11 +48,7 @@ export async function loginAndGetToken(
 }
 
 /**
- * Realiza login y obtiene todos los tokens.
- *
- * @param app Aplicación NestJS
- * @param credentials Credenciales de login
- * @returns Objeto con access_token y refresh_token
+ * Documentación en español.
  */
 export async function loginAndGetTokens(
   app: INestApplication,
@@ -80,17 +66,7 @@ export async function loginAndGetTokens(
 }
 
 /**
- * Crea un cliente autenticado de supertest.
- *
- * Uso:
- * ```typescript
- * const client = await createAuthenticatedClient(app);
- * const response = await client.get('/api/v1/productos');
- * ```
- *
- * @param app Aplicación NestJS
- * @param credentials Credenciales de login
- * @returns Función que retorna request con Authorization header
+ * Documentación en español.
  */
 export async function createAuthenticatedClient(
   app: INestApplication,
@@ -123,10 +99,7 @@ export async function createAuthenticatedClient(
 }
 
 /**
- * Obtiene la aplicación de test y el token de admin.
- * Útil para simplificar el setup de tests.
- *
- * @returns Objeto con app y adminToken
+ * Documentación en español.
  */
 export async function setupTest() {
   const app = await getTestApp();
@@ -136,9 +109,7 @@ export async function setupTest() {
 }
 
 /**
- * Obtiene la aplicación de test con múltiples tokens.
- *
- * @returns Objeto con app y tokens de diferentes roles
+ * Documentación en español.
  */
 export async function setupTestWithTokens() {
   const app = await getTestApp();
@@ -151,31 +122,21 @@ export async function setupTestWithTokens() {
 }
 
 /**
- * Genera un nombre único para tests.
- * Útil para evitar colisiones en tests paralelos.
- *
- * @param prefix Prefijo del nombre
- * @returns Nombre único
+ * Documentación en español.
  */
 export function generateUniqueName(prefix: string = 'Test'): string {
   return `${prefix} ${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Genera un email único para tests.
- *
- * @param prefix Prefijo del email
- * @returns Email único
+ * Documentación en español.
  */
 export function generateUniqueEmail(prefix: string = 'test'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`;
 }
 
 /**
- * Verifica que una respuesta tenga el formato estándar de la API.
- *
- * @param response Respuesta de supertest
- * @param expectedStatus Código de estado HTTP esperado
+ * Documentación en español.
  */
 export function expectStandardResponse(
   response: any,
@@ -187,10 +148,7 @@ export function expectStandardResponse(
 }
 
 /**
- * Verifica que una respuesta de error tenga el formato esperado.
- *
- * @param response Respuesta de supertest
- * @param expectedStatus Código de estado HTTP esperado
+ * Documentación en español.
  */
 export function expectErrorResponse(
   response: any,
@@ -202,9 +160,7 @@ export function expectErrorResponse(
 }
 
 /**
- * Verifica que una respuesta de paginación tenga el formato esperado.
- *
- * @param response Respuesta de supertest
+ * Documentación en español.
  */
 export function expectPaginatedResponse(response: any) {
   expect(response.status).toBe(200);
@@ -217,22 +173,14 @@ export function expectPaginatedResponse(response: any) {
 }
 
 /**
- * Espera un tiempo determinado.
- * Útil para tests que requieren delays (usar con moderación).
- *
- * @param ms Milisegundos a esperar
+ * Documentación en español.
  */
 export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Elimina un recurso de forma segura.
- * No falla si el recurso no existe.
- *
- * @param app Aplicación NestJS
- * @param url URL del recurso a eliminar
- * @param token Token de autenticación
+ * Documentación en español.
  */
 export async function safeDelete(
   app: INestApplication,

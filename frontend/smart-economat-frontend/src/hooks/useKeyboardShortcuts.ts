@@ -3,14 +3,7 @@ import { navigateToElement } from '../utils/a11y-navigation';
 import { useToast } from '../store/toast.hooks';
 
 /**
- * useKeyboardShortcuts: Hook global para gestionar atajos de teclado (F1-F4).
- * Permite la navegación rápida entre las secciones críticas de la aplicación.
- *
- * Mapeo:
- * - F1: Saltar al contenido principal (#main-content)
- * - F2: Saltar al menú lateral (#sidebar-nav)
- * - F3: Saltar a los filtros (#filters-area)
- * - F4: Saltar a los resultados (#results-area)
+ * Documentación en español.
  */
 export const useKeyboardShortcuts = () => {
   const toast = useToast();

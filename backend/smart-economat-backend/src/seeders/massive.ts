@@ -244,8 +244,10 @@ function isIgnorableMissingAlbaran(result: RequestResult): boolean {
   return result.statusCode === 404;
 }
 
-/** Profesor-scoped endpoints may fail with 403/404 due to in-memory permission cache timing;
- *  the same functionality is covered by admin-slots/admin endpoints. */
+/**
+ * Profesor-scoped endpoints may fail with 403/404 due to in-memory permission caché timing.
+ * Descripción en español del bloque.
+ */
 function isProfesorCacheTolerableFailure(
   key: string,
   result: RequestResult

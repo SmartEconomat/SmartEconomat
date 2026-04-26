@@ -9,8 +9,7 @@ import {
 } from '@mui/material';
 
 /**
- * StyledTooltip: Implementación de Tooltips con estética Glassmorphism.
- * Reemplaza las burbujas grises genéricas por elementos integrados con el tema.
+ * Documentación en español.
  */
 const StyledTooltip = styled(({ className, ...props }: TooltipProps) => (
   <MuiTooltip {...props} classes={{ popper: className }} />
@@ -45,8 +44,7 @@ const StyledTooltip = styled(({ className, ...props }: TooltipProps) => (
 }));
 
 /**
- * Componente Tooltip estandarizado para la aplicación.
- * Incluye por defecto la animación Zoom, flecha y posición a la derecha.
+ * Documentación en español.
  */
 export const Tooltip = (props: TooltipProps) => {
   return (

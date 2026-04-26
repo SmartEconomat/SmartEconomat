@@ -5,9 +5,7 @@ import { Albaran } from '../albaran.entity/albaran.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 
 /**
- * AlbaranPedidoRecepcion Entity
- *
- * Tabla puente entre Albaran y RecepcionPedido
+ * Documentación en español.
  */
 @Entity('albaran_pedido_recepcion')
 @Index(['albaranId'])

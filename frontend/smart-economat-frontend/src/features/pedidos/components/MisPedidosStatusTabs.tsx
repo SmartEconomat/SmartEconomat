@@ -11,10 +11,7 @@ interface MisPedidosStatusTabsProps {
 }
 
 /**
- * @description Tab bar for filtering the user's own pedidos by status (pendientes / en proceso / finalizados).
- * @param props.value - Currently selected status filter
- * @param props.onChange - Callback invoked with the newly selected status when the user switches tabs
- * @returns Styled MUI Tabs component with three status options
+ * Documentación en español.
  */
 const MisPedidosStatusTabs: React.FC<MisPedidosStatusTabsProps> = ({
   value,

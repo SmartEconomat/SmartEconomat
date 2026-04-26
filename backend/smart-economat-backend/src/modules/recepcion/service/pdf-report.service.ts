@@ -82,15 +82,7 @@ export interface ProveedorIncidenciaGroup {
 }
 
 /**
- * Generates A4-landscape PDF reports using PDFKit, streamed directly to the HTTP response.
- *
- * Supports three report types (controlled by {@link TipoReportePdf}):
- * - **PEDIDO** — purchase orders grouped by supplier with IVA totals.
- * - **RECEPCION** — single-reception receipt with received quantities and incidents.
- * - **INCIDENCIAS** — discrepancy report grouped by supplier.
- *
- * All query filters are applied at the database level; grouping and PDF layout
- * are performed in-memory.
+ * Documentación en español.
  */
 @Injectable()
 export class PdfReportService {

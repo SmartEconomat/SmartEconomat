@@ -35,17 +35,7 @@ import Input from '../components/ui/Input';
 import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 
 /**
- * User profile page rendered as a unified user card.
- *
- * Displays the authenticated user's profile information and allows them to:
- * - Edit their username.
- * - Change their password.
- * - Request an e-mail change (requires approval from a higher-privilege role).
- *
- * On mount the component loads the current user from the auth store; if the
- * user object is not yet available it fetches it via `refreshUser`.
- *
- * @returns JSX rendered profile page
+ * Documentación en español.
  */
 const Perfil: React.FC = () => {
   const { t } = useTranslation();
@@ -81,13 +71,9 @@ const Perfil: React.FC = () => {
 
   const isInitialized = useRef(false);
 
-  /**
-   * Loads the initial profile data from the auth store or fetches it via
-   * `refreshUser` when not yet available.  Runs only once thanks to the
-   * `isInitialized` ref guard.
-   *
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   useEffect(() => {
     const loadInitialData = async () => {
       const fallbackUser = user;
@@ -136,33 +122,23 @@ const Perfil: React.FC = () => {
     }
   }, [refreshUser, user]);
 
-  /**
-   * Generic change handler for the profile form inputs.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfileData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /**
-   * Generic change handler for the password form inputs.
-   *
-   * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /**
-   * Submits the profile form: persists username and/or password changes via
-   * the auth service, refreshes the auth store, and collapses the edit panel
-   * on success.  Displays toast notifications for both success and error cases.
-   *
-   * @returns {Promise<void>}
-   */
+        /**
+     * Documentación en español.
+     */
   const handleProfileSave = async () => {
     setIsSaving(true);
     setError(null);
@@ -204,12 +180,9 @@ const Perfil: React.FC = () => {
     }
   };
 
-  /**
-   * Discards any unsaved profile changes, resets the form fields back to the
-   * current user values, and exits edit mode.
-   *
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   const handleProfileCancel = () => {
     if (user) {
       setProfileData({
@@ -229,16 +202,9 @@ const Perfil: React.FC = () => {
     setError(null);
   };
 
-  /**
-   * Validates and submits the e-mail change request.
-   *
-   * Performs client-side checks: non-empty fields, valid e-mail format,
-   * matching confirmation, difference from the current e-mail, and minimum
-   * justification length.  On success it shows a toast, clears the form, and
-   * closes the modal.
-   *
-   * @returns {void}
-   */
+        /**
+     * Documentación en español.
+     */
   const handleSubmitEmailRequest = () => {
     const { newEmail, confirmNewEmail, justification } = emailRequest;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

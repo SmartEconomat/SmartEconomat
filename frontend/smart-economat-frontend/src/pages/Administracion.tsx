@@ -55,10 +55,7 @@ interface TabPanelProps {
 import { Fade } from '@mui/material';
 
 /**
- * Renderiza el panel de contenido para una pestaña dada, con transición de aparición gradual cuando está activa.
- *
- * @param props - Props del panel de pestaña: hijos, valor actual, índice del panel e indicador opcional de carga.
- * @returns Un div que actúa como tabpanel con visibilidad de contenido animada.
+ * Documentación en español.
  */
 function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -81,10 +78,7 @@ function CustomTabPanel(props: TabPanelProps) {
 }
 
 /**
- * Devuelve los atributos de accesibilidad (id y aria-controls) para un elemento de pestaña.
- *
- * @param index - La clave única de cadena que identifica el panel de pestaña.
- * @returns Un objeto con los atributos `id` y `aria-controls` para la pestaña.
+ * Documentación en español.
  */
 function a11yProps(index: string) {
   return {
@@ -96,11 +90,7 @@ function a11yProps(index: string) {
 type AdminTabKey = 'slots' | 'alumnos' | 'usuarios' | 'plantillas';
 
 /**
- * Página de Administración Académica para Profesores con Tabs.
- * Gestiona aulas/clases, alumnos, usuarios del sistema y plantillas de roles
- * según los permisos del usuario autenticado.
- *
- * @returns The full administration page with permission-based tab navigation.
+ * Documentación en español.
  */
 const Administracion: React.FC = () => {
   const { t } = useTranslation();
@@ -220,12 +210,9 @@ const Administracion: React.FC = () => {
     }
   }, [initialTab, activeTab]);
 
-  /**
-   * Carga todos los datos necesarios para la pestaña Aulas y Clases.
-   * Obtiene los slots propios (para profesores puros), todos los slots y la lista de
-   * profesores (para administradores), y todas las ubicaciones disponibles.
-   * Redirige al inicio si el usuario carece de permisos.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -267,11 +254,9 @@ const Administracion: React.FC = () => {
     }
   }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
-  /**
-   * Carga todos los datos necesarios para la pestaña Alumnos.
-   * Obtiene la lista de alumnos del profesor y, si aún no se ha cargado, su lista de slots.
-   * Redirige al inicio si el usuario carece de permisos.
-   */
+        /**
+     * Documentación en español.
+     */
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -320,14 +305,9 @@ const Administracion: React.FC = () => {
     }
   }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
 
-  /**
-   * Gestiona los eventos de cambio de pestaña, actualiza el estado de la pestaña activa,
-   * sincroniza el parámetro de búsqueda de la URL y cierra el modo de edición de slots
-   * al abandonar la pestaña correspondiente.
-   *
-   * @param _event - El evento sintético del clic en la pestaña (no se utiliza).
-   * @param newValue - La clave de la pestaña recién seleccionada.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleTabChange = (
     _event: React.SyntheticEvent,
     newValue: AdminTabKey
@@ -340,23 +320,16 @@ const Administracion: React.FC = () => {
     if (newValue !== 'slots') setIsEditingSlots(false);
   };
 
-  /**
-   * Gestiona los cambios en los campos del formulario de nuevo slot.
-   *
-   * @param e - El evento de cambio generado por un campo de entrada del formulario de nuevo slot.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /**
-   * Gestiona el envío del formulario para crear un nuevo aula/slot.
-   * Admite tanto la creación propia del profesor como la creación por parte de un administrador
-   * en nombre de otro profesor. Muestra un toast en caso de éxito o error, y reinicia el
-   * formulario al completarse.
-   *
-   * @param e - El evento de envío del formulario.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -417,13 +390,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Gestiona la eliminación de un slot tras la confirmación del usuario.
-   * Elimina el slot de la lista correspondiente (administrador o profesor) en caso de éxito.
-   *
-   * @param id - El ID del slot a eliminar.
-   * @param isAdminView - Indica si la eliminación se realiza desde la vista de administrador.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
     if (!window.confirm(t('admin.confirm.eliminarClase'))) return;
     try {
@@ -446,13 +415,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Gestiona la actualización de un slot propiedad del profesor actual.
-   * Muestra un toast en caso de éxito o error.
-   *
-   * @param id - El ID del slot a actualizar.
-   * @param data - Datos parciales del slot a actualizar (excluye id y codigoSlot).
-   */
+        /**
+     * Documentación en español.
+     */
   const handleUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
@@ -473,14 +438,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Gestiona la actualización a nivel de administrador de cualquier slot, incluido el cambio
-   * del profesor asignado. Recarga la lista completa de slots tras una actualización exitosa
-   * para reflejar los cambios del profesor.
-   *
-   * @param id - El ID del slot a actualizar.
-   * @param data - Datos parciales del slot a actualizar, opcionalmente con un nuevo profesorId.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleAdminUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
@@ -505,13 +465,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Alterna el estado activo/inactivo de un alumno.
-   * Actualiza la lista local de alumnos con el nuevo estado devuelto por la API.
-   *
-   * @param id - El ID del alumno cuyo estado debe alternarse.
-   * @param currentStatus - El estado actual del alumno (p. ej. 'ACTIVE' o 'INACTIVE').
-   */
+        /**
+     * Documentación en español.
+     */
   const handleToggleStudentStatus = async (
     id: string,
     currentStatus: string
@@ -535,12 +491,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Fuerza el restablecimiento de contraseña de un alumno y muestra la nueva
-   * contraseña provisional en un toast.
-   *
-   * @param id - El ID del alumno cuya contraseña debe restablecerse.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleResetStudentPassword = async (id: string) => {
     try {
       const res = await profesorService.forcePasswordReset(id);
@@ -557,12 +510,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-  /**
-   * Gestiona la eliminación de un alumno tras la confirmación del usuario.
-   * Elimina al alumno de la lista local en caso de éxito.
-   *
-   * @param id - El ID del alumno a eliminar.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDeleteStudent = async (id: string) => {
     if (!window.confirm(t('admin.confirm.eliminarAlumno'))) return;
 
@@ -573,19 +523,16 @@ const Administracion: React.FC = () => {
         toast.success(t('admin.toast.alumnoEliminado'));
       }
     } catch {
-      toast.error('No se pudo eliminar');
+      toast.error(t('admin.errors.eliminar'));
     }
   };
 
-  /**
-   * Muestra un toast informativo indicando que la funcionalidad de gestión de permisos
-   * para el alumno indicado aún no está disponible.
-   *
-   * @param alumno - El objeto alumno cuyos permisos se gestionarían.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
-      `Funcionalidad de permisos para ${alumno.username} próximamente`
+      t('admin.toast.permisosProximamente', { username: alumno.username })
     );
   };
 

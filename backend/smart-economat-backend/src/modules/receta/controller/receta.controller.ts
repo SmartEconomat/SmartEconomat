@@ -38,36 +38,23 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Controller that exposes REST endpoints for managing recipes (recetas),
- * including CRUD, cost calculation, cooking, duplication, and PDF export.
- * All routes require JWT authentication and permission-based authorization.
- *
- * @class RecetaController
+ * Documentación en español.
  */
 @ApiTags('Recetas')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recetas')
 export class RecetaController {
-  /**
-   * Creates an instance of RecetaController.
-   *
-   * @param {RecetaService} recetaService - Service handling core recipe business logic.
-   * @param {RecetaPdfService} recetaPdfService - Service for generating PDF documents for recipes.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     private readonly recetaService: RecetaService,
     private readonly recetaPdfService: RecetaPdfService
   ) {}
 
-  /**
-   * Creates a new recipe and computes its initial estimated unit cost.
-   *
-   * @param {CreateRecetaDto} createRecetaDto - Body containing recipe details and ingredient list.
-   * @returns {Promise<Receta>} The newly created recipe with computed cost.
-   * @throws {BadRequestException} When the DTO fails validation.
-   * @example
-   * POST /recetas
-   */
+        /**
+     * Documentación en español.
+     */
   @Post()
   @RequirePermissions(PERMISSIONS.recetas.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -75,15 +62,9 @@ export class RecetaController {
     return this.recetaService.create(createRecetaDto);
   }
 
-  /**
-   * Duplicates an existing recipe under a new name.
-   *
-   * @param {DuplicateRecetaDto} duplicateRecetaDto - Body containing the source recipe ID and the new name.
-   * @returns {Promise<Receta>} The newly created duplicate recipe.
-   * @throws {NotFoundException} When the source recipe does not exist.
-   * @example
-   * POST /recetas/duplicate
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('duplicate')
   @RequirePermissions(PERMISSIONS.recetas.duplicar)
   @HttpCode(HttpStatus.CREATED)
@@ -91,15 +72,9 @@ export class RecetaController {
     return this.recetaService.duplicate(duplicateRecetaDto);
   }
 
-  /**
-   * Returns a paginated list of recipes, applying role-based visibility if applicable.
-   *
-   * @param {PaginationQueryDto} query - Pagination, sorting, and search parameters.
-   * @param {{ user?: { rol?: string } }} req - Express request object with the optional authenticated user role.
-   * @returns {Promise<PaginatedResponseDto<Receta>>} Paginated collection of recipes.
-   * @example
-   * GET /recetas?page=1&limit=20&sortBy=nombre&order=ASC
-   */
+        /**
+     * Documentación en español.
+     */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   findAll(
@@ -121,16 +96,9 @@ export class RecetaController {
     return this.recetaService.findAll(query, userRole);
   }
 
-  /**
-   * Retrieves a single recipe by its UUID.
-   *
-   * @param {string} id - UUID v7 of the recipe.
-   * @param {{ user?: { rol?: string } }} req - Express request object with the optional authenticated user role.
-   * @returns {Promise<Receta>} The found recipe with ingredients and relations.
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * GET /recetas/:id
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   findOne(
@@ -141,16 +109,9 @@ export class RecetaController {
     return this.recetaService.findOne(id, userRole);
   }
 
-  /**
-   * Returns detailed information for a recipe, including per-ingredient current stock,
-   * quantity deficits, and the consolidated allergen list.
-   *
-   * @param {string} id - UUID v7 of the recipe.
-   * @returns {Promise<DetalleRecetaDto>} Recipe detail with stock analysis and allergens.
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * GET /recetas/:id/detalle
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id/detalle')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   getDetalle(
@@ -159,15 +120,9 @@ export class RecetaController {
     return this.recetaService.getDetalle(id);
   }
 
-  /**
-   * Calculates and returns the full cost breakdown (escandallo) for a recipe.
-   *
-   * @param {string} id - UUID v7 of the recipe.
-   * @returns {Promise<RecetaCostResponseDto>} Cost summary with total and per-ingredient breakdown.
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * GET /recetas/:id/escandallo
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id/escandallo')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Calcular el escandallo (coste) de una receta' })
@@ -180,18 +135,9 @@ export class RecetaController {
     return this.recetaService.calcularEscandallo(id);
   }
 
-  /**
-   * Consumes stock from inventory to cook a recipe the specified number of times.
-   * Uses FEFO ordering with pessimistic write locks.
-   *
-   * @param {string} id - UUID v7 of the recipe to cook.
-   * @param {CocinarRecetaDto} cocinarRecetaDto - Body containing the number of units to cook.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @throws {BadRequestException} When there is insufficient stock for any ingredient.
-   * @example
-   * POST /recetas/:id/cocinar
-   */
+        /**
+     * Documentación en español.
+     */
   @Post(':id/cocinar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.OK)
@@ -202,14 +148,9 @@ export class RecetaController {
     return this.recetaService.cocinar(id, cocinarRecetaDto);
   }
 
-  /**
-   * Calculates a cost preview for an ad-hoc ingredient list without saving a recipe.
-   *
-   * @param {RecetaPreviewCostDto} dto - Body containing the ingredient list and optional rendimiento.
-   * @returns {Promise<RecetaCostResponseDto>} Preview cost summary.
-   * @example
-   * POST /recetas/calculate-preview
-   */
+        /**
+     * Documentación en español.
+     */
   @Post('calculate-preview')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @HttpCode(HttpStatus.OK)
@@ -222,17 +163,9 @@ export class RecetaController {
     return this.recetaService.calculatePreviewCost(dto);
   }
 
-  /**
-   * Generates and streams a PDF document containing one or more recipes.
-   *
-   * @param {string | string[]} ids - Comma-separated string or array of recipe UUID v7 values.
-   * @param {string | undefined} includeImage - Whether to include recipe images in the PDF (defaults to true unless 'false').
-   * @param {express.Response} res - Express response object used for streaming the PDF.
-   * @returns {Promise<void>}
-   * @throws {BadRequestException} When no recipe IDs are provided.
-   * @example
-   * GET /recetas/export/pdf?ids=id1,id2&includeImage=true
-   */
+        /**
+     * Documentación en español.
+     */
   @Get('export/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Generar PDF de varias recetas' })
@@ -254,17 +187,9 @@ export class RecetaController {
     });
   }
 
-  /**
-   * Generates and streams a PDF document for a single recipe.
-   *
-   * @param {string} id - UUID v7 of the recipe.
-   * @param {string | undefined} includeImage - Whether to include the recipe image in the PDF (defaults to true unless 'false').
-   * @param {express.Response} res - Express response object used for streaming the PDF.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * GET /recetas/:id/pdf?includeImage=true
-   */
+        /**
+     * Documentación en español.
+     */
   @Get(':id/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Generar PDF de una receta' })
@@ -278,16 +203,9 @@ export class RecetaController {
     });
   }
 
-  /**
-   * Recalculates and persists the estimated unit cost for a recipe.
-   * Restricted to ADMIN and PROFESOR roles.
-   *
-   * @param {string} id - UUID v7 of the recipe whose costs must be recalculated.
-   * @returns {Promise<Receta>} The updated recipe with the new costeUnitarioEstimado value.
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * POST /recetas/:id/recalcular-costes
-   */
+        /**
+     * Documentación en español.
+     */
   @Post(':id/recalcular-costes')
   @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
@@ -300,16 +218,9 @@ export class RecetaController {
     return this.recetaService.recalcularCostes(id);
   }
 
-  /**
-   * Updates an existing recipe and recalculates its estimated unit cost.
-   *
-   * @param {string} id - UUID v7 of the recipe to update.
-   * @param {UpdateRecetaDto} updateRecetaDto - Partial data to update on the recipe.
-   * @returns {Promise<Receta>} The updated recipe with recomputed cost.
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * PATCH /recetas/:id
-   */
+        /**
+     * Documentación en español.
+     */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recetas.editar)
   async update(
@@ -319,15 +230,9 @@ export class RecetaController {
     return this.recetaService.update(id, updateRecetaDto);
   }
 
-  /**
-   * Soft-deletes a recipe from the system.
-   *
-   * @param {string} id - UUID v7 of the recipe to remove.
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} When no recipe exists with the given ID.
-   * @example
-   * DELETE /recetas/:id
-   */
+        /**
+     * Documentación en español.
+     */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

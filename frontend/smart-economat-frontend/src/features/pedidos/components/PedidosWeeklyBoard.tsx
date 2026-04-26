@@ -36,6 +36,7 @@ import {
   formatPedidoListNumber,
 } from '../utils/pedidoFormatters';
 import { getPedidoUsuarioSelectionIds } from '../utils/pedidoOwnOrders';
+import { formatLocalizedDate } from '../../../utils/intlFormat';
 
 dayjs.extend(isoWeek);
 
@@ -85,7 +86,10 @@ const getWeekRangeLabel = (
   const start = dayjs(referenceDate).startOf('isoWeek');
   const end = dayjs(referenceDate).endOf('isoWeek');
 
-  return weekLabel(start.format('DD/MM'), end.format('DD/MM'));
+  return weekLabel(
+    formatLocalizedDate(start.toDate()),
+    formatLocalizedDate(end.toDate())
+  );
 };
 
 const getPedidoUserName = (
@@ -101,22 +105,7 @@ const isPendingPedido = (pedido: PedidoListItem): boolean =>
   isPendingPedidoUsuarioStatus(String(pedido.estado));
 
 /**
- * @description Weekly accordion board for displaying user-visible pedidos grouped by ISO week.
- * Within each week pedidos are further grouped by user.
- * Supports optional multi-select consolidation into a purchase batch.
- * @param props.data - List of pedidos to display
- * @param props.isLoading - Loading state flag
- * @param props.permissions - Permission flags for actions
- * @param props.viewMode - 'list' or 'grid' display mode
- * @param props.handlers - Action callbacks for each pedido row
- * @param props.totalItems - Total pedido count displayed in the toolbar
- * @param props.isConsolidating - Whether a consolidation operation is in progress
- * @param props.onConsolidateWeek - Callback to consolidate a week's pedidos into a batch
- * @param props.enableSelection - Whether checkbox selection for consolidation is enabled
- * @param props.infoMessage - Optional informational message shown above the board
- * @param props.emptyMessage - Optional message shown when there are no pedidos
- * @param props.warningMessage - Optional warning message shown above the board
- * @returns Accordion-based weekly board component
+ * Documentación en español.
  */
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
@@ -132,7 +121,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   emptyMessage,
   warningMessage,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const weeklyColumns = buildPedidoColumns().filter(
     (column) => column.id !== 'usuario'
   );
@@ -207,7 +196,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
           ),
       }))
       .sort((left, right) => right.weekKey.localeCompare(left.weekKey));
-  }, [data]);
+  }, [data, t, i18n.language]);
 
   const toggleUserSelection = (pedidoUsuarioIds: string[]) => {
     const allSelected = pedidoUsuarioIds.every((id) =>

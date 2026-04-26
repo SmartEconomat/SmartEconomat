@@ -1,12 +1,10 @@
 import { I18nHelper } from '../helpers/i18n.helper';
 /**
- * Utility functions for generating and validating EAN-13 barcodes.
+ * Documentación en español.
  */
 
 /**
- * Calculates the EAN-13 check digit for a 12-digit string.
- * @param digits 12-digit string
- * @returns the check digit (0-9)
+ * Documentación en español.
  */
 export function calculateCheckDigit(digits: string): number {
   if (!/^\d{12}$/.test(digits)) {
@@ -26,9 +24,7 @@ export function calculateCheckDigit(digits: string): number {
 }
 
 /**
- * Generates a random EAN-13 barcode.
- * @param prefix An optional prefix (default: '200' for internal use).
- * @returns A valid 13-digit EAN-13 barcode string.
+ * Documentación en español.
  */
 export function generateEan13(prefix = '200'): string {
   if (!/^\d+$/.test(prefix) || prefix.length > 12) {
@@ -49,9 +45,7 @@ export function generateEan13(prefix = '200'): string {
 }
 
 /**
- * Validates if a string is a structurally correct EAN-13 barcode.
- * @param code The string to validate.
- * @returns true if valid, false otherwise.
+ * Documentación en español.
  */
 export function validateEan13(code: string): boolean {
   if (!code || typeof code !== 'string' || !/^\d{13}$/.test(code)) {

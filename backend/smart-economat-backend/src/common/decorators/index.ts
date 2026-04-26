@@ -1,13 +1,5 @@
 /**
- * @module DecoratorsBarrel
- * Barrel export for all custom NestJS decorators used throughout the SmartEconomat application.
- *
- * Includes:
- * - Permission decorators (`@RequirePermissions`, `@RequireAnyPermission`)
- * - Visibility decorators (`@Public`)
- * - Controller-level access helpers (`@ControllerPermissions`, `@Resource`)
- * - Data normalisation decorators (`@NormalizeString`, `@Trim`, etc.)
- * - Query sorting helpers (`@SortableFields`)
+ * Documentación en español.
  */
 
 export * from './require-permissions.decorator';

@@ -93,9 +93,7 @@ let openFoodFactsRateLimiter: Promise<void> = Promise.resolve();
 let openFoodFactsNextRequestAt = 0;
 
 /**
- * Reads the configured inter-request delay for the OpenFoodFacts API from environment variables.
- * Falls back to 250 ms if not set or invalid.
- * @returns {number} Delay in milliseconds (minimum 0).
+ * Documentación en español.
  */
 function getOpenFoodFactsRequestDelayMs(): number {
   const rawValue =
@@ -107,9 +105,7 @@ function getOpenFoodFactsRequestDelayMs(): number {
 }
 
 /**
- * Reads the configured request timeout for the OpenFoodFacts API from environment variables.
- * Falls back to 8000 ms if not set or invalid.
- * @returns {number} Timeout in milliseconds (minimum 2000).
+ * Documentación en español.
  */
 function getOpenFoodFactsTimeoutMs(): number {
   const rawValue =
@@ -121,19 +117,14 @@ function getOpenFoodFactsTimeoutMs(): number {
 }
 
 /**
- * Returns a promise that resolves after the specified number of milliseconds.
- * @param {number} ms - Duration to wait in milliseconds.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Enforces a module-level rate limit so that consecutive calls to the OpenFoodFacts API
- * are spaced at least `getOpenFoodFactsRequestDelayMs()` milliseconds apart.
- * Callers await this function before issuing their fetch request.
- * @returns {Promise<void>}
+ * Documentación en español.
  */
 async function waitForOpenFoodFactsSlot(): Promise<void> {
   const pending = openFoodFactsRateLimiter.then(async () => {
@@ -150,10 +141,7 @@ async function waitForOpenFoodFactsSlot(): Promise<void> {
 }
 
 /**
- * Safely coerces an unknown value to a string array.
- * Returns an empty array when the value is not a proper array.
- * @param {unknown} value - Value to coerce.
- * @returns {string[]} Array containing only the string elements of the input.
+ * Documentación en español.
  */
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
@@ -164,10 +152,7 @@ function toStringArray(value: unknown): string[] {
 }
 
 /**
- * Translates OpenFoodFacts allergen tags into the internal EU allergen identifiers
- * defined in ALLERGEN_MAP and filtered by EU_ALLERGEN_IDS.
- * @param {string[]} tags - Raw allergen tag strings from the OpenFoodFacts API (e.g. 'en:gluten').
- * @returns {string[]} Deduplicated list of internal allergen identifiers.
+ * Documentación en español.
  */
 function normalizeOFFAllergens(tags: string[]): string[] {
   const result = new Set<string>();
@@ -183,11 +168,7 @@ function normalizeOFFAllergens(tags: string[]): string[] {
 }
 
 /**
- * Converts a raw OpenFoodFacts API product object into an OffProductResponseDto.
- * Returns null when the product is undefined or has no usable name.
- * Also parses quantity/unit strings and normalises allergen tags.
- * @param {OpenFoodFactsApiProduct | undefined} product - Raw product from the API response.
- * @returns {OffProductResponseDto | null} Parsed DTO or null if the product cannot be used.
+ * Documentación en español.
  */
 function parseOFFProduct(
   product: OpenFoodFactsApiProduct | undefined
@@ -239,18 +220,13 @@ function parseOFFProduct(
 }
 
 /**
- * Service that integrates with the OpenFoodFacts public API to look up product information
- * by barcode or by text search. Applies module-level rate limiting and configurable timeouts.
- * @class OpenFoodFactsService
+ * Documentación en español.
  */
 @Injectable()
 export class OpenFoodFactsService {
-  /**
-   * Executes an authenticated GET request to the OpenFoodFacts API after waiting for
-   * a rate-limit slot. Returns null on non-2xx responses.
-   * @param {string} path - API path relative to OFF_BASE (must start with '/').
-   * @returns {Promise<T | null>} Parsed JSON body cast to T, or null on failure.
-   */
+        /**
+     * Documentación en español.
+     */
   private async fetchOpenFoodFactsJson<T>(path: string): Promise<T | null> {
     await waitForOpenFoodFactsSlot();
 
@@ -267,12 +243,9 @@ export class OpenFoodFactsService {
     return (await response.json()) as T;
   }
 
-  /**
-   * Looks up a single product in OpenFoodFacts by its barcode.
-   * Returns null when the barcode is empty, the product is not found, or an error occurs.
-   * @param {string} code - Barcode string to look up (will be URL-encoded).
-   * @returns {Promise<OffProductResponseDto | null>} Parsed product DTO or null.
-   */
+        /**
+     * Documentación en español.
+     */
   async searchByBarcode(code: string): Promise<OffProductResponseDto | null> {
     const trimmedCode = code.trim();
     if (!trimmedCode) {
@@ -295,13 +268,9 @@ export class OpenFoodFactsService {
     }
   }
 
-  /**
-   * Searches for products in OpenFoodFacts by free-text name.
-   * Returns an empty array when the name is blank or an error occurs.
-   * Products without a usable name are filtered out from the result.
-   * @param {string} name - Search term (will be URL-encoded).
-   * @returns {Promise<OffProductResponseDto[]>} Array of matching product DTOs.
-   */
+        /**
+     * Documentación en español.
+     */
   async searchByName(name: string): Promise<OffProductResponseDto[]> {
     const trimmedName = name.trim();
     if (!trimmedName) {

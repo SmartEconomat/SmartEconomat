@@ -13,11 +13,7 @@ import { Type } from 'class-transformer';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 
 /**
- * DTO para consultar el historial de movimientos de un producto o usuario.
- * Soporta búsqueda por:
- * - Producto: via entityId (ID del ProductoProveedor)
- * - Usuario: via userId (ID del Usuario)
- * - Filtrado por tipo de movimiento y rango de fechas
+ * Documentación en español.
  */
 export class MovimientoHistoryDto {
   @IsUUID('all', {

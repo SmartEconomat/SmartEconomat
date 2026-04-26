@@ -16,11 +16,14 @@ import LinearLoader from '../components/ui/LinearLoader';
 
 const LoadingFallback = () => <LinearLoader fixed />;
 
+/**
+ * Documentación en español.
+ */
 const AppRouter: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Public Routes (Login/Register/Reset) */}
+        {/* Rutas públicas (acceso y recuperación) */}
         <Route element={<PublicRoute />}>
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
@@ -29,7 +32,7 @@ const AppRouter: React.FC = () => {
           </Route>
         </Route>
 
-        {/* Protected Routes (Dashboard) */}
+        {/* Rutas protegidas (aplicación autenticada) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route
@@ -53,7 +56,7 @@ const AppRouter: React.FC = () => {
           </Route>
         </Route>
 
-        {/* Fallback */}
+        {/* Redirección de fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

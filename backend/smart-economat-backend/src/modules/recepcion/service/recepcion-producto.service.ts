@@ -12,18 +12,13 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 /**
- * @description Service layer for managing received-product line items (RecepcionProducto).
- * Provides CRUD operations including creation with foreign-key validation,
- * paginated listing, single-item retrieval, partial updates, and soft-deletion.
+ * Documentación en español.
  */
 @Injectable()
 export class RecepcionProductoService {
-  /**
-   * @description Constructs the service with its required TypeORM repositories.
-   * @param recepcionProductoRepository - Repository for RecepcionProducto entities.
-   * @param recepcionRepository - Repository for Recepcion entities, used for FK validation.
-   * @param pedidoProductoRepository - Repository for PedidoProducto entities, used for FK validation.
-   */
+        /**
+     * Documentación en español.
+     */
   constructor(
     @InjectRepository(RecepcionProducto)
     private readonly recepcionProductoRepository: Repository<RecepcionProducto>,
@@ -33,14 +28,9 @@ export class RecepcionProductoService {
     private readonly pedidoProductoRepository: Repository<PedidoProducto>
   ) {}
 
-  /**
-   * @description Creates and persists a new RecepcionProducto record.
-   * Valida that both the referenced Recepcion and PedidoProducto exist before saving.
-   * @param dto - DTO containing the recepcion ID, pedidoProducto ID, quantities, and optional metadata.
-   * @returns La entidad recién creada RecepcionProducto entity with relations loaded.
-   * @throws {NotFoundException} If the referenced Recepcion does not exist.
-   * @throws {NotFoundException} If the referenced PedidoProducto does not exist.
-   */
+        /**
+     * Documentación en español.
+     */
   async create(dto: CreateRecepcionProductoDto): Promise<RecepcionProducto> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id: dto.idRecepcion },
@@ -74,12 +64,9 @@ export class RecepcionProductoService {
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
-  /**
-   * @description Devuelve una lista paginada de RecepcionProducto records with full relations.
-   * Defaults to sorting by `fechaRecepcion` descending, maximum 50 records per page.
-   * @param query - Pagination parameters: page, limit, sortBy, and order.
-   * @returns Paginated response containing the records and metadata (total, page, totalPages).
-   */
+        /**
+     * Documentación en español.
+     */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<RecepcionProducto>> {
@@ -106,12 +93,9 @@ export class RecepcionProductoService {
     return { data, total, page, limit, totalPages };
   }
 
-  /**
-   * @description Retrieves a single RecepcionProducto by its UUID with all related entities loaded.
-   * @param id - UUID of the RecepcionProducto to retrieve.
-   * @returns The found RecepcionProducto entity with relations.
-   * @throws {NotFoundException} If no RecepcionProducto with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async findOne(id: string): Promise<RecepcionProducto> {
     const recepcionProducto = await this.recepcionProductoRepository.findOne({
       where: { id },
@@ -134,15 +118,9 @@ export class RecepcionProductoService {
     return recepcionProducto;
   }
 
-  /**
-   * @description Partially updates an existing RecepcionProducto.
-   * Only the fields present in the DTO are applied; FK references (recepcion, pedidoProducto)
-   * are validated before assignment.
-   * @param id - UUID of the RecepcionProducto to update.
-   * @param dto - Partial update payload.
-   * @returns The updated RecepcionProducto entity.
-   * @throws {NotFoundException} If the RecepcionProducto, Recepcion, or PedidoProducto is not found.
-   */
+        /**
+     * Documentación en español.
+     */
   async update(
     id: string,
     dto: UpdateRecepcionProductoDto
@@ -194,13 +172,9 @@ export class RecepcionProductoService {
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
-  /**
-   * @description Soft-deletes a RecepcionProducto by its UUID.
-   * The record is marked as deleted but remains in the database.
-   * @param id - UUID of the RecepcionProducto to remove.
-   * @returns Resuelve with void on success.
-   * @throws {NotFoundException} If no RecepcionProducto with the given ID exists.
-   */
+        /**
+     * Documentación en español.
+     */
   async remove(id: string): Promise<void> {
     const recepcionProducto = await this.findOne(id);
     await this.recepcionProductoRepository.softDelete(recepcionProducto.id);

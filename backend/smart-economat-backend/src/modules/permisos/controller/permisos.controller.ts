@@ -25,6 +25,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @Controller('permisos')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Roles(rolUsuario.ADMIN)
+/**
+ * Documentación en español.
+ */
 export class PermisosController {
   constructor(private readonly permisosService: PermisosService) {}
 

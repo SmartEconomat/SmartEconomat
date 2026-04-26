@@ -18,37 +18,51 @@ import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
 /**
- * Props for the PasoResultado step component.
+ * Documentación en español.
  */
 interface PasoResultadoProps {
-  /** The result object returned by the backend after the reception is saved. */
+        /**
+     * Documentación en español.
+     */
   resultado: RecepcionResultado | null;
-  /** Callback to reset the entire reception wizard to its initial state. */
+        /**
+     * Documentación en español.
+     */
   onResetWizard: () => void;
 }
 
 /**
- * Props for the internal StatCard component.
+ * Documentación en español.
  */
 interface StatCardProps {
-  /** Card title shown above the main value. */
+        /**
+     * Documentación en español.
+     */
   title: string;
-  /** Primary numeric or string value to display large. */
+        /**
+     * Documentación en español.
+     */
   value: number | string;
-  /** Optional subtitle text rendered below the value. */
+        /**
+     * Documentación en español.
+     */
   subtitle?: string;
-  /** Icon element rendered inside the coloured badge. */
+        /**
+     * Documentación en español.
+     */
   icon: React.ReactNode;
-  /** CSS colour string applied to the badge and hover shadow. */
+        /**
+     * Documentación en español.
+     */
   color: string;
-  /** Click handler — typically opens a detail modal. */
+        /**
+     * Documentación en español.
+     */
   onClick: () => void;
 }
 
 /**
- * Compact summary card used in the reception result screen.
- * Renders a title, a large numeric value, an optional subtitle, and a
- * coloured icon badge. Clicking the card fires the onClick callback.
+ * Documentación en español.
  */
 const StatCard = ({
   title,
@@ -116,12 +130,7 @@ const StatCard = ({
 );
 
 /**
- * Step 4 (final) of the reception wizard: result summary.
- *
- * Displays confirmation that the reception was saved, shows stat cards for
- * movements generated, inventory entries created, and new products added.
- * Any discrepancies are listed in an alert section. Provides action buttons
- * to download a PDF report, navigate to distribution, or reset the wizard.
+ * Documentación en español.
  */
 const PasoResultado: React.FC<PasoResultadoProps> = ({
   resultado,
@@ -134,10 +143,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
     React.useState<DetailType>(null);
   const [downloading, setDownloading] = React.useState(false);
 
-  /**
-   * Initiates a PDF download for the current reception report.
-   * Disables the button while the download is in progress.
-   */
+        /**
+     * Documentación en español.
+     */
   const handleDownloadPdf = async () => {
     if (!resultado?.id) return;
     setDownloading(true);

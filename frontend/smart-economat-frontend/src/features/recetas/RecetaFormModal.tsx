@@ -18,25 +18,7 @@ type RecetaFormModalProps = Pick<
 };
 
 /**
- * Modal de formulario para crear o editar una receta.
- *
- * Renderiza un `DynamicFormModal` con el esquema de campos internacionalizado.
- * Detecta automáticamente si está en modo edición comprobando `initialData.id`.
- *
- * @param {RecetaFormModalProps} props - Props del modal.
- * @param {boolean} props.isOpen - Controla la visibilidad del modal.
- * @param {() => void} props.onClose - Callback al cerrar el modal.
- * @param {object} [props.initialData] - Datos iniciales del formulario (edición).
- * @param {(data: unknown) => void} props.onSubmit - Callback al enviar el formulario.
- * @param {boolean} [props.isSubmitting] - Desactiva el botón de envío mientras se procesa.
- * @param {string} [props.title] - Título del modal (por defecto se genera desde i18n).
- * @returns {JSX.Element} Modal con el formulario de receta.
- * @example
- * <RecetaFormModal
- *   isOpen={open}
- *   onClose={() => setOpen(false)}
- *   onSubmit={handleSubmit}
- * />
+ * Documentación en español.
  */
 const RecetaFormModal: React.FC<RecetaFormModalProps> = ({
   isOpen,

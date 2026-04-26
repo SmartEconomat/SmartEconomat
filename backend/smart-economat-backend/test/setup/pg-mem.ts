@@ -3,24 +3,13 @@ import { newDb, IMemoryDb, IBackup } from 'pg-mem';
 import { DataSource } from 'typeorm';
 
 /**
- * @file pg-mem.ts
- * @description Sistema de base de datos en memoria para testing de alta velocidad.
- *
- * Características:
- * - PostgreSQL en memoria (pg-mem)
- * - DataSource singleton de TypeORM
- * - Funciones UUID v7 y v4 personalizadas
- * - Sistema de snapshots para restauración instantánea
- * - Configuración optimizada para tests
- *
- * @author SmartEconomat Team
+ * Documentación en español.
  */
 
 const g = global as any;
 
 /**
- * Genera un UUID v7 compatible (timestamp-based)
- * UUID v7 es ideal para claves primarias por su ordenamiento temporal natural
+ * Documentación en español.
  */
 function generateUuidV7(): string {
   const timestamp = Date.now();
@@ -46,10 +35,7 @@ function generateUuidV7(): string {
 }
 
 /**
- * Inicializa la base de datos pg-mem con todas las funciones necesarias.
- * Esta función solo se ejecuta una vez por worker de Jest.
- *
- * @returns Objeto con la instancia de base de datos y el adaptador pg
+ * Documentación en español.
  */
 export function initPgMem(): { db: IMemoryDb; pg: any } {
   if (g.__PG_MEM_DB__) {
@@ -108,10 +94,7 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
 }
 
 /**
- * Obtiene el DataSource de TypeORM conectado a pg-mem.
- * Se crea una vez y se reutiliza en todos los tests.
- *
- * @returns DataSource inicializado
+ * Documentación en español.
  */
 export async function getTestDataSource(): Promise<DataSource> {
   if (g.__TEST_DATASOURCE__) {
@@ -130,27 +113,21 @@ export async function getTestDataSource(): Promise<DataSource> {
 }
 
 /**
- * Establece el DataSource de test en la variable global
- * @param dataSource DataSource inicializado
+ * Documentación en español.
  */
 export function setTestDataSource(dataSource: DataSource): void {
   g.__TEST_DATASOURCE__ = dataSource;
 }
 
 /**
- * Devuelve el DataSource actual del worker si ya fue creado.
+ * Documentación en español.
  */
 export function peekTestDataSource(): DataSource | null {
   return g.__TEST_DATASOURCE__ || null;
 }
 
 /**
- * Crea un snapshot (backup) del estado actual de la base de datos.
- * El snapshot captura TODO el estado: esquema, datos, secuencias, etc.
- *
- * Esta operación es extremadamente rápida (~0ms) porque es en memoria.
- *
- * @returns Backup que puede ser restaurado posteriormente
+ * Documentación en español.
  */
 export function takeSnapshot(): IBackup {
   if (!g.__PG_MEM_DB__) {
@@ -165,15 +142,7 @@ export function takeSnapshot(): IBackup {
 }
 
 /**
- * Restaura la base de datos a un snapshot específico.
- * Esta operación es instantánea (~0ms) y revierte TODOS los cambios.
- *
- * A diferencia de transacciones, restore() revierte incluso:
- * - Transacciones internas de servicios
- * - Commits de QueryRunners independientes
- * - Cambios en esquema (aunque no deberían ocurrir en tests)
- *
- * @param backup Snapshot a restaurar
+ * Documentación en español.
  */
 export function restoreSnapshot(backup: IBackup): void {
   if (!backup) {
@@ -186,47 +155,42 @@ export function restoreSnapshot(backup: IBackup): void {
 }
 
 /**
- * Obtiene el snapshot de seeders (estado post-seed)
- * @returns Snapshot de seeders o null si no existe
+ * Documentación en español.
  */
 export function getSeedSnapshot(): IBackup | null {
   return g.__SEED_SNAPSHOT__ || null;
 }
 
 /**
- * Establece el snapshot de seeders
- * @param backup Snapshot a guardar
+ * Documentación en español.
  */
 export function setSeedSnapshot(backup: IBackup): void {
   g.__SEED_SNAPSHOT__ = backup;
 }
 
 /**
- * Obtiene el snapshot de archivo (estado post-beforeAll del archivo de test)
- * @returns Snapshot de archivo o null si no existe
+ * Documentación en español.
  */
 export function getFileSnapshot(): IBackup | null {
   return g.__FILE_SNAPSHOT__ || null;
 }
 
 /**
- * Establece el snapshot de archivo
- * @param backup Snapshot a guardar
+ * Documentación en español.
  */
 export function setFileSnapshot(backup: IBackup): void {
   g.__FILE_SNAPSHOT__ = backup;
 }
 
 /**
- * Limpia el snapshot de suite actual.
+ * Documentación en español.
  */
 export function clearFileSnapshot(): void {
   g.__FILE_SNAPSHOT__ = null;
 }
 
 /**
- * Limpia todos los snapshots y estado global
- * Se usa en globalTeardown
+ * Documentación en español.
  */
 export function cleanupPgMem(): void {
   g.__PG_MEM_DB__ = null;
@@ -240,15 +204,14 @@ export function cleanupPgMem(): void {
 }
 
 /**
- * Verifica si los seeders ya fueron ejecutados en este worker
- * @returns true si los seeders ya se ejecutaron
+ * Documentación en español.
  */
 export function isSeeded(): boolean {
   return g.__SEEDED__ === true;
 }
 
 /**
- * Marca los seeders como ejecutados
+ * Documentación en español.
  */
 export function markAsSeeded(): void {
   g.__SEEDED__ = true;

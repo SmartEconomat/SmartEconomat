@@ -33,11 +33,7 @@ const tabOptions: Array<{
 ];
 
 /**
- * @description Primary navigation tab bar for the pedidos page.
- * Renders three tabs: "Mis Pedidos" (own orders), "Pedidos" (all orders), and "Compras" (batches).
- * @param props.value - Index of the currently active tab (0 | 1 | 2)
- * @param props.onChange - Callback invoked with the new tab value when the user switches tabs
- * @returns Styled MUI Tabs component with icons for each section
+ * Documentación en español.
  */
 const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
   const theme = useTheme();

@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 /**
- * Regresión: SherlockAuth debe asegurar columna antes de cualquier UPDATE a plantilla_rol_id.
+ * Documentación en español.
  */
 describe('SherlockAuthMigration rol.plantilla_rol_id', () => {
   it('up() empieza con ADD COLUMN IF NOT EXISTS plantilla_rol_id en rol', () => {

@@ -1,7 +1,5 @@
 /**
- * @module seeders/producto
- * Direct database seeder that fetches products from OpenFoodFacts and inserts them
- * along with supplier relationships and allergen information.
+ * Documentación en español.
  */
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
@@ -19,13 +17,7 @@ import {
 } from './openfoodfacts.seed';
 
 /**
- * Seeds product data by fetching from the OpenFoodFacts public API, then persists
- * products, supplier associations and allergen mappings to the database in chunks.
- * @param {SeedContext} context - The active seed context providing repository access.
- * @returns {Promise<void>}
- * @throws {Error} When no suppliers exist in the database or OpenFoodFacts returns no products.
- * @example
- * await runSeeder(context);
+ * Documentación en español.
  */
 export const runSeeder = async (context: SeedContext) => {
   const productoRepo = context.getRepository<Repository<Producto>>(Producto);

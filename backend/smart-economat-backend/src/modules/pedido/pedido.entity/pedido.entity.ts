@@ -22,20 +22,7 @@ import { PurchaseBatch } from '../purchase-batch.entity/purchase-batch.entity';
 import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 
 /**
- * Entidad Pedido
- *
- * Representa una solicitud de compra de productos a proveedores.
- *
- * Flujo de estados:
- * 1. PENDIENTE_DE_APROBACION: Pedido interno creado y pendiente de validación.
- * 2. POR_RECEPCIONAR: Compra aprobada o consolidada, pendiente de recepción.
- * 3. PARCIAL: La recepción ha empezado pero aún no está cerrada.
- * 4. INCIDENCIA: Existe una incidencia abierta asociada al pedido.
- * 5. RECEPCIONADO: Mercancía recepcionada completamente.
- * 6. CANCELADO: Pedido anulado antes de cerrarse.
- *
- * @class Pedido
- * @extends {BaseEntity}
+ * Documentación en español.
  */
 @Entity({ name: 'pedido' })
 @Index(['numeroGlobal'], { unique: true })
@@ -48,31 +35,39 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
-  /** Auto-incremented global sequential number for display/reference (e.g. PED-00001). Stored as bigint. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
-  /** Foreign key referencing the User who created the order. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-  /** Foreign key referencing the Proveedor of this order. Nullable (RESTRICT on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'proveedor_id', nullable: true })
   proveedorId?: string;
 
-  /** Foreign key referencing the PurchaseBatch this order belongs to. Nullable (SET NULL on delete). */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'batch_id', nullable: true })
   batchId?: string;
 
-  /** Foreign key referencing the user-initiated PedidoUsuario that originated this order. Nullable. */
+        /**
+     * Documentación en español.
+     */
   @Column({ name: 'pedido_usuario_id', nullable: true })
   pedidoUsuarioId?: string;
 
-  /**
-   * Usuario que creó el pedido.
-   * La relación es SET NULL para mantener histórico si el usuario se borra.
-   * @type {Usuario | null}
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -80,10 +75,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-  /**
-   * Proveedor al que se realiza el pedido.
-   * Obligatorio para trazar reclamaciones y facturación.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.pedidos, {
     nullable: true,
     onDelete: 'RESTRICT',
@@ -91,9 +85,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'proveedor_id' })
   proveedor?: Relation<Proveedor>;
 
-  /**
-   * Lote de compra al que pertenece este pedido.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -101,10 +95,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'batch_id' })
   batch?: Relation<PurchaseBatch>;
 
-  /**
-   * User-initiated order (PedidoUsuario) that originated this purchase order.
-   * ON DELETE SET NULL preserves the purchase order history.
-   */
+        /**
+     * Documentación en español.
+     */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -112,10 +105,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'pedido_usuario_id' })
   pedidoUsuario?: Relation<PedidoUsuario>;
 
-  /**
-   * Fecha de creación del pedido.
-   * @type {Date}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -123,26 +115,21 @@ export class Pedido extends BaseEntity {
   })
   fechaPedido!: Date;
 
-  /**
-   * Fecha prevista de entrega calculada automáticamente por regla de negocio.
-   * @type {Date | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
-  /**
-   * Observaciones operativas del pedido.
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-  /**
-   * Coste total del pedido sumando todas las líneas.
-   * Se actualiza al modificar líneas o confirmar pedido.
-   * Constraint: >= 0.
-   * @type {number}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'numeric',
     precision: 14,
@@ -153,10 +140,9 @@ export class Pedido extends BaseEntity {
   })
   costeTotal!: number;
 
-  /**
-   * Estado actual del pedido.
-   * @type {EstadoPedido}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({
     type: 'enum',
     enum: ESTADO_PEDIDO_DB_VALUES,
@@ -165,42 +151,37 @@ export class Pedido extends BaseEntity {
   })
   estado!: EstadoPedido;
 
-  /**
-   * Líneas de detalle del pedido (productos, cantidades, precios).
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => PedidoProducto, (pp) => pp.pedido, {
     cascade: true,
   })
   pedidoProductos!: Relation<PedidoProducto[]>;
 
-  /**
-   * Relación con las recepciones que se han hecho de este pedido.
-   * Puede haber múltiples recepciones para un solo pedido (entregas parciales).
-   */
+        /**
+     * Documentación en español.
+     */
   @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: Relation<RecepcionPedido[]>;
 
-  /**
-   * Motivo de cancelación (solo si estado === CANCELADO).
-   * @type {string | undefined}
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
 
-  /**
-   * Observaciones de incidencia asociadas al pedido interno.
-   * El detalle funcional vive en el módulo de incidencias y el estado operativo pasa a INCIDENCIA.
-   */
+        /**
+     * Documentación en español.
+     */
   @Column({ type: 'text', nullable: true, name: 'motivo_incidencia' })
   motivoIncidencia?: string;
 
   /* --- Métodos de Dominio --- */
 
-  /**
-   * Calculates the total cost of the order by summing (cantidad * precioUnitario) for each line.
-   *
-   * @returns {number} The total cost, or 0 if there are no lines.
-   */
+        /**
+     * Documentación en español.
+     */
   calcularTotal(): number {
     if (!this.pedidoProductos || this.pedidoProductos.length === 0) {
       return 0;
@@ -210,19 +191,16 @@ export class Pedido extends BaseEntity {
     }, 0);
   }
 
-  /**
-   * Transitions the order state to RECEPCIONADO (fully received).
-   * Should be called once all reception lines have been closed.
-   */
+        /**
+     * Documentación en español.
+     */
   marcarComoRecepcionado(): void {
     this.estado = EstadoPedido.RECEPCIONADO;
   }
 
-  /**
-   * Cancels the order and records the cancellation reason.
-   *
-   * @param {string} motivo - The reason for cancellation (required for audit trail).
-   */
+        /**
+     * Documentación en español.
+     */
   cancelar(motivo: string): void {
     this.estado = EstadoPedido.CANCELADO;
     this.motivoCancelacion = motivo;

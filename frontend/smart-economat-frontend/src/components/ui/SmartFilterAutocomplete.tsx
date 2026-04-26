@@ -11,32 +11,32 @@ import Box from '@mui/material/Box';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
 /**
- * Props para el componente SmartFilterAutocomplete.
- * Hereda de las props de Autocomplete de MUI pero fija el modo 'multiple'.
+ * Documentación en español.
  */
 export interface SmartFilterAutocompleteProps<T> extends Omit<
   AutocompleteProps<T, true, false, false>,
   'renderInput' | 'multiple'
 > {
-  /** Texto que aparece cuando no hay nada escrito */
+        /**
+     * Documentación en español.
+     */
   placeholder?: string;
-  /** Etiqueta de accesibilidad para lectores de pantalla */
+        /**
+     * Documentación en español.
+     */
   ariaLabel?: string;
-  /** Icono que se muestra a la izquierda del input (por defecto FilterList) */
+        /**
+     * Documentación en español.
+     */
   icon?: ReactNode;
-  /** Ancho fijo para el área de escritura (default: 140px) */
+        /**
+     * Documentación en español.
+     */
   inputWidth?: string | number;
 }
 
 /**
- * SmartFilterAutocomplete
- *
- * Un componente de Autocomplete ultra-personalizado para SmartEconomat que ofrece:
- * - Layout optimizado para barras de herramientas (Toolbar).
- * - Orden de Búsqueda -> Chips (tags al final).
- * - Scroll horizontal automático y fluido para los chips seleccionados.
- * - Degradado dinámico inteligente que indica si hay contenido oculto por scroll.
- * - Corte liso contra los botones de control laterales para evitar difuminados.
+ * Documentación en español.
  */
 export function SmartFilterAutocomplete<T>({
   placeholder = 'Filtrar...',

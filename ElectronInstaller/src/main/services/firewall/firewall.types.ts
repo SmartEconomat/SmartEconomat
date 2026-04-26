@@ -81,10 +81,9 @@ export interface FirewallVerificationResult {
   rulesConsistent: boolean;
   connectivity: FirewallConnectivityResult;
   message: string;
-  /**
-   * Verifier skipped HTTP(S) probes (e.g. `preHostMapping`). Reporter must not
-   * treat all-false connectivity as hard failure when rules OK.
-   */
+        /**
+     * Documentación en español.
+     */
   connectivityChecksDeferred?: boolean;
 }
 
@@ -109,11 +108,8 @@ export interface FirewallEnsureContext {
   host: string;
   runtimePath: string;
   log: (line: string) => void;
-  /**
-   * Modo de verificación:
-   * - `preHostMapping`: antes de escribir `hosts` (no se puede asumir resolución DNS del dominio local).
-   * - `postHostMapping`: después de escribir `hosts` (se puede validar loopback DNS del dominio).
-   * - `default`: comportamiento histórico (compatibilidad).
-   */
+        /**
+     * Documentación en español.
+     */
   verificationMode?: "preHostMapping" | "postHostMapping" | "default";
 }

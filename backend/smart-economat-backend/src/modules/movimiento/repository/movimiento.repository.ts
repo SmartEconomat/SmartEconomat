@@ -161,12 +161,9 @@ export class MovimientoRepository {
     return this.repo.softDelete(id);
   }
 
-  /**
-   * Busca movimientos de un producto o usuario específico con filtros opcionales.
-   *
-   * @param dto - DTO con entityId (ProductoProveedor), userId, tipo, rango de fechas
-   * @returns Array de movimientos ordenados cronológicamente (DESC)
-   */
+        /**
+     * Documentación en español.
+     */
   async findMovimientosByEntity(dto: MovimientoHistoryDto) {
     const {
       entityId,

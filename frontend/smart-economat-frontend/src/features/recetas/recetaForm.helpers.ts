@@ -161,10 +161,7 @@ function normalizeIngredients(
 }
 
 /**
- * @description Converts a Receta entity into the flat form-data shape expected by RecetaFormModal.
- * Normalises ingredient references (productoId, proveedorFavoritoId) and resolves the stored image URL.
- * @param receta - The Receta entity returned by the API
- * @returns Plain object suitable for initialising the receta form
+ * Documentación en español.
  */
 export function mapRecetaToFormData(receta: Receta): Record<string, unknown> {
   const imagen = resolveStoredFileUrl(
@@ -185,12 +182,7 @@ export function mapRecetaToFormData(receta: Receta): Record<string, unknown> {
 }
 
 /**
- * @description Validates and transforms raw receta form data into the API RecetaPayload.
- * Uploads a new image file when present, normalises ingredients (merma, unidad, cantidad),
- * and enforces business rules (at least one ingredient, valid difficulty, etc.).
- * @param formData - Raw values from the receta form
- * @returns Promise resolving to a validated RecetaPayload ready to be sent to the API
- * @throws {Error} When required fields are missing or validation fails
+ * Documentación en español.
  */
 export async function buildRecetaPayload(
   formData: Record<string, unknown>
