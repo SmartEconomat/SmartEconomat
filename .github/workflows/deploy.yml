@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - production
+    paths-ignore:
+      - 'ElectronInstaller/**'
+      - 'ElectronInstaller/screenshots/**'
+      - 'ElectronInstaller/docs/**'
+      - 'ElectronInstaller/artifacts/**'
   workflow_dispatch:
 
 env:

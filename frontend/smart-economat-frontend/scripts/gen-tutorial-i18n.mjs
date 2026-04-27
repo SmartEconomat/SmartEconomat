@@ -2,7 +2,6 @@
  * Genera src/i18n/locales/tutorial.{es,en}.json desde una única fuente.
  * Ejecutar: node scripts/gen-tutorial-i18n.mjs
  */
-/* eslint-env node */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
