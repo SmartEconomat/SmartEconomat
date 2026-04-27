@@ -255,7 +255,7 @@ export const UsuariosView: React.FC = () => {
     } finally {
       setIsLoadingRoles(false);
     }
-  }, [toast]);
+  }, [t, toast]);
 
   const loadUsersByRole = useCallback(async () => {
     setIsLoading(true);
@@ -305,7 +305,7 @@ export const UsuariosView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch, statusFilter, toast]);
+  }, [debouncedSearch, statusFilter, t, toast]);
 
   const fetchAllData = useCallback(async () => {
     await loadUsersByRole();

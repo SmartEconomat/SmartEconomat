@@ -18,19 +18,22 @@ export const useToast = () => {
   /**
    * Documentación en español.
    */
-  function showToast(
-    key: string,
-    type: 'success' | 'error' | 'info' | 'warning',
-    dur?: number,
-    options?: ToastOptions
-  ): void {
-    addToast(
-      i18n.t(key, options as Record<string, unknown>),
-      type,
-      dur,
-      options
-    );
-  }
+  const showToast = React.useCallback(
+    (
+      key: string,
+      type: 'success' | 'error' | 'info' | 'warning',
+      dur?: number,
+      options?: ToastOptions
+    ): void => {
+      addToast(
+        i18n.t(key, options as Record<string, unknown>),
+        type,
+        dur,
+        options
+      );
+    },
+    [addToast]
+  );
 
   return React.useMemo(
     () => ({
@@ -43,7 +46,7 @@ export const useToast = () => {
       warning: (key: string, dur?: number, options?: ToastOptions) =>
         showToast(key, 'warning', dur, options),
     }),
-    [addToast]
+    [showToast]
   );
 };
 

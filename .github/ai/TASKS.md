@@ -7,6 +7,7 @@
 3. Alinear DTOs, tipos, enums y schemas del cliente con los contratos públicos del backend.
 4. Refactorizar hooks y servicios para reutilizar el cliente API central y evitar duplicaciones.
 5. Eliminar `400 Bad Request` causados por campos legacy, enums mal serializados o shapes incorrectos.
+6. Estabilizar el pipeline de CI/CD resolviendo errores de linting y formato en el frontend.
 
 ## Criterio de cierre
 

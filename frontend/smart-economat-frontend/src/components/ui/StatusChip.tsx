@@ -54,7 +54,7 @@ const isCategoriaProducto = (status: string): status is CategoriaProducto =>
 /**
  * Documentación en español.
  */
-export const getStatusColor = (
+const getStatusColor = (
   status: string
 ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
   if (!status) return 'default';

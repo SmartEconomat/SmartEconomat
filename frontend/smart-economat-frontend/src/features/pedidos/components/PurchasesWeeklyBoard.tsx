@@ -68,7 +68,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   handlers,
   emptyMessage,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const columns = useMemo(() => buildBatchColumns(), []);
 
@@ -104,7 +104,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
     return Array.from(groups.values()).sort((left, right) =>
       right.weekKey.localeCompare(left.weekKey)
     );
-  }, [batches, t, i18n.language]);
+  }, [batches, t]);
 
   return (
     <Stack spacing={3}>

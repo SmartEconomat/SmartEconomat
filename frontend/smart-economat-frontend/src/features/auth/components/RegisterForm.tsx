@@ -134,7 +134,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [formData.codigoClase, role]);
+  }, [formData.codigoClase, role, t]);
 
   const handleRoleChange = (
     _event: React.MouseEvent<HTMLElement>,

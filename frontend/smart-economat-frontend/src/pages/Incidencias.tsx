@@ -71,7 +71,7 @@ const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
 type ResolveDialogMode = 'adjust' | 'resolve';
 
 const Incidencias: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
@@ -296,7 +296,7 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    [t, i18n.language]
+    [t]
   );
 
   const renderActions = (row: Incidencia) => (
@@ -597,7 +597,7 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-  }, [itemToView, theme, t, i18n.language]);
+  }, [itemToView, theme, t]);
 
   return (
     <Box>

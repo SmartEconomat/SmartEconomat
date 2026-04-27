@@ -121,7 +121,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   emptyMessage,
   warningMessage,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const weeklyColumns = buildPedidoColumns().filter(
     (column) => column.id !== 'usuario'
   );
@@ -196,7 +196,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
           ),
       }))
       .sort((left, right) => right.weekKey.localeCompare(left.weekKey));
-  }, [data, t, i18n.language]);
+  }, [data, t]);
 
   const toggleUserSelection = (pedidoUsuarioIds: string[]) => {
     const allSelected = pedidoUsuarioIds.every((id) =>

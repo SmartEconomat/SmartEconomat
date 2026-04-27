@@ -164,7 +164,7 @@ export function usePedidoActions({
         setIsSaving(false);
       }
     },
-    [discardDraft, reload, toast]
+    [discardDraft, reload, toast, t]
   );
 
   const deletePedidoById = useCallback(
@@ -196,7 +196,7 @@ export function usePedidoActions({
         setIsDeleting(false);
       }
     },
-    [onPedidoDeleted, reload, toast]
+    [onPedidoDeleted, reload, toast, t]
   );
 
   const approvePedidoById = useCallback(
@@ -215,7 +215,7 @@ export function usePedidoActions({
         setIsAceptando(false);
       }
     },
-    [reload, toast]
+    [reload, toast, t]
   );
 
   const approvePurchaseBatchById = useCallback(
@@ -236,7 +236,7 @@ export function usePedidoActions({
         setIsAceptando(false);
       }
     },
-    [reload, toast]
+    [reload, toast, t]
   );
 
   const cancelPedidoById = useCallback(
@@ -258,7 +258,7 @@ export function usePedidoActions({
         setIsCancelando(false);
       }
     },
-    [reload, toast]
+    [reload, toast, t]
   );
 
   const cancelPurchaseBatchById = useCallback(
@@ -282,7 +282,7 @@ export function usePedidoActions({
         setIsCancelando(false);
       }
     },
-    [reload, toast]
+    [reload, toast, t]
   );
 
   const fetchBatchDetail = useCallback(
@@ -314,7 +314,7 @@ export function usePedidoActions({
         setIsFetchingBatch(false);
       }
     },
-    [toast]
+    [toast, t]
   );
 
   const consolidatePedidosByIds = useCallback(
@@ -340,7 +340,7 @@ export function usePedidoActions({
         setIsConsolidatingBatch(false);
       }
     },
-    [onBatchCreated, reload, toast]
+    [onBatchCreated, reload, toast, t]
   );
 
   const startRecepcionFromBatch = useCallback(
@@ -368,7 +368,7 @@ export function usePedidoActions({
         );
       }
     },
-    [navigate, toast]
+    [navigate, toast, t]
   );
 
   return {

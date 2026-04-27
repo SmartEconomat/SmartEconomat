@@ -55,7 +55,7 @@ const getMovimientoNombreProducto = (row: Movimiento) => {
 };
 
 const Movimientos: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const canList = usePermission(PERMISSIONS.movimientos.listar);
   const navigate = useNavigate();
@@ -272,7 +272,7 @@ const Movimientos: React.FC = () => {
         responsiveDisplay: { xs: 'none', sm: 'table-cell' },
       },
     ],
-    [theme, t, i18n.language]
+    [theme, t]
   );
 
   const handleViewClick = (row: Movimiento) => {
@@ -355,7 +355,7 @@ const Movimientos: React.FC = () => {
         ],
       },
     ];
-  }, [itemToView, t, i18n.language]);
+  }, [itemToView, t]);
 
   const detailActions = useMemo(() => {
     if (!itemToView?.entidadId) {

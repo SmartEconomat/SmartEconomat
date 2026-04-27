@@ -82,7 +82,7 @@ interface ProductoAlbaranDetalle {
  * Documentación en español.
  */
 const AlbaranPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const toast = useToast();
 
   // ─── Esquema del formulario ────────────────────────────────────────────────
@@ -482,7 +482,7 @@ const AlbaranPage: React.FC = () => {
         ),
       },
     ],
-    [t, i18n.language]
+    [t]
   );
 
   // ─── Acciones por fila ───────────────────────────────────────────────────
@@ -663,7 +663,7 @@ const AlbaranPage: React.FC = () => {
             ],
       },
     ];
-  }, [itemToView, productosVinculados, t, i18n.language]);
+  }, [itemToView, productosVinculados, t]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 

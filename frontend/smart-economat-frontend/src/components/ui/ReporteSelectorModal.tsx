@@ -98,7 +98,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
       .finally(() => {
         setIsLoadingProveedores(false);
       });
-  }, [isOpen, toast]);
+  }, [isOpen, toast, t]);
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};

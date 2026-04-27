@@ -113,7 +113,7 @@ const collectUbicacionIdsFromPerfil = (
 };
 
 const DistribucionPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -251,7 +251,7 @@ const DistribucionPage: React.FC = () => {
     }
 
     setUserUbicacionIds([]);
-  }, [user?.id, userRole]);
+  }, [t, user?.id, userRole]);
 
   const loadUbicaciones = useCallback(async () => {
     const data = await UbicacionService.findAll();
@@ -308,6 +308,7 @@ const DistribucionPage: React.FC = () => {
     loadHistorial,
     loadUbicaciones,
     loadUserUbicaciones,
+    t,
   ]);
 
   useEffect(() => {
@@ -598,7 +599,7 @@ const DistribucionPage: React.FC = () => {
         );
       }
     },
-    [toast]
+    [t, toast]
   );
 
   const handleOpenMovimientosTrace = useCallback(
@@ -784,7 +785,7 @@ const DistribucionPage: React.FC = () => {
         sortable: true,
       },
     ],
-    [t, i18n.language]
+    [t]
   );
 
   const sortedHistorial = useMemo(() => {
@@ -956,6 +957,7 @@ const DistribucionPage: React.FC = () => {
   }, [
     hasAvailableDestinationOptions,
     selectedOriginUbicacion,
+    t,
     usingFallbackDestinationOptions,
   ]);
 
@@ -984,7 +986,7 @@ const DistribucionPage: React.FC = () => {
     });
 
     return items;
-  }, [visibleUserUbicaciones]);
+  }, [t, visibleUserUbicaciones]);
 
   useEffect(() => {
     if (!distributeOpen || !selectedDisponible) {
