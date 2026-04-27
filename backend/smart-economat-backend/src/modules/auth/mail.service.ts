@@ -223,9 +223,9 @@ export class MailService implements OnApplicationBootstrap {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async sendPasswordResetEmail(
     email: string,
     resetToken: string

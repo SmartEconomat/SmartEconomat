@@ -24,30 +24,30 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 interface UploadDocumentoModalProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isOpen: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onClose: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onUpload: (
     file: File,
     numeroReferencia: string,
     recepcionId?: string,
     observaciones?: string
   ) => Promise<void>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   defaultNumeroReferencia?: string;
 }
 
@@ -102,9 +102,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
     }
   }, [isOpen, defaultNumeroReferencia]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFileError(null);
@@ -120,9 +120,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
     setSelectedFile(file);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSubmit = async () => {
     if (!selectedFile) {
       setFileError(t('albaran.upload.errorSinArchivo'));

@@ -2,33 +2,33 @@
  * Documentación en español.
  */
 export interface DistribucionDisponibleLinea {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuarioLineaId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoProveedorId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoNombre: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPedida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecepcionada: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadDistribuida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPendiente: number;
 }
 
@@ -36,29 +36,29 @@ export interface DistribucionDisponibleLinea {
  * Documentación en español.
  */
 export interface DistribucionDisponible {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuarioId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   numeroGlobal: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   usuario: {
     id?: string;
     nombre?: string;
     username?: string;
   } | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   alumnoSlot: {
     id: string;
     aula: string;
@@ -66,23 +66,23 @@ export interface DistribucionDisponible {
     ubicacionId?: string;
     ubicacionNombre?: string;
   } | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionDestinoSugerida: {
     id: string;
     nombre: string;
   } | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionesUsuario: Array<{
     id: string;
     nombre: string;
   }>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   lineas: DistribucionDisponibleLinea[];
 }
 
@@ -90,49 +90,49 @@ export interface DistribucionDisponible {
  * Documentación en español.
  */
 export interface DistribucionLinea {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuarioLineaId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoProveedorId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPedida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecepcionadaAtribuida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadYaDistribuida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadADistribuir: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadEntregada: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoProveedor?: {
     id: string;
     producto?: {
@@ -146,37 +146,37 @@ export interface DistribucionLinea {
  * Documentación en español.
  */
 export interface Distribucion {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuarioId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fechaPreparacion: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fechaEntrega?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   motivoCancelacion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuario?: {
     id: string;
     numeroGlobal: string;
@@ -187,23 +187,23 @@ export interface Distribucion {
       username?: string;
     };
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionOrigen?: {
     id: string;
     nombre: string;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionDestino?: {
     id: string;
     nombre: string;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   alumnoSlot?: {
     id: string;
     aula: string;
@@ -213,9 +213,9 @@ export interface Distribucion {
       nombre: string;
     };
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   lineas?: DistribucionLinea[];
 }
 
@@ -223,29 +223,29 @@ export interface Distribucion {
  * Documentación en español.
  */
 export interface CreateDistribucionPayload {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoUsuarioId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionOrigenId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionDestinoId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   alumnoSlotId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   lineas: Array<{
     pedidoUsuarioLineaId: string;
     cantidad: number;

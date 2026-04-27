@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from '../interfaces/api-response.interface';
+import { I18nHelper } from '../helpers/i18n.helper';
 import { APP_VERSION } from '../helpers/app-version.helper';
 
 /**
@@ -23,9 +24,9 @@ export class TransformInterceptor<T> implements NestInterceptor<
   T,
   ApiResponse<T>
 > {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
 
@@ -57,7 +58,7 @@ export class TransformInterceptor<T> implements NestInterceptor<
           return data;
         }
 
-        let message = 'Operación exitosa';
+        let message = I18nHelper.getSuccess('OPERATION_SUCCESSFUL');
         let responseData: T | null = data as T;
 
         if (

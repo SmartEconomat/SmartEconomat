@@ -22,18 +22,18 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
  */
 @Injectable()
 export class IncidenciaResuelaService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly incidenciaResuelaRepository: IncidenciaResuelaRepository,
     @InjectRepository(Incidencia)
     private readonly incidenciaRepository: Repository<Incidencia>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateIncidenciaResuelaDto): Promise<IncidenciaResuelta> {
     const incidencia = await this.incidenciaRepository.findOne({
       where: { id: dto.idIncidencia },
@@ -66,9 +66,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.save(resolucion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -76,9 +76,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.findAllPaginated(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<IncidenciaResuelta> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -99,9 +99,9 @@ export class IncidenciaResuelaService {
     return resolucion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     dto: UpdateIncidenciaResuelaDto
@@ -119,9 +119,9 @@ export class IncidenciaResuelaService {
     return this.incidenciaResuelaRepository.save(resolucion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const resolucion = await this.findOne(id);
 

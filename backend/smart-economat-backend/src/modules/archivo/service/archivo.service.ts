@@ -50,9 +50,9 @@ export class ArchivoService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async uploadFile(
     file: Express.Multer.File,
     user: Usuario,
@@ -113,9 +113,9 @@ export class ArchivoService {
     return await this.archivoRepository.save(newArchivo);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async compressImageFile(file: Express.Multer.File): Promise<{
     filename: string;
     path: string;
@@ -159,9 +159,9 @@ export class ArchivoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async processImage(
     inputPath: string,
     options: ImageProcessOptionsDto
@@ -235,9 +235,9 @@ export class ArchivoService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveOutputFormat(
     requestedFormat?: ImageProcessOptionsDto['formatoSalida']
   ): ProcessedImageFormat {
@@ -245,9 +245,9 @@ export class ArchivoService {
     return 'webp';
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async initializeWebpEncoder(): Promise<void> {
     if (!ArchivoService.webpEncoderInitPromise) {
       ArchivoService.webpEncoderInitPromise = (async () => {
@@ -276,18 +276,18 @@ export class ArchivoService {
     return ArchivoService.webpEncoderInitPromise;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private normalizeQuality(quality?: number): number {
     const normalized = quality ?? 80;
 
     return Math.max(1, Math.min(100, normalized));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async loadEsmModule<T>(specifier: string): Promise<T> {
     const moduleNamespace: unknown = await import(specifier);
 
@@ -302,9 +302,9 @@ export class ArchivoService {
     return moduleNamespace as T;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
     const { page = 1, limit = 20, usuarioId, mimeType } = filterDto;
 
@@ -337,9 +337,9 @@ export class ArchivoService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<Archivo> {
     const archivo = await this.archivoRepository.findOne({
       where: { id, isDeleted: false },
@@ -353,9 +353,9 @@ export class ArchivoService {
     return archivo;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getFileContent(filename: string): string {
     if (this.storageType === 'local') {
       const uploadDirResolved = path.resolve(this.uploadDir);
@@ -377,9 +377,9 @@ export class ArchivoService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
 
@@ -397,9 +397,9 @@ export class ArchivoService {
     await this.archivoRepository.softRemove(archivo);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cleanupByUrl(fileUrl?: string): Promise<void> {
     if (!fileUrl?.trim()) {
       return;
@@ -424,9 +424,9 @@ export class ArchivoService {
     await this.deletePhysicalFileFromUrl(trimmedUrl);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async deleteManagedFiles(archivo: Archivo): Promise<void> {
     await this.deletePhysicalFileFromUrl(archivo.url);
 
@@ -435,9 +435,9 @@ export class ArchivoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async deletePhysicalFileFromUrl(fileUrl?: string): Promise<void> {
     const filename = this.extractFilenameFromUrl(fileUrl);
     if (!filename) {
@@ -464,9 +464,9 @@ export class ArchivoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async deleteLocalFileQuietly(filePath?: string): Promise<void> {
     if (!filePath) {
       return;
@@ -485,9 +485,9 @@ export class ArchivoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private extractFilenameFromUrl(fileUrl?: string): string | null {
     if (!fileUrl?.trim()) {
       return null;

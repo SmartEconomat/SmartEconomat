@@ -11,13 +11,13 @@ import Spinner from './Spinner';
  * Documentación en español.
  */
 interface ButtonProps extends MuiButtonProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   loadingText?: React.ReactNode;
 }
 

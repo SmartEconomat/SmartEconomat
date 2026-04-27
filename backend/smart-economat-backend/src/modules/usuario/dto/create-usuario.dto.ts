@@ -10,7 +10,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { rolUsuario, UserStatus } from '../enums/usuario.enums';
+import { rolUsuario, UserStatus, UserLanguage } from '../enums/usuario.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
@@ -80,4 +80,9 @@ export class CreateUsuarioDto {
     message: i18nValidationMessage('validation.EL_ESTADO_NO_ES_V_LIDO'),
   })
   status!: UserStatus;
+  @IsOptional()
+  @IsEnum(UserLanguage, {
+    message: i18nValidationMessage('validation.IDIOMA_INVALIDO'),
+  })
+  idioma?: UserLanguage;
 }

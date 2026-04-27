@@ -1102,14 +1102,18 @@ const Productos: React.FC = () => {
                                                     ),
                                                   }
                                                 )
-                                              : t('productos.detail.mejorOpcion')
+                                              : t(
+                                                  'productos.detail.mejorOpcion'
+                                                )
                                           }
                                           size="small"
                                           color="success"
                                         />
                                       )}
                                       <Tooltip
-                                        title={t('productos.actions.verHistorico')}
+                                        title={t(
+                                          'productos.actions.verHistorico'
+                                        )}
                                       >
                                         <span>
                                           <IconButton
@@ -1416,7 +1420,8 @@ const Productos: React.FC = () => {
                                         color="text.secondary"
                                         display="block"
                                       >
-                                        {t('productos.historial.documento')}: {h.documentoOrigen}
+                                        {t('productos.historial.documento')}:{' '}
+                                        {h.documentoOrigen}
                                       </Typography>
                                     )}
                                   </TableCell>

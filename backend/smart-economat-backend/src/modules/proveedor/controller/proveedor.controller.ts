@@ -30,14 +30,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('proveedor')
 export class ProveedorController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly proveedorService: ProveedorService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.proveedores.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -45,9 +45,9 @@ export class ProveedorController {
     return this.proveedorService.create(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findAll(
@@ -68,18 +68,18 @@ export class ProveedorController {
     return this.proveedorService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('con-pedidos')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findWithOrders(): Promise<Proveedor[]> {
     return this.proveedorService.findWithOrders();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findOne(
@@ -90,9 +90,9 @@ export class ProveedorController {
     return this.proveedorService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.proveedores.editar)
   update(
@@ -102,9 +102,9 @@ export class ProveedorController {
     return this.proveedorService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.proveedores.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

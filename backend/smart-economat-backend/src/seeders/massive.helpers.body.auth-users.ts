@@ -96,6 +96,7 @@ export function buildBodyAuthUsers(
       username: `admin_prof_${suffix}`,
       email: `admin.prof.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       cial: deterministicCode(
         'CIALA',
         iteration,
@@ -110,6 +111,7 @@ export function buildBodyAuthUsers(
       username: `register_prof_${suffix}`,
       email: `register.prof.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       cial: deterministicCode(
         'CIALR',
         iteration,
@@ -132,6 +134,7 @@ export function buildBodyAuthUsers(
       username: `reg_${suffix}`,
       email: `register.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       rol: 'ALUMNO',
     };
   }
@@ -187,6 +190,7 @@ export function buildBodyAuthUsers(
     return {
       username: `alumno_${suffix}`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       codigoClase,
     };
   }
@@ -434,6 +438,7 @@ export function buildBodyAuthUsers(
       username: `admin_${suffix}`,
       email: `admin.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       rol: roleValue,
       ...(roleValue === 'PROFESOR'
         ? {
@@ -469,6 +474,7 @@ export function buildBodyAuthUsers(
       username: `user_${suffix}`,
       email: `user.${suffix}@smarteconomat.local`,
       password: DEFAULT_SEED_PASSWORD,
+      idioma: 'es',
       nombre: pickDeterministic(
         DETERMINISTIC_PERSON_NAMES,
         iteration,

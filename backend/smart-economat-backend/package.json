@@ -76,7 +76,7 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.27",
-    "uuid": "^9.0.1",
+    "uuid": "11.0.1",
     "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
@@ -85,8 +85,8 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@swc/cli": "^0.7.10",
-    "@swc/core": "^1.15.18",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.30",
     "@swc/jest": "^0.2.39",
     "@types/bcrypt": "^6.0.0",
     "@types/cache-manager": "^4.0.6",
@@ -123,7 +123,9 @@
     "typescript-eslint": "^8.56.1"
   },
   "overrides": {
-    "yauzl": "^3.2.1"
+    "yauzl": "^3.2.1",
+    "uuid": "11.0.1",
+    "chokidar": "^3.6.0"
   },
   "jest": {
     "moduleFileExtensions": [

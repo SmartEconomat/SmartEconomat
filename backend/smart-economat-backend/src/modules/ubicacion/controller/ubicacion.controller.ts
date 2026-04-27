@@ -36,16 +36,16 @@ export class UbicacionController extends BaseController<
   UpdateUbicacionDto,
   UbicacionService
 > {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(service: UbicacionService) {
     super(service);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.ubicaciones.crear)
   @ApiOperation({ summary: 'Crear nueva ubicación' })
@@ -53,9 +53,9 @@ export class UbicacionController extends BaseController<
     return super.create(createUbicacionDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
@@ -66,9 +66,9 @@ export class UbicacionController extends BaseController<
     return super.findAll(query, req);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.ver)
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
@@ -79,9 +79,9 @@ export class UbicacionController extends BaseController<
     return super.findOne(id, req);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.editar)
   @ApiOperation({ summary: 'Actualizar una ubicación' })
@@ -92,9 +92,9 @@ export class UbicacionController extends BaseController<
     return super.update(id, updateUbicacionDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.eliminar)
   @ApiOperation({ summary: 'Eliminar una ubicación lógica' })
@@ -102,9 +102,9 @@ export class UbicacionController extends BaseController<
     return super.remove(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/restore')
   @RequirePermissions(PERMISSIONS.ubicaciones.restaurar)
   @ApiOperation({ summary: 'Restaurar una ubicación eliminada' })

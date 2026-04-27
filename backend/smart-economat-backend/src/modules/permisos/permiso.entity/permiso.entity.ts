@@ -10,59 +10,59 @@ import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/planti
 @Index('idx_permiso_modulo', ['modulo'])
 @Index('idx_permiso_activo', ['activo'])
 export class Permiso extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, unique: true })
   codigo!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 150 })
   nombre!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 50 })
   modulo!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 50 })
   accion!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToMany(() => Rol, (rol) => rol.permisos)
   roles!: Rol[];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosAdicionales)
   usuariosAdicionales: Relation<Usuario>[];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToMany(() => Usuario, (usuario) => usuario.permisosExcluidos)
   usuariosExcluidos: Relation<Usuario>[];

@@ -5,13 +5,13 @@ import { TextField, TextFieldProps, MenuItem } from '@mui/material';
  * Documentación en español.
  */
 export type SelectOption = {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value: string | number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string | React.ReactNode;
 };
 
@@ -19,17 +19,17 @@ export type SelectOption = {
  * Documentación en español.
  */
 export type SelectFieldProps = Omit<TextFieldProps, 'select' | 'children'> & {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   options: SelectOption[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string;
 };
 

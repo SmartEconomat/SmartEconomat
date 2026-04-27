@@ -24,9 +24,9 @@ import { EstadoIncidencia } from '../enums/incidencia.enums';
 @Index(['pedidoId'])
 @Index(['usuarioResolutorId'])
 export class Incidencia extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado?: EstadoIncidencia;
   resuelta?: boolean;
 
@@ -39,9 +39,9 @@ export class Incidencia extends BaseEntity {
   @Column({ name: 'usuario_resolutor_id', nullable: true })
   usuarioResolutorId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Recepcion, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -49,9 +49,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'recepcion_id' })
   recepcion!: Relation<Recepcion>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Pedido, {
     onDelete: 'RESTRICT',
     nullable: true,
@@ -59,9 +59,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'pedido_id' })
   pedido?: Relation<Pedido>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, (usuario) => usuario.incidenciasResueltas, {
     onDelete: 'SET NULL',
     nullable: true,
@@ -69,9 +69,9 @@ export class Incidencia extends BaseEntity {
   @JoinColumn({ name: 'usuario_resolutor_id' })
   usuarioResolutor?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => IncidenciaLinea, (linea) => linea.incidencia, {
     cascade: true,
   })
@@ -83,21 +83,21 @@ export class Incidencia extends BaseEntity {
   )
   recepcionProducto?: Relation<RecepcionProducto>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'observaciones_recepcion' })
   observacionesRecepcion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'observaciones_resolucion' })
   observacionesResolucion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -107,9 +107,9 @@ export class Incidencia extends BaseEntity {
 
   /* --- Métodos de Dominio --- */
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   resolver(usuarioId: string, observaciones?: string): void {
     this.fechaResolucion = new Date();
     this.usuarioResolutorId = usuarioId;
@@ -118,9 +118,9 @@ export class Incidencia extends BaseEntity {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estaResuelta(): boolean {
     return this.fechaResolucion !== null && this.fechaResolucion !== undefined;
   }

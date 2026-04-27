@@ -185,7 +185,7 @@ function ensureMassiveLogTargets(): void {
     lastError instanceof Error ? lastError.message : lastError
   );
   throw new Error(
-    `[seed-massive] No se pudo inicializar directorio de logs para seeders: ${details}`
+    `[seed-massive] Failed to initialize logs directory for seeders: ${details}`
   );
 }
 

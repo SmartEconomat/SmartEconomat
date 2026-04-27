@@ -29,9 +29,9 @@ describe('UsuarioController (e2e)', () => {
   });
 
   describe('Perfil (Auto-servicio)', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /usuarios/perfil - Debe obtener mi perfil (200)', async () => {
       await request(app.getHttpServer() as Server)
         .get('/api/v1/usuarios/perfil')
@@ -43,9 +43,9 @@ describe('UsuarioController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)', async () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil')
@@ -57,9 +57,9 @@ describe('UsuarioController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)', async () => {
       await request(app.getHttpServer() as Server)
         .patch('/api/v1/usuarios/perfil/password')
@@ -88,9 +88,9 @@ describe('UsuarioController (e2e)', () => {
   });
 
   describe('Administración (Solo Admin)', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /usuarios - Debe listar usuarios (200)', async () => {
       const res = await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios')
@@ -110,9 +110,9 @@ describe('UsuarioController (e2e)', () => {
       }
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /usuarios/:id - Debe obtener un usuario (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -121,9 +121,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -133,9 +133,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /usuarios/:id/rol - Debe cambiar el rol (200)', async () => {
       if (!testUserId) return;
       await request(app.getHttpServer() as Server)
@@ -145,9 +145,9 @@ describe('UsuarioController (e2e)', () => {
         .expect(200);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /usuarios/:id - Debe fallar con UUID inválido (400)', async () => {
       await request(app.getHttpServer() as string)
         .get('/api/v1/usuarios/invalid-uuid')

@@ -25,9 +25,9 @@ export class PreparacionService {
     private readonly recetaRepository: RecetaRepository
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     dto: CreatePreparacionDto,
     userId: string
@@ -40,9 +40,9 @@ export class PreparacionService {
     return this.preparacionRepository.create(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -50,9 +50,9 @@ export class PreparacionService {
     return this.preparacionRepository.findAllPaginated(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Preparacion> {
     const preparacion = await this.preparacionRepository.findById(id, userRole);
     if (!preparacion) {
@@ -61,9 +61,9 @@ export class PreparacionService {
     return preparacion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async iniciarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
     if (preparacion.estado !== PreparacionEstado.PENDIENTE) {
@@ -79,9 +79,9 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async finalizarPreparacion(
     id: string,
     userId: string,
@@ -121,9 +121,9 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cancelarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
     if (preparacion.estado === PreparacionEstado.COMPLETADA) {
@@ -136,9 +136,9 @@ export class PreparacionService {
     return this.preparacionRepository.save(preparacion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     return this.preparacionRepository.remove(id);
   }

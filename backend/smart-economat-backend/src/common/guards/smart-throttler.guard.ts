@@ -24,9 +24,9 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
     this.smartLogger.log('SmartAuthThrottlerGuard successfully initialized');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   protected async getTracker(req: Record<string, any>): Promise<string> {
     await Promise.resolve();
     if (req.user?.id) {

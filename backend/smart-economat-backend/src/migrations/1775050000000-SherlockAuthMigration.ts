@@ -232,9 +232,9 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     return permissionIdByCode;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async deactivateGhostPermissions(
     queryRunner: QueryRunner,
     activeCodes: string[]
@@ -441,9 +441,9 @@ export class SherlockAuthMigration1775050000000 implements MigrationInterface {
     ]);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async enforceAdminRestrictions(
     queryRunner: QueryRunner,
     roleIdByName: Map<rolUsuario, string>,

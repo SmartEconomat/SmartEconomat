@@ -5,19 +5,19 @@ import * as path from 'path';
  * Documentación en español.
  */
 export class SeederI18nHelper {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static translations: Record<string, any> | null = null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly defaultLang = 'es';
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static loadTranslations(): void {
     if (this.translations) return;
 
@@ -61,17 +61,17 @@ export class SeederI18nHelper {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static getLang(): string {
     const lang = process.env.SEEDER_LANG || this.defaultLang;
     return lang === 'en' ? 'en' : 'es';
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static getMessage(path: string, args?: Record<string, any>): string {
     this.loadTranslations();
 
@@ -97,30 +97,30 @@ export class SeederI18nHelper {
     return message;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getError(key: string, args?: Record<string, any>): string {
     return this.getMessage(`errors.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getSeederSuccess(key: string, args?: Record<string, any>): string {
     return this.getMessage(`seeders.success.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getSeederMessage(key: string, args?: Record<string, any>): string {
     return this.getMessage(`seeders.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getEntity(key: string): string {
     return this.getMessage(`entities.${key}`);
   }

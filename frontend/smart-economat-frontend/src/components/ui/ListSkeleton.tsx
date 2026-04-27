@@ -5,17 +5,17 @@ import { Box, Skeleton, Paper, Stack, Divider } from '@mui/material';
  * Documentación en español.
  */
 interface ListSkeletonProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   count?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   hasHeader?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   type?: 'list' | 'accordion' | 'table';
 }
 
@@ -27,9 +27,9 @@ const ListSkeleton: React.FC<ListSkeletonProps> = ({
   hasHeader = true,
   type = 'list',
 }) => {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const renderItem = (index: number) => (
     <Box key={index} sx={{ py: 2, px: 3 }}>
       <Stack direction="row" spacing={2} alignItems="center">
@@ -48,9 +48,9 @@ const ListSkeleton: React.FC<ListSkeletonProps> = ({
     </Box>
   );
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const renderAccordion = (index: number) => (
     <Paper
       key={index}

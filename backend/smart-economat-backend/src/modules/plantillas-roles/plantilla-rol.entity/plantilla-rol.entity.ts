@@ -17,39 +17,39 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 @Index('idx_plantilla_nombre', ['nombre'])
 @Index('idx_plantilla_activo', ['activo'])
 export class PlantillaRol extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, unique: true })
   nombre!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: true, name: 'es_editable' })
   esEditable!: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'uuid', nullable: true, name: 'plantilla_padre_id' })
   plantillaPadreId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PlantillaRol, (plantilla) => plantilla.plantillasHijas, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -57,21 +57,21 @@ export class PlantillaRol extends BaseEntity {
   @JoinColumn({ name: 'plantilla_padre_id' })
   plantillaPadre?: Relation<PlantillaRol>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => PlantillaRol, (plantilla) => plantilla.plantillaPadre)
   plantillasHijas!: Relation<PlantillaRol[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Rol, (rol) => rol.plantillaRol)
   roles!: Relation<Rol[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToMany(() => Permiso, (permiso) => permiso.plantillasRoles, {
     cascade: false,
   })

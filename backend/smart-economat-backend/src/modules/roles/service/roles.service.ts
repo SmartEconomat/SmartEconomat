@@ -36,9 +36,9 @@ export class RolesService {
     private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateRolDto): Promise<Rol> {
     const existente = await this.rolRepo.findOne({
       where: { nombre: dto.nombre },
@@ -66,7 +66,7 @@ export class RolesService {
 
         if (permisos.length !== dto.permisoIds.length) {
           throw new BadRequestException(
-            I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+            I18nHelper.getError('SOME_PERMISSIONS_NOT_FOUND')
           );
         }
 
@@ -97,7 +97,7 @@ export class RolesService {
 
     if ((dto.permisoIds?.length ?? 0) !== permisos.length) {
       throw new BadRequestException(
-        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+        I18nHelper.getError('SOME_PERMISSIONS_NOT_FOUND')
       );
     }
 
@@ -126,9 +126,9 @@ export class RolesService {
     return this.findOne(rol.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(query: PaginationQueryDto): Promise<PaginatedResponseDto<Rol>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 10, 50);
@@ -151,9 +151,9 @@ export class RolesService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAllNoPagination(): Promise<Rol[]> {
     return this.rolRepo.find({
       where: { activo: true },
@@ -161,9 +161,9 @@ export class RolesService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<Rol> {
     const rol = await this.rolRepo.findOne({
       where: { id },
@@ -179,9 +179,9 @@ export class RolesService {
     return rol;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, dto: UpdateRolDto): Promise<Rol> {
     const rol = await this.findOne(id);
 
@@ -219,15 +219,15 @@ export class RolesService {
     return this.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const rol = await this.findOne(id);
 
     if (rol.esSistema) {
       throw new BadRequestException(
-        I18nHelper.getError('NO_SE_PUEDE_ELIMINAR_UN_ROL_DE_SISTEMA')
+        I18nHelper.getError('CANNOT_DELETE_SYSTEM_ROLE')
       );
     }
 
@@ -243,9 +243,9 @@ export class RolesService {
     await this.rolRepo.softDelete(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async assignPermissions(
     rolId: string,
     dto: AssignPermissionsDto,
@@ -265,7 +265,7 @@ export class RolesService {
 
     if (permisos.length !== dto.permisoIds.length) {
       throw new BadRequestException(
-        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+        I18nHelper.getError('SOME_PERMISSIONS_NOT_FOUND')
       );
     }
 
@@ -284,9 +284,9 @@ export class RolesService {
     return this.findOne(rolId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async assignRoleToUser(
     dto: AssignRoleToUserDto,
     asignadoPor?: string
@@ -325,9 +325,9 @@ export class RolesService {
     return saved;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async removeRoleFromUser(usuarioId: string, rolId: string): Promise<void> {
     const usuarioRol = await this.usuarioRolRepo.findOne({
       where: { usuarioId, rolId },
@@ -335,7 +335,7 @@ export class RolesService {
 
     if (!usuarioRol) {
       throw new NotFoundException(
-        I18nHelper.getError('ASIGNACI_N_DE_ROL_NO_ENCONTRADA')
+        I18nHelper.getError('ROLE_ASSIGNMENT_NOT_FOUND')
       );
     }
 
@@ -344,9 +344,9 @@ export class RolesService {
     await this.authPermissionsService.invalidateUserCache(usuarioId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getUserRoles(usuarioId: string): Promise<Rol[]> {
     const usuario = await this.usuarioRepo.findOne({
       where: { id: usuarioId },
@@ -362,9 +362,9 @@ export class RolesService {
     return usuario.roles || [];
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async invalidateCacheForRole(rolId: string): Promise<void> {
     const usuarioRoles = await this.usuarioRolRepo.find({
       where: { rolId, activo: true },

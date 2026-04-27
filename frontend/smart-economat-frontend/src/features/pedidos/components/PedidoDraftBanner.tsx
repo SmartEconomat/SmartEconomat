@@ -42,8 +42,7 @@ const PedidoDraftBanner: React.FC<PedidoDraftBannerProps> = ({
       </Typography>
       <Typography variant="caption" color="text.secondary">
         {t('pedidos.draft.lastUpdate')}{' '}
-        {draft.updatedAt &&
-        !Number.isNaN(new Date(draft.updatedAt).getTime())
+        {draft.updatedAt && !Number.isNaN(new Date(draft.updatedAt).getTime())
           ? formatLocalizedDateTime(draft.updatedAt)
           : t('pedidos.draft.noDate')}
       </Typography>

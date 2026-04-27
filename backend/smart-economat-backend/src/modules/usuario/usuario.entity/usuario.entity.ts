@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import * as bcrypt from 'bcrypt';
-import { rolUsuario, UserStatus } from '../enums/usuario.enums';
+import { rolUsuario, UserStatus, UserLanguage } from '../enums/usuario.enums';
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity';
@@ -30,106 +30,112 @@ import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 @Index(['username'])
 @Index(['email'])
 export class Usuario extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 150, nullable: true })
   nombre?: string | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, unique: true })
   username!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, select: false })
   password!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   email?: string | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'enum', enum: rolUsuario, default: rolUsuario.ALUMNO })
   rol!: rolUsuario;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Index('idx_usuario_status', ['status'])
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.INACTIVE })
   status!: UserStatus;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
+  @Column({ type: 'enum', enum: UserLanguage, default: UserLanguage.ES })
+  idioma!: UserLanguage;
+
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', nullable: true, select: false })
   resetPasswordOtp?: string | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'timestamptz', nullable: true })
   resetPasswordOtpExpires?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: false, name: 'must_change_password' })
   mustChangePassword!: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Pedido, (pedido) => pedido.usuario)
   pedidos!: Relation<Pedido[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Recepcion, (recepcion) => recepcion.usuario)
   recepciones!: Relation<Recepcion[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Movimiento, (mov) => mov.usuario)
   movimientos!: Relation<Movimiento[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Incidencia, (incidencia) => incidencia.usuarioResolutor)
   incidenciasResueltas!: Relation<Incidencia[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Archivo, (archivo) => archivo.usuario)
   archivos!: Relation<Archivo[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToOne(() => Profesor, (profesor) => profesor.user)
   profesor?: Relation<Profesor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToOne(() => Alumno, (alumno) => alumno.user)
   alumno?: Relation<Alumno>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToMany(() => Rol, (rol) => rol.usuarios, { cascade: true })
   @JoinTable({
     name: 'usuario_rol',
@@ -138,9 +144,9 @@ export class Usuario extends BaseEntity {
   })
   roles: Rol[];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToMany(() => Permiso, (permiso) => permiso.usuariosAdicionales)
   @JoinTable({
     name: 'usuario_permiso_adicional',
@@ -149,9 +155,9 @@ export class Usuario extends BaseEntity {
   })
   permisosAdicionales: Permiso[];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToMany(() => Permiso, (permiso) => permiso.usuariosExcluidos)
   @JoinTable({
     name: 'usuario_permiso_excluido',
@@ -160,15 +166,15 @@ export class Usuario extends BaseEntity {
   })
   permisosExcluidos: Permiso[];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: true })
   activo: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
@@ -177,9 +183,9 @@ export class Usuario extends BaseEntity {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async validarPassword(plainPassword: string): Promise<boolean> {
     return bcrypt.compare(plainPassword, this.password);
   }

@@ -29,9 +29,9 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     super(Incidencia, dataSource.createEntityManager());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   findOneWithRelations(
     id: string,
     userRole?: string
@@ -57,9 +57,9 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   findAllWithRelations(): Promise<Incidencia[]> {
     return this.find({
       relations: [
@@ -77,9 +77,9 @@ export class IncidenciaRepository extends Repository<Incidencia> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAllPaginated(
     query: IncidenciaQueryDto,
     userRole?: string

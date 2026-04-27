@@ -39,9 +39,9 @@ import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-pro
  */
 @Injectable()
 export class DistribucionService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Distribucion)
     private readonly distribucionRepository: Repository<Distribucion>,
@@ -62,9 +62,9 @@ export class DistribucionService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -117,9 +117,9 @@ export class DistribucionService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Distribucion> {
     const isAdmin = isSherlockElevatedRole(userRole);
     const distribucion = await this.distribucionRepository.findOne({
@@ -153,9 +153,9 @@ export class DistribucionService {
     return distribucion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findDisponibles(
     query: PaginationQueryDto
   ): Promise<DistribucionDisponibleDto[]> {
@@ -202,9 +202,9 @@ export class DistribucionService {
     return disponibles;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     dto: CreateDistribucionDto,
     userId: string
@@ -328,9 +328,9 @@ export class DistribucionService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async confirmar(id: string, userId: string): Promise<Distribucion> {
     return this.dataSource.transaction(async (manager) => {
       const distribucion = await manager.findOne(Distribucion, {
@@ -387,9 +387,9 @@ export class DistribucionService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cancelar(
     id: string,
     dto: CancelDistribucionDto,
@@ -431,9 +431,9 @@ export class DistribucionService {
     return this.findOne(distribucion.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolveOrigen(
     manager: EntityManager,
     ubicacionOrigenId?: string
@@ -465,9 +465,9 @@ export class DistribucionService {
     return defaultUbicacion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolveTargetSlot(
     manager: EntityManager,
     dto: CreateDistribucionDto,
@@ -506,9 +506,9 @@ export class DistribucionService {
     return null;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolveDestino(
     manager: EntityManager,
     dto: CreateDistribucionDto,
@@ -547,9 +547,9 @@ export class DistribucionService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async calculatePendingByPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -598,9 +598,9 @@ export class DistribucionService {
     return result;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getRecepcionadoPorPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -636,9 +636,9 @@ export class DistribucionService {
     return result;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getDistribuidoPorPedidoUsuarioLinea(
     manager: EntityManager,
     pedidoUsuarioLineaIds: string[]
@@ -680,9 +680,9 @@ export class DistribucionService {
     return result;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async buildDistribucionDisponible(
     pedidoUsuario: PedidoUsuario
   ): Promise<DistribucionDisponibleDto> {
@@ -757,9 +757,9 @@ export class DistribucionService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolvePedidoUsuarioUbicaciones(
     pedidoUsuario: PedidoUsuario
   ): Array<{ id: string; nombre: string }> {
@@ -793,9 +793,9 @@ export class DistribucionService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolvePedidoUsuarioSlot(
     pedidoUsuario: PedidoUsuario
   ): AlumnoSlot | null {
@@ -824,9 +824,9 @@ export class DistribucionService {
     })[0];
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async transferirLinea(
     manager: EntityManager,
     distribucion: Distribucion,

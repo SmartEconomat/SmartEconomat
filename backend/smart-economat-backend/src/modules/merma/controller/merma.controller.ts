@@ -32,14 +32,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('merma')
 export class MermaController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly mermaService: MermaService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.merma.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -59,9 +59,9 @@ export class MermaController {
     return this.mermaService.create(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('produccion/reportar')
   @RequirePermissions(PERMISSIONS.merma.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -82,9 +82,9 @@ export class MermaController {
     return this.mermaService.createFromProduccion(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('kpis')
   @RequirePermissions(PERMISSIONS.merma.stats)
   @ApiOperation({
@@ -96,9 +96,9 @@ export class MermaController {
     return this.mermaService.getKpis(query);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.merma.stats)
   @ApiOperation({
@@ -109,9 +109,9 @@ export class MermaController {
     return this.mermaService.getStats();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.merma.listar)
   @ApiOperation({ summary: 'Listar todas las mermas con paginación' })
@@ -123,9 +123,9 @@ export class MermaController {
     return this.mermaService.findAll(query);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.merma.ver)
   @ApiOperation({ summary: 'Obtener una merma por ID' })

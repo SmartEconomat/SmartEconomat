@@ -431,9 +431,7 @@ const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
                         : '—'}
                     </TableCell>
                     <TableCell>{p.usuario || '—'}</TableCell>
-                    <TableCell>
-                      {formatLocalizedDate(p.fecha)}
-                    </TableCell>
+                    <TableCell>{formatLocalizedDate(p.fecha)}</TableCell>
                     <TableCell align="center">
                       <StatusChip status={p.estado} size="small" />
                     </TableCell>

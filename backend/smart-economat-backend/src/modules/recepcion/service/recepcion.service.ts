@@ -19,9 +19,9 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
  */
 @Injectable()
 export class RecepcionService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Recepcion)
     private readonly recepcionRepository: Repository<Recepcion>,
@@ -31,9 +31,9 @@ export class RecepcionService {
     private readonly movimientoHelper: MovimientoHelper
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateRecepcionDto, userId: string): Promise<Recepcion> {
     const usuario = await this.usuarioRepository.findOne({
       where: { id: dto.usuarioId },
@@ -64,9 +64,9 @@ export class RecepcionService {
     return savedRecepcion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -90,9 +90,9 @@ export class RecepcionService {
     return { data, total, page, limit, totalPages };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Recepcion> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -120,9 +120,9 @@ export class RecepcionService {
     return recepcion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     dto: UpdateRecepcionDto,
@@ -152,9 +152,9 @@ export class RecepcionService {
     return await this.recepcionRepository.save(recepcion);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id },

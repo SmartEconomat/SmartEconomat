@@ -140,29 +140,29 @@ export function agregarInventarioPorProducto(
  * Documentación en español.
  */
 export interface CreateInventarioPayload {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoProveedorId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadActual: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadMinima: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadMaxima?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ubicacionId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fechaCaducidad?: string;
 }
 

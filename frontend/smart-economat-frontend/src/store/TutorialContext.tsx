@@ -1,6 +1,9 @@
 import React, { useState, useCallback, ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { buildTutorialConfig, TutorialStep } from '../utils/config/tutorialData';
+import {
+  buildTutorialConfig,
+  TutorialStep,
+} from '../utils/config/tutorialData';
 import i18n from '../i18n/index';
 import { TutorialContext } from './tutorial.context';
 import { useAuth } from './auth.hooks';

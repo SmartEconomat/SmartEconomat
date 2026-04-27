@@ -615,7 +615,7 @@ async function ensurePendingPreparacionForCancel(
 
   if (!recetaId) {
     throw new Error(
-      '[seed-massive] No se pudo crear preparación pendiente: faltan recetaIds'
+      '[seed-massive] Could not crear preparación pendiente: faltan recetaIds'
     );
   }
 
@@ -854,7 +854,7 @@ async function ensureRecetaReadyForProduccion(
 
   if (!recetaId) {
     throw new Error(
-      '[seed-massive] No se pudo preparar producción: faltan recetaIds'
+      '[seed-massive] Could not preparar producción: faltan recetaIds'
     );
   }
 
@@ -1140,7 +1140,7 @@ async function ensureMermaProduccionTarget(
   }
 
   throw new Error(
-    '[seed-massive] No se pudo resolver lote e ingrediente válidos para /merma/produccion/reportar'
+    '[seed-massive] Could not resolver lote e ingrediente válidos para /merma/produccion/reportar'
   );
 }
 
@@ -1408,7 +1408,7 @@ async function ensureIncidenciaForResolver(
   const recepcionIds = getStateArray(context, 'recepcionIds');
   if (recepcionIds.length === 0) {
     throw new Error(
-      '[seed-massive] No se pudo precrear incidencia para resolver: faltan recepcionIds'
+      '[seed-massive] Could not precrear incidencia para resolver: faltan recepcionIds'
     );
   }
 
@@ -1437,7 +1437,7 @@ async function ensureIncidenciaForResolver(
 
   if (pedidoProductoCandidates.length === 0) {
     throw new Error(
-      '[seed-massive] No se pudo precrear incidencia para resolver: faltan pedidoProductoIds válidos'
+      '[seed-massive] Could not precrear incidencia para resolver: faltan pedidoProductoIds válidos'
     );
   }
 
@@ -1567,7 +1567,7 @@ async function ensureIncidenciaForResolver(
     getStateArray(context, 'incidenciaPendienteIds').length > 0;
   if (!hasPending) {
     throw new Error(
-      '[seed-massive] No se pudo precrear incidencia para resolver: respuesta sin ID reutilizable'
+      '[seed-massive] Could not precrear incidencia para resolver: response without reusable ID'
     );
   }
 }
@@ -1853,7 +1853,7 @@ async function ensureDistribucionDisponibilidadBootstrap(
   const pedidoUsuarioId = extractResourceId(pedidoUsuarioResponse);
   if (!pedidoUsuarioId) {
     throw new Error(
-      '[seed-massive] No se pudo precrear pedido-usuario para bootstrap de distribuciones'
+      '[seed-massive] Could not precrear pedido-usuario para bootstrap de distribuciones'
     );
   }
 
@@ -1941,7 +1941,7 @@ async function ensureDistribucionDisponibilidadBootstrap(
 
   if (!pedidoProductoId) {
     throw new Error(
-      '[seed-massive] No se pudo resolver pedidoProductoId para bootstrap de distribuciones'
+      '[seed-massive] Could not resolver pedidoProductoId para bootstrap de distribuciones'
     );
   }
 
@@ -2135,7 +2135,7 @@ async function fetchIncidenciaById(
   const incidencia = unwrapIncidenciaPayload(payload);
   if (!incidencia) {
     throw new Error(
-      `[seed-massive] No se pudo leer incidencia ${incidenciaId} para verificar estado`
+      `[seed-massive] Could not leer incidencia ${incidenciaId} to verify state`
     );
   }
 
@@ -2521,7 +2521,7 @@ async function ensurePreparedDistribucionForAction(
 
   if (getStateArray(context, 'distribucionPreparadaIds').length === 0) {
     throw new Error(
-      '[seed-massive] No se pudo precrear una distribución preparada para operar con PATCH'
+      '[seed-massive] Could not precrear una distribución preparada para operar con PATCH'
     );
   }
 }

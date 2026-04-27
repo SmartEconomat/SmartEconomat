@@ -26,21 +26,21 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Index(['proveedorId'])
 @Check(`"precio_unitario" IS NULL OR "precio_unitario" > 0`)
 export class ProductoProveedor extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'proveedor_id' })
   proveedorId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -48,15 +48,15 @@ export class ProductoProveedor extends BaseEntity {
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 130,
@@ -65,9 +65,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   codigoBarras?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -78,9 +78,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   precioUnitario?: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 5,
@@ -92,9 +92,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   mermaEsperada?: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -105,9 +105,9 @@ export class ProductoProveedor extends BaseEntity {
   })
   pmp!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -115,21 +115,21 @@ export class ProductoProveedor extends BaseEntity {
   @JoinColumn({ name: 'proveedor_id' })
   proveedor!: Relation<Proveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
   inventarios!: Relation<Inventario[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
   historialPrecios!: Relation<HistorialPrecio[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: Relation<PedidoProducto[]>;
 }

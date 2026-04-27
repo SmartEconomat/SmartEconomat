@@ -32,9 +32,9 @@ import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta
  */
 @Injectable()
 export class ProductoService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly productoRepository: ProductoRepository,
     @InjectRepository(ProductoProveedor)
@@ -47,9 +47,9 @@ export class ProductoService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     createProductoDto: CreateProductoDto,
     userId: string
@@ -114,9 +114,9 @@ export class ProductoService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: ProductFilterDto,
     userRole?: string
@@ -205,9 +205,9 @@ export class ProductoService {
     return { data: processedData, total, page, limit, totalPages };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, _userRole?: string): Promise<Producto> {
     void _userRole;
 
@@ -225,9 +225,9 @@ export class ProductoService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     updateProductoDto: UpdateProductoDto,
@@ -371,9 +371,9 @@ export class ProductoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async generateUniqueEan13(): Promise<string> {
     const MAX_RETRIES = 5;
     for (let i = 0; i < MAX_RETRIES; i++) {
@@ -388,9 +388,9 @@ export class ProductoService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async actualizarPMP(
     productoProveedorId: string,
     nuevaCantidad: number,
@@ -401,7 +401,6 @@ export class ProductoService {
 
     const pp = await em.findOne(ProductoProveedor, {
       where: { id: productoProveedorId },
-      relations: ['producto'],
       lock: { mode: 'pessimistic_write' },
     });
 
@@ -420,8 +419,6 @@ export class ProductoService {
     const stockAnteriorPP = Math.max(0, stockTotalPP - nuevaCantidad);
     let pmpAnteriorPP = Number(pp.pmp);
 
-    // Fallback: Si el PMP es 0 pero tenemos precio unitario pactado, lo usamos como semilla
-    // para evitar que el stock previo sin valorar hunda el PMP en la primera compra.
     if (pmpAnteriorPP <= 0) {
       pmpAnteriorPP = Number(pp.precioUnitario) || 0;
     }
@@ -449,22 +446,27 @@ export class ProductoService {
     return pp.pmp;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async recalcularPmpProducto(
     productoId: string,
     em: EntityManager
   ): Promise<void> {
     const producto = await em.findOne(Producto, {
       where: { id: productoId },
-      relations: ['proveedores'],
       lock: { mode: 'pessimistic_write' },
     });
     if (!producto) return;
 
-    const ppIds = producto.proveedores.map((p) => p.id);
-    if (ppIds.length === 0) return;
+    const ppRepo = em.getRepository(ProductoProveedor);
+    const proveedores = await ppRepo.find({
+      where: { productoId: producto.id },
+    });
+
+    if (proveedores.length === 0) return;
+
+    const ppIds = proveedores.map((p) => p.id);
 
     const todosInventarios = await em.find(Inventario, {
       where: { productoProveedorId: In(ppIds) },
@@ -473,7 +475,7 @@ export class ProductoService {
     let stockTotal = 0;
     let sumaPonderada = 0;
 
-    for (const pp of producto.proveedores) {
+    for (const pp of proveedores) {
       const invPP = todosInventarios.filter(
         (inv) => inv.productoProveedorId === pp.id
       );
@@ -501,9 +503,9 @@ export class ProductoService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getHistorialPrecios(
     productoId: string,
     proveedorId?: string
@@ -524,9 +526,9 @@ export class ProductoService {
     return query.getMany();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private ensureUniqueAlergenos(
     alergenos?: ProductoAlergeno['alergeno'][]
   ): ProductoAlergeno['alergeno'][] | undefined {
@@ -545,9 +547,9 @@ export class ProductoService {
     return uniqueAlergenos;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private validatePrecioMayorQueCero(
     precioUnitario: number,
     proveedorId: string
@@ -559,9 +561,9 @@ export class ProductoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async registrarPrecioYResolverPrecioActual(
     manager: EntityManager,
     productoProveedorId: string,
@@ -594,9 +596,9 @@ export class ProductoService {
     return latestHistorial.precio;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async validateProveedorPayload(
     manager: EntityManager,
     proveedores?: AddProveedorToProductoDto[],
@@ -670,9 +672,9 @@ export class ProductoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async replaceAlergenosWithManager(
     manager: EntityManager,
     productoId: string,
@@ -699,9 +701,9 @@ export class ProductoService {
     await manager.save(ProductoAlergeno, relations);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async syncProveedoresWithManager(
     manager: EntityManager,
     productoId: string,

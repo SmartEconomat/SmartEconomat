@@ -29,14 +29,14 @@ const DASHBOARD_PENDING_ORDER_STATES = [
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly MOVIMIENTOS_RECIENTES_LIMITE = 7;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Inventario)
     private readonly inventarioRepository: Repository<Inventario>,
@@ -52,9 +52,9 @@ export class DashboardService {
     private readonly incidenciaRepository: Repository<Incidencia>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getStats(): Promise<DashboardStatsDto> {
     this.logger.log(I18nHelper.translate('logs.FETCHING_DASHBOARD_STATISTICS'));
 

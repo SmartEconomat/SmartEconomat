@@ -3,7 +3,11 @@ import { randomBytes } from 'crypto';
 import type { QueryRunner } from 'typeorm';
 
 import AppDataSource from '../config/typeorm.config';
-import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
+import {
+  rolUsuario,
+  UserStatus,
+  UserLanguage,
+} from '../modules/usuario/enums/usuario.enums';
 
 type BootstrapAdminUserSeed = {
   username: string;
@@ -11,6 +15,7 @@ type BootstrapAdminUserSeed = {
   nombre: string;
   rol: rolUsuario;
   tempPassword: string;
+  idioma: UserLanguage;
 };
 
 const SEED_TAG = '[seed-bootstrap-admin-users]';
@@ -93,6 +98,7 @@ export function resolveBootstrapAdminUsersFromEnv(
       nombre: 'Super Administrador',
       rol: rolUsuario.SUPER_ADMIN,
       tempPassword: defaultSuperAdminTempPassword,
+      idioma: UserLanguage.ES,
     },
     {
       username: providedAdminUsername,
@@ -100,6 +106,7 @@ export function resolveBootstrapAdminUsersFromEnv(
       nombre: 'Administrador Principal',
       rol: rolUsuario.ADMIN,
       tempPassword: defaultAdminTempPassword,
+      idioma: UserLanguage.ES,
     },
   ] as const;
 }
@@ -165,19 +172,23 @@ async function upsertBootstrapUser(
            "email" = $3,
            "rol" = $4,
            "status" = $5,
+           "password" = $6,
+           "idioma" = $7,
            "activo" = TRUE,
            "resetPasswordOtp" = NULL,
            "resetPasswordOtpExpires" = NULL,
            "deleted_at" = NULL,
            "deleted_by" = NULL,
            "updated_at" = NOW()
-       WHERE "id" = $6`,
+       WHERE "id" = $8`,
       [
         seedUser.nombre,
         seedUser.username,
         seedUser.email,
         seedUser.rol,
         UserStatus.ACTIVE,
+        hashedTemporaryPassword,
+        seedUser.idioma,
         existingUserId,
       ]
     );
@@ -193,11 +204,12 @@ async function upsertBootstrapUser(
       "email",
       "rol",
       "status",
+      "idioma",
       "must_change_password",
       "activo",
       "resetPasswordOtp",
       "resetPasswordOtpExpires"
-    ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE, NULL, NULL)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, TRUE, NULL, NULL)
     RETURNING "id"`,
     [
       seedUser.nombre,
@@ -206,13 +218,14 @@ async function upsertBootstrapUser(
       seedUser.email,
       seedUser.rol,
       UserStatus.ACTIVE,
+      seedUser.idioma,
     ]
   )) as Array<{ id?: string }>;
 
   const insertedUserId = normalizeId(insertedRows[0]?.id);
   if (!insertedUserId) {
     throw new Error(
-      `${SEED_TAG} No se pudo crear el usuario ${seedUser.username}.`
+      `${SEED_TAG} Could not crear el usuario ${seedUser.username}.`
     );
   }
 
@@ -268,7 +281,7 @@ export async function runBootstrapAdminUsersSeed(): Promise<void> {
       const roleId = roleIdByName.get(seedUser.rol);
       if (!roleId) {
         throw new Error(
-          `${SEED_TAG} No se pudo resolver el rol ${seedUser.rol}.`
+          `${SEED_TAG} Could not resolver el rol ${seedUser.rol}.`
         );
       }
 

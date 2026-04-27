@@ -42,9 +42,9 @@ export class InventarioService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     dto: CreateInventarioItemDto,
     userId: string
@@ -113,9 +113,9 @@ export class InventarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -150,9 +150,9 @@ export class InventarioService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Inventario> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -174,9 +174,9 @@ export class InventarioService {
     return inventario;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     dto: UpdateInventarioDto,
@@ -275,9 +275,9 @@ export class InventarioService {
     return this.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string, userId: string): Promise<void> {
     const inventario = await this.findOne(id);
     const result = await this.inventarioRepository.softDelete(id);
@@ -303,9 +303,9 @@ export class InventarioService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
     const productos = await this.inventarioRepository.findCaducidadProxima();
     return productos
@@ -316,9 +316,9 @@ export class InventarioService {
       }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
     const items = await this.inventarioRepository.findStockBajo();
     return items.map((item) => ({
@@ -332,18 +332,18 @@ export class InventarioService {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async queryStock(
     dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {
     return this.inventarioRepository.queryStock(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async ajustarManual(
     dto: CreateMovimientoManualDto,
     userId: string
@@ -433,9 +433,9 @@ export class InventarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private validarConsistenciaAjusteManual(
     dto: CreateMovimientoManualDto
   ): void {
@@ -460,9 +460,9 @@ export class InventarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private mapManualTipoToMovimiento(
     tipo: TipoMovimientoManual
   ): TipoMovimiento {
@@ -480,9 +480,9 @@ export class InventarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildManualAdjustmentDescription(
     productoNombre: string,
     cantidadAnterior: number,

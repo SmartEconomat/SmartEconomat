@@ -40,9 +40,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.inventario.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -53,9 +53,9 @@ export class InventarioController {
     return this.inventarioService.create(createInventarioDto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.inventario.listar)
   findAll(
@@ -74,9 +74,9 @@ export class InventarioController {
     return this.inventarioService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('stock')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   queryStock(
@@ -85,9 +85,9 @@ export class InventarioController {
     return this.inventarioService.queryStock(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('ajustes-manuales')
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @HttpCode(HttpStatus.CREATED)
@@ -116,9 +116,9 @@ export class InventarioController {
     return this.inventarioService.ajustarManual(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.inventario.ver)
   findOne(
@@ -128,9 +128,9 @@ export class InventarioController {
     return this.inventarioService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.inventario.editar)
   update(
@@ -141,9 +141,9 @@ export class InventarioController {
     return this.inventarioService.update(id, updateInventarioDto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.inventario.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

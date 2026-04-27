@@ -1,4 +1,5 @@
 import React, { useState, ReactNode, useEffect } from 'react';
+import i18n from '../i18n';
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 import { authService } from '../services/auth.service';
 import { ApiError } from '../services/api.service';
@@ -64,6 +65,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           } else {
             dispatch(resetPermissions());
           }
+
+          // Sync i18n with user preferred language from DB
+          if (refreshedUser?.idioma && i18n.language !== refreshedUser.idioma) {
+            void i18n.changeLanguage(refreshedUser.idioma);
+          }
+
           setIsSessionVerified(true);
           setIsAuthResolved(true);
           localStorage.setItem('sm_has_session', 'true');
@@ -76,8 +83,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             setIsSessionVerified(false);
             localStorage.removeItem('sm_has_session');
             setUser(null);
-            // No resetear permisos aquí para evitar navegación inesperada en vistas protegidas
-            // dispatch(resetPermissions()); // Comentado para preservar permisos hasta logout
           }
           setIsAuthResolved(true);
           return null;
@@ -91,6 +96,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return refreshPromise;
     },
     [dispatch, isUnauthorizedError]
+  );
+
+  const changeLanguage = React.useCallback(
+    async (idioma: 'es' | 'en') => {
+      // 1. Immediate UI update
+      await i18n.changeLanguage(idioma);
+
+      // 2. Persist in DB if logged in
+      if (user) {
+        try {
+          await authService.updateLanguage(idioma);
+          // 3. Update local state
+          setUser((prev) => (prev ? { ...prev, idioma } : null));
+        } catch (error) {
+          console.error('Failed to persist language in DB:', error);
+        }
+      }
+    },
+    [user]
   );
 
   const logout = React.useCallback(async () => {
@@ -185,6 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         login,
         logout,
         refreshUser,
+        changeLanguage,
       }}
     >
       {children}

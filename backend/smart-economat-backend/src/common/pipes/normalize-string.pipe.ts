@@ -6,9 +6,9 @@ import { I18nHelper } from '../helpers/i18n.helper';
  * Documentación en español.
  */
 export class NormalizeStringPipe {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(
     options: {
       trim?: boolean;

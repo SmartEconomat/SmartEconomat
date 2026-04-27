@@ -33,14 +33,14 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('movimientos')
 export class MovimientoController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly movimientoService: MovimientoService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
@@ -63,9 +63,9 @@ export class MovimientoController {
     return this.movimientoService.create(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -86,9 +86,9 @@ export class MovimientoController {
     return this.movimientoService.findAll(query);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('historial')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -160,9 +160,9 @@ export class MovimientoController {
     return this.movimientoService.getMovimientoHistory(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   @ApiOperation({
@@ -181,9 +181,9 @@ export class MovimientoController {
     return this.movimientoService.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
   @ApiOperation({
@@ -213,9 +213,9 @@ export class MovimientoController {
     return this.movimientoService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)

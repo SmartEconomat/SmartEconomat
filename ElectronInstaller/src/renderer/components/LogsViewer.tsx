@@ -61,33 +61,14 @@ export function LogsViewer({
   onExportLogs,
 }: LogsViewerProps) {
   const streamRef = useRef<HTMLDivElement | null>(null);
-  const shouldAutoScrollRef = useRef(true);
-  const lastLogCountRef = useRef(0);
   const hasLogs = logs.length > 0;
 
-  const syncAutoScrollPreference = (): void => {
-    const container = streamRef.current;
-    if (!container) {
-      return;
-    }
-
-    const distanceToBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    shouldAutoScrollRef.current = distanceToBottom <= 24;
-  };
-
   useEffect(() => {
-    const container = streamRef.current;
-    if (!container) {
+    if (!streamRef.current) {
       return;
     }
 
-    const hasNewLogs = logs.length > lastLogCountRef.current;
-    lastLogCountRef.current = logs.length;
-
-    if (hasNewLogs && shouldAutoScrollRef.current) {
-      container.scrollTop = container.scrollHeight;
-    }
+    streamRef.current.scrollTop = streamRef.current.scrollHeight;
   }, [logs]);
 
   return (
@@ -176,7 +157,6 @@ export function LogsViewer({
 
       <Box
         ref={streamRef}
-        onScroll={syncAutoScrollPreference}
         sx={{
           height: 380,
           overflow: "auto",

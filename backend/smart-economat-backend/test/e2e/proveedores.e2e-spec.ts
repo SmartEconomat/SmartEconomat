@@ -37,9 +37,9 @@ describe('ProveedorController (e2e)', () => {
   });
 
   describe('CRUD de Proveedores', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('POST /proveedor - Debe crear un proveedor (201)', async () => {
       const res = await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
@@ -54,9 +54,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(true);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('POST /proveedor - Debe fallar si el nombre ya existe (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/proveedor')
@@ -81,9 +81,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(false);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('POST /proveedor - Debe fallar si el NIF ya existe (400)', async () => {
       const nifFijo = 'B33333333';
       await request(app.getHttpServer() as string)
@@ -100,9 +100,9 @@ describe('ProveedorController (e2e)', () => {
       expect(res.body.success).toBe(false);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /proveedor - Debe listar proveedores (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/proveedor')
@@ -113,9 +113,9 @@ describe('ProveedorController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /proveedor/:id - Debe actualizar proveedor (200)', () => {
       return request(app.getHttpServer() as string)
         .patch(`/api/v1/proveedor/${proveedorId}`)
@@ -124,9 +124,9 @@ describe('ProveedorController (e2e)', () => {
         .expect(200);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('DELETE /proveedor/:id - Debe eliminar proveedor (204)', () => {
       return request(app.getHttpServer() as string)
         .delete(`/api/v1/proveedor/${proveedorId}`)
@@ -134,9 +134,9 @@ describe('ProveedorController (e2e)', () => {
         .expect(204);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('DELETE /proveedor/:id - Debe fallar si tiene pedidos (400)', async () => {
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/proveedor')

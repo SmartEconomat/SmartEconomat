@@ -222,6 +222,9 @@ describe('ProductoService', () => {
         { productoProveedorId: 'pp-2', cantidadActual: 0 },
       ]),
       update: jest.fn().mockResolvedValue(undefined),
+      getRepository: jest.fn().mockReturnValue({
+        find: jest.fn().mockResolvedValue(producto.proveedores),
+      }),
     };
 
     await (service as any).recalcularPmpProducto('prod-1', em);
@@ -246,7 +249,9 @@ describe('ProductoService', () => {
       update: jest.fn().mockResolvedValue(undefined),
     };
 
-    jest.spyOn(service as any, 'recalcularPmpProducto').mockResolvedValue(undefined);
+    jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
 
     const pmp = await service.actualizarPMP('pp-1', 1, 20, em as any);
 

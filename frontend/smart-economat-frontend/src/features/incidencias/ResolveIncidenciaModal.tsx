@@ -38,29 +38,29 @@ import {
  * Documentación en español.
  */
 interface ResolveIncidenciaModalProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isOpen: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onClose: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onResolve: (payload: ResolveIncidenciaPayload) => Promise<void>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   incidencia?: Incidencia | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   defaultMarkResolved?: boolean;
 }
 
@@ -182,9 +182,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   }, [isOpen, incidencia, defaultMarkResolved]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const lineasOrdenadas = useMemo(
     () =>
       [...lineas].sort((a, b) => {
@@ -206,9 +206,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     [lineas]
   );
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const lineasFiltradas = useMemo(() => {
     const term = normalizeText(busquedaProducto);
 
@@ -225,17 +225,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     setPage(0);
   }, [busquedaProducto]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const lineasPaginadas = useMemo(() => {
     const start = page * rowsPerPage;
     return lineasFiltradas.slice(start, start + rowsPerPage);
   }, [lineasFiltradas, page, rowsPerPage]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const resumenLineas = useMemo(() => {
     const ajustables = lineas.filter((linea) =>
       hasDiscrepancia(linea.cantidadEsperada, linea.cantidadRecibidaOriginal)
@@ -250,9 +250,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
 
   const hasLineasAjustables = resumenLineas.ajustables > 0;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const hasLineUpdates = useMemo(
     () =>
       lineas.some((linea) => {
@@ -276,9 +276,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   const canSubmit = marcarComoResuelta || hasLineUpdates;
   const hasLineas = lineas.length > 0;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const getAjusteBounds = (linea: EditableLinea) => {
     const balanceOriginal =
       linea.cantidadRecibidaOriginal - linea.cantidadEsperada;
@@ -303,17 +303,17 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     };
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const clampAjuste = (linea: EditableLinea, ajuste: number): number => {
     const bounds = getAjusteBounds(linea);
     return Math.min(bounds.max, Math.max(bounds.min, ajuste));
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const isIntermedioAjuste = (value: string): boolean => {
     const normalized = value.replace(',', '.').trim();
     return (
@@ -325,9 +325,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleAjusteChange = (lineaId: string, value: string) => {
     setLineas((current) =>
       current.map((linea) =>
@@ -356,9 +356,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleAjusteBlur = (lineaId: string) => {
     setLineas((current) =>
       current.map((linea) => {
@@ -377,9 +377,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleObservacionLineaChange = (lineaId: string, value: string) => {
     setLineas((current) =>
       current.map((linea) =>
@@ -388,9 +388,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
     );
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasLineas || !canSubmit) return;

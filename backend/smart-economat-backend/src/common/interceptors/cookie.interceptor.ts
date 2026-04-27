@@ -24,9 +24,9 @@ export const getAuthCookieOptions = () => ({
  */
 @Injectable()
 export class CookieInterceptor implements NestInterceptor {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       tap((data: { access_token?: string }) => {

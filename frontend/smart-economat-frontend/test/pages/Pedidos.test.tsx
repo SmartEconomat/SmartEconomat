@@ -16,6 +16,7 @@ import * as productoProveedorService from '../../src/services/productoProveedor.
 import { PedidoDraftRecord } from '../../src/services/pedidoDraft.service';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import i18n from '../../src/i18n';
 
 // Mocking hooks and components
 vi.mock('../../src/hooks/usePedidoDraft', () => ({
@@ -290,7 +291,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
 
     // El modal de recuperación NO debería estar
     expect(
-      screen.queryByText('pedidos.recovery.titulo')
+      screen.queryByText(i18n.t('pedidos.recovery.titulo'))
     ).not.toBeInTheDocument();
 
     // 3. Simular que se guarda un borrador
@@ -337,7 +338,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     // Esperar a que el modal aparezca
     await waitFor(() => {
       expect(
-        screen.getByText('pedidos.recovery.titulo')
+        screen.getByText(i18n.t('pedidos.recovery.titulo'))
       ).toBeInTheDocument();
     });
   });

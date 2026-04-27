@@ -42,9 +42,9 @@ export class PedidoService {
     private readonly pedidoUsuarioService: PedidoUsuarioService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     createPedidoDto: CreatePedidoDto,
     userId: string
@@ -83,7 +83,9 @@ export class PedidoService {
       await this.movimientoHelper.trackPedidoCreation(
         userId,
         savedPedido.id,
-        `Creación de pedido #${savedPedido.id}`
+        I18nHelper.translate('receta.movimiento.descripcion_creacion', {
+          id: savedPedido.id,
+        })
       );
 
       return await this.findOne(savedPedido.id);
@@ -104,18 +106,18 @@ export class PedidoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Pedido>> {
     return await this.pedidoRepository.findAllPaginated(query, true);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<Pedido> {
     const pedido = await this.pedidoRepository.findOneWithRelations(id, true);
     if (!pedido) {
@@ -124,9 +126,9 @@ export class PedidoService {
     return pedido;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     updatePedidoDto: UpdatePedidoDto,
@@ -240,9 +242,9 @@ export class PedidoService {
     return this.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cancelarPedido(
     id: string,
     dto: CancelPedidoDto,
@@ -264,16 +266,17 @@ export class PedidoService {
 
     pedido.estado = EstadoPedido.CANCELADO;
     pedido.motivoCancelacion =
-      dto.motivoCancelacion || 'Cancelado por el usuario';
+      dto.motivoCancelacion ||
+      I18nHelper.translate('pedidos.cancelar.motivoPorDefecto');
     if (userId) {
       pedido.modifiedBy = userId;
     }
     return await this.pedidoRepository.save(pedido);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async restaurarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
 
@@ -291,9 +294,9 @@ export class PedidoService {
     return await this.pedidoRepository.save(pedido);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async aceptarPedido(id: string, userId?: string): Promise<Pedido> {
     const pedido = await this.findOne(id);
     if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
@@ -309,9 +312,9 @@ export class PedidoService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async handleStatusTransition(
     pedidoId: string,
     trigger: PedidoStatusTrigger,
@@ -360,9 +363,9 @@ export class PedidoService {
     return savedPedido;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const pedido = await this.findOne(id);
 

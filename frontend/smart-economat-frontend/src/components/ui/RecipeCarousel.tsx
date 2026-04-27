@@ -9,33 +9,33 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
  * Documentación en español.
  */
 interface CarouselItem {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   title: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   description: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   image: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   time: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   difficulty: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   category: string;
 }
 

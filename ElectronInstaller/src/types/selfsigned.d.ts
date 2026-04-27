@@ -6,18 +6,13 @@ declare module "selfsigned" {
 
   export interface SelfSignedExtension {
     name: string;
-    altNames?: Array<{ type: 2; value: string } | { type: 7; ip: string }>;
+    altNames?: Array<
+      | { type: 2; value: string }
+      | { type: 7; ip: string }
+    >;
     cA?: boolean;
-    keyCertSign?: boolean;
-    digitalSignature?: boolean;
-    nonRepudiation?: boolean;
-    keyEncipherment?: boolean;
-    dataEncipherment?: boolean;
-    serverAuth?: boolean;
-    clientAuth?: boolean;
-    codeSigning?: boolean;
-    emailProtection?: boolean;
-    timeStamping?: boolean;
+    keyUsage?: boolean[];
+    extendedKeyUsage?: boolean[];
   }
 
   export interface SelfSignedOptions {

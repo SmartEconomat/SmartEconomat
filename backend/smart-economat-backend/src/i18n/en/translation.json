@@ -3,9 +3,9 @@
     "ALBARAN_ALREADY_HAS_DOCUMENT": "Delivery note {nAlbaran} already has an attached document",
     "ALBARAN_NOT_FOUND": "Delivery note not found",
     "ALBARAN_UPLOAD_FAILED": "Failed to upload delivery note document: {message}",
-    "ALGUNOS_PERMISOS_NO_EXISTEN": "Some permissions do not exist",
-    "ALUMNO_NO_ENCONTRADO": "Student not found",
-    "ASIGNACI_N_DE_ROL_NO_ENCONTRADA": "Role assignment not found",
+    "SOME_PERMISSIONS_NOT_FOUND": "Some permissions do not exist",
+    "STUDENT_NOT_FOUND": "Student not found",
+    "ROLE_ASSIGNMENT_NOT_FOUND": "Role assignment not found",
     "ACCOUNT_BLOCKED": "Your account has been blocked. Please contact support.",
     "ACCOUNT_INACTIVE": "Your account is inactive. Please wait for an administrator to activate it.",
     "BAD_REQUEST": "Bad request",
@@ -13,14 +13,14 @@
     "CONFLICT": "Conflict with current resource state",
     "DUPLICATE_ENTRY": "A record with that value already exists. Please use a different one.",
     "DUPLICATE_INGREDIENT": "Duplicate ingredients are not allowed within the same recipe",
-    "EL_C_DIGO_DE_BARRAS_YA_EST_REGISTRADO": "The barcode is already registered",
-    "EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE": "The specified new slot does not exist",
-    "EL_NUEVO_SLOT_YA_EST_OCUPADO": "The new slot is already full",
-    "EL_TOKEN_ES_INV_LIDO_O_HA_EXPIRADO": "The token is invalid or has expired",
-    "EL_UUID_NO_PUEDE_ESTAR_VAC_O": "The UUID cannot be empty",
+    "BARCODE_ALREADY_REGISTERED": "The barcode is already registered",
+    "NEW_SLOT_NOT_FOUND": "The specified new slot does not exist",
+    "NEW_SLOT_FULL": "The new slot is already full",
+    "TOKEN_INVALID_OR_EXPIRED": "The token is invalid or has expired",
+    "UUID_CANNOT_BE_EMPTY": "The UUID cannot be empty",
     "EMPTY_REQUEST": "Request body is empty",
     "ENTITY_HAS_RELATIONS": "This record cannot be deleted because it is being used in other parts of the system.",
-    "ESTA_PLANTILLA_NO_ES_EDITABLE": "This template is not editable",
+    "TEMPLATE_NOT_EDITABLE": "This template is not editable",
     "FILE_DELETE_FORBIDDEN": "You do not have permission to delete this file",
     "FILE_NOT_FOUND": "File not found",
     "FILE_NOT_FOUND_PHYSICAL": "Physical file not found on disk",
@@ -51,7 +51,7 @@
     "BATCH_ALREADY_DEPLETED": "The lot is already depleted",
     "COULD_NOT_RESOLVE_LOT_RECIPE": "Could not resolve the recipe for the lot",
     "INVENTARIO_NOT_FOUND": "Inventory record not found",
-    "LA_CONTRASE_A_ACTUAL_ES_INCORRECTA": "The current password is incorrect",
+    "CURRENT_PASSWORD_INCORRECT": "The current password is incorrect",
     "MERMA_NOT_FOUND": "Waste record not found",
     "MISSING_REQUIRED_FIELD": "A required field is missing",
     "MOVEMENTS_NOT_FOUND": "No movements found for this entity",
@@ -66,8 +66,8 @@
     "NO_PROVEEDORES": "No suppliers found. Run proveedor.seeder.ts first.",
     "NO_RECEPCIONES": "No receptions created",
     "NO_RECEPCIONES_PRODUCTOS": "No product receptions available",
-    "NO_SE_HAN_ESPECIFICADO_PEDIDOS": "No orders have been specified.",
-    "NO_SE_PUEDE_ELIMINAR_UN_ROL_DE_SISTEMA": "A system role cannot be deleted",
+    "NO_ORDERS_SPECIFIED": "No orders have been specified.",
+    "CANNOT_DELETE_SYSTEM_ROLE": "A system role cannot be deleted",
     "NO_USUARIOS": "No users in the database",
     "NOT_ENOUGH_STOCK_FOR_INGREDIENT": "Insufficient stock for ingredient '{ingredient}'",
     "NUEVO_PROFESOR_NO_ENCONTRADO": "New professor not found",
@@ -77,8 +77,8 @@
     "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be POR_RECEPCIONAR)",
     "PEDIDO_PRODUCT_NOT_FOUND": "Order product not found",
     "PERMISO_NO_ENCONTRADO": "Permission not found",
-    "PLANTILLA_PADRE_NO_ENCONTRADA": "Parent template not found",
-    "PRECIO_NO_NEGATIVO": "Price cannot be negative",
+    "PARENT_TEMPLATE_NOT_FOUND": "Parent template not found",
+    "PRICE_CANNOT_BE_NEGATIVE": "Price cannot be negative",
     "PRICE_MUST_BE_GREATER_THAN_ZERO": "Price must be greater than 0",
     "PRICE_NOT_CHANGED": "The specified price is identical to the current one",
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product",
@@ -95,12 +95,13 @@
     "RECEPTION_NOT_FOUND": "Reception not found",
     "RECEPTION_PRODUCT_NOT_FOUND": "Reception product not found",
     "RECIPE_NOT_FOUND": "Recipe not found",
+    "MIN_ONE_RECIPE_ID_REQUIRED": "At least one recipe ID must be provided.",
     "RUN_SEEDER_NOT_FOUND": "runSeeder not found in file",
     "SEEDER_NOT_FOUND": "Seeder not found",
     "SLOT_CAPACITY_REACHED": "The selected classroom/class has reached its maximum capacity",
     "SLOT_HAS_STUDENTS": "Cannot delete a slot that has students assigned",
     "STORAGE_TYPE_LOCAL_ONLY": "Only applicable for local storage",
-    "UBICACI_N_NO_ENCONTRADA": "Location not found",
+    "LOCATION_NOT_FOUND": "Location not found",
     "UNAUTHORIZED": "Unauthorized",
     "USERNAME_OR_EMAIL_IS_ALREADY_TAKEN": "Username or email is already taken",
     "USER_BLOCKED_CANNOT_RESET_PASSWORD": "Cannot change the password of a blocked user",
@@ -111,8 +112,8 @@
     "USER_NOT_FOUND_1": "User not found",
     "USER_OR_EMAIL_ALREADY_EXISTS": "User or email already exists",
     "USER_OR_EMAIL_ALREADY_REGISTERED": "User or email already registered",
-    "USUARIO_NO_AUTENTICADO": "User not authenticated",
-    "YA_EXISTE_UNA_UBICACI_N_CON_ESTE_NOMBRE": "A location with this name already exists",
+    "USER_NOT_AUTHENTICATED": "User not authenticated",
+    "LOCATION_NAME_ALREADY_EXISTS": "A location with this name already exists",
     "INVALID_FILE_PATH": "Invalid file path",
     "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Unsupported file type. Only images (jpg, jpeg, png, gif) and PDF are allowed",
     "RECIPE_NO_RESULT_PRODUCT": "The recipe has no result product configured. Edit the recipe to assign one.",
@@ -195,8 +196,9 @@
     "NOMBRE_USUARIO_MAX_LENGTH": "Username cannot exceed 100 characters",
     "CONTRASEÑA_DEBE_SER_CADENA": "Password must be a string",
     "CONTRASEÑA_FUERTE_REQUERIDA": "Password must have at least 8 characters, one uppercase letter, one lowercase letter, one number and one symbol",
-    "CORREO_ELECTRONICO_NO_VALIDO": "Email address is not valid",
+    "INVALID_EMAIL": "Email address is not valid",
     "CORREO_ELECTRONICO_MAX_LENGTH": "Email address cannot exceed 255 characters",
+    "IDIOMA_INVALIDO": "The selected language is invalid (only 'es' or 'en' allowed)",
     "AULA_CLASE_DEBE_SER_CADENA": "Classroom must be a string",
     "CIAL_DEBE_SER_CADENA": "CIAL must be a string",
     "ID_RECETA_INVALIDO": "Invalid recipe ID",
@@ -359,6 +361,12 @@
       "usuarios": "✅ Users seeder executed successfully."
     }
   },
+  "receta": {
+    "movimiento": {
+      "descripcion": "Recipe preparation: {nombre}",
+      "descripcion_creacion": "Order creation #{id}"
+    }
+  },
   "docs": {
     "ACCESO_DENEGADO_ROL_INSUFICIENTE": "Access denied - Insufficient role",
     "ACCESO_DENEGADO_SOLO_ADMIN": "Access denied - ADMIN only",
@@ -516,7 +524,13 @@
     "UUID_DE_LA_NUEVA_RECEPCI_N": "New reception UUID",
     "UUID_DE_LA_RECETA": "Recipe UUID",
     "UUID_DE_LA_RECETA_A_PRODUCIR": "UUID of the recipe to produce",
-    "UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO": "UUID of the destination warehouse location for the produced batch"
+    "UUID_DE_LA_UBICACI_N_DE_ALMAC_N_DESTINO": "UUID of the storage location for the produced batch",
+    "TAG_RECETAS": "Recipes",
+    "OP_CALCULAR_ESCANDALLO": "Calculate recipe cost (escandallo)",
+    "OP_CALCULATE_PREVIEW": "Preview recipe cost before creation/editing",
+    "OP_EXPORT_MULTIPLE_PDF": "Generate PDF for multiple recipes",
+    "OP_EXPORT_SINGLE_PDF": "Generate PDF for a single recipe",
+    "OP_RECALCULAR_COSTES": "Recalculate and save the estimated unit cost of the recipe"
   },
   "messages": {
     "SESI_N_CERRADA_CORRECTAMENTE": "Session closed successfully",
@@ -536,6 +550,11 @@
     "ERROR_AL_INVALIDAR_TODO_EL_CACHE": "Error invalidating full cache:",
     "FETCHING_DASHBOARD_STATISTICS": "Fetching dashboard statistics...",
     "TODO_EL_CACHE_DE_PERMISOS_HA_SIDO_INVALI": "ALL permissions cache has been invalidated"
+  },
+  "pedidos": {
+    "cancelar": {
+      "motivoPorDefecto": "Cancelled by user"
+    }
   },
   "exceptions": {}
 }

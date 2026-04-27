@@ -18,45 +18,45 @@ import { formatLocalizedDateTime } from '../../utils/intlFormat';
  * Documentación en español.
  */
 interface MermasTableProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   data: Merma[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   total: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   page: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pageSize: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onPageChange: (newPage: number) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onPageSizeChange: (newPageSize: number) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filters: {
     motivo: string;
     startDate: string;
     endDate: string;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onFiltersChange: (newFilters: {
     motivo: string;
     startDate: string;

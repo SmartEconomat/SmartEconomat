@@ -3,7 +3,12 @@ import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AppDataSource from '../config/typeorm.config';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
+import {
+  rolUsuario,
+  UserStatus,
+  UserLanguage,
+} from '../modules/usuario/enums/usuario.enums';
+import * as bcrypt from 'bcrypt';
 import {
   computeSeedBackoffMs,
   hasDataEnvelope,
@@ -88,9 +93,9 @@ export class SeedContext {
     },
   ];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveWritableLogFilePath(): string {
     const candidates = [
       resolve(__dirname, './logs'),
@@ -115,13 +120,13 @@ export class SeedContext {
       lastError instanceof Error ? lastError.message : lastError
     );
     throw new Error(
-      `[seed] No se pudo inicializar directorio de logs para seeders: ${message}`
+      `[seed] Could not inicializar directorio de logs para seeders: ${message}`
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(config: SeedContextConfig = {}) {
     this.resolveConfig(config);
     this.logFilePath = this.resolveWritableLogFilePath();
@@ -150,9 +155,9 @@ export class SeedContext {
   readonly env = 'development';
   apiBaseUrl = SeedContext.DEFAULT_API_BASE_URL;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private ensurePositiveInt(
     value: number | undefined,
     fallback: number
@@ -169,9 +174,9 @@ export class SeedContext {
     return normalized;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private ensureNonNegativeInt(
     value: number | undefined,
     fallback: number
@@ -188,9 +193,9 @@ export class SeedContext {
     return normalized;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveConfig(config: SeedContextConfig): void {
     this.apiBaseUrl =
       typeof config.apiBaseUrl === 'string' &&
@@ -240,9 +245,9 @@ export class SeedContext {
         : SeedContext.DEFAULT_AUTH_CANDIDATES;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async ensureDockerInfra(): Promise<void> {
     const isDocker = existsSync('/.dockerenv');
     if (isDocker) {
@@ -313,9 +318,9 @@ export class SeedContext {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async waitForBackend(retries = 60, delayMs = 2000): Promise<void> {
     let lastStatusCode: number | undefined;
     let lastErrorMessage = '';
@@ -364,9 +369,9 @@ export class SeedContext {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async ensureDatabaseCompatibility(): Promise<void> {
     await Promise.resolve();
     const isDocker = existsSync('/.dockerenv');
@@ -414,9 +419,9 @@ export class SeedContext {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async login(): Promise<void> {
     let lastError: unknown;
 
@@ -493,9 +498,9 @@ export class SeedContext {
       : new Error('[seed] No fue posible autenticarse para ejecutar seeders');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async ensureBootstrapAdminCredentials(): Promise<void> {
     if (this.bootstrapAdminAttempted) {
       return;
@@ -525,25 +530,28 @@ export class SeedContext {
         })
         .getOne();
 
+      const hashedPassword = await bcrypt.hash(password, 10);
       if (existing) {
         existing.email = existing.email || email;
         existing.username = existing.username || username;
-        existing.password = password;
+        existing.password = hashedPassword;
         existing.rol = rolUsuario.SUPER_ADMIN;
         existing.status = UserStatus.ACTIVE;
         existing.activo = true;
         existing.mustChangePassword = false;
+        existing.idioma = existing.idioma || UserLanguage.ES;
         await repo.save(existing);
       } else {
         const created = repo.create({
           nombre: 'Seeder Bootstrap Admin',
           username,
           email,
-          password,
+          password: hashedPassword,
           rol: rolUsuario.SUPER_ADMIN,
           status: UserStatus.ACTIVE,
           activo: true,
           mustChangePassword: false,
+          idioma: UserLanguage.ES,
         });
         await repo.save(created);
       }
@@ -567,28 +575,28 @@ export class SeedContext {
     } catch (error) {
       const message = String(error instanceof Error ? error.message : error);
       throw new Error(
-        `[seed] No se pudo bootstrapear credenciales admin para seeding: ${message}`
+        `[seed] Could not bootstrapear credenciales admin para seeding: ${message}`
       );
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getAccessToken(): string {
     return this.token;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setAccessToken(token: string): void {
     this.token = token;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setSessionToken(sessionKey: string, token: string): void {
     const normalizedKey = sessionKey.trim();
     if (!normalizedKey || !token) {
@@ -597,16 +605,16 @@ export class SeedContext {
     this.sessions.set(normalizedKey, token);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getSessionToken(sessionKey: string): string | undefined {
     return this.sessions.get(sessionKey.trim());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   requireSessionToken(sessionKey: string): string {
     const token = this.getSessionToken(sessionKey);
     if (!token) {
@@ -615,9 +623,9 @@ export class SeedContext {
     return token;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getSessionTokensByPrefix(prefix: string): string[] {
     const normalizedPrefix = prefix.trim();
     if (!normalizedPrefix) {
@@ -632,9 +640,9 @@ export class SeedContext {
     return tokens;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async loginWithCredentials(
     credentials: {
       email: string;
@@ -670,60 +678,60 @@ export class SeedContext {
     return token;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getLastResponseStatusCode(): number | undefined {
     return this.lastResponseStatusCode;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   set(key: string, value: unknown): void {
     this.store.set(key, value);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   appendToStateArray<T>(key: string, value: T): void {
     const current = this.getState<T[]>(key) || [];
     current.push(value);
     this.store.set(key, current);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getState<T>(key: string): T | undefined {
     return this.store.get(key) as T | undefined;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   hasState(key: string): boolean {
     return this.store.has(key);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'GET' });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async postJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'POST', body });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async postMultipart<T>(
     path: string,
     form: Record<string, string | Blob>,
@@ -818,30 +826,30 @@ export class SeedContext {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async patchJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PATCH', body });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async putJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PUT', body });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async deleteJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async requestJson<T>(
     path: string,
     options: {
@@ -854,9 +862,9 @@ export class SeedContext {
     return this.request<T>(path, options);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async withConcurrency<T>(task: () => Promise<T>): Promise<T> {
     await this.acquireSlot();
     try {
@@ -866,32 +874,32 @@ export class SeedContext {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async delay(ms: number): Promise<void> {
     await new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   close(): Promise<void> {
     this.logRaw(`=== SEED HTTP LOG END ${this.nextLogTimestamp()} ===\n\n`);
     return Promise.resolve();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   get<T>(token: unknown): T {
     void token;
     return undefined as T;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getDataSource(): any {
     return {
       manager: {},
@@ -910,9 +918,9 @@ export class SeedContext {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getRepository<T>(entity: unknown): T {
     void entity;
     return {
@@ -923,9 +931,9 @@ export class SeedContext {
     } as T;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async transaction<T>(callback: (queryRunner: any) => Promise<T>): Promise<T> {
     return callback({
       manager: {
@@ -934,9 +942,9 @@ export class SeedContext {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   validateDto<T extends object>(
     dtoClass: unknown,
     payload: unknown
@@ -945,43 +953,43 @@ export class SeedContext {
     return Promise.resolve(payload as T);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   find<T>(entity: unknown, options?: unknown): Promise<T[]> {
     void entity;
     void options;
     return Promise.resolve([] as T[]);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   findOne<T>(entity: unknown, options: unknown): Promise<T | null> {
     void entity;
     void options;
     return Promise.resolve(null);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   count(entity: unknown, where?: unknown): Promise<number> {
     void entity;
     void where;
     return Promise.resolve(0);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getSeedActorUserId(): Promise<string> {
     return Promise.resolve('');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async request<T>(
     path: string,
     options: {
@@ -1096,25 +1104,25 @@ export class SeedContext {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async parseResponseBody(
     response: Response
   ): Promise<Record<string, unknown> | string | null> {
     return parseSeedResponseBody(response);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private computeBackoffMs(attempt: number): number {
     return computeSeedBackoffMs(this.backoffBaseMs, this.backoffMaxMs, attempt);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async fetchWithTimeout(
     url: string,
     init: RequestInit
@@ -1135,16 +1143,16 @@ export class SeedContext {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private parseRetryAfterMs(headerValue: string | null): number | undefined {
     return parseSeedRetryAfterMs(headerValue);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async acquireSlot(): Promise<void> {
     if (this.inFlight < this.maxConcurrency) {
       this.inFlight++;
@@ -1159,9 +1167,9 @@ export class SeedContext {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private releaseSlot(): void {
     this.inFlight = Math.max(0, this.inFlight - 1);
     const next = this.queue.shift();
@@ -1170,16 +1178,16 @@ export class SeedContext {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private logRaw(content: string): void {
     appendFileSync(this.logFilePath, content, 'utf8');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private logEvent(event: {
     method: string;
     path: string;
@@ -1199,16 +1207,16 @@ export class SeedContext {
     this.logRaw(`${lines.join('\n')}\n`);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private safeStringify(value: unknown): string {
     return seedSafeStringify(value);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private nextLogTimestamp(): string {
     const timestamp = seedDateIso(0, this.logEventCursor);
     this.logEventCursor += 1;

@@ -19,9 +19,9 @@ export class Albaran extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   fecha?: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 500,
@@ -30,9 +30,9 @@ export class Albaran extends BaseEntity {
   })
   documentoUrl?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 255,
@@ -41,9 +41,9 @@ export class Albaran extends BaseEntity {
   })
   documentoNombre?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 100,
@@ -52,9 +52,9 @@ export class Albaran extends BaseEntity {
   })
   documentoMimeType?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'int', nullable: true, name: 'documento_tamano' })
   documentoTamano?: number;
 

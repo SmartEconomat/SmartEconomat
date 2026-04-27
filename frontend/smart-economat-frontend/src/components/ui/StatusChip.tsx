@@ -32,13 +32,13 @@ export type StatusType =
  * Documentación en español.
  */
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   status: StatusType | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label?: string;
 }
 
@@ -160,6 +160,14 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       ['pendiente', 'reclamado', 'abonado', 'reenviado'].includes(normalized)
     ) {
       return getEnumLabel(t, 'estadoReclamacion', s);
+    }
+
+    if (['fácil', 'media', 'difícil'].includes(normalized)) {
+      return getEnumLabel(t, 'recetaDificultad', s);
+    }
+
+    if (['g', 'kg', 'l', 'ml', 'pieza', 'cda', 'cdta'].includes(normalized)) {
+      return getEnumLabel(t, 'recetaUnidad', s);
     }
 
     return getTranslatedStatus(normalized);

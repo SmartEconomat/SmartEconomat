@@ -23,37 +23,37 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 @Index(['createdAt'])
 @Index(['usuarioId'])
 export class PurchaseBatch extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'referencia', type: 'varchar', length: 32, unique: true })
   referencia!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   numeroLote?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   referenciaLote?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -61,21 +61,21 @@ export class PurchaseBatch extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ default: false, name: 'is_aprobado' })
   isAprobado: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: ESTADO_LOTE_DB_VALUES,
@@ -84,9 +84,9 @@ export class PurchaseBatch extends BaseEntity {
   })
   estado!: EstadoLote;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Pedido, (pedido) => pedido.batch, {
     cascade: true,
   })
@@ -94,9 +94,9 @@ export class PurchaseBatch extends BaseEntity {
 
   /* --- Lógica de Dominio --- */
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static calcularEstadoLote(pedidos: Pedido[]): EstadoLote {
     if (!pedidos || pedidos.length === 0) {
       return EstadoLote.PENDIENTE;

@@ -35,39 +35,39 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Index(['estado', 'createdAt'])
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'proveedor_id', nullable: true })
   proveedorId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'batch_id', nullable: true })
   batchId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'pedido_usuario_id', nullable: true })
   pedidoUsuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -75,9 +75,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.pedidos, {
     nullable: true,
     onDelete: 'RESTRICT',
@@ -85,9 +85,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'proveedor_id' })
   proveedor?: Relation<Proveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -95,9 +95,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'batch_id' })
   batch?: Relation<PurchaseBatch>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.pedidos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -105,9 +105,9 @@ export class Pedido extends BaseEntity {
   @JoinColumn({ name: 'pedido_usuario_id' })
   pedidoUsuario?: Relation<PedidoUsuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -115,21 +115,21 @@ export class Pedido extends BaseEntity {
   })
   fechaPedido!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 14,
@@ -140,9 +140,9 @@ export class Pedido extends BaseEntity {
   })
   costeTotal!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: ESTADO_PEDIDO_DB_VALUES,
@@ -151,37 +151,37 @@ export class Pedido extends BaseEntity {
   })
   estado!: EstadoPedido;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => PedidoProducto, (pp) => pp.pedido, {
     cascade: true,
   })
   pedidoProductos!: Relation<PedidoProducto[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: Relation<RecepcionPedido[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'motivo_incidencia' })
   motivoIncidencia?: string;
 
   /* --- Métodos de Dominio --- */
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   calcularTotal(): number {
     if (!this.pedidoProductos || this.pedidoProductos.length === 0) {
       return 0;
@@ -191,16 +191,16 @@ export class Pedido extends BaseEntity {
     }, 0);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   marcarComoRecepcionado(): void {
     this.estado = EstadoPedido.RECEPCIONADO;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cancelar(motivo: string): void {
     this.estado = EstadoPedido.CANCELADO;
     this.motivoCancelacion = motivo;

@@ -16,21 +16,21 @@ type SpinnerColor = 'primary' | 'white' | 'gray' | 'inherit';
  * Documentación en español.
  */
 export interface SpinnerProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   size?: SpinnerSize;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   color?: SpinnerColor;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   overlay?: boolean | 'container' | 'screen';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   className?: string;
 }
 

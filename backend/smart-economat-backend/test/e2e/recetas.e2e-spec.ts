@@ -68,9 +68,9 @@ describe('RecetaController (e2e)', () => {
   });
 
   describe('CRUD de Recetas', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('POST /recetas - Debe crear una receta (201)', async () => {
       const res = await request(app.getHttpServer() as string)
         .post('/api/v1/recetas')
@@ -99,9 +99,9 @@ describe('RecetaController (e2e)', () => {
       recetaId = res.body.data.id;
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /recetas - Debe listar recetas (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/recetas')
@@ -109,9 +109,9 @@ describe('RecetaController (e2e)', () => {
         .expect(200);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /recetas/:id - Debe actualizar receta (200)', () => {
       return request(app.getHttpServer() as string)
         .patch(`/api/v1/recetas/${recetaId}`)
@@ -126,9 +126,9 @@ describe('RecetaController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('DELETE /recetas/:id - Debe eliminar receta (204)', () => {
       return request(app.getHttpServer() as string)
         .delete(`/api/v1/recetas/${recetaId}`)
@@ -142,9 +142,9 @@ describe('RecetaController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
       const originalName = `Receta Original ${Date.now()}_${Math.random()}`;
       const duplicatedName = `Receta Duplicada ${Date.now()}_${Math.random()}`;

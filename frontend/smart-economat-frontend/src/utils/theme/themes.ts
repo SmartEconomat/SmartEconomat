@@ -252,9 +252,9 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
       palette = lightPalette;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const baseComponents = {
     ...a11yComponentDefaults,
     MuiTabs: {

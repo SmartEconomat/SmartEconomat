@@ -3,8 +3,6 @@ import type {
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
-  HealthUpdateEvent,
-  InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerProgressEvent,
@@ -17,9 +15,7 @@ import type {
   RuntimeLogEvent,
   RuntimePaths,
   ServiceHealth,
-  SupervisorSnapshot,
   TailLogsPayload,
-  UninstallPayload,
 } from "@shared/contracts";
 
 declare global {
@@ -40,11 +36,7 @@ declare global {
       pickInstallerFile: (
         payload: InstallerFilePickerPayload,
       ) => Promise<OperationResult<string>>;
-      testSmtp: (
-        config: Partial<InstallerConfigPayload>,
-      ) => Promise<OperationResult<boolean>>;
       getInstallerState: () => Promise<OperationResult<InstallerStateSnapshot>>;
-      getInstallerBootState: () => Promise<OperationResult<InstallerBootState>>;
       onInstallerProgress: (
         callback: (event: InstallerProgressEvent) => void,
       ) => () => void;
@@ -61,19 +53,11 @@ declare global {
       ) => Promise<OperationResult<string>>;
       onRuntimeLog: (callback: (event: RuntimeLogEvent) => void) => () => void;
       pruneSafe: (payload: PrunePayload) => Promise<OperationResult>;
-      uninstall: (payload: UninstallPayload) => Promise<OperationResult>;
       backupNow: (
         payload: BackupPayload,
       ) => Promise<OperationResult<BackupMetadata>>;
       restoreFrom: (payload: RestorePayload) => Promise<OperationResult>;
       diagnostics: (payload: RuntimePaths) => Promise<OperationResult<string>>;
-      getWatchdogStatus: () => Promise<OperationResult<HealthUpdateEvent>>;
-      getSupervisorSnapshot: () => Promise<OperationResult<SupervisorSnapshot>>;
-      restartDockerDesktop: () => Promise<OperationResult>;
-      runSupervisorRecovery: () => Promise<OperationResult>;
-      onHealthUpdate: (
-        callback: (event: HealthUpdateEvent) => void,
-      ) => () => void;
       onDebugLog: (callback: (event: DebugLogEntry) => void) => () => void;
       getDebugLogs: () => Promise<OperationResult<DebugLogEntry[]>>;
       clearDebugLogs: () => Promise<OperationResult>;

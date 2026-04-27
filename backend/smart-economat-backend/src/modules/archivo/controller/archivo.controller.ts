@@ -44,9 +44,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('upload')
   @RequirePermissions(PERMISSIONS.archivos.subir)
   @ApiOperation({ summary: 'Subir un nuevo archivo' })
@@ -79,9 +79,9 @@ export class ArchivoController {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.archivos.listar)
   @ApiOperation({ summary: 'Listar archivos' })
@@ -97,9 +97,9 @@ export class ArchivoController {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.archivos.ver)
   @ApiOperation({ summary: 'Obtener metadata de un archivo por ID' })
@@ -111,9 +111,9 @@ export class ArchivoController {
     return this.mapToResponseDto(result);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('content/:filename')
   @Public()
   @ApiOperation({ summary: 'Servir el contenido de un archivo subido' })
@@ -122,9 +122,9 @@ export class ArchivoController {
     res.sendFile(filePath);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.archivos.eliminar)
   @ApiOperation({ summary: 'Eliminar un archivo (soft-delete)' })
@@ -142,9 +142,9 @@ export class ArchivoController {
     res.status(HttpStatus.NO_CONTENT).send();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private mapToResponseDto(archivo: any): FileResponseDto {
     const dto = new FileResponseDto();
     dto.id = archivo.id;

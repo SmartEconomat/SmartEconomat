@@ -26,14 +26,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 export class AdminController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly adminService: AdminService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('roles')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.listar)
@@ -41,9 +41,9 @@ export class AdminController {
     return this.adminService.getRoles();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('permissions')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.listar)
@@ -51,9 +51,9 @@ export class AdminController {
     return this.adminService.getPermissions();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('profesores')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.crear)
@@ -61,9 +61,9 @@ export class AdminController {
     return this.adminService.createProfesor(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('users/:id/role')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -81,9 +81,9 @@ export class AdminController {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('users/:id/activate')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.activar_desactivar)
@@ -94,9 +94,9 @@ export class AdminController {
     return this.adminService.activateUser(userId, dto.active);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('users/:id/force-reset')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.resetear_password)

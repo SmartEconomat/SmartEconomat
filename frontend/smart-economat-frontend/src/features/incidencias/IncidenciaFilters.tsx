@@ -6,13 +6,13 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 export interface IncidenciaFiltersState {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   startDate: string | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   endDate: string | null;
 }
 
@@ -20,13 +20,13 @@ export interface IncidenciaFiltersState {
  * Documentación en español.
  */
 interface IncidenciaFiltersProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filters: IncidenciaFiltersState;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChange: (filters: IncidenciaFiltersState) => void;
 }
 
@@ -39,9 +39,9 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
 }) => {
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {

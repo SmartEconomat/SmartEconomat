@@ -178,7 +178,9 @@ export default function SettingsMenu({
             <ListItemIcon>
               <InvertColorsIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>{t('configuracion.altoContrasteOscuro')}</ListItemText>
+            <ListItemText>
+              {t('configuracion.altoContrasteOscuro')}
+            </ListItemText>
             {currentThemeName === 'highContrastDark' && (
               <Typography variant="body2" color="text.secondary">
                 <CheckIcon fontSize="small" />

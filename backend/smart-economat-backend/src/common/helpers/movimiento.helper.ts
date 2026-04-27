@@ -10,9 +10,9 @@ import { TipoMovimiento } from '../../modules/movimiento/enums/movimiento.enums'
 export class MovimientoHelper {
   constructor(private readonly movimientoPort: MovimientoPort) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createMovimiento(
     userId: string,
     tipo: TipoMovimiento,
@@ -39,9 +39,9 @@ export class MovimientoHelper {
     return movimiento;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackProductoCreation(
     userId: string,
     productoId: string,
@@ -59,9 +59,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackProductoUpdate(
     userId: string,
     productoId: string,
@@ -79,9 +79,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackProductoRestore(
     userId: string,
     productoId: string,
@@ -99,9 +99,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackProductoDeletion(
     userId: string,
     productoId: string,
@@ -119,9 +119,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackInventarioMovimiento(
     userId: string,
     inventarioId: string,
@@ -144,9 +144,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackPedidoCreation(
     userId: string,
     pedidoId: string,
@@ -164,9 +164,9 @@ export class MovimientoHelper {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async trackRecepcion(
     userId: string,
     recepcionId: string,

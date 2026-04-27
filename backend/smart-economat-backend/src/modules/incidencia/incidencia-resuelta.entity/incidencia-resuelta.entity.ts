@@ -18,9 +18,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @Column({ name: 'usuario_resolutor_id', nullable: true })
   usuarioResolutorId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Incidencia, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -28,9 +28,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @JoinColumn({ name: 'incidencia_id' })
   incidencia!: Relation<Incidencia>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, {
     onDelete: 'SET NULL',
     nullable: true,
@@ -38,9 +38,9 @@ export class IncidenciaResuelta extends BaseEntity {
   @JoinColumn({ name: 'usuario_resolutor_id' })
   usuarioResolutor?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: TipoResolucion,
@@ -48,18 +48,18 @@ export class IncidenciaResuelta extends BaseEntity {
   })
   tipoResolucion!: TipoResolucion;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     name: 'fecha_resolucion',
   })
   fechaResolucion!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 }

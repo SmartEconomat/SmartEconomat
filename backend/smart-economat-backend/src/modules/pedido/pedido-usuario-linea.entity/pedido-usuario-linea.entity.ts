@@ -14,21 +14,21 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 @Check(`"cantidad" > 0`)
 @Check(`"precio_unitario" >= 0`)
 export class PedidoUsuarioLinea extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'pedido_usuario_id' })
   pedidoUsuarioId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.lineas, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -36,9 +36,9 @@ export class PedidoUsuarioLinea extends BaseEntity {
   @JoinColumn({ name: 'pedido_usuario_id' })
   pedidoUsuario!: Relation<PedidoUsuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => ProductoProveedor, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -46,9 +46,9 @@ export class PedidoUsuarioLinea extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -57,9 +57,9 @@ export class PedidoUsuarioLinea extends BaseEntity {
   })
   cantidad!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -69,9 +69,9 @@ export class PedidoUsuarioLinea extends BaseEntity {
   })
   precioUnitario!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 }

@@ -12,9 +12,9 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({
   const [fontSize, setFontSizeState] = useState<FontSize>('medium');
   const [isLearningMode, setLearningModeState] = useState(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   useLayoutEffect(() => {
     const savedTheme = localStorage.getItem('appTheme') as ThemeName;
     const savedFontSize = localStorage.getItem('appFontSize') as FontSize;
@@ -38,25 +38,25 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const setTheme = (name: ThemeName) => {
     setThemeName(name);
     localStorage.setItem('appTheme', name);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const setFontSize = (size: FontSize) => {
     setFontSizeState(size);
     localStorage.setItem('appFontSize', size);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const setLearningMode = (mode: boolean) => {
     setLearningModeState(mode);
     localStorage.setItem('appLearningMode', String(mode));

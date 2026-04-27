@@ -6,25 +6,25 @@ import type { SxProps, Theme } from '@mui/material/styles';
  * Documentación en español.
  */
 type InputProps = TextFieldProps & {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   name: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   type?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value?: unknown;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChange?: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement>;
 };
 

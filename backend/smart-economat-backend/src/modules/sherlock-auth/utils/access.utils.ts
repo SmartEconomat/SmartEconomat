@@ -63,21 +63,21 @@ export const uniqueStrings = (
  * Documentación en español.
  */
 export interface SherlockEffectivePermissionsInput {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   role?: string | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   rolePermissions?: string[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   directPermissions?: string[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   excludedPermissions?: string[];
 }
 

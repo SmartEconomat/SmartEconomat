@@ -15,7 +15,9 @@ interface QuickProveedorModalProps {
   onSuccess: (newProveedor: Proveedor) => void;
 }
 
-const buildProveedorQuickSchema = (t: TFunction<'translation'>): DynamicField[] => [
+const buildProveedorQuickSchema = (
+  t: TFunction<'translation'>
+): DynamicField[] => [
   {
     name: 'nif',
     label: t('proveedores.form.nifCuit'),
@@ -89,9 +91,7 @@ const QuickProveedorModal: React.FC<QuickProveedorModalProps> = ({
       onClose();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('proveedores.errors.errorCrear');
+        err instanceof Error ? err.message : t('proveedores.errors.errorCrear');
       toast.error(message);
     } finally {
       setIsSaving(false);

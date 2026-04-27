@@ -168,12 +168,11 @@ const MERMA_I18N_UNIT_KEYS = [
 
 type MermaI18nUnitKey = (typeof MERMA_I18N_UNIT_KEYS)[number];
 
-const resolveMermaUnitKey = (rawUnit?: string): MermaI18nUnitKey | 'default' => {
+const resolveMermaUnitKey = (
+  rawUnit?: string
+): MermaI18nUnitKey | 'default' => {
   const unit = rawUnit?.toLowerCase();
-  if (
-    unit &&
-    (MERMA_I18N_UNIT_KEYS as readonly string[]).includes(unit)
-  ) {
+  if (unit && (MERMA_I18N_UNIT_KEYS as readonly string[]).includes(unit)) {
     return unit as MermaI18nUnitKey;
   }
   return 'default';
@@ -557,7 +556,8 @@ const Preparaciones: React.FC = () => {
     {
       id: 'createdAt',
       label: t('preparaciones.columns.fechaCreacion'),
-      render: (row) => formatLocalizedDateTime(row.createdAt || row.fechaProduccion),
+      render: (row) =>
+        formatLocalizedDateTime(row.createdAt || row.fechaProduccion),
       hideOnMobile: true,
     },
     {

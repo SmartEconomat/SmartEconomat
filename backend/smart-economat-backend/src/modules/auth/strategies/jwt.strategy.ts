@@ -41,9 +41,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async validate(payload: JwtPayload) {
     const user = await this.usuarioRepo.findOne({
       where: { id: payload.sub, status: UserStatus.ACTIVE },
@@ -56,6 +56,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       id: user.id,
       username: user.username,
       rol: getRolPrincipal(user.roles, user.rol),
+      idioma: user.idioma,
     };
   }
 }

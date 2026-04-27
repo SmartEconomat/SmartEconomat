@@ -27,9 +27,9 @@ describe('ProductoProveedorController (e2e)', () => {
   });
 
   describe('Precios e Historial', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('PATCH /api/v1/producto-proveedor/:id/precio - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)
         .patch(
@@ -40,9 +40,9 @@ describe('ProductoProveedorController (e2e)', () => {
         .expect(404);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /api/v1/producto-proveedor/:id/historial - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)
         .get(

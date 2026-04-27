@@ -15,9 +15,9 @@ export const useToast = () => {
 
   const { addToast } = context;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   function showToast(
     key: string,
     type: 'success' | 'error' | 'info' | 'warning',

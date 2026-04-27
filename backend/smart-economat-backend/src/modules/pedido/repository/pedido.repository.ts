@@ -13,9 +13,9 @@ export class PedidoRepository extends Repository<Pedido> {
     super(Pedido, dataSource.createEntityManager());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAllWithRelations(loadRelations = false): Promise<Pedido[]> {
     return await this.find({
       relations: loadRelations
@@ -37,9 +37,9 @@ export class PedidoRepository extends Repository<Pedido> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAllPaginated(
     query: PaginationQueryDto,
     loadRelations = false
@@ -177,9 +177,9 @@ export class PedidoRepository extends Repository<Pedido> {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOneWithRelations(
     id: string,
     loadRelations = false
@@ -202,9 +202,9 @@ export class PedidoRepository extends Repository<Pedido> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findByEstado(estado: string, loadRelations = false): Promise<Pedido[]> {
     return await this.find({
       where: { estado: estado as any },
@@ -222,9 +222,9 @@ export class PedidoRepository extends Repository<Pedido> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findByUsuario(
     idUsuario: string,
     loadRelations = false

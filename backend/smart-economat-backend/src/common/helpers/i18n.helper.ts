@@ -123,37 +123,37 @@ export class I18nHelper {
     return I18nHelper.translateFromFiles(key, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getError(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.errors.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getSuccess(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.success.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getValidation(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.validation.${key}`, args);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static getEntity(key: string): string {
     return I18nHelper.translate(`translation.entities.${key}`);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Translates a key.
+   */
   static translate(key: string, args?: Record<string, any>): string {
     const direct = I18nHelper.translateKey(key, args);
     if (direct) {
@@ -167,6 +167,19 @@ export class I18nHelper {
       }
     }
 
-    return key;
+    return I18nHelper.humanize(key);
+  }
+
+  /**
+   * Converts a key like 'USER_NOT_FOUND' to 'User Not Found'
+   */
+  private static humanize(key: string): string {
+    const lastPart = key.split('.').pop() || key;
+    return lastPart
+      .replace(/[_-]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 }

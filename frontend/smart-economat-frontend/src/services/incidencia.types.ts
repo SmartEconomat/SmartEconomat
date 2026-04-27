@@ -2,17 +2,17 @@
  * Documentación en español.
  */
 export enum TipoDiferencia {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   FALTANTE = 'FALTANTE',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   EXCESO = 'EXCESO',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   DEFECTUOSO = 'DEFECTUOSO',
 }
 
@@ -20,21 +20,21 @@ export enum TipoDiferencia {
  * Documentación en español.
  */
 export enum EstadoReclamacion {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   PENDIENTE = 'PENDIENTE',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   RECLAMADO = 'RECLAMADO',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ABONADO = 'ABONADO',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   REENVIADO = 'REENVIADO',
 }
 
@@ -42,29 +42,29 @@ export enum EstadoReclamacion {
  * Documentación en español.
  */
 export enum EstadoIncidencia {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   NUEVA = 'nueva',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   EN_AJUSTE = 'en_ajuste',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   PENDIENTE_VALIDACION = 'pendiente_validacion',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   RESUELTA = 'resuelta',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   CANCELADA = 'cancelada',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   INVALIDA = 'invalida',
 }
 
@@ -72,53 +72,53 @@ export enum EstadoIncidencia {
  * Documentación en español.
  */
 export interface IncidenciaLinea {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoProductoId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   nombreProducto: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   unidad?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadEsperada: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecibida: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPendiente: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   diferencia: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   tipoDiferencia: TipoDiferencia;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estadoReclamacion: EstadoReclamacion;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
 }
 
@@ -126,65 +126,65 @@ export interface IncidenciaLinea {
  * Documentación en español.
  */
 export interface Incidencia {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcionId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoId: string | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   proveedorNombre: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   motivoIncidencia: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado: EstadoIncidencia;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observacionesRecepcion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observacionesResolucion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   resuelta: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fechaResolucion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPedidaTotal: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecibidaTotal: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadPendienteTotal: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   lineas: IncidenciaLinea[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   createdAt: string;
 }
 
@@ -192,29 +192,29 @@ export interface Incidencia {
  * Documentación en español.
  */
 export interface ResolveIncidenciaLineaAdjustment {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoProductoId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ajusteCantidad?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecibida?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estadoReclamacion?: EstadoReclamacion;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
 }
 
@@ -222,28 +222,28 @@ export interface ResolveIncidenciaLineaAdjustment {
  * Documentación en español.
  */
 export interface ResolveIncidenciaPayload {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   usuarioId?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observacionesResolucion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   marcarComoResuelta?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estadoFinal?:
     | EstadoIncidencia.RESUELTA
     | EstadoIncidencia.CANCELADA
     | EstadoIncidencia.INVALIDA;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   lineas?: ResolveIncidenciaLineaAdjustment[];
 }
 
@@ -251,28 +251,28 @@ export interface ResolveIncidenciaPayload {
  * Documentación en español.
  */
 export interface IncidenciasQueryParams {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   page?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   limit?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchTerm?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   resuelta?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   startDate?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   endDate?: string;
 }

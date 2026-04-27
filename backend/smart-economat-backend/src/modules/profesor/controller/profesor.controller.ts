@@ -29,63 +29,63 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class ProfesorController {
   constructor(private readonly profesorService: ProfesorService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('register')
   @Public()
   async register(@Body() dto: CreateProfesorDto) {
     return this.profesorService.register(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('slots')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async createSlot(@GetUser('id') userId: string, @Body() dto: CreateSlotDto) {
     return this.profesorService.createSlot(userId, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('admin-slots')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminCreateSlot(@Body() dto: AdminCreateSlotDto) {
     return this.profesorService.adminCreateSlot(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('slots')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async getSlots(@GetUser('id') userId: string) {
     return this.profesorService.getSlots(userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('all-slots')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getAllSlots() {
     return this.profesorService.getAllSlots();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('all-profesores')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async getAllProfesores() {
     return this.profesorService.getAllProfesores();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('admin-slots/:id')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminUpdateSlot(
@@ -95,9 +95,9 @@ export class ProfesorController {
     return this.profesorService.adminUpdateSlot(slotId, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('slots/:id')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async updateSlot(
@@ -108,27 +108,27 @@ export class ProfesorController {
     return this.profesorService.updateSlot(userId, slotId, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete('slots/:id')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async deleteSlot(@GetUser('id') userId: string, @Param('id') slotId: string) {
     return this.profesorService.deleteSlot(userId, slotId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete('admin-slots/:id')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async adminDeleteSlot(@Param('id') slotId: string) {
     return this.profesorService.adminDeleteSlot(slotId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('alumnos/:id/activate')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_alumnos)
   async activateAlumno(
@@ -138,18 +138,18 @@ export class ProfesorController {
     return this.profesorService.activateAlumno(profesorUserId, alumnoId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('alumnos')
   @RequirePermissions(PERMISSIONS.profesor.ver_alumnos)
   async getAlumnos(@GetUser('id') profesorUserId: string) {
     return this.profesorService.getAlumnos(profesorUserId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('alumnos/:id/force-reset')
   @RequirePermissions(PERMISSIONS.profesor.gestionar_alumnos)
   async forcePasswordReset(

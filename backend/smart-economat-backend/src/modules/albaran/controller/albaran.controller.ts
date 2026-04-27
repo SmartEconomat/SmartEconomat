@@ -50,14 +50,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('albaranes')
 export class AlbaranController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly albaranService: AlbaranService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -65,9 +65,9 @@ export class AlbaranController {
     return this.albaranService.create(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('upload-documento')
   @RequirePermissions(PERMISSIONS.albaranes.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -133,9 +133,9 @@ export class AlbaranController {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('documento/:filename')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
   @ApiOperation({
@@ -150,9 +150,9 @@ export class AlbaranController {
     return res.sendFile(filePath);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   findAll(
@@ -170,9 +170,9 @@ export class AlbaranController {
     return this.albaranService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
   findOne(
@@ -183,9 +183,9 @@ export class AlbaranController {
     return this.albaranService.findOne(id, userRole, true);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.albaranes.editar)
   update(
@@ -195,9 +195,9 @@ export class AlbaranController {
     return this.albaranService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.albaranes.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

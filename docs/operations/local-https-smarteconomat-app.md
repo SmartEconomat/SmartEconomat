@@ -30,8 +30,8 @@ Este script hace automaticamente en Linux/macOS:
   - `certs/privkey.pem`
 - Ajusta variables en `.env.prod`:
   - `DOMAIN=smarteconomat.app`
-  - `URL_FRONTEND_DERIVADA=https://smarteconomat.app`
-  - `URL_BACKEND_DERIVADA=https://smarteconomat.app/api/v1`
+  - `FRONTEND_API_URL=https://smarteconomat.app`
+  - `BACKEND_API_URL=https://smarteconomat.app/api/v1`
   - `DB_SYNC=false`
   - `TLS_PROVIDER=selfsigned`
   - `SEED_DEFAULT_ADMIN_TEMP_PASSWORD` (si no existia)

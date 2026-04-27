@@ -14,14 +14,14 @@ import { Injectable } from '@nestjs/common';
 @ValidatorConstraint({ name: 'IsUnique', async: true })
 @Injectable()
 export class IsUniqueConstraint implements ValidatorConstraintInterface {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly dataSource: DataSource) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async validate(value: unknown, args: ValidationArguments) {
     const [entityClass, field] = args.constraints as [new () => object, string];
     const repository = this.dataSource.getRepository(entityClass);
@@ -31,9 +31,9 @@ export class IsUniqueConstraint implements ValidatorConstraintInterface {
     return !exists;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   defaultMessage(args: ValidationArguments) {
     const [entityClass] = args.constraints;
     return `${entityClass.name} with this ${args.property} already exists`;

@@ -5,13 +5,13 @@ import { TextField, TextFieldProps } from '@mui/material';
  * Documentación en español.
  */
 export type InputFieldProps = Omit<TextFieldProps, 'id' | 'label'> & {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string;
 };
 

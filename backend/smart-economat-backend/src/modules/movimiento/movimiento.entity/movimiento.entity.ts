@@ -21,33 +21,33 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 @Index(['createdAt'])
 @Check(`"cantidad" >= 0`)
 export class Movimiento extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'inventario_id', nullable: true })
   inventarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_proveedor_id', nullable: true })
   productoProveedorId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'enum', enum: TipoMovimiento })
   tipo!: TipoMovimiento;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -56,9 +56,9 @@ export class Movimiento extends BaseEntity {
   })
   cantidad!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, (usuario) => usuario.movimientos, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -66,9 +66,9 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Inventario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -76,9 +76,9 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'inventario_id' })
   inventario?: Relation<Inventario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => ProductoProveedor, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -86,21 +86,21 @@ export class Movimiento extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor?: Relation<ProductoProveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 50, name: 'entidad_tipo' })
   entidad!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'uuid', name: 'entidad_id' })
   entidadId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 }

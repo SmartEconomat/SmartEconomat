@@ -55,9 +55,9 @@ export class RecetaToPedidoService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async generateFromRecetas(
     dto: GeneratePedidoFromRecetasDto,
     userId: string
@@ -82,9 +82,9 @@ export class RecetaToPedidoService {
     return pedido;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async buildBatchOrderFromRecetas(
     dto: GeneratePedidoFromRecetasDto
   ): Promise<CreatePedidoUsuarioDto> {

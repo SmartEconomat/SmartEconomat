@@ -20,9 +20,9 @@ import { useTranslation } from 'react-i18next';
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onSuccess: (newLocation: Ubicacion) => void;
 }
 
@@ -39,9 +39,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const toast = useToast();
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 

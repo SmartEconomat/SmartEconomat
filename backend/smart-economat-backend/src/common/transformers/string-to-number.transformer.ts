@@ -15,9 +15,9 @@ type TransformValueParams = Pick<TransformFnParams, 'value'>;
  * Documentación en español.
  */
 export class StringToNumberTransformer {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(params: TransformValueParams): number | null | undefined {
     const value = params.value;
     if (value === null) return null;

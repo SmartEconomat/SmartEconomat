@@ -16,13 +16,13 @@ import { getEnumLabel } from '../../i18n/enumPresentation';
  * Documentación en español.
  */
 export interface ProductFiltersState {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   categorias: CategoriaProducto[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   alergenos: string[];
 }
 
@@ -30,9 +30,9 @@ export interface ProductFiltersProps {
   filters: ProductFiltersState;
   onChange: (filters: ProductFiltersState) => void;
   onClear?: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   inline?: boolean;
 }
 

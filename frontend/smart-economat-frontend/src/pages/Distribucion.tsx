@@ -457,9 +457,7 @@ const DistribucionPage: React.FC = () => {
       .filter((linea) => linea.cantidad > 0);
 
     if (lineas.length === 0) {
-      toast.error(
-        t('distribucion.toast.lineaRequerida')
-      );
+      toast.error(t('distribucion.toast.lineaRequerida'));
       return;
     }
 
@@ -469,9 +467,7 @@ const DistribucionPage: React.FC = () => {
     );
 
     if (invalidLine) {
-      toast.error(
-        t('distribucion.toast.lineasInvalidas')
-      );
+      toast.error(t('distribucion.toast.lineasInvalidas'));
       return;
     }
 
@@ -541,9 +537,7 @@ const DistribucionPage: React.FC = () => {
           setDestinationId(refreshedFallbackId);
         }
 
-        toast.error(
-          t('distribucion.toast.errorUbicacionDestino')
-        );
+        toast.error(t('distribucion.toast.errorUbicacionDestino'));
       } else {
         toast.error(errorMessage);
       }
@@ -571,7 +565,8 @@ const DistribucionPage: React.FC = () => {
   };
 
   const handleCancel = async (id: string) => {
-    const motivo = window.prompt(t('distribucion.motivoCancelacion')) || undefined;
+    const motivo =
+      window.prompt(t('distribucion.motivoCancelacion')) || undefined;
     try {
       await cancelDistribucion(id, motivo);
       toast.success(t('distribucion.toast.distribucionCancelada'));
@@ -688,7 +683,8 @@ const DistribucionPage: React.FC = () => {
         id: 'ubicacionDestinoSugerida',
         label: t('distribucion.columns.destinoSugerido'),
         render: (row) =>
-          row.ubicacionDestinoSugerida?.nombre || t('distribucion.columns.destino'),
+          row.ubicacionDestinoSugerida?.nombre ||
+          t('distribucion.columns.destino'),
         sortable: true,
       },
       {
@@ -778,8 +774,7 @@ const DistribucionPage: React.FC = () => {
       {
         id: 'fechaPreparacion',
         label: t('distribucion.columns.fechaEntrega'),
-        render: (row) =>
-          formatLocalizedDateTime(row.fechaPreparacion),
+        render: (row) => formatLocalizedDateTime(row.fechaPreparacion),
         sortable: true,
       },
       {
@@ -1266,7 +1261,8 @@ const DistribucionPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    {linea.productoProveedor?.producto?.nombre || t('comun.producto')}
+                    {linea.productoProveedor?.producto?.nombre ||
+                      t('comun.producto')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {t('distribucion.detail.pedido')}: {linea.cantidadPedida} ·{' '}
@@ -1276,7 +1272,8 @@ const DistribucionPage: React.FC = () => {
                     {linea.cantidadYaDistribuida} ·{' '}
                     {t('distribucion.detail.preparado')}:{' '}
                     {linea.cantidadADistribuir} ·{' '}
-                    {t('distribucion.detail.entregado')}: {linea.cantidadEntregada}
+                    {t('distribucion.detail.entregado')}:{' '}
+                    {linea.cantidadEntregada}
                   </Typography>
                 </Box>
               ))}

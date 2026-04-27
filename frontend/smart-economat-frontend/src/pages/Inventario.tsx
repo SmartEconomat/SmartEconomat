@@ -628,12 +628,16 @@ const Inventario: React.FC = () => {
 
       const nombre = toOptionalString(typedFormData.nombre);
       if (!nombre) {
-        throw new Error(t('inventario.crearProductoValidacion.nombreObligatorio'));
+        throw new Error(
+          t('inventario.crearProductoValidacion.nombreObligatorio')
+        );
       }
 
       const contenido = Number(typedFormData.contenido);
       if (Number.isNaN(contenido) || contenido <= 0) {
-        throw new Error(t('inventario.crearProductoValidacion.contenidoInvalido'));
+        throw new Error(
+          t('inventario.crearProductoValidacion.contenidoInvalido')
+        );
       }
 
       const unidad = normalizeUnidadMedida(
@@ -713,7 +717,9 @@ const Inventario: React.FC = () => {
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventario.toast.errorCrearProducto');
+        err instanceof Error
+          ? err.message
+          : t('inventario.toast.errorCrearProducto');
       toast.error(message);
     } finally {
       setIsSavingProducto(false);

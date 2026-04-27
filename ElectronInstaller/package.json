@@ -1,6 +1,6 @@
 {
   "name": "smarteconomat-installer",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "description": "Instalador de SmartEconomat vía Docker",
   "main": "out/main/index.js",
   "type": "module",
@@ -10,40 +10,26 @@
   "scripts": {
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
-    "prebuild:project": "node ./scripts/pre-build-project.mjs",
-    "build:project": "node ./scripts/pre-build-project.mjs",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "type-check": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "npm run build:app && playwright test --grep-invert \"pantallas Electron\"",
+    "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "qa:gate": "npm run build:app && npm run lint && npm run test && npm run test:e2e",
-    "capture:screenshots": "npm run build:app:capture && playwright test -c playwright.screenshots.config.ts",
-    "capture:screenshots:headed": "HEADED=1 npm run capture:screenshots",
-    "capture:screenshots:debug": "PWDEBUG=1 HEADED=1 npm run capture:screenshots",
-    "build:app:capture": "VITE_INSTALLER_CAPTURE_BRIDGE_MOCK=true electron-vite build",
-    "build:app": "node ./scripts/ensure-win-icons.mjs && node ./scripts/maybe-electron-rebuild.mjs && electron-vite build",
-    "build:win": "npm run build:win:fast",
-    "build:win:fast": "node ./scripts/build-win-fast-local.mjs",
-    "build:win:release": "npm run build:win:fast",
-    "build:win:signed": "npm run build:win:fast && npm run verify:win:signature",
-    "build:win:release:signed": "npm run build:win:signed",
-    "sign:win:artifact": "node ./scripts/sign-windows-artifact.mjs",
-    "verify:win:signature": "node ./scripts/verify-win-signature.mjs",
-    "verify:win:icon": "node ./scripts/verify-win-exe-icon.mjs",
-    "build:win:cleanup": "node ./scripts/kill-stuck-builds.mjs",
-    "build:windows-from-linux": "node ./scripts/build-windows-from-linux.mjs",
-    "build:win:linux": "npm run build:windows-from-linux",
+    "build:app": "electron-vite build",
+    "build:win": "npm run build:app && electron-builder --win && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
+    "build:win:fast": "npm run build:app && electron-builder --win --config.compression=store && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
+    "build:win:compact": "npm run build:app && electron-builder --win --config.compression=maximum && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
+    "build:win:linux": "node ./scripts/build-windows-from-linux.mjs",
     "build:mac": "node ./scripts/build-mac-safe.mjs",
     "build:linux": "npm run build:app && electron-builder --linux",
+    "build:linux:fast": "npm run build:app && electron-builder --linux --config.compression=store",
+    "build:linux:compact": "npm run build:app && electron-builder --linux --config.compression=maximum",
     "pack": "npm run build:app && electron-builder --dir",
     "build": "npm run build:app && node ./scripts/build-current-platform.mjs",
     "validate:env-template": "node ./scripts/validate-env-template.mjs",
-    "fix:local-hosts": "node ./scripts/fix-local-hosts.mjs",
-    "validate:local-domain": "node ./scripts/validate-local-domain.mjs",
     "analyze:artifacts": "node ./scripts/analyze-artifacts.mjs"
   },
   "author": "SmartEconomat",
@@ -57,7 +43,6 @@
     "ajv-formats": "^3.0.1",
     "dayjs": "^1.11.19",
     "electron-log": "^5.4.3",
-    "nodemailer": "^8.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "selfsigned": "^2.4.1",
@@ -67,7 +52,6 @@
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.59.1",
     "@types/node": "^22.18.12",
-    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.3.0",
@@ -80,10 +64,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.5.0",
     "playwright-core": "^1.59.1",
-    "png-to-ico": "^3.0.1",
     "prettier": "^3.6.2",
-    "rcedit": "^5.0.2",
-    "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^6.1.0",
@@ -96,7 +77,7 @@
     "appId": "com.smarteconomat.installer",
     "productName": "SmartEconomat",
     "buildDependenciesFromSource": false,
-    "compression": "store",
+    "compression": "normal",
     "asar": true,
     "asarUnpack": [
       "out/preload/**/*"
@@ -146,13 +127,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "SmartEconomat",
-      "installerIcon": "resources/icons/nsis/installer.ico",
-      "uninstallerIcon": "resources/icons/nsis/uninstaller.ico",
-      "installerHeaderIcon": "resources/icons/nsis/installer.ico",
-      "installerHeader": "resources/icons/nsis/installerHeader.bmp",
-      "installerSidebar": "resources/icons/nsis/installerSidebar.bmp",
-      "uninstallerSidebar": "resources/icons/nsis/uninstallerSidebar.bmp",
-      "runAfterFinish": true,
+      "installerIcon": "resources/icons/win/icon.ico",
+      "uninstallerIcon": "resources/icons/win/icon.ico",
+      "runAfterFinish": false,
       "include": "resources/nsis/installer-hooks.nsh"
     },
     "mac": {
@@ -210,50 +187,48 @@
         ]
       },
       {
-        "from": "windows-supervisor/scripts",
-        "to": "scripts/windows-supervisor",
+        "from": "../backend",
+        "to": "project/backend",
         "filter": [
-          "**/*"
+          "**/*",
+          "!**/*.map",
+          "!**/*.md",
+          "!**/test/**",
+          "!**/tests/**",
+          "!**/__tests__/**",
+          "!**/*.spec.*",
+          "!**/*.test.*",
+          "!**/node_modules/**",
+          "!**/dist/**",
+          "!**/coverage/**",
+          "!**/.cache/**",
+          "!**/.next/**",
+          "!**/.turbo/**",
+          "!**/logs/**",
+          "!**/.git/**",
+          "!**/.github/**"
         ]
       },
       {
-        "from": "windows-supervisor/winsw",
-        "to": "scripts/windows-supervisor/winsw",
+        "from": "../frontend",
+        "to": "project/frontend",
         "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "windows-supervisor/src",
-        "to": "scripts/windows-supervisor/src",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "../backend/smart-economat-backend",
-        "to": "project/backend/smart-economat-backend",
-        "filter": [
-          "dist/**/*",
-          "scripts/**/*",
-          "package.json",
-          "package-lock.json",
-          "src/i18n/**/*",
-          "src/seeders/datos-base-economato/**/*",
-          "!**/*.map"
-        ]
-      },
-      {
-        "from": "../frontend/smart-economat-frontend",
-        "to": "project/frontend/smart-economat-frontend",
-        "filter": [
-          "build/**/*",
-          "nginx.conf",
-          "nginx-http.conf",
-          "docker-entrypoint.d/**/*",
-          "package.json",
-          "package-lock.json",
-          "!**/*.map"
+          "**/*",
+          "!**/*.map",
+          "!**/*.md",
+          "!**/test/**",
+          "!**/tests/**",
+          "!**/__tests__/**",
+          "!**/*.spec.*",
+          "!**/*.test.*",
+          "!**/node_modules/**",
+          "!**/dist/**",
+          "!**/coverage/**",
+          "!**/.cache/**",
+          "!**/.next/**",
+          "!**/.turbo/**",
+          "!**/.git/**",
+          "!**/.github/**"
         ]
       },
       {

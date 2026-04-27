@@ -18,21 +18,21 @@ import { Alergeno } from '../enums/producto.enums';
  */
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @PrimaryColumn('uuid', { name: 'producto_id' })
   productoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
   alergeno!: Alergeno;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToOne(() => Producto, (producto) => producto.alergenos, {
     onDelete: 'CASCADE',
@@ -40,27 +40,27 @@ export class ProductoAlergeno {
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   readonly createdAt!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   readonly updatedAt!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at', nullable: true })
   deletedAt?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @VersionColumn({ name: 'version', default: 1 })
   version!: number;
 }

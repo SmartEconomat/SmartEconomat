@@ -126,20 +126,20 @@ export default function Login() {
   const [phase, setPhase] = useState<AuthPhase>('idle');
   const hasToggled = useRef(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const pendingAuth = useRef<{ user: User } | null>(null);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const slideLeft = isLogin ? '0%' : `${FORM_W}%`;
   const formLeft = isLogin ? `${SLIDE_W}%` : '0%';
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const animated = hasToggled.current && phase === 'idle';
   const formAnim = animated
     ? isLogin
@@ -175,9 +175,9 @@ export default function Login() {
   // Caso 1: Login exitoso
   // ─────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleLoginSuccess = (user: User) => {
     pendingAuth.current = { user };
     setPhase('login-exit');
@@ -193,9 +193,9 @@ export default function Login() {
   // Caso 2: Registro exitoso
   // ─────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleRegisterSuccess = () => {
     setPhase('register-exit');
     setTimeout(() => {
@@ -209,9 +209,9 @@ export default function Login() {
     }, EXIT_DURATION + REGISTER_MSG_MS);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const showOverlay =
     phase === 'login-exit' ||
     phase === 'register-exit' ||

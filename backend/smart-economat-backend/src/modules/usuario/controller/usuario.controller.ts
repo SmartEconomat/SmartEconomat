@@ -35,23 +35,23 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly usuarioService: UsuarioService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.usuarios.crear)
   create(@Body() dto: CreateUsuarioDto) {
     return this.usuarioService.create(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('admin')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.crear)
@@ -59,9 +59,9 @@ export class UsuarioController {
     return this.usuarioService.createAdmin(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('perfil')
   async getPerfil(@GetUser('id') id: string) {
     const usuario = await this.usuarioService.findOne(id);
@@ -72,25 +72,25 @@ export class UsuarioController {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('perfil')
   updatePerfil(@GetUser('id') id: string, @Body() dto: UpdateUsuarioDto) {
     return this.usuarioService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('perfil/password')
   changePassword(@GetUser('id') id: string, @Body() dto: ChangePasswordDto) {
     return this.usuarioService.changePassword(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   findAll(
@@ -109,27 +109,27 @@ export class UsuarioController {
     return this.usuarioService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('minimos')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   findAllMinimal() {
     return this.usuarioService.findAllMinimal();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.usuarios.ver)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   update(
@@ -139,9 +139,9 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/admin')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -152,9 +152,9 @@ export class UsuarioController {
     return this.usuarioService.updateAdmin(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/activar')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   updateStatus(
@@ -164,9 +164,9 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/rol')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   updateRol(
@@ -176,9 +176,9 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/password')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   updatePassword(
@@ -188,18 +188,18 @@ export class UsuarioController {
     return this.usuarioService.resetPassword(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.usuarios.eliminar)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.remove(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   addAdditionalPermission(
@@ -209,9 +209,9 @@ export class UsuarioController {
     return this.usuarioService.addAdditionalPermission(id, permisoId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   removeAdditionalPermission(
@@ -221,9 +221,9 @@ export class UsuarioController {
     return this.usuarioService.removeAdditionalPermission(id, permisoId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   addExcludedPermission(
@@ -233,9 +233,9 @@ export class UsuarioController {
     return this.usuarioService.addExcludedPermission(id, permisoId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
   removeExcludedPermission(

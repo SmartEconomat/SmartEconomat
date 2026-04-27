@@ -33,25 +33,25 @@ import { Alergeno } from '../../producto/enums/producto.enums';
  */
 @Injectable()
 export class RecetaService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly recetaRepository: RecetaRepository,
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(createRecetaDto: CreateRecetaDto): Promise<Receta> {
     const receta = await this.recetaRepository.create(createRecetaDto);
     return this.recalcularCostes(receta.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -59,9 +59,9 @@ export class RecetaService {
     return this.recetaRepository.findAllPaginated(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id, userRole);
 
@@ -72,26 +72,26 @@ export class RecetaService {
     return receta;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, updateRecetaDto: UpdateRecetaDto): Promise<Receta> {
     await this.findOne(id);
     await this.recetaRepository.update(id, updateRecetaDto);
     return this.recalcularCostes(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.recetaRepository.remove(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async duplicate(duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
     return this.recetaRepository.duplicate(
       duplicateRecetaDto.sourceId,
@@ -99,9 +99,9 @@ export class RecetaService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getDetalle(id: string): Promise<DetalleRecetaDto> {
     const receta = await this.recetaRepository.findById(id);
 
@@ -164,9 +164,9 @@ export class RecetaService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async calcularEscandallo(id: string): Promise<RecetaCostResponseDto> {
     const receta = await this.recetaRepository.findById(id);
 
@@ -203,9 +203,9 @@ export class RecetaService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async calculatePreviewCost(
     dto: RecetaPreviewCostDto
   ): Promise<RecetaCostResponseDto> {
@@ -300,9 +300,9 @@ export class RecetaService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cocinar(id: string, dto: CocinarRecetaDto): Promise<void> {
     const cantidadRecetas = dto.cantidad || 1;
     const receta = await this.recetaRepository.findById(id);
@@ -367,7 +367,9 @@ export class RecetaService {
             productoProveedor: inv.productoProveedor,
             entidad: 'Receta',
             entidadId: id,
-            descripcion: 'Elaboración de receta: ' + receta.nombre,
+            descripcion: I18nHelper.translate('receta.movimiento.descripcion', {
+              nombre: receta.nombre,
+            }),
           });
           movimientos.push(movimiento);
         }
@@ -378,9 +380,9 @@ export class RecetaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async recalcularCostes(id: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id);
 

@@ -30,9 +30,9 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
  */
 @Injectable()
 export class UsuarioService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly usuarioRepo: UsuarioRepository,
     @InjectDataSource()
@@ -42,9 +42,9 @@ export class UsuarioService {
     private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   create(dto: CreateUsuarioDto) {
     return this.usuarioRepo.createUsuario({
       ...dto,
@@ -52,9 +52,9 @@ export class UsuarioService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createAdmin(dto: AdminCreateUsuarioDto) {
     const savedUserId = await this.dataSource.transaction(async (manager) => {
       const { aula, cial, ...userData } = dto;
@@ -101,23 +101,23 @@ export class UsuarioService {
     return this.findOne(savedUserId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   findAll(query: PaginationQueryDto, userRole?: string) {
     return this.usuarioRepo.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   findAllMinimal() {
     return this.usuarioRepo.findAllMinimal();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string) {
     const usuario = await this.usuarioRepo.findById(id);
     if (!usuario) {
@@ -126,16 +126,16 @@ export class UsuarioService {
     return usuario;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   update(id: string, dto: Partial<Usuario>) {
     return this.usuarioRepo.updateUsuario(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async updateAdmin(id: string, dto: AdminUpdateUsuarioDto) {
     const usuario = await this.findOne(id);
     if (!usuario) {
@@ -145,9 +145,9 @@ export class UsuarioService {
     return this.usuarioRepo.updateUsuario(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const usuario = await this.usuarioRepo.findByIdWithPassword(userId);
     if (!usuario) throw new NotFoundException();
@@ -164,9 +164,9 @@ export class UsuarioService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async resetPassword(id: string, dto: ResetPasswordDto) {
     const usuario = await this.findOne(id);
 
@@ -182,16 +182,16 @@ export class UsuarioService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string) {
     return this.usuarioRepo.deleteUsuario(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async addAdditionalPermission(userId: string, permisoId: string) {
     const usuario = await this.usuarioRepo.findById(userId);
     if (!usuario) throw new NotFoundException();
@@ -213,9 +213,9 @@ export class UsuarioService {
     return this.findOne(userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async removeAdditionalPermission(userId: string, permisoId: string) {
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },
@@ -231,9 +231,9 @@ export class UsuarioService {
     return this.findOne(userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async addExcludedPermission(userId: string, permisoId: string) {
     const usuario = await this.usuarioRepo.findById(userId);
     if (!usuario) throw new NotFoundException();
@@ -255,9 +255,9 @@ export class UsuarioService {
     return this.findOne(userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async removeExcludedPermission(userId: string, permisoId: string) {
     const basicUser = await this.usuarioRepo.repo.findOne({
       where: { id: userId },
@@ -273,9 +273,9 @@ export class UsuarioService {
     return { success: true };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getUserPermissions(userId: string): Promise<string[]> {
     return this.authPermissionsService.getUserPermissions(userId);
   }

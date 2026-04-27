@@ -6,14 +6,14 @@ import { AppService } from './app.service';
  */
 @Controller()
 export class AppController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly appService: AppService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   getHello(): string {
     return this.appService.getHello();

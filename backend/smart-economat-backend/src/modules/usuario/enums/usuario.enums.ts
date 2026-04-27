@@ -10,3 +10,8 @@ export enum UserStatus {
   ACTIVE = 'ACTIVE',
   BLOCKED = 'BLOCKED',
 }
+
+export enum UserLanguage {
+  ES = 'es',
+  EN = 'en',
+}

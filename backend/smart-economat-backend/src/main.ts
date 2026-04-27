@@ -36,7 +36,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('SmartEconomat API')
-    .setDescription('API para la gestión de economato y stock')
+    .setDescription('API for economat and stock management')
     .setVersion('1.0')
     .addTag('SmartEconomat')
     .build();

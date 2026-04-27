@@ -70,10 +70,7 @@ import { formatPedidoId } from '../features/pedidos/utils/pedidoFormatters';
 import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
 import { DownloadService } from '../services/download.service';
 import { useToast } from '../store/toast.hooks';
-import {
-  formatLocalizedDate,
-  formatLocalizedTime,
-} from '../utils/intlFormat';
+import { formatLocalizedDate, formatLocalizedTime } from '../utils/intlFormat';
 
 interface PedidoActionTarget {
   id: string;
@@ -775,9 +772,7 @@ const Pedidos: React.FC = () => {
             message={t('pedidos.confirm.eliminarMensaje', {
               fecha:
                 itemToDelete?.fechaPedido &&
-                !Number.isNaN(
-                  new Date(itemToDelete.fechaPedido).getTime()
-                )
+                !Number.isNaN(new Date(itemToDelete.fechaPedido).getTime())
                   ? formatLocalizedDate(itemToDelete.fechaPedido)
                   : '—',
             })}
@@ -943,20 +938,18 @@ const Pedidos: React.FC = () => {
             onClose={() => setIsRecoveryOpen(false)}
             onConfirm={handleRecoverDraft}
             title={t('pedidos.recovery.titulo')}
-            message={
-              t('pedidos.recovery.mensaje', {
-                fecha:
-                  draft?.updatedAt &&
-                  !Number.isNaN(new Date(draft.updatedAt).getTime())
-                    ? formatLocalizedDate(draft.updatedAt)
-                    : '...',
-                hora:
-                  draft?.updatedAt &&
-                  !Number.isNaN(new Date(draft.updatedAt).getTime())
-                    ? formatLocalizedTime(draft.updatedAt)
-                    : '...',
-              })
-            }
+            message={t('pedidos.recovery.mensaje', {
+              fecha:
+                draft?.updatedAt &&
+                !Number.isNaN(new Date(draft.updatedAt).getTime())
+                  ? formatLocalizedDate(draft.updatedAt)
+                  : '...',
+              hora:
+                draft?.updatedAt &&
+                !Number.isNaN(new Date(draft.updatedAt).getTime())
+                  ? formatLocalizedTime(draft.updatedAt)
+                  : '...',
+            })}
             confirmText={t('pedidos.recovery.confirmar')}
             cancelText={t('pedidos.recovery.cancelar')}
             confirmColor="primary"
@@ -971,15 +964,13 @@ const Pedidos: React.FC = () => {
               openNewPedidoForm();
             }}
             title={t('pedidos.borradorExistente.titulo')}
-            message={
-              t('pedidos.borradorExistente.mensaje', {
-                fecha:
-                  draft?.updatedAt &&
-                  !Number.isNaN(new Date(draft.updatedAt).getTime())
-                    ? formatLocalizedDate(draft.updatedAt)
-                    : '...',
-              })
-            }
+            message={t('pedidos.borradorExistente.mensaje', {
+              fecha:
+                draft?.updatedAt &&
+                !Number.isNaN(new Date(draft.updatedAt).getTime())
+                  ? formatLocalizedDate(draft.updatedAt)
+                  : '...',
+            })}
             confirmText={t('pedidos.borradorExistente.confirmar')}
             cancelText={t('pedidos.borradorExistente.cancelar')}
             confirmColor="warning"

@@ -23,9 +23,9 @@ import {
  */
 @Injectable()
 export class PlantillasRolesService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(PlantillaRol)
     private readonly plantillaRepo: Repository<PlantillaRol>,
@@ -36,9 +36,9 @@ export class PlantillasRolesService {
     private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreatePlantillaDto): Promise<PlantillaRol> {
     const nombre = dto.nombre.trim();
 
@@ -64,9 +64,9 @@ export class PlantillasRolesService {
     return this.findOne(saved.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(): Promise<PlantillaRol[]> {
     return this.plantillaRepo.find({
       relations: ['permisos', 'plantillaPadre'],
@@ -74,9 +74,9 @@ export class PlantillasRolesService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<PlantillaRol> {
     const plantilla = await this.plantillaRepo.findOne({
       where: { id },
@@ -92,15 +92,15 @@ export class PlantillasRolesService {
     return plantilla;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, dto: UpdatePlantillaDto): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
 
     if (!plantilla.esEditable) {
       throw new BadRequestException(
-        I18nHelper.getError('ESTA_PLANTILLA_NO_ES_EDITABLE')
+        I18nHelper.getError('TEMPLATE_NOT_EDITABLE')
       );
     }
 
@@ -145,9 +145,9 @@ export class PlantillasRolesService {
     return this.findOne(updated.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async updatePermisos(
     id: string,
     permisoIds: string[]
@@ -167,9 +167,9 @@ export class PlantillasRolesService {
     return this.findOne(plantilla.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async duplicateTemplate(id: string, nombre?: string): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
 
@@ -193,15 +193,15 @@ export class PlantillasRolesService {
     return this.findOne(saved.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async setTemplateActivo(id: string, activo: boolean): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
 
     if (!plantilla.esEditable) {
       throw new BadRequestException(
-        I18nHelper.getError('ESTA_PLANTILLA_NO_ES_EDITABLE')
+        I18nHelper.getError('TEMPLATE_NOT_EDITABLE')
       );
     }
 
@@ -210,21 +210,21 @@ export class PlantillasRolesService {
     return this.findOne(updated.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly PROTECTED_TEMPLATE_NAMES =
     SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly IMMUTABLE_PERMISSION_TEMPLATE_NAMES =
     SYSTEM_ROLE_TEMPLATE_PERMISSION_LOCKED_NAMES;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private assertTemplatePermissionMutationAllowed(
     plantilla: PlantillaRol
   ): void {
@@ -239,9 +239,9 @@ export class PlantillasRolesService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const plantilla = await this.findOne(id);
 
@@ -276,9 +276,9 @@ export class PlantillasRolesService {
     await this.plantillaRepo.softDelete(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createRolFromPlantilla(
     plantillaId: string,
     nombreRol: string,
@@ -309,9 +309,9 @@ export class PlantillasRolesService {
     return savedRol;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getPermisosEfectivos(id: string): Promise<{
     permisosDirectos: Permiso[];
     permisosHeredados: Permiso[];
@@ -342,9 +342,9 @@ export class PlantillasRolesService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getPermisosWithInheritance(
     plantillaId: string,
     visited = new Set<string>()
@@ -371,9 +371,9 @@ export class PlantillasRolesService {
     return Array.from(permisosIds);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolvePermisos(permisoIds: string[]): Promise<Permiso[]> {
     if (permisoIds.length === 0) {
       return [];
@@ -386,16 +386,16 @@ export class PlantillasRolesService {
 
     if (permisos.length !== ids.length) {
       throw new BadRequestException(
-        I18nHelper.getError('ALGUNOS_PERMISOS_NO_EXISTEN')
+        I18nHelper.getError('SOME_PERMISSIONS_NOT_FOUND')
       );
     }
 
     return permisos;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async assertNombreDisponible(
     nombre: string,
     plantillaId?: string
@@ -412,9 +412,9 @@ export class PlantillasRolesService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async assertParentChain(
     currentTemplateId: string | undefined,
     parentId: string | undefined
@@ -446,7 +446,7 @@ export class PlantillasRolesService {
 
       if (!parent) {
         throw new NotFoundException(
-          I18nHelper.getError('PLANTILLA_PADRE_NO_ENCONTRADA')
+          I18nHelper.getError('PARENT_TEMPLATE_NOT_FOUND')
         );
       }
 
@@ -454,9 +454,9 @@ export class PlantillasRolesService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async collectTemplateAndDescendantsIds(
     rootTemplateId: string
   ): Promise<string[]> {
@@ -484,9 +484,9 @@ export class PlantillasRolesService {
     return Array.from(discovered);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async syncRolesForTemplateIds(templateIds: string[]): Promise<void> {
     let updatedRolesCount = 0;
 
@@ -499,9 +499,9 @@ export class PlantillasRolesService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async syncLinkedRolesFromTemplate(
     templateId: string
   ): Promise<number> {
@@ -530,9 +530,9 @@ export class PlantillasRolesService {
     return roles.length;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async buildDuplicateName(baseName: string): Promise<string> {
     let sequence = 1;
 

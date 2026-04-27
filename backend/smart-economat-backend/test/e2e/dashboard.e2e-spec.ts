@@ -27,9 +27,9 @@ describe('DashboardController (e2e)', () => {
   });
 
   describe('Estadísticas', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')
@@ -43,9 +43,9 @@ describe('DashboardController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('GET /api/v1/dashboard/stats - Debe fallar sin token (401)', () => {
       return request(app.getHttpServer() as string)
         .get('/api/v1/dashboard/stats')

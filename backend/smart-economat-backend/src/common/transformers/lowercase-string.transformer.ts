@@ -13,9 +13,9 @@ type TransformValueParams = Pick<TransformFnParams, 'value'>;
  * Documentación en español.
  */
 export class LowercaseStringTransformer {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(params: TransformValueParams): string | undefined {
     const value = params.value as string;
     if (value == null) return value;

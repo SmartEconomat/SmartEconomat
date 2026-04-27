@@ -25,9 +25,9 @@ import { useTranslation } from 'react-i18next';
 interface Props {
   open: boolean;
   onClose: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChanged: () => void;
 }
 
@@ -41,9 +41,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const toast = useToast();
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadUbicaciones = async () => {
     setLoading(true);
     try {
@@ -66,9 +66,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleAdd = async () => {
     if (!newNombre.trim()) return;
     try {
@@ -83,9 +83,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDelete = async (id: string) => {
     try {
       await UbicacionService.remove(id);

@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
 import * as express from 'express';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
@@ -40,21 +41,21 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 /**
  * Documentación en español.
  */
-@ApiTags('Recetas')
+@ApiTags('docs.TAG_RECETAS')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recetas')
 export class RecetaController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly recetaService: RecetaService,
     private readonly recetaPdfService: RecetaPdfService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.recetas.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -62,9 +63,9 @@ export class RecetaController {
     return this.recetaService.create(createRecetaDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('duplicate')
   @RequirePermissions(PERMISSIONS.recetas.duplicar)
   @HttpCode(HttpStatus.CREATED)
@@ -72,9 +73,9 @@ export class RecetaController {
     return this.recetaService.duplicate(duplicateRecetaDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   findAll(
@@ -96,9 +97,9 @@ export class RecetaController {
     return this.recetaService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   findOne(
@@ -109,9 +110,9 @@ export class RecetaController {
     return this.recetaService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id/detalle')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   getDetalle(
@@ -120,12 +121,12 @@ export class RecetaController {
     return this.recetaService.getDetalle(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id/escandallo')
   @RequirePermissions(PERMISSIONS.recetas.ver)
-  @ApiOperation({ summary: 'Calcular el escandallo (coste) de una receta' })
+  @ApiOperation({ summary: 'docs.OP_CALCULAR_ESCANDALLO' })
   @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: RecetaCostResponseDto })
   @ApiResponse({ status: 404, description: 'docs.RECETA_NO_ENCONTRADA' })
@@ -135,9 +136,9 @@ export class RecetaController {
     return this.recetaService.calcularEscandallo(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/cocinar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.OK)
@@ -148,14 +149,14 @@ export class RecetaController {
     return this.recetaService.cocinar(id, cocinarRecetaDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('calculate-preview')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Vista previa del coste de una receta antes de crearla/editarla',
+    summary: 'docs.OP_CALCULATE_PREVIEW',
   })
   calculatePreviewCost(
     @Body() dto: RecetaPreviewCostDto
@@ -163,54 +164,74 @@ export class RecetaController {
     return this.recetaService.calculatePreviewCost(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('export/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
-  @ApiOperation({ summary: 'Generar PDF de varias recetas' })
+  @ApiOperation({ summary: 'docs.OP_EXPORT_MULTIPLE_PDF' })
   async exportMultiplePdf(
     @Query('ids') ids: string | string[],
     @Query('includeImage') includeImage: string | undefined,
-    @Res() res: express.Response
+    @Query('lang') lang: string | undefined,
+    @Res() res: express.Response,
+    @Req() req: { user?: { idioma?: string } }
   ): Promise<void> {
     const idArray = Array.isArray(ids)
       ? ids
       : ids?.split(',').filter((id) => id.length > 0) || [];
+
     if (idArray.length === 0) {
       throw new BadRequestException(
-        'Debe proporcionar al menos un ID de receta.'
+        I18nHelper.getError('MIN_ONE_RECIPE_ID_REQUIRED')
       );
     }
-    await this.recetaPdfService.generatePdf(idArray, res, {
-      includeImage: includeImage !== 'false',
-    });
+
+    const userLang = lang || req.user?.idioma || 'es';
+
+    await this.recetaPdfService.generatePdf(
+      idArray,
+      res,
+      {
+        includeImage: includeImage !== 'false',
+      },
+      userLang
+    );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
-  @ApiOperation({ summary: 'Generar PDF de una receta' })
+  @ApiOperation({ summary: 'docs.OP_EXPORT_SINGLE_PDF' })
   async exportSinglePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query('includeImage') includeImage: string | undefined,
-    @Res() res: express.Response
+    @Query('lang') lang: string | undefined,
+    @Res() res: express.Response,
+    @Req() req: { user?: { idioma?: string } }
   ): Promise<void> {
-    await this.recetaPdfService.generatePdf([id], res, {
-      includeImage: includeImage !== 'false',
-    });
+    const userLang = lang || req.user?.idioma || 'es';
+
+    await this.recetaPdfService.generatePdf(
+      [id],
+      res,
+      {
+        includeImage: includeImage !== 'false',
+      },
+      userLang
+    );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/recalcular-costes')
   @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Recalcular y guardar el coste unitario estimado de la receta',
+    summary: 'docs.OP_RECALCULAR_COSTES',
   })
   @ApiParam({ name: 'id', description: 'docs.UUID_DE_LA_RECETA' })
   @ApiResponse({ status: 200, type: Receta })
@@ -218,9 +239,9 @@ export class RecetaController {
     return this.recetaService.recalcularCostes(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recetas.editar)
   async update(
@@ -230,9 +251,9 @@ export class RecetaController {
     return this.recetaService.update(id, updateRecetaDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

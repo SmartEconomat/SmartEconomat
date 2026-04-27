@@ -24,9 +24,9 @@ import { RecepcionDraftRecord } from '../interfaces/recepcion-draft-record.inter
 export class RecepcionDraftService implements OnModuleDestroy {
   private readonly logger = new Logger(RecepcionDraftService.name);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(RecepcionDraft)
     private readonly recepcionDraftRepository: Repository<RecepcionDraft>,
@@ -34,9 +34,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     private readonly redisClient: Redis
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async onModuleDestroy(): Promise<void> {
     try {
       if (this.redisClient.status !== 'end') {
@@ -47,9 +47,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async upsertDraft(
     userId: string,
     dto: UpsertRecepcionDraftDto
@@ -109,9 +109,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     return nextDraft;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getLatestDraft(userId: string): Promise<RecepcionDraftRecord | null> {
     const fromCache = await this.getDraftFromCache(userId);
     if (fromCache) {
@@ -133,9 +133,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     return fromDatabase;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async clearDraft(userId: string): Promise<void> {
     await Promise.allSettled([
       this.deleteDraftFromCache(userId),
@@ -143,23 +143,23 @@ export class RecepcionDraftService implements OnModuleDestroy {
     ]);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildCacheKey(userId: string): string {
     return `${RECEPCION_DRAFT_CACHE_PREFIX}${userId}`;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private isExpired(expiresAt: string | null): boolean {
     return Boolean(expiresAt && new Date(expiresAt).getTime() <= Date.now());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getDraftFromCache(
     userId: string
   ): Promise<RecepcionDraftRecord | null> {
@@ -190,9 +190,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async saveDraftToCache(draft: RecepcionDraftRecord): Promise<void> {
     await this.redisClient.set(
       this.buildCacheKey(draft.userId),
@@ -202,9 +202,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async deleteDraftFromCache(userId: string): Promise<void> {
     try {
       await this.redisClient.del(this.buildCacheKey(userId));
@@ -216,9 +216,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getDraftFromDatabase(
     userId: string
   ): Promise<RecepcionDraftRecord | null> {
@@ -242,9 +242,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     return this.mapEntityToRecord(draftEntity, 'database');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async persistDraftToDatabase(
     draft: RecepcionDraftRecord
   ): Promise<RecepcionDraftRecord> {
@@ -276,9 +276,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
     return this.mapEntityToRecord(saved, 'database');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private mapEntityToRecord(
     entity: RecepcionDraft,
     source: 'redis' | 'database'

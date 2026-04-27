@@ -30,9 +30,9 @@ export class AuthPermissionsService {
     private readonly cacheManager: Cache
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getUserPermissions(userId: string): Promise<string[]> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
 
@@ -64,9 +64,9 @@ export class AuthPermissionsService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async loadUserPermissionsFromDB(userId: string): Promise<string[]> {
     const usuario = await this.usuarioRepo.findOne({
       where: { id: userId, activo: true },
@@ -146,9 +146,9 @@ export class AuthPermissionsService {
     return result;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async userHasAllPermissions(
     userId: string,
     requiredPermissions: string[]
@@ -163,9 +163,9 @@ export class AuthPermissionsService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async userHasAnyPermission(
     userId: string,
     requiredPermissions: string[]
@@ -180,9 +180,9 @@ export class AuthPermissionsService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async invalidateUserCache(userId: string): Promise<void> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
     try {
@@ -196,9 +196,9 @@ export class AuthPermissionsService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async invalidateUsersCache(userIds: string[]): Promise<void> {
     try {
       await Promise.all(
@@ -213,9 +213,9 @@ export class AuthPermissionsService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async invalidateAllCache(): Promise<void> {
     try {
       const cache = this.cacheManager as unknown as {
@@ -233,9 +233,9 @@ export class AuthPermissionsService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async preloadUserPermissions(userId: string): Promise<string[]> {
     const permisos = await this.loadUserPermissionsFromDB(userId);
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;

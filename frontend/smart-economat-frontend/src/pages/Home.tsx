@@ -226,7 +226,14 @@ const Home: React.FC = () => {
     const saved = localStorage.getItem('dashboard_visible_metrics');
     return saved
       ? JSON.parse(saved)
-      : ['productos', 'pedidos', 'incidencias', 'stock', 'proveedores', 'notificaciones'];
+      : [
+          'productos',
+          'pedidos',
+          'incidencias',
+          'stock',
+          'proveedores',
+          'notificaciones',
+        ];
   });
 
   const handleUpdateVisibleMetrics = (newMetrics: string[]) => {
@@ -273,9 +280,7 @@ const Home: React.FC = () => {
     } catch (err: unknown) {
       console.error('Error cargando datos del dashboard:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : t('dashboard.errors.desconocido')
+        err instanceof Error ? err.message : t('dashboard.errors.desconocido')
       );
     } finally {
       setIsLoading(false);
@@ -370,7 +375,9 @@ const Home: React.FC = () => {
       {/* Header */}
       <Box id="dashboard-welcome" mb={4}>
         <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
-          {t('dashboard.greeting', { name: user?.name || t('dashboard.admin') })}{' '}
+          {t('dashboard.greeting', {
+            name: user?.name || t('dashboard.admin'),
+          })}{' '}
           <span role="img" aria-label="emoji saludo">
             👋
           </span>
@@ -897,7 +904,9 @@ const Home: React.FC = () => {
             onSubmit={handleSavePedidoQuickAction}
             isSubmitting={isSavingPedido}
             requireConfirmation
-            confirmationMessage={t('dashboard.quickActions.confirmarNuevoPedido')}
+            confirmationMessage={t(
+              'dashboard.quickActions.confirmarNuevoPedido'
+            )}
           />
 
           <RecetaFormModal

@@ -12,9 +12,7 @@ export class CreateUbicacionDto {
     example: 'Almacen A',
   })
   @IsUnique(Ubicacion, 'nombre', {
-    message: i18nValidationMessage(
-      'validation.YA_EXISTE_UNA_UBICACI_N_CON_ESTE_NOMBRE'
-    ),
+    message: i18nValidationMessage('validation.LOCATION_NAME_ALREADY_EXISTS'),
   })
   nombre: string;
 

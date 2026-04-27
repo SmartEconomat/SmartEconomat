@@ -15,9 +15,9 @@ import * as crypto from 'crypto';
 export class CsrfMiddleware implements NestMiddleware {
   private readonly logger = new Logger(CsrfMiddleware.name);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   use(req: Request, res: Response, next: NextFunction) {
     const tokenInCookie = req.cookies['XSRF-TOKEN'];
 

@@ -5,7 +5,7 @@ import {
   consumeStateValue,
   getStateArray,
   pickRequiredStateValue,
-  pushStateValue,
+  removeStateValue,
 } from './massive.state';
 
 export function pickIdForRoute(
@@ -23,31 +23,55 @@ export function pickIdForRoute(
     return pickRequiredStateValue(context, key, iteration);
   };
 
-  if (path.startsWith('/admin/users')) {
-    const adminRouteTargetIds = getStateArray(
-      context,
-      'seedAdminRouteTargetUserIds'
-    );
-    if (adminRouteTargetIds.length > 0) {
-      return adminRouteTargetIds[iteration % adminRouteTargetIds.length];
-    }
-    return pick('usuarioIds');
-  }
-  if (path.startsWith('/usuarios')) {
-    const mutableUserIds = getStateArray(context, 'seedMutableUserIds');
-    if (mutableUserIds.length > 0) {
+  if (path.startsWith('/admin/users') || path.startsWith('/usuarios')) {
+    const protectedIds = getStateArray(context, 'seedProtectedUserIds');
+    const pickFiltered = (key: string): string => {
+      const allIds = getStateArray(context, key);
+      const safeIds = allIds.filter((id) => !protectedIds.includes(id));
+
+      if (safeIds.length === 0) {
+        return pick(key);
+      }
+
       if (consume) {
-        const consumed = consumeStateValue(context, 'seedMutableUserIds', '');
+        const idToConsume = safeIds[0] || '';
+        if (idToConsume) {
+          removeStateValue(context, key, idToConsume);
+        }
+        return idToConsume;
+      }
+
+      return safeIds[iteration % safeIds.length] || '';
+    };
+
+    if (path.startsWith('/admin/users')) {
+      const adminRouteTargetIds = getStateArray(
+        context,
+        'seedAdminRouteTargetUserIds'
+      );
+      if (adminRouteTargetIds.length > 0) {
+        return adminRouteTargetIds[iteration % adminRouteTargetIds.length];
+      }
+      return pickFiltered('usuarioIds');
+    }
+
+    const mutableUserIds = getStateArray(context, 'seedMutableUserIds');
+    const safeMutableIds = mutableUserIds.filter(
+      (id) => !protectedIds.includes(id)
+    );
+
+    if (safeMutableIds.length > 0) {
+      if (consume) {
+        const consumed = safeMutableIds[0] || '';
         if (consumed) {
-          pushStateValue(context, 'seedMutableUserIds', consumed);
+          removeStateValue(context, 'seedMutableUserIds', consumed);
           return consumed;
         }
       }
-
-      return mutableUserIds[iteration % mutableUserIds.length];
+      return safeMutableIds[iteration % safeMutableIds.length] || '';
     }
 
-    return pick('usuarioIds');
+    return pickFiltered('usuarioIds');
   }
   if (path.startsWith('/profesores/admin-slots')) {
     if (consume) {

@@ -6,7 +6,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PedidoService } from '../../../src/modules/pedido/service/pedido.service';
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
-import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubicacion.entity';
 import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
 import { EstadoVisualProducto } from '../../../src/modules/recepcion/enums/estado-visual.enum';
 
@@ -30,7 +29,9 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
         findOne: jest.fn(),
         find: jest.fn().mockResolvedValue([]),
         create: jest.fn((_, data) => data),
-        save: jest.fn((data) => Promise.resolve({ id: 'generated-id', ...data })),
+        save: jest.fn((data) =>
+          Promise.resolve({ id: 'generated-id', ...data })
+        ),
       },
     };
 
@@ -53,42 +54,47 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
 
     service = module.get<RecepcionStockService>(RecepcionStockService);
 
-    const mockPedido = { 
-      id: 'ped-1', 
+    const mockPedido = {
+      id: 'ped-1',
       estado: EstadoPedido.POR_RECEPCIONAR,
       proveedor: { id: 'prov-1', nombre: 'Prov 1' },
       pedidoProductos: [
-        { 
-          id: 'pp-1', 
-          cantidad: 10, 
+        {
+          id: 'pp-1',
+          cantidad: 10,
           precioUnitario: 5,
-          productoProveedor: { 
-            id: 'pprov-1', 
-            productoProveedorId: 'pprov-1', 
+          productoProveedorId: 'pprov-1',
+          productoProveedor: {
+            id: 'pprov-1',
+            productoProveedorId: 'pprov-1',
             precioUnitario: 5,
-            producto: { nombre: 'Prod 1' }
-          } 
+            producto: { nombre: 'Prod 1' },
+          },
         },
-        { 
-          id: 'pp-2', 
-          cantidad: 10, 
+        {
+          id: 'pp-2',
+          cantidad: 10,
           precioUnitario: 10,
-          productoProveedor: { 
-            id: 'pprov-1', 
-            productoProveedorId: 'pprov-1', 
+          productoProveedorId: 'pprov-1',
+          productoProveedor: {
+            id: 'pprov-1',
+            productoProveedorId: 'pprov-1',
             precioUnitario: 10,
-            producto: { nombre: 'Prod 1' }
-          } 
-        }
-      ]
+            producto: { nombre: 'Prod 1' },
+          },
+        },
+      ],
     };
 
-    mockDataSource.manager.findOne.mockResolvedValue({ id: 'user-1' });
-    
-    // Forzamos el retorno del pedido mockeado para cualquier llamada a findOne que parezca un pedido
+    mockDataSource.manager.findOne.mockImplementation((entity: any) => {
+      if (entity === Usuario) return Promise.resolve({ id: 'user-1' });
+      if (entity === Pedido) return Promise.resolve(mockPedido);
+      return Promise.resolve(null);
+    });
+
     queryRunner.manager.findOne.mockResolvedValue({
       ...mockPedido,
-      estado: EstadoPedido.POR_RECEPCIONAR
+      estado: EstadoPedido.POR_RECEPCIONAR,
     });
   });
 
@@ -97,13 +103,25 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
       pedidoId: 'ped-1',
       nAlbaran: 'ALB-AGG-001',
       productosRecibidos: [
-        { pedidoProductoId: 'pp-1', cantidadRecibida: 10, estadoVisual: EstadoVisualProducto.OPTIMO },
-        { pedidoProductoId: 'pp-2', cantidadRecibida: 10, estadoVisual: EstadoVisualProducto.OPTIMO },
+        {
+          pedidoProductoId: 'pp-1',
+          cantidadRecibida: 10,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
+        {
+          pedidoProductoId: 'pp-2',
+          cantidadRecibida: 10,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
       ],
     };
 
-    jest.spyOn(service as any, 'actualizarEstadoPedido').mockResolvedValue(EstadoPedido.RECEPCIONADO);
-    jest.spyOn(service as any, 'crearIncidenciaConLineas' as any).mockResolvedValue({ id: 'inci-1' });
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.RECEPCIONADO);
+    jest
+      .spyOn(service as any, 'crearIncidenciaConLineas' as any)
+      .mockResolvedValue({ id: 'inci-1' });
 
     await service.procesarRecepcionMasiva(dto as any, 'user-1');
 

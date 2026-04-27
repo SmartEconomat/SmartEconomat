@@ -32,6 +32,6 @@ export function languageDetector(
   next: NextFunction
 ): void {
   const lang = resolveLanguage(req);
-  i18next.changeLanguage(lang);
+  void i18next.changeLanguage(lang);
   next();
 }

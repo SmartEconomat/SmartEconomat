@@ -18,9 +18,9 @@ describe('AppController (e2e)', () => {
     /* app compartida, no cerrar */
   });
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   it('/ (GET)', () => {
     return request(app.getHttpServer() as string)
       .get('/api/v1')

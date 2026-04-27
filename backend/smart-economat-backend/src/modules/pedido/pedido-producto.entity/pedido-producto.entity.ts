@@ -16,32 +16,32 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Check(`"cantidad" > 0`)
 @Check(`"precio_unitario" >= 0`)
 export class PedidoProducto extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   hasLinkedMovements?: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'pedido_id' })
   pedidoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'pedido_usuario_linea_id', nullable: true })
   pedidoUsuarioLineaId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Pedido, (pedido) => pedido.pedidoProductos, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -49,9 +49,9 @@ export class PedidoProducto extends BaseEntity {
   @JoinColumn({ name: 'pedido_id' })
   pedido!: Relation<Pedido>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.pedidoProductos, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -66,9 +66,9 @@ export class PedidoProducto extends BaseEntity {
   @JoinColumn({ name: 'pedido_usuario_linea_id' })
   pedidoUsuarioLinea?: Relation<PedidoUsuarioLinea>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -77,9 +77,9 @@ export class PedidoProducto extends BaseEntity {
   })
   cantidad!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -89,17 +89,17 @@ export class PedidoProducto extends BaseEntity {
   })
   precioUnitario!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 
   /* --- Métodos de Dominio --- */
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   get subtotal(): number {
     return Number(this.cantidad) * Number(this.precioUnitario);
   }

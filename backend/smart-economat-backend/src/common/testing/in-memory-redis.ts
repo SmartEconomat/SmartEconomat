@@ -6,13 +6,13 @@
  * Documentación en español.
  */
 type StoredValue = {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   expiresAt?: number;
 };
 
@@ -25,19 +25,19 @@ type RedisSetMode = 'EX';
  * Documentación en español.
  */
 export type InMemoryRedisLike = {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   status: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   get(key: string): Promise<string | null>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   set(
     key: string,
     value: string,
@@ -45,19 +45,19 @@ export type InMemoryRedisLike = {
     durationSeconds?: number
   ): Promise<'OK'>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   del(key: string): Promise<number>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   quit(): Promise<'OK'>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   disconnect(reconnect?: boolean): void;
 };
 
@@ -67,9 +67,9 @@ export type InMemoryRedisLike = {
 export function createInMemoryRedisClient(): InMemoryRedisLike {
   const store = new Map<string, StoredValue>();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const purgeIfExpired = (key: string): void => {
     const entry = store.get(key);
     if (!entry) return;

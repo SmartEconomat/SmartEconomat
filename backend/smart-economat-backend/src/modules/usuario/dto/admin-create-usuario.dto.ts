@@ -8,9 +8,15 @@ import {
   MaxLength,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { rolUsuario } from '../enums/usuario.enums';
+import { rolUsuario, UserLanguage } from '../enums/usuario.enums';
 
 export class AdminCreateUsuarioDto {
+  @IsOptional()
+  @IsEnum(UserLanguage, {
+    message: i18nValidationMessage('validation.IDIOMA_INVALIDO'),
+  })
+  idioma?: UserLanguage;
+
   @IsString({
     message: i18nValidationMessage(
       'validation.NOMBRE_COMPLETO_DEBE_SER_CADENA'
@@ -56,7 +62,7 @@ export class AdminCreateUsuarioDto {
   @IsEmail(
     {},
     {
-      message: i18nValidationMessage('validation.CORREO_ELECTRONICO_NO_VALIDO'),
+      message: i18nValidationMessage('validation.INVALID_EMAIL'),
     }
   )
   @MaxLength(255, {

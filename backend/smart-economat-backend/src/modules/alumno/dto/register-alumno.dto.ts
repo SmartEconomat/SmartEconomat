@@ -3,11 +3,14 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
+  IsEnum,
+  IsOptional,
   IsStrongPassword,
   Min,
   ValidateIf,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { UserLanguage } from '../../usuario/enums/usuario.enums';
 
 export class RegisterAlumnoDto {
   @Transform(({ value }): string =>
@@ -72,4 +75,8 @@ export class RegisterAlumnoDto {
   @IsString()
   @IsNotEmpty()
   cialProfesor?: string;
+
+  @IsOptional()
+  @IsEnum(UserLanguage)
+  idioma?: UserLanguage;
 }

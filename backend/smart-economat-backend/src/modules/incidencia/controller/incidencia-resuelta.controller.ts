@@ -33,16 +33,16 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')
 export class IncidenciaResuelaController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly incidenciaResuelaService: IncidenciaResuelaService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -50,9 +50,9 @@ export class IncidenciaResuelaController {
     return this.incidenciaResuelaService.create(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
@@ -63,9 +63,9 @@ export class IncidenciaResuelaController {
     return this.incidenciaResuelaService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
@@ -76,9 +76,9 @@ export class IncidenciaResuelaController {
     return this.incidenciaResuelaService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.incidencias.editar)
   update(
@@ -88,9 +88,9 @@ export class IncidenciaResuelaController {
     return this.incidenciaResuelaService.update(id, dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.incidencias.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

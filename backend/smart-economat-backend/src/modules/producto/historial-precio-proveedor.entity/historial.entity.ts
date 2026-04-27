@@ -12,15 +12,15 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Index(['fecha'])
 @Check(`"precio" > 0`)
 export class HistorialPrecio extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.historialPrecios, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -28,9 +28,9 @@ export class HistorialPrecio extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -40,9 +40,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   precio!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -52,9 +52,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   cantidad?: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 50,
@@ -63,9 +63,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   documentoOrigen?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'uuid',
     nullable: true,
@@ -73,9 +73,9 @@ export class HistorialPrecio extends BaseEntity {
   })
   recepcionId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',

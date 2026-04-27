@@ -20,6 +20,7 @@ import {
   TableRow,
   Tooltip,
   CircularProgress,
+  SelectChangeEvent,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -346,19 +347,18 @@ const Recetas: React.FC = () => {
       setTotalPages(recetasData.totalPages);
       setTotalItems(recetasData.total || recetasData.data.length);
     } catch (err: unknown) {
-      const message =
+      setError(
         err instanceof Error
           ? err.message
-          : 'Error desconocido al cargar recetas.';
-      setError(message);
+          : t('recetas.errors.cargaDesconocida')
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, sortBy, sortOrder]);
+  }, [page, pageSize, searchTerm, sortBy, sortOrder, t]);
 
   useEffect(() => {
     loadData();
-    // Cargar ubicaciones para el modal de preparación
     UbicacionService.findAll().then(setUbicaciones).catch(console.error);
   }, [loadData]);
 
@@ -373,9 +373,7 @@ const Recetas: React.FC = () => {
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('recetas.toast.errorEliminar');
+        err instanceof Error ? err.message : t('recetas.toast.errorEliminar');
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -399,9 +397,7 @@ const Recetas: React.FC = () => {
       setItemToEdit(null);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : t('recetas.toast.errorGuardar');
+        err instanceof Error ? err.message : t('recetas.toast.errorGuardar');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -437,7 +433,7 @@ const Recetas: React.FC = () => {
       });
       setIsExportDialogOpen(false);
     } catch {
-      // El error ya lo maneja el servicio
+      // Error handled by exportRecipesPdf internal toast
     } finally {
       setIsExportingPdf(false);
     }
@@ -445,7 +441,6 @@ const Recetas: React.FC = () => {
 
   const handleExportExcel = async () => {
     try {
-      // Si hay seleccionados exportamos solo esos, si no, todo lo filtrado (searchTerm)
       const ids = selectedIds.length > 0 ? selectedIds.join(',') : '';
       const query = new URLSearchParams({ searchTerm });
       if (ids) query.append('ids', ids);
@@ -458,7 +453,7 @@ const Recetas: React.FC = () => {
         }
       );
     } catch {
-      // Manejado
+      // Error handled by downloadFile internal toast
     }
   };
 
@@ -657,112 +652,121 @@ const Recetas: React.FC = () => {
 
   const columns: Column<Receta>[] = useMemo(
     () => [
-    {
-      id: 'nombre',
-      label: t('recetas.columns.nombre'),
-      sortable: true,
-      width: 350,
-      cellSx: { py: 2 },
-      render: (row) => (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <RecipeImagePreview
-            receta={row}
-            width={44}
-            height={44}
-            borderRadius={1.5}
-            iconSize={20}
-          />
-          <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
-            <Typography
-              variant="inherit"
-              sx={{
-                fontWeight: 400,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              noWrap
-            >
-              {row.nombre}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              noWrap
-              sx={{
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {row.unidadResultado
-                ? `${row.rendimiento ?? '—'} ${row.unidadResultado}`
-                : t(
-                    row.ingredientes?.length === 1
-                      ? 'recetas.listado.ingredientesCount_one'
-                      : 'recetas.listado.ingredientesCount_other',
-                    { count: row.ingredientes?.length ?? 0 }
-                  )}
-            </Typography>
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      id: 'dificultad',
-      label: t('recetas.columns.dificultad'),
-      render: (row) =>
-        row.dificultad ? (
-          <StatusChip status={row.dificultad} size="small" variant="outlined" />
-        ) : (
-          <span style={{ color: '#bbb' }}>—</span>
-        ),
-      sortable: true,
-      width: 120,
-      cellSx: { py: 2 },
-    },
-    {
-      id: 'tiempoPreparacion',
-      label: t('recetas.columns.tiempo'),
-      width: 140,
-      sortable: true,
-      render: (row) => {
-        const tiempoLabel = getTiempoPreparacionLabel(row);
-
-        return tiempoLabel ? (
+      {
+        id: 'nombre',
+        label: t('recetas.columns.nombre'),
+        sortable: true,
+        width: 350,
+        cellSx: { py: 2 },
+        render: (row) => (
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 0.5,
-              whiteSpace: 'nowrap',
+              gap: 1,
+              minWidth: 0,
+              overflow: 'hidden',
             }}
           >
-            <AccessTimeOutlinedIcon fontSize="inherit" sx={{ opacity: 0.6 }} />
-            {tiempoLabel}
+            <RecipeImagePreview
+              receta={row}
+              width={44}
+              height={44}
+              borderRadius={1.5}
+              iconSize={20}
+            />
+            <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
+              <Typography
+                variant="inherit"
+                sx={{
+                  fontWeight: 400,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                noWrap
+              >
+                {row.nombre}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {row.unidadResultado
+                  ? `${row.rendimiento ?? '—'} ${row.unidadResultado}`
+                  : t(
+                      row.ingredientes?.length === 1
+                        ? 'recetas.listado.ingredientesCount_one'
+                        : 'recetas.listado.ingredientesCount_other',
+                      { count: row.ingredientes?.length ?? 0 }
+                    )}
+              </Typography>
+            </Box>
           </Box>
-        ) : (
-          <span>—</span>
-        );
+        ),
       },
-    },
-    {
-      id: 'ingredientes',
-      label: 'Ingredientes',
-      align: 'right',
-      width: 120,
-      render: (row) => row.ingredientes?.length ?? 0,
-      cellSx: { whiteSpace: 'nowrap' },
-      responsiveDisplay: { xs: 'none', lg: 'table-cell' },
-    },
-  ];
+      {
+        id: 'dificultad',
+        label: t('recetas.columns.dificultad'),
+        render: (row) =>
+          row.dificultad ? (
+            <StatusChip
+              status={row.dificultad}
+              size="small"
+              variant="outlined"
+            />
+          ) : (
+            <span style={{ color: '#bbb' }}>—</span>
+          ),
+        sortable: true,
+        width: 120,
+        cellSx: { py: 2 },
+      },
+      {
+        id: 'tiempoPreparacion',
+        label: t('recetas.columns.tiempo'),
+        width: 140,
+        sortable: true,
+        render: (row) => {
+          const tiempoLabel = getTiempoPreparacionLabel(row);
+
+          return tiempoLabel ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <AccessTimeOutlinedIcon
+                fontSize="inherit"
+                sx={{ opacity: 0.6 }}
+              />
+              {tiempoLabel}
+            </Box>
+          ) : (
+            <span>—</span>
+          );
+        },
+      },
+      {
+        id: 'ingredientes',
+        label: t('recetas.columns.ingredientes'),
+        align: 'right',
+        width: 120,
+        render: (row) => row.ingredientes?.length ?? 0,
+        cellSx: { whiteSpace: 'nowrap' },
+        responsiveDisplay: { xs: 'none', lg: 'table-cell' },
+      },
+    ],
+    [t]
+  );
 
   const handleSort = (key: string | keyof Receta) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
@@ -823,7 +827,7 @@ const Recetas: React.FC = () => {
 
   const renderActions = (row: Receta) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-        <Tooltip title={t('recetas.verDetalles')}>
+      <Tooltip title={t('recetas.verDetalles')}>
         <IconButton
           color="primary"
           onClick={() => {
@@ -909,11 +913,11 @@ const Recetas: React.FC = () => {
   const viewSections: DetailSection[] = itemToView
     ? [
         {
-          title: 'Información',
+          title: t('recetas.detalle.seccionInformacion'),
           columns: 3,
           fields: [
             {
-              label: 'Dificultad',
+              label: t('recetas.detalle.dificultad'),
               value: itemToView.dificultad ? (
                 <StatusChip
                   status={itemToView.dificultad}
@@ -923,45 +927,51 @@ const Recetas: React.FC = () => {
               ) : undefined,
             },
             {
-              label: 'Franja de tiempo',
+              label: t('recetas.detalle.franjaTiempo'),
               value: getFranjaTiempoLabel(itemToView),
             },
             {
-              label: 'Tiempo de preparación',
+              label: t('recetas.detalle.tiempoPreparacion'),
               value: getTiempoPreparacionLabel(itemToView),
             },
           ],
         },
         {
-          title: 'Instrucciones',
+          title: t('recetas.detalle.seccionInstrucciones'),
           fields: [
             {
-              label: 'Pasos de elaboración',
+              label: t('recetas.detalle.pasosElaboracion'),
               value: itemToView.instrucciones,
               fullWidth: true,
             },
           ],
         },
         {
-          title: 'Producción',
+          title: t('recetas.detalle.seccionProduccion'),
           columns: 3,
           fields: [
             {
-              label: 'Rendimiento',
+              label: t('recetas.detalle.rendimiento'),
               value: itemToView.rendimiento
                 ? `${itemToView.rendimiento} ${itemToView.unidadResultado}`
                 : undefined,
             },
-            { label: 'Días de Caducidad', value: itemToView.diasCaducidad },
             {
-              label: 'Coste Est. por unidad',
+              label: t('recetas.detalle.diasCaducidad'),
+              value: itemToView.diasCaducidad,
+            },
+            {
+              label: t('recetas.detalle.costeEstimado'),
               value: getCosteUnitarioEstimadoLabel(
                 itemToView.costeUnitarioEstimado
               ),
             },
-            { label: 'Raciones (base)', value: itemToView.raciones },
             {
-              label: 'Tamaño ración',
+              label: t('recetas.detalle.racionesBase'),
+              value: itemToView.raciones,
+            },
+            {
+              label: t('recetas.detalle.tamanoRacion'),
               value: itemToView.tamanioRacion
                 ? `${itemToView.tamanioRacion} ${itemToView.unidadResultado}`
                 : undefined,
@@ -969,13 +979,13 @@ const Recetas: React.FC = () => {
           ],
         },
         {
-          title: 'Ingredientes',
+          title: t('recetas.detalle.seccionIngredientes'),
           content: (
             <RecetaIngredientesView ingredientes={itemToView.ingredientes} />
           ),
         },
         {
-          title: 'Alérgenos detectados',
+          title: t('recetas.detalle.alergenosDetectados'),
           content: <RecetaAlergenos ingredientes={itemToView.ingredientes} />,
         },
       ]
@@ -992,15 +1002,15 @@ const Recetas: React.FC = () => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por nombre, instrucciones, ingredientes..."
+        searchPlaceholder={t('recetas.toolbar.buscarPlaceholder')}
         searchId="search-recetas"
         totalItems={totalItems}
-        totalItemsLabel="recetas"
+        totalItemsLabel={t('recetas.toolbar.totalItemsLabel')}
         viewMode={viewMode}
         primaryAction={
           canCreate
             ? {
-                label: 'Nueva Receta',
+                label: t('recetas.nuevaReceta'),
                 onClick: () => setItemToEdit({}),
                 id: 'btn-nueva-receta',
               }
@@ -1012,8 +1022,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Preparar (${selectedIds.length})`
-                      : 'Preparar recetas',
+                      ? t('recetas.toolbar.prepararConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.toolbar.prepararSeleccion'),
                   icon: <RestaurantIcon />,
                   onClick: () => {
                     const items = data.filter((r) =>
@@ -1033,8 +1045,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Exportar PDF (${selectedIds.length})`
-                      : 'Exportar PDF',
+                      ? t('recetas.toolbar.exportarPdfConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.toolbar.exportarPdf'),
                   icon: <PictureAsPdfOutlinedIcon />,
                   onClick: () => {
                     const ids =
@@ -1053,7 +1067,7 @@ const Recetas: React.FC = () => {
           ...(canExportPdf
             ? [
                 {
-                  label: 'Exportar Excel',
+                  label: t('recetas.exportExcel'),
                   icon: <FileDownloadOutlinedIcon />,
                   onClick: () => {
                     void handleExportExcel();
@@ -1069,8 +1083,10 @@ const Recetas: React.FC = () => {
                 {
                   label:
                     selectedIds.length > 0
-                      ? `Crear pedido (${selectedIds.length})`
-                      : 'Crear pedido',
+                      ? t('recetas.toolbar.crearPedidoConCount', {
+                          count: selectedIds.length,
+                        })
+                      : t('recetas.toolbar.crearPedido'),
                   icon: <ShoppingCartCheckoutOutlinedIcon />,
                   onClick: () => {
                     const items = data.filter((r) =>
@@ -1121,7 +1137,9 @@ const Recetas: React.FC = () => {
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             onRowClick={handleEditClick}
-            getRowAriaLabel={(row) => `Editar receta ${row.nombre}`}
+            getRowAriaLabel={(row) =>
+              t('recetas.editarAria', { nombre: row.nombre })
+            }
             emptyStateMessage={
               <Box sx={{ py: 4, textAlign: 'center' }}>
                 <MenuBookOutlinedIcon
@@ -1129,8 +1147,8 @@ const Recetas: React.FC = () => {
                 />
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   {searchTerm.trim()
-                    ? 'No hay recetas que coincidan con tu búsqueda'
-                    : 'No hay recetas registradas'}
+                    ? t('recetas.empty.sinCoincidencias')
+                    : t('recetas.empty.sinRegistros')}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -1138,8 +1156,8 @@ const Recetas: React.FC = () => {
                   sx={{ mb: 3 }}
                 >
                   {searchTerm.trim()
-                    ? 'Prueba con otros términos o limpia el filtro.'
-                    : 'Crea la primera receta del economato para comenzar.'}
+                    ? t('recetas.empty.hintBusqueda')
+                    : t('recetas.empty.hintInicial')}
                 </Typography>
                 {!searchTerm.trim() && canCreate && (
                   <Button
@@ -1147,7 +1165,7 @@ const Recetas: React.FC = () => {
                     startIcon={<AddIcon />}
                     onClick={() => setItemToEdit({})}
                   >
-                    Añadir Receta
+                    {t('recetas.nuevaReceta')}
                   </Button>
                 )}
               </Box>
@@ -1158,8 +1176,7 @@ const Recetas: React.FC = () => {
               onPageChange: (_, newPage) => setPage(newPage),
               pageSize: pageSize,
               pageSizeOptions: [5, 10, 25, 50],
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onPageSizeChange: (e: any) => {
+              onPageSizeChange: (e: SelectChangeEvent<number>) => {
                 setPageSize(Number(e.target.value));
                 setPage(1);
               },
@@ -1230,7 +1247,9 @@ const Recetas: React.FC = () => {
                   }}
                 >
                   <Typography variant="caption" color="text.secondary">
-                    {receta.ingredientes?.length || 0} ingredientes
+                    {t('recetas.listado.ingredientesCount_other', {
+                      count: receta.ingredientes?.length || 0,
+                    })}
                   </Typography>
                   <Box>{renderActions(receta)}</Box>
                 </CardActions>
@@ -1248,13 +1267,11 @@ const Recetas: React.FC = () => {
         title={t('recetas.eliminarReceta')}
         message={
           <>
-            ¿Estás seguro de que deseas eliminar la receta{' '}
-            <strong>{itemToDelete?.nombre}</strong>? Esta acción no se puede
-            deshacer.
+            {t('recetas.confirmEliminarMsj', { nombre: itemToDelete?.nombre })}
           </>
         }
-        confirmText="Sí, eliminar"
-        cancelText="Cancelar"
+        confirmText={t('recetas.confirmSiEliminar')}
+        cancelText={t('comun.cancelar')}
         isLoading={isDeleting}
       />
 
@@ -1270,7 +1287,9 @@ const Recetas: React.FC = () => {
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
         title={itemToView?.nombre ?? ''}
-        subtitle={`${itemToView?.ingredientes?.length ?? 0} ingredientes`}
+        subtitle={t('recetas.listado.ingredientesCount_other', {
+          count: itemToView?.ingredientes?.length ?? 0,
+        })}
         size="lg"
         headerMedia={
           itemToView ? (
@@ -1297,7 +1316,7 @@ const Recetas: React.FC = () => {
                     setItemToView(null);
                   }}
                 >
-                  Preparar
+                  {t('recetas.preparar')}
                 </Button>
               )}
               {canCreateOrders && (
@@ -1310,7 +1329,7 @@ const Recetas: React.FC = () => {
                     setItemToView(null);
                   }}
                 >
-                  Pedido
+                  {t('recetas.crearPedido')}
                 </Button>
               )}
               <Button
@@ -1319,7 +1338,7 @@ const Recetas: React.FC = () => {
                 startIcon={<PictureAsPdfOutlinedIcon />}
                 onClick={() => openExportDialog([itemToView!.id])}
               >
-                Ficha PDF
+                {t('recetas.fichaPdf')}
               </Button>
             </Box>
           )
@@ -1394,7 +1413,6 @@ const Recetas: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Modal para Ejecutar Preparación */}
       <Dialog
         open={isCookModalOpen}
         onClose={() => !isCooking && setIsCookModalOpen(false)}
@@ -1441,57 +1459,45 @@ const Recetas: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={3} sx={{ mt: 0 }}>
-            {/* Columna Izquierda: Tabla de Recetas */}
             <Grid size={{ xs: 12, md: 7 }}>
               <Typography
                 variant="subtitle2"
                 sx={{
-                  mb: 1.5,
-                  fontWeight: 700,
+                  mb: 2,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
+                  color: 'primary.dark',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  letterSpacing: 0.5,
                 }}
               >
-                <MenuBookOutlinedIcon fontSize="small" />{' '}
+                <RestaurantIcon fontSize="small" />
                 {t('recetas.preparacionLote.seccionRecetas')}
               </Typography>
               <TableContainer
                 component={Paper}
                 variant="outlined"
-                sx={{
-                  maxHeight: 400,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'action.hover',
-                }}
+                sx={{ borderRadius: 2 }}
               >
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell
-                        sx={{ fontWeight: 700, bgcolor: 'background.paper' }}
+                        sx={{ fontWeight: 800, bgcolor: 'action.hover' }}
                       >
                         {t('recetas.preparacionLote.colReceta')}
                       </TableCell>
                       <TableCell
-                        sx={{
-                          fontWeight: 700,
-                          width: 100,
-                          bgcolor: 'background.paper',
-                        }}
-                        align="right"
+                        align="center"
+                        sx={{ fontWeight: 800, bgcolor: 'action.hover' }}
                       >
                         {t('recetas.preparacionLote.colCantidad')}
                       </TableCell>
                       <TableCell
-                        sx={{
-                          fontWeight: 700,
-                          width: 100,
-                          bgcolor: 'background.paper',
-                        }}
-                        align="right"
+                        align="center"
+                        sx={{ fontWeight: 800, bgcolor: 'action.hover' }}
                       >
                         {t('recetas.preparacionLote.colRaciones')}
                       </TableCell>
@@ -1610,7 +1616,6 @@ const Recetas: React.FC = () => {
               </TableContainer>
             </Grid>
 
-            {/* Columna Derecha: Configuración y Stock */}
             <Grid size={{ xs: 12, md: 5 }}>
               <Stack spacing={2.5}>
                 <Box>
@@ -1663,7 +1668,6 @@ const Recetas: React.FC = () => {
 
                 <Divider />
 
-                {/* Sección de Validación de Stock */}
                 <Box>
                   <Box
                     sx={{

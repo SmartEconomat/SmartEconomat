@@ -23,9 +23,9 @@ export class PermisosService {
     private readonly permisoRepo: Repository<Permiso>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreatePermisoDto): Promise<Permiso> {
     const existente = await this.permisoRepo.findOne({
       where: { codigo: dto.codigo },
@@ -41,17 +41,17 @@ export class PermisosService {
     return this.permisoRepo.save(permiso);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createMany(dtos: CreatePermisoDto[]): Promise<Permiso[]> {
     const permisos = dtos.map((dto) => this.permisoRepo.create(dto));
     return this.permisoRepo.save(permisos);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Permiso>> {
@@ -75,9 +75,9 @@ export class PermisosService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAllNoPagination(): Promise<Permiso[]> {
     return this.permisoRepo.find({
       where: { activo: true },
@@ -85,9 +85,9 @@ export class PermisosService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findGroupedByModule(): Promise<Record<string, Permiso[]>> {
     const permisos = await this.permisoRepo.find({
       where: { activo: true },
@@ -106,9 +106,9 @@ export class PermisosService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<Permiso> {
     const permiso = await this.permisoRepo.findOne({ where: { id } });
 
@@ -121,16 +121,16 @@ export class PermisosService {
     return permiso;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findByCodigo(codigo: string): Promise<Permiso | null> {
     return this.permisoRepo.findOne({ where: { codigo } });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findByCodigos(codigos: string[]): Promise<Permiso[]> {
     if (!codigos || codigos.length === 0) {
       return [];
@@ -142,9 +142,9 @@ export class PermisosService {
       .getMany();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, dto: UpdatePermisoDto): Promise<Permiso> {
     const permiso = await this.findOne(id);
 
@@ -164,9 +164,9 @@ export class PermisosService {
     return this.permisoRepo.save(permiso);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const rolesCount = await this.permisoRepo
       .createQueryBuilder('permiso')

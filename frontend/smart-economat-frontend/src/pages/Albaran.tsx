@@ -87,9 +87,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Esquema del formulario ────────────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const ALBARAN_FORM_FIELDS: DynamicField[] = [
     {
       name: 'nAlbaran',
@@ -153,9 +153,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Carga de datos ──────────────────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -185,9 +185,9 @@ const AlbaranPage: React.FC = () => {
   // ─── Filtrado local (concordancia y fechas) ──────────────────────────────
   // El backend no implementa estos filtros, se aplican sobre la página actual.
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const filteredData = useMemo(() => {
     let result = data;
 
@@ -211,25 +211,25 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Handlers de CRUD ───────────────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleOpenCreate = () => {
     setItemToEdit(null);
     setIsFormOpen(true);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleOpenEdit = (albaran: Albaran) => {
     setItemToEdit(albaran);
     setIsFormOpen(true);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleOpenView = async (albaran: Albaran) => {
     if (!canView) {
       setItemToView(albaran);
@@ -242,16 +242,14 @@ const AlbaranPage: React.FC = () => {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : t('albaran.errors.cargarDetalle');
-      toast.error(
-        t('albaran.errors.cargarDetalleConFallback', { message })
-      );
+      toast.error(t('albaran.errors.cargarDetalleConFallback', { message }));
       setItemToView(albaran);
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleFormSubmit = async (formData: Record<string, unknown>) => {
     setIsSubmitting(true);
     try {
@@ -295,9 +293,9 @@ const AlbaranPage: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -315,9 +313,9 @@ const AlbaranPage: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleUploadDocumento = async (
     file: File,
     numeroReferencia: string,
@@ -346,9 +344,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Datos iniciales del formulario de edición ───────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const formInitialData = useMemo(() => {
     if (!itemToEdit) return {};
     return {
@@ -406,9 +404,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Columnas de la tabla ────────────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const columns: Column<Albaran>[] = useMemo(
     () => [
       {
@@ -424,8 +422,7 @@ const AlbaranPage: React.FC = () => {
       {
         id: 'fecha',
         label: t('albaran.columns.fecha'),
-        render: (row) =>
-          row.fecha ? formatLocalizedDate(row.fecha) : '—',
+        render: (row) => (row.fecha ? formatLocalizedDate(row.fecha) : '—'),
         sortable: true,
       },
       {
@@ -490,9 +487,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Acciones por fila ───────────────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const renderActions = (row: Albaran) => (
     <Stack
       direction="row"
@@ -564,9 +561,9 @@ const AlbaranPage: React.FC = () => {
 
   // ─── Secciones del modal de detalle ─────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
 

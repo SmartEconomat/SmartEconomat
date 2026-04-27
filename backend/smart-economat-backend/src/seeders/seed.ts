@@ -157,7 +157,7 @@ if (require.main === module) {
 
       console.log('Seeders HTTP ejecutados correctamente.');
     } catch (err) {
-      console.error('Error al ejecutar seeders HTTP:', err);
+      console.error('Error running seeders HTTP:', err);
       process.exit(1);
     }
   })();

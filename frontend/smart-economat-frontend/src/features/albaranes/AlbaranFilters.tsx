@@ -7,17 +7,17 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 export interface AlbaranFiltersState {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   concordancia: boolean | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   startDate: string | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   endDate: string | null;
 }
 
@@ -25,13 +25,13 @@ export interface AlbaranFiltersState {
  * Documentación en español.
  */
 interface AlbaranFiltersProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filters: AlbaranFiltersState;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChange: (filters: AlbaranFiltersState) => void;
 }
 
@@ -49,9 +49,9 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
     { label: t('albaran.form.noConforme'), value: false },
   ];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleConcordanciaChange = (
     _: unknown,
     newValue: { label: string; value: boolean } | null
@@ -59,9 +59,9 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
     onChange({ ...filters, concordancia: newValue ? newValue.value : null });
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {

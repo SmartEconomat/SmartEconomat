@@ -13,9 +13,9 @@ import { I18nHelper } from '../helpers/i18n.helper';
  */
 @Injectable()
 export class NormalizeDataPipe implements PipeTransform<unknown> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async transform(
     value: unknown,
     metadata: ArgumentMetadata
@@ -65,9 +65,9 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
     return this.normalizeObject(value);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private normalizeObject(obj: object): unknown {
     if (!obj || typeof obj !== 'object') {
       return obj;

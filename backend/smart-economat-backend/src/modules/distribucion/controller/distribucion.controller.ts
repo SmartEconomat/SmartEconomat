@@ -31,9 +31,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class DistribucionController {
   constructor(private readonly distribucionService: DistribucionService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.distribuciones.listar)
   @ApiOperation({ summary: 'Listar distribuciones' })
@@ -44,9 +44,9 @@ export class DistribucionController {
     return this.distribucionService.findAll(query, req.user?.rol);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('disponibles')
   @RequirePermissions(PERMISSIONS.distribuciones.listar)
   @ApiOperation({ summary: 'Listar pedidos de usuario distribuibles' })
@@ -54,9 +54,9 @@ export class DistribucionController {
     return this.distribucionService.findDisponibles(query);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.distribuciones.ver)
   @ApiOperation({ summary: 'Ver detalle de distribución' })
@@ -67,9 +67,9 @@ export class DistribucionController {
     return this.distribucionService.findOne(id, req.user?.rol);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.distribuciones.crear)
   @ApiOperation({ summary: 'Preparar una distribución' })
@@ -77,9 +77,9 @@ export class DistribucionController {
     return this.distribucionService.create(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/confirmar')
   @RequirePermissions(PERMISSIONS.distribuciones.confirmar)
   @ApiOperation({ summary: 'Confirmar una distribución y mover stock' })
@@ -90,9 +90,9 @@ export class DistribucionController {
     return this.distribucionService.confirmar(id, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.distribuciones.cancelar)
   @ApiOperation({ summary: 'Cancelar una distribución no confirmada' })

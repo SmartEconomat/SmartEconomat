@@ -13,9 +13,9 @@ type TransformValueParams = Pick<TransformFnParams, 'value'>;
  * Documentación en español.
  */
 export class StringToBooleanTransformer {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(params: TransformValueParams): boolean | null | undefined {
     const value = params.value;
     if (value === null) return null;

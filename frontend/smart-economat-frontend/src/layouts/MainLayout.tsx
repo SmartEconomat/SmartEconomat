@@ -38,6 +38,7 @@ import SettingsMenu from '../components/common/Settings/SettingsMenu';
 import TutorialHelper from '../components/common/Tutorial/TutorialHelper';
 import LearningModeToggle from '../components/common/Learning/LearningModeToggle';
 import NotificationCenter from '../components/common/Notification/NotificationCenter';
+import LanguageSwitcher from '../components/common/Settings/LanguageSwitcher';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSidebar } from '../store/sidebar.hooks';
 import InteractiveTour from '../components/common/Tutorial/InteractiveTour';
@@ -302,62 +303,64 @@ const SidebarContent = React.memo(
                     const itemTitle = item.title.startsWith('navigation.')
                       ? t(item.title)
                       : item.title;
-                    const itemDescription = item.description.startsWith('navigation.')
+                    const itemDescription = item.description.startsWith(
+                      'navigation.'
+                    )
                       ? t(item.description)
                       : item.description;
                     return (
-                  <Tooltip
-                    title={getTooltipContent(
-                      isExpanded,
-                      isLearningMode || false,
-                      itemTitle,
-                      itemDescription
-                    )}
-                    describeChild
-                  >
-                    <ListItemButton
-                      sx={{
-                        minHeight: 48,
-                        justifyContent: isExpanded ? 'initial' : 'center',
-                        px: 2.5,
-                        borderRadius: isExpanded ? 0 : '10px',
-                        mx: isExpanded ? 0 : 1,
-                        mb: isExpanded ? 0 : 0.5,
-                      }}
-                      selected={location.pathname === item.path}
-                      onClick={() => onNavigate(item.path)}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          mr: isExpanded ? 3 : 0,
-                          justifyContent: 'center',
-                          color:
-                            location.pathname === item.path
-                              ? 'primary.main'
-                              : 'inherit',
-                        }}
+                      <Tooltip
+                        title={getTooltipContent(
+                          isExpanded,
+                          isLearningMode || false,
+                          itemTitle,
+                          itemDescription
+                        )}
+                        describeChild
                       >
-                        {item.icon}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={itemTitle}
-                        sx={{
-                          display: isExpanded ? 'block' : 'none',
-                          opacity: isExpanded ? 1 : 0,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          transition: theme.transitions.create('opacity', {
-                            easing: theme.transitions.easing.easeInOut,
-                            duration: isExpanded
-                              ? theme.transitions.duration.standard
-                              : 150,
-                            delay: isExpanded ? 250 : 0,
-                          }),
-                        }}
-                      />
-                    </ListItemButton>
-                  </Tooltip>
+                        <ListItemButton
+                          sx={{
+                            minHeight: 48,
+                            justifyContent: isExpanded ? 'initial' : 'center',
+                            px: 2.5,
+                            borderRadius: isExpanded ? 0 : '10px',
+                            mx: isExpanded ? 0 : 1,
+                            mb: isExpanded ? 0 : 0.5,
+                          }}
+                          selected={location.pathname === item.path}
+                          onClick={() => onNavigate(item.path)}
+                        >
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 0,
+                              mr: isExpanded ? 3 : 0,
+                              justifyContent: 'center',
+                              color:
+                                location.pathname === item.path
+                                  ? 'primary.main'
+                                  : 'inherit',
+                            }}
+                          >
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={itemTitle}
+                            sx={{
+                              display: isExpanded ? 'block' : 'none',
+                              opacity: isExpanded ? 1 : 0,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              transition: theme.transitions.create('opacity', {
+                                easing: theme.transitions.easing.easeInOut,
+                                duration: isExpanded
+                                  ? theme.transitions.duration.standard
+                                  : 150,
+                                delay: isExpanded ? 250 : 0,
+                              }),
+                            }}
+                          />
+                        </ListItemButton>
+                      </Tooltip>
                     );
                   })()}
                 </ListItem>
@@ -479,9 +482,9 @@ export default function MainLayout() {
       return true;
     });
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const renderSidebarContent = (isExpanded: boolean) => (
     <SidebarContent
       isExpanded={isExpanded}
@@ -554,6 +557,7 @@ export default function MainLayout() {
           <Box
             sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}
           >
+            <LanguageSwitcher />
             <NotificationCenter />
             <Typography
               variant="subtitle1"
@@ -600,14 +604,18 @@ export default function MainLayout() {
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">{t('perfil.miPerfil')}</Typography>
+                <Typography textAlign="center">
+                  {t('perfil.miPerfil')}
+                </Typography>
               </MuiMenuItem>
               <Divider />
               <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">{t('layout.userMenu.logout')}</Typography>
+                <Typography textAlign="center">
+                  {t('layout.userMenu.logout')}
+                </Typography>
               </MuiMenuItem>
             </Menu>
           </Box>

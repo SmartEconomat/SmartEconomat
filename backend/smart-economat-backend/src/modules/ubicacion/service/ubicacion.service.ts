@@ -16,9 +16,9 @@ export class UbicacionService extends BaseService<
   CreateUbicacionDto,
   UpdateUbicacionDto
 > {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Ubicacion)
     repository: Repository<Ubicacion>,
@@ -27,16 +27,16 @@ export class UbicacionService extends BaseService<
     super(repository, dataSource);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   protected getNotFoundMessage(): string {
-    return I18nHelper.getError('UBICACI_N_NO_ENCONTRADA');
+    return I18nHelper.getError('LOCATION_NOT_FOUND');
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async restore(id: string): Promise<Ubicacion> {
     const ubicacion = await this.repository.findOne({
       where: { id } as any,

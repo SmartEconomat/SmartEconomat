@@ -7,19 +7,19 @@ import { isUUID } from 'class-validator';
  */
 @Injectable()
 export class ParseUUIDv7Pipe implements PipeTransform<string | undefined> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly UUID_V7_REGEX =
     /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   transform(value: string | undefined): string {
     if (!value) {
       throw new BadRequestException(
-        I18nHelper.getError('EL_UUID_NO_PUEDE_ESTAR_VAC_O')
+        I18nHelper.getError('UUID_CANNOT_BE_EMPTY')
       );
     }
 

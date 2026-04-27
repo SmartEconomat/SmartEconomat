@@ -126,9 +126,15 @@ const PedidoDetailDrawer: React.FC<PedidoDetailDrawerProps> = ({
           <TableHead>
             <TableRow>
               <TableCell>{t('pedidos.detalle.tabla.producto')}</TableCell>
-              <TableCell align="right">{t('pedidos.detalle.tabla.cantidad')}</TableCell>
-              <TableCell align="right">{t('pedidos.detalle.tabla.precio')}</TableCell>
-              <TableCell align="right">{t('pedidos.detalle.tabla.subtotal')}</TableCell>
+              <TableCell align="right">
+                {t('pedidos.detalle.tabla.cantidad')}
+              </TableCell>
+              <TableCell align="right">
+                {t('pedidos.detalle.tabla.precio')}
+              </TableCell>
+              <TableCell align="right">
+                {t('pedidos.detalle.tabla.subtotal')}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

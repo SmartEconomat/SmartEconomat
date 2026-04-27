@@ -18,9 +18,9 @@ import { Alergeno } from '../enums/producto.enums';
  */
 @Injectable()
 export class ProductoAlergenoService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(ProductoAlergeno)
     private readonly productoAlergenoRepository: Repository<ProductoAlergeno>,
@@ -28,9 +28,9 @@ export class ProductoAlergenoService {
     private readonly productoRepository: Repository<Producto>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateProductoAlergenoDto): Promise<ProductoAlergeno> {
     const { idProducto, alergeno } = dto;
 
@@ -59,9 +59,9 @@ export class ProductoAlergenoService {
     return this.productoAlergenoRepository.save(productoAlergeno);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(idProducto?: string): Promise<ProductoAlergeno[]> {
     const qb = this.productoAlergenoRepository
       .createQueryBuilder('pa')
@@ -74,9 +74,9 @@ export class ProductoAlergenoService {
     return qb.getMany();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(idProducto: string): Promise<ProductoAlergeno[]> {
     const productoExiste = await this.productoRepository.findOne({
       where: { id: idProducto },
@@ -91,9 +91,9 @@ export class ProductoAlergenoService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     idProducto: string,
     dto: UpdateProductoAlergenoDto
@@ -124,9 +124,9 @@ export class ProductoAlergenoService {
     return this.productoAlergenoRepository.save(newRelations);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(idProducto: string, alergeno: string): Promise<void> {
     if (!Object.values(Alergeno).includes(alergeno as Alergeno)) {
       throw new BadRequestException(

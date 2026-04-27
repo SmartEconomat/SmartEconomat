@@ -11,7 +11,7 @@ describe('ParseUUIDv7Pipe', () => {
   beforeAll(() => {
     jest.spyOn(I18nHelper, 'getError').mockImplementation((key: string) => {
       const messages: Record<string, string> = {
-        EL_UUID_NO_PUEDE_ESTAR_VAC_O: 'El UUID no puede estar vacío',
+        UUID_CANNOT_BE_EMPTY: 'El UUID no puede estar vacío',
       };
       return messages[key] || key;
     });

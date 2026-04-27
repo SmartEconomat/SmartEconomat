@@ -455,9 +455,7 @@ const Incidencias: React.FC = () => {
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
                         {itemToView.fechaResolucion
-                          ? formatLocalizedDateTime(
-                              itemToView.fechaResolucion
-                            )
+                          ? formatLocalizedDateTime(itemToView.fechaResolucion)
                           : '—'}
                       </Typography>
                     </Box>

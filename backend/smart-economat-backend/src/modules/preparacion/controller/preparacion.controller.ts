@@ -28,9 +28,9 @@ import type { Request } from 'express';
 export class PreparacionController {
   constructor(private readonly preparacionService: PreparacionService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async create(
@@ -39,14 +39,14 @@ export class PreparacionController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error(I18nHelper.getError('USUARIO_NO_AUTENTICADO'));
+      throw new Error(I18nHelper.getError('USER_NOT_AUTHENTICATED'));
     }
     return this.preparacionService.create(dto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async findAll(
@@ -57,9 +57,9 @@ export class PreparacionController {
     return this.preparacionService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   async findOne(
@@ -70,18 +70,18 @@ export class PreparacionController {
     return this.preparacionService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/iniciar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async iniciar(@Param('id') id: string) {
     return this.preparacionService.iniciarPreparacion(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/finalizar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async finalizar(
@@ -91,7 +91,7 @@ export class PreparacionController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error(I18nHelper.getError('USUARIO_NO_AUTENTICADO'));
+      throw new Error(I18nHelper.getError('USER_NOT_AUTHENTICATED'));
     }
     return this.preparacionService.finalizarPreparacion(
       id,
@@ -100,18 +100,18 @@ export class PreparacionController {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async cancelar(@Param('id') id: string) {
     return this.preparacionService.cancelarPreparacion(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)
   async remove(@Param('id') id: string) {

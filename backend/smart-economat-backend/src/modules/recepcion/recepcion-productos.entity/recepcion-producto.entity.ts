@@ -33,9 +33,9 @@ export class RecepcionProducto extends BaseEntity {
   @Column({ name: 'incidencia_id', nullable: true })
   incidenciaId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionProductos, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -43,9 +43,9 @@ export class RecepcionProducto extends BaseEntity {
   @JoinColumn({ name: 'recepcion_id' })
   recepcion!: Relation<Recepcion>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PedidoProducto, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -60,9 +60,9 @@ export class RecepcionProducto extends BaseEntity {
   @JoinColumn({ name: 'incidencia_id' })
   incidencia?: Relation<Incidencia>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,

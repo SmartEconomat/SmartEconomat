@@ -11,41 +11,41 @@ import { PreparacionEstado } from '../enums/preparacion.enums';
  */
 @Entity('preparacion')
 export class Preparacion extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'ubicacion_destino_id', nullable: true })
   ubicacionDestinoId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -55,9 +55,9 @@ export class Preparacion extends BaseEntity {
   })
   cantidadAProducir!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: PreparacionEstado,
@@ -65,9 +65,9 @@ export class Preparacion extends BaseEntity {
   })
   estado!: PreparacionEstado;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -75,9 +75,9 @@ export class Preparacion extends BaseEntity {
   })
   fechaProgramada?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -85,9 +85,9 @@ export class Preparacion extends BaseEntity {
   })
   fechaInicio?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -95,9 +95,9 @@ export class Preparacion extends BaseEntity {
   })
   fechaFinalizacion?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 }

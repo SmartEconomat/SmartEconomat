@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductoService } from '../../../src/modules/producto/service/producto.service';
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { Producto } from '../../../src/modules/producto/producto.entity/producto.entity';
-import { Inventario } from '../../../src/modules/inventario/inventario.entity/inventario.entity';
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ProductoRepository } from '../../../src/modules/producto/repository/producto.repository';
@@ -29,9 +27,18 @@ describe('ProductoService (PMP Fallback)', () => {
       providers: [
         ProductoService,
         { provide: ProductoRepository, useValue: mockProductoRepository },
-        { provide: getRepositoryToken(ProductoProveedor), useValue: mockProductoProveedorRepository },
-        { provide: getRepositoryToken(ProductoAlergeno), useValue: mockProductoAlergenoRepository },
-        { provide: getRepositoryToken(Proveedor), useValue: mockProveedorRepository },
+        {
+          provide: getRepositoryToken(ProductoProveedor),
+          useValue: mockProductoProveedorRepository,
+        },
+        {
+          provide: getRepositoryToken(ProductoAlergeno),
+          useValue: mockProductoAlergenoRepository,
+        },
+        {
+          provide: getRepositoryToken(Proveedor),
+          useValue: mockProveedorRepository,
+        },
         { provide: ArchivoService, useValue: mockArchivoService },
         { provide: MovimientoHelper, useValue: mockMovimientoHelper },
         { provide: DataSource, useValue: mockDataSource },
@@ -45,32 +52,24 @@ describe('ProductoService (PMP Fallback)', () => {
     const mockPP = {
       id: 'pp-1',
       pmp: 0,
-      precioUnitario: 10, // Precio pactado
+      precioUnitario: 10,
       producto: { id: 'prod-1' },
     };
 
     const em = {
       findOne: jest.fn().mockResolvedValue(mockPP),
-      find: jest.fn().mockResolvedValue([{ cantidadActual: 100 }]), // Stock previo de 100
+      find: jest.fn().mockResolvedValue([{ cantidadActual: 100 }]),
       update: jest.fn().mockResolvedValue(undefined),
     };
 
-    // Espiamos el recálculo global para no ejecutarlo
-    jest.spyOn(service as any, 'recalcularPmpProducto').mockResolvedValue(undefined);
+    jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
 
-    // Recibimos 1 unidad a 20€.
-    // Cálculo esperado:
-    // stockAnterior = 100 (ya que total=100+1=101, pero find devolvió 100? No, wait)
-    // Si find devuelve 100 y nuevaCantidad es 1, stockAnterior es 100-1 = 99? No.
-    // En mi implementación: stockTotalPP = reduce(inventarios).
-    // Si queremos stockAnterior=100, inventarios deben sumar 101.
     em.find.mockResolvedValue([{ cantidadActual: 101 }]);
 
     const pmp = await service.actualizarPMP('pp-1', 1, 20, em as any);
 
-    // stockAnterior = 101 - 1 = 100
-    // pmpAnterior = 10 (fallback de precioUnitario)
-    // nuevoPmp = (100 * 10 + 1 * 20) / 101 = 1020 / 101 = 10.0990...
     expect(pmp).toBeCloseTo(10.099, 3);
     expect(em.update).toHaveBeenCalledWith(
       ProductoProveedor,
@@ -93,11 +92,10 @@ describe('ProductoService (PMP Fallback)', () => {
       update: jest.fn().mockResolvedValue(undefined),
     };
 
-    jest.spyOn(service as any, 'recalcularPmpProducto').mockResolvedValue(undefined);
+    jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
 
-    // Recibimos 10 unidades a 15€.
-    // stockTotal = 20. nueva = 10. anterior = 10.
-    // nuevoPmp = (10 * 5 + 10 * 15) / 20 = (50 + 150) / 20 = 200 / 20 = 10
     const pmp = await service.actualizarPMP('pp-1', 10, 15, em as any);
 
     expect(pmp).toBe(10);

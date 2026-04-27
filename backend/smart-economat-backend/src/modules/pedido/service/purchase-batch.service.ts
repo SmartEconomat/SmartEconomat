@@ -56,9 +56,9 @@ export class PurchaseBatchService {
     private readonly produccionService: ProduccionService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createBatchOrder(
     dto: CreatePurchaseBatchDto,
     userId: string
@@ -177,9 +177,9 @@ export class PurchaseBatchService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createBatchOrderFromMissingStock(
     dto: CreateMissingStockBatchDto,
     userId: string
@@ -190,9 +190,9 @@ export class PurchaseBatchService {
     return this.createBatchOrder(pedidoUsuarioDto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async buildPedidoUsuarioDtoFromMissingStock(
     dto: CreateMissingStockBatchDto
   ): Promise<CreatePedidoUsuarioDto> {
@@ -254,9 +254,9 @@ export class PurchaseBatchService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(): Promise<PurchaseBatch[]> {
     const batches = await this.dataSource.getRepository(PurchaseBatch).find({
       relations: [
@@ -271,9 +271,9 @@ export class PurchaseBatchService {
     return batches.map((batch) => this.decorateBatchIdentity(batch));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async consolidateExistingOrders(
     dto: ConsolidatePurchaseBatchDto,
     userId: string
@@ -288,9 +288,9 @@ export class PurchaseBatchService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async approvePedidoUsuario(
     pedidoUsuarioId: string,
     userId: string
@@ -812,9 +812,9 @@ export class PurchaseBatchService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<PurchaseBatch> {
     const batch = await this.dataSource.getRepository(PurchaseBatch).findOne({
       where: { id },
@@ -839,9 +839,9 @@ export class PurchaseBatchService {
     return this.decorateBatchIdentity(batch);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async syncBatchStatus(
     batchId: string,
     manager?: EntityManager,

@@ -3,6 +3,7 @@ import { Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { RecetaService } from './receta.service';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Jimp, JimpMime } from 'jimp';
@@ -98,18 +99,20 @@ export class RecetaPdfService {
 
   constructor(
     private readonly recetaService: RecetaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly i18n: I18nService
   ) {}
 
   async generatePdf(
     ids: string[],
     res: Response,
-    options: RecetaPdfOptions = {}
+    options: RecetaPdfOptions = {},
+    lang: string = 'es'
   ): Promise<void> {
     try {
       const recipesData: CompleteRecetaData[] = [];
       for (const id of ids) {
-        recipesData.push(await this.getCompleteRecetaData(id));
+        recipesData.push(await this.getCompleteRecetaData(id, lang));
       }
 
       if (recipesData.length === 0) return;
@@ -131,7 +134,7 @@ export class RecetaPdfService {
 
       for (let i = 0; i < recipesData.length; i++) {
         doc.addPage();
-        await this.renderRecipe(doc, recipesData[i], options);
+        await this.renderRecipe(doc, recipesData[i], options, lang);
       }
 
       doc.end();
@@ -144,21 +147,27 @@ export class RecetaPdfService {
     }
   }
 
-  private async getCompleteRecetaData(id: string): Promise<CompleteRecetaData> {
+  private async getCompleteRecetaData(
+    id: string,
+    lang: string
+  ): Promise<CompleteRecetaData> {
     const detalle = await this.recetaService.getDetalle(id);
     const escandallo = await this.recetaService.calcularEscandallo(id);
 
     return {
       ...detalle,
       escandallo,
-      printDate: new Date().toLocaleDateString('es-ES'),
+      printDate: new Date().toLocaleDateString(
+        lang === 'es' ? 'es-ES' : 'en-GB'
+      ),
     } as CompleteRecetaData;
   }
 
   private async renderRecipe(
     doc: PDFKit.PDFDocument,
     data: CompleteRecetaData,
-    options: RecetaPdfOptions = {}
+    options: RecetaPdfOptions = {},
+    lang: string = 'es'
   ): Promise<void> {
     const { receta, alergenosConsolidados, escandallo } = data;
 
@@ -203,10 +212,15 @@ export class RecetaPdfService {
       .fillColor(COLORS.ACCENT)
       .font('Helvetica-Bold')
       .fontSize(8)
-      .text('FICHA TÉCNICA DE RECETA', headerTextX, cursorY, {
-        width: headerTextWidth,
-        characterSpacing: 0.9,
-      });
+      .text(
+        this.i18n.t('pdf.receta.ficha_tecnica', { lang }),
+        headerTextX,
+        cursorY,
+        {
+          width: headerTextWidth,
+          characterSpacing: 0.9,
+        }
+      );
 
     cursorY += 14;
     doc
@@ -223,9 +237,11 @@ export class RecetaPdfService {
     cursorY = Math.min(doc.y + 6, MARGIN + 64);
 
     const subtitleParts = [
-      receta.dificultad ? `Dificultad: ${receta.dificultad}` : null,
+      receta.dificultad
+        ? `${this.i18n.t('pdf.receta.dificultad', { lang })}: ${receta.dificultad}`
+        : null,
       receta.ingredientes?.length
-        ? `${receta.ingredientes.length} ingredientes`
+        ? `${receta.ingredientes.length} ${this.i18n.t('pdf.receta.ingredientes', { lang })}`
         : null,
     ].filter(Boolean);
 
@@ -310,7 +326,7 @@ export class RecetaPdfService {
 
     this.drawInfoBox(
       doc,
-      'RENDIMIENTO',
+      this.i18n.t('pdf.receta.rendimiento', { lang }),
       `${receta.rendimiento || '—'} ${receta.unidadResultado || ''}`.trim(),
       MARGIN,
       statY,
@@ -318,15 +334,15 @@ export class RecetaPdfService {
     );
     this.drawInfoBox(
       doc,
-      'RACIONES',
-      `${receta.raciones || '—'} porciones`,
+      this.i18n.t('pdf.receta.raciones', { lang }),
+      `${receta.raciones || '—'} ${this.i18n.t('pdf.receta.porciones', { lang })}`,
       MARGIN + statWidth + statGap,
       statY,
       statWidth
     );
     this.drawInfoBox(
       doc,
-      'TIEMPO',
+      this.i18n.t('pdf.receta.tiempo', { lang }),
       receta.tiempoEstimadoMinutos
         ? `${receta.tiempoEstimadoMinutos} min`
         : '—',
@@ -347,19 +363,43 @@ export class RecetaPdfService {
     let currentY = allergensY + 74 + SECTION_GAP;
     currentY = this.drawSectionTitle(
       doc,
-      'LISTADO DE INGREDIENTES',
+      this.i18n.t('pdf.receta.listado_ingredientes', { lang }),
       MARGIN,
       currentY,
       contentWidth
     );
 
     const tableCols = [
-      { label: 'PRODUCTO', width: 0.4, align: 'left' },
-      { label: 'CANT.', width: 0.12, align: 'right' },
-      { label: 'UD', width: 0.1, align: 'center' },
-      { label: 'MERMA', width: 0.1, align: 'right' },
-      { label: 'B. REAL', width: 0.13, align: 'right' },
-      { label: 'ALÉRG.', width: 0.15, align: 'right' },
+      {
+        label: this.i18n.t('pdf.receta.producto', { lang }),
+        width: 0.4,
+        align: 'left',
+      },
+      {
+        label: this.i18n.t('pdf.receta.cant', { lang }),
+        width: 0.12,
+        align: 'right',
+      },
+      {
+        label: this.i18n.t('pdf.receta.ud', { lang }),
+        width: 0.1,
+        align: 'center',
+      },
+      {
+        label: this.i18n.t('pdf.receta.merma', { lang }),
+        width: 0.1,
+        align: 'right',
+      },
+      {
+        label: this.i18n.t('pdf.receta.b_real', { lang }),
+        width: 0.13,
+        align: 'right',
+      },
+      {
+        label: this.i18n.t('pdf.receta.alerg', { lang }),
+        width: 0.15,
+        align: 'right',
+      },
     ];
 
     const tableWidth = contentWidth;
@@ -404,11 +444,11 @@ export class RecetaPdfService {
         doc.addPage();
         currentY = this.drawSectionTitle(
           doc,
-          'LISTADO DE INGREDIENTES',
+          this.i18n.t('pdf.receta.listado_ingredientes', { lang }),
           MARGIN,
           MARGIN,
           contentWidth,
-          'CONTINUACIÓN'
+          this.i18n.t('pdf.receta.continuacion', { lang })
         );
         currentY = this.drawTableHeader(
           doc,
@@ -487,7 +527,7 @@ export class RecetaPdfService {
 
     currentY = this.drawSectionTitle(
       doc,
-      'ELABORACIÓN PASO A PASO',
+      this.i18n.t('pdf.receta.elaboracion', { lang }),
       MARGIN,
       currentY,
       contentWidth
@@ -518,11 +558,11 @@ export class RecetaPdfService {
           doc.addPage();
           currentY = this.drawSectionTitle(
             doc,
-            'ELABORACIÓN PASO A PASO',
+            this.i18n.t('pdf.receta.elaboracion', { lang }),
             MARGIN,
             MARGIN,
             contentWidth,
-            'CONTINUACIÓN'
+            this.i18n.t('pdf.receta.continuacion', { lang })
           );
           currentY -= 1;
         }
@@ -556,7 +596,7 @@ export class RecetaPdfService {
         .fontSize(FONT_BODY + 0.4)
         .fillColor(COLORS.GRAY)
         .text(
-          'No hay instrucciones detalladas para esta receta.',
+          this.i18n.t('pdf.receta.sin_instrucciones', { lang }),
           MARGIN,
           currentY + 2,
           {
@@ -585,7 +625,7 @@ export class RecetaPdfService {
       .fillColor(COLORS.GRAY)
       .font('Helvetica')
       .text(
-        `SmartEconomat Kitchen Suite · Impreso ${data.printDate}`,
+        `${this.i18n.t('pdf.receta.footer', { lang })} ${data.printDate}`,
         MARGIN,
         footY + 5,
         {

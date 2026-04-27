@@ -17,21 +17,21 @@ export interface SmartFilterAutocompleteProps<T> extends Omit<
   AutocompleteProps<T, true, false, false>,
   'renderInput' | 'multiple'
 > {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   placeholder?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ariaLabel?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   icon?: ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   inputWidth?: string | number;
 }
 

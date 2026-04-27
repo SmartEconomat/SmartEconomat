@@ -13,17 +13,17 @@ export type RolType = 'Administrador' | 'Profesor' | 'Alumno' | string;
  * Documentación en español.
  */
 export interface RoleBadgeProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   rol: RolType;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   size?: 'small' | 'medium';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   sx?: SxProps<Theme>;
 }
 

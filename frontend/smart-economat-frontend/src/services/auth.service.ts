@@ -19,6 +19,7 @@ export interface CurrentUserResponse {
   rol?: string;
   role?: string;
   permisos?: string[];
+  idioma?: 'es' | 'en';
 }
 
 export interface User {
@@ -28,6 +29,7 @@ export interface User {
   rol: string;
   username?: string;
   permisos: string[];
+  idioma: 'es' | 'en';
 }
 
 export interface RegisterAlumnoRequest {
@@ -122,7 +124,17 @@ export const authService = {
       rol: result.data.rol || result.data.role || 'usuario',
       username: result.data.username,
       permisos: result.data.permisos || [],
+      idioma: result.data.idioma || 'es',
     };
+  },
+
+  async updateLanguage(idioma: 'es' | 'en'): Promise<void> {
+    const response = await baseFetch('/usuarios/perfil', {
+      method: 'PATCH',
+      body: JSON.stringify({ idioma }),
+    });
+
+    await parseApiResponse(response, 'Error al actualizar el idioma');
   },
 
   async registerAlumno(
@@ -236,6 +248,7 @@ export const authService = {
   async updateProfile(data: {
     username: string;
     email?: string;
+    idioma?: 'es' | 'en';
   }): Promise<void> {
     const response = await baseFetch('/usuarios/perfil', {
       method: 'PATCH',

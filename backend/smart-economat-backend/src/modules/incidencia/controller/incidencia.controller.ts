@@ -51,14 +51,14 @@ export class IncidenciaController {
       estadoLabelKey: `enum.incidenciaEstado.${String(incidencia.estado).toUpperCase()}`,
     };
   }
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly incidenciaService: IncidenciaService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -68,9 +68,9 @@ export class IncidenciaController {
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
@@ -90,9 +90,9 @@ export class IncidenciaController {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
@@ -105,9 +105,9 @@ export class IncidenciaController {
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.incidencias.editar)
   update(
@@ -119,9 +119,9 @@ export class IncidenciaController {
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.incidencias.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -129,9 +129,9 @@ export class IncidenciaController {
     return this.incidenciaService.remove(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
   resolver(
@@ -144,9 +144,9 @@ export class IncidenciaController {
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('reportar')
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @ApiOperation({
@@ -162,9 +162,9 @@ export class IncidenciaController {
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
   @ApiOperation({ summary: 'Resuelve una incidencia de forma transaccional' })

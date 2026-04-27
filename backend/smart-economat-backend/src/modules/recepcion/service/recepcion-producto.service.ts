@@ -16,9 +16,9 @@ import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
  */
 @Injectable()
 export class RecepcionProductoService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(RecepcionProducto)
     private readonly recepcionProductoRepository: Repository<RecepcionProducto>,
@@ -28,9 +28,9 @@ export class RecepcionProductoService {
     private readonly pedidoProductoRepository: Repository<PedidoProducto>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateRecepcionProductoDto): Promise<RecepcionProducto> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id: dto.idRecepcion },
@@ -64,9 +64,9 @@ export class RecepcionProductoService {
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<RecepcionProducto>> {
@@ -93,9 +93,9 @@ export class RecepcionProductoService {
     return { data, total, page, limit, totalPages };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<RecepcionProducto> {
     const recepcionProducto = await this.recepcionProductoRepository.findOne({
       where: { id },
@@ -118,9 +118,9 @@ export class RecepcionProductoService {
     return recepcionProducto;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     dto: UpdateRecepcionProductoDto
@@ -172,9 +172,9 @@ export class RecepcionProductoService {
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const recepcionProducto = await this.findOne(id);
     await this.recepcionProductoRepository.softDelete(recepcionProducto.id);

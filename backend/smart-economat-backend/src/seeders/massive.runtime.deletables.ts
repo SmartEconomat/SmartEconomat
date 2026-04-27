@@ -209,7 +209,7 @@ export async function ensureDeletableProfesorSlotResource(
   }
 
   throw new Error(
-    '[seed-massive] No se pudo precrear slot de profesor eliminable tras reintentos por conflicto'
+    '[seed-massive] Could not precrear slot de profesor eliminable tras reintentos por conflicto'
   );
 }
 
@@ -292,7 +292,7 @@ export async function ensureDeletableProveedorResource(
     }
 
     throw new Error(
-      '[seed-massive] No se pudo precrear proveedor eliminable tras reintentos por conflicto'
+      '[seed-massive] Could not precrear proveedor eliminable tras reintentos por conflicto'
     );
   } finally {
     context.setAccessToken(previousToken);
@@ -587,6 +587,6 @@ export async function ensureDeletableProductoAlergenoResource(
   }
 
   throw new Error(
-    '[seed-massive] No se pudo obtener ni crear una asociacion producto-alergeno eliminable'
+    '[seed-massive] Could not obtener ni crear una asociacion producto-alergeno eliminable'
   );
 }

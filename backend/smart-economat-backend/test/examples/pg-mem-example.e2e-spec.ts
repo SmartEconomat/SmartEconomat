@@ -16,16 +16,13 @@ describe('Ejemplo pg-mem (e2e)', () => {
     dataSource = app.get(DataSource);
   });
 
-  // El beforeEach global en jest.setup.ts restaura el snapshot post-seed
-  // automáticamente antes de cada test (rollback), garantizando aislamiento.
-
   afterAll(() => {
     /* app compartida globalmente, se limpia al final de todo el proceso en globalTeardown.ts */
   });
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   it('Test 1 - Debe insertar un usuario temporal', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 
@@ -53,9 +50,9 @@ describe('Ejemplo pg-mem (e2e)', () => {
     console.log('Test 1 completado. Usuario insertado en memoria.');
   });
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   it('Test 2 - Debe verificar que el estado se reseteó automáticamente (snapshot restore)', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
 

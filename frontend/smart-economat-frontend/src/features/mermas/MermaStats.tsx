@@ -17,13 +17,13 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 interface MermaStatsProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   stats: MermaStats | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading?: boolean;
 }
 
@@ -33,9 +33,9 @@ interface MermaStatsProps {
 const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const MOTIVO_LABELS: Record<string, string> = {
     [MotivoMerma.ROTURA]: t('merma.form.motivoOpciones.roturaEnvase'),
     [MotivoMerma.DETERIORO]: t('merma.form.motivoOpciones.deterioroCaducidad'),

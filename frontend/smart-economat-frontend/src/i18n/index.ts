@@ -1,8 +1,9 @@
 /**
- * Documentación en español.
+ * i18n initialization with browser detection and local storage persistence.
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './en.json';
 import es from './es.json';
 import tutorialEn from './locales/tutorial.en.json';
@@ -16,11 +17,28 @@ export const resources = {
   es: { translation: esMerged },
 };
 
-i18n.use(initReactI18next).init({
-  resources,
-  lng: 'es',
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false },
-});
+// Configuration for the language detector
+const detectorOptions = {
+  // Order of detection
+  order: ['localStorage', 'navigator'],
+  // Key to use in localStorage
+  lookupLocalStorage: 'sm_language',
+  // Cache the selection in localStorage
+  caches: ['localStorage'],
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'es', // Default fallback: Spanish
+    detection: detectorOptions,
+    interpolation: { escapeValue: false },
+    // Only allow 'es' and 'en'
+    supportedLngs: ['es', 'en'],
+    // If language has region (e.g. 'en-US'), just use 'en'
+    nonExplicitSupportedLngs: true,
+  });
 
 export default i18n;

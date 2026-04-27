@@ -48,9 +48,9 @@ export class PedidoDraftService implements OnModuleDestroy {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async upsertDraft(
     userId: string,
     dto: UpsertPedidoDraftDto
@@ -108,9 +108,9 @@ export class PedidoDraftService implements OnModuleDestroy {
     return nextDraft;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getLatestDraft(userId: string): Promise<PedidoDraftRecord | null> {
     const fromCache = await this.getDraftFromCache(userId);
     if (fromCache) {
@@ -132,9 +132,9 @@ export class PedidoDraftService implements OnModuleDestroy {
     return fromDatabase;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async clearDraft(userId: string): Promise<void> {
     await Promise.allSettled([
       this.deleteDraftFromCache(userId),
@@ -142,9 +142,9 @@ export class PedidoDraftService implements OnModuleDestroy {
     ]);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async finalizeOrder(userId: string): Promise<PedidoUsuario> {
     const draft = await this.getLatestDraft(userId);
     if (!draft) {
@@ -168,9 +168,9 @@ export class PedidoDraftService implements OnModuleDestroy {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async saveAndFinalize(
     userId: string,
     dto: CreatePedidoUsuarioDto

@@ -99,9 +99,9 @@ export class ExportService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamProductosToExcel(
     query: ExportProductoFilterDto,
     res: Response
@@ -116,9 +116,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamPedidosToExcel(
     query: ExportPedidoFilterDto,
     res: Response
@@ -133,9 +133,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamProveedoresToExcel(
     query: ExportProveedorFilterDto,
     res: Response
@@ -150,9 +150,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamAlbaranesToExcel(
     query: ExportAlbaranFilterDto,
     res: Response
@@ -167,9 +167,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamIncidenciasToExcel(
     query: ExportIncidenciaFilterDto,
     res: Response
@@ -184,9 +184,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamInventarioToExcel(
     query: ExportInventarioFilterDto,
     res: Response
@@ -201,9 +201,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamMovimientosToExcel(
     query: ExportMovimientoFilterDto,
     res: Response
@@ -218,9 +218,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamRecepcionesToExcel(
     query: ExportRecepcionFilterDto,
     res: Response
@@ -235,9 +235,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamRecetasToExcel(
     query: ExportRecetaFilterDto,
     res: Response
@@ -252,9 +252,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamUbicacionesToExcel(
     query: ExportUbicacionFilterDto,
     res: Response
@@ -269,9 +269,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamUsuariosToExcel(
     query: ExportUsuarioFilterDto,
     res: Response
@@ -286,9 +286,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamProductosToPdf(
     query: ExportProductoFilterDto,
     res: Response
@@ -303,9 +303,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamProveedoresToPdf(
     query: ExportProveedorFilterDto,
     res: Response
@@ -320,9 +320,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamInventarioToPdf(
     query: ExportInventarioFilterDto,
     res: Response
@@ -337,9 +337,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamPedidosToPdf(
     query: ExportPedidoFilterDto,
     res: Response
@@ -354,9 +354,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamAlbaranesToPdf(
     query: ExportAlbaranFilterDto,
     res: Response
@@ -371,9 +371,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamIncidenciasToPdf(
     query: ExportIncidenciaFilterDto,
     res: Response
@@ -388,9 +388,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async streamRecetasToPdf(
     query: ExportRecetaFilterDto,
     res: Response
@@ -405,9 +405,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async streamQueryToPdf<T extends object>(
     res: Response,
     title: string,
@@ -426,9 +426,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async streamQueryToExcel<T extends object>(
     res: Response,
     sheetName: string,
@@ -447,9 +447,9 @@ export class ExportService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async ensureWithinLimit<T extends object>(
     qb: SelectQueryBuilder<T>,
     maxRows: number
@@ -463,9 +463,9 @@ export class ExportService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async streamToPdf(
     res: Response,
     title: string,
@@ -497,9 +497,9 @@ export class ExportService {
     await buildPdfTable(res, title, columns, rows);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async streamToExcel(
     res: Response,
     sheetName: string,
@@ -597,9 +597,9 @@ export class ExportService {
     await workbook.commit();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async fetchBatch<T extends object>(
     qb: SelectQueryBuilder<T>,
     offset: number,
@@ -611,9 +611,9 @@ export class ExportService {
     return items.map(mapper);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildProductoQueryBuilder(
     query: ExportProductoFilterDto
   ): SelectQueryBuilder<Producto> {
@@ -664,9 +664,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildPedidoQueryBuilder(
     query: ExportPedidoFilterDto
   ): SelectQueryBuilder<Pedido> {
@@ -702,9 +702,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildProveedorQueryBuilder(
     query: ExportProveedorFilterDto
   ): SelectQueryBuilder<Proveedor> {
@@ -721,9 +721,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildAlbaranQueryBuilder(
     query: ExportAlbaranFilterDto
   ): SelectQueryBuilder<Albaran> {
@@ -753,9 +753,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildIncidenciaQueryBuilder(
     query: ExportIncidenciaFilterDto
   ): SelectQueryBuilder<Incidencia> {
@@ -806,9 +806,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildInventarioQueryBuilder(
     query: ExportInventarioFilterDto
   ): SelectQueryBuilder<Inventario> {
@@ -839,9 +839,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildMovimientoQueryBuilder(
     query: ExportMovimientoFilterDto
   ): SelectQueryBuilder<Movimiento> {
@@ -871,9 +871,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildRecepcionQueryBuilder(
     query: ExportRecepcionFilterDto
   ): SelectQueryBuilder<Recepcion> {
@@ -902,9 +902,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildRecetaQueryBuilder(
     query: ExportRecetaFilterDto
   ): SelectQueryBuilder<Receta> {
@@ -935,9 +935,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildUbicacionQueryBuilder(
     query: ExportUbicacionFilterDto
   ): SelectQueryBuilder<Ubicacion> {
@@ -954,9 +954,9 @@ export class ExportService {
     return qb;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private buildUsuarioQueryBuilder(
     query: ExportUsuarioFilterDto
   ): SelectQueryBuilder<Usuario> {

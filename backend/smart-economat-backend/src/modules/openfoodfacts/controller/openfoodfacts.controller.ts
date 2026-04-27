@@ -31,9 +31,9 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 export class OpenFoodFactsController {
   constructor(private readonly openFoodFactsService: OpenFoodFactsService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('producto/:codigoBarras')
   @RequireAnyPermission(
     PERMISSIONS.productos.listar,
@@ -70,9 +70,9 @@ export class OpenFoodFactsController {
     return this.openFoodFactsService.searchByBarcode(trimmedBarcode);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('buscar')
   @RequireAnyPermission(
     PERMISSIONS.productos.listar,

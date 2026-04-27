@@ -81,9 +81,9 @@ export interface MermaKpiResponse {
 export class MermaService {
   private readonly logger = new Logger(MermaService.name);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Merma)
     private readonly mermaRepository: Repository<Merma>,
@@ -96,9 +96,9 @@ export class MermaService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateMermaDto, userId: string): Promise<Merma> {
     const merma = await this.registerMerma(
       {
@@ -120,9 +120,9 @@ export class MermaService {
     return merma;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createFromProduccion(
     dto: CreateMermaProduccionDto,
     userId: string
@@ -169,9 +169,9 @@ export class MermaService {
     return merma;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Merma>> {
@@ -196,9 +196,9 @@ export class MermaService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<Merma> {
     const merma = await this.mermaRepository.findOne({
       where: { id },
@@ -212,9 +212,9 @@ export class MermaService {
     return merma;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getKpis(query: MermaKpiQueryDto): Promise<MermaKpiResponse> {
     const { startDate, endDate, productoId } = query;
     const dateRange = this.resolveDateRange(startDate, endDate);
@@ -331,9 +331,9 @@ export class MermaService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getStats(): Promise<{ porMotivo: unknown[]; porProducto: unknown[] }> {
     const porMotivo = await this.mermaRepository
       .createQueryBuilder('m')
@@ -361,9 +361,9 @@ export class MermaService {
     return { porMotivo, porProducto };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async registerMerma(
     command: MermaCommand,
     userId: string
@@ -449,9 +449,9 @@ export class MermaService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async consumeInventoryByProduct(
     manager: EntityManager,
     productoId: string,
@@ -504,9 +504,9 @@ export class MermaService {
     return consumos;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async createMermaMovements(
     manager: EntityManager,
     consumos: Array<{ inventario: Inventario; descontar: number }>,
@@ -530,9 +530,9 @@ export class MermaService {
     await manager.save(Movimiento, movimientos);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveTipoMerma(motivo: MotivoMerma): TipoMerma {
     switch (motivo) {
       case MotivoMerma.ROTURA:
@@ -546,9 +546,9 @@ export class MermaService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async findByIdempotencyKey(key: string): Promise<Merma | null> {
     return this.mermaRepository.findOne({
       where: { idempotencyKey: key },
@@ -556,9 +556,9 @@ export class MermaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
       return false;
@@ -571,9 +571,9 @@ export class MermaService {
     return withDriverError.driverError?.code === '23505';
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveDateRange(
     startDate?: string,
     endDate?: string
@@ -605,9 +605,9 @@ export class MermaService {
     return { start, end };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private logHighValueMerma(merma: Merma, userId: string): void {
     if (merma.cantidad >= MERMA_UMBRAL_ALTO) {
       this.logger.warn(

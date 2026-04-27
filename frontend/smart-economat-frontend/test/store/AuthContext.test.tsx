@@ -69,6 +69,7 @@ describe('AuthProvider', () => {
         email: 'tampered@example.com',
         rol: 'ADMIN',
         permisos: ['usuarios:eliminar'],
+        idioma: 'es',
       })
     );
 
@@ -78,6 +79,7 @@ describe('AuthProvider', () => {
       email: 'valid@example.com',
       rol: 'ADMIN',
       permisos: ['usuarios:listar'],
+      idioma: 'es',
     });
 
     render(
@@ -108,6 +110,7 @@ describe('AuthProvider', () => {
         email: 'stale@example.com',
         rol: 'ADMIN',
         permisos: ['usuarios:listar'],
+        idioma: 'es',
       })
     );
     mockedAuthService.getCurrentUser.mockRejectedValue(
@@ -141,6 +144,7 @@ describe('AuthProvider', () => {
               email: 'valid@example.com',
               rol: 'ADMIN',
               permisos: ['usuarios:listar'],
+              idioma: 'es',
             });
         })
     );
@@ -172,6 +176,7 @@ describe('AuthProvider', () => {
         email: 'valid@example.com',
         rol: 'ADMIN',
         permisos: ['usuarios:listar'],
+        idioma: 'es',
       })
       .mockImplementationOnce(
         () =>
@@ -183,6 +188,7 @@ describe('AuthProvider', () => {
                 email: 'valid@example.com',
                 rol: 'ADMIN',
                 permisos: ['usuarios:listar'],
+                idioma: 'es',
               });
           })
       );

@@ -13,21 +13,21 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
  */
 @Entity('receta_ingrediente')
 export class RecetaIngrediente extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -36,15 +36,15 @@ export class RecetaIngrediente extends BaseEntity {
   })
   cantidad!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'enum', enum: UnidadIngrediente })
   unidad!: UnidadIngrediente;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 5,
@@ -55,9 +55,9 @@ export class RecetaIngrediente extends BaseEntity {
   })
   mermaAplicada!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToOne(() => Receta, (receta) => receta.ingredientes, {
     onDelete: 'CASCADE',
@@ -65,22 +65,22 @@ export class RecetaIngrediente extends BaseEntity {
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Producto, { nullable: false })
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'proveedor_favorito_id', nullable: true })
   proveedorFavoritoId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Proveedor, { nullable: true })
   @JoinColumn({ name: 'proveedor_favorito_id' })
   proveedorFavorito?: Relation<Proveedor>;

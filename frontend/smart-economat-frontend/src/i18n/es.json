@@ -22,6 +22,12 @@
       "welcome": "¡Bienvenido!",
       "loading": "Cargando tu aplicación…"
     },
+    "overlay": {
+      "registerSuccess": "¡Registro exitoso!",
+      "waitForActivation": "Espera a que un administrador active tu cuenta.",
+      "welcome": "¡Bienvenido a SmartEconomat!",
+      "loadingApp": "Cargando aplicación..."
+    },
     "register": {
       "successTitle": "¡Registro exitoso!",
       "successWait": "Debes esperar a que tu usuario esté activo."
@@ -319,6 +325,11 @@
       "sinProveedor": "Sin proveedor disponible",
       "masBarato": "Seleccionar automáticamente el más barato",
       "masBaratoLabel": "Más barato"
+    },
+    "alergenos": {
+      "sinAlergenos": "No se han detectado alérgenos en los ingredientes de esta receta.",
+      "contiene": "Contiene {{nombre}}",
+      "sin": "Sin {{nombre}}"
     }
   },
   "recetas": {
@@ -1655,6 +1666,8 @@
     "miPerfil": "Mi Perfil",
     "descripcionAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.",
     "descripcionOtros": "Consulta y edita tus datos personales y opciones de seguridad.",
+    "idiomaTitulo": "Preferencias de Idioma",
+    "idioma": "Idioma",
     "seccion": {
       "titulo": "Perfil y Seguridad",
       "descripcionAlumno": "Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior.",
@@ -2703,6 +2716,27 @@
       "CON_INCIDENCIAS": "Con incidencias",
       "CANCELADA": "Cancelada"
     },
+    "recetaDificultad": {
+      "FÁCIL": "Fácil",
+      "MEDIA": "Media",
+      "DIFÍCIL": "Difícil"
+    },
+    "recetaTiempo": {
+      "10_MIN": "10 min",
+      "20_MIN": "20 min",
+      "30_MIN": "30 min",
+      "45_MIN": "45 min",
+      "60_MIN": "60 min"
+    },
+    "recetaUnidad": {
+      "G": "g",
+      "KG": "kg",
+      "L": "l",
+      "ML": "ml",
+      "PIEZA": "pieza",
+      "CDA": "cda",
+      "CDTA": "cdta"
+    },
     "productoCategoria": {
       "VERDURA": "Verdura",
       "FRUTA": "Fruta",
@@ -2719,6 +2753,41 @@
       "AZUCAR": "Azúcar",
       "BEBIDA": "Bebida",
       "OTRO": "Otro"
+    },
+    "alergeno": {
+      "GLUTEN": "Gluten",
+      "CRUSTACEOS": "Crustáceos",
+      "HUEVOS": "Huevos",
+      "PESCADO": "Pescado",
+      "CACAHUETES": "Cacahuetes",
+      "SOJA": "Soja",
+      "LACTEOS": "Lácteos",
+      "FRUTOS_CON_CASCARA": "Frutos de cáscara",
+      "APIO": "Apio",
+      "MOSTAZA": "Mostaza",
+      "SESAMO": "Sésamo",
+      "SULFITO": "Sulfitos",
+      "ALTRAMUCES": "Altramuces",
+      "MOLUSCOS": "Moluscos"
+    }
+  },
+  "notifications": {
+    "title": "Centro de Notificaciones",
+    "subtitle": "Gestiona tus alertas y pendientes",
+    "allClear": "¡Todo al día!",
+    "allClearDesc": "No tienes notificaciones pendientes en este momento.",
+    "loading": "Cargando notificaciones...",
+    "loadError": "Error al cargar las notificaciones",
+    "errorTitle": "Ha ocurrido un error",
+    "openCenter": "Abrir notificaciones",
+    "refresh": "Actualizar",
+    "totalPending_one": "1 pendiente",
+    "totalPending_other": "{{count}} pendientes",
+    "priority": {
+      "low": "Baja",
+      "medium": "Prioritaria",
+      "high": "Alta",
+      "urgent": "Urgente"
     }
   }
 }

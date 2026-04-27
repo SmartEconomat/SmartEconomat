@@ -309,7 +309,10 @@ export class RecepcionStockService {
         await queryRunner.manager.save(batchMovimientos);
         movimientosGenerados = batchMovimientos.length;
 
-        const pmpUpdatesPending = new Map<string, { totalQty: number, weightedSum: number }>();
+        const pmpUpdatesPending = new Map<
+          string,
+          { totalQty: number; weightedSum: number }
+        >();
         for (const item of lineasConInventario) {
           const precioUnitario = Number(item.ppRef.precioUnitario);
           if (!Number.isFinite(precioUnitario) || precioUnitario <= 0) {
@@ -330,17 +333,25 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const pmpData = pmpUpdatesPending.get(item.ppRef.productoProveedorId) || { totalQty: 0, weightedSum: 0 };
+          const pmpData = pmpUpdatesPending.get(
+            item.ppRef.productoProveedorId
+          ) || { totalQty: 0, weightedSum: 0 };
           pmpUpdatesPending.set(item.ppRef.productoProveedorId, {
             totalQty: pmpData.totalQty + cantidadRecibida,
-            weightedSum: pmpData.weightedSum + (cantidadRecibida * precioUnitario)
+            weightedSum:
+              pmpData.weightedSum + cantidadRecibida * precioUnitario,
           });
         }
 
         for (const [ppId, data] of pmpUpdatesPending.entries()) {
           if (this.productoService?.actualizarPMP) {
             const avgPrice = data.weightedSum / data.totalQty;
-            await this.productoService.actualizarPMP(ppId, data.totalQty, avgPrice, queryRunner.manager);
+            await this.productoService.actualizarPMP(
+              ppId,
+              data.totalQty,
+              avgPrice,
+              queryRunner.manager
+            );
           }
         }
       }
@@ -471,9 +482,7 @@ export class RecepcionStockService {
     const pedidoIdsList = listaPedidos.map((p) => p.pedidoId);
 
     if (pedidoIdsList.length === 0) {
-      throw new BadRequestException(
-        I18nHelper.getError('NO_SE_HAN_ESPECIFICADO_PEDIDOS')
-      );
+      throw new BadRequestException(I18nHelper.getError('NO_ORDERS_SPECIFIED'));
     }
 
     const uniquePedidoIds = [...new Set(pedidoIdsList)];
@@ -675,7 +684,10 @@ export class RecepcionStockService {
       }
 
       const sumadoRecibidoPorPP = new Map<string, number>();
-      const pmpUpdatesPending = new Map<string, { totalQty: number, weightedSum: number }>();
+      const pmpUpdatesPending = new Map<
+        string,
+        { totalQty: number; weightedSum: number }
+      >();
       const detallesRecibidos = new Map<string, RecepcionLineaProcesada[]>();
       const pedidoPorPedidoProducto = new Map<string, Pedido>();
 
@@ -854,10 +866,14 @@ export class RecepcionStockService {
           });
           await queryRunner.manager.save(historial);
 
-          const pmpData = pmpUpdatesPending.get(ppRef.productoProveedorId) || { totalQty: 0, weightedSum: 0 };
+          const pmpData = pmpUpdatesPending.get(ppRef.productoProveedorId) || {
+            totalQty: 0,
+            weightedSum: 0,
+          };
           pmpUpdatesPending.set(ppRef.productoProveedorId, {
             totalQty: pmpData.totalQty + cantidadRecibida,
-            weightedSum: pmpData.weightedSum + (cantidadRecibida * precioUnitario)
+            weightedSum:
+              pmpData.weightedSum + cantidadRecibida * precioUnitario,
           });
         }
       }
@@ -865,7 +881,12 @@ export class RecepcionStockService {
       for (const [ppId, data] of pmpUpdatesPending.entries()) {
         if (this.productoService?.actualizarPMP) {
           const avgPrice = data.weightedSum / data.totalQty;
-          await this.productoService.actualizarPMP(ppId, data.totalQty, avgPrice, queryRunner.manager);
+          await this.productoService.actualizarPMP(
+            ppId,
+            data.totalQty,
+            avgPrice,
+            queryRunner.manager
+          );
         }
       }
 
@@ -1160,9 +1181,9 @@ export class RecepcionStockService {
     return updatedPedido.estado;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async getOrGenerateAlbaranNumber(
     nAlbaran?: string,
     manager?: EntityManager

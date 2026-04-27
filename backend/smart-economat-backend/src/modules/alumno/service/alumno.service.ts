@@ -22,17 +22,17 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
  */
 @Injectable()
 export class AlumnoService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Alumno) private readonly alumnoRepo: Repository<Alumno>,
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolveSlotForRegistration(
     manager: {
       findOne: (...args: unknown[]) => Promise<unknown>;
@@ -98,9 +98,9 @@ export class AlumnoService {
     return resolvedSlot;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async findSlotByCode(
     manager: {
       findOne: (...args: unknown[]) => Promise<unknown>;
@@ -118,9 +118,9 @@ export class AlumnoService {
     })) as AlumnoSlot | null;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async countStudentsInSlot(
     manager: {
       count?: (entity: typeof Alumno, options: unknown) => Promise<number>;
@@ -144,9 +144,9 @@ export class AlumnoService {
     return slot.alumno ? 1 : 0;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
       const slot = await this.resolveSlotForRegistration(manager, dto);
@@ -203,9 +203,9 @@ export class AlumnoService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getSlotByCode(codigoClase: string) {
     const normalizedCode = codigoClase.trim().toUpperCase();
     const slot = await this.dataSource.getRepository(AlumnoSlot).findOne({
@@ -230,9 +230,9 @@ export class AlumnoService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async changeProfesor(
     alumnoUserId: string,
     reqUserId: string,
@@ -246,9 +246,7 @@ export class AlumnoService {
       });
 
       if (!alumno)
-        throw new NotFoundException(
-          I18nHelper.getError('ALUMNO_NO_ENCONTRADO')
-        );
+        throw new NotFoundException(I18nHelper.getError('STUDENT_NOT_FOUND'));
 
       if (reqUserRole === rolUsuario.PROFESOR) {
         const profesorActual = await manager.findOne(Profesor, {
@@ -288,9 +286,7 @@ export class AlumnoService {
       });
 
       if (!nuevoSlot)
-        throw new NotFoundException(
-          I18nHelper.getError('EL_NUEVO_SLOT_ESPECIFICADO_NO_EXISTE')
-        );
+        throw new NotFoundException(I18nHelper.getError('NEW_SLOT_NOT_FOUND'));
 
       const alumnosEnNuevoSlot = await this.countStudentsInSlot(
         manager,
@@ -315,9 +311,9 @@ export class AlumnoService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getAulas() {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       select: ['aula'],
@@ -326,9 +322,9 @@ export class AlumnoService {
     return aulas.sort();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getClasesByAula(aula: string) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       where: { aula },
@@ -338,9 +334,9 @@ export class AlumnoService {
     return clases.sort((a: number, b: number) => a - b);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getProfesoresBySlot(aula: string, numeroClase: number) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
       where: { aula, numeroClase },

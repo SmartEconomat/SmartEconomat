@@ -15,27 +15,27 @@ import type { Request } from 'express';
 export class HighTrafficAlertInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HighTrafficAlert');
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private readonly userRequestCount = new Map<
     string,
     { count: number; lastTs: number }
   >();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private readonly ALERT_THRESHOLD = 100;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private readonly ALERT_WINDOW_MS = 10000;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (
       process.env.NODE_ENV === 'test' ||
@@ -56,9 +56,9 @@ export class HighTrafficAlertInterceptor implements NestInterceptor {
     return next.handle();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private monitorUser(userId: string, path: string) {
     const now = Date.now();
     const data = this.userRequestCount.get(userId) || { count: 0, lastTs: now };

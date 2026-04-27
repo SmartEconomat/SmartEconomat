@@ -42,9 +42,9 @@ export class ProduccionService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async ejecutarProduccion(
     dto: EjecutarProduccionDto,
     userId: string,
@@ -326,9 +326,9 @@ export class ProduccionService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<ProduccionLote>> {
@@ -420,9 +420,9 @@ export class ProduccionService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async consumirPorciones(
     loteId: string,
     dto: ConsumirProduccionDto
@@ -537,9 +537,9 @@ export class ProduccionService {
     return Number((pasosRedondeados * CONSUMPTION_PORTION_STEP).toFixed(3));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<ProduccionLote> {
     const lote = await this.dataSource.getRepository(ProduccionLote).findOne({
       where: { id },
@@ -554,9 +554,9 @@ export class ProduccionService {
     return lote;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async validarMultiple(dto: ValidarProduccionDto) {
     const recipeIds = dto.items.map((it) => it.recetaId);
     if (recipeIds.length === 0) return { ingredients: [] };

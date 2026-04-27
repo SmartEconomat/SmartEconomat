@@ -17,14 +17,14 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
  */
 @Injectable()
 export class ProveedorService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly proveedorRepository: ProveedorRepository) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(createProveedorDto: CreateProveedorDto): Promise<Proveedor> {
     const { nombre, nif } = createProveedorDto;
 
@@ -48,9 +48,9 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -90,9 +90,9 @@ export class ProveedorService {
     return { data: processedData, total, page, limit, totalPages };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Proveedor> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -114,9 +114,9 @@ export class ProveedorService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     updateProveedorDto: UpdateProveedorDto
@@ -146,9 +146,9 @@ export class ProveedorService {
     return await this.proveedorRepository.save(proveedor);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const proveedor = await this.proveedorRepository.findOne({
       where: { id },
@@ -171,9 +171,9 @@ export class ProveedorService {
     await this.proveedorRepository.softDelete(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findWithOrders(): Promise<Proveedor[]> {
     return await this.proveedorRepository
       .createQueryBuilder('proveedor')

@@ -61,9 +61,9 @@ const Proveedores: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const toast = useToast();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -93,9 +93,9 @@ const Proveedores: React.FC = () => {
     loadData();
   }, [loadData]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -117,9 +117,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSave = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
     try {
@@ -152,32 +152,32 @@ const Proveedores: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleEditClick = (row: Proveedor) => {
     setItemToEdit({ ...row } as unknown as Record<string, unknown>);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleViewClick = (row: Proveedor) => {
     setItemToView(row);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSort = (key: string | keyof Proveedor) => {
     const isAsc = sortBy === key && sortOrder === 'asc';
     setSortOrder(isAsc ? 'desc' : 'asc');
     setSortBy(key as string);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleExportPdf = async () => {
     try {
       await DownloadService.downloadFile(
@@ -189,9 +189,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleExportExcel = async () => {
     try {
       await DownloadService.downloadFile(
@@ -203,9 +203,9 @@ const Proveedores: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleExportIndividualPdf = async (proveedor: Proveedor) => {
     try {
       // Usamos el searchTerm con el NIF para filtrar solo este proveedor
@@ -297,9 +297,9 @@ const Proveedores: React.FC = () => {
     },
   ];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const renderActions = (row: Proveedor) => (
     <Stack direction="row" spacing={1} justifyContent="center">
       <Tooltip title={t('proveedores.actions.verDetalle')}>

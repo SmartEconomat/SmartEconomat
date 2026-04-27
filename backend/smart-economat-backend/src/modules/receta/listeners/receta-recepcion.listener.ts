@@ -45,7 +45,7 @@ export class RecetaRecepcionListener {
         .createQueryBuilder('ri')
         .select('DISTINCT ri.receta_id', 'recetaId')
         .where('ri.producto_id IN (:...productoIds)', { productoIds })
-        .getRawMany();
+        .getRawMany<{ recetaId: string }>();
 
       const recetaIds = ingredientes.map((i) => i.recetaId);
 
@@ -61,7 +61,9 @@ export class RecetaRecepcionListener {
         try {
           await this.recetaService.recalcularCostes(id);
         } catch (err) {
-          this.logger.error(`Error recalcuando receta ${id}: ${err.message}`);
+          this.logger.error(
+            `Error recalcuando receta ${id}: ${(err as Error).message}`
+          );
         }
       }
 
@@ -70,7 +72,7 @@ export class RecetaRecepcionListener {
       );
     } catch (error) {
       this.logger.error(
-        `Error procesando recálculo tras recepción: ${error.message}`
+        `Error procesando recálculo tras recepción: ${(error as Error).message}`
       );
     }
   }
@@ -87,7 +89,7 @@ export class RecetaRecepcionListener {
         .createQueryBuilder('ri')
         .select('DISTINCT ri.receta_id', 'recetaId')
         .where('ri.producto_id = :productoId', { productoId: event.productoId })
-        .getRawMany();
+        .getRawMany<{ recetaId: string }>();
 
       const recetaIds = ingredientes.map((i) => i.recetaId);
 
@@ -97,12 +99,14 @@ export class RecetaRecepcionListener {
         try {
           await this.recetaService.recalcularCostes(id);
         } catch (err) {
-          this.logger.error(`Error recalcuando receta ${id}: ${err.message}`);
+          this.logger.error(
+            `Error recalcuando receta ${id}: ${(err as Error).message}`
+          );
         }
       }
     } catch (error) {
       this.logger.error(
-        `Error procesando recálculo tras cambio de precio manual: ${error.message}`
+        `Error procesando recálculo tras cambio de precio manual: ${(error as Error).message}`
       );
     }
   }

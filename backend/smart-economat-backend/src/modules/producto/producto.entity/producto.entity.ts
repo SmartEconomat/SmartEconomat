@@ -15,51 +15,51 @@ import { Merma } from '../../merma/merma.entity/merma.entity';
 @Index(['codigoBarras'])
 @Check(`"fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"`)
 export class Producto extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'enum', enum: UnidadMedida, nullable: true })
   unidad?: UnidadMedida;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_caducidad' })
   fechaCaducidad?: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 200, nullable: true, name: 'path_img' })
   pathImg?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'enum', enum: TipoProducto, nullable: true })
   tipo?: TipoProducto;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 130,
@@ -69,9 +69,9 @@ export class Producto extends BaseEntity {
   })
   codigoBarras?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
 
   @Column({
     type: 'numeric',
@@ -83,9 +83,9 @@ export class Producto extends BaseEntity {
   })
   contenido!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -96,23 +96,23 @@ export class Producto extends BaseEntity {
   })
   pmp!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {
     cascade: true,
   })
   alergenos?: Relation<ProductoAlergeno[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
   proveedores!: Relation<ProductoProveedor[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Merma, (merma) => merma.producto)
   mermas?: Relation<Merma[]>;
 }

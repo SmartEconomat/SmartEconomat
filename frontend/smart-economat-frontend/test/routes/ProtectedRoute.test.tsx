@@ -18,10 +18,12 @@ const buildAuthContext = (
     email: 'test@example.com',
     rol: 'ADMIN',
     permisos: ['usuarios:listar'],
+    idioma: 'es',
   },
   login: vi.fn(),
   logout: vi.fn(),
   refreshUser: vi.fn(),
+  changeLanguage: vi.fn(),
   ...overrides,
 });
 
@@ -75,6 +77,7 @@ describe('ProtectedRoute', () => {
       email: 'limited@example.com',
       rol: 'PROFESOR',
       permisos: ['productos:listar'],
+      idioma: 'es',
     };
 
     renderProtectedRoute({
@@ -113,6 +116,6 @@ describe('ProtectedRoute', () => {
       requiredPermission: 'usuarios:listar',
     });
 
-    expect(screen.getByLabelText('Cargando')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Cargando/i)).toBeInTheDocument();
   });
 });

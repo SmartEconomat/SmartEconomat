@@ -185,9 +185,7 @@ const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
                     </Box>
                     <Tooltip title={t('perfil.copiarCodigo')}>
                       <Chip
-                        label={
-                          group.codigoSlot || t('perfil.sinCodigoSlot')
-                        }
+                        label={group.codigoSlot || t('perfil.sinCodigoSlot')}
                         size="small"
                         color="primary"
                         variant={group.codigoSlot ? 'filled' : 'outlined'}

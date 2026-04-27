@@ -161,9 +161,9 @@ export class MovimientoRepository {
     return this.repo.softDelete(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findMovimientosByEntity(dto: MovimientoHistoryDto) {
     const {
       entityId,

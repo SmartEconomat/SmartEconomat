@@ -7,16 +7,16 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class ProductoRepository extends Repository<Producto> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private dataSource: DataSource) {
     super(Producto, dataSource.createEntityManager());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async existsByCodigoBarras(codigoBarras: string): Promise<boolean> {
     const count = await this.count({ where: { codigoBarras } });
     return count > 0;

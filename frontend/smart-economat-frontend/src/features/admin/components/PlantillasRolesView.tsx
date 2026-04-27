@@ -44,9 +44,9 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 interface PlantillasRolesViewProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   canEdit: boolean;
 }
 
@@ -108,9 +108,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   );
   const [isReadonly, setIsReadonly] = useState(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -144,9 +144,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     void loadData();
   }, [loadData]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const rolesCountByPlantillaId = useMemo(() => {
     const counts = new Map<string, number>();
 
@@ -162,9 +162,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     return counts;
   }, [roles]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const groupedPermissions = useMemo(() => {
     const grouped = new Map<string, Permiso[]>();
 
@@ -191,9 +191,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     return entries;
   }, [permisos]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const togglePermisoSelection = useCallback((permisoId: string) => {
     setSelectedPermisoIds((prev) => {
       const next = new Set(prev);
@@ -206,9 +206,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     });
   }, []);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const toggleModuleSelection = useCallback((modulePermisos: Permiso[]) => {
     setSelectedPermisoIds((prev) => {
       const moduleIds = modulePermisos.map((p) => p.id);
@@ -225,9 +225,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     });
   }, []);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const openEditDialog = useCallback(
     (plantilla: PlantillaRol) => {
       const isSuperadmin = isSuperadminPlantilla(plantilla.nombre);
@@ -245,9 +245,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     [permisos]
   );
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const closeDialog = () => {
     if (saving) {
       return;
@@ -259,9 +259,9 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
     setIsReadonly(false);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSubmit = async () => {
     if (!editingPlantilla || isReadonly) {
       return;
@@ -465,8 +465,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                         : 'plantillasRoles.warningRolesLinked_other',
                       {
                         count:
-                          rolesCountByPlantillaId.get(editingPlantilla.id) ??
-                          0,
+                          rolesCountByPlantillaId.get(editingPlantilla.id) ?? 0,
                       }
                     )
                   : ''}

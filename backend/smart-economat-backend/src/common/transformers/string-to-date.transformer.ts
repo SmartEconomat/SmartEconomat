@@ -13,9 +13,9 @@ type TransformValueParams = Pick<TransformFnParams, 'value'>;
  * Documentación en español.
  */
 export class StringToDateTransformer {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(params: TransformValueParams): Date | null | undefined {
     const value = params.value;
     if (value === null) return null;

@@ -15,41 +15,41 @@ import { EstadoLote } from '../enums/receta.enums';
 @Index(['preparacionId'])
 @Index(['fechaProduccion'])
 export class ProduccionLote extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'preparacion_id', nullable: true })
   preparacionId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -59,9 +59,9 @@ export class ProduccionLote extends BaseEntity {
   })
   cantidadProducida!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -69,9 +69,9 @@ export class ProduccionLote extends BaseEntity {
   })
   fechaProduccion!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -79,9 +79,9 @@ export class ProduccionLote extends BaseEntity {
   })
   fechaCaducidad?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -89,9 +89,9 @@ export class ProduccionLote extends BaseEntity {
   })
   fechaAgotado?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 14,
@@ -101,9 +101,9 @@ export class ProduccionLote extends BaseEntity {
   })
   costeTotalReal!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -114,9 +114,9 @@ export class ProduccionLote extends BaseEntity {
   })
   porcionesProducidas!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 10,
@@ -127,9 +127,9 @@ export class ProduccionLote extends BaseEntity {
   })
   porcionesRestantes!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: EstadoLote,

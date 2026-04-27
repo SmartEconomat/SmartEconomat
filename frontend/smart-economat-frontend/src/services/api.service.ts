@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { eventBus, AUTH_EVENTS } from '../utils/eventBus';
 
 /**
@@ -311,6 +312,11 @@ export async function baseFetch(
   }
 
   const headers = new Headers(options.headers);
+
+  // Internationalization: Send the current UI language to the backend
+  if (!headers.has('Accept-Language') && i18n.language) {
+    headers.set('Accept-Language', i18n.language);
+  }
 
   // Protección CSRF: Añadir token desde la cookie si existe
   const csrfToken = getCookie('XSRF-TOKEN');

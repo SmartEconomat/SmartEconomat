@@ -10,25 +10,25 @@ const EXPORT_TIMEOUT_MS = 30000;
  * Documentación en español.
  */
 export interface DownloadOptions {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filename: string;
-        /**
+  /**
+   * Documentación en español.
+   */
+  toast: {
+    /**
      * Documentación en español.
      */
-  toast: {
-                /**
-         * Documentación en español.
-         */
     success: (msg: string) => void;
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     error: (msg: string) => void;
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     info: (msg: string) => void;
   };
 }
@@ -45,9 +45,9 @@ interface ApiError {
  * Documentación en español.
  */
 export class DownloadService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static async downloadFile(
     path: string,
     options: DownloadOptions
@@ -106,9 +106,9 @@ export class DownloadService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static openPdfInNewTab(blob: Blob) {
     const url = window.URL.createObjectURL(blob);
     window.open(url, '_blank');
@@ -116,9 +116,9 @@ export class DownloadService {
     // Navegadores modernos suelen manejar esto, pero es una limitación de blobs.
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static async getBlob(
     path: string,
     toast: DownloadOptions['toast']

@@ -29,6 +29,7 @@ export interface User {
       };
     }>;
   };
+  idioma?: 'es' | 'en';
 }
 
 export interface AuthContextType {
@@ -39,4 +40,5 @@ export interface AuthContextType {
   login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
+  changeLanguage: (idioma: 'es' | 'en') => Promise<void>;
 }

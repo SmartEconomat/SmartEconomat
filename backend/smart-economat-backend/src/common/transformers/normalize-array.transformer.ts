@@ -6,9 +6,9 @@
  * Documentación en español.
  */
 export class NormalizeArrayTransformer {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   static transform(params: { value: any }): any {
     const value = params.value;
     if (value === null) return null;

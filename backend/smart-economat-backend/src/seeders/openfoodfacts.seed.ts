@@ -185,7 +185,7 @@ function loadLocalCatalogOffProducts(): OffProduct[] {
     parsed = JSON.parse(rawFile) as SeedCatalogFile;
   } catch (error) {
     throw new Error(
-      `[seed-openfoodfacts] No se pudo cargar el catalogo local ${localCatalogPath}: ${String(
+      `[seed-openfoodfacts] Could not cargar el catalogo local ${localCatalogPath}: ${String(
         error instanceof Error ? error.message : error
       )}`
     );
@@ -436,7 +436,7 @@ export async function uploadOpenFoodFactsProductImage(
     return applyUploadedImageToProduct(product, ref);
   } catch (error) {
     console.warn(
-      `[seed-openfoodfacts] No se pudo descargar/subir la imagen del producto ${String(
+      `[seed-openfoodfacts] Could not descargar/subir la imagen del producto ${String(
         product.code || 'sin-codigo'
       )}: ${String(error instanceof Error ? error.message : error)}`
     );

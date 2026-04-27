@@ -51,9 +51,9 @@ export class PedidoUsuarioService {
     private readonly purchaseBatchService: PurchaseBatchService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(
     dto: CreatePedidoUsuarioDto,
     userId: string
@@ -89,9 +89,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PedidoUsuarioQueryDto
   ): Promise<PaginatedResponseDto<PedidoUsuario>> {
@@ -195,9 +195,9 @@ export class PedidoUsuarioService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string): Promise<PedidoUsuario> {
     const pedidoUsuario = await this.dataSource
       .getRepository(PedidoUsuario)
@@ -229,9 +229,9 @@ export class PedidoUsuarioService {
     return pedidoUsuario;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(
     id: string,
     dto: UpdatePedidoUsuarioDto,
@@ -333,17 +333,17 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async accept(id: string, userId: string): Promise<PedidoUsuario> {
     await this.purchaseBatchService.approvePedidoUsuario(id, userId);
     return this.findOne(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async cancel(
     id: string,
     dto: CancelPedidoUsuarioDto,
@@ -362,9 +362,9 @@ export class PedidoUsuarioService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async restore(id: string, userId?: string): Promise<PedidoUsuario> {
     return this.changePendingAggregateStatus(
       id,
@@ -382,9 +382,9 @@ export class PedidoUsuarioService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string, user: { id: string; rol?: string }): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -439,9 +439,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
     manager?: EntityManager,
@@ -473,9 +473,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async changePendingAggregateStatus(
     id: string,
     mutatePedido: (pedido: Pedido) => Promise<void> | void,
@@ -549,9 +549,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async persistAggregate(
     manager: EntityManager,
     dto: CreatePedidoUsuarioDto,
@@ -578,9 +578,9 @@ export class PedidoUsuarioService {
     return savedPedidoUsuario;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async persistAggregateLinesAndPedidos(
     manager: EntityManager,
     pedidoUsuario: PedidoUsuario,
@@ -715,9 +715,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async calculateAggregateStatus(
     pedidoUsuario: PedidoUsuario,
     manager?: EntityManager
@@ -774,9 +774,9 @@ export class PedidoUsuarioService {
       : EstadoPedidoUsuario.APROBADO;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async hasLinkedReferences(
     manager: EntityManager,
     pedidoIds: string[],
@@ -808,9 +808,9 @@ export class PedidoUsuarioService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private assertEditable(pedidoUsuario: PedidoUsuario): void {
     if (pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE) {
       throw new BadRequestException(
@@ -828,9 +828,9 @@ export class PedidoUsuarioService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async annotateLinkedMovements(pedidos: Pedido[]): Promise<void> {
     const lineIds = pedidos.flatMap((pedido) =>
       (pedido.pedidoProductos || []).map((line) => line.id)
@@ -863,9 +863,9 @@ export class PedidoUsuarioService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private calculateFechaEntrega(baseDate = new Date()): Date {
     const hours = this.configService.get<number>(
       'PEDIDO_FECHA_ENTREGA_HOURS',

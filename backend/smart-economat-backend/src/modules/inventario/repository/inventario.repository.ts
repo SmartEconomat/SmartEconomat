@@ -16,9 +16,9 @@ export class InventarioRepository extends Repository<Inventario> {
     super(Inventario, dataSource.createEntityManager());
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findByProductoProveedor(
     productoProveedorId: string
   ): Promise<Inventario[]> {
@@ -32,9 +32,9 @@ export class InventarioRepository extends Repository<Inventario> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findStockBajo(): Promise<Inventario[]> {
     return this.createQueryBuilder('inventario')
       .where('inventario.cantidad_actual < inventario.cantidad_minima')
@@ -45,9 +45,9 @@ export class InventarioRepository extends Repository<Inventario> {
       .getMany();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findCaducidadProxima(dias: number = 7): Promise<Inventario[]> {
     const hoy = new Date();
     const limite = new Date();
@@ -57,9 +57,9 @@ export class InventarioRepository extends Repository<Inventario> {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async queryStock(
     dto: InventoryQueryDto
   ): Promise<StockPorUbicacionDto[] | StockConsolidadoDto[]> {

@@ -224,9 +224,9 @@ function parseOFFProduct(
  */
 @Injectable()
 export class OpenFoodFactsService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async fetchOpenFoodFactsJson<T>(path: string): Promise<T | null> {
     await waitForOpenFoodFactsSlot();
 
@@ -243,9 +243,9 @@ export class OpenFoodFactsService {
     return (await response.json()) as T;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async searchByBarcode(code: string): Promise<OffProductResponseDto | null> {
     const trimmedCode = code.trim();
     if (!trimmedCode) {
@@ -268,9 +268,9 @@ export class OpenFoodFactsService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async searchByName(name: string): Promise<OffProductResponseDto[]> {
     const trimmedName = name.trim();
     if (!trimmedName) {

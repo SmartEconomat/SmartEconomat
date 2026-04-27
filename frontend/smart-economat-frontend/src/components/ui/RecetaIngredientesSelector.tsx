@@ -581,7 +581,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                             <TextField
                               {...params}
                               variant="outlined"
-                              placeholder={t('recetas.ingredientes.buscarProducto')}
+                              placeholder={t(
+                                'recetas.ingredientes.buscarProducto'
+                              )}
                               helperText={t('recetas.ingredientes.buscarAyuda')}
                               InputLabelProps={{ shrink: true }}
                               InputProps={{
@@ -662,7 +664,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                             renderValue: (val) => {
                               if (!val) {
                                 return (
-                                  <em>{t('recetas.ingredientes.sinProveedor')}</em>
+                                  <em>
+                                    {t('recetas.ingredientes.sinProveedor')}
+                                  </em>
                                 );
                               }
 
@@ -737,7 +741,9 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               >
                                 <span>
                                   {pp.proveedor?.nombre ||
-                                    t('recetas.ingredientes.proveedorDesconocido')}{' '}
+                                    t(
+                                      'recetas.ingredientes.proveedorDesconocido'
+                                    )}{' '}
                                   ({pp.precioUnitario}€)
                                 </span>
                                 {pp.proveedor?.id === cheapestProviderId && (

@@ -115,6 +115,7 @@ describe('Inventario page i18n smoke', () => {
           'inventario:crear',
           'ubicaciones:editar',
         ],
+        idioma: 'es',
       } as never,
       isAuthenticated: true,
       isAuthResolved: true,
@@ -122,6 +123,7 @@ describe('Inventario page i18n smoke', () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       refreshUser: vi.fn().mockResolvedValue(null),
+      changeLanguage: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(authHooks.usePermission).mockReturnValue(true);
     vi.mocked(inventarioService.fetchInventario).mockResolvedValue([]);

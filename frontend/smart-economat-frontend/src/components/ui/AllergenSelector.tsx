@@ -7,17 +7,17 @@ import { EU_ALLERGENS } from '../../utils/constants';
  * Documentación en español.
  */
 export interface AllergenSelectorProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value: string[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChange: (newValue: string[]) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   disabled?: boolean;
 }
 

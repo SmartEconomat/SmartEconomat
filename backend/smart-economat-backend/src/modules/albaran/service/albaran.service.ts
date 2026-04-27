@@ -48,9 +48,9 @@ const ALBARAN_DETAIL_RELATIONS = [
 export class AlbaranService {
   private readonly logger = new Logger(AlbaranService.name);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Albaran)
     private readonly albaranRepository: Repository<Albaran>,
@@ -59,17 +59,17 @@ export class AlbaranService {
     private readonly archivoService: ArchivoService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateAlbaranDto): Promise<Albaran> {
     const albaran = this.albaranRepository.create(dto);
     return await this.albaranRepository.save(albaran);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createOrGetAlbaran(params: {
     numeroReferencia?: string;
     fecha?: Date;
@@ -102,9 +102,9 @@ export class AlbaranService {
     return albaran;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async generateAutomaticNumber(
     repo: Repository<Albaran>
   ): Promise<string> {
@@ -132,9 +132,9 @@ export class AlbaranService {
     return `${prefix}${paddedSeq}`;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private deriveConcordanciaFromLinks(albaran: Albaran): boolean | undefined {
     const recepciones = (albaran.albaranPedidoRecepcion ?? [])
       .map((link) => link.recepcionPedido?.recepcion)
@@ -151,9 +151,9 @@ export class AlbaranService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async syncLoadedAlbaranConcordancia(
     repo: Repository<Albaran>,
     albaran: Albaran
@@ -173,9 +173,9 @@ export class AlbaranService {
     return albaran;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async syncConcordanciaFromRecepciones(
     albaranId: string,
     manager?: EntityManager
@@ -196,9 +196,9 @@ export class AlbaranService {
     return await this.syncLoadedAlbaranConcordancia(repo, albaran);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: PaginationQueryDto,
     userRole?: string
@@ -234,9 +234,9 @@ export class AlbaranService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(
     id: string,
     _userRole?: string,
@@ -263,26 +263,26 @@ export class AlbaranService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, dto: UpdateAlbaranDto): Promise<Albaran> {
     const albaran = await this.findOne(id);
     this.albaranRepository.merge(albaran, dto);
     return this.albaranRepository.save(albaran);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const albaran = await this.findOne(id);
     await this.albaranRepository.softDelete(albaran.id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async uploadDocumento(
     file: Express.Multer.File,
     dto: UploadAlbaranDto
@@ -419,9 +419,9 @@ export class AlbaranService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getDocumentoPath(filename: string): string {
     const uploadDir = this.configService.get<string>(
       'LOCAL_STORAGE_PATH',
@@ -443,9 +443,9 @@ export class AlbaranService {
     return filePath;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private deleteFileQuietly(filePath: string): void {
     try {
       if (filePath && fs.existsSync(filePath)) {

@@ -127,7 +127,11 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                   <React.Fragment>
                     {canCreate && !disabled && (
                       <InputAdornment position="end" sx={{ mr: 1 }}>
-                        <Tooltip title={t('proveedores.selectorInline.tooltipCrearRapido')}>
+                        <Tooltip
+                          title={t(
+                            'proveedores.selectorInline.tooltipCrearRapido'
+                          )}
+                        >
                           <IconButton
                             size="small"
                             color="primary"

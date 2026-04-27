@@ -19,22 +19,22 @@ export class PlantillaRolPermiso {
   @PrimaryColumn({ type: 'uuid', name: 'permiso_id' })
   permisoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => PlantillaRol, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'plantilla_rol_id' })
   plantillaRol!: PlantillaRol;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Permiso, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'permiso_id' })
   permiso!: Permiso;

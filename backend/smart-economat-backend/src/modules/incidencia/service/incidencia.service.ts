@@ -45,14 +45,14 @@ import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-produ
  */
 @Injectable()
 export class IncidenciaService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private static readonly CANTIDAD_EPSILON = 0.0005;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly incidenciaRepository: IncidenciaRepository,
     @InjectRepository(Recepcion)
@@ -62,9 +62,9 @@ export class IncidenciaService {
     private readonly pedidoService: PedidoService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async create(dto: CreateIncidenciaDto): Promise<Incidencia> {
     return this.dataSource.transaction(async (manager) => {
       const incidencia = manager.create(Incidencia, {
@@ -97,9 +97,9 @@ export class IncidenciaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findAll(
     query: IncidenciaQueryDto,
     userRole?: string
@@ -116,9 +116,9 @@ export class IncidenciaService {
     return result;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async findOne(id: string, userRole?: string): Promise<Incidencia> {
     const incidencia = await this.incidenciaRepository.findOneWithRelations(
       id,
@@ -132,9 +132,9 @@ export class IncidenciaService {
     return this.attachEstadoComputado(incidencia);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async update(id: string, dto: UpdateIncidenciaDto): Promise<Incidencia> {
     const incidencia = await this.findOne(id);
 
@@ -154,9 +154,9 @@ export class IncidenciaService {
     return this.attachEstadoComputado(saved);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async remove(id: string): Promise<void> {
     const incidencia = await this.findOne(id);
 
@@ -169,9 +169,9 @@ export class IncidenciaService {
     await this.incidenciaRepository.remove(incidencia);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async resolverIncidencia(
     id: string,
     dto: ResolverIncidenciaDto,
@@ -279,9 +279,9 @@ export class IncidenciaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async reportarIncidencia(dto: ReportIncidenciaDto): Promise<Incidencia> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id: dto.recepcionId },
@@ -383,9 +383,9 @@ export class IncidenciaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async resolverIncidenciaTransaccional(
     id: string,
     dto: ResolveIncidenciaDto,
@@ -443,18 +443,18 @@ export class IncidenciaService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private attachEstadoComputado(incidencia: Incidencia): Incidencia {
     incidencia.resuelta = incidencia.estaResuelta();
     incidencia.estado = this.resolveEstadoIncidencia(incidencia);
     return incidencia;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveEstadoIncidencia(incidencia: Incidencia): EstadoIncidencia {
     const observacionesResolucion =
       incidencia.observacionesResolucion?.toLowerCase() ?? '';
@@ -506,9 +506,9 @@ export class IncidenciaService {
     return EstadoIncidencia.EN_AJUSTE;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private composeObservacionesResolucion(
     observaciones: string | undefined,
     estadoFinal?: EstadoFinalIncidenciaDto
@@ -526,9 +526,9 @@ export class IncidenciaService {
     return base;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private appendStateTag(base: string | undefined, tag: string): string {
     if (!base) {
       return tag;
@@ -541,9 +541,9 @@ export class IncidenciaService {
     return `${base} ${tag}`;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private isLineaBalanceada(linea: IncidenciaLinea): boolean {
     return (
       Math.abs(
@@ -552,9 +552,9 @@ export class IncidenciaService {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private resolveEstadoReclamacion(linea: IncidenciaLinea): EstadoReclamacion {
     if (this.isLineaBalanceada(linea)) {
       return EstadoReclamacion.ABONADO;
@@ -567,9 +567,9 @@ export class IncidenciaService {
     return EstadoReclamacion.PENDIENTE;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private applyLineaAjustes(
     lineas: IncidenciaLinea[],
     ajustes: ResolverIncidenciaLineaDto[]
@@ -659,9 +659,9 @@ export class IncidenciaService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async syncPedidoStatusAfterIncidenciaResolution(
     pedidoId: string,
     manager: EntityManager

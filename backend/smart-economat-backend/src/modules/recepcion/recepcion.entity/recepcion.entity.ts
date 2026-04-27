@@ -25,9 +25,9 @@ export class Recepcion extends BaseEntity {
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Exclude()
   @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
     nullable: true,
@@ -36,9 +36,9 @@ export class Recepcion extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -46,9 +46,9 @@ export class Recepcion extends BaseEntity {
   })
   fechaRecepcion!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: EstadoRecepcion,
@@ -56,25 +56,25 @@ export class Recepcion extends BaseEntity {
   })
   estado!: EstadoRecepcion;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
   @Column({ default: false })
   incidencia: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion, {
     cascade: true,
   })
   recepcionesPedidos!: Relation<RecepcionPedido[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion, {
     cascade: true,
   })

@@ -22,6 +22,10 @@ const enumDomainAlias: Record<string, string> = {
   mermaMotivo: 'mermaMotivo',
   rolUsuario: 'rolUsuario',
   productoCategoria: 'productoCategoria',
+  recetaDificultad: 'recetaDificultad',
+  recetaTiempo: 'recetaTiempo',
+  recetaUnidad: 'recetaUnidad',
+  alergeno: 'alergeno',
 };
 
 export const getEnumLabel = (

@@ -49,18 +49,18 @@ export class RecepcionController {
       estadoLabelKey: `enum.recepcionEstado.${String(recepcion.estado).toUpperCase()}`,
     };
   }
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly recepcionService: RecepcionService,
     private readonly recepcionStockService: RecepcionStockService,
     private readonly pdfReportService: PdfReportService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -73,9 +73,9 @@ export class RecepcionController {
     return this.recepcionStockService.procesarRecepcion(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   findAll(
@@ -90,9 +90,9 @@ export class RecepcionController {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('reporte-pdf')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   async reportePdf(
@@ -107,9 +107,9 @@ export class RecepcionController {
     await this.pdfReportService.generateReport(filters, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recepciones.ver)
   findOne(
@@ -122,9 +122,9 @@ export class RecepcionController {
       .then((recepcion) => this.withRecepcionLabels(recepcion));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recepciones.editar)
   update(
@@ -137,9 +137,9 @@ export class RecepcionController {
       .then((recepcion) => this.withRecepcionLabels(recepcion));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recepciones.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

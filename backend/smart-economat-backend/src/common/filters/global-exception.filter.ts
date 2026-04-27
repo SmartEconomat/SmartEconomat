@@ -18,13 +18,13 @@ import { I18nHelper } from '../helpers/i18n.helper';
  * Documentación en español.
  */
 const PG_ERROR_KEYS: Record<string, string> = {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   '23503': 'errors.ENTITY_HAS_RELATIONS',
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   '23505': 'errors.DUPLICATE_ENTRY',
 };
 
@@ -35,9 +35,9 @@ const PG_ERROR_KEYS: Record<string, string> = {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -136,9 +136,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     );
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private translateIfNeeded(value: unknown): string {
     if (value === null || value === undefined) return '';
 
@@ -192,9 +192,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private sendResponse(
     response: Response,
     status: number,

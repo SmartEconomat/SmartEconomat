@@ -10,9 +10,9 @@ import { EU_ALLERGENS } from '../../utils/constants';
  * Documentación en español.
  */
 interface RecetaAlergenosProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ingredientes?: RecetaIngrediente[];
 }
 
@@ -58,9 +58,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
       </Box>
 
       {presentIds.size === 0 ? (
-        <Alert severity="success">
-          No se han detectado alérgenos en los ingredientes de esta receta.
-        </Alert>
+        <Alert severity="success">{t('receta.alergenos.sinAlergenos')}</Alert>
       ) : (
         <Box
           sx={{
@@ -76,8 +74,8 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                 key={allergen.id}
                 title={
                   isPresent
-                    ? `Contiene ${allergen.label}`
-                    : `Sin ${allergen.label}`
+                    ? t('receta.alergenos.contiene', { nombre: allergen.label })
+                    : t('receta.alergenos.sin', { nombre: allergen.label })
                 }
               >
                 <Box

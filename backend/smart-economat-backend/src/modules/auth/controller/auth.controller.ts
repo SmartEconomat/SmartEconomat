@@ -30,18 +30,18 @@ import { CookieInterceptor } from '../../../common/interceptors/cookie.intercept
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Public()
   @Post('register')
   async register(@Body() registerUserDto: RegisterUserDto) {
     return this.authService.register(registerUserDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Public()
   @UseInterceptors(CookieInterceptor)
   @Post('login')
@@ -54,9 +54,9 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Public()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -65,9 +65,9 @@ export class AuthController {
     return { message: I18nHelper.getSuccess('LOGOUT_SUCCESS') };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(
@@ -76,9 +76,9 @@ export class AuthController {
     return req.user;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   @HttpCode(HttpStatus.OK)
@@ -94,9 +94,9 @@ export class AuthController {
     return { message: I18nHelper.getSuccess('PASSWORD_CHANGED') };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -108,9 +108,9 @@ export class AuthController {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)

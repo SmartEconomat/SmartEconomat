@@ -33,21 +33,21 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 export interface DetailField {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value: React.ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fullWidth?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   colSpan?: number;
 }
 

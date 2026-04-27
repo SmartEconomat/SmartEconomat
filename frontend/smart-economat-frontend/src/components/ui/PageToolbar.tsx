@@ -30,29 +30,29 @@ import { useBreakpoints } from '../../utils/useBreakpoints';
 import { useTranslation } from 'react-i18next';
 
 export interface PageToolbarProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   title?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   icon?: React.ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchValue?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onSearchChange?: (value: string) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchPlaceholder?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchId?: string;
   primaryAction?: {
     label: string;
@@ -62,9 +62,9 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   secondaryAction?: {
     label: string;
     onClick: () => void;
@@ -73,37 +73,37 @@ export interface PageToolbarProps {
     disabled?: boolean;
     isLoading?: boolean;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filters?: React.ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   totalItems?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   totalItemsLabel?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   viewMode?: 'list' | 'grid';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onScanBarcode?: () => void; // Added onScanBarcode prop
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   autoFocusSearch?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   sticky?: boolean;
   extraActions?: {
     label: string;
@@ -122,9 +122,9 @@ export interface PageToolbarProps {
       | 'inherit';
     variant?: 'text' | 'outlined' | 'contained';
   }[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id?: string;
 }
 

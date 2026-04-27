@@ -2,7 +2,10 @@ import '@testing-library/jest-dom/vitest';
 import 'wicg-inert';
 // Initialize i18n so that t() calls in components return real translations
 // (Spanish by default) instead of raw keys during Vitest runs.
-import './i18n';
+import i18n from './i18n';
+
+// Force Spanish for tests to match expectations
+i18n.changeLanguage('es');
 
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();

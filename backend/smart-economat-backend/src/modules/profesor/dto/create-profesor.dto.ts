@@ -1,11 +1,14 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { UserLanguage } from '../../usuario/enums/usuario.enums';
 
 export class CreateProfesorDto {
   @IsString()
@@ -39,4 +42,8 @@ export class CreateProfesorDto {
   @IsString()
   @IsNotEmpty()
   cial!: string;
+
+  @IsOptional()
+  @IsEnum(UserLanguage)
+  idioma?: UserLanguage;
 }

@@ -24,14 +24,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('dashboard')
 export class DashboardController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly dashboardService: DashboardService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.dashboard.ver_estadisticas)
   @UseInterceptors(CacheInterceptor)

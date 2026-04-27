@@ -4,9 +4,9 @@ import { SEED_REFERENCE_DATE } from './deterministic.seed-data';
  * Documentación en español.
  */
 export class HttpSeedRequestError extends Error {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     public readonly status: number,
     message: string,

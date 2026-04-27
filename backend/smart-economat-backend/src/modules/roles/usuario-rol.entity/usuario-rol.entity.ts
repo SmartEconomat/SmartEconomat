@@ -21,34 +21,34 @@ export class UsuarioRol {
   @PrimaryColumn({ type: 'uuid', name: 'rol_id' })
   rolId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'uuid', nullable: true, name: 'asignado_por' })
   asignadoPor?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'usuario_id' })
   usuario!: Usuario;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Rol, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'rol_id' })
   rol!: Rol;

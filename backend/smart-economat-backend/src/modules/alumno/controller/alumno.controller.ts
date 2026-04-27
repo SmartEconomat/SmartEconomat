@@ -23,50 +23,50 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
  */
 @Controller('alumnos')
 export class AlumnoController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly alumnoService: AlumnoService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('register')
   @Public()
   async register(@Body() dto: RegisterAlumnoDto) {
     return this.alumnoService.register(dto);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('slots/:codigoClase')
   @Public()
   async getSlotByCode(@Param('codigoClase') codigoClase: string) {
     return this.alumnoService.getSlotByCode(codigoClase);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('aulas')
   @Public()
   async getAulas() {
     return this.alumnoService.getAulas();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('aulas/:aula/clases')
   @Public()
   async getClasesByAula(@Param('aula') aula: string) {
     return this.alumnoService.getClasesByAula(aula);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('aulas/:aula/clases/:clase/profesores')
   @Public()
   async getProfesoresBySlot(
@@ -76,9 +76,9 @@ export class AlumnoController {
     return this.alumnoService.getProfesoresBySlot(aula, parseInt(clase));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch('change-profesor')
   @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermissions(PERMISSIONS.alumno.cambiar_profesor)

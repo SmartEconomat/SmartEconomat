@@ -21,6 +21,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LanguageIcon from '@mui/icons-material/Language';
 import { useTranslation } from 'react-i18next';
 
 import ProfileForm from '../features/profile/components/ProfileForm';
@@ -38,7 +39,7 @@ import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
  * Documentación en español.
  */
 const Perfil: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, refreshUser } = useAuth();
   const toast = useToast();
 
@@ -49,11 +50,11 @@ const Perfil: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [profileData, setProfileData] = useState({
     username: '',
     email: '',
     usernameAlias: '',
+    idioma: 'es' as 'es' | 'en',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -71,9 +72,9 @@ const Perfil: React.FC = () => {
 
   const isInitialized = useRef(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   useEffect(() => {
     const loadInitialData = async () => {
       const fallbackUser = user;
@@ -83,6 +84,7 @@ const Perfil: React.FC = () => {
           username: user.username || user.name,
           email: user.email,
           usernameAlias: user.username || '',
+          idioma: user.idioma || 'es',
         });
         isInitialized.current = true;
         return;
@@ -100,6 +102,7 @@ const Perfil: React.FC = () => {
           username: updatedUser.username || updatedUser.name,
           email: updatedUser.email,
           usernameAlias: updatedUser.username || '',
+          idioma: updatedUser.idioma || 'es',
         });
       } catch (err) {
         console.error('Error loading profile data', err);
@@ -109,6 +112,7 @@ const Perfil: React.FC = () => {
             username: fallbackUser.username || fallbackUser.name,
             email: fallbackUser.email,
             usernameAlias: fallbackUser.username || '',
+            idioma: fallbackUser.idioma || 'es',
           });
         }
       } finally {
@@ -122,30 +126,44 @@ const Perfil: React.FC = () => {
     }
   }, [refreshUser, user]);
 
-        /**
-     * Documentación en español.
-     */
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfileData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  /**
+   * Documentación en español.
+   */
+  const handleProfileChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [e.target.name as string]: e.target.value,
+    }));
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleProfileSave = async () => {
     setIsSaving(true);
     setError(null);
 
     try {
-      if (profileData.username !== (user?.username || user?.name)) {
-        await authService.updateProfile({ username: profileData.username });
+      if (
+        profileData.username !== (user?.username || user?.name) ||
+        profileData.idioma !== user?.idioma
+      ) {
+        await authService.updateProfile({
+          username: profileData.username,
+          idioma: profileData.idioma,
+        });
+        if (profileData.idioma !== user?.idioma) {
+          await i18n.changeLanguage(profileData.idioma);
+        }
       }
 
       if (passwordData.newPassword) {
@@ -180,15 +198,16 @@ const Perfil: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleProfileCancel = () => {
     if (user) {
       setProfileData({
         username: user.username || user.name,
         email: user.email,
         usernameAlias: user.username || '',
+        idioma: user.idioma || 'es',
       });
     }
 
@@ -202,9 +221,9 @@ const Perfil: React.FC = () => {
     setError(null);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleSubmitEmailRequest = () => {
     const { newEmail, confirmNewEmail, justification } = emailRequest;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -326,6 +345,37 @@ const Perfil: React.FC = () => {
                 onOpenEmailModal={() => setIsEmailModalOpen(true)}
                 isSaving={isSaving}
               />
+
+              <Box>
+                <Box display="flex" alignItems="center" mb={{ xs: 2, md: 3 }}>
+                  <LanguageIcon
+                    color="primary"
+                    sx={{ fontSize: { xs: 28, md: 32 }, mr: 1.5 }}
+                  />
+                  <Typography
+                    variant="h5"
+                    fontWeight={600}
+                    sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+                  >
+                    {t('perfil.idiomaTitulo') || 'Preferencias de Idioma'}
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: { xs: 3, md: 4 } }} />
+
+                <Box maxWidth={{ sm: '300px' }}>
+                  <Input
+                    select
+                    label={t('perfil.idioma') || 'Idioma'}
+                    name="idioma"
+                    value={profileData.idioma}
+                    onChange={handleProfileChange}
+                    disabled={!isEditingProfile || isSaving}
+                  >
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                  </Input>
+                </Box>
+              </Box>
 
               <ChangePasswordForm
                 isEditing={isEditingProfile}

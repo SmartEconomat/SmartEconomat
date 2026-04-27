@@ -5,9 +5,9 @@ import { usePermission } from '../../../hooks/usePermission';
  * Documentación en español.
  */
 export interface WithPermissionProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fallback?: React.ReactNode;
 }
 
@@ -18,9 +18,9 @@ export function withPermission<P extends object>(
   WrappedComponent: ComponentType<P>,
   requiredPermissions: string | string[]
 ) {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   return function WithPermissionWrapper(props: P & WithPermissionProps) {
     const { fallback, ...restProps } = props;
     const hasAccess = usePermission(requiredPermissions);

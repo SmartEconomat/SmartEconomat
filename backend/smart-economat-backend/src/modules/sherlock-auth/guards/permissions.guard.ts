@@ -64,7 +64,7 @@ export class SherlockPermissionsGuard implements CanActivate {
         'Usuario no autenticado intentando acceder a ruta protegida'
       );
       throw new ForbiddenException(
-        I18nHelper.getError('USUARIO_NO_AUTENTICADO')
+        I18nHelper.getError('USER_NOT_AUTHENTICATED')
       );
     }
 

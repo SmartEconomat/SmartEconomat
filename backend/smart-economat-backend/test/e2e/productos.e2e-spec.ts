@@ -17,9 +17,9 @@ describe('ProductoController (e2e)', () => {
     adminToken = await loginAndGetToken(app);
   });
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async function createProducto(nombre?: string) {
     const productoNombre = nombre || generateUniqueName('Producto');
 

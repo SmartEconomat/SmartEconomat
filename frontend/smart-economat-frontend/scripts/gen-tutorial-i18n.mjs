@@ -2,6 +2,7 @@
  * Genera src/i18n/locales/tutorial.{es,en}.json desde una única fuente.
  * Ejecutar: node scripts/gen-tutorial-i18n.mjs
  */
+/* eslint-env node */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -572,31 +573,49 @@ for (const [route, arr] of Object.entries(blocks)) {
   });
 }
 
-const tutorialEs = { tutorial: { routes: T.es, ui: {
-  omitirTourAria: 'Omitir tour',
-  finalizar: 'Finalizar',
-  siguiente: 'Siguiente',
-  atras: 'Atrás',
-  saltarTodo: 'Saltar todo el tutorial',
-  tooltipTitulo: 'Tutorial',
-  tooltipDescList: 'Iniciar tutorial interactivo por este módulo',
-  tooltipDescIcon: 'Iniciar tutorial interactivo',
-  ariaIniciar: 'Iniciar tutorial',
-  listPrimary: 'Tutorial',
-} } };
-const tutorialEn = { tutorial: { routes: T.en, ui: {
-  omitirTourAria: 'Skip tour',
-  finalizar: 'Finish',
-  siguiente: 'Next',
-  atras: 'Back',
-  saltarTodo: 'Skip entire tutorial',
-  tooltipTitulo: 'Tutorial',
-  tooltipDescList: 'Start interactive tutorial for this module',
-  tooltipDescIcon: 'Start interactive tutorial',
-  ariaIniciar: 'Start tutorial',
-  listPrimary: 'Tutorial',
-} } };
+const tutorialEs = {
+  tutorial: {
+    routes: T.es,
+    ui: {
+      omitirTourAria: 'Omitir tour',
+      finalizar: 'Finalizar',
+      siguiente: 'Siguiente',
+      atras: 'Atrás',
+      saltarTodo: 'Saltar todo el tutorial',
+      tooltipTitulo: 'Tutorial',
+      tooltipDescList: 'Iniciar tutorial interactivo por este módulo',
+      tooltipDescIcon: 'Iniciar tutorial interactivo',
+      ariaIniciar: 'Iniciar tutorial',
+      listPrimary: 'Tutorial',
+    },
+  },
+};
+const tutorialEn = {
+  tutorial: {
+    routes: T.en,
+    ui: {
+      omitirTourAria: 'Skip tour',
+      finalizar: 'Finish',
+      siguiente: 'Next',
+      atras: 'Back',
+      saltarTodo: 'Skip entire tutorial',
+      tooltipTitulo: 'Tutorial',
+      tooltipDescList: 'Start interactive tutorial for this module',
+      tooltipDescIcon: 'Start interactive tutorial',
+      ariaIniciar: 'Start tutorial',
+      listPrimary: 'Tutorial',
+    },
+  },
+};
 
-writeFileSync(join(outDir, 'tutorial.es.json'), JSON.stringify(tutorialEs, null, 2), 'utf8');
-writeFileSync(join(outDir, 'tutorial.en.json'), JSON.stringify(tutorialEn, null, 2), 'utf8');
+writeFileSync(
+  join(outDir, 'tutorial.es.json'),
+  JSON.stringify(tutorialEs, null, 2),
+  'utf8'
+);
+writeFileSync(
+  join(outDir, 'tutorial.en.json'),
+  JSON.stringify(tutorialEn, null, 2),
+  'utf8'
+);
 console.log('Written tutorial.es.json and tutorial.en.json');

@@ -22,6 +22,7 @@ import RecetaIngredientesSelector from './RecetaIngredientesSelector';
 import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
 import BarcodeScanner from './BarcodeScanner';
 import BarcodeIcon from './BarcodeIcon';
+import Autocomplete from './Autocomplete';
 import {
   InputAdornment,
   IconButton,
@@ -85,7 +86,8 @@ export type FieldType =
   | 'orderLines'
   | 'recipeIngredients'
   | 'batchViewer'
-  | 'barcode';
+  | 'barcode'
+  | 'autocomplete';
 
 export type FormDataRecord = Record<string, unknown>;
 
@@ -105,6 +107,8 @@ export interface DynamicField {
   patternMessage?: string;
   maxLength?: number;
   minLength?: number;
+  onSearch?: (query: string) => void;
+  loading?: boolean;
 }
 
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
@@ -135,13 +139,15 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
     | 'inherit';
 }
 
+const EMPTY_OBJECT = {};
+
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isOpen,
   onClose,
   title,
   size = 'md',
   fields = [],
-  initialData = {},
+  initialData = EMPTY_OBJECT,
   onSubmit,
   onCancel,
   submitLabel,
@@ -179,6 +185,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const pendingCloseReasonRef = useRef<ModalCloseReason | undefined>(undefined);
   const initialSnapshotRef = useRef<string>('');
+  const lastInitialDataRef = useRef<Record<string, unknown>>(initialData);
+  const wasOpenRef = useRef<boolean>(false);
 
   const selectedProveedorId =
     typeof formData.proveedorId === 'string'
@@ -203,7 +211,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const dataToSet = { ...initialData };
+      const dataToSet: FormDataRecord = { ...initialData };
       fields.forEach((field) => {
         if (dataToSet[field.name] === undefined) {
           dataToSet[field.name] =
@@ -214,13 +222,19 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 : '';
         }
       });
-      formDataRef.current = dataToSet;
-      setFormData(dataToSet);
-      initialSnapshotRef.current = createStableSnapshot(dataToSet);
-      setShowOFFResults(false);
-      setOffResults([]);
-      if (onValuesChange) onValuesChange(dataToSet);
+
+      // Solo resetear si es una apertura nueva o initialData cambió realmente
+      if (!wasOpenRef.current || lastInitialDataRef.current !== initialData) {
+        formDataRef.current = dataToSet;
+        setFormData(dataToSet);
+        initialSnapshotRef.current = createStableSnapshot(dataToSet);
+        setShowOFFResults(false);
+        setOffResults([]);
+        lastInitialDataRef.current = initialData;
+        if (onValuesChange) onValuesChange(dataToSet);
+      }
     }
+    wasOpenRef.current = isOpen;
   }, [isOpen, initialData, fields, onValuesChange]);
 
   useEffect(() => {
@@ -321,7 +335,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         try {
           const regex = new RegExp(pattern);
           if (!regex.test(stringValue)) {
-            return patternMessage || t('forms.validation.invalidFormat', { label });
+            return (
+              patternMessage || t('forms.validation.invalidFormat', { label })
+            );
           }
         } catch {
           console.error(`Invalid regex for field ${field.name}:`, pattern);
@@ -490,7 +506,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
     fields.length > 0
       ? fields
       : Object.keys(initialData).map((key) => {
-          const val = initialData[key];
+          const val = (initialData as FormDataRecord)[key];
           const typeOfVal = typeof val;
           let type: FieldType = 'text';
 
@@ -603,6 +619,27 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
               },
             }}
             inputProps={{ step: 'any', inputMode: 'decimal', min: 0 }}
+          />
+        );
+
+      case 'autocomplete':
+        return (
+          <Autocomplete
+            key={name}
+            name={name}
+            label={label}
+            value={(value as string | number) ?? null}
+            options={options || []}
+            onChange={(fieldName, newValue) => {
+              updateFormData((prev) => ({ ...prev, [fieldName]: newValue }));
+              setErrors((prev) => ({ ...prev, [fieldName]: '' }));
+            }}
+            onSearch={field.onSearch}
+            loading={field.loading}
+            required={required}
+            disabled={disabled}
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
           />
         );
 
@@ -1160,9 +1197,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmSubmit}
         title={t('comun.confirmarAccion')}
-        message={
-          confirmationMessage || t('comun.confirmarGuardar')
-        }
+        message={confirmationMessage || t('comun.confirmarGuardar')}
         confirmText={t('comun.guardar')}
         cancelText={t('comun.cerrar')}
         confirmColor="primary"

@@ -40,25 +40,25 @@ import {
 } from '@zxing/library';
 
 export interface BarcodeScannerProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   open: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onClose: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onScan: (code: string) => void | Promise<void>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   title?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   continuous?: boolean;
 }
 
@@ -492,7 +492,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             <Typography variant="subtitle2" gutterBottom>
               {t('escaner.sinCamara')}
             </Typography>
-            <Typography variant="body2">{t('escaner.sinCamaraDesc')}</Typography>
+            <Typography variant="body2">
+              {t('escaner.sinCamaraDesc')}
+            </Typography>
           </Alert>
         );
 
@@ -502,7 +504,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             <Typography variant="subtitle2" gutterBottom>
               {t('escaner.errorCamara')}
             </Typography>
-            <Typography variant="body2">{t('escaner.errorCamaraDesc')}</Typography>
+            <Typography variant="body2">
+              {t('escaner.errorCamaraDesc')}
+            </Typography>
             <Button
               size="small"
               sx={{ mt: 1 }}
@@ -758,10 +762,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 disabled={torchBusy}
                 startIcon={torchEnabled ? <FlashOffIcon /> : <FlashOnIcon />}
                 title={
-                  torchEnabled ? t('escaner.apagarLuz') : t('escaner.encenderLuz')
+                  torchEnabled
+                    ? t('escaner.apagarLuz')
+                    : t('escaner.encenderLuz')
                 }
                 aria-label={
-                  torchEnabled ? t('escaner.apagarLuz') : t('escaner.encenderLuz')
+                  torchEnabled
+                    ? t('escaner.apagarLuz')
+                    : t('escaner.encenderLuz')
                 }
                 sx={{
                   minWidth: isShortScreen ? '44px' : 'auto',

@@ -26,6 +26,12 @@
       "successTitle": "Registration successful!",
       "successWait": "Please wait until your account is active."
     },
+    "overlay": {
+      "welcome": "Welcome!",
+      "loadingApp": "Loading your application...",
+      "registerSuccess": "Registration successful!",
+      "waitForActivation": "Please wait until your account is active."
+    },
     "errors": {
       "invalidCredentials": "Invalid username or password.",
       "accountPending": "Your account is still pending activation.",
@@ -319,6 +325,11 @@
       "sinProveedor": "No supplier available",
       "masBarato": "Automatically select the cheapest",
       "masBaratoLabel": "Cheapest"
+    },
+    "alergenos": {
+      "sinAlergenos": "No allergens have been detected in the ingredients of this recipe.",
+      "contiene": "Contains {{nombre}}",
+      "sin": "{{nombre}} free"
     }
   },
   "recetas": {
@@ -1117,6 +1128,8 @@
     "miPerfil": "My Profile",
     "descripcionAlumno": "View your profile, change your username or password, and request email changes with higher-role approval.",
     "descripcionOtros": "View and edit your personal data and security options.",
+    "idiomaTitulo": "Language Preferences",
+    "idioma": "Language",
     "seccion": {
       "titulo": "Profile & Security",
       "descripcionAlumno": "You can edit your username and password. Email changes require approval from a higher-privilege role.",
@@ -2703,6 +2716,27 @@
       "CON_INCIDENCIAS": "With incidents",
       "CANCELADA": "Cancelled"
     },
+    "recetaDificultad": {
+      "FÁCIL": "Easy",
+      "MEDIA": "Medium",
+      "DIFÍCIL": "Hard"
+    },
+    "recetaTiempo": {
+      "10_MIN": "10 min",
+      "20_MIN": "20 min",
+      "30_MIN": "30 min",
+      "45_MIN": "45 min",
+      "60_MIN": "60 min"
+    },
+    "recetaUnidad": {
+      "G": "g",
+      "KG": "kg",
+      "L": "l",
+      "ML": "ml",
+      "PIEZA": "piece",
+      "CDA": "tbsp",
+      "CDTA": "tsp"
+    },
     "productoCategoria": {
       "VERDURA": "Vegetable",
       "FRUTA": "Fruit",
@@ -2719,6 +2753,41 @@
       "AZUCAR": "Sugar",
       "BEBIDA": "Beverage",
       "OTRO": "Other"
+    },
+    "alergeno": {
+      "GLUTEN": "Gluten",
+      "CRUSTACEOS": "Crustaceans",
+      "HUEVOS": "Eggs",
+      "PESCADO": "Fish",
+      "CACAHUETES": "Peanuts",
+      "SOJA": "Soy",
+      "LACTEOS": "Dairy",
+      "FRUTOS_CON_CASCARA": "Tree nuts",
+      "APIO": "Celery",
+      "MOSTAZA": "Mustard",
+      "SESAMO": "Sesame",
+      "SULFITO": "Sulphites",
+      "ALTRAMUCES": "Lupin",
+      "MOLUSCOS": "Molluscs"
+    }
+  },
+  "notifications": {
+    "title": "Notification Center",
+    "subtitle": "Manage your alerts and tasks",
+    "allClear": "All clear!",
+    "allClearDesc": "You have no pending notifications at this time.",
+    "loading": "Loading notifications...",
+    "loadError": "Error loading notifications",
+    "errorTitle": "An error occurred",
+    "openCenter": "Open notifications",
+    "refresh": "Refresh",
+    "totalPending_one": "1 pending",
+    "totalPending_other": "{{count}} pending",
+    "priority": {
+      "low": "Low",
+      "medium": "Priority",
+      "high": "High",
+      "urgent": "Urgent"
     }
   }
 }

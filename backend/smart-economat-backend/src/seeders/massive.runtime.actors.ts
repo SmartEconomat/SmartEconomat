@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
 import { HttpSeedRequestError, SeedContext } from './seed-context';
 import { DEFAULT_SEED_PASSWORD } from './massive.config';
@@ -11,7 +12,11 @@ import { getSystemRoleTemplateAliases } from '../common/constants/system-role-te
 import AppDataSource from '../config/typeorm.config';
 import { Rol } from '../modules/roles/rol.entity/rol.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
-import { rolUsuario, UserStatus } from '../modules/usuario/enums/usuario.enums';
+import {
+  rolUsuario,
+  UserStatus,
+  UserLanguage,
+} from '../modules/usuario/enums/usuario.enums';
 import { Permiso } from '../modules/permisos/permiso.entity/permiso.entity';
 import { PlantillaRol } from '../modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 import { Profesor } from '../modules/profesor/profesor.entity/profesor.entity';
@@ -268,30 +273,34 @@ async function upsertSeedUserViaRepository(params: {
     relations: ['roles'],
   });
 
+  const hashedPassword = await bcrypt.hash(params.password, 10);
   if (!existing) {
-    const created = userRepo.create({
+    const created = new Usuario();
+    Object.assign(created, {
       username: params.username,
       email: params.email,
-      password: params.password,
+      password: hashedPassword,
       rol: params.role,
       nombre: params.nombre,
       status: UserStatus.ACTIVE,
       activo: true,
       mustChangePassword: false,
       roles: roleEntity ? [roleEntity] : [],
+      idioma: UserLanguage.ES,
     });
     return userRepo.save(created);
   }
 
   existing.username = params.username;
   existing.email = params.email;
-  existing.password = params.password;
+  existing.password = hashedPassword;
   existing.rol = params.role;
   existing.nombre = params.nombre;
   existing.status = UserStatus.ACTIVE;
   existing.activo = true;
   existing.mustChangePassword = false;
   existing.roles = roleEntity ? [roleEntity] : [];
+  existing.idioma = existing.idioma || UserLanguage.ES;
 
   return userRepo.save(existing);
 }
@@ -1072,6 +1081,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     fixedSuperAdminUser.id,
     rolUsuario.SUPER_ADMIN
   );
+  pushStateValue(context, 'seedProtectedUserIds', fixedSuperAdminUser.id);
 
   const fixedAdminUser = await upsertSeedUserViaRepository(FIXED_SEED_ADMIN);
   await removeUserAdditionalPermissions(
@@ -1084,6 +1094,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     fixedAdminUser.id,
     rolUsuario.ADMIN
   );
+  pushStateValue(context, 'seedProtectedUserIds', fixedAdminUser.id);
 
   const adminToken = await context.loginWithCredentials(
     {
@@ -1456,7 +1467,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     const classCode = extractClassCodeFromResponse(slotResponse);
     if (!classCode) {
       throw new Error(
-        `[seed-massive] No se pudo extraer codigoClase del profesor ${email}`
+        `[seed-massive] Could not extraer codigoClase del profesor ${email}`
       );
     }
 
@@ -1484,7 +1495,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   const transferTargetProfesor = profesorActors[0];
   if (!transferTargetProfesor) {
     throw new Error(
-      '[seed-massive] No se pudo preparar profesor destino para cambio de alumno'
+      '[seed-massive] Could not preparar profesor destino para cambio de alumno'
     );
   }
 
@@ -1807,7 +1818,7 @@ export async function ensureAdminRouteActors(
     const userId = targetUser.id;
     if (!userId) {
       throw new Error(
-        `[seed-massive] No se pudo resolver ID de usuario objetivo admin (${username})`
+        `[seed-massive] Could not resolver ID de usuario objetivo admin (${username})`
       );
     }
 

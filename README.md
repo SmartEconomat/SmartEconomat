@@ -64,6 +64,24 @@ docker compose --env-file .env.prod --file docker-compose.prod.yml up -d
 - Backend API base: `http://localhost:3000/api/v1`
 - Swagger: `http://localhost:3000/api/v1/docs`
 
+## Configuración de credenciales de administrador
+
+Para configurar la contraseña inicial de los usuarios `admin` y `superadmin` (especialmente útil en el primer despliegue o para reseteos), define la siguiente variable de entorno en tu archivo `.env.dev` (local) o `.env.prod` (servidor):
+
+```env
+SEED_DEFAULT_ADMIN_TEMP_PASSWORD=tu_contraseña_secreta
+```
+
+Una vez definida, ejecuta el seeder de bootstrap para aplicar los cambios:
+
+```bash
+# En backend/smart-economat-backend
+npm run seed:bootstrap-admin-users
+```
+
+> [!IMPORTANT]
+> Si no se define esta variable, el sistema generará una contraseña aleatoria de 24 caracteres tipo base64url que podrás encontrar en los logs o en el archivo `.env.prod` del servidor tras el despliegue.
+
 ## Comandos principales
 
 ### Backend (`backend/smart-economat-backend`)

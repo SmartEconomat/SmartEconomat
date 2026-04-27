@@ -2,25 +2,25 @@
  * Documentación en español.
  */
 export interface AlbaranPedidoRecepcion {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   albaranId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcionPedidoId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcionPedido?: AlbaranRecepcionPedido;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   createdAt?: string;
 }
 
@@ -28,21 +28,21 @@ export interface AlbaranPedidoRecepcion {
  * Documentación en español.
  */
 export interface AlbaranRecepcionPedido {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcionId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcion?: AlbaranRecepcion;
 }
 
@@ -50,25 +50,25 @@ export interface AlbaranRecepcionPedido {
  * Documentación en español.
  */
 export interface AlbaranRecepcion {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fechaRecepcion?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estado?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   incidencia?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   recepcionProductos?: AlbaranRecepcionProducto[];
 }
 
@@ -76,29 +76,29 @@ export interface AlbaranRecepcion {
  * Documentación en español.
  */
 export interface AlbaranRecepcionProducto {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoProductoId: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidadRecibida?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   estadoProducto?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   observaciones?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pedidoProducto?: AlbaranPedidoProducto;
 }
 
@@ -106,21 +106,21 @@ export interface AlbaranRecepcionProducto {
  * Documentación en español.
  */
 export interface AlbaranPedidoProducto {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cantidad?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   precioUnitario?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   productoProveedor?: AlbaranProductoProveedor;
 }
 
@@ -128,17 +128,17 @@ export interface AlbaranPedidoProducto {
  * Documentación en español.
  */
 export interface AlbaranProductoProveedor {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   producto?: AlbaranProducto;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   proveedor?: AlbaranProveedor;
 }
 
@@ -146,17 +146,17 @@ export interface AlbaranProductoProveedor {
  * Documentación en español.
  */
 export interface AlbaranProducto {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   nombre?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   unidad?: string;
 }
 
@@ -164,13 +164,13 @@ export interface AlbaranProducto {
  * Documentación en español.
  */
 export interface AlbaranProveedor {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   nombre?: string;
 }
 
@@ -178,53 +178,53 @@ export interface AlbaranProveedor {
  * Documentación en español.
  */
 export interface Albaran {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   nAlbaran: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   concordancia?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fecha?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   documentoUrl?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   documentoNombre?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   documentoMimeType?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   documentoTamano?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   albaranPedidoRecepcion?: AlbaranPedidoRecepcion[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   createdAt: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   updatedAt: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   deletedAt?: string;
 }
 
@@ -232,17 +232,17 @@ export interface Albaran {
  * Documentación en español.
  */
 export interface CreateAlbaranDto {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   nAlbaran: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   concordancia?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   fecha?: string;
 }
 
@@ -255,24 +255,24 @@ export type UpdateAlbaranDto = Partial<CreateAlbaranDto>;
  * Documentación en español.
  */
 export interface AlbaranQueryParams {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   page?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   limit?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchTerm?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   sortBy?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   order?: 'ASC' | 'DESC';
 }

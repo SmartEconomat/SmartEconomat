@@ -14,6 +14,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckIcon from '@mui/icons-material/Check';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '../../ui/Tooltip';
+import { useAuth } from '../../../store/auth.hooks';
 
 const SUPPORTED_LANGS = [
   { code: 'es', label: 'Español' },
@@ -24,6 +25,7 @@ type LangCode = (typeof SUPPORTED_LANGS)[number]['code'];
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
+  const { changeLanguage } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -43,7 +45,7 @@ export default function LanguageSwitcher() {
   };
 
   const handleSelect = (code: LangCode) => {
-    i18n.changeLanguage(code);
+    changeLanguage(code);
     handleClose();
   };
 

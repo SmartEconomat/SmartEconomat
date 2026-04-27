@@ -19,7 +19,11 @@ describe("CertificateService", () => {
 
     expect(result.ok).toBe(true);
 
-    const fullchainPath = path.join(runtimePath, "certs", "fullchain.pem");
+    const fullchainPath = path.join(
+      runtimePath,
+      "certs",
+      "fullchain.pem",
+    );
     const privkeyPath = path.join(runtimePath, "certs", "privkey.pem");
 
     const [fullchain, privkey] = await Promise.all([

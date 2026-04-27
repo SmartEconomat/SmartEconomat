@@ -40,29 +40,29 @@ import { useTranslation } from 'react-i18next';
  * Documentación en español.
  */
 export interface Column<T> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id: keyof T | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   render?: (row: T) => ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   hideOnMobile?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   responsiveDisplay?: {
     xs?: string;
     sm?: string;
@@ -71,155 +71,155 @@ export interface Column<T> {
     xl?: string;
     [key: string]: string | undefined;
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   sortable?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   width?: number | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   minWidth?: number | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   headerSx?: SxProps<Theme>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   cellSx?: SxProps<Theme>;
 }
 
 export interface ExportHandlers {
   onExportPdf?: () => void;
   onExportExcel?: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   exportLabel?: string;
 }
 
 export interface DataTableProps<T> {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   columns: Column<T>[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   data: T[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLoading?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   emptyStateMessage?: ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   pagination?: {
     currentPage: number;
     totalPages: number;
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     totalItems?: number;
     onPageChange: (event: React.ChangeEvent<unknown>, page: number) => void;
     pageSize?: number;
     onPageSizeChange?: (event: SelectChangeEvent<number>) => void;
     pageSizeOptions?: number[];
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   renderActions?: (row: T) => ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   actionsLabel?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   actionsAlign?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   actionsWidth?: number | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   renderGridItem?: (row: T) => ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   defaultViewMode?: 'list' | 'grid';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   viewMode?: 'list' | 'grid';
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   sortConfig?: {
     key: keyof T | string;
     direction: 'asc' | 'desc';
   };
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onSort?: (key: keyof T | string) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   leftHeaderAction?: ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   rightHeaderAction?: ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   hideTopBar?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   selectable?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   selectedIds?: string[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onSelectionChange?: (ids: string[]) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   uniqueKey?: keyof T | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   exportHandlers?: ExportHandlers;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onRowClick?: (row: T) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   getRowAriaLabel?: (row: T) => string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   id?: string;
 }
 
@@ -336,10 +336,16 @@ export function DataTable<T extends Record<string, any>>({
                 onChange={handleViewModeChange}
                 size="small"
               >
-                <ToggleButton value="list" aria-label={t('table.viewMode.listAria')}>
+                <ToggleButton
+                  value="list"
+                  aria-label={t('table.viewMode.listAria')}
+                >
                   <ViewListIcon />
                 </ToggleButton>
-                <ToggleButton value="grid" aria-label={t('table.viewMode.gridAria')}>
+                <ToggleButton
+                  value="grid"
+                  aria-label={t('table.viewMode.gridAria')}
+                >
                   <ViewModuleIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
@@ -353,10 +359,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? t('table.export.pdfSelected', { count: selectedIds.length })
+                    ? t('table.export.pdfSelected', {
+                        count: selectedIds.length,
+                      })
                     : t('table.export.pdfAll', {
                         count: pagination?.totalItems ?? data.length,
-                        label: exportHandlers.exportLabel || t('table.export.records'),
+                        label:
+                          exportHandlers.exportLabel ||
+                          t('table.export.records'),
                       })
                 }
               >
@@ -382,10 +392,14 @@ export function DataTable<T extends Record<string, any>>({
               <Tooltip
                 title={
                   selectedIds.length > 0
-                    ? t('table.export.excelSelected', { count: selectedIds.length })
+                    ? t('table.export.excelSelected', {
+                        count: selectedIds.length,
+                      })
                     : t('table.export.excelAll', {
                         count: pagination?.totalItems ?? data.length,
-                        label: exportHandlers.exportLabel || t('table.export.records'),
+                        label:
+                          exportHandlers.exportLabel ||
+                          t('table.export.records'),
                       })
                 }
               >
@@ -843,7 +857,9 @@ export function DataTable<T extends Record<string, any>>({
               },
               actions: {
                 nextButton: { 'aria-label': t('table.pagination.nextPage') },
-                previousButton: { 'aria-label': t('table.pagination.previousPage') },
+                previousButton: {
+                  'aria-label': t('table.pagination.previousPage'),
+                },
               },
             }}
           />

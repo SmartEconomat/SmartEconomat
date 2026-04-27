@@ -47,17 +47,17 @@ export class PedidoController {
       estadoLabelKey: `enum.pedidoEstado.${String(pedido.estado).toUpperCase()}`,
     };
   }
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     private readonly pedidoService: PedidoService,
     private readonly recetaToPedidoService: RecetaToPedidoService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   create(
@@ -70,9 +70,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   findAll(
@@ -93,9 +93,9 @@ export class PedidoController {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post('from-recipes')
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   createFromRecipes(
@@ -108,9 +108,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.pedidos.ver)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<Pedido> {
@@ -119,9 +119,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   update(
@@ -134,9 +134,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.pedidos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -144,9 +144,9 @@ export class PedidoController {
     return this.pedidoService.remove(id);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/fecha-entrega')
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   updateFechaEntrega(
@@ -158,9 +158,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.pedidos.cancelar)
   cancelarPedido(
@@ -173,9 +173,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/aceptar')
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   aceptarPedido(
@@ -187,9 +187,9 @@ export class PedidoController {
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id/restaurar')
   @RequirePermissions(PERMISSIONS.pedidos.restaurar)
   restaurarPedido(

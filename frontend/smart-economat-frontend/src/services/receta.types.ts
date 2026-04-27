@@ -54,13 +54,13 @@ export interface Receta {
   id: string;
   nombre: string;
   instrucciones: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   tiempo?: TiempoReceta;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   tiempoPreparacion?: string;
   tiempoEstimadoMinutos: number;
   dificultad: DificultadReceta;

@@ -9,9 +9,9 @@ import {
  * Documentación en español.
  */
 interface CheckboxProps extends MuiCheckboxProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   label: string;
 }
 

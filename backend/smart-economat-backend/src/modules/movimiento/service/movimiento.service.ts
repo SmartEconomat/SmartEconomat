@@ -45,9 +45,9 @@ export class MovimientoService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getMovimientoHistory(
     dto: MovimientoHistoryDto
   ): Promise<PaginatedResponseDto<Movimiento>> {

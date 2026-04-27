@@ -40,14 +40,14 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('productos')
 export class ProductoController {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly productoService: ProductoService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('generar-ean13')
   @RequirePermissions(PERMISSIONS.productos.generar_ean13)
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
@@ -60,9 +60,9 @@ export class ProductoController {
     return { codigo_barras };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.productos.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -100,9 +100,9 @@ export class ProductoController {
     return this.productoService.create(createProductoDto, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.productos.listar)
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
@@ -118,9 +118,9 @@ export class ProductoController {
     return this.productoService.findAll(query, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener un producto por ID' })
@@ -135,9 +135,9 @@ export class ProductoController {
     return this.productoService.findOne(id, userRole);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.productos.editar)
   @ApiOperation({ summary: 'Actualizar un producto' })
@@ -175,9 +175,9 @@ export class ProductoController {
     return this.productoService.remove(id, userId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id/historial-precios')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
@@ -190,9 +190,9 @@ export class ProductoController {
     return this.productoService.getHistorialPrecios(id, proveedorId);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get(':id/pmp')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({

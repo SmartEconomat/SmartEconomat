@@ -11,35 +11,35 @@ import {
  * Documentación en español.
  */
 export abstract class BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @PrimaryColumn('uuid', {
     default: () => 'uuid_generate_v7()',
   })
   readonly id!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @CreateDateColumn({
     type: 'timestamptz',
     name: 'created_at',
   })
   readonly createdAt!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @UpdateDateColumn({
     type: 'timestamptz',
     name: 'updated_at',
   })
   readonly updatedAt!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @DeleteDateColumn({
     type: 'timestamptz',
     name: 'deleted_at',
@@ -47,9 +47,9 @@ export abstract class BaseEntity {
   })
   deletedAt?: Date | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'uuid',
     nullable: true,
@@ -57,9 +57,9 @@ export abstract class BaseEntity {
   })
   deletedBy?: string | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'uuid',
     nullable: true,
@@ -67,9 +67,9 @@ export abstract class BaseEntity {
   })
   modifiedBy?: string | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @VersionColumn({
     default: 1,
   })

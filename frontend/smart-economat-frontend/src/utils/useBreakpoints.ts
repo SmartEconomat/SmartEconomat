@@ -10,50 +10,50 @@ import { useMediaQuery } from '@mui/material';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface Breakpoints {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isMobile: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isTablet: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isDesktop: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isLargeDesktop: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isXLarge: boolean;
 
   // ── Rangos compuestos (los más usados en condiciones responsive) ──
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isMobileOrTablet: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isTabletOrAbove: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isTabletOrBelow: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isDesktopOrAbove: boolean;
 
   // ── Valor numérico del ancho actual (útil para lógica JS pura) ──
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   screenWidth: number;
 }
 

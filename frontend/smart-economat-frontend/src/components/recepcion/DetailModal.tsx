@@ -32,21 +32,21 @@ export type DetailType =
  * Documentación en español.
  */
 interface DetailModalProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   open: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   type: DetailType;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   resultado: RecepcionResultado | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onClose: () => void;
 }
 

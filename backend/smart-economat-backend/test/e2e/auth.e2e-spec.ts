@@ -24,9 +24,9 @@ describe('AuthController (e2e)', () => {
       password: 'Password123!',
     };
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('Debe registrar un nuevo usuario (201) y no permitir duplicados (409)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
@@ -39,9 +39,9 @@ describe('AuthController (e2e)', () => {
         .expect(409);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('Debe fallar si el password es débil (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/register')
@@ -51,9 +51,9 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('Debe loguear correctamente (200)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
@@ -68,9 +68,9 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('Debe fallar con password erróneo (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')
@@ -81,9 +81,9 @@ describe('AuthController (e2e)', () => {
         .expect(400);
     });
 
-                /**
-         * Documentación en español.
-         */
+    /**
+     * Documentación en español.
+     */
     it('Debe fallar con email inexistente (400)', async () => {
       await request(app.getHttpServer() as string)
         .post('/api/v1/auth/login')

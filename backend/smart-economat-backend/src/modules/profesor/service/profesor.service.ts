@@ -37,9 +37,9 @@ export class ProfesorService {
     private readonly dataSource: DataSource
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async resolveUbicacion(
     ubicacionId?: string
   ): Promise<Ubicacion | null> {
@@ -50,17 +50,15 @@ export class ProfesorService {
     });
 
     if (!ubicacion) {
-      throw new NotFoundException(
-        I18nHelper.getError('UBICACI_N_NO_ENCONTRADA')
-      );
+      throw new NotFoundException(I18nHelper.getError('LOCATION_NOT_FOUND'));
     }
 
     return ubicacion;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async register(dto: CreateProfesorDto) {
     return this.dataSource.transaction(async (manager) => {
       const whereConditions: FindOptionsWhere<Usuario>[] = [
@@ -119,9 +117,9 @@ export class ProfesorService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createSlot(userId: string, dto: CreateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -159,9 +157,9 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async adminCreateSlot(dto: AdminCreateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { id: dto.profesorId },
@@ -197,9 +195,9 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async updateSlot(userId: string, slotId: string, dto: UpdateSlotDto) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -245,9 +243,9 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getSlots(userId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -265,9 +263,9 @@ export class ProfesorService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async deleteSlot(userId: string, slotId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: userId } },
@@ -295,9 +293,9 @@ export class ProfesorService {
     return { message: I18nHelper.translate('success.DELETED') };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async activateAlumno(profesorUserId: string, alumnoId: string) {
     return this.dataSource.transaction(async (manager) => {
       const profesor = await manager.findOne(Profesor, {
@@ -327,9 +325,9 @@ export class ProfesorService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getAlumnos(profesorUserId: string) {
     const profesor = await this.profesorRepo.findOne({
       where: { user: { id: profesorUserId } },
@@ -352,9 +350,9 @@ export class ProfesorService {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async forcePasswordReset(profesorUserId: string, alumnoId: string) {
     if (!alumnoId || alumnoId === 'undefined') {
       throw new BadRequestException(I18nHelper.getError('INVALID_ALUMNO_ID'));
@@ -401,9 +399,9 @@ export class ProfesorService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getAllSlots() {
     return this.slotRepo.find({
       relations: ['profesor', 'profesor.user', 'alumnos', 'ubicacion'],
@@ -411,9 +409,9 @@ export class ProfesorService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getAllProfesores() {
     const profesores = await this.profesorRepo.find({
       relations: ['user'],
@@ -428,9 +426,9 @@ export class ProfesorService {
     }));
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async adminUpdateSlot(slotId: string, dto: AdminUpdateSlotDto) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
@@ -491,9 +489,9 @@ export class ProfesorService {
     return this.slotRepo.save(slot);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async adminDeleteSlot(slotId: string) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },

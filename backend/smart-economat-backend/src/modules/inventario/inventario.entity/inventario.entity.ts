@@ -17,21 +17,21 @@ import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 @Check(`"cantidad_minima" >= 0`)
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
 export class Inventario extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'ubicacion_id' })
   ubicacionId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -39,9 +39,9 @@ export class Inventario extends BaseEntity {
   @JoinColumn({ name: 'producto_proveedor_id' })
   productoProveedor!: Relation<ProductoProveedor>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -51,9 +51,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadActual!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -63,9 +63,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadMinima!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -76,9 +76,9 @@ export class Inventario extends BaseEntity {
   })
   cantidadMaxima?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Ubicacion, (ubicacion) => ubicacion.inventarios, {
     onDelete: 'RESTRICT',
     nullable: false,
@@ -86,9 +86,9 @@ export class Inventario extends BaseEntity {
   @JoinColumn({ name: 'ubicacion_id' })
   ubicacion!: Relation<Ubicacion>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -96,9 +96,9 @@ export class Inventario extends BaseEntity {
   })
   fechaEntrada!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     nullable: true,
@@ -108,9 +108,9 @@ export class Inventario extends BaseEntity {
 
   /* --- Métodos de Dominio --- */
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   ajustarCantidad(delta: number): void {
     this.cantidadActual = Number(this.cantidadActual) + delta;
     if (this.cantidadActual < 0) {
@@ -120,16 +120,16 @@ export class Inventario extends BaseEntity {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   esBajoStock(): boolean {
     return Number(this.cantidadActual) < Number(this.cantidadMinima);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   proximoACaducar(diasUmbral: number = 7): boolean {
     if (!this.fechaCaducidad) return false;
     const umbralFecha = new Date();

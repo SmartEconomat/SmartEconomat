@@ -116,7 +116,7 @@ export async function activateUserByIdentity(
 
   const identityLabel = identity.email || identity.username || 'desconocido';
   throw new Error(
-    `[seed-massive] No se pudo localizar usuario para activar (${identityLabel})`
+    `[seed-massive] Could not localizar usuario para activar (${identityLabel})`
   );
 }
 

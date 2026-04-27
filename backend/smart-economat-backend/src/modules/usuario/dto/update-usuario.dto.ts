@@ -8,7 +8,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { rolUsuario, UserStatus } from '../enums/usuario.enums';
+import { rolUsuario, UserStatus, UserLanguage } from '../enums/usuario.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
@@ -81,4 +81,10 @@ export class UpdateUsuarioDto {
   })
   @MaxLength(50)
   aula?: string;
+
+  @IsOptional()
+  @IsEnum(UserLanguage, {
+    message: i18nValidationMessage('validation.IDIOMA_INVALIDO'),
+  })
+  idioma?: UserLanguage;
 }

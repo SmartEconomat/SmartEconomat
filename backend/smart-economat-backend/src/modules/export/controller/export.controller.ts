@@ -29,9 +29,9 @@ const PDF_MIME = 'application/pdf';
 export class ExportController {
   constructor(private readonly exportService: ExportService) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('productos/xlsx')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductos(
@@ -46,9 +46,9 @@ export class ExportController {
     await this.exportService.streamProductosToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('pedidos/xlsx')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidos(
@@ -60,9 +60,9 @@ export class ExportController {
     await this.exportService.streamPedidosToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('proveedores/xlsx')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedores(
@@ -77,9 +77,9 @@ export class ExportController {
     await this.exportService.streamProveedoresToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('albaranes/xlsx')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranes(
@@ -94,9 +94,9 @@ export class ExportController {
     await this.exportService.streamAlbaranesToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('incidencias/xlsx')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidencias(
@@ -111,9 +111,9 @@ export class ExportController {
     await this.exportService.streamIncidenciasToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('inventario/xlsx')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventario(
@@ -128,9 +128,9 @@ export class ExportController {
     await this.exportService.streamInventarioToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('movimientos/xlsx')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   async exportMovimientos(
@@ -145,9 +145,9 @@ export class ExportController {
     await this.exportService.streamMovimientosToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('recepciones/xlsx')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   async exportRecepciones(
@@ -162,9 +162,9 @@ export class ExportController {
     await this.exportService.streamRecepcionesToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('recetas/xlsx')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetas(
@@ -176,9 +176,9 @@ export class ExportController {
     await this.exportService.streamRecetasToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('ubicaciones/xlsx')
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   async exportUbicaciones(
@@ -193,9 +193,9 @@ export class ExportController {
     await this.exportService.streamUbicacionesToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('usuarios/xlsx')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async exportUsuarios(
@@ -210,9 +210,9 @@ export class ExportController {
     await this.exportService.streamUsuariosToExcel(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('productos/pdf')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductosPdf(
@@ -227,9 +227,9 @@ export class ExportController {
     await this.exportService.streamProductosToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('proveedores/pdf')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedoresPdf(
@@ -244,9 +244,9 @@ export class ExportController {
     await this.exportService.streamProveedoresToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('inventario/pdf')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventarioPdf(
@@ -261,9 +261,9 @@ export class ExportController {
     await this.exportService.streamInventarioToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('pedidos/pdf')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidosPdf(
@@ -275,9 +275,9 @@ export class ExportController {
     await this.exportService.streamPedidosToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('albaranes/pdf')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranesPdf(
@@ -292,9 +292,9 @@ export class ExportController {
     await this.exportService.streamAlbaranesToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('incidencias/pdf')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidenciasPdf(
@@ -309,9 +309,9 @@ export class ExportController {
     await this.exportService.streamIncidenciasToPdf(query, res);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Get('recetas/pdf')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetasPdf(

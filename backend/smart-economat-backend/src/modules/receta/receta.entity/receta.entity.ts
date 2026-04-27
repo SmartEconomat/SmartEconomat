@@ -11,21 +11,21 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
 @Index(['dificultad', 'tiempoEstimadoMinutos'])
 @Entity('receta')
 export class Receta extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ length: 150 })
   nombre!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column('text')
   instrucciones!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'integer',
     name: 'tiempo_estimado_minutos',
@@ -33,9 +33,9 @@ export class Receta extends BaseEntity {
   })
   tiempoEstimadoMinutos!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: DificultadReceta,
@@ -43,15 +43,15 @@ export class Receta extends BaseEntity {
   })
   dificultad!: DificultadReceta;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'path_img' })
   pathImg?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'varchar',
     length: 255,
@@ -60,9 +60,9 @@ export class Receta extends BaseEntity {
   })
   pathImgOptimized?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -73,9 +73,9 @@ export class Receta extends BaseEntity {
   })
   rendimiento?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: UnidadIngrediente,
@@ -84,9 +84,9 @@ export class Receta extends BaseEntity {
   })
   unidadResultado?: UnidadIngrediente | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'integer',
     nullable: true,
@@ -94,9 +94,9 @@ export class Receta extends BaseEntity {
   })
   diasCaducidad?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -107,9 +107,9 @@ export class Receta extends BaseEntity {
   })
   costeUnitarioEstimado?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -121,9 +121,9 @@ export class Receta extends BaseEntity {
   })
   raciones?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 12,
@@ -134,9 +134,9 @@ export class Receta extends BaseEntity {
   })
   tamanioRacion?: number | null;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
   ingredientes!: Relation<RecetaIngrediente[]>;
 }

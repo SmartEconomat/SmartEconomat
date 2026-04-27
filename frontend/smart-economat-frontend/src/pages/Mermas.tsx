@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
@@ -18,7 +18,7 @@ import {
 import DynamicFormModal from '../components/ui/DynamicFormModal';
 import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
-import { fetchAllProductos } from '../services/producto.service';
+import { fetchProductosPaginated } from '../services/producto.service';
 import { useTranslation } from 'react-i18next';
 
 const formatProductoMedidaLabel = (
@@ -47,7 +47,8 @@ const MermasPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [productos, setProductos] = useState<
+  const [isSearchingProductos, setIsSearchingProductos] = useState(false);
+  const [productosBusqueda, setProductosBusqueda] = useState<
     { value: string | number; label: string }[]
   >([]);
 
@@ -79,25 +80,50 @@ const MermasPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, filters, toast]);
+  }, [page, pageSize, filters, toast, t]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  useEffect(() => {
-    // Cargar productos para el select del form
-    fetchAllProductos().then((productosResponse) => {
-      setProductos(
-        productosResponse.map((p) => ({
+  // Manejar búsqueda de productos
+  const handleProductSearch = useCallback(async (query: string) => {
+    if (!query) return;
+    setIsSearchingProductos(true);
+    try {
+      const response = await fetchProductosPaginated({
+        searchTerm: query,
+        limit: 20,
+      });
+      setProductosBusqueda(
+        response.data.map((p) => ({
           value: p.id as string,
           label: formatProductoMedidaLabel(p.contenido, p.unidad)
             ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} por unidad`
             : p.nombre,
         }))
       );
-    });
+    } catch (err) {
+      console.error('Error buscando productos:', err);
+    } finally {
+      setIsSearchingProductos(false);
+    }
   }, []);
+
+  const dynamicSchema = useMemo(() => {
+    return mermaSchema.map((field) => {
+      if (field.name === 'productoId') {
+        return {
+          ...field,
+          type: 'autocomplete' as const,
+          options: productosBusqueda,
+          onSearch: handleProductSearch,
+          loading: isSearchingProductos,
+        };
+      }
+      return field;
+    });
+  }, [productosBusqueda, handleProductSearch, isSearchingProductos]);
 
   const handleCreateMerma = async (formData: Record<string, unknown>) => {
     setIsSaving(true);
@@ -120,13 +146,6 @@ const MermasPage: React.FC = () => {
     }
   };
 
-  const dynamicSchema = mermaSchema.map((field) => {
-    if (field.name === 'productoId') {
-      return { ...field, options: productos };
-    }
-    return field;
-  });
-
   return (
     <Box>
       <PageToolbar
@@ -139,7 +158,10 @@ const MermasPage: React.FC = () => {
           label: t('mermas.acciones.registrar'),
           id: 'btn-reportar-merma',
           icon: <AddIcon />,
-          onClick: () => setIsModalOpen(true),
+          onClick: () => {
+            setProductosBusqueda([]); // Limpiar para forzar nueva búsqueda
+            setIsModalOpen(true);
+          },
         }}
       />
 

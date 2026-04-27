@@ -21,13 +21,13 @@ import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
  * Documentación en español.
  */
 interface PasoResultadoProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   resultado: RecepcionResultado | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onResetWizard: () => void;
 }
 
@@ -35,29 +35,29 @@ interface PasoResultadoProps {
  * Documentación en español.
  */
 interface StatCardProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   title: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   value: number | string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   subtitle?: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   icon: React.ReactNode;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   color: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onClick: () => void;
 }
 
@@ -143,9 +143,9 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
     React.useState<DetailType>(null);
   const [downloading, setDownloading] = React.useState(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDownloadPdf = async () => {
     if (!resultado?.id) return;
     setDownloading(true);

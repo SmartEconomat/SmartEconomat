@@ -27,22 +27,22 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Index(['fechaPedido'])
 @Check(`"coste_total" >= 0`)
 export class PedidoUsuario extends BaseEntity {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   @Generated('increment')
   numeroGlobal!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
@@ -50,21 +50,21 @@ export class PedidoUsuario extends BaseEntity {
   })
   fechaPedido!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'numeric',
     precision: 14,
@@ -75,9 +75,9 @@ export class PedidoUsuario extends BaseEntity {
   })
   costeTotal!: number;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({
     type: 'enum',
     enum: EstadoPedidoUsuario,
@@ -86,15 +86,15 @@ export class PedidoUsuario extends BaseEntity {
   })
   estado!: EstadoPedidoUsuario;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ name: 'ubicacion_entrega_sugerida_id', nullable: true })
   ubicacionEntregaSugeridaId?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Usuario, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -102,9 +102,9 @@ export class PedidoUsuario extends BaseEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Ubicacion, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -112,17 +112,17 @@ export class PedidoUsuario extends BaseEntity {
   @JoinColumn({ name: 'ubicacion_entrega_sugerida_id' })
   ubicacionEntregaSugerida?: Relation<Ubicacion>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => PedidoUsuarioLinea, (linea) => linea.pedidoUsuario, {
     cascade: true,
   })
   lineas!: Relation<PedidoUsuarioLinea[]>;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @OneToMany(() => Pedido, (pedido) => pedido.pedidoUsuario)
   pedidos!: Relation<Pedido[]>;
 }

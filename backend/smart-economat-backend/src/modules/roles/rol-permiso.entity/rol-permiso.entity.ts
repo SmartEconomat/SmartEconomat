@@ -20,28 +20,28 @@ export class RolPermiso {
   @PrimaryColumn({ type: 'uuid', name: 'permiso_id' })
   permisoId!: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @Column({ type: 'uuid', nullable: true, name: 'asignado_por' })
   asignadoPor?: string;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Rol, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'rol_id' })
   rol!: Rol;
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   @ManyToOne(() => Permiso, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'permiso_id' })
   permiso!: Permiso;

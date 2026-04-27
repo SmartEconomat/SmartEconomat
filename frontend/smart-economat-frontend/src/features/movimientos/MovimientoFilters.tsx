@@ -9,17 +9,17 @@ import { getEnumLabel } from '../../i18n/enumPresentation';
  * Documentación en español.
  */
 export interface MovimientoFiltersState {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   types: TipoMovimiento[];
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   startDate: string | null;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   endDate: string | null;
 }
 
@@ -27,13 +27,13 @@ export interface MovimientoFiltersState {
  * Documentación en español.
  */
 interface MovimientoFiltersProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   filters: MovimientoFiltersState;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onChange: (filters: MovimientoFiltersState) => void;
 }
 
@@ -51,9 +51,9 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
 }) => {
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleTypeChange = (
     _: React.SyntheticEvent,
     newValue: TipoMovimiento[]
@@ -61,9 +61,9 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
     onChange({ ...filters, types: newValue });
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDateChange =
     (field: 'startDate' | 'endDate') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {

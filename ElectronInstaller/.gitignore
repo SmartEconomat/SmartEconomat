@@ -55,9 +55,6 @@ yarn-error.log*
 # Playwright
 .playwright/
 
-# Capturas automáticas (npm run capture:screenshots)
-screenshots/
-
 # Other
 temp/
 tmp/

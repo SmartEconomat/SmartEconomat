@@ -9,14 +9,14 @@ import { isSherlockElevatedRole } from '../utils/access.utils';
  */
 @Injectable()
 export class SherlockRolesGuard implements CanActivate {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(private readonly reflector: Reflector) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<rolUsuario[]>(
       ROLES_KEY,

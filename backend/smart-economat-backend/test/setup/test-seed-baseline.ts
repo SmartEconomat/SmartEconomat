@@ -11,7 +11,9 @@ import { Usuario } from '../../src/modules/usuario/usuario.entity/usuario.entity
 import {
   rolUsuario,
   UserStatus,
+  UserLanguage,
 } from '../../src/modules/usuario/enums/usuario.enums';
+import { ALL_PERMISSION_CODES } from '../../src/common/constants/permissions.constants';
 
 const SEED_PASSWORD = 'SmartEconomat2026!';
 const SOURCE_ROOT = join(__dirname, '../../src');
@@ -162,7 +164,10 @@ function listTypeScriptFiles(rootDir: string): string[] {
 }
 
 function collectPermissionCodesFromSource(): string[] {
-  const permissionCodes = new Set<string>(ESSENTIAL_PERMISSION_CODES);
+  const permissionCodes = new Set<string>([
+    ...ESSENTIAL_PERMISSION_CODES,
+    ...ALL_PERMISSION_CODES,
+  ]);
 
   for (const filePath of listTypeScriptFiles(SOURCE_ROOT)) {
     const fileContent = readFileSync(filePath, 'utf8');
@@ -329,6 +334,7 @@ async function upsertBaselineUsers(
     user.status = UserStatus.ACTIVE;
     user.activo = true;
     user.mustChangePassword = false;
+    user.idioma = UserLanguage.ES;
     user.roles = role ? [role] : [];
     user.permisosAdicionales = [];
     user.permisosExcluidos = [];
@@ -429,6 +435,7 @@ async function upsertBaselineAlumnos(
     user.status = UserStatus.ACTIVE;
     user.activo = true;
     user.mustChangePassword = false;
+    user.idioma = UserLanguage.ES;
     user.roles = alumnoRole ? [alumnoRole] : [];
     user.permisosAdicionales = [];
     user.permisosExcluidos = [];

@@ -38,9 +38,9 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const LOGIN_SLIDES: SlideData[] = [
     {
       title: t('auth.slide.login.slide1.title'),
@@ -56,9 +56,9 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
     },
   ];
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const REGISTER_SLIDES: SlideData[] = [
     {
       title: t('auth.slide.register.slide1.title'),
@@ -77,30 +77,30 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const slides = isLogin ? LOGIN_SLIDES : REGISTER_SLIDES;
 
   const [activeSlide, setActiveSlide] = useState(0);
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const [slideKey, setSlideKey] = useState(0);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const goToSlide = useCallback((index: number) => {
     setActiveSlide(index);
     setSlideKey((k) => k + 1);
   }, []);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   useEffect(() => {
     setActiveSlide(0);
     setSlideKey((k) => k + 1);
   }, [isLogin]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveSlide((prev) => {

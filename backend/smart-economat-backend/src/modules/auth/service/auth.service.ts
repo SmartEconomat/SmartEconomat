@@ -31,9 +31,9 @@ export class AuthService {
     private readonly mailService: MailService
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async register(dto: RegisterUserDto) {
     return await this.dataSource.transaction(async (manager) => {
       const whereConditions: any[] = [{ username: dto.username }];
@@ -67,9 +67,9 @@ export class AuthService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo
       .createQueryBuilder('usuario')
@@ -99,9 +99,9 @@ export class AuthService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async forgotPassword(email: string): Promise<void> {
     if (!email) return;
 
@@ -120,9 +120,9 @@ export class AuthService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -137,7 +137,7 @@ export class AuthService {
       usuario.resetPasswordOtpExpires < new Date()
     ) {
       throw new BadRequestException(
-        I18nHelper.getError('EL_TOKEN_ES_INV_LIDO_O_HA_EXPIRADO')
+        I18nHelper.getError('TOKEN_INVALID_OR_EXPIRED')
       );
     }
 
@@ -149,9 +149,9 @@ export class AuthService {
     await this.usuarioRepo.save(usuario);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async changePassword(
     userId: string,
     currentPassword: string,
@@ -169,7 +169,7 @@ export class AuthService {
 
     if (!(await bcrypt.compare(currentPassword, usuario.password))) {
       throw new BadRequestException(
-        I18nHelper.getError('LA_CONTRASE_A_ACTUAL_ES_INCORRECTA')
+        I18nHelper.getError('CURRENT_PASSWORD_INCORRECT')
       );
     }
 
@@ -178,9 +178,9 @@ export class AuthService {
     await this.usuarioRepo.save(usuario);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private generateToken(usuario: Usuario) {
     const payload: JwtPayload = {
       sub: usuario.id,

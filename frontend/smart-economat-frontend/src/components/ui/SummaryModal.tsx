@@ -41,10 +41,7 @@ import type { AlertaStock } from '../../services/inventario.types';
 import { formatPedidoListNumber } from '../../features/pedidos/utils/pedidoFormatters';
 import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../../i18n/enumPresentation';
-import {
-  formatLocalizedDate,
-  getResolvedLocale,
-} from '../../utils/intlFormat';
+import { formatLocalizedDate, getResolvedLocale } from '../../utils/intlFormat';
 
 export type SummaryModalType =
   | 'productos'
@@ -296,7 +293,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   }, [data, type]);
 
   const getButtonLabel = () => {
-    if (!type) return t('resumen.verTodosFallback', { title: title.toLowerCase() });
+    if (!type)
+      return t('resumen.verTodosFallback', { title: title.toLowerCase() });
 
     const labels: Record<SummaryModalType, string> = {
       productos: t('resumen.verTodos.productos'),
@@ -306,7 +304,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       proveedores: t('resumen.verTodos.proveedores'),
     };
 
-    return labels[type] || t('resumen.verTodosFallback', { title: title.toLowerCase() });
+    return (
+      labels[type] ||
+      t('resumen.verTodosFallback', { title: title.toLowerCase() })
+    );
   };
 
   const handleSeeAll = () => {
@@ -497,7 +498,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={t('resumen.incidencias.lineas', { count: lineas.length })}
+                    label={t('resumen.incidencias.lineas', {
+                      count: lineas.length,
+                    })}
                   />
                 </Stack>
               </Box>
@@ -523,7 +526,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </Stack>
 
             <Typography variant="body2" color="text.secondary">
-              {t('resumen.incidencias.proveedor')}: {item.proveedorNombre || t('resumen.incidencias.sinProveedor')}
+              {t('resumen.incidencias.proveedor')}:{' '}
+              {item.proveedorNombre || t('resumen.incidencias.sinProveedor')}
             </Typography>
 
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
@@ -593,7 +597,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                               variant="caption"
                               color="text.secondary"
                             >
-                              {t('resumen.incidencias.nota')}: {linea.observaciones}
+                              {t('resumen.incidencias.nota')}:{' '}
+                              {linea.observaciones}
                             </Typography>
                           ) : null}
                         </Stack>

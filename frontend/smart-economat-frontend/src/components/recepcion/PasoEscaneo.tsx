@@ -45,82 +45,82 @@ import {
  * Documentación en español.
  */
 interface PasoEscaneoProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searchQuery: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setSearchQuery: (query: string) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onSearch: (query?: string | unknown) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   searching: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isScaleSupported: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isScaleConnected: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isScaleEnabled: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setIsScaleEnabled: (enabled: boolean) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isScaleBusy: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onRequestScaleAccess: () => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   draft: RecepcionDraft;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   expandedPanel: string | false;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setExpandedPanel: (panel: string | false) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onUpdateLinea: (
     pIdx: number | null,
     lIdx: number,
     field: string,
     value: string | number | boolean | undefined
   ) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   isWeightUnit: (u: string | undefined) => boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onOpenWeightScale: (pIdx: number | null, lIdx: number) => void;
 }
 
@@ -171,9 +171,9 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   const { t } = useTranslation();
   const [scannerOpen, setScannerOpen] = React.useState(false);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleBarcodeScan = (code: string) => {
     setSearchQuery(code);
     onSearch(code);

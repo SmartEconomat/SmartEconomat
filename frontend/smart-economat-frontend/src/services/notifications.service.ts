@@ -107,9 +107,7 @@ async function getPendingUsersNotification(): Promise<AppNotification | null> {
 
   return {
     id: 'pending-users',
-    title: String(
-      i18n.t('notificaciones.tarjetas.pendientesUsuarios.titulo')
-    ),
+    title: String(i18n.t('notificaciones.tarjetas.pendientesUsuarios.titulo')),
     description: String(
       i18n.t('notificaciones.tarjetas.pendientesUsuarios.descripcion', {
         count: pendingUsers,

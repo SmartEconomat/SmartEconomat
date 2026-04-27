@@ -210,9 +210,9 @@ const Administracion: React.FC = () => {
     }
   }, [initialTab, activeTab]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadSlotsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -254,9 +254,9 @@ const Administracion: React.FC = () => {
     }
   }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
       navigate('/');
@@ -305,9 +305,9 @@ const Administracion: React.FC = () => {
     }
   }, [activeTab, loadedTabs, loadSlotsTabData, loadStudentsTabData]);
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleTabChange = (
     _event: React.SyntheticEvent,
     newValue: AdminTabKey
@@ -320,16 +320,16 @@ const Administracion: React.FC = () => {
     if (newValue !== 'slots') setIsEditingSlots(false);
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleNewSlotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewSlot((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -390,9 +390,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
     if (!window.confirm(t('admin.confirm.eliminarClase'))) return;
     try {
@@ -415,9 +415,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>>
@@ -438,9 +438,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleAdminUpdateSlot = async (
     id: string,
     data: Partial<Omit<AlumnoSlot, 'id' | 'codigoSlot'>> & {
@@ -465,9 +465,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleToggleStudentStatus = async (
     id: string,
     currentStatus: string
@@ -491,9 +491,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleResetStudentPassword = async (id: string) => {
     try {
       const res = await profesorService.forcePasswordReset(id);
@@ -510,9 +510,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleDeleteStudent = async (id: string) => {
     if (!window.confirm(t('admin.confirm.eliminarAlumno'))) return;
 
@@ -527,9 +527,9 @@ const Administracion: React.FC = () => {
     }
   };
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
       t('admin.toast.permisosProximamente', { username: alumno.username })

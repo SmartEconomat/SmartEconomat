@@ -29,9 +29,9 @@ import {
  */
 @Injectable()
 export class AdminService {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
@@ -48,24 +48,24 @@ export class AdminService {
     private readonly permisoRepo?: Repository<Permiso>
   ) {}
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private isAdminRole(role?: string) {
     return isSherlockElevatedRole(role);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private isSuperAdmin(role?: string) {
     const normalized = role?.trim().toUpperCase();
     return normalized === SYSTEM_ROLES.SUPER_ADMIN;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async ensureNotDemotingAdmin(
     actorId: string,
     targetUserId: string,
@@ -106,9 +106,9 @@ export class AdminService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   private async ensureNotLastActiveAdmin(
     user: Usuario,
     nextRole: string,
@@ -142,9 +142,9 @@ export class AdminService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getRoles() {
     if (!this.rolRepo) {
       return [];
@@ -157,9 +157,9 @@ export class AdminService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async getPermissions() {
     if (!this.permisoRepo) {
       return [];
@@ -171,9 +171,9 @@ export class AdminService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async createProfesor(dto: CreateProfesorDto) {
     return this.dataSource.transaction(async (manager) => {
       const whereConditions: FindOptionsWhere<Usuario>[] = [
@@ -232,9 +232,9 @@ export class AdminService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async updateUserRole(
     actorUserId: string,
     userId: string,
@@ -303,9 +303,9 @@ export class AdminService {
     });
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async activateUser(userId: string, active?: boolean) {
     const user = await this.usuarioRepo.findOne({
       where: { id: userId },
@@ -343,9 +343,9 @@ export class AdminService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   async forcePasswordReset(userId: string) {
     const user = await this.usuarioRepo.findOne({ where: { id: userId } });
     if (!user)

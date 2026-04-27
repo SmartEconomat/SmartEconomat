@@ -56,25 +56,25 @@ const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
  * Documentación en español.
  */
 interface PasoRevisionProps {
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   draft: RecepcionDraft;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   expandedPanel: string | false;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   setExpandedPanel: (panel: string | false) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Documentación en español.
+   */
   onUpdateLinea: (
     pIdx: number | null,
     lIdx: number,
