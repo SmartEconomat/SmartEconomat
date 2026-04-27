@@ -9,6 +9,10 @@ import {
 import { SelectOption } from './Select';
 import SearchIcon from '@mui/icons-material/Search';
 
+type AutocompleteRenderProps = React.HTMLAttributes<HTMLLIElement> & {
+  key: string;
+};
+
 export interface AutocompleteProps {
   name: string;
   label: string;
@@ -116,9 +120,7 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
         />
       )}
       renderOption={(props, option) => {
-        const { key, ...optionProps } = props as React.HTMLAttributes<HTMLLIElement> & {
-          key: string;
-        };
+        const { key, ...optionProps } = props as AutocompleteRenderProps;
         return (
           <Box
             component="li"
