@@ -116,7 +116,9 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
         />
       )}
       renderOption={(props, option) => {
-        const { key, ...optionProps } = props as any;
+        const { key, ...optionProps } = props as React.HTMLAttributes<HTMLLIElement> & {
+          key: string;
+        };
         return (
           <Box
             component="li"
