@@ -13,6 +13,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   Link as RouterLink,
   useNavigate,
@@ -86,6 +87,7 @@ type AdminTabKey = 'slots' | 'alumnos' | 'usuarios' | 'plantillas';
  * Página de Administración Académica para Profesores con Tabs.
  */
 const Administracion: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -134,28 +136,28 @@ const Administracion: React.FC = () => {
         canManageSlots
           ? {
               key: 'slots' as const,
-              label: 'Aulas y Clases',
+              label: t('administracion.tabs.slots'),
               icon: <SchoolIcon />,
             }
           : null,
         canViewStudents
           ? {
               key: 'alumnos' as const,
-              label: 'Alumnos',
+              label: t('administracion.tabs.students'),
               icon: <PeopleIcon />,
             }
           : null,
         isAdmin
           ? {
               key: 'usuarios' as const,
-              label: 'Gestión Usuarios',
+              label: t('administracion.tabs.users'),
               icon: <PeopleIcon />,
             }
           : null,
         canViewRoleTemplates
           ? {
               key: 'plantillas' as const,
-              label: 'Plantillas Roles',
+              label: t('administracion.tabs.roleTemplates'),
               icon: <SecurityIcon />,
             }
           : null,
@@ -164,7 +166,7 @@ const Administracion: React.FC = () => {
         label: string;
         icon: React.ReactElement;
       }>,
-    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates]
+    [canManageSlots, canViewStudents, isAdmin, canViewRoleTemplates, t]
   );
 
   const initialTab = useMemo<AdminTabKey>(() => {
@@ -237,11 +239,11 @@ const Administracion: React.FC = () => {
       setLoadedTabs((prev) => ({ ...prev, slots: true }));
     } catch (loadError) {
       console.error('Error loading administración data', loadError);
-      setError('Error al cargar los datos de administración');
+      setError(t('administracion.feedback.loadError'));
     } finally {
       setLoadingTab((current) => (current === 'slots' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, isAdmin]);
+  }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
 
   const loadStudentsTabData = useCallback(async () => {
     if (canViewAdmin === false) {
@@ -275,11 +277,11 @@ const Administracion: React.FC = () => {
       }));
     } catch (loadError) {
       console.error('Error loading administración students', loadError);
-      setError('Error al cargar los alumnos');
+      setError(t('administracion.feedback.loadStudentsError'));
     } finally {
       setLoadingTab((current) => (current === 'alumnos' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, slots.length]);
+  }, [canViewAdmin, navigate, isPureProfesor, slots.length, t]);
 
   useEffect(() => {
     if (activeTab === 'slots' && !loadedTabs.slots) {
@@ -326,10 +328,7 @@ const Administracion: React.FC = () => {
         if (myProfile) {
           targetProfesorId = myProfile.id;
         } else if (!isPureProfesor) {
-          // Si no es "puro profesor" y no tiene perfil, el backend fallará con PROFESSOR_PROFILE_NOT_FOUND
-          toast.error(
-            'No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.'
-          );
+          toast.error(t('administracion.feedback.noProfessorProfile'));
           setIsSaving(false);
           return;
         }
@@ -358,9 +357,11 @@ const Administracion: React.FC = () => {
           profesorId: '',
           ubicacionId: '',
         });
-        toast.success('Aula/Clase añadida con éxito');
+        toast.success(t('administracion.feedback.slotCreated'));
       } else {
-        toast.error(res.message || 'Error al crear la clase');
+        toast.error(
+          res.message || t('administracion.feedback.createSlotError')
+        );
       }
     } catch {
       toast.error('Error al crear la clase');
@@ -370,7 +371,7 @@ const Administracion: React.FC = () => {
   };
 
   const handleDeleteSlot = async (id: string, isAdminView?: boolean) => {
-    if (!window.confirm('¿Seguro que quieres eliminar esta clase?')) return;
+    if (!window.confirm(t('administracion.dialogs.confirmDeleteSlot'))) return;
     try {
       const res = isAdminView
         ? await profesorService.adminDeleteSlot(id)
@@ -382,12 +383,12 @@ const Administracion: React.FC = () => {
         } else {
           setSlots((prev) => prev.filter((s) => s.id !== id));
         }
-        toast.success('Ubicación eliminada');
+        toast.success(t('administracion.feedback.slotDeleted'));
       } else {
-        toast.error(res.message || 'Error al eliminar');
+        toast.error(res.message || t('common.errors.unknown'));
       }
     } catch {
-      toast.error('No se pudo eliminar');
+      toast.error(t('common.errors.unknown'));
     }
   };
 
@@ -400,9 +401,9 @@ const Administracion: React.FC = () => {
       const res = await profesorService.updateSlot(id, data);
       if (res.success) {
         setSlots((prev) => prev.map((s) => (s.id === id ? res.data : s)));
-        toast.success('Ubicación actualizada');
+        toast.success(t('administracion.feedback.slotUpdated'));
       } else {
-        toast.error(res.message || 'Error al actualizar');
+        toast.error(res.message || t('common.errors.unknown'));
       }
     } catch {
       toast.error('Error al actualizar');
@@ -424,12 +425,14 @@ const Administracion: React.FC = () => {
         // Recargar todos los slots para reflejar el nuevo profesor
         const allSlotsRes = await profesorService.getAllSlots();
         if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
-        toast.success('Aula actualizada correctamente');
+        toast.success(t('administracion.feedback.slotUpdated'));
       } else {
-        toast.error(res.message || 'Error al actualizar el aula');
+        toast.error(
+          res.message || t('administracion.feedback.updateSlotError')
+        );
       }
     } catch {
-      toast.error('Error al actualizar el aula');
+      toast.error(t('administracion.feedback.updateSlotError'));
     } finally {
       setIsSaving(false);
     }
@@ -449,10 +452,10 @@ const Administracion: React.FC = () => {
         setStudents((prev) =>
           prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
         );
-        toast.success('Estado de alumno actualizado');
+        toast.success(t('administracion.feedback.studentStatusUpdated'));
       }
     } catch {
-      toast.error('Error al cambiar estado');
+      toast.error(t('common.errors.unknown'));
     } finally {
       setIsSaving(false);
     }
@@ -463,32 +466,38 @@ const Administracion: React.FC = () => {
       const res = await profesorService.forcePasswordReset(id);
       if (res.success) {
         toast.success(
-          `Contraseña reseteada. Nueva clave: ${res.data.provisionalPassword}`,
+          t('administracion.feedback.passwordReset', {
+            password: res.data.provisionalPassword,
+          }),
           10000
         );
       }
     } catch {
-      toast.error('Error al resetear contraseña');
+      toast.error(t('common.errors.unknown'));
     }
   };
 
   const handleDeleteStudent = async (id: string) => {
-    if (!window.confirm('¿Seguro que quieres eliminar a este alumno?')) return;
+    if (!window.confirm(t('administracion.dialogs.confirmDeleteStudent')))
+      return;
 
     try {
       const res = await profesorService.removeStudent(id);
       if (res.success) {
         setStudents((prev) => prev.filter((s) => s.id !== id));
-        toast.success('Alumno eliminado');
+        toast.success(t('administracion.feedback.studentDeleted'));
       }
     } catch {
-      toast.error('No se pudo eliminar');
+      toast.error(t('common.errors.unknown'));
     }
   };
 
   const handleManagePermissions = (alumno: Alumno) => {
     toast.info(
-      `Funcionalidad de permisos para ${alumno.username} próximamente`
+      t('common.featureComingSoon', {
+        feature: t('administracion.labels.permissions'),
+        user: alumno.username,
+      })
     );
   };
 
@@ -504,19 +513,19 @@ const Administracion: React.FC = () => {
           color="primary.main"
           sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' } }}
         >
-          Administración Académica
+          {t('administracion.title')}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1.5 }}>
-          Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.
+          {t('administracion.description')}
         </Typography>
 
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />}>
           <Link underline="hover" color="inherit" component={RouterLink} to="/">
-            Inicio
+            {t('menu.inicio.title')}
           </Link>
           <Typography color="text.primary" fontWeight={500}>
-            Administración
+            {t('administracion.breadcrumb')}
           </Typography>
         </Breadcrumbs>
       </Box>
@@ -600,7 +609,7 @@ const Administracion: React.FC = () => {
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
-                    {isEditingSlots ? 'Finalizar Edición' : 'Gestionar'}
+                    {isEditingSlots ? t('common.finish') : t('common.manage')}
                   </Button>
                 </Box>
               )}

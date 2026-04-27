@@ -336,31 +336,21 @@ const Productos: React.FC = () => {
 
       if (existingProduct) {
         setProductToEdit(buildEditData(existingProduct));
-        toast.success('Producto localizado. Abriendo su ficha para editar.');
+        toast.success(t('productos.feedback.located'));
         return;
       }
 
       if (!canCreate) {
-        toast.info(
-          'No se encontró el producto. Se dejó el código en la búsqueda.'
-        );
+        toast.info(t('productos.feedback.notFoundSearch'));
         return;
       }
 
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.info(
-        'Producto no encontrado. Se abrió el formulario para crearlo.'
-      );
-    } catch {
-      if (!canCreate) {
-        toast.error('No se pudo validar el código escaneado.');
-        return;
-      }
-
+      toast.info(t('productos.feedback.notFoundCreate'));
+    } catch (err) {
+      console.error('Error in handleSearchScannerResult', err);
+      toast.warning(t('productos.feedback.catalogError'));
       setProductToEdit(await buildCreateProductDraft(code));
-      toast.warning(
-        'No se pudo comprobar el catálogo, pero se abrió el alta del producto.'
-      );
     }
   };
 
@@ -410,7 +400,7 @@ const Productos: React.FC = () => {
 
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalle">
+      <Tooltip title={t('common.viewDetails')}>
         <IconButton
           color="primary"
           onClick={(e) => {
@@ -418,32 +408,32 @@ const Productos: React.FC = () => {
             handleViewClick(row);
           }}
           size="small"
-          aria-label="Ver detalle"
+          aria-label={t('common.viewDetails')}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {canEdit && (
-        <Tooltip title="Editar">
+        <Tooltip title={t('common.edit')}>
           <IconButton
             color="secondary"
             onClick={() => {
               setProductToEdit(buildEditData(row));
             }}
             size="small"
-            aria-label="Editar"
+            aria-label={t('common.edit')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {canDelete && (
-        <Tooltip title="Eliminar">
+        <Tooltip title={t('common.delete')}>
           <IconButton
             color="error"
             onClick={() => setProductToDelete(row)}
             size="small"
-            aria-label="Borrar"
+            aria-label={t('common.delete')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>

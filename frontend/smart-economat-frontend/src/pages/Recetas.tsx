@@ -145,7 +145,7 @@ const RecetaIngredientesView: React.FC<{
                         fontWeight: 700,
                       }}
                     >
-                      Auto
+                      {t('recetas.dialogs.auto')}
                     </Box>
                   </Box>
                 ) : (
@@ -398,7 +398,10 @@ const Recetas: React.FC = () => {
 
   const openExportDialog = (ids: string[]) => {
     if (ids.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(
+        t('recetas.feedback.selectRecipesExport') ||
+          'Selecciona al menos una receta para exportar a PDF.'
+      );
       return;
     }
 
@@ -409,7 +412,10 @@ const Recetas: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (exportIds.length === 0) {
-      toast.error('Selecciona al menos una receta para exportar a PDF.');
+      toast.error(
+        t('recetas.feedback.selectRecipesExport') ||
+          'Selecciona al menos una receta para exportar a PDF.'
+      );
       return;
     }
 
@@ -540,7 +546,8 @@ const Recetas: React.FC = () => {
 
     if (!hasMissingIngredients) {
       toast.error(
-        'No se encontraron proveedores válidos para los ingredientes faltantes.'
+        t('recetas.feedback.noProvidersMissing') ||
+          'No se encontraron proveedores válidos para los ingredientes faltantes.'
       );
       return;
     }
@@ -548,7 +555,9 @@ const Recetas: React.FC = () => {
     setIsCooking(true);
     try {
       const pedidoUsuario = await createPedidoUsuarioFromMissingStock({
-        observaciones: `Pedido automático por falta de stock para: ${cookData.items.map((it) => it.receta.nombre).join(', ')}`,
+        observaciones: t('recetas.feedback.autoOrderNote', {
+          recipes: cookData.items.map((it) => it.receta.nombre).join(', '),
+        }),
         items: cookData.items.map((item) => ({
           recetaId: item.receta.id,
           cantidad: item.cantidad,
@@ -557,14 +566,16 @@ const Recetas: React.FC = () => {
 
       const totalPedidos = pedidoUsuario.pedidos?.length ?? 0;
       toast.success(
-        totalPedidos > 0
-          ? `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} con ${totalPedidos} pedido${totalPedidos === 1 ? '' : 's'} interno${totalPedidos === 1 ? '' : 's'} para cubrir los faltantes.`
-          : `Se ha generado el pedido #${pedidoUsuario.numeroGlobal} para cubrir los faltantes.`
+        t('recetas.feedback.orderCreated', {
+          id: pedidoUsuario.numeroGlobal,
+          count: totalPedidos,
+        })
       );
       setIsCookModalOpen(false);
     } catch (err: unknown) {
       toast.error(
-        'Error al generar pedidos: ' +
+        t('recetas.feedback.orderError') +
+          ': ' +
           (err instanceof Error ? err.message : String(err))
       );
     } finally {
@@ -574,7 +585,7 @@ const Recetas: React.FC = () => {
 
   const handleConfirmCook = async () => {
     if (cookData.items.length === 0 || !cookData.ubicacionId) {
-      toast.error('Debes seleccionar una ubicación de destino.');
+      toast.error(t('inventario.feedback.noUbicaciones'));
       return;
     }
 
@@ -608,15 +619,18 @@ const Recetas: React.FC = () => {
       if (successful > 0) {
         toast.success(
           successful === cookData.items.length
-            ? 'Producciones lanzadas con éxito'
-            : `Se procesaron ${successful} de ${cookData.items.length} producciones.`
+            ? t('recetas.feedback.recipeCooked')
+            : t('recetas.feedback.partialCooked', {
+                count: successful,
+                total: cookData.items.length,
+              })
         );
       }
       setIsCookModalOpen(false);
       setSelectedIds([]);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al iniciar la preparación.';
+        err instanceof Error ? err.message : t('recetas.feedback.cookError');
       toast.error(message);
     } finally {
       setIsCooking(false);
@@ -671,7 +685,7 @@ const Recetas: React.FC = () => {
             >
               {row.unidadResultado
                 ? `${row.rendimiento ?? '—'} ${row.unidadResultado}`
-                : t('recetas.table.ingredientsCount', {
+                : t('recetas.table.ingredients_with_count', {
                     count: row.ingredientes?.length ?? 0,
                   })}
             </Typography>
@@ -753,7 +767,7 @@ const Recetas: React.FC = () => {
       );
 
       if (recetaIds.length === 0) {
-        toast.error('Debes seleccionar al menos una receta.');
+        toast.error(t('recetas.feedback.selectRecipesExport'));
         return;
       }
 
@@ -767,20 +781,21 @@ const Recetas: React.FC = () => {
         });
 
         toast.success(
-          `Pedido #${pedidoUsuario.numeroGlobal} generado correctamente desde ${recetaIds.length} receta${recetaIds.length === 1 ? '' : 's'}.`
+          t('recetas.feedback.orderCreated', {
+            id: pedidoUsuario.numeroGlobal,
+            count: recetaIds.length,
+          })
         );
         setItemToView(null);
       } catch (err: unknown) {
         const message =
-          err instanceof Error
-            ? err.message
-            : 'Error al generar el pedido desde recetas.';
+          err instanceof Error ? err.message : t('recetas.feedback.orderError');
         toast.error(message);
       } finally {
         setIsCooking(false);
       }
     },
-    [toast]
+    [toast, t]
   );
 
   const renderActions = (row: Receta) => (

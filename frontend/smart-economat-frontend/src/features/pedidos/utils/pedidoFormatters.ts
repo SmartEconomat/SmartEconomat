@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import i18next from 'i18next';
 import { PedidoListItem, PurchaseBatch } from '../../../services/pedido.types';
 
 export type PedidoNumberContext =
@@ -18,10 +19,14 @@ export const formatPedidoDate = (
 
 export const formatCurrency = (value?: number | string | null): string => {
   const amount = Number(value || 0);
-  return `${amount.toLocaleString('es-ES', {
+  const locale = i18next.language || 'es-ES';
+
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })} €`;
+  }).format(amount);
 };
 
 export const formatPedidoId = (id?: string): string => {

@@ -20,6 +20,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from './utils/getCategoryIconFilled';
 import { useBreakpoints } from '../../utils/useBreakpoints';
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos públicos
@@ -48,23 +49,7 @@ export interface ProductFiltersProps {
 // Opciones de categoría
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
-  { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-  { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-  { value: CategoriaProducto.CARNE, label: 'Carne' },
-  { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-  { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-  { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-  { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-  { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-  { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-  { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-  { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-  { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-  { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-  { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-  { value: CategoriaProducto.OTRO, label: 'Otro' },
-];
+// CATEGORIA_OPTIONS will be moved inside the component
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Componente
@@ -74,10 +59,76 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const { isMobileOrTablet } = useBreakpoints();
 
+  const categoriaOptions = React.useMemo<
+    { value: CategoriaProducto; label: string }[]
+  >(
+    () => [
+      {
+        value: CategoriaProducto.VERDURA,
+        label: t('productos.categories.verdura'),
+      },
+      {
+        value: CategoriaProducto.FRUTA,
+        label: t('productos.categories.fruta'),
+      },
+      {
+        value: CategoriaProducto.CARNE,
+        label: t('productos.categories.carne'),
+      },
+      {
+        value: CategoriaProducto.PESCADO,
+        label: t('productos.categories.pescado'),
+      },
+      {
+        value: CategoriaProducto.MARISCO,
+        label: t('productos.categories.marisco'),
+      },
+      {
+        value: CategoriaProducto.LACTEO,
+        label: t('productos.categories.lacteo'),
+      },
+      {
+        value: CategoriaProducto.HUEVO,
+        label: t('productos.categories.huevo'),
+      },
+      {
+        value: CategoriaProducto.CEREAL,
+        label: t('productos.categories.cereal'),
+      },
+      {
+        value: CategoriaProducto.LEGUMBRE,
+        label: t('productos.categories.legumbre'),
+      },
+      {
+        value: CategoriaProducto.FRUTO_SECO,
+        label: t('productos.categories.fruto_seco'),
+      },
+      {
+        value: CategoriaProducto.CONDIMENTO,
+        label: t('productos.categories.condimento'),
+      },
+      {
+        value: CategoriaProducto.ACEITE,
+        label: t('productos.categories.aceite'),
+      },
+      {
+        value: CategoriaProducto.AZUCAR,
+        label: t('productos.categories.azucar'),
+      },
+      {
+        value: CategoriaProducto.BEBIDA,
+        label: t('productos.categories.bebida'),
+      },
+      { value: CategoriaProducto.OTRO, label: t('productos.categories.otro') },
+    ],
+    [t]
+  );
+
   // Sincronizar las opciones seleccionadas con el estado externo
-  const selected = CATEGORIA_OPTIONS.filter((opt) =>
+  const selected = categoriaOptions.filter((opt) =>
     filters.categorias.includes(opt.value)
   );
 
@@ -92,7 +143,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
     <Autocomplete
       multiple
       disableCloseOnSelect
-      options={CATEGORIA_OPTIONS}
+      options={categoriaOptions}
       value={selected}
       getOptionLabel={(opt) => opt.label}
       isOptionEqualToValue={(opt, val) => opt.value === val.value}
@@ -192,7 +243,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         <TextField
           {...params}
           size="small"
-          placeholder={selected.length === 0 ? 'Filtrar categoría...' : ''}
+          placeholder={
+            selected.length === 0 ? t('productos.searchPlaceholder') : ''
+          }
           InputProps={{
             ...params.InputProps,
             startAdornment: (
@@ -230,10 +283,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
         },
       }}
       ListboxProps={{ style: { maxHeight: 300 } }}
-      noOptionsText="Sin resultados"
-      clearText="Limpiar filtros"
-      openText="Ver categorías"
-      closeText="Cerrar"
+      noOptionsText={t('common.noData')}
+      clearText={t('common.clearSearch')}
+      openText={t('common.showFilters')}
+      closeText={t('common.close')}
     />
   );
 };

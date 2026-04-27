@@ -14,8 +14,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 export interface TutorialStep {
   icon: React.ReactNode;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
 }
 
 export interface TutorialConfigItem {
@@ -28,23 +28,20 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
     steps: [
       {
         icon: <DashboardIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Panel de Inicio',
-        description:
-          'Este es tu centro de control principal. Aquí tendrás una vista rápida del estado de tu economato.',
+        titleKey: 'tutorial.home.panel.title',
+        descriptionKey: 'tutorial.home.panel.description',
       },
       {
         icon: (
           <AddShoppingCartIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
         ),
-        title: 'Accesos Rápidos',
-        description:
-          'Usa las tarjetas de acceso rápido para crear nuevos pedidos o registrar artículos en segundos.',
+        titleKey: 'tutorial.home.accesos.title',
+        descriptionKey: 'tutorial.home.accesos.description',
       },
       {
         icon: <AssessmentIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-        title: 'Resumen de Actividad',
-        description:
-          'Mantente al día con las últimas notificaciones y alertas de stock bajo.',
+        titleKey: 'tutorial.home.resumen.title',
+        descriptionKey: 'tutorial.home.resumen.description',
       },
     ],
   },
@@ -54,17 +51,15 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
         icon: (
           <QrCodeScannerIcon sx={{ fontSize: 60, color: 'primary.main' }} />
         ),
-        title: 'Recepción de Mercancía',
-        description:
-          'Gestiona la entrada de productos al almacén de manera eficiente.',
+        titleKey: 'tutorial.recepciones.gestion.title',
+        descriptionKey: 'tutorial.recepciones.gestion.description',
       },
       {
         icon: (
           <QrCodeScannerIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
         ),
-        title: 'Escaneo de Códigos',
-        description:
-          'Usa el lector de códigos de barras para identificar productos rápidamente y evitar errores.',
+        titleKey: 'tutorial.recepciones.escaneo.title',
+        descriptionKey: 'tutorial.recepciones.escaneo.description',
       },
     ],
   },
@@ -72,15 +67,13 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
     steps: [
       {
         icon: <InventoryIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Gestión de Inventario',
-        description:
-          'Consulta el stock actual de todos tus productos en tiempo real.',
+        titleKey: 'tutorial.inventario.gestion.title',
+        descriptionKey: 'tutorial.inventario.gestion.description',
       },
       {
         icon: <AssessmentIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-        title: 'Ajustes y Filtros',
-        description:
-          'Realiza ajustes manuales y filtra por categorías para encontrar lo que buscas.',
+        titleKey: 'tutorial.inventario.ajustes.title',
+        descriptionKey: 'tutorial.inventario.ajustes.description',
       },
     ],
   },
@@ -89,48 +82,42 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
       PROFESOR: [
         {
           icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description:
-            'Desde esta tarjeta puedes revisar y editar tus datos personales básicos.',
+          titleKey: 'tutorial.perfil.usuario.title',
+          descriptionKey: 'tutorial.perfil.usuario.description',
         },
         {
           icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-          title: 'Seguridad y contraseña',
-          description:
-            'Puedes cambiar tu nombre de usuario y contraseña. El cambio de email requiere autorización de un rol superior.',
+          titleKey: 'tutorial.perfil.seguridad.title',
+          descriptionKey: 'tutorial.perfil.seguridad.description',
         },
         {
           icon: (
             <MeetingRoomIcon sx={{ fontSize: 60, color: 'secondary.main' }} />
           ),
-          title: 'Administración de aulas',
-          description:
-            'Como profesor puedes gestionar clases, cupos y ubicaciones académicas.',
+          titleKey: 'tutorial.perfil.aulas.title',
+          descriptionKey: 'tutorial.perfil.aulas.description',
         },
         {
           icon: <GroupIcon sx={{ fontSize: 60, color: 'success.main' }} />,
-          title: 'Gestión de alumnos',
-          description:
-            'Puedes consultar alumnos, activar su estado y realizar acciones docentes permitidas.',
+          titleKey: 'tutorial.perfil.alumnos.title',
+          descriptionKey: 'tutorial.perfil.alumnos.description',
         },
       ],
       ALUMNO: [
         {
           icon: <PersonIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-          title: 'Perfil de usuario',
-          description: 'Aquí puedes consultar tu información personal.',
+          titleKey: 'tutorial.perfil.usuario_alumno.title',
+          descriptionKey: 'tutorial.perfil.usuario_alumno.description',
         },
         {
           icon: <LockIcon sx={{ fontSize: 60, color: 'warning.main' }} />,
-          title: 'Seguridad y contraseña',
-          description:
-            'Como alumno puedes editar tu nombre de usuario y cambiar tu contraseña.',
+          titleKey: 'tutorial.perfil.seguridad_alumno.title',
+          descriptionKey: 'tutorial.perfil.seguridad_alumno.description',
         },
         {
           icon: <EmailIcon sx={{ fontSize: 60, color: 'info.main' }} />,
-          title: 'Cambio de email',
-          description:
-            'El email no se modifica directamente. Debes enviar una solicitud y esperar la aprobación de un rol superior.',
+          titleKey: 'tutorial.perfil.email.title',
+          descriptionKey: 'tutorial.perfil.email.description',
         },
       ],
     },
@@ -139,15 +126,13 @@ export const tutorialConfig: Record<string, TutorialConfigItem> = {
     steps: [
       {
         icon: <HelpIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
-        title: 'Ayuda General',
-        description:
-          'Navega por el menú lateral para acceder a las diferentes secciones de la aplicación.',
+        titleKey: 'tutorial.default.ayuda.title',
+        descriptionKey: 'tutorial.default.ayuda.description',
       },
       {
         icon: <SettingsIcon sx={{ fontSize: 60, color: 'action.active' }} />,
-        title: 'Configuración',
-        description:
-          'Personaliza tu experiencia, cambia el tema o gestiona tu perfil desde el menú superior.',
+        titleKey: 'tutorial.default.config.title',
+        descriptionKey: 'tutorial.default.config.description',
       },
     ],
   },

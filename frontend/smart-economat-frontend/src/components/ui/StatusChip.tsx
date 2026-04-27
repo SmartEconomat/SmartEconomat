@@ -1,177 +1,21 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Chip, ChipProps } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { useTranslation } from 'react-i18next';
 import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
-
-export type StatusType =
-  | 'success'
-  | 'completed'
-  | 'delivered'
-  | 'approved'
-  | 'error'
-  | 'failed'
-  | 'cancelled'
-  | 'rejected'
-  | 'warning'
-  | 'pending'
-  | 'in_progress'
-  | 'review'
-  | 'info'
-  | 'active'
-  | 'archived'
-  | 'fácil'
-  | 'media'
-  | 'difícil'
-  | 'default'
-  | 'unknown';
+import {
+  StatusType,
+  getStatusColor,
+  isCategoriaProducto,
+  capitalize,
+  CATEGORY_CHIP_MIN_WIDTH,
+} from './StatusChip.utils';
 
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
   status: StatusType | string;
   label?: string;
 }
-
-// Ancho fijo para chips de categoría de producto
-const CATEGORY_CHIP_MIN_WIDTH = 110;
-
-// Conjunto de valores de CategoriaProducto para detección rápida
-const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
-
-const isCategoriaProducto = (status: string): status is CategoriaProducto =>
-  CATEGORIA_VALUES.has(status.toLowerCase());
-
-export const getStatusColor = (
-  status: string
-): 'success' | 'error' | 'warning' | 'info' | 'default' => {
-  if (!status) return 'default';
-  const normalizedStatus =
-    typeof status === 'string'
-      ? status.toLowerCase()
-      : String(status).toLowerCase();
-
-  switch (normalizedStatus) {
-    case 'success':
-    case 'completed':
-    case 'delivered':
-    case 'entregado':
-    case 'en_almacen':
-    case 'approved':
-    case 'recibido':
-    case 'fácil':
-    case 'entrada':
-    case 'entrada_compra':
-    case 'entrada_distribucion':
-    case 'completado':
-    case 'entregada':
-      return 'success';
-    case 'error':
-    case 'failed':
-    case 'cancelled':
-    case 'cancelado':
-    case 'rejected':
-    case 'difícil':
-    case 'salida':
-    case 'salida_distribucion':
-    case 'salida_elaboracion':
-      return 'error';
-    case 'warning':
-    case 'review':
-    case 'media':
-    case 'ajuste':
-    case 'pendiente':
-    case 'preparada':
-    case 'preparado':
-      return 'warning';
-    case 'in_progress':
-    case 'en_proceso':
-    case 'parcial':
-    case 'info':
-    case 'active':
-    case 'archived':
-    case 'pedido':
-      return 'info';
-    default:
-      return 'default';
-  }
-};
-
-const statusTranslations: Record<string, string> = {
-  success: 'Éxito',
-  completed: 'Completado',
-  delivered: 'En almacén',
-  entregado: 'En almacén',
-  en_almacen: 'En almacén',
-  approved: 'Aprobado',
-  error: 'Error',
-  failed: 'Fallido',
-  cancelled: 'Cancelado',
-  cancelado: 'Cancelado',
-  rejected: 'Rechazado',
-  warning: 'Advertencia',
-  pending: 'Pendiente',
-  pendiente: 'Pendiente',
-  in_progress: 'En progreso',
-  en_proceso: 'En proceso',
-  recibido: 'Recibido',
-  review: 'En revisión',
-  info: 'Info',
-  active: 'Activo',
-  archived: 'Archivado',
-  fácil: 'Fácil',
-  media: 'Media',
-  difícil: 'Difícil',
-  unknown: 'Desconocido',
-  default: 'Por defecto',
-  entrada: 'Entrada',
-  salida: 'Salida',
-  ajuste: 'Ajuste',
-  pedido: 'Pedido',
-  entrada_compra: 'Entrada compra',
-  entrada_distribucion: 'Entrada distribución',
-  salida_distribucion: 'Salida distribución',
-  salida_elaboracion: 'Salida elaboración',
-  parcial: 'Parcial',
-  completado: 'Completado',
-  preparada: 'Por recoger',
-  preparado: 'Por recoger',
-  entregada: 'Entregada',
-};
-
-const categoriaTranslations: Record<CategoriaProducto, string> = {
-  [CategoriaProducto.VERDURA]: 'Verdura',
-  [CategoriaProducto.FRUTA]: 'Fruta',
-  [CategoriaProducto.CARNE]: 'Carne',
-  [CategoriaProducto.PESCADO]: 'Pescado',
-  [CategoriaProducto.MARISCO]: 'Marisco',
-  [CategoriaProducto.LACTEO]: 'Lácteo',
-  [CategoriaProducto.HUEVO]: 'Huevo',
-  [CategoriaProducto.CEREAL]: 'Cereal',
-  [CategoriaProducto.LEGUMBRE]: 'Legumbre',
-  [CategoriaProducto.FRUTO_SECO]: 'Fruto seco',
-  [CategoriaProducto.CONDIMENTO]: 'Condimento',
-  [CategoriaProducto.ACEITE]: 'Aceite',
-  [CategoriaProducto.AZUCAR]: 'Azúcar',
-  [CategoriaProducto.BEBIDA]: 'Bebida',
-  [CategoriaProducto.OTRO]: 'Otro',
-};
-
-const capitalize = (text: string) => {
-  if (!text) return '';
-  const spacedText = text.replace(/[_]/g, ' ');
-  return spacedText.charAt(0).toUpperCase() + spacedText.slice(1);
-};
-
-const getTranslatedStatus = (status: string) => {
-  if (!status) return '—';
-  const normalized =
-    typeof status === 'string'
-      ? status.toLowerCase()
-      : String(status).toLowerCase();
-  if (statusTranslations[normalized]) {
-    return statusTranslations[normalized];
-  }
-  return capitalize(String(status));
-};
 
 export const StatusChip: React.FC<StatusChipProps> = ({
   status,
@@ -180,15 +24,89 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   variant = 'outlined',
   ...rest
 }) => {
-  const statusStr = status as string;
+  const { t } = useTranslation();
+  const statusStr = (status as string).toLowerCase();
   const isCategoria = isCategoriaProducto(statusStr);
 
+  const statusTranslations = useMemo<Record<string, string>>(
+    () => ({
+      success: t('common.status.success'),
+      completed: t('common.status.completed'),
+      delivered: t('common.status.delivered'),
+      entregado: t('common.status.delivered'),
+      en_almacen: t('common.status.delivered'),
+      approved: t('common.status.approved'),
+      error: t('common.status.error'),
+      failed: t('common.status.failed'),
+      cancelled: t('common.status.cancelled'),
+      cancelado: t('common.status.cancelled'),
+      rejected: t('common.status.rejected'),
+      warning: t('common.status.warning'),
+      pending: t('common.status.pending'),
+      pendiente: t('common.status.pending'),
+      in_progress: t('common.status.in_progress'),
+      en_proceso: t('common.status.in_progress'),
+      recibido: t('common.status.received'),
+      review: t('common.status.review'),
+      info: t('common.status.info'),
+      active: t('common.status.active'),
+      archived: t('common.status.archived'),
+      fácil: t('recetas.difficulty.facil'),
+      media: t('recetas.difficulty.media'),
+      difícil: t('recetas.difficulty.dificil'),
+      unknown: t('common.status.unknown'),
+      default: t('common.status.default'),
+      entrada: t('movimientos.types.ENTRADA'),
+      salida: t('movimientos.types.SALIDA'),
+      ajuste: t('movimientos.types.AJUSTE'),
+      pedido: t('movimientos.types.PEDIDO'),
+      entrada_compra: t('movimientos.types.ENTRADA_COMPRA'),
+      entrada_distribucion: t('movimientos.types.ENTRADA_DISTRIBUCION'),
+      salida_distribucion: t('movimientos.types.SALIDA_DISTRIBUCION'),
+      salida_elaboracion: t('movimientos.types.SALIDA_ELABORACION'),
+      parcial: t('common.status.partial'),
+      completado: t('common.status.completed'),
+      preparada: t('recetas.status.por_recoger'),
+      preparado: t('recetas.status.por_recoger'),
+      entregada: t('recetas.status.entregada'),
+    }),
+    [t]
+  );
+
+  const categoriaTranslations = useMemo<Record<CategoriaProducto, string>>(
+    () => ({
+      [CategoriaProducto.VERDURA]: t('productos.categories.verdura'),
+      [CategoriaProducto.FRUTA]: t('productos.categories.fruta'),
+      [CategoriaProducto.CARNE]: t('productos.categories.carne'),
+      [CategoriaProducto.PESCADO]: t('productos.categories.pescado'),
+      [CategoriaProducto.MARISCO]: t('productos.categories.marisco'),
+      [CategoriaProducto.LACTEO]: t('productos.categories.lacteo'),
+      [CategoriaProducto.HUEVO]: t('productos.categories.huevo'),
+      [CategoriaProducto.CEREAL]: t('productos.categories.cereal'),
+      [CategoriaProducto.LEGUMBRE]: t('productos.categories.legumbre'),
+      [CategoriaProducto.FRUTO_SECO]: t('productos.categories.fruto_seco'),
+      [CategoriaProducto.CONDIMENTO]: t('productos.categories.condimento'),
+      [CategoriaProducto.ACEITE]: t('productos.categories.aceite'),
+      [CategoriaProducto.AZUCAR]: t('productos.categories.azucar'),
+      [CategoriaProducto.BEBIDA]: t('productos.categories.bebida'),
+      [CategoriaProducto.OTRO]: t('productos.categories.otro'),
+    }),
+    [t]
+  );
+
   const resolvedColor = getStatusColor(statusStr);
-  const displayLabel =
-    label ||
-    (isCategoria
-      ? categoriaTranslations[statusStr.toLowerCase() as CategoriaProducto]
-      : getTranslatedStatus(statusStr));
+
+  const getDisplayLabel = () => {
+    if (label) return label;
+    if (isCategoria) {
+      const catKey = statusStr.toUpperCase() as keyof typeof CategoriaProducto;
+      const catValue = CategoriaProducto[catKey];
+      return categoriaTranslations[catValue] || capitalize(statusStr);
+    }
+    return statusTranslations[statusStr] || capitalize(statusStr);
+  };
+
+  const displayLabel = getDisplayLabel();
 
   // Icono de punto para estados que no son categorías
   const dotIcon = (

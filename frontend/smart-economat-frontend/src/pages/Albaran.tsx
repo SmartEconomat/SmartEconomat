@@ -11,6 +11,7 @@ import {
   Button,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useTranslation } from 'react-i18next';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -60,27 +61,27 @@ const formatFileSize = (bytes?: number): string => {
 
 // ─── Esquema del formulario ──────────────────────────────────────────────────
 
-const ALBARAN_FORM_FIELDS: DynamicField[] = [
+const getAlbaranFormFields = (t: (key: string) => string): DynamicField[] => [
   {
     name: 'nAlbaran',
-    label: 'Número de Albarán',
+    label: t('albaranes.fields.number'),
     required: true,
     width: 6,
   },
   {
     name: 'concordancia',
-    label: 'Concordancia',
+    label: t('albaranes.fields.concordance'),
     type: 'select',
     options: [
-      { value: '', label: '— Sin definir —' },
-      { value: 'true', label: 'Conforme' },
-      { value: 'false', label: 'No conforme' },
+      { value: '', label: `— ${t('albaranes.status.noDefinido')} —` },
+      { value: 'true', label: t('albaranes.status.conforme') },
+      { value: 'false', label: t('albaranes.status.noConforme') },
     ],
     width: 6,
   },
   {
     name: 'fecha',
-    label: 'Fecha del Albarán',
+    label: t('albaranes.fields.date'),
     type: 'date',
     width: 6,
   },
@@ -99,6 +100,7 @@ interface ProductoAlbaranDetalle {
 // ─── Componente principal ────────────────────────────────────────────────────
 
 const AlbaranPage: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
 
   // Paginación y datos
@@ -153,12 +155,12 @@ const AlbaranPage: React.FC = () => {
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al cargar albaranes';
+        err instanceof Error ? err.message : t('albaranes.feedback.loadError');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm]);
+  }, [page, pageSize, searchTerm, t]);
 
   useEffect(() => {
     loadData();
@@ -213,8 +215,8 @@ const AlbaranPage: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : 'No se pudo cargar el detalle completo del albarán';
-      toast.error(`${message}. Se mostrará la información disponible.`);
+          : t('albaranes.feedback.detailError');
+      toast.error(`${message}.`);
       setItemToView(albaran);
     }
   };
@@ -239,7 +241,7 @@ const AlbaranPage: React.FC = () => {
           fecha: fechaStr ? new Date(fechaStr).toISOString() : undefined,
         };
         await updateAlbaran(itemToEdit.id, dto);
-        toast.success('Albarán actualizado correctamente');
+        toast.success(t('albaranes.feedback.saveSuccess'));
       } else {
         const dto: CreateAlbaranDto = {
           nAlbaran: formData.nAlbaran as string,
@@ -247,7 +249,7 @@ const AlbaranPage: React.FC = () => {
           fecha: fechaStr ? new Date(fechaStr).toISOString() : undefined,
         };
         await createAlbaran(dto);
-        toast.success('Albarán creado correctamente');
+        toast.success(t('albaranes.feedback.saveSuccess'));
       }
 
       setIsFormOpen(false);
@@ -267,7 +269,7 @@ const AlbaranPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeAlbaran(itemToDelete.id);
-      toast.success('Albarán eliminado correctamente');
+      toast.success(t('albaranes.feedback.deleteSuccess'));
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
@@ -293,7 +295,7 @@ const AlbaranPage: React.FC = () => {
         recepcionId,
         observaciones
       );
-      toast.success('Documento subido correctamente');
+      toast.success(t('albaranes.feedback.uploadSuccess'));
       setItemToUpload(null);
       loadData();
     } catch (err: unknown) {
@@ -320,6 +322,8 @@ const AlbaranPage: React.FC = () => {
       fecha: itemToEdit.fecha ? itemToEdit.fecha.split('T')[0] : '',
     };
   }, [itemToEdit]);
+
+  const albaranFormFields = useMemo(() => getAlbaranFormFields(t), [t]);
 
   const productosVinculados = useMemo<ProductoAlbaranDetalle[]>(() => {
     if (!itemToView?.albaranPedidoRecepcion?.length) {
@@ -368,7 +372,7 @@ const AlbaranPage: React.FC = () => {
     () => [
       {
         id: 'nAlbaran',
-        label: 'Nº Albarán',
+        label: t('albaranes.fields.number'),
         render: (row) => (
           <Typography variant="body2" fontWeight={600}>
             {row.nAlbaran}
@@ -378,20 +382,20 @@ const AlbaranPage: React.FC = () => {
       },
       {
         id: 'fecha',
-        label: 'Fecha',
+        label: t('albaranes.fields.date'),
         render: (row) =>
           row.fecha ? new Date(row.fecha).toLocaleDateString('es-ES') : '—',
         sortable: true,
       },
       {
         id: 'concordancia',
-        label: 'Concordancia',
+        label: t('albaranes.fields.concordance'),
         render: (row) => {
           if (row.concordancia === true)
             return (
               <StatusChip
                 status="success"
-                label="Conforme"
+                label={t('albaranes.status.conforme')}
                 icon={<CheckCircleOutlineIcon />}
               />
             );
@@ -399,7 +403,7 @@ const AlbaranPage: React.FC = () => {
             return (
               <StatusChip
                 status="error"
-                label="No conforme"
+                label={t('albaranes.status.noConforme')}
                 icon={<CancelOutlinedIcon />}
               />
             );
@@ -412,7 +416,7 @@ const AlbaranPage: React.FC = () => {
       },
       {
         id: 'documentoUrl',
-        label: 'Documento',
+        label: t('albaranes.fields.document'),
         render: (row) =>
           row.documentoUrl ? (
             <Tooltip title={row.documentoNombre || 'Ver documento'}>
@@ -430,7 +434,7 @@ const AlbaranPage: React.FC = () => {
       },
       {
         id: 'albaranPedidoRecepcion',
-        label: 'Recepciones',
+        label: t('albaranes.fields.receptions'),
         render: (row) => (
           <Typography variant="body2" color="text.secondary">
             {row.albaranPedidoRecepcion?.length ?? 0}
@@ -438,7 +442,7 @@ const AlbaranPage: React.FC = () => {
         ),
       },
     ],
-    []
+    [t]
   );
 
   // ─── Acciones por fila ───────────────────────────────────────────────────
@@ -450,7 +454,7 @@ const AlbaranPage: React.FC = () => {
       sx={{ minWidth: 160, justifyContent: 'flex-start' }}
     >
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="Ver detalle">
+        <Tooltip title={t('albaranes.actions.view')}>
           <IconButton
             color="primary"
             onClick={(e) => {
@@ -466,7 +470,7 @@ const AlbaranPage: React.FC = () => {
 
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.documentoUrl && canCreate && (
-          <Tooltip title="Subir documento">
+          <Tooltip title={t('albaranes.actions.upload')}>
             <IconButton
               color="info"
               onClick={() => setItemToUpload(row)}
@@ -480,7 +484,7 @@ const AlbaranPage: React.FC = () => {
 
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {canEdit && (
-          <Tooltip title="Editar">
+          <Tooltip title={t('common.edit')}>
             <IconButton
               color="secondary"
               onClick={() => handleOpenEdit(row)}
@@ -494,7 +498,7 @@ const AlbaranPage: React.FC = () => {
 
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {canDelete && (
-          <Tooltip title="Eliminar">
+          <Tooltip title={t('common.delete')}>
             <IconButton
               color="error"
               onClick={() => setItemToDelete(row)}
@@ -515,56 +519,56 @@ const AlbaranPage: React.FC = () => {
 
     return [
       {
-        title: 'Información del Albarán',
+        title: t('albaranes.dialogs.info'),
         fields: [
-          { label: 'Nº Albarán', value: itemToView.nAlbaran },
+          { label: t('albaranes.fields.number'), value: itemToView.nAlbaran },
           {
-            label: 'Fecha',
+            label: t('albaranes.fields.date'),
             value: itemToView.fecha
-              ? new Date(itemToView.fecha).toLocaleDateString('es-ES')
+              ? new Date(itemToView.fecha).toLocaleDateString()
               : '—',
           },
           {
-            label: 'Concordancia',
+            label: t('albaranes.fields.concordance'),
             value:
               itemToView.concordancia === true
-                ? 'Conforme'
+                ? t('albaranes.status.conforme')
                 : itemToView.concordancia === false
-                  ? 'No conforme'
+                  ? t('albaranes.status.noConforme')
                   : '—',
           },
           {
-            label: 'Fecha de Registro',
-            value: new Date(itemToView.createdAt).toLocaleString('es-ES'),
+            label: t('common.createdAt'),
+            value: new Date(itemToView.createdAt).toLocaleString(),
           },
         ],
       },
       ...(itemToView.documentoUrl
         ? [
             {
-              title: 'Documento Adjunto',
+              title: t('albaranes.fields.fileInfo'),
               fields: [
                 {
-                  label: 'Nombre',
+                  label: t('albaranes.fields.fileName'),
                   value: itemToView.documentoNombre || '—',
                 },
                 {
-                  label: 'Tipo',
+                  label: t('albaranes.fields.fileType'),
                   value: itemToView.documentoMimeType || '—',
                 },
                 {
-                  label: 'Tamaño',
+                  label: t('albaranes.fields.fileSize'),
                   value: formatFileSize(itemToView.documentoTamano),
                 },
                 {
-                  label: 'Ver documento',
+                  label: t('albaranes.fields.viewFile'),
                   value: (
                     <Link
                       href={itemToView.documentoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Abrir archivo
+                      {t('albaranes.fields.openFile')}
                     </Link>
                   ),
                 },
@@ -573,40 +577,39 @@ const AlbaranPage: React.FC = () => {
           ]
         : []),
       {
-        title: `Recepciones Vinculadas (${itemToView.albaranPedidoRecepcion?.length ?? 0})`,
+        title: `${t('albaranes.fields.linkedReceptions')} (${itemToView.albaranPedidoRecepcion?.length ?? 0})`,
         fields: itemToView.albaranPedidoRecepcion?.length
           ? itemToView.albaranPedidoRecepcion.map((apr, idx) => ({
-              label: `Recepción ${idx + 1}`,
+              label: `${t('recepcion.title')} ${idx + 1}`,
               value: apr.recepcionPedidoId,
             }))
-          : [{ label: 'Sin recepciones vinculadas', value: '—' }],
+          : [{ label: t('recepcion.empty.noRecords'), value: '—' }], // Simplified
       },
       {
-        title: `Productos Vinculados (${productosVinculados.length})`,
+        title: `${t('albaranes.fields.linkedProducts')} (${productosVinculados.length})`,
         fields: productosVinculados.length
           ? productosVinculados.map((linea, idx) => ({
-              label: `Producto ${idx + 1}`,
-              value: `${linea.nombre} · Cantidad recibida: ${linea.cantidadRecibida} ${linea.unidad} · Proveedor: ${linea.proveedor} · Estado: ${linea.estadoProducto} · Recepción: ${linea.recepcionId}`,
+              label: `${t('common.product')} ${idx + 1}`,
+              value: `${linea.nombre} · ${t('pedidos.fields.quantity')}: ${linea.cantidadRecibida} ${linea.unidad} · ${t('pedidos.fields.provider')}: ${linea.proveedor} · ${t('incidencias.fields.status')}: ${linea.estadoProducto} · ID: ${linea.recepcionId}`,
               fullWidth: true,
             }))
           : [
               {
-                label: 'Sin productos vinculados',
-                value:
-                  'No hay líneas de producto asociadas a las recepciones de este albarán.',
+                label: t('common.noResults'),
+                value: '—',
                 fullWidth: true,
               },
             ],
       },
     ];
-  }, [itemToView, productosVinculados]);
+  }, [itemToView, productosVinculados, t]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <Box>
       <PageToolbar
-        title="Albaranes"
+        title={t('albaranes.title')}
         totalItems={totalItems}
         totalItemsLabel="albaranes"
         searchValue={searchTerm}
@@ -614,11 +617,11 @@ const AlbaranPage: React.FC = () => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por número de albarán..."
+        searchPlaceholder={t('common.searchPlaceholder')}
         primaryAction={
           canCreate
             ? {
-                label: 'Nuevo Albarán',
+                label: t('albaranes.actions.new'),
                 onClick: handleOpenCreate,
                 icon: <AddIcon />,
               }
@@ -653,7 +656,7 @@ const AlbaranPage: React.FC = () => {
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No hay albaranes registrados
+                {t('albaranes.empty.noRecords')}
               </Typography>
               <Typography
                 variant="body2"
@@ -661,8 +664,8 @@ const AlbaranPage: React.FC = () => {
                 sx={{ maxWidth: 400, mx: 'auto' }}
               >
                 {searchTerm
-                  ? 'No se encontraron albaranes que coincidan con tu búsqueda.'
-                  : 'Aún no hay albaranes en el sistema. Crea el primero con el botón "Nuevo Albarán".'}
+                  ? t('albaranes.empty.noMatches')
+                  : t('albaranes.empty.createFirst')}
               </Typography>
             </Box>
           }
@@ -683,7 +686,7 @@ const AlbaranPage: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle del Albarán"
+        title={t('albaranes.dialogs.detailTitle')}
         subtitle={itemToView?.nAlbaran}
         sections={detailSections}
         size="md"
@@ -697,7 +700,7 @@ const AlbaranPage: React.FC = () => {
               }
             : undefined
         }
-        editLabel="Editar Albarán"
+        editLabel={t('albaranes.actions.edit')}
         actions={
           !itemToView?.documentoUrl && canCreate ? (
             <Button
@@ -711,7 +714,7 @@ const AlbaranPage: React.FC = () => {
                 }
               }}
             >
-              Subir Documento
+              {t('albaranes.actions.upload')}
             </Button>
           ) : undefined
         }
@@ -724,8 +727,10 @@ const AlbaranPage: React.FC = () => {
           setIsFormOpen(false);
           setItemToEdit(null);
         }}
-        title={itemToEdit ? 'Editar Albarán' : 'Nuevo Albarán'}
-        fields={ALBARAN_FORM_FIELDS}
+        title={
+          itemToEdit ? t('albaranes.actions.edit') : t('albaranes.actions.new')
+        }
+        fields={albaranFormFields}
         initialData={formInitialData}
         onSubmit={handleFormSubmit}
         onCancel={() => {
@@ -733,7 +738,9 @@ const AlbaranPage: React.FC = () => {
           setItemToEdit(null);
         }}
         isSubmitting={isSubmitting}
-        submitLabel={itemToEdit ? 'Guardar Cambios' : 'Crear Albarán'}
+        submitLabel={
+          itemToEdit ? t('common.saveChanges') : t('albaranes.actions.new')
+        }
         size="sm"
       />
 
@@ -751,9 +758,12 @@ const AlbaranPage: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title="Eliminar Albarán"
-        message={`¿Estás seguro de que deseas eliminar el albarán "${itemToDelete?.nAlbaran}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
+        title={t('albaranes.actions.delete')}
+        message={t('albaranes.dialogs.confirmDelete', {
+          number: itemToDelete?.nAlbaran,
+        })}
+        confirmText={t('common.confirmDelete')}
+        cancelText={t('common.cancel')}
         isLoading={isDeleting}
       />
     </Box>

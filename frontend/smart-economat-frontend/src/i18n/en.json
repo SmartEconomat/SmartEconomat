@@ -61,9 +61,31 @@
     "searchOpenFoodFacts": "Search on OpenFoodFacts",
     "confirmSaveMessage": "Are you sure you want to save this data?",
     "scanX": "Scan {{label}}",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "discard": "Discard",
+    "continue": "Continuar",
+    "manage": "Gestionar",
+    "processing": "Processing...",
+    "saving": "Saving...",
+    "synced": "Synced",
+    "syncError": "Sync Error",
+    "conflict": "Conflict",
+    "featureComingSoon": "Funcionalidad de {{feature}} para {{user}} próximamente",
+    "from": "From",
+    "until": "Until",
+    "time": {
+      "now": "now",
+      "yesterday": "yesterday",
+      "minutes": "{{count}}min",
+      "hours": "{{count}}h",
+      "days": "{{count}}d"
+    },
     "errors": {
       "required": "This field is required",
-      "invalidId": "The ID must be a valid UUID"
+      "invalidId": "The ID must be a valid UUID",
+      "unknown": "Unknown error."
     },
     "barcodeScanner": {
       "title": "Scan Barcode",
@@ -83,11 +105,32 @@
         "genericTitle": "Error starting camera",
         "genericBody": "Could not start the scanner. Check if another application is using the camera and try again."
       }
+    },
+    "settings": {
+      "title": "Settings",
+      "config": "Configuration",
+      "theme": "Theme",
+      "appearance": "Theme and appearance settings",
+      "light": "Light",
+      "dark": "Dark",
+      "highContrastLight": "High Contrast (Light)",
+      "highContrastDark": "High Contrast (Dark)",
+      "fontSize": "Font Size",
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "learning": {
+      "title": "Learning Mode",
+      "on": "Learning: ON",
+      "off": "Learning: OFF",
+      "enable": "Enable learning mode (Show detailed descriptions)",
+      "disable": "Disable learning mode (Hide detailed descriptions)"
     }
   },
   "menuGroups": {
     "inicio": "Home",
-    "catalogo": "Catalogue",
+    "catalogo": "Catalog",
     "operaciones": "Operations",
     "control": "Control",
     "gestion": "Management"
@@ -149,31 +192,46 @@
       "title": "Administration",
       "description": "Manage classes, students and academic settings"
     },
-    "miPerfil": {
-      "title": "My Profile",
-      "description": "Configure personal details and security"
+    "perfil": {
+      "title": "Perfil de Usuario",
+      "description": "Consulta y edita tus datos personales y opciones de seguridad."
     }
   },
   "dashboard": {
     "welcome": "Hello, {{name}} 👋",
-    "summary": "Here is a summary of the current status of the economato.",
-    "statsTitle": "Economato Statistics",
+    "summary": "Here is a summary of the current status of the storeroom.",
+    "statsTitle": "Storeroom Statistics",
     "quickActions": "Quick Actions",
     "recentActivity": "Recent Activity",
     "noActivity": "No recent activity recorded.",
+    "errorLoading": "Error loading dashboard.",
+    "noPermissions": "You do not have permissions to view the dashboard.",
     "metrics": {
       "productos": "Total Products",
       "pedidos": "Pending Orders",
-      "incidencias": "Incidencies",
+      "incidencias": "Incidents",
       "stock": "Stock Alerts",
       "proveedores": "Suppliers",
-      "notificaciones": "Notifications"
+      "notificaciones": "Notifications",
+      "productosAdded": "+{{count}} added this month",
+      "noProductosAdded": "No new products this month",
+      "pedidosToday": "{{count}} received today",
+      "noPedidosToday": "No receptions today",
+      "incidenciasCount": "{{count}} order{{s}} with incidents",
+      "noIncidencias": "No incidents",
+      "stockAlertCount": "{{count}} item{{s}} low",
+      "stockOk": "Stock OK",
+      "notificacionesCount": "{{count}} pending action{{s}}",
+      "noNotificaciones": "No notifications"
     },
     "actions": {
       "newOrder": "New Order",
       "addProduct": "Add Product",
       "registerReception": "Register Reception",
-      "newRecipe": "New Recipe"
+      "newRecipe": "New Recipe",
+      "productAdded": "Product added successfully.",
+      "recipeCreated": "Recipe created successfully.",
+      "saveError": "Error saving quick action."
     },
     "modals": {
       "productsSummary": "Products List",
@@ -184,6 +242,18 @@
       "newProduct": "Add New Product",
       "newOrder": "Create New Order",
       "newRecipe": "New Recipe"
+    },
+    "activity": {
+      "labels": {
+        "entrada": "A stock entry has been recorded",
+        "salida": "A stock exit has been recorded",
+        "ajuste": "An inventory adjustment has been performed",
+        "pedido": "An order has been recorded",
+        "entrada_compra": "A purchase reception has been recorded",
+        "generic": "Activity recorded ({{tipo}})",
+        "withProduct": "{{label}}: {{name}}",
+        "withDescription": "{{label}}: {{description}}"
+      }
     }
   },
   "productos": {
@@ -216,7 +286,12 @@
       "deleted": "Product \"{{name}}\" deleted successfully.",
       "deleteError": "Error deleting product.",
       "updated": "Product updated successfully.",
-      "created": "Product created successfully."
+      "created": "Product created successfully.",
+      "located": "Product located. Opening its profile to edit.",
+      "notFoundSearch": "Product not found. Code left in the search.",
+      "notFoundCreate": "Product not found. Opened the form to create it.",
+      "validationError": "Could not validate the scanned code.",
+      "catalogError": "Could not check the catalog, but the product registration was opened."
     },
     "scanner": {
       "title": "Scan Product to Search"
@@ -251,6 +326,102 @@
       "actions": {
         "viewHistory": "View All History"
       }
+    },
+    "categories": {
+      "aceite": "Oil",
+      "bebida": "Beverage",
+      "carne": "Meat",
+      "conserva": "Canned Food",
+      "especia": "Spice",
+      "fruta": "Fruit",
+      "huevo": "Egg",
+      "lacteo": "Dairy",
+      "legumbre": "Legume",
+      "pescado": "Fish",
+      "verdura": "Vegetable",
+      "otro": "Other"
+    }
+  },
+  "pedidos": {
+    "title": "Gestión de Pedidos",
+    "tabs": {
+      "weekly": "Calendario Semanal",
+      "purchases": "Compras a Proveedores",
+      "all": "Todos los Pedidos",
+      "own": "Mis Pedidos"
+    },
+    "status": {
+      "PENDIENTE_DE_APROBACION": "Pending Approval",
+      "PENDIENTE": "Pending",
+      "EN_PROCESO": "In Process",
+      "RECIBIDO": "Received",
+      "RECIBIDO_PARCIAL": "Partially Received",
+      "CANCELADO": "Cancelled",
+      "INCIDENCIA": "Incident",
+      "BORRADOR": "Draft"
+    },
+    "filters": {
+      "search": "Buscar por proveedor, Nº pedido o fecha...",
+      "status": "Filtrar por estado",
+      "pending": "Pendientes",
+      "active": "Activos",
+      "finished": "Finalizados"
+    },
+    "actions": {
+      "newOrder": "Nuevo Pedido",
+      "newOrderAria": "Crear nuevo pedido",
+      "recoverDraft": "Recuperar borrador",
+      "discardDraft": "Descartar borrador",
+      "consolidate": "Consolidar semana",
+      "receive": "Recibir pedido",
+      "approve": "Aprobar",
+      "cancel": "Cancelar",
+      "details": "Detalles",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "report": "Reporte PDF",
+      "exportExcel": "Exportar Excel"
+    },
+    "fields": {
+      "provider": "Proveedor",
+      "deliveryDate": "Fecha de entrega",
+      "orderDate": "Fecha de pedido",
+      "observations": "Observaciones",
+      "cancelReason": "Motivo de cancelación",
+      "incidenceReason": "Motivo de incidencia",
+      "products": "Detalle de Productos",
+      "quantity": "Cantidad",
+      "price": "Precio Unitario",
+      "total": "Total"
+    },
+    "dialogs": {
+      "deleteTitle": "Eliminar pedido",
+      "deleteMessage": "¿Estás seguro de que deseas eliminar el pedido del **{{date}}**? Esta acción no se puede deshacer.",
+      "approveTitle": "Aprobar Pedido",
+      "approveMessage": "¿Estás seguro de que deseas aprobar el pedido **{{id}}** al proveedor **{{provider}}**? Pasará a estar 'En Proceso' y se considerará tramitado.",
+      "cancelTitle": "Cancelar Pedido",
+      "cancelMessage": "¿Estás seguro de que deseas cancelar el pedido? Por favor, indica el motivo.",
+      "confirmSave": "¿Estás seguro de que deseas guardar los cambios en este pedido?",
+      "confirmCreate": "¿Estás seguro de que deseas registrar este nuevo pedido?",
+      "recoveryTitle": "Borrador pendiente",
+      "recoveryMessage": "Tienes un borrador de pedido sin guardar. ¿Deseas recuperarlo o empezar uno nuevo?",
+      "discardDraftTitle": "¿Descartar borrador?",
+      "discardDraftMessage": "Si sales ahora, perderás los cambios no guardados. ¿Deseas guardar el borrador para continuar después o descartarlo?"
+    },
+    "feedback": {
+      "loadError": "Error al cargar los pedidos.",
+      "saveSuccess": "Pedido guardado correctamente.",
+      "saveError": "Error al guardar el pedido.",
+      "deleted": "Pedido eliminado correctamente.",
+      "deleteError": "Error al eliminar el pedido.",
+      "approved": "Pedido aprobado correctamente.",
+      "approveError": "Error al aprobar el pedido.",
+      "cancelled": "Pedido cancelado correctamente.",
+      "cancelError": "Error al cancelar el pedido.",
+      "consolidateSuccess": "Lote semanal generado correctamente.",
+      "consolidateError": "Error al consolidar la semana.",
+      "draftSaved": "Borrador guardado automáticamente.",
+      "draftDiscarded": "Borrador descartado."
     }
   },
   "proveedores": {
@@ -265,6 +436,14 @@
     "actions": {
       "newProvider": "New Supplier",
       "addProvider": "Add Supplier"
+    },
+    "fields": {
+      "nif": "NIF / CIF",
+      "businessName": "Razón Social",
+      "contactPerson": "Persona de Contacto",
+      "phone": "Teléfono",
+      "email": "Email",
+      "address": "Dirección"
     },
     "empty": {
       "search": "No suppliers match your search",
@@ -303,9 +482,15 @@
     "table": {
       "recipe": "Recipe",
       "quantity": "Quantity",
-      "ingredientsCount": "{{count}} ingredients",
       "unit": "Unit",
-      "cost": "Cost"
+      "cost": "Cost",
+      "name": "Nombre",
+      "difficulty": "Dificultad",
+      "time": "Tiempo",
+      "ingredients": "Ingredientes",
+      "favProvider": "Proveedor Fav.",
+      "ingredient": "Ingrediente",
+      "ingredients_with_count": "{{count}} ingredientes"
     },
     "actions": {
       "newRecipe": "New Recipe",
@@ -328,13 +513,467 @@
       "stockOk": "Stock available for all recipes.",
       "startBatchProduction": "Start batch production",
       "startPreparation": "Start preparation",
-      "noIngredients": "This recipe has no registered ingredients."
+      "noIngredients": "This recipe has no registered ingredients.",
+      "auto": "Auto"
     },
     "feedback": {
       "loadError": "Error loading recipes.",
       "deleted": "Recipe \"{{name}}\" deleted successfully.",
       "recipeCooked": "Production registered successfully.",
-      "orderCreated": "Order #{{id}} generated successfully from {{count}} recipes."
+      "orderCreated": "Order #{{id}} generated successfully from {{count}} recipes.",
+      "saveError": "Error al guardar la receta.",
+      "updated": "Receta actualizada correctamente.",
+      "created": "Receta creada correctamente.",
+      "deleteError": "Error al eliminar la receta.",
+      "selectRecipesExport": "Selecciona al menos una receta para exportar.",
+      "noProvidersMissing": "No se encontraron proveedores para los ingredientes faltantes.",
+      "autoOrderNote": "Pedido automático por falta de stock para: {{recipes}}",
+      "orderError": "Error al generar el pedido.",
+      "cookError": "Error al iniciar la preparación.",
+      "partialCooked": "Se procesaron {{count}} de {{total}} producciones."
+    }
+  },
+  "recepcion": {
+    "title": "Recepción de Mercancía",
+    "steps": {
+      "selection": "Selección de Pedidos",
+      "scan": "Escaneo de Lote",
+      "review": "Revisión Final",
+      "result": "Resultado"
+    },
+    "status": {
+      "noEntregado": "No entregado",
+      "ok": "OK",
+      "parcial": "Parcial",
+      "exceso": "Exceso",
+      "nuevo": "Nuevo",
+      "noScaleAuthorized": "Sin báscula autorizada",
+      "scaleError": "Error de lectura en báscula",
+      "scaleReadError": "No se pudo leer la báscula"
+    },
+    "scale": {
+      "notAvailable": "Web Serial no disponible",
+      "notAuthorized": "Sin báscula autorizada",
+      "deactivated": "Báscula desactivada",
+      "disconnected": "Báscula desconectada",
+      "noSupport": "Este navegador no soporta Web Serial para conectar la báscula.",
+      "portError": "No se pudo abrir el puerto serie de la báscula.",
+      "notActiveHint": "La báscula no está activa. Vincúlala o introduce el peso manualmente."
+    },
+    "actions": {
+      "finish": "Finalizar Recepción",
+      "recover": "Sí, recuperar",
+      "discard": "No, descartar",
+      "discardConfirm": "Sí, descartar"
+    },
+    "dialogs": {
+      "recoveryTitle": "Recuperar recepción pendiente",
+      "recoveryMessage": "Has dejado una recepción a medias. ¿Deseas recuperarla y continuar donde lo dejaste?",
+      "discardTitle": "Descartar recepción",
+      "discardMessage": "¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado."
+    },
+    "feedback": {
+      "loadPedidosError": "Error al cargar pedidos compatibles.",
+      "desconocido": "Desconocido",
+      "loadingDraft": "Recuperando borrador de recepción...",
+      "recoveringDraft": "Recuperando borrador de recepción...",
+      "scaleNotEnabled": "La báscula no está activa. Vincúlala o introduce el peso manualmente.",
+      "noScaleFound": "No hay una báscula autorizada disponible.",
+      "scaleCommunicationLost": "Se perdió la comunicación con la báscula.",
+      "scaleReadError": "No se pudo iniciar la lectura de la báscula.",
+      "noReceptionItems": "Debes recepcionar al menos un producto.",
+      "discrepancyNoteRequired": "Falla Validativa: El producto \"{{product}}\" presenta discrepancias con el pedido o estado y su campo de notas es obligatorio.",
+      "spontaneousNoteRequired": "Falla Validativa: El producto espontáneo \"{{product}}\" requiere obligatoriamente una nota justificativa.",
+      "orderNotFound": "Error crítico: El pedido que intentabas recepcionar ya no existe o fue procesado. El borrador remoto obsoleto ha sido eliminado por seguridad. Por favor, selecciona nuevamente los pedidos a recepcionar.",
+      "transactionError": "Error crítico en la transacción: {{message}}. Los datos siguen sincronizados en el servidor; puedes intentar enviarlos de nuevo.",
+      "processingMassive": "Procesando Recepción Masiva...",
+      "acidWarning": "Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador."
+    },
+    "table": {
+      "product": "Producto",
+      "provider": "Proveedor"
+    }
+  },
+  "albaranes": {
+    "title": "Gestión de Albaranes",
+    "description": "Control de documentos de entrega de proveedores",
+    "fields": {
+      "number": "Nº Albarán",
+      "date": "Fecha",
+      "concordance": "Concordancia",
+      "document": "Documento",
+      "receptions": "Recepciones",
+      "linkedProducts": "Productos Vinculados",
+      "linkedReceptions": "Recepciones Vinculadas",
+      "fileInfo": "Información del Archivo",
+      "fileName": "Nombre",
+      "fileType": "Tipo",
+      "fileSize": "Tamaño",
+      "viewFile": "Ver documento",
+      "openFile": "Abrir archivo"
+    },
+    "status": {
+      "conforme": "Conforme",
+      "noConforme": "No conforme",
+      "noDefinido": "Sin definir"
+    },
+    "actions": {
+      "new": "Nuevo Albarán",
+      "upload": "Subir documento",
+      "edit": "Editar Albarán",
+      "delete": "Eliminar Albarán",
+      "view": "Ver detalle"
+    },
+    "dialogs": {
+      "detailTitle": "Detalle del Albarán",
+      "info": "Información del Albarán",
+      "linkedInfo": "Recepciones y Productos",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar el albarán \"{{number}}\"? Esta acción no se puede deshacer."
+    },
+    "feedback": {
+      "loadError": "Error al cargar albaranes",
+      "saveSuccess": "Albarán guardado correctamente.",
+      "deleteSuccess": "Albarán eliminado correctamente.",
+      "uploadSuccess": "Documento subido correctamente.",
+      "detailError": "No se pudo cargar el detalle completo del albarán."
+    },
+    "empty": {
+      "noRecords": "No hay albaranes registrados",
+      "noMatches": "No se encontraron albaranes que coincidan con tu búsqueda.",
+      "createFirst": "Aún no hay albaranes en el sistema. Crea el primero con el botón \"Nuevo Albarán\"."
+    }
+  },
+  "preparaciones": {
+    "title": "Bolsa de Preparaciones",
+    "tabs": {
+      "available": "Disponibles",
+      "consumed": "Agotadas (Consumidas)"
+    },
+    "fields": {
+      "creationDate": "Fecha creación",
+      "recipe": "Receta",
+      "quantity": "Cantidad",
+      "realCost": "Coste Real",
+      "chef": "Cocinero/a",
+      "exhaustedDate": "Fecha agotado",
+      "availableRations": "Raciones disponibles",
+      "preparedRations": "Raciones preparadas",
+      "expiration": "Caducidad",
+      "equivalence": "Equivalencia"
+    },
+    "actions": {
+      "viewDetail": "Ver detalles",
+      "consume": "Consumir raciones o cantidad",
+      "reportMerma": "Reportar merma de ingrediente"
+    },
+    "dialogs": {
+      "consumeTitle": "Consumir Preparación",
+      "mermaTitle": "Reportar Merma de Producción",
+      "availableLabel": "Disponible: {{amount}}",
+      "rations": "raciones",
+      "amount": "Cantidad / Peso",
+      "lostAmount": "¿Cuánto se perdió?",
+      "lostAmountWithUnit": "¿Cuánto se perdió? ({{unit}})",
+      "mermaReason": "Motivo de la merma",
+      "notes": "Notas adicionales"
+    },
+    "labels": {
+      "ingredient": "Ingrediente"
+    },
+    "feedback": {
+      "loadError": "Error al cargar preparaciones",
+      "consumeSuccess": "Consumo registrado correctamente.",
+      "consumeError": "Error al consumir la preparación.",
+      "mermaSuccess": "Merma de producción registrada correctamente.",
+      "mermaLoadError": "No se pudo cargar el detalle de ingredientes para reportar merma.",
+      "recipeLoadError": "No se pudo resolver la receta del lote para cargar ingredientes.",
+      "noStock": "No hay suficientes raciones disponibles.",
+      "noEquivalence": "Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.",
+      "maxAmount": "Solo puedes consumir {{amount}} {{unit}}.",
+      "invalidQuantity": "Introduce una cantidad válida.",
+      "invalidMultiple": "La cantidad debe ser múltiplo de {{amount}} {{unit}}.",
+      "invalidLote": "Selecciona un lote de producción válido.",
+      "selectIngredient": "Selecciona el ingrediente con merma.",
+      "equivalenceError": "Selecciona primero el ingrediente para ver en qué medida registrar la merma."
+    },
+    "empty": {
+      "noRecords": "No hay preparaciones registradas",
+      "executeRecipe": "Ejecuta una receta para ver su historial aquí."
+    }
+  },
+  "inventario": {
+    "title": "Gestión de Inventario",
+    "tabs": {
+      "assigned": "Mis Ubicaciones",
+      "general": "Vista General"
+    },
+    "filters": {
+      "categories": "Categorías",
+      "locations": "Ubicaciones",
+      "search": "Buscar por nombre, código..."
+    },
+    "table": {
+      "product": "Producto",
+      "code": "Código",
+      "stock": "Stock",
+      "location": "Ubicación",
+      "lastUpdate": "Última act."
+    },
+    "actions": {
+      "newEntry": "Nueva Entrada",
+      "newProduct": "Nuevo Producto",
+      "adjust": "Ajustar",
+      "audit": "Auditar",
+      "scan": "Escanear"
+    },
+    "dialogs": {
+      "createTitle": "Registrar entrada en inventario",
+      "adjustTitle": "Ajustar stock de {{name}}",
+      "auditTitle": "Auditoría de {{name}}",
+      "confirmCreate": "¿Estás seguro de que deseas registrar esta entrada?",
+      "scannerTitle": "Escáner de Inventario",
+      "quantityTitle": "Indica cantidad",
+      "quantityPrompt": "¿Cuántas unidades de **{{name}}** deseas añadir?"
+    },
+    "fields": {
+      "productProvider": "Producto / Proveedor",
+      "quantity": "Cantidad Actual",
+      "minQuantity": "Stock Mínimo",
+      "maxQuantity": "Stock Máximo",
+      "location": "Ubicación",
+      "expiry": "Fecha de Caducidad",
+      "name": "Nombre Comercial",
+      "brand": "Marca",
+      "description": "Descripción",
+      "content": "Contenido Numérico",
+      "unit": "Unidad de Medida",
+      "category": "Categoría",
+      "barcode": "Código de Barras",
+      "associatedProviders": "Proveedores Asociados"
+    },
+    "feedback": {
+      "loadError": "Error al cargar el inventario.",
+      "saveSuccess": "Stock añadido correctamente para {{name}}.",
+      "saveError": "No se pudo añadir el producto al inventario.",
+      "productCreated": "Producto creado correctamente en catálogo.",
+      "noPermissionAdd": "Producto creado, pero no tienes permisos para añadirlo al inventario.",
+      "located": "Producto localizado en inventario.",
+      "foundCatalog": "Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.",
+      "foundCatalogNoPermission": "Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.",
+      "noExistsNoPermission": "Este código no existe en inventario y no tienes permisos para crear productos.",
+      "exactMatchInfo": "No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.",
+      "multipleOptions": "Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.",
+      "loadOptionsError": "Error al cargar opciones de producto/proveedor.",
+      "invalidQuantity": "La cantidad debe ser un número válido mayor o igual a 0.",
+      "invalidMinQuantity": "La cantidad mínima debe ser un número válido mayor o igual a 0.",
+      "invalidMaxQuantity": "La cantidad máxima debe ser un número válido mayor o igual a 0.",
+      "maxLessMin": "La cantidad máxima no puede ser menor que la mínima.",
+      "selectProductProvider": "Selecciona un producto/proveedor.",
+      "noUbicaciones": "No hay ubicaciones disponibles para registrar el inventario."
+    }
+  },
+  "movimientos": {
+    "title": "Historial de Movimientos",
+    "description": "Registro de todas las entradas y salidas de stock",
+    "fields": {
+      "date": "Fecha",
+      "type": "Tipo",
+      "quantity": "Cant.",
+      "description": "Descripción",
+      "user": "Usuario",
+      "batch": "Lote",
+      "origin": "Origen (Entidad)",
+      "originId": "ID Entidad"
+    },
+    "types": {
+      "ENTRADA": "Entrada",
+      "ENTRADA_COMPRA": "Entrada por Compra",
+      "ENTRADA_DISTRIBUCION": "Entrada por Distribución",
+      "SALIDA": "Salida",
+      "SALIDA_ELABORACION": "Salida por Elaboración",
+      "SALIDA_DISTRIBUCION": "Salida por Distribución",
+      "AJUSTE": "Ajuste",
+      "PEDIDO": "Pedido",
+      "MERMA": "Merma"
+    },
+    "dialogs": {
+      "detailTitle": "Detalle del Movimiento",
+      "generalInfo": "Información General",
+      "context": "Contexto",
+      "tracking": "Seguimiento"
+    },
+    "actions": {
+      "viewDetail": "Ver detalle",
+      "viewDistribution": "Ver Distribución"
+    },
+    "feedback": {
+      "loadError": "Error al cargar los movimientos."
+    },
+    "empty": {
+      "noMovements": "No hay movimientos",
+      "noMatches": "No se encontraron movimientos que coincidan con los filtros seleccionados.",
+      "noRecords": "Aún no se han registrado alteraciones de inventario en el sistema."
+    }
+  },
+  "mermas": {
+    "title": "Gestión de Mermas",
+    "description": "Control de desperdicios y pérdidas de producto",
+    "actions": {
+      "report": "Reportar Merma"
+    },
+    "fields": {
+      "history": "Historial de Mermas",
+      "product": "Producto",
+      "quantity": "Cantidad",
+      "reason": "Motivo",
+      "notes": "Notas"
+    },
+    "reasons": {
+      "deterioro": "Deterioration / Expiry",
+      "hurto": "Theft / Loss",
+      "error_preparacion": "Preparation error",
+      "otros": "Other reasons"
+    },
+    "filters": {
+      "byReason": "Filter by Reason",
+      "allReasons": "All reasons"
+    },
+    "dialogs": {
+      "createTitle": "Registrar Merma de Producto",
+      "confirmMessage": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+    },
+    "feedback": {
+      "loadError": "Error al cargar datos de mermas",
+      "saveSuccess": "Merma registrada correctamente.",
+      "saveError": "Error al registrar la merma."
+    }
+  },
+  "incidencias": {
+    "title": "Centro de Incidencias",
+    "description": "Reportar y gestionar problemas o devoluciones",
+    "tabs": {
+      "open": "Abiertas",
+      "closed": "Cerradas",
+      "all": "Todas"
+    },
+    "status": {
+      "nueva": "Nueva",
+      "en_ajuste": "En ajuste",
+      "pendiente_validacion": "Pendiente validación",
+      "resuelta": "Resuelta",
+      "cancelada": "Cancelada",
+      "invalida": "Inválida"
+    },
+    "fields": {
+      "date": "Fecha",
+      "provider": "Proveedor",
+      "products": "Producto(s)",
+      "quantities": "Cantidades por producto",
+      "status": "Estado",
+      "incidenceNotes": "Notas de Incidencia",
+      "receptionNotes": "Notas de Recepción",
+      "resolutionNotes": "Notas de Resolución",
+      "expected": "Pedida",
+      "received": "Recibido",
+      "difference": "Diferencia",
+      "pending": "Pendiente",
+      "reason": "Motivo"
+    },
+    "actions": {
+      "viewDetail": "Ver detalle",
+      "adjustQuantities": "Ajustar cantidades",
+      "resolve": "Resolver incidencia",
+      "reportPdf": "Reporte PDF",
+      "reportExcel": "Reporte Excel"
+    },
+    "dialogs": {
+      "resolveTitle": "Resolver Incidencia",
+      "adjustTitle": "Ajustar Cantidades",
+      "deleteTitle": "Eliminar Incidencia",
+      "deleteMessage": "¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.",
+      "resolvedHeader": "INCIDENCIA RESUELTA"
+    },
+    "feedback": {
+      "loadError": "Error al cargar las incidencias.",
+      "resolveSuccess": "Incidencia marcada como resuelta.",
+      "cancelSuccess": "Incidencia marcada como cancelada.",
+      "invalidSuccess": "Incidencia marcada como inválida.",
+      "updateSuccess": "Incidencia actualizada correctamente.",
+      "deleteSuccess": "Incidencia eliminada correctamente."
+    },
+    "empty": {
+      "noOpen": "No hay incidencias abiertas",
+      "noClosed": "No hay incidencias cerradas",
+      "noMatches": "No se encontraron incidencias que coincidan con tu búsqueda.",
+      "greatJob": "¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes."
+    }
+  },
+  "administracion": {
+    "title": "Administración Académica",
+    "description": "Gestiona tus aulas, clases y alumnos vinculados desde un solo lugar.",
+    "breadcrumb": "Administración",
+    "tabs": {
+      "slots": "Aulas y Clases",
+      "students": "Alumnos",
+      "users": "Gestión Usuarios",
+      "roleTemplates": "Plantillas Roles"
+    },
+    "labels": {
+      "permissions": "Permisos"
+    },
+    "dialogs": {
+      "confirmDeleteSlot": "¿Seguro que quieres eliminar esta clase?",
+      "confirmDeleteStudent": "¿Seguro que quieres eliminar a este alumno?"
+    },
+    "feedback": {
+      "loadError": "Error al cargar los datos de administración",
+      "loadStudentsError": "Error al cargar los alumnos",
+      "noProfessorProfile": "No tienes un perfil de profesor vinculado. Selecciona un profesor de la lista o asegúrate de tener un perfil de profesor creado.",
+      "slotCreated": "Aula/Clase añadida con éxito",
+      "createSlotError": "Error al crear la clase",
+      "slotDeleted": "Ubicación eliminada",
+      "slotUpdated": "Ubicación actualizada",
+      "updateSlotError": "Error al actualizar el aula",
+      "studentStatusUpdated": "Estado de alumno actualizado",
+      "studentDeleted": "Alumno eliminado",
+      "passwordReset": "Contraseña reseteada. Nueva clave: {{password}}"
+    }
+  },
+  "perfil": {
+    "title": "Perfil de Usuario",
+    "description": "Consulta y edita tus datos personales y opciones de seguridad.",
+    "descriptionAlumno": "Consulta tu perfil, cambia tu nombre de usuario o contraseña y solicita cambios de email con aprobación superior.",
+    "breadcrumb": "Mi Perfil",
+    "sections": {
+      "profileSecurity": "Perfil y Seguridad",
+      "profileSecurityHint": "Gestiona tu información personal y tu contraseña.",
+      "profileSecurityHintAlumno": "Puedes editar tu nombre de usuario y contraseña. El cambio de email requiere aprobación de un rol superior."
+    },
+    "fields": {
+      "newEmail": "Nuevo Email",
+      "confirmEmail": "Confirmar Nuevo Email",
+      "justification": "Justificación"
+    },
+    "actions": {
+      "edit": "Editar Perfil",
+      "save": "Guardar Cambios",
+      "sendRequest": "Enviar Solicitud"
+    },
+    "dialogs": {
+      "emailTitle": "Solicitar Cambio de Email",
+      "emailHint": "El cambio de email no es inmediato. La solicitud será revisada por un rol superior y solo se aplicará tras su aprobación."
+    },
+    "feedback": {
+      "profileUpdated": "Perfil actualizado correctamente",
+      "passwordsDoNotMatch": "Las contraseñas no coinciden.",
+      "saveError": "Error al guardar los cambios",
+      "saveErrorToast": "Error al actualizar el perfil",
+      "confirmEmail": "Introduce y confirma el nuevo email",
+      "invalidEmail": "El formato del email no es válido",
+      "emailsDoNotMatch": "Los emails no coinciden",
+      "sameEmail": "El nuevo email debe ser diferente al actual",
+      "invalidJustification": "Indica una justificación válida (mínimo 10 caracteres)",
+      "emailRequestSent": "Solicitud enviada. El cambio de email quedará pendiente de aprobación por un rol superior."
     }
   },
   "allergens": {
@@ -352,5 +991,363 @@
     "SULFITO": "Sulphites",
     "ALTRAMUCES": "Lupin",
     "MOLUSCOS": "Molluscs"
+  },
+  "tutorial": {
+    "common": {
+      "helpTitle": "Page Tutorial",
+      "helpDescription": "Need help? Click here anytime to start an interactive tutorial that will explain step by step how to use the current page."
+    },
+    "home": {
+      "welcome": {
+        "title": "Welcome to Smart Economat!",
+        "description": "This is your central dashboard. From here you will have a global view of everything happening in the economat in real time."
+      },
+      "navigation": {
+        "title": "Navigation Menu",
+        "description": "Use the sidebar to move between different areas of the system. The menu adapts to your device."
+      },
+      "stats": {
+        "title": "Economat Status",
+        "description": "Watch your most important KPIs: low stock, pending orders, and active incidences at a glance."
+      },
+      "actions": {
+        "title": "Quick Actions",
+        "description": "Need to create an order or add a product? Access the most frequent functions without navigating through menus."
+      },
+      "notifications": {
+        "title": "Notification Center",
+        "description": "Watch critical system alerts: stock breaks, new pending users, or urgent discrepancies."
+      },
+      "activity": {
+        "title": "Recent Activity",
+        "description": "Stay up to date with the history of stock movements and recently performed operations."
+      },
+      "profile": {
+        "title": "Your Profile and Preferences",
+        "description": "Manage your personal data and notifications. You can also find this help here when you need it."
+      }
+    },
+    "productos": {
+      "search": {
+        "title": "Smart Search",
+        "description": "Type the name, brand, or barcode to locate products. You can even use the scanner!"
+      },
+      "filters": {
+        "title": "Advanced Filters",
+        "description": "Refine your search by selecting specific categories to find exactly what you need."
+      },
+      "sort": {
+        "title": "Data Sorting",
+        "description": "Click on the column headers to sort the list ascending or descending."
+      },
+      "add": {
+        "title": "Product Creation",
+        "description": "Add new items to the catalog. The system will try to autocomplete data if you use the scanner."
+      },
+      "export_pdf": {
+        "title": "PDF Export",
+        "description": "Generate documents ready to print with the current list and its prices."
+      },
+      "export_excel": {
+        "title": "Excel Reports",
+        "description": "Download all technical information to work on it externally."
+      },
+      "row_actions": {
+        "title": "Quick Actions",
+        "description": "From here you can edit, delete, or restore products individually."
+      }
+    },
+    "proveedores": {
+      "search": {
+        "title": "Provider Search",
+        "description": "Find any provider by their name, NIF, contact person, or email."
+      },
+      "sort": {
+        "title": "Smart Sorting",
+        "description": "Organize the list alphabetically by corporate name or by any other contact field."
+      },
+      "add": {
+        "title": "Provider Registration",
+        "description": "Add new providers to your catalog to manage their orders and products."
+      },
+      "export_pdf": {
+        "title": "PDF Export",
+        "description": "Generate a PDF document with the full list of your providers and their contact details."
+      },
+      "export_excel": {
+        "title": "Excel Report",
+        "description": "Download the provider database for external analysis or administrative management."
+      },
+      "row_actions": {
+        "title": "Individual Management",
+        "description": "Check detailed files, edit information, or delete providers directly from the row."
+      }
+    },
+    "recetas": {
+      "carousel": {
+        "title": "Culinary Inspiration",
+        "description": "Explore our featured suggestions and seasonal dishes in this visual carousel."
+      },
+      "search": {
+        "title": "Recipe Search",
+        "description": "Find any dish by its name, ingredients, or even by its preparation steps."
+      },
+      "sort": {
+        "title": "Agile Sorting",
+        "description": "Organize your recipe book by difficulty, preparation time, or name as you need."
+      },
+      "add": {
+        "title": "Recipe Creation",
+        "description": "Register new elaborations detailing ingredients, steps, and estimated costs."
+      },
+      "cooking": {
+        "title": "Let's Cook!",
+        "description": "Use the preparation button to launch productions instantly. You can also view complete technical data."
+      }
+    },
+    "pedidos": {
+      "tabs": {
+        "title": "Order Center",
+        "description": "Toggle between your personal orders, the global center list, or supplier purchase management."
+      },
+      "add": {
+        "title": "New Order",
+        "description": "Start an item request. The system allows you to search and add products quickly."
+      },
+      "continue": {
+        "title": "Recover Drafts",
+        "description": "If you leave an order halfway, you can continue it here without losing the products you had already added."
+      },
+      "flow": {
+        "title": "Flow Tracking",
+        "description": "Here you will see the status of each order (Pending, In Process, Received) and can manage its details."
+      },
+      "export_pdf": {
+        "title": "PDF Control",
+        "description": "Generate consolidated lists to review the period's purchasing needs."
+      },
+      "export_excel": {
+        "title": "Excel Export",
+        "description": "Download all detailed information to work on it in external spreadsheets."
+      }
+    },
+    "recepciones": {
+      "stepper": {
+        "title": "Reception Assistant",
+        "description": "Follow these 4 guided steps to register incoming goods accurately and organized."
+      },
+      "sync": {
+        "title": "Safe Draft",
+        "description": "Your progress is automatically synced to the cloud. You can start on a PC and finish on a Tablet without losing data."
+      },
+      "search": {
+        "title": "Smart Reception",
+        "description": "Scan the barcode or search by name to identify the products you are receiving."
+      },
+      "scale": {
+        "title": "Scale Connectivity",
+        "description": "If you have a compatible scale, connect it via USB to capture weights automatically in real time."
+      },
+      "nav": {
+        "title": "Process Steps",
+        "description": "Use the navigation buttons to move between order selection, counting, and final review."
+      }
+    },
+    "distribucion": {
+      "tabs": {
+        "title": "Delivery Management",
+        "description": "Toggle between orders ready to be delivered and the history of distributions made."
+      },
+      "search": {
+        "title": "Quick Search",
+        "description": "Locate specific deliveries by searching for order number, username, or destination classroom."
+      },
+      "content": {
+        "title": "Pending List",
+        "description": "Here you will see all products that have already been received in the warehouse and are waiting to be taken to their final destination."
+      },
+      "distribute": {
+        "title": "Start Delivery",
+        "description": "Click here to open the delivery assistant, where you can choose the destination location and the quantities to transfer."
+      },
+      "confirm": {
+        "title": "Receipt Confirmation",
+        "description": "Once the goods are delivered, the recipient must confirm receipt from the history to formalize the stock movement."
+      }
+    },
+    "preparaciones": {
+      "summary": {
+        "title": "Preparation Bag",
+        "description": "Here you manage everything that comes out of the kitchen. Control the stock of prepared dishes ready to serve or distribute."
+      },
+      "tabs": {
+        "title": "Production Status",
+        "description": "Toggle between currently available preparations and the history of those that have already run out."
+      },
+      "consume": {
+        "title": "Consumption Record",
+        "description": "Use this button when you send portions to the dining room or make a delivery. The system will automatically discount the batch stock."
+      },
+      "merma": {
+        "title": "Waste Management",
+        "description": "If a portion spoils or there is a service error, record it here to keep the inventory squared."
+      },
+      "detail": {
+        "title": "Detailed Control",
+        "description": "Consult the technical sheet of the preparation, including real costs and expiration dates."
+      }
+    },
+    "albaranes": {
+      "toolbar": {
+        "title": "Delivery Note Management",
+        "description": "In this section you can digitize and manage the delivery notes from your suppliers."
+      },
+      "add": {
+        "title": "Manual Registration",
+        "description": "Don't have the delivery note digitized? Create it manually here to link it later to your receptions."
+      },
+      "upload": {
+        "title": "Digital Storage",
+        "description": "Upload a photo or PDF of the physical delivery note to always have the documentary backup a click away."
+      },
+      "table": {
+        "title": "Consistency Control",
+        "description": "Verify at a glance if the received goods match what is indicated on the supplier's paper."
+      },
+      "view": {
+        "title": "History and Inquiry",
+        "description": "Access the full detail to see what specific products came in this shipment."
+      }
+    },
+    "inventario_tour": {
+      "toolbar": {
+        "title": "Inventory Management",
+        "description": "Here you can view and manage all stock available in the economat in a centralized way."
+      },
+      "add": {
+        "title": "Stock Entry",
+        "description": "Use this button to add products to the inventory manually if they don't come from a previous order."
+      },
+      "locations": {
+        "title": "Warehouse Configuration",
+        "description": "Define and manage the shelves, chambers, and storage areas of your center."
+      },
+      "search": {
+        "title": "Search and AI",
+        "description": "Search for products by name or use the barcode scanner for much more agile management."
+      },
+      "filters": {
+        "title": "Smart Filters",
+        "description": "Refine the list by product categories or by specific locations to find what you need."
+      },
+      "tabs": {
+        "title": "Locations and Slots",
+        "description": "Toggle between the global view and your assigned zones to see only what belongs to you."
+      },
+      "table": {
+        "title": "Control Actions",
+        "description": "From the table you can adjust stock due to waste or audit batches and expiration dates for each product."
+      }
+    },
+    "movimientos": {
+      "toolbar": {
+        "title": "Movement History",
+        "description": "Every change in stock is recorded here: entries, exits, waste, and manual adjustments."
+      },
+      "filters": {
+        "title": "Filtering by Type",
+        "description": "Search for specific movements by filtering by date or by type of operation (e.g., only waste or only entries)."
+      },
+      "table": {
+        "title": "Traceability",
+        "description": "Check at a glance which user performed the action, which product was affected, and the exact quantity."
+      },
+      "detail": {
+        "title": "Audit Details",
+        "description": "Access the full detail to see the affected batch and, if the movement comes from an order or distribution, go directly to its source."
+      }
+    },
+    "mermas_tour": {
+      "toolbar": {
+        "title": "Waste Management",
+        "description": "From here you will control all unplanned stock losses in the inventory."
+      },
+      "report": {
+        "title": "Report Waste",
+        "description": "Record waste due to breakage, expiration, or theft. Remember that this action discounts stock permanently."
+      },
+      "stats": {
+        "title": "Impact Statistics",
+        "description": "Consult at a glance the total volume of losses and the most frequent reasons to take action."
+      },
+      "table": {
+        "title": "Waste History",
+        "description": "All waste is audited. Review the history to see who reported the loss and the detailed reason."
+      }
+    },
+    "incidencias_tour": {
+      "toolbar": {
+        "title": "Incidence Center",
+        "description": "All discrepancies detected during the reception of goods are centralized here."
+      },
+      "reports": {
+        "title": "Reports and Export",
+        "description": "Generate official lists in PDF or Excel for supplier claims or internal audits."
+      },
+      "tabs": {
+        "title": "Filtering by Status",
+        "description": "Organize your work by separating what is pending review from what has already been resolved."
+      },
+      "table": {
+        "title": "Problem Traceability",
+        "description": "Consult the detail of what was missing or what arrived extra in each order to make the right decision."
+      },
+      "adjust": {
+        "title": "Discrepancy Adjustment",
+        "description": "Correct the real quantities received if there was an error in the initial data collection."
+      },
+      "resolve": {
+        "title": "Final Resolution",
+        "description": "Upon resolving, the system will automatically adjust the inventory and close the discrepancy cycle."
+      }
+    },
+    "administracion_tour": {
+      "header": {
+        "title": "Administración Académica",
+        "description": "Desde este centro de control gestionarás la estructura organizativa del economato y los accesos al sistema."
+      },
+      "tabs": {
+        "title": "Módulos de Gestión",
+        "description": "Navega entre la gestión de aulas, el listado de alumnos vinculados, la administración de usuarios y las plantillas de roles."
+      },
+      "users": {
+        "title": "Control de Usuarios",
+        "description": "Administra cuentas, restablece contraseñas y asigna roles específicos a cada miembro del equipo."
+      },
+      "slots": {
+        "title": "Modo Gestión",
+        "description": "Activa este modo para editar nombres de aulas, capacidades o asignar profesores a clases específicas."
+      }
+    },
+    "perfil_tour": {
+      "user": {
+        "title": "User Profile",
+        "description": "From this card you can review and edit your basic personal data."
+      },
+      "security": {
+        "title": "Security and Password",
+        "description": "You can change your username and password. Changing the email requires authorization from a higher role."
+      }
+    },
+    "default_tour": {
+      "nav": {
+        "title": "Navigation",
+        "description": "Use the sidebar to move between different sections assigned to your role."
+      },
+      "account": {
+        "title": "Your Account",
+        "description": "Manage your profile, theme preferences, and log out from the top menu."
+      }
+    }
   }
 }

@@ -28,7 +28,8 @@ import { useToast } from '../../store/toast.hooks';
 import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import DynamicFormModal, { DynamicField } from '../ui/DynamicFormModal';
 import { SelectOption } from '../ui/Select';
-import { mermaSchema } from '../../utils/schemas';
+import { useTranslation } from 'react-i18next';
+import { getMermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
 import { fetchAllProductos } from '../../services/producto.service';
@@ -122,6 +123,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   onClose,
   onRefreshItem,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   // Filter items matching the product – memoized to avoid new reference each render
   const relevantItems = React.useMemo(
@@ -310,12 +312,18 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     }
   };
 
-  const dynamicMermaSchema: DynamicField[] = mermaSchema.map((field) => {
-    if (field.name === 'productoId') {
-      return { ...field, options: productosOptions, defaultValue: productoId };
+  const dynamicMermaSchema: DynamicField[] = getMermaSchema(t).map(
+    (field: DynamicField) => {
+      if (field.name === 'productoId') {
+        return {
+          ...field,
+          options: productosOptions,
+          defaultValue: productoId,
+        };
+      }
+      return field;
     }
-    return field;
-  });
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>

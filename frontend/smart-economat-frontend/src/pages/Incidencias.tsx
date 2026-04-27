@@ -16,6 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TuneIcon from '@mui/icons-material/Tune';
+import { useTranslation } from 'react-i18next';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
 import DetailModal from '../components/ui/DetailModal';
@@ -49,15 +50,6 @@ import ReporteSelectorModal, {
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
-const INCIDENCIA_STATUS_LABEL: Record<EstadoIncidencia, string> = {
-  nueva: 'Nueva',
-  en_ajuste: 'En ajuste',
-  pendiente_validacion: 'Pendiente validación',
-  resuelta: 'Resuelta',
-  cancelada: 'Cancelada',
-  invalida: 'Inválida',
-};
-
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
   nueva: 'pending',
   en_ajuste: 'warning',
@@ -85,6 +77,20 @@ const CLOSED_STATE_PRIORITY: Record<EstadoIncidencia, number> = {
 type ResolveDialogMode = 'adjust' | 'resolve';
 
 const Incidencias: React.FC = () => {
+  const { t } = useTranslation();
+
+  const INCIDENCIA_STATUS_LABEL = useMemo<Record<EstadoIncidencia, string>>(
+    () => ({
+      nueva: t('incidencias.status.nueva'),
+      en_ajuste: t('incidencias.status.en_ajuste'),
+      pendiente_validacion: t('incidencias.status.pendiente_validacion'),
+      resuelta: t('incidencias.status.resuelta'),
+      cancelada: t('incidencias.status.cancelada'),
+      invalida: t('incidencias.status.invalida'),
+    }),
+    [t]
+  );
+
   const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
@@ -215,17 +221,17 @@ const Incidencias: React.FC = () => {
       if (payload.marcarComoResuelta) {
         switch (payload.estadoFinal) {
           case EstadoIncidencia.CANCELADA:
-            toast.success('Incidencia marcada como cancelada');
+            toast.success(t('incidencias.feedback.cancelSuccess'));
             break;
           case EstadoIncidencia.INVALIDA:
-            toast.success('Incidencia marcada como inválida');
+            toast.success(t('incidencias.feedback.invalidSuccess'));
             break;
           default:
-            toast.success('Incidencia marcada como resuelta');
+            toast.success(t('incidencias.feedback.resolveSuccess'));
             break;
         }
       } else {
-        toast.success('Incidencia actualizada correctamente');
+        toast.success(t('incidencias.feedback.updateSuccess'));
       }
       setItemToResolve(null);
       if (itemToView?.id === id) {
@@ -246,7 +252,7 @@ const Incidencias: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeIncidencia(itemToDelete.id);
-      toast.success('Incidencia eliminada correctamente');
+      toast.success(t('incidencias.feedback.deleteSuccess'));
       setItemToDelete(null);
       loadData();
     } catch (err: unknown) {
@@ -305,19 +311,19 @@ const Incidencias: React.FC = () => {
     () => [
       {
         id: 'createdAt',
-        label: 'Fecha',
+        label: t('incidencias.fields.date'),
         render: (row) => new Date(row.createdAt).toLocaleDateString(),
         sortable: true,
       },
       {
         id: 'proveedorNombre',
-        label: 'Proveedor',
+        label: t('incidencias.fields.provider'),
         render: (row) => row.proveedorNombre || '—',
         sortable: true,
       },
       {
         id: 'productos',
-        label: 'Producto(s)',
+        label: t('incidencias.fields.products'),
         render: (row) => (
           <Stack spacing={0.35}>
             <Typography variant="body2" fontWeight={600}>
@@ -328,15 +334,14 @@ const Incidencias: React.FC = () => {
                 .join(', ') || 'Sin detalle'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {row.lineas?.length || 0} línea
-              {(row.lineas?.length || 0) !== 1 ? 's' : ''}
+              {t('common.linesCount', { count: row.lineas?.length || 0 })}
             </Typography>
           </Stack>
         ),
       },
       {
         id: 'cantidades',
-        label: 'Cantidades por producto',
+        label: t('incidencias.fields.quantities'),
         render: (row) => (
           <Stack spacing={0.35}>
             {(row.lineas || []).slice(0, 3).map((linea) => (
@@ -368,7 +373,7 @@ const Incidencias: React.FC = () => {
       },
       {
         id: 'estado',
-        label: 'Estado',
+        label: t('incidencias.fields.status'),
         render: (row) => (
           <StatusChip
             status={INCIDENCIA_STATUS_CHIP[row.estado]}
@@ -380,7 +385,7 @@ const Incidencias: React.FC = () => {
         ),
       },
     ],
-    []
+    [t, INCIDENCIA_STATUS_LABEL]
   );
 
   const renderActions = (row: Incidencia) => {
@@ -394,7 +399,7 @@ const Incidencias: React.FC = () => {
         sx={{ minWidth: 160, justifyContent: 'flex-start' }}
       >
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title="Ver detalle">
+          <Tooltip title={t('incidencias.actions.viewDetail')}>
             <IconButton
               color="primary"
               onClick={(e) => {
@@ -409,7 +414,7 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canOperate && canResolve && (
-            <Tooltip title="Ajustar cantidades">
+            <Tooltip title={t('incidencias.actions.adjustQuantities')}>
               <IconButton
                 onClick={() => openResolveModal(row, 'adjust')}
                 size="small"
@@ -423,7 +428,7 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canOperate && canResolve && (
-            <Tooltip title="Resolver incidencia">
+            <Tooltip title={t('incidencias.actions.resolve')}>
               <IconButton
                 onClick={() => openResolveModal(row, 'resolve')}
                 size="small"
@@ -437,7 +442,7 @@ const Incidencias: React.FC = () => {
         </Box>
         <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
           {canDelete && (
-            <Tooltip title="Eliminar">
+            <Tooltip title={t('common.delete')}>
               <IconButton
                 onClick={() => setItemToDelete(row)}
                 size="small"
@@ -456,37 +461,39 @@ const Incidencias: React.FC = () => {
     if (!itemToView) return [];
     return [
       {
-        title: 'Información de la Incidencia',
+        title: t('incidencias.dialogs.info'),
         fields: [
-          { label: 'Proveedor', value: itemToView.proveedorNombre || '—' },
           {
-            label: 'Fecha de Registro',
+            label: t('incidencias.fields.provider'),
+            value: itemToView.proveedorNombre || '—',
+          },
+          {
+            label: t('incidencias.fields.date'),
             value: new Date(itemToView.createdAt).toLocaleString(),
           },
           {
-            label: 'Estado',
+            label: t('incidencias.fields.status'),
             value: INCIDENCIA_STATUS_LABEL[itemToView.estado],
           },
           { label: 'ID Recepción', value: itemToView.recepcionId || '—' },
           {
-            label: 'Motivo',
-            value: itemToView.motivoIncidencia || 'Sin motivo especificado',
+            label: t('incidencias.fields.reason'),
+            value: itemToView.motivoIncidencia || '—',
             fullWidth: true,
           },
         ],
       },
       {
-        title: 'Notas de Incidencia',
+        title: t('incidencias.fields.incidenceNotes'),
         fields: [
           {
-            label: 'Notas de Recepción',
-            value: itemToView.observacionesRecepcion || 'Sin observaciones',
+            label: t('incidencias.fields.receptionNotes'),
+            value: itemToView.observacionesRecepcion || '—',
             fullWidth: true,
           },
           {
-            label: 'Notas de Resolución',
-            value:
-              itemToView.observacionesResolucion || 'Sin notas de resolución',
+            label: t('incidencias.fields.resolutionNotes'),
+            value: itemToView.observacionesResolucion || '—',
             fullWidth: true,
           },
         ],
@@ -494,7 +501,7 @@ const Incidencias: React.FC = () => {
       ...(itemToView.resuelta
         ? [
             {
-              title: 'Resolución',
+              title: t('incidencias.status.resuelta'),
               fullWidth: true,
               content: (
                 <Box
@@ -518,7 +525,7 @@ const Incidencias: React.FC = () => {
                       color="success.main"
                       fontWeight={700}
                     >
-                      INCIDENCIA RESUELTA
+                      {t('incidencias.dialogs.resolvedHeader')}
                     </Typography>
                   </Stack>
                   <Stack spacing={2}>
@@ -528,7 +535,7 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        Fecha de Resolución
+                        {t('incidencias.fields.date')}
                       </Typography>
                       <Typography variant="body2" fontWeight={600}>
                         {itemToView.fechaResolucion
@@ -544,7 +551,7 @@ const Incidencias: React.FC = () => {
                         color="text.secondary"
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        Notas de Resolución
+                        {t('incidencias.fields.resolutionNotes')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                         {itemToView.observacionesResolucion || '—'}
@@ -557,7 +564,7 @@ const Incidencias: React.FC = () => {
           ]
         : []),
       {
-        title: `Productos con Discrepancia (${itemToView.lineas?.length || 0})`,
+        title: `${t('incidencias.fields.products')} (${itemToView.lineas?.length || 0})`,
         fullWidth: true,
         content: (
           <Box sx={{ mt: 1 }}>
@@ -602,7 +609,7 @@ const Incidencias: React.FC = () => {
                 <Stack direction="row" spacing={3}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Pedida
+                      {t('incidencias.fields.expected')}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {linea.cantidadEsperada} {linea.unidad || 'ud'}
@@ -610,7 +617,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Recibido
+                      {t('incidencias.fields.received')}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
                       {linea.cantidadRecibida} {linea.unidad || 'ud'}
@@ -618,7 +625,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Diferencia
+                      {t('incidencias.fields.difference')}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -634,7 +641,7 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Pendiente
+                      {t('incidencias.fields.pending')}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -654,7 +661,7 @@ const Incidencias: React.FC = () => {
                     variant="caption"
                     sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}
                   >
-                    Nota: {linea.observaciones}
+                    {t('common.notes')}: {linea.observaciones}
                   </Typography>
                 )}
               </Box>
@@ -663,12 +670,12 @@ const Incidencias: React.FC = () => {
         ),
       },
     ];
-  }, [itemToView, theme]);
+  }, [itemToView, theme, t, INCIDENCIA_STATUS_LABEL]);
 
   return (
     <Box>
       <PageToolbar
-        title="Centro de Incidencias"
+        title={t('incidencias.title')}
         totalItems={totalItemsVista}
         totalItemsLabel="incidencias"
         searchValue={searchTerm}
@@ -676,10 +683,10 @@ const Incidencias: React.FC = () => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por proveedor u observaciones..."
+        searchPlaceholder={t('common.searchPlaceholder')}
         extraActions={[
           {
-            label: 'Reporte PDF',
+            label: t('incidencias.actions.reportPdf'),
             onClick: () => openReporteModal('pdf'),
             icon: <PictureAsPdfIcon />,
             id: 'btn-reporte-incidencias-pdf',
@@ -687,7 +694,7 @@ const Incidencias: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Reporte Excel',
+            label: t('incidencias.actions.reportExcel'),
             onClick: () => openReporteModal('excel'),
             icon: <FileDownloadOutlinedIcon />,
             id: 'btn-reporte-incidencias-excel',
@@ -736,9 +743,9 @@ const Incidencias: React.FC = () => {
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 {isCerradasTab
                   ? cerradasTab === 'todas'
-                    ? 'No hay incidencias cerradas'
-                    : `No hay incidencias ${INCIDENCIA_STATUS_LABEL[cerradasTab]}`
-                  : 'No hay incidencias abiertas'}
+                    ? t('incidencias.empty.noClosed')
+                    : `${t('common.noResults')} ${INCIDENCIA_STATUS_LABEL[cerradasTab]}`
+                  : t('incidencias.empty.noOpen')}
               </Typography>
               <Typography
                 variant="body2"
@@ -746,10 +753,10 @@ const Incidencias: React.FC = () => {
                 sx={{ maxWidth: 400, mx: 'auto' }}
               >
                 {searchTerm
-                  ? 'No se encontraron incidencias que coincidan con tu búsqueda.'
+                  ? t('incidencias.empty.noMatches')
                   : isCerradasTab
-                    ? 'Las incidencias cerradas incluyen resueltas, canceladas e inválidas.'
-                    : '¡Excelente trabajo! No se han detectado discrepancias pendientes en las recepciones recientes.'}
+                    ? t('incidencias.empty.noClosed')
+                    : t('incidencias.empty.greatJob')}
               </Typography>
             </Box>
           }
@@ -769,7 +776,7 @@ const Incidencias: React.FC = () => {
       <DetailModal
         isOpen={!!itemToView}
         onClose={() => setItemToView(null)}
-        title="Detalle de Incidencia"
+        title={t('incidencias.dialogs.info')}
         subtitle={itemToView?.proveedorNombre}
         sections={detailSections}
         size="md"
@@ -786,7 +793,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Ajustar cantidades
+                {t('incidencias.actions.adjustQuantities')}
               </Button>
               <Button
                 variant="contained"
@@ -798,7 +805,7 @@ const Incidencias: React.FC = () => {
                   }
                 }}
               >
-                Resolver incidencia
+                {t('incidencias.actions.resolve')}
               </Button>
             </Stack>
           ) : undefined
@@ -809,9 +816,10 @@ const Incidencias: React.FC = () => {
         isOpen={!!itemToDelete}
         onClose={() => !isDeleting && setItemToDelete(null)}
         onConfirm={handleDelete}
-        title="Eliminar Incidencia"
-        message="¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer y se perderá el registro de la discrepancia."
-        confirmText="Eliminar"
+        title={t('incidencias.dialogs.deleteTitle')}
+        message={t('incidencias.dialogs.deleteMessage')}
+        confirmText={t('common.confirmDelete')}
+        cancelText={t('common.cancel')}
         isLoading={isDeleting}
       />
 

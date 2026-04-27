@@ -21,8 +21,13 @@ import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import { useTheme } from '@mui/material/styles';
 import { useThemeContext } from '../../../store/theme.hooks';
 import { getTooltipContent } from '../../../utils/tooltipUtils';
-import { tutorialConfig } from '../../../utils/config/tutorialData';
+import {
+  tutorialConfig,
+  TutorialStep as ConfigTutorialStep,
+  TutorialConfigItem,
+} from '../../../utils/config/tutorialData';
 import { useAuth } from '../../../store/auth.hooks';
+import { useTranslation } from 'react-i18next';
 
 interface TutorialStep {
   title: string;
@@ -30,10 +35,7 @@ interface TutorialStep {
   icon: React.ReactNode;
 }
 
-interface RouteTutorialConfig {
-  steps?: TutorialStep[];
-  roles?: Record<string, TutorialStep[]>;
-}
+// Eliminado RouteTutorialConfig ya que usaremos TutorialConfigItem
 
 interface TutorialHelperProps {
   mode?: 'icon' | 'listitem';
@@ -51,6 +53,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
   isOpen = true,
   steps: customSteps,
 }: TutorialHelperProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
   const theme = useTheme();
@@ -82,11 +85,11 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
 
   const currentPath = location.pathname;
   const defaultConfig =
-    (tutorialConfig as Record<string, RouteTutorialConfig>)[currentPath] ||
-    (tutorialConfig['default'] as RouteTutorialConfig);
+    (tutorialConfig as Record<string, TutorialConfigItem>)[currentPath] ||
+    (tutorialConfig['default'] as TutorialConfigItem);
 
   // Determinamos qué pasos mostrar:
-  // 1. Si se pasan steps por props
+  // 1. Si se pasan steps por props (ya traducidos habitualmente)
   // 2. Si hay pasos específicos para el ROL en la config centralizada
   // 3. Pasos por defecto de la ruta
   let steps: TutorialStep[] = [];
@@ -98,9 +101,19 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
       icon: s.icon || defaultConfig?.steps?.[0]?.icon,
     }));
   } else if (defaultConfig?.roles && defaultConfig.roles[userRole]) {
-    steps = defaultConfig.roles[userRole];
+    steps = (defaultConfig.roles[userRole] as ConfigTutorialStep[]).map(
+      (s: ConfigTutorialStep) => ({
+        title: t(s.titleKey),
+        description: t(s.descriptionKey),
+        icon: s.icon,
+      })
+    );
   } else {
-    steps = defaultConfig?.steps || [];
+    steps = (defaultConfig?.steps || []).map((s: ConfigTutorialStep) => ({
+      title: t(s.titleKey),
+      description: t(s.descriptionKey),
+      icon: s.icon,
+    }));
   }
 
   if (steps.length === 0) return null;
@@ -172,7 +185,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           onClick={handleClose}
           sx={{ color: 'text.secondary' }}
         >
-          Cerrar
+          {t('common.close')}
         </Button>
       </CardActions>
     </Card>
@@ -185,14 +198,14 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           title={getTooltipContent(
             isOpen,
             isLearningMode,
-            'Ayuda',
-            'Ver guía de ayuda de esta página'
+            t('tutorial.ayuda'),
+            t('tutorial.verGuia')
           )}
         >
           <ListItemButton
             onClick={handleClick}
             aria-describedby={id}
-            aria-label="Mostrar tutorial"
+            aria-label={t('tutorial.ayuda')}
             sx={{
               minHeight: 48,
               justifyContent: isOpen ? 'initial' : 'center',
@@ -208,7 +221,10 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
             >
               <HelpOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Ayuda" sx={{ opacity: isOpen ? 1 : 0 }} />
+            <ListItemText
+              primary={t('tutorial.ayuda')}
+              sx={{ opacity: isOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </Tooltip>
         <Popover
@@ -240,8 +256,8 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
         title={getTooltipContent(
           false,
           isLearningMode,
-          'Ayuda',
-          'Ver guía de ayuda'
+          t('tutorial.ayuda'),
+          t('tutorial.verGuia')
         )}
         placement="bottom"
       >
@@ -249,7 +265,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
           color="inherit"
           aria-describedby={id}
           onClick={handleClick}
-          aria-label="Mostrar tutorial"
+          aria-label={t('tutorial.ayuda')}
           sx={{ ml: 1 }}
         >
           <HelpOutlineIcon />

@@ -220,7 +220,10 @@ const QuickAction = ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function tiempoRelativoCorto(fechaStr: string): string {
+function tiempoRelativoCorto(
+  fechaStr: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const fecha = new Date(fechaStr);
   const ahora = new Date();
   const diffMs = ahora.getTime() - fecha.getTime();
@@ -228,26 +231,38 @@ function tiempoRelativoCorto(fechaStr: string): string {
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return 'ahora';
-  if (diffMin < 60) return `${diffMin}min`;
-  if (diffH < 24) return `${diffH}h`;
-  if (diffD === 1) return 'ayer';
-  if (diffD < 7) return `${diffD}d`;
-  return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  if (diffMin < 1) return t('common.time.now');
+  if (diffMin < 60) return t('common.time.minutes', { count: diffMin });
+  if (diffH < 24) return t('common.time.hours', { count: diffH });
+  if (diffD === 1) return t('common.time.yesterday');
+  if (diffD < 7) return t('common.time.days', { count: diffD });
+  return fecha.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+  });
 }
 
-function tipoActividadLabel(mov: DashboardMovimiento): string {
-  const labels: Record<string, string> = {
-    entrada: 'Se ha registrado una entrada de stock',
-    salida: 'Se ha registrado una salida de stock',
-    ajuste: 'Se ha realizado un ajuste de inventario',
-    pedido: 'Se ha registrado un pedido',
-    entrada_compra: 'Se ha registrado una recepción de compra',
-  };
-  const base = labels[mov.tipo] ?? `Se ha registrado actividad (${mov.tipo})`;
-  if (mov.productoNombre) return `${base}: ${mov.productoNombre}`;
-  if (mov.descripcion) return `${base}: ${mov.descripcion}`;
-  return base;
+function tipoActividadLabel(
+  mov: DashboardMovimiento,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const label = t(`dashboard.activity.labels.${mov.tipo}`, {
+    defaultValue: t('dashboard.activity.labels.generic', { tipo: mov.tipo }),
+  });
+
+  if (mov.productoNombre) {
+    return t('dashboard.activity.labels.withProduct', {
+      label,
+      name: mov.productoNombre,
+    });
+  }
+  if (mov.descripcion) {
+    return t('dashboard.activity.labels.withDescription', {
+      label,
+      description: mov.descripcion,
+    });
+  }
+  return label;
 }
 
 const TIPO_ACTIVIDAD_CONFIG: Record<
@@ -354,7 +369,7 @@ const Home: React.FC = () => {
     if (!canViewDashboard) {
       setStats(null);
       setIsLoading(false);
-      setError('No tienes permisos para ver el dashboard.');
+      setError(t('dashboard.noPermissions'));
       return;
     }
 
@@ -386,14 +401,12 @@ const Home: React.FC = () => {
     } catch (err: unknown) {
       console.error('Error cargando datos del dashboard:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar el dashboard.'
+        err instanceof Error ? err.message : t('dashboard.errorLoading')
       );
     } finally {
       setIsLoading(false);
     }
-  }, [canListUsers, canReviewInventoryNotifications, canViewDashboard]);
+  }, [canListUsers, canReviewInventoryNotifications, canViewDashboard, t]);
 
   useEffect(() => {
     loadStats();
@@ -421,30 +434,28 @@ const Home: React.FC = () => {
     setIsSavingQuickAction(true);
     try {
       if (quickActionTask === 'product') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const payload = await buildProductoPayload(formData as any);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await createProducto(payload as any);
-        toast.success('Producto añadido correctamente.');
+        const payload = await buildProductoPayload(
+          formData as unknown as Record<string, unknown>
+        );
+        await createProducto(payload);
+        toast.success(t('dashboard.actions.productAdded'));
       } else if (quickActionTask === 'recipe') {
         const payload = await buildRecetaPayload(formData);
         await createReceta(payload);
-        toast.success('Receta creada correctamente.');
+        toast.success(t('dashboard.actions.recipeCreated'));
       }
       setQuickActionTask(null);
       loadStats();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error al guardar la acción rápida.';
+        err instanceof Error ? err.message : t('dashboard.actions.saveError');
       toast.error(message);
     } finally {
       setIsSavingQuickAction(false);
     }
   };
 
-  const pedidoSchema = getPedidoSchema(null);
+  const pedidoSchema = getPedidoSchema(null, t);
 
   // ── Derived values ──────────────────────────────────────────────────────
 
@@ -478,7 +489,7 @@ const Home: React.FC = () => {
           icon={<ErrorOutlineIcon />}
           action={
             <Button color="inherit" size="small" onClick={loadStats}>
-              Reintentar
+              {t('common.retry')}
             </Button>
           }
           sx={{ mb: 3, borderRadius: 2 }}
@@ -562,8 +573,11 @@ const Home: React.FC = () => {
                           <TrendingFlatIcon fontSize="small" color="disabled" />
                         )}
                         {productosEsteMes > 0
-                          ? `+${productosEsteMes} agregado${productosEsteMes !== 1 ? 's' : ''} este mes`
-                          : 'Sin nuevos productos este mes'}
+                          ? t('dashboard.metrics.productosAdded', {
+                              count: productosEsteMes,
+                              s: productosEsteMes !== 1 ? 's' : '',
+                            })
+                          : t('dashboard.metrics.noProductosAdded')}
                       </>
                     )
                   }
@@ -585,8 +599,11 @@ const Home: React.FC = () => {
                       <>
                         <CalendarTodayIcon fontSize="small" />
                         {pedidosProcesarHoy > 0
-                          ? `${pedidosProcesarHoy} recibido${pedidosProcesarHoy !== 1 ? 's' : ''} hoy`
-                          : 'Sin recepciones hoy'}
+                          ? t('dashboard.metrics.pedidosToday', {
+                              count: pedidosProcesarHoy,
+                              s: pedidosProcesarHoy !== 1 ? 's' : '',
+                            })
+                          : t('dashboard.metrics.noPedidosToday')}
                       </>
                     )
                   }
@@ -611,8 +628,11 @@ const Home: React.FC = () => {
                       <>
                         <ErrorOutlineIcon fontSize="small" />
                         {incidenciasCount > 0
-                          ? `${incidenciasCount} pedido${incidenciasCount !== 1 ? 's' : ''} con incidencias`
-                          : 'Sin incidencias'}
+                          ? t('dashboard.metrics.incidenciasCount', {
+                              count: incidenciasCount,
+                              s: incidenciasCount !== 1 ? 's' : '',
+                            })
+                          : t('dashboard.metrics.noIncidencias')}
                       </>
                     )
                   }
@@ -637,8 +657,11 @@ const Home: React.FC = () => {
                           color={alertasStock > 0 ? 'error' : 'disabled'}
                         />
                         {alertasStock > 0
-                          ? `${alertasStock} ítem${alertasStock !== 1 ? 's' : ''} bajo mínimo`
-                          : 'Stock correcto'}
+                          ? t('dashboard.metrics.stockAlertCount', {
+                              count: alertasStock,
+                              s: alertasStock !== 1 ? 's' : '',
+                            })
+                          : t('dashboard.metrics.stockOk')}
                       </>
                     )
                   }
@@ -665,7 +688,7 @@ const Home: React.FC = () => {
                           fontSize="small"
                           color="success"
                         />
-                        Catálogo actualizado
+                        {t('productos.detail.sections.general')}
                       </>
                     )
                   }
@@ -697,8 +720,27 @@ const Home: React.FC = () => {
                       <>
                         <NotificationsIcon fontSize="small" />
                         {notifications.length > 0
-                          ? `${notifications.reduce((acc, curr) => acc + curr.count, 0)} acción${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''} pendiente${notifications.reduce((acc, curr) => acc + curr.count, 0) !== 1 ? 'es' : ''}`
-                          : 'Sin notificaciones'}
+                          ? t('dashboard.metrics.notificacionesCount', {
+                              count: notifications.reduce(
+                                (acc, curr) => acc + curr.count,
+                                0
+                              ),
+                              es:
+                                notifications.reduce(
+                                  (acc, curr) => acc + curr.count,
+                                  0
+                                ) !== 1
+                                  ? 'es'
+                                  : '',
+                              s:
+                                notifications.reduce(
+                                  (acc, curr) => acc + curr.count,
+                                  0
+                                ) !== 1
+                                  ? 's'
+                                  : '',
+                            })
+                          : t('dashboard.metrics.noNotificaciones')}
                       </>
                     )
                   }
@@ -803,56 +845,60 @@ const Home: React.FC = () => {
                   </Typography>
                 </Box>
               ) : (
-                <Stack spacing={3}>
-                  {movimientos.map((mov) => (
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                  {movimientos.slice(0, 8).map((mov) => (
                     <Box
                       key={mov.id}
-                      display="flex"
-                      gap={2}
-                      alignItems="flex-start"
+                      sx={{
+                        display: 'flex',
+                        gap: 2,
+                        p: 1.5,
+                        borderRadius: 2,
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
                     >
                       <Box
                         sx={{
-                          color: `${getActividadColor(mov.tipo)}.main`,
                           display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 40,
+                          height: 40,
+                          borderRadius: '50%',
+                          bgcolor: `${getActividadColor(mov.tipo)}.light`,
+                          color: 'common.white',
                           flexShrink: 0,
-                          mt: 0.25,
                         }}
                       >
                         {getActividadIcon(mov.tipo)}
                       </Box>
-                      <Box>
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                         <Typography
                           variant="body2"
-                          fontWeight={500}
-                          sx={{ mb: 0.5, lineHeight: 1.2 }}
+                          fontWeight={600}
+                          sx={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            lineHeight: 1.3,
+                          }}
                         >
-                          {tipoActividadLabel(mov)}
+                          {tipoActividadLabel(mov, t)}
                         </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.secondary',
-                              fontWeight: 600,
-                              bgcolor: 'action.hover',
-                              px: 1,
-                              py: 0.2,
-                              borderRadius: 1,
-                            }}
-                          >
-                            {tiempoRelativoCorto(mov.createdAt)}
+                        <Stack
+                          direction="row"
+                          spacing={0.75}
+                          alignItems="center"
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {tiempoRelativoCorto(mov.createdAt, t)}
                           </Typography>
                           {mov.usuario && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.75,
-                              }}
-                            >
+                            <>
                               <Box
                                 component="span"
                                 sx={{
@@ -862,8 +908,13 @@ const Home: React.FC = () => {
                                   bgcolor: 'text.disabled',
                                 }}
                               />
-                              {mov.usuario.nombre || mov.usuario.username}
-                            </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {mov.usuario.nombre || mov.usuario.username}
+                              </Typography>
+                            </>
                           )}
                         </Stack>
                       </Box>

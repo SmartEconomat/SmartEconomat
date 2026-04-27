@@ -12,6 +12,7 @@ import { CategoriaProducto } from '../../services/producto.types';
 import { Ubicacion } from '../../services/ubicacion.types';
 import { getCategoryIconFilled } from '../productos/utils/getCategoryIconFilled';
 import { useBreakpoints } from '../../utils/useBreakpoints';
+import { useTranslation } from 'react-i18next';
 
 export interface InventarioFiltersState {
   categorias: CategoriaProducto[];
@@ -24,23 +25,7 @@ export interface InventarioFiltersProps {
   ubicacionesDisponibles: Ubicacion[];
 }
 
-const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
-  { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-  { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-  { value: CategoriaProducto.CARNE, label: 'Carne' },
-  { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-  { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-  { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-  { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-  { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-  { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-  { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-  { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-  { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-  { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-  { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-  { value: CategoriaProducto.OTRO, label: 'Otro' },
-];
+// Move CATEGORIA_OPTIONS logic into the component to use t()
 
 /**
  * Filtros avanzados para la página de Inventario.
@@ -51,9 +36,75 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
   onChange,
   ubicacionesDisponibles,
 }) => {
+  const { t } = useTranslation();
   const { isMobileOrTablet } = useBreakpoints();
 
-  const selectedCategorias = CATEGORIA_OPTIONS.filter((opt) =>
+  const categoriaOptions = React.useMemo<
+    { value: CategoriaProducto; label: string }[]
+  >(
+    () => [
+      {
+        value: CategoriaProducto.VERDURA,
+        label: t('productos.categories.verdura'),
+      },
+      {
+        value: CategoriaProducto.FRUTA,
+        label: t('productos.categories.fruta'),
+      },
+      {
+        value: CategoriaProducto.CARNE,
+        label: t('productos.categories.carne'),
+      },
+      {
+        value: CategoriaProducto.PESCADO,
+        label: t('productos.categories.pescado'),
+      },
+      {
+        value: CategoriaProducto.MARISCO,
+        label: t('productos.categories.marisco'),
+      },
+      {
+        value: CategoriaProducto.LACTEO,
+        label: t('productos.categories.lacteo'),
+      },
+      {
+        value: CategoriaProducto.HUEVO,
+        label: t('productos.categories.huevo'),
+      },
+      {
+        value: CategoriaProducto.CEREAL,
+        label: t('productos.categories.cereal'),
+      },
+      {
+        value: CategoriaProducto.LEGUMBRE,
+        label: t('productos.categories.legumbre'),
+      },
+      {
+        value: CategoriaProducto.FRUTO_SECO,
+        label: t('productos.categories.fruto_seco'),
+      },
+      {
+        value: CategoriaProducto.CONDIMENTO,
+        label: t('productos.categories.condimento'),
+      },
+      {
+        value: CategoriaProducto.ACEITE,
+        label: t('productos.categories.aceite'),
+      },
+      {
+        value: CategoriaProducto.AZUCAR,
+        label: t('productos.categories.azucar'),
+      },
+      {
+        value: CategoriaProducto.BEBIDA,
+        label: t('productos.categories.bebida'),
+      },
+      { value: CategoriaProducto.OTRO, label: t('productos.categories.otro') },
+    ],
+    [t]
+  );
+
+  const selectedCategorias = categoriaOptions.filter((opt) =>
     filters.categorias.includes(opt.value)
   );
 
@@ -81,7 +132,7 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
         multiple
         disableCloseOnSelect
         size="small"
-        options={CATEGORIA_OPTIONS}
+        options={categoriaOptions}
         value={selectedCategorias}
         getOptionLabel={(opt) => opt.label}
         isOptionEqualToValue={(opt, val) => opt.value === val.value}
@@ -124,7 +175,9 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
           <TextField
             {...params}
             placeholder={
-              selectedCategorias.length === 0 ? 'Filtrar categoría...' : ''
+              selectedCategorias.length === 0
+                ? t('inventario.filters.categories')
+                : ''
             }
             InputProps={{
               ...params.InputProps,
@@ -189,7 +242,11 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder={selectedUbicaciones.length === 0 ? 'Ubicación...' : ''}
+            placeholder={
+              selectedUbicaciones.length === 0
+                ? t('inventario.filters.locations')
+                : ''
+            }
             InputProps={{
               ...params.InputProps,
               startAdornment: (

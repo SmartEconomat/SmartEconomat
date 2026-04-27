@@ -16,29 +16,33 @@ import { getCategoryIcon } from './utils/getCategoryIcon';
 import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 import { useToast } from '../../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
-// ── Base schema ────────────────────────────────────────────────────────
+// ── Base schema logic ──────────────────────────────────────────────────
 
-const productoBaseSchema: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre Comercial', required: true },
-  { name: 'marca', label: 'Marca' },
-  { name: 'descripcion', label: 'Descripción' },
+const getProductoBaseSchema = (t: (key: string) => string): DynamicField[] => [
+  { name: 'nombre', label: t('inventario.fields.name'), required: true },
+  { name: 'marca', label: t('inventario.fields.brand') },
+  { name: 'descripcion', label: t('inventario.fields.description') },
   {
     name: 'contenido',
-    label: 'Contenido Numérico',
+    label: t('inventario.fields.content'),
     type: 'number',
     required: true,
   },
   {
     name: 'unidad',
-    label: 'Unidad de Medida',
+    label: t('inventario.fields.unit'),
     type: 'select',
     options: [
       { value: UnidadMedida.KG, label: 'Kg' },
-      { value: UnidadMedida.G, label: 'Gramo' },
+      {
+        value: UnidadMedida.G,
+        label: t('recetas.table.unit_gramo') || 'Gramo',
+      }, // Assuming added to recipes or common
       { value: UnidadMedida.L, label: 'Litro' },
       { value: UnidadMedida.ML, label: 'Mililitro' },
-      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
+      { value: UnidadMedida.UNIDAD, label: t('common.units') },
       { value: UnidadMedida.PAQ, label: 'Paquete' },
     ],
     required: true,
@@ -46,31 +50,77 @@ const productoBaseSchema: DynamicField[] = [
   },
   {
     name: 'tipo',
-    label: 'Categoría',
+    label: t('inventario.fields.category'),
     type: 'select',
     width: 4,
     options: [
-      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-      { value: CategoriaProducto.CARNE, label: 'Carne' },
-      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-      { value: CategoriaProducto.OTRO, label: 'Otro' },
+      {
+        value: CategoriaProducto.VERDURA,
+        label: t('productos.categories.verdura'),
+      },
+      {
+        value: CategoriaProducto.FRUTA,
+        label: t('productos.categories.fruta'),
+      },
+      {
+        value: CategoriaProducto.CARNE,
+        label: t('productos.categories.carne'),
+      },
+      {
+        value: CategoriaProducto.PESCADO,
+        label: t('productos.categories.pescado'),
+      },
+      {
+        value: CategoriaProducto.MARISCO,
+        label: t('productos.categories.pescado'),
+      }, // Mapping to Pescado if missing or add to JSON
+      {
+        value: CategoriaProducto.LACTEO,
+        label: t('productos.categories.lacteo'),
+      },
+      {
+        value: CategoriaProducto.HUEVO,
+        label: t('productos.categories.huevo'),
+      },
+      {
+        value: CategoriaProducto.CEREAL,
+        label: t('productos.categories.legumbre'),
+      }, // Mapping
+      {
+        value: CategoriaProducto.LEGUMBRE,
+        label: t('productos.categories.legumbre'),
+      },
+      {
+        value: CategoriaProducto.FRUTO_SECO,
+        label: t('productos.categories.otro'),
+      },
+      {
+        value: CategoriaProducto.CONDIMENTO,
+        label: t('productos.categories.especia'),
+      },
+      {
+        value: CategoriaProducto.ACEITE,
+        label: t('productos.categories.aceite'),
+      },
+      {
+        value: CategoriaProducto.AZUCAR,
+        label: t('productos.categories.otro'),
+      },
+      {
+        value: CategoriaProducto.BEBIDA,
+        label: t('productos.categories.bebida'),
+      },
+      { value: CategoriaProducto.OTRO, label: t('productos.categories.otro') },
     ],
   },
-  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+  {
+    name: 'codigoBarras',
+    label: t('inventario.fields.barcode'),
+    type: 'barcode',
+  },
   {
     name: 'imagen',
-    label: 'Cargar Imagen',
+    label: t('common.uploadImage'),
     type: 'image',
     getFallbackIcon: (formData) =>
       getCategoryIcon(formData.tipo as CategoriaProducto, {
@@ -79,7 +129,7 @@ const productoBaseSchema: DynamicField[] = [
   },
   {
     name: 'alergenos',
-    label: 'Alérgenos Presentes',
+    label: t('productos.detail.sections.allergens'),
     type: 'allergens',
     position: 'bottom',
   },
@@ -117,6 +167,7 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   title,
 }) => {
   const isEditing = Boolean(initialData.id);
+  const { t } = useTranslation();
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
   const toast = useToast();
@@ -129,17 +180,17 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   }, [isOpen]);
 
   const dynamicSchema = React.useMemo(() => {
-    const schema = [...productoBaseSchema];
+    const schema = getProductoBaseSchema(t);
     schema.push({
       name: 'proveedores',
-      label: 'Proveedores Asociados',
+      label: t('productos.detail.sections.suppliers'),
       type: 'proveedores',
       position: 'bottom',
       defaultValue: [],
       options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     });
     return schema;
-  }, [proveedores]);
+  }, [proveedores, t]);
 
   const handleBarcodeFetch = useCallback(async (code: string) => {
     const product = await searchByBarcode(code);
@@ -164,13 +215,11 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       return await generateProductoEan13();
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'No se pudo generar el codigo de barras.';
+        error instanceof Error ? error.message : t('common.errors.unknown');
       toast.error(message);
       return undefined;
     }
-  }, [toast]);
+  }, [toast, t]);
 
   return (
     <DynamicFormModal
@@ -179,8 +228,8 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       title={
         title ??
         (isEditing
-          ? `Editar: ${String(initialData.nombre || '')}`
-          : 'Crear Nuevo Producto')
+          ? t('common.editItem', { name: String(initialData.nombre || '') })
+          : t('dashboard.modals.newProduct'))
       }
       size="lg"
       fields={dynamicSchema}
@@ -193,8 +242,8 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       onOFFSearch={handleOFFSearch}
       confirmationMessage={
         isEditing
-          ? '¿Estás seguro de que deseas guardar los cambios realizados en este producto?'
-          : '¿Estás seguro de que deseas añadir este nuevo producto al inventario?'
+          ? t('proveedores.dialogs.confirmEdit')
+          : t('proveedores.dialogs.confirmCreate')
       }
     />
   );

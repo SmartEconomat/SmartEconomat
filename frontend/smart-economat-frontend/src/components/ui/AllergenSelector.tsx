@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Box, Typography, Tooltip } from '@mui/material';
 import { EU_ALLERGENS } from '../../utils/constants';
 
 export interface AllergenSelectorProps {

@@ -220,9 +220,13 @@ export default function MainLayout() {
             />
           </Box>
         )}
-        <Tooltip title={open ? 'Minimizar menú' : 'Expandir menú'}>
+        <Tooltip
+          title={open ? t('common.collapseMenu') : t('common.expandMenu')}
+        >
           <IconButton
-            aria-label={open ? 'Minimizar menú' : 'Expandir menú'}
+            aria-label={
+              open ? t('common.collapseMenu') : t('common.expandMenu')
+            }
             onClick={open ? handleDrawerClose : handleDrawerOpen}
           >
             {theme.direction === 'rtl' ? (
@@ -240,7 +244,7 @@ export default function MainLayout() {
         </Tooltip>
       </DrawerHeader>
       <Divider />
-      <List aria-label="Navegación principal">
+      <List aria-label={t('common.mainNavigation')}>
         {visibleMenuItems.map((item, index) => {
           const previousGroup =
             index > 0 ? visibleMenuItems[index - 1].group : null;
@@ -317,7 +321,7 @@ export default function MainLayout() {
       </List>
       <Box sx={{ marginTop: 'auto' }}>
         <Divider />
-        <List aria-label="Opciones del sistema">
+        <List aria-label={t('common.systemOptions')}>
           <ListItem disablePadding sx={{ display: 'block' }}>
             <TutorialHelper mode="listitem" isOpen={open} />
           </ListItem>
@@ -412,14 +416,16 @@ export default function MainLayout() {
                 <ListItemIcon>
                   <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Mi Perfil</Typography>
+                <Typography textAlign="center">
+                  {t('common.myProfile')}
+                </Typography>
               </MuiMenuItem>
               <Divider />
               <MuiMenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />
                 </ListItemIcon>
-                <Typography textAlign="center">Cerrar Sesión</Typography>
+                <Typography textAlign="center">{t('common.logout')}</Typography>
               </MuiMenuItem>
             </Menu>
           </Box>

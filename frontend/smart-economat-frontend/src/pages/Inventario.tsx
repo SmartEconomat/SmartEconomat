@@ -59,6 +59,7 @@ import {
   type ProductoProveedorOption,
 } from '../services/productoProveedor.service';
 import { searchByBarcode } from '../services/openfoodfacts.service';
+import { useTranslation } from 'react-i18next';
 
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 import AddIcon from '@mui/icons-material/Add';
@@ -137,59 +138,117 @@ interface ProductoFormData extends Record<string, unknown> {
   proveedores?: ProductoFormProveedor[];
 }
 
-const PRODUCTO_CREATE_FIELDS_BASE: DynamicField[] = [
-  { name: 'nombre', label: 'Nombre Comercial', required: true },
-  { name: 'marca', label: 'Marca' },
-  { name: 'descripcion', label: 'Descripción' },
+const getProductCreateFieldsBase = (
+  t: (key: string) => string
+): DynamicField[] => [
+  { name: 'nombre', label: t('inventario.fields.name'), required: true },
+  { name: 'marca', label: t('inventario.fields.brand') },
+  { name: 'descripcion', label: t('inventario.fields.description') },
   {
     name: 'contenido',
-    label: 'Contenido Numérico',
+    label: t('inventario.fields.content'),
     type: 'number',
     required: true,
   },
   {
     name: 'unidad',
-    label: 'Unidad de Medida',
+    label: t('inventario.fields.unit'),
     type: 'select',
     required: true,
     options: [
       { value: UnidadMedida.KG, label: 'Kg' },
-      { value: UnidadMedida.G, label: 'Gramo' },
-      { value: UnidadMedida.L, label: 'Litro' },
-      { value: UnidadMedida.ML, label: 'Mililitro' },
-      { value: UnidadMedida.UNIDAD, label: 'Unidad' },
-      { value: UnidadMedida.PAQ, label: 'Paquete' },
+      { value: UnidadMedida.G, label: t('common.units.gramo') || 'Gramo' },
+      { value: UnidadMedida.L, label: t('common.units.litro') || 'Litro' },
+      {
+        value: UnidadMedida.ML,
+        label: t('common.units.mililitro') || 'Mililitro',
+      },
+      {
+        value: UnidadMedida.UNIDAD,
+        label: t('common.units.unidad') || 'Unidad',
+      },
+      {
+        value: UnidadMedida.PAQ,
+        label: t('common.units.paquete') || 'Paquete',
+      },
     ],
     width: 6,
   },
   {
     name: 'tipo',
-    label: 'Categoría',
+    label: t('inventario.fields.category'),
     type: 'select',
     required: true,
     width: 6,
     options: [
-      { value: CategoriaProducto.VERDURA, label: 'Verdura' },
-      { value: CategoriaProducto.FRUTA, label: 'Fruta' },
-      { value: CategoriaProducto.CARNE, label: 'Carne' },
-      { value: CategoriaProducto.PESCADO, label: 'Pescado' },
-      { value: CategoriaProducto.MARISCO, label: 'Marisco' },
-      { value: CategoriaProducto.LACTEO, label: 'Lácteo' },
-      { value: CategoriaProducto.HUEVO, label: 'Huevo' },
-      { value: CategoriaProducto.CEREAL, label: 'Cereal' },
-      { value: CategoriaProducto.LEGUMBRE, label: 'Legumbre' },
-      { value: CategoriaProducto.FRUTO_SECO, label: 'Fruto Seco' },
-      { value: CategoriaProducto.CONDIMENTO, label: 'Condimento' },
-      { value: CategoriaProducto.ACEITE, label: 'Aceite' },
-      { value: CategoriaProducto.AZUCAR, label: 'Azúcar' },
-      { value: CategoriaProducto.BEBIDA, label: 'Bebida' },
-      { value: CategoriaProducto.OTRO, label: 'Otro' },
+      {
+        value: CategoriaProducto.VERDURA,
+        label: t('productos.categories.verdura'),
+      },
+      {
+        value: CategoriaProducto.FRUTA,
+        label: t('productos.categories.fruta'),
+      },
+      {
+        value: CategoriaProducto.CARNE,
+        label: t('productos.categories.carne'),
+      },
+      {
+        value: CategoriaProducto.PESCADO,
+        label: t('productos.categories.pescado'),
+      },
+      {
+        value: CategoriaProducto.MARISCO,
+        label: t('productos.categories.marisco'),
+      },
+      {
+        value: CategoriaProducto.LACTEO,
+        label: t('productos.categories.lacteo'),
+      },
+      {
+        value: CategoriaProducto.HUEVO,
+        label: t('productos.categories.huevo'),
+      },
+      {
+        value: CategoriaProducto.CEREAL,
+        label: t('productos.categories.cereal'),
+      },
+      {
+        value: CategoriaProducto.LEGUMBRE,
+        label: t('productos.categories.legumbre'),
+      },
+      {
+        value: CategoriaProducto.FRUTO_SECO,
+        label: t('productos.categories.fruto_seco'),
+      },
+      {
+        value: CategoriaProducto.CONDIMENTO,
+        label: t('productos.categories.condimento'),
+      },
+      {
+        value: CategoriaProducto.ACEITE,
+        label: t('productos.categories.aceite'),
+      },
+      {
+        value: CategoriaProducto.AZUCAR,
+        label: t('productos.categories.azucar'),
+      },
+      {
+        value: CategoriaProducto.BEBIDA,
+        label: t('productos.categories.bebida'),
+      },
+      { value: CategoriaProducto.OTRO, label: t('productos.categories.otro') },
     ],
   },
-  { name: 'codigoBarras', label: 'Código de Barras', type: 'barcode' },
+  {
+    name: 'codigoBarras',
+    label: t('inventario.fields.barcode'),
+    type: 'barcode',
+  },
 ];
 
 const Inventario: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -276,10 +335,13 @@ const Inventario: React.FC = () => {
       }
       return ubicacionesList;
     } catch {
-      toast.error('Error al cargar ubicaciones');
+      toast.error(
+        t('inventario.feedback.loadUbicacionesError') ||
+          'Error al cargar ubicaciones'
+      );
       return [];
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     void loadUbicaciones();
@@ -341,14 +403,15 @@ const Inventario: React.FC = () => {
     let cancelled = false;
     setIsSearchingProductoProveedor(true);
 
-    const t = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       searchProductoProveedor(term, 20, 0)
         .then((opts) => {
           if (!cancelled) setProductoProveedorOptions(opts);
         })
         .catch((err: unknown) => {
           console.error('Error buscando producto/proveedor:', err);
-          if (!cancelled) toast.error('Error al buscar producto/proveedor.');
+          if (!cancelled)
+            toast.error(t('inventario.feedback.loadOptionsError'));
         })
         .finally(() => {
           if (!cancelled) setIsSearchingProductoProveedor(false);
@@ -357,9 +420,9 @@ const Inventario: React.FC = () => {
 
     return () => {
       cancelled = true;
-      window.clearTimeout(t);
+      window.clearTimeout(timeoutId);
     };
-  }, [isCreateOpen, productoProveedorInput, toast]);
+  }, [isCreateOpen, productoProveedorInput, toast, t]);
 
   const handleOpenCreate = () => {
     setIsCreateOpen(true);
@@ -398,24 +461,22 @@ const Inventario: React.FC = () => {
       setTotalItems(agregado.length);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error desconocido al cargar inventario.';
+        err instanceof Error ? err.message : t('inventario.feedback.loadError');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [tabIndex, assignedLocations]);
+  }, [tabIndex, assignedLocations, t]);
 
   useEffect(() => {
     void reloadInventario();
   }, [tabIndex, assignedLocations, canSeeGeneral, reloadInventario]);
 
   const productoCreateSchema = useMemo<DynamicField[]>(() => {
-    const schema = [...PRODUCTO_CREATE_FIELDS_BASE];
+    const schema = [...getProductCreateFieldsBase(t)];
     schema.push({
       name: 'proveedores',
-      label: 'Proveedores Asociados',
+      label: t('inventario.fields.associatedProviders'),
       type: 'proveedores',
       position: 'bottom',
       required: true,
@@ -423,7 +484,7 @@ const Inventario: React.FC = () => {
       options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
     });
     return schema;
-  }, [proveedores]);
+  }, [proveedores, t]);
 
   const ensureProveedoresLoaded = useCallback(async (): Promise<void> => {
     if (proveedores.length > 0) return;
@@ -457,12 +518,12 @@ const Inventario: React.FC = () => {
 
     if (uniqueProviders.length === 0) {
       throw new Error(
-        'No hay proveedores disponibles. Crea al menos uno antes de dar de alta un producto.'
+        t('inventario.feedback.noProvidersError') ||
+          'No hay proveedores disponibles.'
       );
     }
-
     setProveedores(uniqueProviders);
-  }, [proveedores]);
+  }, [proveedores, t]);
 
   const buildCreateProductDraft = useCallback(async (barcode: string) => {
     const offData = await searchByBarcode(barcode);
@@ -582,18 +643,16 @@ const Inventario: React.FC = () => {
         }
 
         if (options.length === 0) {
-          toast.info(
-            'No se encontró relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
-          );
+          toast.info(t('inventario.feedback.exactMatchInfo'));
         }
       } catch (err: unknown) {
         console.error('Error preparando alta en inventario:', err);
-        toast.error('Error al cargar opciones de producto/proveedor.');
+        toast.error(t('inventario.feedback.loadOptionsError'));
       } finally {
         setIsSearchingProductoProveedor(false);
       }
     },
-    [loadUbicaciones, toast, ubicaciones.length]
+    [loadUbicaciones, toast, ubicaciones.length, t]
   );
 
   const handleCreateProductoDesdeInventario = async (
@@ -611,7 +670,7 @@ const Inventario: React.FC = () => {
 
       const nombre = toOptionalString(typedFormData.nombre);
       if (!nombre) {
-        throw new Error('El nombre del producto es obligatorio.');
+        throw new Error(t('common.errors.required'));
       }
 
       const contenido = Number(typedFormData.contenido);
@@ -684,7 +743,7 @@ const Inventario: React.FC = () => {
 
       setIsCreateProductoModalOpen(false);
       setCreateProductoInitialData({});
-      toast.success('Producto creado correctamente en catálogo.');
+      toast.success(t('inventario.feedback.productCreated'));
 
       if (canCrear) {
         openCantidadDialogForProduct({
@@ -692,9 +751,7 @@ const Inventario: React.FC = () => {
           nombre: creado.nombre,
         });
       } else {
-        toast.info(
-          'Producto creado, pero no tienes permisos para añadirlo al inventario.'
-        );
+        toast.info(t('inventario.feedback.noPermissionAdd'));
       }
     } catch (err: unknown) {
       const message =
@@ -718,7 +775,7 @@ const Inventario: React.FC = () => {
       );
 
       if (existsInInventory) {
-        toast.success('Producto localizado en inventario.');
+        toast.success(t('inventario.feedback.located'));
         return;
       }
 
@@ -731,13 +788,9 @@ const Inventario: React.FC = () => {
               barcode: code,
               nombre: existingProduct.nombre,
             });
-            toast.info(
-              'Producto encontrado en catálogo. Indica la cantidad que quieres añadir al inventario.'
-            );
+            toast.info(t('inventario.feedback.foundCatalog'));
           } else {
-            toast.info(
-              'Producto encontrado en catálogo, pero no tienes permisos para añadir inventario.'
-            );
+            toast.info(t('inventario.feedback.foundCatalogNoPermission'));
           }
           return;
         }
@@ -746,15 +799,13 @@ const Inventario: React.FC = () => {
       }
 
       if (!canCrearProducto) {
-        toast.info(
-          'Este código no existe en inventario y no tienes permisos para crear productos.'
-        );
+        toast.info(t('inventario.feedback.noExistsNoPermission'));
         return;
       }
 
       setBarcodePendienteCrearProducto(code);
     },
-    [canCrear, canCrearProducto, data, openCantidadDialogForProduct, toast]
+    [canCrear, canCrearProducto, data, openCantidadDialogForProduct, toast, t]
   );
 
   const handleConfirmCantidadScanner = async () => {
@@ -763,12 +814,12 @@ const Inventario: React.FC = () => {
 
     const cantidad = Number(cantidadEscaneo);
     if (Number.isNaN(cantidad) || cantidad <= 0) {
-      toast.error('La cantidad a añadir debe ser un número mayor que 0.');
+      toast.error(t('inventario.feedback.invalidQuantity'));
       return;
     }
 
     if (!canCrear) {
-      toast.info('No tienes permisos para añadir inventario.');
+      toast.info(t('inventario.feedback.foundCatalogNoPermission'));
       setIsCantidadDialogOpen(false);
       setProductoPendienteCantidadInventario(null);
       setCantidadEscaneo('1');
@@ -782,9 +833,7 @@ const Inventario: React.FC = () => {
       const ubicacionDestinoId = ubicacionId || ubicacionesDisponibles[0]?.id;
 
       if (!ubicacionDestinoId) {
-        throw new Error(
-          'No hay ubicaciones disponibles para registrar el inventario.'
-        );
+        throw new Error(t('inventario.feedback.noUbicaciones'));
       }
 
       const query = (producto.barcode || producto.nombre).trim();
@@ -803,15 +852,11 @@ const Inventario: React.FC = () => {
         setCantidadEscaneo('1');
 
         if (options.length === 0) {
-          toast.error(
-            'No existe relación producto/proveedor para este artículo. Asocia un proveedor y vuelve a intentarlo.'
-          );
+          toast.error(t('inventario.feedback.exactMatchInfo'));
           return;
         }
 
-        toast.info(
-          'Se encontraron varias relaciones producto/proveedor. Selecciona una manualmente para completar el alta en inventario.'
-        );
+        toast.info(t('inventario.feedback.multipleOptions'));
         void openInventarioCreateForProduct(producto, cantidad, options);
         return;
       }
@@ -823,16 +868,16 @@ const Inventario: React.FC = () => {
         ubicacionId: ubicacionDestinoId,
       });
 
-      toast.success(`Stock añadido correctamente para ${producto.nombre}.`);
+      toast.success(
+        t('inventario.feedback.saveSuccess', { name: producto.nombre })
+      );
       setIsCantidadDialogOpen(false);
       setProductoPendienteCantidadInventario(null);
       setCantidadEscaneo('1');
       await reloadInventario();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'No se pudo añadir el producto al inventario.';
+        err instanceof Error ? err.message : t('inventario.feedback.saveError');
       toast.error(message);
     } finally {
       setIsAddingFromScanner(false);
@@ -841,34 +886,28 @@ const Inventario: React.FC = () => {
 
   const handleCreateInventario = async () => {
     if (!productoProveedorValue?.id) {
-      toast.error('Selecciona un producto/proveedor.');
+      toast.error(t('inventario.feedback.selectProductProvider'));
       return;
     }
     const cantActual = Number(cantidadActual);
     const cantMin = Number(cantidadMinima);
     const cantMax = cantidadMaxima ? Number(cantidadMaxima) : undefined;
     if (Number.isNaN(cantActual) || cantActual < 0) {
-      toast.error(
-        'La cantidad actual debe ser un número válido mayor o igual a 0.'
-      );
+      toast.error(t('inventario.feedback.invalidQuantity'));
       return;
     }
     if (Number.isNaN(cantMin) || cantMin < 0) {
-      toast.error(
-        'La cantidad mínima debe ser un número válido mayor o igual a 0.'
-      );
+      toast.error(t('inventario.feedback.invalidMinQuantity'));
       return;
     }
     if (cantMax !== undefined && (Number.isNaN(cantMax) || cantMax < 0)) {
-      toast.error(
-        'La cantidad máxima debe ser un número válido mayor o igual a 0.'
-      );
+      toast.error(t('inventario.feedback.invalidMaxQuantity'));
       return;
     }
 
     // max must be >= min when provided
     if (cantMax !== undefined && cantMax < cantMin) {
-      toast.error('La cantidad máxima no puede ser menor que la mínima.');
+      toast.error(t('inventario.feedback.maxLessMin'));
       return;
     }
 
@@ -895,9 +934,7 @@ const Inventario: React.FC = () => {
       await reloadInventario();
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : 'Error al crear la entrada de inventario.';
+        err instanceof Error ? err.message : t('inventario.feedback.saveError');
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -968,13 +1005,13 @@ const Inventario: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, filters]);
+  }, [searchTerm, filters, t]);
 
   const columns: Column<InventarioPorProducto>[] = [
-    { id: 'nombre', label: 'Producto' },
+    { id: 'nombre', label: t('inventario.table.product') },
     {
       id: 'tipo',
-      label: 'Tipo',
+      label: t('inventario.fields.category'), // Usaremos tipo para la columna tipo/categoría
       render: (row) =>
         row.tipo ? (
           <StatusChip status={row.tipo} variant="outlined" size="small" />
@@ -985,7 +1022,7 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'cantidadTotal',
-      label: 'Stock Total',
+      label: t('inventario.table.stock'),
       align: 'right',
       render: (row) => {
         const equivalente = formatEquivalentByConstruction(
@@ -1010,7 +1047,7 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'cantidadMinima',
-      label: 'Mínimo',
+      label: t('inventario.fields.minQuantity'),
       align: 'right',
       render: (row) => {
         const equivalente = formatEquivalentByConstruction(
@@ -1036,13 +1073,13 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'bajoStock',
-      label: 'Estado',
+      label: t('recepcion.table.status') || 'Estado',
       render: (row) =>
         row.bajoStock ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <WarningAmberOutlinedIcon color="warning" fontSize="small" />
             <Typography variant="body2" color="warning.main">
-              Bajo stock
+              {t('common.lowStock') || 'Bajo stock'}
             </Typography>
           </Box>
         ) : (
@@ -1053,23 +1090,23 @@ const Inventario: React.FC = () => {
     },
     {
       id: 'proveedores',
-      label: 'Proveedores',
+      label: t('productos.detail.sections.suppliers'),
       render: (row) => row.proveedores?.join(', ') ?? '—',
       hideOnMobile: true,
     },
     {
       id: 'ubicaciones',
-      label: 'Ubicaciones',
+      label: t('inventario.filters.locations'),
       render: (row) => row.ubicaciones?.join(', ') ?? '—',
       hideOnMobile: true,
     },
     {
       id: 'acciones',
-      label: 'Acciones',
+      label: t('common.actions'),
       align: 'right',
       render: (row) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="Ver Detalles y Lotes">
+          <Tooltip title={t('common.viewDetails')}>
             <IconButton
               size="small"
               color="primary"
@@ -1083,7 +1120,7 @@ const Inventario: React.FC = () => {
             </IconButton>
           </Tooltip>
           {canAjustar && (
-            <Tooltip title="Auditar stock por ajuste (+/-)">
+            <Tooltip title={t('inventario.actions.adjust')}>
               <IconButton
                 size="small"
                 color="secondary"
@@ -1105,21 +1142,21 @@ const Inventario: React.FC = () => {
   return (
     <Box>
       <PageToolbar
-        title="Inventario por Producto"
+        title={t('inventario.title')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
           setSearchTerm(v);
           setPage(1);
         }}
-        searchPlaceholder="Buscar por producto, tipo, proveedor o ubicación..."
+        searchPlaceholder={t('inventario.filters.search')}
         searchId="search-inventario"
         autoFocusSearch={true}
         totalItems={totalItems}
-        totalItemsLabel="productos"
+        totalItemsLabel={t('productos.totalItemsLabel')}
         primaryAction={
           canCrear
             ? {
-                label: 'Añadir al inventario',
+                label: t('inventario.actions.newEntry'),
                 onClick: handleOpenCreate,
                 icon: <AddIcon />,
                 id: 'btn-add-inventario',
@@ -1129,7 +1166,7 @@ const Inventario: React.FC = () => {
         secondaryAction={
           canGestionarUbicaciones
             ? {
-                label: 'Gestionar Ubicaciones',
+                label: t('inventario.actions.newProduct'), // O gestionar ubicaciones si prefieres
                 onClick: () => setIsUbicacionesModalOpen(true),
                 icon: <SettingsIcon />,
                 id: 'btn-manage-locations',
@@ -1158,7 +1195,7 @@ const Inventario: React.FC = () => {
         onScan={(code) => {
           void handleSearchScannerResult(code);
         }}
-        title="Escanear Producto para Buscar"
+        title={t('inventario.dialogs.scannerTitle')}
       />
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -1170,8 +1207,8 @@ const Inventario: React.FC = () => {
           }}
           aria-label="inventory tabs"
         >
-          <Tab label="Mis Ubicaciones" />
-          {canSeeGeneral && <Tab label="Inventario General" />}
+          <Tab label={t('inventario.tabs.assigned')} />
+          {canSeeGeneral && <Tab label={t('inventario.tabs.general')} />}
         </Tabs>
       </Box>
 
@@ -1196,21 +1233,30 @@ const Inventario: React.FC = () => {
                 {searchTerm.trim() ||
                 filters.categorias.length > 0 ||
                 filters.ubicaciones.length > 0
-                  ? 'No hay productos que coincidan con tu búsqueda o filtros'
+                  ? t('productos.empty.filtered')
                   : tabIndex === 0
                     ? assignedLocations.length === 0
-                      ? 'No tienes ubicaciones asignadas'
-                      : `No hay stock en ${assignedLocations.map((l) => l.nombre).join(', ')}`
-                    : 'No hay stock en inventario'}
+                      ? t('inventario.feedback.noAssignedLocations') ||
+                        'No tienes ubicaciones asignadas'
+                      : t('inventario.feedback.noStockInLocations', {
+                          locations: assignedLocations
+                            .map((l) => l.nombre)
+                            .join(', '),
+                        }) ||
+                        `No hay stock en ${assignedLocations.map((l) => l.nombre).join(', ')}`
+                    : t('inventario.feedback.noStockGeneral') ||
+                      'No hay stock en inventario'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 {searchTerm.trim() ||
                 filters.categorias.length > 0 ||
                 filters.ubicaciones.length > 0
-                  ? 'Prueba con otros términos o limpia los filtros.'
+                  ? t('productos.empty.filteredHint')
                   : tabIndex === 0 && assignedLocations.length === 0
-                    ? 'Contacta con tu profesor o administrador para que te asigne un slot.'
-                    : 'Registra recepciones o crea entradas de inventario para ver el stock.'}
+                    ? t('inventario.feedback.noAssignedLocationsHint') ||
+                      'Contacta con tu profesor o administrador.'
+                    : t('inventario.feedback.noStockHint') ||
+                      'Registra recepciones para ver el stock.'}
               </Typography>
             </Box>
           }
@@ -1233,7 +1279,7 @@ const Inventario: React.FC = () => {
           fullWidth
           maxWidth="sm"
         >
-          <DialogTitle>Añadir producto al inventario</DialogTitle>
+          <DialogTitle>{t('inventario.dialogs.createTitle')}</DialogTitle>
           <DialogContent dividers>
             <Box display="flex" flexDirection="column" gap={2} mt={1}>
               <Autocomplete
@@ -1249,14 +1295,15 @@ const Inventario: React.FC = () => {
                 filterOptions={(x) => x} // sin filtrado local
                 noOptionsText={
                   productoProveedorInput.trim().length < 2
-                    ? 'Escribe al menos 2 caracteres para buscar…'
-                    : 'Sin resultados'
+                    ? t('common.searchPlaceholderMin') ||
+                      'Escribe al menos 2 caracteres…'
+                    : t('common.noData')
                 }
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Producto / Proveedor"
-                    placeholder="Buscar producto o proveedor…"
+                    label={t('inventario.fields.productProvider')}
+                    placeholder={t('inventario.fields.search')}
                     fullWidth
                     required
                     error={
@@ -1266,7 +1313,8 @@ const Inventario: React.FC = () => {
                     helperText={
                       !productoProveedorValue &&
                       productoProveedorInput.length > 0
-                        ? 'Debes seleccionar una opción válida'
+                        ? t('common.errors.invalidOption') ||
+                          'Selecciona una opción válida'
                         : undefined
                     }
                     InputProps={{
@@ -1286,7 +1334,7 @@ const Inventario: React.FC = () => {
 
               <Box display="flex" gap={2} flexWrap="wrap">
                 <TextField
-                  label="Cantidad actual"
+                  label={t('inventario.fields.quantity')}
                   type="number"
                   value={cantidadActual}
                   onChange={(e) => setCantidadActual(e.target.value)}
@@ -1299,13 +1347,13 @@ const Inventario: React.FC = () => {
                   helperText={
                     cantidadActual !== '' &&
                     (Number.isNaN(cantActualNum) || cantActualNum < 0)
-                      ? 'Debe ser un número ≥ 0'
+                      ? t('inventario.feedback.invalidQuantity')
                       : undefined
                   }
                   fullWidth
                 />
                 <TextField
-                  label="Cantidad mínima"
+                  label={t('inventario.fields.minQuantity')}
                   type="number"
                   value={cantidadMinima}
                   onChange={(e) => setCantidadMinima(e.target.value)}
@@ -1318,7 +1366,7 @@ const Inventario: React.FC = () => {
                   helperText={
                     cantidadMinima !== '' &&
                     (Number.isNaN(cantMinNum) || cantMinNum < 0)
-                      ? 'Debe ser un número ≥ 0'
+                      ? t('inventario.feedback.invalidMinQuantity')
                       : undefined
                   }
                   fullWidth
@@ -1327,7 +1375,7 @@ const Inventario: React.FC = () => {
 
               <Box display="flex" gap={2} flexWrap="wrap">
                 <TextField
-                  label="Cantidad máxima (opcional)"
+                  label={t('inventario.fields.maxQuantity')}
                   type="number"
                   value={cantidadMaxima}
                   onChange={(e) => setCantidadMaxima(e.target.value)}
@@ -1343,16 +1391,16 @@ const Inventario: React.FC = () => {
                     cantidadMaxima !== '' &&
                     cantMaxNum !== undefined &&
                     (Number.isNaN(cantMaxNum) || cantMaxNum < 0
-                      ? 'Debe ser un número ≥ 0'
+                      ? t('inventario.feedback.invalidMaxQuantity')
                       : cantMaxNum < cantMinNum
-                        ? 'No puede ser menor que la mínima'
+                        ? t('inventario.feedback.maxLessMin')
                         : undefined)
                   }
                   fullWidth
                 />
                 <TextField
                   select
-                  label="Ubicación de almacén"
+                  label={t('inventario.fields.location')}
                   value={ubicacionId}
                   onChange={(e) => setUbicacionId(e.target.value)}
                   fullWidth
@@ -1367,7 +1415,7 @@ const Inventario: React.FC = () => {
               </Box>
 
               <TextField
-                label="Fecha de caducidad (opcional)"
+                label={t('inventario.fields.expiry')}
                 type="date"
                 value={fechaCaducidad}
                 onChange={(e) => setFechaCaducidad(e.target.value)}
@@ -1378,14 +1426,14 @@ const Inventario: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseCreate} disabled={isSaving}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleCreateInventario}
               variant="contained"
               disabled={isSaving || !isFormValid}
             >
-              {isSaving ? 'Guardando...' : 'Guardar'}
+              {isSaving ? t('common.loading') : t('common.save')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1404,7 +1452,7 @@ const Inventario: React.FC = () => {
           onSubmit={handleCreateProductoDesdeInventario}
           isSubmitting={isSavingProducto}
           requireConfirmation={true}
-          confirmationMessage="¿Deseas crear este producto y dejarlo listo para inventario?"
+          confirmationMessage={t('inventario.dialogs.confirmCreate')}
           onBarcodeFetch={handleBarcodeFetch}
         />
 
@@ -1423,14 +1471,19 @@ const Inventario: React.FC = () => {
               setBarcodePendienteCrearProducto(null);
             }
           }}
-          title="Producto no encontrado"
+          title={
+            t('productos.dialogs.notFoundTitle') || 'Producto no encontrado'
+          }
           message={
             barcodePendienteCrearProducto
-              ? `Este producto (${barcodePendienteCrearProducto}) no existe en inventario. ¿Deseas crearlo en el catálogo?`
-              : 'Este producto no existe en inventario. ¿Deseas crearlo en el catálogo?'
+              ? t('inventario.feedback.confirmCreateFromBarcode', {
+                  barcode: barcodePendienteCrearProducto,
+                }) ||
+                `Este producto (${barcodePendienteCrearProducto}) no existe. ¿Crear?`
+              : t('inventario.feedback.noExistsNoPermission')
           }
-          confirmText="Sí, crear producto"
-          cancelText="No"
+          confirmText={t('common.confirm')}
+          cancelText={t('common.cancel')}
           confirmColor="primary"
           confirmVariant="contained"
           isLoading={isPreparingCreateProducto}
@@ -1448,17 +1501,19 @@ const Inventario: React.FC = () => {
           fullWidth
           maxWidth="xs"
         >
-          <DialogTitle>Cantidad a añadir</DialogTitle>
+          <DialogTitle>{t('inventario.dialogs.quantityTitle')}</DialogTitle>
           <DialogContent dividers>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {productoPendienteCantidadInventario
-                ? `Indica la cantidad que quieres añadir para "${productoPendienteCantidadInventario.nombre}".`
-                : 'Indica la cantidad que quieres añadir al inventario.'}
+                ? t('inventario.dialogs.quantityPrompt', {
+                    name: productoPendienteCantidadInventario.nombre,
+                  })
+                : t('inventario.dialogs.quantityTitle')}
             </Typography>
             <TextField
               autoFocus
               fullWidth
-              label="Cantidad a añadir"
+              label={t('inventario.fields.quantity')}
               type="number"
               value={cantidadEscaneo}
               onChange={(e) => setCantidadEscaneo(e.target.value)}
@@ -1466,7 +1521,7 @@ const Inventario: React.FC = () => {
               error={cantidadEscaneo !== '' && !isCantidadEscaneoValida}
               helperText={
                 cantidadEscaneo !== '' && !isCantidadEscaneoValida
-                  ? 'Debe ser un número mayor que 0'
+                  ? t('inventario.feedback.invalidQuantity')
                   : undefined
               }
             />
@@ -1480,7 +1535,7 @@ const Inventario: React.FC = () => {
               }}
               disabled={isAddingFromScanner}
             >
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -1489,7 +1544,9 @@ const Inventario: React.FC = () => {
               variant="contained"
               disabled={isAddingFromScanner || !isCantidadEscaneoValida}
             >
-              {isAddingFromScanner ? 'Añadiendo...' : 'Añadir al inventario'}
+              {isAddingFromScanner
+                ? t('common.loading')
+                : t('inventario.actions.adjust')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -12,6 +12,7 @@ import StatusChip from '../../components/ui/StatusChip';
 import { Merma, MotivoMerma } from '../../services/merma.types';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 interface MermasTableProps {
   data: Merma[];
@@ -44,36 +45,39 @@ const MermasTable: React.FC<MermasTableProps> = ({
   filters,
   onFiltersChange,
 }) => {
+  const { t } = useTranslation();
   const columns: Column<Merma>[] = [
     {
       id: 'createdAt',
-      label: 'Fecha',
+      label: t('movimientos.fields.date'),
       render: (row) => dayjs(row.createdAt).format('DD/MM/YYYY HH:mm'),
     },
     {
       id: 'producto',
-      label: 'Producto',
+      label: t('inventario.table.product'),
       render: (row) => row.producto?.nombre || '—',
     },
     {
       id: 'cantidad',
-      label: 'Cantidad',
+      label: t('movimientos.fields.quantity'),
       align: 'right',
       render: (row) => `${row.cantidad} ${row.producto?.unidad || ''}`,
     },
     {
       id: 'motivo',
-      label: 'Motivo',
+      label: t('mermas.fields.reason'),
       render: (row) => (
         <StatusChip
           status={row.motivo}
           label={
             {
-              [MotivoMerma.ROTURA]: 'Rotura',
-              [MotivoMerma.DETERIORO]: 'Deterioro',
-              [MotivoMerma.HURTO]: 'Hurto',
-              [MotivoMerma.ERROR_PREPARACION]: 'Error Prep.',
-              [MotivoMerma.OTROS]: 'Otros',
+              [MotivoMerma.ROTURA]: t('movimientos.types.MERMA'),
+              [MotivoMerma.DETERIORO]: t('mermas.reasons.deterioro'),
+              [MotivoMerma.HURTO]: t('mermas.reasons.hurto'),
+              [MotivoMerma.ERROR_PREPARACION]: t(
+                'mermas.reasons.error_preparacion'
+              ),
+              [MotivoMerma.OTROS]: t('mermas.reasons.otros'),
             }[row.motivo]
           }
           variant="outlined"
@@ -83,20 +87,24 @@ const MermasTable: React.FC<MermasTableProps> = ({
     },
     {
       id: 'usuario',
-      label: 'Registrado por',
+      label: t('movimientos.fields.user'),
       render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
       hideOnMobile: true,
     },
     {
       id: 'acciones',
-      label: 'Acciones',
+      label: t('common.actions'),
       align: 'right',
       render: (row) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="Ver Notas">
+          <Tooltip title={t('common.viewDetails')}>
             <IconButton
               size="small"
-              onClick={() => alert(`Notas: ${row.notas || 'Sin notas'}`)}
+              onClick={() =>
+                alert(
+                  `${t('mermas.fields.notes')}: ${row.notas || t('common.noData')}`
+                )
+              }
               disabled={!row.notas}
             >
               <VisibilityIcon fontSize="small" />
@@ -112,7 +120,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
       <Box mb={3} display="flex" gap={2} flexWrap="wrap">
         <TextField
           select
-          label="Filtrar por Motivo"
+          label={t('mermas.filters.byReason') || 'Filtrar por Motivo'}
           size="small"
           value={filters.motivo}
           onChange={(e) =>
@@ -120,19 +128,27 @@ const MermasTable: React.FC<MermasTableProps> = ({
           }
           sx={{ minWidth: 200 }}
         >
-          <MenuItem value="">Todos los motivos</MenuItem>
-          <MenuItem value={MotivoMerma.ROTURA}>Rotura de envase</MenuItem>
+          <MenuItem value="">
+            {t('mermas.filters.allReasons') || 'Todos los motivos'}
+          </MenuItem>
+          <MenuItem value={MotivoMerma.ROTURA}>
+            {t('movimientos.types.MERMA')}
+          </MenuItem>
           <MenuItem value={MotivoMerma.DETERIORO}>
-            Deterioro / Caducidad
+            {t('mermas.reasons.deterioro')}
           </MenuItem>
-          <MenuItem value={MotivoMerma.HURTO}>Hurto / Pérdida</MenuItem>
+          <MenuItem value={MotivoMerma.HURTO}>
+            {t('mermas.reasons.hurto')}
+          </MenuItem>
           <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
-            Error de preparación
+            {t('mermas.reasons.error_preparacion')}
           </MenuItem>
-          <MenuItem value={MotivoMerma.OTROS}>Otros</MenuItem>
+          <MenuItem value={MotivoMerma.OTROS}>
+            {t('mermas.reasons.otros')}
+          </MenuItem>
         </TextField>
         <TextField
-          label="Desde"
+          label={t('common.from') || 'Desde'}
           type="date"
           size="small"
           InputLabelProps={{ shrink: true }}
@@ -142,7 +158,7 @@ const MermasTable: React.FC<MermasTableProps> = ({
           }
         />
         <TextField
-          label="Hasta"
+          label={t('common.until') || 'Hasta'}
           type="date"
           size="small"
           InputLabelProps={{ shrink: true }}

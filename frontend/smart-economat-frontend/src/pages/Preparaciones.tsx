@@ -19,6 +19,7 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useTranslation } from 'react-i18next';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import HistoryIcon from '@mui/icons-material/History';
@@ -221,6 +222,7 @@ type MermaIngredienteOption = {
 };
 
 const Preparaciones: React.FC = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -261,12 +263,14 @@ const Preparaciones: React.FC = () => {
       setTotalItems(response.total);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : 'Error al cargar preparaciones'
+        err instanceof Error
+          ? err.message
+          : t('preparaciones.feedback.loadError')
       );
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, activeTab]);
+  }, [page, pageSize, activeTab, t]);
 
   useEffect(() => {
     loadData();
@@ -321,33 +325,33 @@ const Preparaciones: React.FC = () => {
     mermaCantidadInput.length > 0 &&
     (mermaCantidad === null || mermaCantidad <= 0);
   const mermaCantidadLabel = selectedMermaIngrediente
-    ? `¿Cuánto se perdió? (${selectedMermaUnitInfo.fullLabel})`
-    : '¿Cuánto se perdió?';
+    ? t('preparaciones.dialogs.lostAmountWithUnit', {
+        unit: selectedMermaUnitInfo.fullLabel,
+      })
+    : t('preparaciones.dialogs.lostAmount');
   const mermaCantidadHelperText = isMermaCantidadInvalid
-    ? 'Introduce un número mayor que 0.'
+    ? t('inventario.feedback.invalidQuantity')
     : selectedMermaIngrediente
-      ? `Registra la merma en ${selectedMermaUnitInfo.fullLabel}. Ejemplo: ${selectedMermaUnitInfo.example} ${selectedMermaUnitInfo.shortLabel}.`
-      : 'Selecciona primero el ingrediente para ver en qué medida registrar la merma.';
+      ? t('preparaciones.dialogs.lostAmount', {
+          unit: selectedMermaUnitInfo.fullLabel,
+        })
+      : t('preparaciones.feedback.equivalenceError');
 
   const notifyExceededMax = useCallback(
     (mode: TipoConsumoProduccion) => {
       if (mode === 'raciones') {
-        toast.warning(
-          `Solo hay ${formatRations(availablePortions)} raciones disponibles en este lote.`
-        );
+        toast.warning(t('preparaciones.feedback.noStock'));
         return;
       }
 
       toast.warning(
-        `Solo puedes consumir ${formatAmount(maxConsumableAmount ?? 0)} ${consumingItem?.receta?.unidadResultado || ''}.`
+        t('preparaciones.feedback.maxAmount', {
+          amount: formatAmount(maxConsumableAmount ?? 0),
+          unit: consumingItem?.receta?.unidadResultado || '',
+        })
       );
     },
-    [
-      availablePortions,
-      consumingItem?.receta?.unidadResultado,
-      maxConsumableAmount,
-      toast,
-    ]
+    [maxConsumableAmount, toast, t, consumingItem?.receta?.unidadResultado]
   );
 
   const handleConsumptionInputChange = useCallback(
@@ -404,15 +408,16 @@ const Preparaciones: React.FC = () => {
 
     if (isCurrentValueInvalid || currentValue === null) {
       if (isAmountModeWithoutEquivalence) {
-        toast.error(
-          'Esta receta no tiene una equivalencia válida por ración para consumir por cantidad o peso.'
-        );
+        toast.error(t('preparaciones.feedback.noEquivalence'));
         return;
       }
 
       if (isAmountMultipleInvalid && rationAmount) {
         toast.error(
-          `La cantidad debe ser múltiplo de ${formatAmount(rationAmount)} ${consumingItem?.receta?.unidadResultado || 'unidad'}.`
+          t('preparaciones.feedback.invalidMultiple', {
+            amount: formatAmount(rationAmount),
+            unit: consumingItem?.receta?.unidadResultado || t('unidades.unit'),
+          })
         );
         return;
       }
@@ -424,7 +429,7 @@ const Preparaciones: React.FC = () => {
       ) {
         notifyExceededMax(consumeMode);
       } else {
-        toast.error('Introduce una cantidad válida para consumir.');
+        toast.error(t('preparaciones.feedback.invalidQuantity'));
       }
       return;
     }
@@ -434,7 +439,7 @@ const Preparaciones: React.FC = () => {
         tipo: consumeMode,
         valor: currentValue,
       });
-      toast.success('Consumo registrado correctamente.');
+      toast.success(t('preparaciones.feedback.consumeSuccess'));
       setConsumingId(null);
       setPortionsInput('1');
       setAmountInput('1');
@@ -443,7 +448,7 @@ const Preparaciones: React.FC = () => {
       const message =
         err instanceof Error
           ? err.message
-          : 'Error al consumir la preparación.';
+          : t('preparaciones.feedback.consumeError');
 
       if (/no hay suficientes/i.test(message)) {
         toast.warning(message);
@@ -478,7 +483,8 @@ const Preparaciones: React.FC = () => {
         .filter((item) => Boolean(item?.producto?.id))
         .map((item) => ({
           productoId: String(item.producto?.id),
-          productoNombre: item.producto?.nombre || 'Ingrediente',
+          productoNombre:
+            item.producto?.nombre || t('preparaciones.labels.ingredient'),
           unidad: item.unidad,
         }));
 
@@ -490,9 +496,7 @@ const Preparaciones: React.FC = () => {
 
       const recetaId = lote.recetaId || lote.receta?.id;
       if (!recetaId) {
-        setMermaLoadError(
-          'No se pudo resolver la receta del lote para cargar ingredientes.'
-        );
+        setMermaLoadError(t('preparaciones.feedback.recipeLoadError'));
         return;
       }
 
@@ -516,28 +520,28 @@ const Preparaciones: React.FC = () => {
         const message =
           err instanceof Error && err.message
             ? err.message
-            : 'No se pudo cargar el detalle de ingredientes para reportar merma.';
+            : t('preparaciones.feedback.mermaLoadError');
         setMermaLoadError(message);
       } finally {
         setIsLoadingMermaDetalle(false);
       }
     },
-    [resetMermaForm]
+    [resetMermaForm, t]
   );
 
   const handleSubmitMerma = async () => {
     if (!mermaLote) {
-      toast.error('Selecciona un lote de producción válido.');
+      toast.error(t('preparaciones.feedback.invalidLote'));
       return;
     }
 
     if (!mermaProductoId) {
-      toast.error('Selecciona el ingrediente con merma.');
+      toast.error(t('preparaciones.feedback.selectIngredient'));
       return;
     }
 
     if (mermaCantidad === null || mermaCantidad <= 0) {
-      toast.error('Introduce una cantidad de merma mayor que 0.');
+      toast.error(t('preparaciones.feedback.invalidQuantity'));
       return;
     }
 
@@ -551,7 +555,7 @@ const Preparaciones: React.FC = () => {
         notas: mermaNotas.trim() || undefined,
       });
 
-      toast.success('Merma de producción registrada correctamente.');
+      toast.success(t('preparaciones.feedback.mermaSuccess'));
       closeMermaDialog();
       await loadData();
     } catch (err: unknown) {
@@ -568,30 +572,30 @@ const Preparaciones: React.FC = () => {
   const columns: Column<ProduccionLote>[] = [
     {
       id: 'createdAt',
-      label: 'Fecha creación',
+      label: t('preparaciones.fields.creationDate'),
       render: (row) => formatDateTime(row.createdAt || row.fechaProduccion),
       hideOnMobile: true,
     },
     {
       id: 'receta',
-      label: 'Receta',
+      label: t('preparaciones.fields.recipe'),
       render: (row) => row.receta?.nombre ?? '—',
     },
     {
       id: 'cantidadProducida',
-      label: 'Cantidad',
+      label: t('preparaciones.fields.quantity'),
       align: 'right',
     },
     {
       id: 'costeTotalReal',
-      label: 'Coste Real',
+      label: t('preparaciones.fields.realCost'),
       align: 'right',
       render: (row) => `${Number(row.costeTotalReal).toFixed(2)}€`,
       hideOnMobile: true,
     },
     {
       id: 'usuario',
-      label: 'Cocinero/a',
+      label: t('preparaciones.fields.chef'),
       render: (row) => row.usuario?.nombre ?? '—',
       hideOnMobile: true,
     },
@@ -599,7 +603,7 @@ const Preparaciones: React.FC = () => {
       ? [
           {
             id: 'fechaAgotado' as const,
-            label: 'Fecha agotado',
+            label: t('preparaciones.fields.exhaustedDate'),
             render: (row: ProduccionLote) =>
               row.estado === 'agotado'
                 ? formatDateTime(row.fechaAgotado || null)
@@ -612,7 +616,7 @@ const Preparaciones: React.FC = () => {
       ? [
           {
             id: 'porcionesRestantes' as const,
-            label: 'Raciones disponibles',
+            label: t('preparaciones.fields.availableRations'),
             align: 'right' as const,
             render: (row: ProduccionLote) => (
               <Typography
@@ -627,7 +631,7 @@ const Preparaciones: React.FC = () => {
       : [
           {
             id: 'porcionesProducidas' as const,
-            label: 'Raciones preparadas',
+            label: t('preparaciones.fields.preparedRations'),
             align: 'right' as const,
             render: (row: ProduccionLote) => (
               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -640,7 +644,7 @@ const Preparaciones: React.FC = () => {
 
   const renderActions = (row: ProduccionLote) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title="Ver detalles">
+      <Tooltip title={t('preparaciones.actions.viewDetail')}>
         <IconButton
           color="primary"
           onClick={(e) => {
@@ -648,13 +652,13 @@ const Preparaciones: React.FC = () => {
             setItemToView(row);
           }}
           size="small"
-          aria-label="Ver detalles"
+          aria-label={t('preparaciones.actions.viewDetail')}
         >
           <VisibilityIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       {activeTab === 0 && row.estado === 'disponible' && (
-        <Tooltip title="Consumir raciones o cantidad">
+        <Tooltip title={t('preparaciones.actions.consume')}>
           <IconButton
             color="success"
             onClick={(e) => {
@@ -667,14 +671,14 @@ const Preparaciones: React.FC = () => {
               setConsumeMode('raciones');
             }}
             size="small"
-            aria-label="Consumir preparación"
+            aria-label={t('preparaciones.actions.consume')}
           >
             <LocalDiningIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
       {activeTab === 0 && row.estado === 'disponible' && (
-        <Tooltip title="Reportar merma de ingrediente">
+        <Tooltip title={t('preparaciones.actions.reportMerma')}>
           <IconButton
             color="warning"
             onClick={(e) => {
@@ -682,7 +686,7 @@ const Preparaciones: React.FC = () => {
               void openMermaDialog(row);
             }}
             size="small"
-            aria-label="Reportar merma de ingrediente"
+            aria-label={t('preparaciones.actions.reportMerma')}
           >
             <ReportProblemIcon fontSize="small" />
           </IconButton>
@@ -694,57 +698,60 @@ const Preparaciones: React.FC = () => {
   const viewSections: DetailSection[] = itemToView
     ? [
         {
-          title: 'Información General',
+          title: t('movimientos.dialogs.generalInfo'),
           columns: 3,
           fields: [
-            { label: 'Receta', value: itemToView.receta?.nombre },
             {
-              label: 'Fecha de ejecución',
+              label: t('preparaciones.fields.recipe'),
+              value: itemToView.receta?.nombre,
+            },
+            {
+              label: t('preparaciones.fields.creationDate'),
               value: formatDateTime(itemToView.fechaProduccion),
             },
             {
-              label: 'Fecha de creación',
+              label: t('common.createdAt'),
               value: formatDateTime(
                 itemToView.createdAt || itemToView.fechaProduccion
               ),
             },
             {
-              label: 'Fecha de agotado',
+              label: t('preparaciones.fields.exhaustedDate'),
               value:
                 itemToView.estado === 'agotado'
                   ? formatDateTime(itemToView.fechaAgotado || null)
-                  : 'Aún disponible',
+                  : t('preparaciones.tabs.available'),
             },
             {
-              label: 'Cantidad Producida',
+              label: t('preparaciones.fields.quantity'),
               value: itemToView.cantidadProducida,
             },
             ...(activeTab === 0
               ? [
                   {
-                    label: 'Raciones disponibles',
-                    value: `${formatRations(itemToView.porcionesRestantes)} raciones`,
+                    label: t('preparaciones.fields.availableRations'),
+                    value: `${formatRations(itemToView.porcionesRestantes)} ${t('preparaciones.dialogs.rations')}`,
                   },
                 ]
               : [
                   {
-                    label: 'Raciones preparadas',
-                    value: `${formatRations(itemToView.porcionesProducidas)} raciones`,
+                    label: t('preparaciones.fields.preparedRations'),
+                    value: `${formatRations(itemToView.porcionesProducidas)} ${t('preparaciones.dialogs.rations')}`,
                   },
                 ]),
             {
-              label: 'Coste Total Real',
+              label: t('preparaciones.fields.realCost'),
               value: `${Number(itemToView.costeTotalReal).toFixed(4)}€`,
             },
             {
-              label: 'Caducidad',
+              label: t('preparaciones.fields.expiration'),
               value: itemToView.fechaCaducidad
                 ? new Date(itemToView.fechaCaducidad).toLocaleDateString()
-                : 'No definida',
+                : t('common.noDefinido'),
             },
             {
-              label: 'Equivalencia',
-              value: formatRationInfo(itemToView) ?? 'No definida',
+              label: t('preparaciones.fields.equivalence'),
+              value: formatRationInfo(itemToView) ?? t('common.noDefinido'),
             },
           ],
         },
@@ -764,12 +771,12 @@ const Preparaciones: React.FC = () => {
           <Tab
             icon={<RestaurantIcon />}
             iconPosition="start"
-            label="Disponibles"
+            label={t('preparaciones.tabs.available')}
           />
           <Tab
             icon={<HistoryIcon />}
             iconPosition="start"
-            label="Agotadas (Consumidas)"
+            label={t('preparaciones.tabs.consumed')}
           />
         </Tabs>
       </Box>
@@ -792,10 +799,10 @@ const Preparaciones: React.FC = () => {
                 sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
               />
               <Typography variant="h6" color="text.secondary">
-                No hay preparaciones registradas
+                {t('preparaciones.empty.noRecords')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Ejecuta una receta para ver su historial aquí.
+                {t('preparaciones.empty.executeRecipe')}
               </Typography>
             </Box>
           }

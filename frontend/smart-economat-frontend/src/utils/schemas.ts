@@ -1,36 +1,51 @@
 import { DynamicField } from '../components/ui/DynamicFormModal';
 import { MotivoMerma } from '../services/merma.types';
 
-export const mermaSchema: DynamicField[] = [
+export const getMermaSchema = (t: (key: string) => string): DynamicField[] => [
   {
     name: 'productoId',
-    label: 'Producto',
+    label: t('mermas.fields.product'),
     type: 'select',
     required: true,
     options: [], // Se rellena dinámicamente
   },
   {
     name: 'cantidad',
-    label: '¿Cuánto se perdió? (según la medida del producto)',
+    label: t('mermas.fields.quantity'),
     type: 'number',
     required: true,
   },
   {
     name: 'motivo',
-    label: 'Motivo de la merma',
+    label: t('mermas.fields.reason'),
     type: 'select',
     required: true,
     options: [
-      { value: MotivoMerma.ROTURA, label: 'Rotura de envase' },
-      { value: MotivoMerma.DETERIORO, label: 'Deterioro / Caducidad' },
-      { value: MotivoMerma.HURTO, label: 'Hurto / Pérdida' },
-      { value: MotivoMerma.ERROR_PREPARACION, label: 'Error de preparación' },
-      { value: MotivoMerma.OTROS, label: 'Otros motivos' },
+      {
+        value: MotivoMerma.ROTURA,
+        label: t('movimientos.types.MERMA') + ' - ' + t('mermas.fields.reason'),
+      },
+      {
+        value: MotivoMerma.DETERIORO,
+        label: t('mermas.reasons.deterioro') || 'Deterioro / Caducidad',
+      },
+      {
+        value: MotivoMerma.HURTO,
+        label: t('mermas.reasons.hurto') || 'Hurto / Pérdida',
+      },
+      {
+        value: MotivoMerma.ERROR_PREPARACION,
+        label: t('mermas.reasons.error_preparacion') || 'Error de preparación',
+      },
+      {
+        value: MotivoMerma.OTROS,
+        label: t('mermas.reasons.otros') || 'Otros motivos',
+      },
     ],
   },
   {
     name: 'notas',
-    label: 'Observaciones / Notas',
+    label: t('mermas.fields.notes'),
     type: 'textarea',
     position: 'bottom',
   },

@@ -54,6 +54,7 @@ import { formatPedidoId } from '../features/pedidos/utils/pedidoFormatters';
 import { getPedidoSchema } from '../features/pedidos/utils/pedidoSchema';
 import { DownloadService } from '../services/download.service';
 import { useToast } from '../store/toast.hooks';
+import { useTranslation } from 'react-i18next';
 
 interface PedidoActionTarget {
   id: string;
@@ -107,6 +108,7 @@ const Pedidos: React.FC = () => {
   const [isNewPedidoWarningOpen, setIsNewPedidoWarningOpen] = useState(false);
   const [isDraftCloseConfirmOpen, setIsDraftCloseConfirmOpen] = useState(false);
   const hasPromptedRef = useRef(false);
+  const { t } = useTranslation();
   const latestValsRef = useRef<Record<string, unknown>>({});
   const { user } = useAuth();
   const toast = useToast();
@@ -232,7 +234,10 @@ const Pedidos: React.FC = () => {
     },
   });
 
-  const pedidoSchema = useMemo(() => getPedidoSchema(itemToEdit), [itemToEdit]);
+  const pedidoSchema = useMemo(
+    () => getPedidoSchema(itemToEdit, t),
+    [itemToEdit, t]
+  );
 
   useEffect(() => {
     void loadDraft();
@@ -573,7 +578,7 @@ const Pedidos: React.FC = () => {
             variant: 'outlined',
           },
           {
-            label: 'Exportar Excel',
+            label: t('pedidos.actions.exportExcel'),
             onClick: () => {
               void handleExportExcel();
             },
@@ -663,20 +668,18 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToDelete}
           onClose={() => !isDeleting && setItemToDelete(null)}
           onConfirm={() => void handleDeleteConfirm()}
-          title="Eliminar pedido"
+          title={t('pedidos.dialogs.deleteTitle')}
           message={
             <>
-              ¿Estás seguro de que deseas eliminar el pedido del{' '}
-              <strong>
-                {itemToDelete?.fechaPedido
+              {t('pedidos.dialogs.deleteMessage', {
+                date: itemToDelete?.fechaPedido
                   ? dayjs(itemToDelete.fechaPedido).format('DD/MM/YYYY')
-                  : ''}
-              </strong>
-              ? Esta acción no se puede deshacer.
+                  : '',
+              })}
             </>
           }
-          confirmText="Sí, eliminar"
-          cancelText="Cancelar"
+          confirmText={t('common.confirmDelete')}
+          cancelText={t('common.cancel')}
           isLoading={isDeleting}
         />
 
@@ -684,37 +687,19 @@ const Pedidos: React.FC = () => {
           isOpen={!!itemToAceptar}
           onClose={() => !isAceptando && setItemToAceptar(null)}
           onConfirm={() => void handleAceptarConfirm()}
-          title="Aprobar Pedido"
+          title={t('pedidos.dialogs.approveTitle')}
           message={
             <>
-              {itemToAceptar?.targetType === 'purchase_batch' ? (
-                <>
-                  ¿Estás seguro de que deseas tramitar la compra{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                  </strong>
-                  ({formatPedidoId(itemToAceptar?.id)})? La compra avanzará a su
-                  siguiente estado operativo.
-                </>
-              ) : (
-                <>
-                  ¿Estás seguro de que deseas aprobar el pedido{' '}
-                  <strong>
-                    {itemToAceptar?.numeroGlobal
-                      ? `#${itemToAceptar.numeroGlobal} `
-                      : ''}
-                    ({formatPedidoId(itemToAceptar?.id)})
-                  </strong>{' '}
-                  al proveedor <strong>{itemToAceptar?.proveedorNombre}</strong>
-                  ? Pasará a estar "En Proceso" y se considerará tramitado.
-                </>
-              )}
+              {t('pedidos.dialogs.approveMessage', {
+                id: itemToAceptar?.numeroGlobal
+                  ? `#${itemToAceptar.numeroGlobal}`
+                  : formatPedidoId(itemToAceptar?.id),
+                provider: itemToAceptar?.proveedorNombre || '',
+              })}
             </>
           }
-          confirmText="Sí, Aprobar"
-          cancelText="Cancelar"
+          confirmText={t('pedidos.actions.approve')}
+          cancelText={t('common.cancel')}
           isLoading={isAceptando}
           confirmColor="success"
         />
@@ -724,14 +709,14 @@ const Pedidos: React.FC = () => {
           onClose={() => !isCancelando && setItemToCancelar(null)}
           title={
             itemToCancelar?.targetType === 'purchase_batch'
-              ? `Cancelar Compra: ${formatPedidoId(itemToCancelar?.id)}`
-              : `Cancelar Pedido: ${itemToCancelar?.proveedorNombre || ''}`
+              ? `${t('pedidos.actions.cancel')} ${t('pedidos.tabs.purchases')}: ${formatPedidoId(itemToCancelar?.id)}`
+              : `${t('pedidos.actions.cancel')} ${t('pedidos.tabs.all')}: ${itemToCancelar?.proveedorNombre || ''}`
           }
           size="sm"
           fields={[
             {
               name: 'motivoCancelacion',
-              label: 'Motivo de Cancelación (Opcional)',
+              label: t('pedidos.fields.cancelReason'),
               type: 'text',
               width: 12,
               required: false,
@@ -749,17 +734,17 @@ const Pedidos: React.FC = () => {
           title={
             itemToEdit?.targetType === 'purchase_batch'
               ? isItemToEditEditable
-                ? `Editar Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                : `Detalles de la Compra ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                ? `${t('common.edit')} ${t('pedidos.tabs.purchases')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                : `${t('pedidos.actions.details')} ${t('pedidos.tabs.purchases')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
               : itemToEdit?.targetType === 'pedido_usuario'
                 ? isItemToEditEditable
-                  ? `Editar Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
-                  : `Detalles del Pedido ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)} (Solo lectura)`
+                  ? `${t('common.edit')} ${t('pedidos.tabs.all')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
+                  : `${t('pedidos.actions.details')} ${t('pedidos.tabs.all')} ${itemToEdit?.numeroGlobal ? `#${itemToEdit.numeroGlobal}` : formatPedidoId(itemToEdit?.batchId || itemToEdit?.id)}`
                 : itemToEdit?.id
                   ? isItemToEditEditable
-                    ? 'Editar Pedido'
-                    : 'Detalles del Pedido (Solo lectura)'
-                  : 'Crear Nuevo Pedido'
+                    ? `${t('common.edit')} ${t('pedidos.tabs.all')}`
+                    : `${t('pedidos.actions.details')} ${t('pedidos.tabs.all')}`
+                  : t('pedidos.actions.newOrder')
           }
           size="lg"
           fields={pedidoSchema}
@@ -770,14 +755,14 @@ const Pedidos: React.FC = () => {
           isSubmitting={isSaving}
           onValuesChange={handleValuesChange}
           requireConfirmation={isItemToEditEditable}
-          submitLabel={isItemToEditEditable ? 'Guardar' : 'Cerrar'}
-          cancelLabel={isItemToEditEditable ? 'Cancelar' : ''}
+          submitLabel={
+            isItemToEditEditable ? t('common.save') : t('common.close')
+          }
+          cancelLabel={isItemToEditEditable ? t('common.cancel') : ''}
           confirmationMessage={
             itemToEdit?.id
-              ? itemToEdit.targetType === 'purchase_batch'
-                ? '¿Estás seguro de que deseas guardar los cambios en esta compra?'
-                : '¿Estás seguro de que deseas guardar los cambios en este pedido?'
-              : '¿Estás seguro de que deseas registrar este nuevo pedido?'
+              ? t('pedidos.dialogs.confirmSave')
+              : t('pedidos.dialogs.confirmCreate')
           }
         />
 

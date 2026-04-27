@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
+import { useTranslation } from 'react-i18next';
 import PageToolbar from '../components/ui/PageToolbar';
 import { MermasTable, MermaStats } from '../features/mermas';
 import {
@@ -16,7 +17,7 @@ import {
   MotivoMerma,
 } from '../services/merma.types';
 import DynamicFormModal from '../components/ui/DynamicFormModal';
-import { mermaSchema } from '../utils/schemas';
+import { getMermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
 import { fetchAllProductos } from '../services/producto.service';
 
@@ -32,6 +33,7 @@ const formatProductoMedidaLabel = (
 };
 
 const MermasPage: React.FC = () => {
+  const { t } = useTranslation();
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [stats, setStats] = useState<IMermaStats | null>(null);
   const [total, setTotal] = useState(0);
@@ -72,12 +74,12 @@ const MermasPage: React.FC = () => {
       setStats(statsData);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al cargar datos de mermas';
+        err instanceof Error ? err.message : t('mermas.feedback.loadError');
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, filters, toast]);
+  }, [page, pageSize, filters, toast, t]);
 
   useEffect(() => {
     loadData();
@@ -108,34 +110,36 @@ const MermasPage: React.FC = () => {
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success('Merma registrada correctamente');
+      toast.success(t('mermas.feedback.saveSuccess'));
       setIsModalOpen(false);
       loadData();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Error al registrar merma';
+        err instanceof Error ? err.message : t('mermas.feedback.saveError');
       toast.error(message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const dynamicSchema = mermaSchema.map((field) => {
-    if (field.name === 'productoId') {
-      return { ...field, options: productos };
-    }
-    return field;
-  });
+  const dynamicSchema = useMemo(() => {
+    return getMermaSchema(t).map((field) => {
+      if (field.name === 'productoId') {
+        return { ...field, options: productos };
+      }
+      return field;
+    });
+  }, [t, productos]);
 
   return (
     <Box>
       <PageToolbar
-        title="Gestión de Mermas"
+        title={t('mermas.title')}
         icon={<BrokenImageOutlinedIcon />}
         totalItems={total}
         totalItemsLabel="registros"
         primaryAction={{
-          label: 'Reportar Merma',
+          label: t('mermas.actions.report'),
           icon: <AddIcon />,
           onClick: () => setIsModalOpen(true),
         }}
@@ -146,7 +150,7 @@ const MermasPage: React.FC = () => {
 
         <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
           <Typography variant="h6" fontWeight={600} mb={3}>
-            Historial de Mermas
+            {t('mermas.fields.history')}
           </Typography>
           <MermasTable
             data={mermas}
@@ -165,12 +169,12 @@ const MermasPage: React.FC = () => {
       <DynamicFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Registrar Merma de Producto"
+        title={t('mermas.dialogs.createTitle')}
         fields={dynamicSchema}
         onSubmit={handleCreateMerma}
         isSubmitting={isSaving}
         requireConfirmation={true}
-        confirmationMessage="Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?"
+        confirmationMessage={t('mermas.dialogs.confirmMessage')}
       />
     </Box>
   );

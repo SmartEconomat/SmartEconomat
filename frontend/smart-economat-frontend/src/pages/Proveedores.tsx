@@ -37,13 +37,35 @@ import AddIcon from '@mui/icons-material/Add';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { DownloadService } from '../services/download.service';
 
-const proveedorSchema: DynamicField[] = [
-  { name: 'nif', label: 'NIF / CUIT', required: true, width: 4 },
-  { name: 'nombre', label: 'Razón Social', required: true, width: 8 },
-  { name: 'contacto', label: 'Persona de Contacto' },
-  { name: 'telefono', label: 'Teléfono', width: 6 },
-  { name: 'email', label: 'Email', type: 'text', width: 6 },
-  { name: 'direccion', label: 'Dirección' },
+const getProveedorSchema = (t: (key: string) => string): DynamicField[] => [
+  {
+    name: 'nif',
+    label: t('proveedores.fields.nif') || 'NIF / CIF',
+    required: true,
+    width: 4,
+  },
+  {
+    name: 'nombre',
+    label: t('proveedores.fields.businessName') || 'Razón Social',
+    required: true,
+    width: 8,
+  },
+  {
+    name: 'contacto',
+    label: t('proveedores.fields.contactPerson') || 'Persona de Contacto',
+  },
+  {
+    name: 'telefono',
+    label: t('proveedores.fields.phone') || 'Teléfono',
+    width: 6,
+  },
+  {
+    name: 'email',
+    label: t('proveedores.fields.email') || 'Email',
+    type: 'text',
+    width: 6,
+  },
+  { name: 'direccion', label: t('proveedores.fields.address') || 'Dirección' },
 ];
 
 const Proveedores: React.FC = () => {
@@ -206,7 +228,7 @@ const Proveedores: React.FC = () => {
     { id: 'nombre', label: t('proveedores.table.name'), sortable: true },
     {
       id: 'nif',
-      label: 'NIF',
+      label: t('proveedores.fields.nif') || 'NIF',
       render: (row) => row.nif ?? '—',
       sortable: true,
       responsiveDisplay: { xs: 'none', md: 'table-cell' },
@@ -227,7 +249,7 @@ const Proveedores: React.FC = () => {
     },
     {
       id: 'email',
-      label: 'Email',
+      label: t('proveedores.fields.email') || 'Email',
       render: (row) => row.email ?? '—',
       sortable: true,
       responsiveDisplay: { xs: 'none', lg: 'table-cell' },
@@ -240,7 +262,7 @@ const Proveedores: React.FC = () => {
         <IconButton
           onClick={() => handleViewClick(row)}
           size="small"
-          aria-label="Ver detalle"
+          aria-label={t('common.viewDetails')}
           sx={{ color: 'text.secondary' }}
         >
           <VisibilityIcon fontSize="small" />
@@ -252,7 +274,7 @@ const Proveedores: React.FC = () => {
             color="secondary"
             onClick={() => handleEditClick(row)}
             size="small"
-            aria-label="Editar"
+            aria-label={t('common.edit')}
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -264,7 +286,7 @@ const Proveedores: React.FC = () => {
             color="error"
             onClick={() => setItemToDelete(row)}
             size="small"
-            aria-label="Borrar"
+            aria-label={t('common.delete')}
           >
             <DeleteIcon fontSize="small" />
           </IconButton>
@@ -385,7 +407,7 @@ const Proveedores: React.FC = () => {
               : t('proveedores.actions.newProvider')
           }
           size="md"
-          fields={proveedorSchema}
+          fields={getProveedorSchema(t)}
           initialData={itemToEdit || {}}
           onSubmit={handleSave}
           isSubmitting={isSaving}
@@ -435,7 +457,10 @@ const Proveedores: React.FC = () => {
                   label: t('proveedores.table.name'),
                   value: itemToView?.nombre,
                 },
-                { label: 'NIF / CUIT', value: itemToView?.nif },
+                {
+                  label: t('proveedores.fields.nif') || 'NIF / CIF',
+                  value: itemToView?.nif,
+                },
               ],
             },
             {
@@ -449,7 +474,11 @@ const Proveedores: React.FC = () => {
                   label: t('proveedores.table.phone'),
                   value: itemToView?.telefono,
                 },
-                { label: 'Email', value: itemToView?.email, fullWidth: true },
+                {
+                  label: t('proveedores.fields.email') || 'Email',
+                  value: itemToView?.email,
+                  fullWidth: true,
+                },
               ],
             },
             {
