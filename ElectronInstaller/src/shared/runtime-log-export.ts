@@ -8,6 +8,11 @@ function splitLogLine(line: string): string[] {
   return line.replace(/\r\n/g, "\n").split("\n");
 }
 
+/**
+ * Expone la operación "formatRuntimeLogTimestamp" del instalador SmartEconomat.
+ * @param {string} value - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function formatRuntimeLogTimestamp(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -20,6 +25,11 @@ export function formatRuntimeLogTimestamp(value: string): string {
   ].join(" ");
 }
 
+/**
+ * Expone la operación "serializeVisibleRuntimeLogs" del instalador SmartEconomat.
+ * @param {RuntimeLogEvent[]} logs - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function serializeVisibleRuntimeLogs(logs: RuntimeLogEvent[]): string {
   return logs
     .flatMap((log) => {
@@ -33,6 +43,11 @@ export function serializeVisibleRuntimeLogs(logs: RuntimeLogEvent[]): string {
     .join("\n");
 }
 
+/**
+ * Expone la operación "buildRuntimeLogsExportFileName" del instalador SmartEconomat.
+ * @param {Date} date - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function buildRuntimeLogsExportFileName(date = new Date()): string {
   const stamp = [
     `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`,

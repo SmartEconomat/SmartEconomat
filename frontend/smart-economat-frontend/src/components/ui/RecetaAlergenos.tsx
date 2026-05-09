@@ -5,19 +5,20 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { RecetaIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface RecetaAlergenosProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   ingredientes?: RecetaIngrediente[];
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
   ingredientes = [],
@@ -42,7 +43,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isGlutenFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label={t('recetas.sinGluten')}
+          label={t('recipes.alergenos.sinGluten')}
           color={isGlutenFree ? 'success' : 'error'}
           variant={isGlutenFree ? 'filled' : 'outlined'}
         />
@@ -51,14 +52,14 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
           icon={
             isLacteosFree ? <CheckCircleOutlineIcon /> : <WarningAmberIcon />
           }
-          label={t('recetas.sinLacteos')}
+          label={t('recipes.alergenos.sinLacteos')}
           color={isLacteosFree ? 'success' : 'error'}
           variant={isLacteosFree ? 'filled' : 'outlined'}
         />
       </Box>
 
       {presentIds.size === 0 ? (
-        <Alert severity="success">{t('receta.alergenos.sinAlergenos')}</Alert>
+        <Alert severity="success">{t('recipes.alergenos.sinAlergenos')}</Alert>
       ) : (
         <Box
           sx={{
@@ -74,8 +75,12 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                 key={allergen.id}
                 title={
                   isPresent
-                    ? t('receta.alergenos.contiene', { nombre: allergen.label })
-                    : t('receta.alergenos.sin', { nombre: allergen.label })
+                    ? t('recipes.alergenos.contiene', {
+                        nombre: getEnumLabel(t, 'alergeno', allergen.id),
+                      })
+                    : t('recipes.alergenos.sin', {
+                        nombre: getEnumLabel(t, 'alergeno', allergen.id),
+                      })
                 }
               >
                 <Box
@@ -114,7 +119,7 @@ const RecetaAlergenos: React.FC<RecetaAlergenosProps> = ({
                       color: isPresent ? 'warning.dark' : 'text.disabled',
                     }}
                   >
-                    {allergen.label}
+                    {getEnumLabel(t, 'alergeno', allergen.id)}
                   </Typography>
                 </Box>
               </Tooltip>

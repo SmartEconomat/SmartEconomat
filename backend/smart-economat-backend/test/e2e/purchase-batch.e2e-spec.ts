@@ -5,6 +5,7 @@ import { DataSource, In } from 'typeorm';
 import { loginAndGetToken, generateUniqueName } from '../utils/test-helpers';
 import { Pedido } from '../../src/modules/pedido/pedido.entity/pedido.entity';
 import { PedidoDraft } from '../../src/modules/pedido-draft/pedido-draft.entity/pedido-draft.entity';
+import { EstadoPedidoUsuario } from '../../src/modules/pedido/enums/estado-pedido-usuario.enum';
 
 describe('PurchaseBatchController (e2e)', () => {
   let app: INestApplication;
@@ -74,6 +75,22 @@ describe('PurchaseBatchController (e2e)', () => {
 
     expect(res.status).toBe(201);
     return res.body.data.id as string;
+  }
+
+  async function createPedidoUsuario(productoProveedorIds: string[]) {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/pedido-usuarios')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        observaciones: 'Pedido usuario para consolidacion E2E',
+        lineas: productoProveedorIds.map((productoProveedorId, index) => ({
+          productoProveedorId,
+          cantidad: index + 1,
+        })),
+      });
+
+    expect(res.status).toBe(201);
+    return res.body.data;
   }
 
   it('POST /purchase-batches - Debería crear un lote con pedidos agrupados por proveedor', async () => {
@@ -287,5 +304,79 @@ describe('PurchaseBatchController (e2e)', () => {
         (pedido: { estado: string }) => pedido.estado === 'cancelado'
       )
     ).toBe(true);
+  });
+
+  it('POST /purchase-batches/consolidate - Estado consolidado con auto-aprobación', async () => {
+    const proveedor = await createProveedor();
+    const pp = await createProductoConProveedor(proveedor.id);
+    const pedidoUsuario = await createPedidoUsuario([pp]);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/purchase-batches/consolidate')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        pedidoUsuarioIds: [pedidoUsuario.id],
+        autoApprovePending: true,
+      });
+
+    expect(res.status).toBe(201);
+    const pedidoUsuarioRes = await request(app.getHttpServer())
+      .get(`/api/v1/pedido-usuarios/${pedidoUsuario.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(pedidoUsuarioRes.status).toBe(200);
+    expect(pedidoUsuarioRes.body.data.estado).toBe(
+      EstadoPedidoUsuario.CONSOLIDADO
+    );
+  });
+
+  it('POST /purchase-batches/consolidate - Bloquea pendientes sin auto-aprobación', async () => {
+    const proveedor = await createProveedor();
+    const pp = await createProductoConProveedor(proveedor.id);
+    const pedidoUsuario = await createPedidoUsuario([pp]);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/purchase-batches/consolidate')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        pedidoUsuarioIds: [pedidoUsuario.id],
+      });
+
+    expect(res.status).toBe(400);
+    expect(String(res.body.message || '')).toContain('autoApprovePending=true');
+  });
+
+  it('POST /purchase-batches/consolidate - Consolidación masiva de varios pedidos de usuario', async () => {
+    const proveedorA = await createProveedor();
+    const proveedorB = await createProveedor();
+    const ppA = await createProductoConProveedor(proveedorA.id);
+    const ppB = await createProductoConProveedor(proveedorB.id);
+
+    const pedidoUsuarioA = await createPedidoUsuario([ppA]);
+    const pedidoUsuarioB = await createPedidoUsuario([ppB]);
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/purchase-batches/consolidate')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        pedidoUsuarioIds: [pedidoUsuarioA.id, pedidoUsuarioB.id],
+        autoApprovePending: true,
+        observaciones: 'Consolidación masiva E2E',
+      });
+
+    expect(res.status).toBe(201);
+    expect(Array.isArray(res.body.data.pedidos)).toBe(true);
+    expect(res.body.data.pedidos.length).toBeGreaterThanOrEqual(2);
+
+    const [aAfter, bAfter] = await Promise.all([
+      request(app.getHttpServer())
+        .get(`/api/v1/pedido-usuarios/${pedidoUsuarioA.id}`)
+        .set('Authorization', `Bearer ${adminToken}`),
+      request(app.getHttpServer())
+        .get(`/api/v1/pedido-usuarios/${pedidoUsuarioB.id}`)
+        .set('Authorization', `Bearer ${adminToken}`),
+    ]);
+
+    expect(aAfter.body.data.id).toBeDefined();
+    expect(bAfter.body.data.id).toBeDefined();
   });
 });

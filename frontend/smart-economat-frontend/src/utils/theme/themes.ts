@@ -1,14 +1,17 @@
 import { createTheme, Theme } from '@mui/material/styles';
 
+/** Alias público (ThemeName) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ThemeName =
   | 'light'
   | 'dark'
   | 'highContrastLight'
   | 'highContrastDark';
+/** Contrato de tipos público (ProductoFiltros). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoFiltros {
   categoria?: string;
   stockBajo?: boolean;
 }
+/** Alias público (FontSize) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type FontSize = 'small' | 'medium' | 'large';
 
 const getFontSize = (size: FontSize) => {
@@ -105,7 +108,7 @@ const highContrastLightPalette = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const highContrastDarkPalette = {
   mode: 'dark' as const,
@@ -139,7 +142,7 @@ const highContrastDarkPalette = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const a11yComponentDefaults = {
   MuiDialog: {
@@ -169,6 +172,12 @@ const a11yComponentDefaults = {
   },
 };
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {ThemeName} themeName - Entrada efectiva esperada por el contrato.
+ * @undefined {FontSize} fontSize - Entrada efectiva esperada por el contrato.
+ * @undefined {Theme} Datos efectivos después de ejecutar la operación.
+ */
 export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
   const typography = getTypography(fontSize) as Record<string, unknown>;
   let palette;
@@ -253,7 +262,7 @@ export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const baseComponents = {
     ...a11yComponentDefaults,

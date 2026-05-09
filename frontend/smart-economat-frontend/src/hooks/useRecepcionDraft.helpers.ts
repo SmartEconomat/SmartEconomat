@@ -4,6 +4,7 @@ import {
   RecepcionDraftEnvelope,
 } from '../services/recepcion.types';
 
+/** Constantes públicas (RECEPCION_STEP_ORDER) expuestas en smart-economat-frontend (SPA). */
 export const RECEPCION_STEP_ORDER: PasoWizard[] = [
   'SELECCION_PEDIDOS',
   'ESCANEO_LOTE',
@@ -22,6 +23,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Expone "hasRecepcionDraftContent" en smart-economat-frontend (SPA).
+ * @undefined {RecepcionDraft} draft - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function hasRecepcionDraftContent(draft: RecepcionDraft): boolean {
   const hasSelectedPedidos = draft.pedidosSeleccionados.length > 0;
   const hasSpontaneousProducts = draft.productosEspontaneos.length > 0;
@@ -37,6 +43,11 @@ export function hasRecepcionDraftContent(draft: RecepcionDraft): boolean {
   );
 }
 
+/**
+ * Expone "normalizeRecepcionDraftStep" en smart-economat-frontend (SPA).
+ * @undefined {Pick<RecepcionDraft, "paso" | "pedidosSeleccionados" | "productosEspontaneos">} draft - Entrada efectiva esperada por el contrato.
+ * @undefined {PasoWizard} Datos efectivos después de ejecutar la operación.
+ */
 export function normalizeRecepcionDraftStep(
   draft: Pick<
     RecepcionDraft,
@@ -61,6 +72,13 @@ export function normalizeRecepcionDraftStep(
   return requestedStep;
 }
 
+/**
+ * Expone "hydrateRecepcionDraft" en smart-economat-frontend (SPA).
+ * @undefined {RecepcionDraft | Record<string, unknown> | null | undefined} payload - Entrada efectiva esperada por el contrato.
+ * @undefined {Pick<RecepcionDraftEnvelope, "version" | "updatedAt" | "createdAt"> | null} envelope - Entrada efectiva esperada por el contrato.
+ * @undefined {RecepcionDraft} fallbackDraft - Entrada efectiva esperada por el contrato.
+ * @undefined {RecepcionDraft} Datos efectivos después de ejecutar la operación.
+ */
 export function hydrateRecepcionDraft(
   payload: RecepcionDraft | Record<string, unknown> | null | undefined,
   envelope: Pick<
@@ -116,6 +134,11 @@ export function hydrateRecepcionDraft(
   return hydratedDraft;
 }
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {RecepcionDraft} draft - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function getRecepcionDraftStepIndex(draft: RecepcionDraft): number {
   return Math.max(0, RECEPCION_STEP_ORDER.indexOf(draft.paso));
 }

@@ -1,3 +1,4 @@
+/** Clase pública (AlertaStockDTO). Paquete: smart-economat-backend (Nest). */
 export class AlertaStockDTO {
   id: string;
   cantidadActual: number;

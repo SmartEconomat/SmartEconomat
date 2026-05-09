@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsOptional, IsUUID } from 'class-validator';
 
+/** Clase pública (MermaKpiQueryDto). Paquete: smart-economat-backend (Nest). */
 export class MermaKpiQueryDto {
   @ApiPropertyOptional({
     description: 'Fecha inicial ISO-8601 para ventana analítica',

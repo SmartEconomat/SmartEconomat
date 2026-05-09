@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (UnidadIngrediente) dentro de smart-economat-backend (Nest). */
 export enum UnidadIngrediente {
   GRAMO = 'g',
   KILOGRAMO = 'kg',
@@ -8,14 +9,15 @@ export enum UnidadIngrediente {
   CUCHARADITA = 'cdta',
 }
 
+/** Catálogo de valores enumerados (DificultadReceta) dentro de smart-economat-backend (Nest). */
 export enum DificultadReceta {
   FACIL = 'Fácil',
   MEDIA = 'Media',
   DIFICIL = 'Difícil',
 }
 
+/** Catálogo de valores enumerados (TiempoReceta) dentro de smart-economat-backend (Nest). */
 export enum TiempoReceta {
-  MIN_5 = '5 min',
   MIN_10 = '10 min',
   MIN_15 = '15 min',
   MIN_20 = '20 min',
@@ -30,8 +32,8 @@ export enum TiempoReceta {
   MIN_120 = '120 min',
 }
 
+/** Constantes públicas (TIEMPO_RECETA_VALUES) expuestas en smart-economat-backend (Nest). */
 export const TIEMPO_RECETA_VALUES = [
-  TiempoReceta.MIN_5,
   TiempoReceta.MIN_10,
   TiempoReceta.MIN_15,
   TiempoReceta.MIN_20,
@@ -47,7 +49,6 @@ export const TIEMPO_RECETA_VALUES = [
 ] as const satisfies readonly TiempoReceta[];
 
 const TIEMPO_RECETA_MINUTOS: Readonly<Record<TiempoReceta, number>> = {
-  [TiempoReceta.MIN_5]: 5,
   [TiempoReceta.MIN_10]: 10,
   [TiempoReceta.MIN_15]: 15,
   [TiempoReceta.MIN_20]: 20,
@@ -62,10 +63,16 @@ const TIEMPO_RECETA_MINUTOS: Readonly<Record<TiempoReceta, number>> = {
   [TiempoReceta.MIN_120]: 120,
 };
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {TiempoReceta} tiempoReceta - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function getTiempoRecetaMinutos(tiempoReceta: TiempoReceta): number {
   return TIEMPO_RECETA_MINUTOS[tiempoReceta];
 }
 
+/** Catálogo de valores enumerados (EstadoLote) dentro de smart-economat-backend (Nest). */
 export enum EstadoLote {
   DISPONIBLE = 'disponible',
   AGOTADO = 'agotado',

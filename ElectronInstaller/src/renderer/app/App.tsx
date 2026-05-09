@@ -13,6 +13,10 @@ import { PreflightPage } from "@renderer/pages/PreflightPage";
 import { WelcomePage } from "@renderer/pages/WelcomePage";
 import BrandLogo from "@renderer/assets/images/SVG/logo-smat-economato.svg";
 
+/**
+ * Expone la operación "App" del instalador SmartEconomat.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function App() {
   const flow = useInstallerFlow();
   const [dangerOpen, setDangerOpen] = useState(false);

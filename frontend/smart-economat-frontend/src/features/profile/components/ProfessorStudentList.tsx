@@ -38,7 +38,7 @@ interface ProfessorStudentListProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ProfessorStudentList: React.FC<ProfessorStudentListProps> = ({
   students,

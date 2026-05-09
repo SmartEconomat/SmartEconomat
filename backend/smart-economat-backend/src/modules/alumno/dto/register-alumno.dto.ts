@@ -12,6 +12,7 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { UserLanguage } from '../../usuario/enums/usuario.enums';
 
+/** Clase pública (RegisterAlumnoDto). Paquete: smart-economat-backend (Nest). */
 export class RegisterAlumnoDto {
   @Transform(({ value }): string =>
     typeof value === 'string' ? value.trim() : ''

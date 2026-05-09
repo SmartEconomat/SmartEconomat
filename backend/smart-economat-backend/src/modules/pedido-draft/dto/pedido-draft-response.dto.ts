@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (PedidoDraftResponseDto). Paquete: smart-economat-backend (Nest). */
 export class PedidoDraftResponseDto {
   @ApiPropertyOptional({
     description: 'ID persistido del borrador en PostgreSQL si existe.',

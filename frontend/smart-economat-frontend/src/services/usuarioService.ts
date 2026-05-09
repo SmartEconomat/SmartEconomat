@@ -7,7 +7,14 @@ import {
   RolOption,
   Permiso,
 } from '../types/usuario';
-import { ApiError, baseFetch, parseApiResponse } from './api.service';
+import {
+  ApiError,
+  baseFetch,
+  parseApiResponse,
+  buildQueryParams,
+} from './api.service';
+import { UserStatusEnum } from '../enums/user-status.enum';
+import { mapUserStatusBackendToEnum } from '../utils/usuario-status.utils';
 
 const DEFAULT_TEMP_PASSWORD = 'Temp1234!';
 const BACKEND_DEFAULT_PAGE_LIMIT = 20;
@@ -25,9 +32,22 @@ const mapFrontendToBackend = (
     mapped.rol = (mapped.rol as string).toUpperCase();
   }
 
-  // Map Status
+  // Map Status using enum
   if (mapped.estado) {
-    mapped.status = mapped.estado === 'Activo' ? 'ACTIVE' : 'INACTIVE';
+    const statusEnum = mapUserStatusBackendToEnum(mapped.estado as string);
+    if (statusEnum) {
+      mapped.status = statusEnum;
+    } else {
+      const raw = String(mapped.estado).trim().toUpperCase();
+      if (raw === UserStatusEnum.BLOCKED || raw === 'BLOQUEADO') {
+        mapped.status = 'BLOCKED';
+      } else {
+        mapped.status =
+          raw === UserStatusEnum.ACTIVE || raw === 'ACTIVO'
+            ? 'ACTIVE'
+            : 'INACTIVE';
+      }
+    }
     delete mapped.estado;
   }
 
@@ -51,7 +71,6 @@ const mapFrontendToBackend = (
   delete mapped.permisosAdicionalesIds;
   delete mapped.permisosExcluidosIds;
   delete mapped.slotId;
-  delete mapped.ubicacionId;
 
   return mapped;
 };
@@ -66,10 +85,27 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
     (user.rol as string | undefined);
   const rolName = backendRol || 'Alumno';
 
-  const backendStatus = (user.status as string | undefined)?.toUpperCase();
-  const isActiveFromStatus = backendStatus === 'ACTIVE';
-  const isInactiveFromStatus = backendStatus === 'INACTIVE';
+  const backendStatus = mapUserStatusBackendToEnum(
+    user.status as string | undefined
+  );
   const fallbackActivo = Boolean(user.activo);
+
+  // Determinar el estado final usando enum (BLOCKED no se infiere solo por activo=false)
+  const finalStatus =
+    backendStatus ??
+    (fallbackActivo ? UserStatusEnum.ACTIVE : UserStatusEnum.INACTIVE);
+
+  const ubicaciones = Array.isArray(user.ubicaciones)
+    ? (user.ubicaciones as Array<Record<string, unknown>>)
+        .map((ubicacion) => {
+          const id = typeof ubicacion.id === 'string' ? ubicacion.id : '';
+          const nombre =
+            typeof ubicacion.nombre === 'string' ? ubicacion.nombre : '';
+          if (!id || !nombre) return null;
+          return { id, nombre };
+        })
+        .filter((item): item is { id: string; nombre: string } => !!item)
+    : [];
 
   return {
     id: (user.id as string | number) || 0,
@@ -79,21 +115,19 @@ const mapBackendToFrontend = (user: Record<string, unknown>): Usuario => {
     rol: rolName,
     roleId: primaryRole?.id as string | undefined,
     roleName: primaryRole?.nombre as string | undefined,
-    estado: isActiveFromStatus
-      ? 'Activo'
-      : isInactiveFromStatus
-        ? 'Inactivo'
-        : fallbackActivo || user.estado === 'Activo'
-          ? 'Activo'
-          : 'Inactivo',
+    estado: finalStatus,
     fecha_registro: (user.createdAt as string) || new Date().toISOString(),
     permisosAdicionales: (user.permisosAdicionales as Permiso[]) || [],
     permisosExcluidos: (user.permisosExcluidos as Permiso[]) || [],
     slotId: user.slotId as string | undefined,
     ubicacionId: user.ubicacionId as string | undefined,
+    ubicacionesIds: ubicaciones.map((item) => item.id),
+    ubicaciones,
+    preferences: (user.preferences as Record<string, unknown>) || {},
   };
 };
 
+/** Constantes públicas (usuarioService) expuestas en smart-economat-frontend (SPA). */
 export const usuarioService = {
   async getRoles(): Promise<ApiResponse<RolOption[]>> {
     const response = await baseFetch('/admin/roles');
@@ -138,29 +172,31 @@ export const usuarioService = {
   },
 
   async getUsuarios(
-    page: number = 1,
-    limit: number = BACKEND_DEFAULT_PAGE_LIMIT,
-    search?: string,
-    filterRol?: string,
-    sortBy?: string,
-    sortOrder?: 'asc' | 'desc',
-    filterEstado?: string
+    params: Record<string, unknown>
   ): Promise<PaginatedResponse<Usuario>> {
     try {
-      const safeLimit = Math.min(Math.max(1, limit), BACKEND_MAX_PAGE_LIMIT);
+      const page =
+        typeof params.page === 'number' && Number.isFinite(params.page)
+          ? Math.max(1, Math.trunc(params.page))
+          : 1;
+      const safeLimit = Math.min(
+        Math.max(1, Number(params.limit) || BACKEND_DEFAULT_PAGE_LIMIT),
+        BACKEND_MAX_PAGE_LIMIT
+      );
 
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(safeLimit),
-      });
+      // Filtrar "Todos" en rol antes de construir params
+      const processedParams = { ...params };
+      if (processedParams.rol === 'Todos') {
+        delete processedParams.rol;
+      }
 
-      if (search?.trim()) params.set('searchTerm', search.trim());
-      if (filterRol && filterRol !== 'Todos') params.set('rol', filterRol);
-      if (sortBy) params.set('sortBy', sortBy);
-      if (sortOrder) params.set('order', sortOrder.toUpperCase());
-      if (filterEstado?.trim()) params.set('estado', filterEstado.trim());
+      const searchParams = buildQueryParams(
+        processedParams,
+        BACKEND_DEFAULT_PAGE_LIMIT,
+        BACKEND_MAX_PAGE_LIMIT
+      );
 
-      const response = await baseFetch(`/usuarios?${params.toString()}`);
+      const response = await baseFetch(`/usuarios?${searchParams.toString()}`);
       const result = await parseApiResponse<Record<string, unknown>>(
         response,
         'Error al obtener usuarios'
@@ -368,5 +404,51 @@ export const usuarioService = {
       }
       throw error;
     }
+  },
+  async updatePreferences(
+    preferences: Record<string, unknown>
+  ): Promise<ApiResponse<Usuario>> {
+    try {
+      const response = await baseFetch('/usuarios/perfil/preferences', {
+        method: 'PATCH',
+        body: JSON.stringify(preferences),
+      });
+
+      const result = await parseApiResponse<Record<string, unknown>>(
+        response,
+        'Error al actualizar preferencias'
+      );
+      return {
+        data: mapBackendToFrontend(result.data),
+        status: response.status,
+        message: result.message || 'Preferencias actualizadas',
+      };
+    } catch (error) {
+      console.error('Error al actualizar preferencias', error);
+      throw error;
+    }
+  },
+
+  async fetchCatalogoUbicacionesPerfil(): Promise<
+    Array<{ id: string; nombre: string }>
+  > {
+    const response = await baseFetch('/usuarios/perfil/catalogo-ubicaciones');
+    const result = await parseApiResponse<
+      Array<{ id: string; nombre: string }>
+    >(response, 'Error al cargar el catálogo de ubicaciones');
+    const payload = result.data;
+    return Array.isArray(payload) ? payload : [];
+  },
+
+  async updateMisUbicacionesPerfil(payload: {
+    ubicacionesIds: string[];
+    ubicacionPredeterminadaId?: string | null;
+  }): Promise<void> {
+    const response = await baseFetch('/usuarios/perfil/mis-ubicaciones', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    await parseApiResponse(response, 'Error al actualizar ubicaciones');
   },
 };

@@ -27,38 +27,39 @@ import { ProcessRunnerService } from "./process-runner.service";
 import { SupervisorLogService } from "./supervisor-log.service";
 import { computeBackoffInterval, shouldRunRecovery } from "./supervisor-policy";
 
+/** Contrato tipado público (BootGuardianOptions). */
 export interface BootGuardianOptions {
   onLog: (message: string) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   baseHealthCheckIntervalMs?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   maxHealthCheckIntervalMs?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   maxRetriesPerLevel?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   enableDockerAutostart?: boolean;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   dockerStartupTimeoutMs?: number;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   postResumeDelayMs?: number;
   onSnapshot?: (snapshot: SupervisorSnapshot) => void;
   onTrayStateChange?: (state: "healthy" | "recovering" | "degraded") => void;
 }
 
 /**
- * Documentación en español.
+ * Servicio de dominio para boot guardian.
  */
 export class BootGuardianService {
   private readonly dockerOrchestrator = new DockerOrchestratorService();
@@ -106,6 +107,10 @@ export class BootGuardianService {
   private incidentsResolved = 0;
   private lastIncidentAt: string | null = null;
 
+  /**
+   * Construye la instancia del servicio.
+   * @param {BootGuardianOptions} options - Entrada esperada por la función.
+   */
   constructor(options: BootGuardianOptions) {
     this.onLog = options.onLog;
     this.baseIntervalMs = options.baseHealthCheckIntervalMs ?? 30_000;
@@ -118,16 +123,28 @@ export class BootGuardianService {
     this.onTrayStateChange = options.onTrayStateChange;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de set main window dentro del flujo de la aplicación.
+   *
+   * @param window Parámetro de entrada para la operación.
+   */
+  /**
+   * Establece la referencia o configuración interna.
+   * @param {BrowserWindow | null} window - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   setMainWindow(window: BrowserWindow | null): void {
     this.mainWindow = window;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Obtiene status.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {HealthUpdateEvent} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getStatus(): HealthUpdateEvent {
     return {
       health: this.lastHealth,
@@ -144,6 +161,10 @@ export class BootGuardianService {
     };
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {SupervisorSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getSupervisorSnapshot(): SupervisorSnapshot {
     const now = Date.now();
     const hasErrors = this.supervisorChecks.some(
@@ -182,9 +203,14 @@ export class BootGuardianService {
     };
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de bootstrap dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone la operación "bootstrap" del instalador SmartEconomat.
+   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async bootstrap(): Promise<void> {
     if (this.running) {
       this.log(
@@ -242,9 +268,13 @@ export class BootGuardianService {
     this.log("[BOOT-GUARDIAN] Watchdog de alta disponibilidad activado ✅");
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de stop dentro del flujo de la aplicación.
+   */
+  /**
+   * Detiene el flujo o proceso en curso.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   stop(): void {
     if (this.watchdogTimer) {
       clearTimeout(this.watchdogTimer);
@@ -256,9 +286,14 @@ export class BootGuardianService {
     this.log("[BOOT-GUARDIAN] Watchdog detenido.");
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de on system resume dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone la operación "onSystemResume" del instalador SmartEconomat.
+   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async onSystemResume(): Promise<void> {
     if (!this.running || !this.runtimePath) {
       return;
@@ -275,15 +310,23 @@ export class BootGuardianService {
     await this.watchdogCycle();
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de on system suspend dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone la operación "onSystemSuspend" del instalador SmartEconomat.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   onSystemSuspend(): void {
     this.log(
       "[BOOT-GUARDIAN] Sistema entrando en suspensión. Registrando evento.",
     );
   }
 
+  /**
+   * Expone la operación "restartDockerDesktopNow" del instalador SmartEconomat.
+   * @returns {Promise<boolean>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async restartDockerDesktopNow(): Promise<boolean> {
     const ready = await this.ensureDockerDesktopRunning();
     if (ready && this.runtimePath) {
@@ -293,6 +336,10 @@ export class BootGuardianService {
     return ready;
   }
 
+  /**
+   * Expone la operación "runRecoveryNow" del instalador SmartEconomat.
+   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async runRecoveryNow(): Promise<void> {
     if (!this.runtimePath) {
       return;
@@ -349,9 +396,10 @@ export class BootGuardianService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Garantiza docker desktop running antes de continuar el flujo.
+   * @returns Valor resultante de la operación.
+   */
   private async ensureDockerDesktopRunning(): Promise<boolean> {
     const initialProbe = await this.dockerReadiness.probe({
       source: "boot-guardian",
@@ -416,9 +464,12 @@ export class BootGuardianService {
 
   // ── Graduated Recovery ────────────────────────────────────────
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Garantiza stack healthy antes de continuar el flujo.
+   *
+   * @param runtimePath Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
+   */
   private async ensureStackHealthy(runtimePath: string): Promise<void> {
     const healthResult = await this.dockerOrchestrator.getHealth(runtimePath);
 
@@ -602,9 +653,9 @@ export class BootGuardianService {
     }
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   private async performRecoveryLevel1(
     runtimePath: string,
     downServices: ServiceHealth[],
@@ -648,9 +699,12 @@ export class BootGuardianService {
     return false;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de perform recovery level2 dentro del flujo de la aplicación.
+   *
+   * @param runtimePath Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
+   */
   private async performRecoveryLevel2(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 2: compose up -d");
     this.log(
@@ -677,9 +731,12 @@ export class BootGuardianService {
     return false;
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de perform recovery level3 dentro del flujo de la aplicación.
+   *
+   * @param runtimePath Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
+   */
   private async performRecoveryLevel3(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 3: compose down && up -d --build");
     this.log(
@@ -775,9 +832,10 @@ export class BootGuardianService {
     }, intervalMs);
   }
 
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Calcula current interval según las reglas de negocio.
+   * @returns Valor resultante de la operación.
+   */
   private computeCurrentInterval(): number {
     if (this.consecutiveFailures === 0) {
       return this.baseIntervalMs;

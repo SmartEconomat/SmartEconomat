@@ -138,13 +138,17 @@ SmartEconomat — Sistema de gestión de economato
 Este es un mensaje automático, por favor no respondas a este correo.`;
 
 /**
- * Documentación en español.
+ * Servicio de dominio para mail.
  */
 @Injectable()
 export class MailService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MailService.name);
   private transporter: Transporter | null = null;
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly configService: ConfigService) {}
 
   private deriveFrontendUrl(): string {
@@ -169,6 +173,10 @@ export class MailService implements OnApplicationBootstrap {
     return `noreply@${domain}`;
   }
 
+  /**
+   * Expone "onApplicationBootstrap" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async onApplicationBootstrap(): Promise<void> {
     if (this.configService.get<string>('NODE_ENV') === 'test') return;
 
@@ -224,7 +232,13 @@ export class MailService implements OnApplicationBootstrap {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "sendPasswordResetEmail" en smart-economat-backend (Nest).
+   * @undefined {string} email - Entrada efectiva esperada por el contrato.
+   * @undefined {string} resetToken - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async sendPasswordResetEmail(
     email: string,

@@ -15,7 +15,7 @@ import { RecepcionPedido } from '../recepcion-pedido.entity/recepcion-pedido.ent
 import { RecepcionProducto } from '../recepcion-productos.entity/recepcion-producto.entity';
 
 /**
- * Documentación en español.
+ * Representa recepcion en el sistema.
  */
 @Entity({ name: 'recepcion' })
 @Index(['usuarioId'])
@@ -26,7 +26,7 @@ export class Recepcion extends BaseEntity {
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Exclude()
   @ManyToOne(() => Usuario, (usuario) => usuario.recepciones, {
@@ -37,7 +37,7 @@ export class Recepcion extends BaseEntity {
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -47,7 +47,7 @@ export class Recepcion extends BaseEntity {
   fechaRecepcion!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -57,7 +57,7 @@ export class Recepcion extends BaseEntity {
   estado!: EstadoRecepcion;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
@@ -65,7 +65,7 @@ export class Recepcion extends BaseEntity {
   incidencia: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => RecepcionPedido, (rp) => rp.recepcion, {
     cascade: true,
@@ -73,7 +73,7 @@ export class Recepcion extends BaseEntity {
   recepcionesPedidos!: Relation<RecepcionPedido[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => RecepcionProducto, (rp) => rp.recepcion, {
     cascade: true,

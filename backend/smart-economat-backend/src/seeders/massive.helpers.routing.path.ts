@@ -13,6 +13,13 @@ import {
   pickStateValue,
 } from './massive.state';
 
+/**
+ * Expone "resolvePathParams" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function resolvePathParams(
   context: SeedContext,
   endpoint: Endpoint,

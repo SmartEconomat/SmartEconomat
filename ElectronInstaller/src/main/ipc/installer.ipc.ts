@@ -122,9 +122,20 @@ const installerFilePickerSchema = z.object({
     .optional(),
 });
 
+/** Servicio del proceso principal: InstallerIPC. */
 export class InstallerIPC {
   private readonly stateMachine = new InstallStateMachine();
 
+  /**
+   * Construye la instancia del servicio.
+   * @param {BrowserWindow} window - Entrada esperada por la función.
+   * @param {DebugLogService} debugLogService - Entrada esperada por la función.
+   * @param {PreflightService} preflightService - Entrada esperada por la función.
+   * @param {EnvRendererService} envRendererService - Entrada esperada por la función.
+   * @param {TLSService} tlsService - Entrada esperada por la función.
+   * @param {DockerOrchestratorService} dockerService - Entrada esperada por la función.
+   * @param {JournalService} journalService - Entrada esperada por la función.
+   */
   constructor(
     private window: BrowserWindow,
     private readonly debugLogService: DebugLogService,
@@ -135,10 +146,19 @@ export class InstallerIPC {
     private readonly journalService = new JournalService(),
   ) {}
 
+  /**
+   * Establece la referencia o configuración interna.
+   * @param {BrowserWindow} window - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   setWindow(window: BrowserWindow): void {
     this.window = window;
   }
 
+  /**
+   * Registra manejadores y canaliza IPC o integración con el proceso principal.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   register(): void {
     registerIpcHandleWithDebug(
       this.debugLogService,
@@ -504,6 +524,12 @@ export class InstallerIPC {
   }
 }
 
+/**
+ * Registra manejadores y canaliza IPC o integración con el proceso principal.
+ * @param {BrowserWindow} window - Entrada esperada por la función.
+ * @param {DebugLogService} debugLogService - Entrada esperada por la función.
+ * @returns {InstallerIPC} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function registerInstallerIpc(
   window: BrowserWindow,
   debugLogService: DebugLogService,

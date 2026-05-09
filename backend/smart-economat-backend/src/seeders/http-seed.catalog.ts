@@ -318,19 +318,7 @@ async function usuariosTask(context: SeedContext): Promise<void> {
     );
   }
 
-  const ubicacionesDisponibles = (await saveListIds(
-    context,
-    '/ubicacion',
-    'ubicacionIds'
-  )) as SeedUbicacionEntity[];
-
-  const ubicacionSlotProfesor =
-    ubicacionesDisponibles.find(
-      (ubicacion) => getStringField(ubicacion, 'nombre') !== 'Almacén Principal'
-    ) || ubicacionesDisponibles[0];
-  const ubicacionSlotProfesorId = ubicacionSlotProfesor
-    ? getEntityId(ubicacionSlotProfesor)
-    : undefined;
+  await saveListIds(context, '/ubicacion', 'ubicacionIds');
 
   try {
     await safe('crear slot fijo profesor', () =>
@@ -339,9 +327,6 @@ async function usuariosTask(context: SeedContext): Promise<void> {
         numeroClase: 2026,
         capacidad: 30,
         profesorId: profesorPrincipalId,
-        ...(ubicacionSlotProfesorId
-          ? { ubicacionId: ubicacionSlotProfesorId }
-          : {}),
       })
     );
   } catch (error) {
@@ -998,7 +983,7 @@ async function pedidoTask(context: SeedContext): Promise<void> {
     context.postJson('/pedido-usuarios/from-missing-stock', {
       items: (context.getState<string[]>('recetaIds') || [])
         .slice(0, 2)
-        .map((recetaId) => ({ recetaId, cantidad: 1 })),
+        .map((recetaId) => ({ recetaId, cantidadAProducir: 1 })),
       observaciones: 'Seed desde faltantes',
     })
   );
@@ -1222,12 +1207,14 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     actualEstado: string | undefined,
     incidenciaId: string
   ): void => {
-    if (actualEstado === targetEstado) {
+    const actual = (actualEstado ?? '').trim().toLowerCase();
+    const expected = targetEstado.trim().toLowerCase();
+    if (actual === expected) {
       return;
     }
 
     throw new Error(
-      `[seed] Estado incidencia no coincide para ${incidenciaId}: esperado=${targetEstado}, actual=${actualEstado ?? 'desconocido'}`
+      `[seed] Estado incidencia no coincide para ${incidenciaId}: esperado=${expected}, actual=${actual || 'desconocido'}`
     );
   };
   if (incIds.length > 0) {
@@ -1305,7 +1292,7 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     const incidenciaNuevaId = await createReportedIncidencia(0, 'nueva');
     const incidenciaNueva = await fetchIncidencia(incidenciaNuevaId);
     warnUnexpectedEstado(
-      'nueva',
+      'abierta',
       observeEstado(incidenciaNueva),
       incidenciaNuevaId
     );
@@ -1352,7 +1339,7 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     }
     const incidenciaPendiente = await fetchIncidencia(incidenciaPendienteId);
     warnUnexpectedEstado(
-      'pendiente_validacion',
+      'en_proceso',
       observeEstado(incidenciaPendiente),
       incidenciaPendienteId
     );
@@ -1383,7 +1370,7 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     }
     const incidenciaAjuste = await fetchIncidencia(incidenciaAjusteId);
     warnUnexpectedEstado(
-      'en_ajuste',
+      'en_proceso',
       observeEstado(incidenciaAjuste),
       incidenciaAjusteId
     );
@@ -1430,7 +1417,7 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     );
     const incidenciaCancelada = await fetchIncidencia(incidenciaCanceladaId);
     warnUnexpectedEstado(
-      'cancelada',
+      'resuelta',
       observeEstado(incidenciaCancelada),
       incidenciaCanceladaId
     );
@@ -1452,7 +1439,7 @@ async function incidenciaTask(context: SeedContext): Promise<void> {
     );
     const incidenciaInvalida = await fetchIncidencia(incidenciaInvalidaId);
     warnUnexpectedEstado(
-      'invalida',
+      'resuelta',
       observeEstado(incidenciaInvalida),
       incidenciaInvalidaId
     );
@@ -1575,7 +1562,7 @@ async function preparacionTaskEnhanced(context: SeedContext): Promise<void> {
 
 async function produccionTask(context: SeedContext): Promise<void> {
   await safe('validar produccion', () =>
-    context.postJson('/produccion/validar', {})
+    context.postJson('/produccion/validar', { items: [] })
   );
   await safe('ejecutar produccion', () =>
     context.postJson('/produccion/ejecutar', {})
@@ -1716,6 +1703,12 @@ const TASKS: Record<string, SeederTask> = {
   alertas: alertasTask,
 };
 
+/**
+ * Expone "runNamedHttpSeeder" en smart-economat-backend (Nest).
+ * @undefined {string} name - Entrada efectiva esperada por el contrato.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function runNamedHttpSeeder(
   name: string,
   context: SeedContext

@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
@@ -17,7 +17,14 @@ import {
 } from './openfoodfacts.seed';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de run seeder dentro del flujo de la aplicación.
+ *
+ * @param context Parámetro de entrada para la operación.
+ */
+/**
+ * Expone "runSeeder" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export const runSeeder = async (context: SeedContext) => {
   const productoRepo = context.getRepository<Repository<Producto>>(Producto);

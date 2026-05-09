@@ -504,7 +504,7 @@ describe('PedidoController (e2e)', () => {
         .post('/api/v1/pedido-usuarios/from-missing-stock')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          items: [{ recetaId: recetaFaltanteId, cantidad: 1 }],
+          items: [{ recetaId: recetaFaltanteId, cantidadAProducir: 1 }],
           observaciones: 'Pedido visible por faltantes',
         });
 

@@ -1,3 +1,4 @@
+/** Constantes públicas (STRONG_PASSWORD_MESSAGE) expuestas en smart-economat-frontend (SPA). */
 export const STRONG_PASSWORD_MESSAGE =
   'La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo.';
 
@@ -10,6 +11,11 @@ type PasswordValidationResult = {
   isValid: boolean;
 };
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {string} value - Entrada efectiva esperada por el contrato.
+ * @undefined {PasswordValidationResult} Datos efectivos después de ejecutar la operación.
+ */
 export function getPasswordValidationResult(
   value: string
 ): PasswordValidationResult {
@@ -32,6 +38,11 @@ export function getPasswordValidationResult(
   };
 }
 
+/**
+ * Expone "isStrongPassword" en smart-economat-frontend (SPA).
+ * @undefined {string} value - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function isStrongPassword(value: string): boolean {
   return getPasswordValidationResult(value).isValid;
 }
@@ -43,6 +54,16 @@ type PasswordChangeValidationOptions = {
   requireCurrentPassword?: boolean;
 };
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {PasswordChangeValidationOptions} {
+ *   currentPassword,
+ *   newPassword,
+ *   confirmPassword,
+ *   requireCurrentPassword = false,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function getPasswordChangeError({
   currentPassword,
   newPassword,

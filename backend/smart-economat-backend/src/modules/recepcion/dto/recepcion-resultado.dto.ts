@@ -68,6 +68,7 @@ class ProductoCreadoDto {
   codigoBarras: string;
 }
 
+/** Clase pública (RecepcionResultadoDto). Paquete: smart-economat-backend (Nest). */
 export class RecepcionResultadoDto {
   @ApiProperty({
     description: 'docs.UUID_DE_LA_NUEVA_RECEPCI_N',

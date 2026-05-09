@@ -8,21 +8,21 @@ import {
 import Spinner from './Spinner';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface ButtonProps extends MuiButtonProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isLoading?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   loadingText?: React.ReactNode;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Button: React.FC<ButtonProps> = ({
   children,

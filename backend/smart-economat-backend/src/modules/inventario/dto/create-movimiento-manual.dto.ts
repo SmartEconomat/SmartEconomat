@@ -12,6 +12,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TipoMovimientoManual } from '../../movimiento/enums/movimiento.enums';
 
+/** Clase pública (CreateMovimientoManualDto). Paquete: smart-economat-backend (Nest). */
 export class CreateMovimientoManualDto {
   @ApiProperty({
     description: 'UUID v7 del registro de inventario a ajustar',

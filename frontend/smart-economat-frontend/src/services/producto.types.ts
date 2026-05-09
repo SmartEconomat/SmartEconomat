@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (CategoriaProducto) dentro de smart-economat-frontend (SPA). */
 export enum CategoriaProducto {
   VERDURA = 'verdura',
   FRUTA = 'fruta',
@@ -16,6 +17,7 @@ export enum CategoriaProducto {
   OTRO = 'otro',
 }
 
+/** Catálogo de valores enumerados (UnidadMedida) dentro de smart-economat-frontend (SPA). */
 export enum UnidadMedida {
   KG = 'KG',
   G = 'G',
@@ -25,6 +27,7 @@ export enum UnidadMedida {
   PAQ = 'PAQ',
 }
 
+/** Constantes públicas (BACKEND_ALLERGENS) expuestas en smart-economat-frontend (SPA). */
 export const BACKEND_ALLERGENS = [
   'GLUTEN',
   'CRUSTACEOS',
@@ -42,8 +45,14 @@ export const BACKEND_ALLERGENS = [
   'MOLUSCOS',
 ] as const;
 
+/** Alias público (BackendAlergeno) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type BackendAlergeno = (typeof BACKEND_ALLERGENS)[number];
 
+/**
+ * Expone "normalizeUnidadMedida" en smart-economat-frontend (SPA).
+ * @undefined {string | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {UnidadMedida | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function normalizeUnidadMedida(
   value?: string | null
 ): UnidadMedida | undefined {
@@ -51,6 +60,11 @@ export function normalizeUnidadMedida(
   return value.toUpperCase() as UnidadMedida;
 }
 
+/**
+ * Expone "normalizeAlergeno" en smart-economat-frontend (SPA).
+ * @undefined {string | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {"GLUTEN" | "CRUSTACEOS" | "HUEVOS" | "PESCADO" | "CACAHUETES" | "SOJA" | "LACTEOS" | "FRUTOS_CON_CASCARA" | "APIO" | "MOSTAZA" | "SESAMO" | "SULFITO" | "ALTRAMUCES" | "MOLUSCOS" | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function normalizeAlergeno(
   value?: string | null
 ): BackendAlergeno | undefined {
@@ -58,17 +72,20 @@ export function normalizeAlergeno(
   return value.toUpperCase() as BackendAlergeno;
 }
 
+/** Contrato de tipos público (ProductoAlergeno). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoAlergeno {
   id_producto: string;
   alergeno: string;
 }
 
+/** Contrato de tipos público (ProductoProveedor). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoProveedor {
   id: string;
   proveedorId?: string;
   nombre?: string;
   marca?: string;
   codigoBarras?: string;
+  effectiveBarcode?: string;
   precioUnitario?: number;
   mermaEsperada?: number;
   costeEfectivoUnitario?: number;
@@ -81,6 +98,7 @@ export interface ProductoProveedor {
   };
 }
 
+/** Contrato de tipos público (Producto). Contexto: smart-economat-frontend (SPA). */
 export interface Producto {
   id: string;
   nombre: string;
@@ -95,10 +113,14 @@ export interface Producto {
   fechaCaducidad?: string;
   proveedores?: ProductoProveedor[];
   pmp?: number;
+  /** false: fuera del catálogo sin soft-delete; se lista en «Eliminados». */
+  activo?: boolean;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+/** Contrato de tipos público (HistorialPrecio). Contexto: smart-economat-frontend (SPA). */
 export interface HistorialPrecio {
   id: string;
   precio: number;
@@ -109,6 +131,7 @@ export interface HistorialPrecio {
   productoProveedor: ProductoProveedor;
 }
 
+/** Contrato de tipos público (ProductoNuevoDto). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoNuevoDto {
   pendienteCreacion: boolean;
   codigoBarras: string;
@@ -119,6 +142,7 @@ export interface ProductoNuevoDto {
   contenido: number;
 }
 
+/** Contrato de tipos público (ProductosQueryParams). Contexto: smart-economat-frontend (SPA). */
 export interface ProductosQueryParams {
   page?: number;
   limit?: number;
@@ -129,5 +153,6 @@ export interface ProductosQueryParams {
   alergenos?: string[];
   sortBy?: string;
   order?: 'ASC' | 'DESC' | 'asc' | 'desc';
+  /** true = pestaña «Eliminados»: solo productos con soft-delete (`deletedAt`). */
   soloEliminados?: boolean;
 }

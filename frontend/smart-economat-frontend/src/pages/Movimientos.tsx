@@ -7,14 +7,10 @@ import {
   useTheme,
   alpha,
   Tooltip,
-  IconButton,
-  Stack,
 } from '@mui/material';
 import DataTable, { Column } from '../components/ui/DataTable';
 import PageToolbar from '../components/ui/PageToolbar';
-import MovimientoFilters, {
-  MovimientoFiltersState,
-} from '../features/movimientos/MovimientoFilters';
+import MovimientoFilters from '../features/movimientos/MovimientoFilters';
 import {
   getMovimientoUsuarioDisplayName,
   getMovimientoUsuarioInitial,
@@ -29,7 +25,6 @@ import HistoryIcon from '@mui/icons-material/History';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ConstructionIcon from '@mui/icons-material/Construction';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { usePermission } from '../store/auth.hooks'; // Original import path
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -40,6 +35,7 @@ import {
   formatLocalizedDateTime,
   formatLocalizedTime,
 } from '../utils/intlFormat';
+import { useDataTable } from '../hooks/useDataTable';
 
 type MovimientosLocationState = {
   prefillSearchTerm?: string;
@@ -66,19 +62,31 @@ const Movimientos: React.FC = () => {
       navigate('/');
     }
   }, [canList, navigate]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [data, setData] = useState<Movimiento[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [itemToView, setItemToView] = useState<Movimiento | null>(null);
-  const [filters, setFilters] = useState<MovimientoFiltersState>({
-    types: [],
-    startDate: null,
-    endDate: null,
+
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'createdAt',
+    order: 'desc',
+    filters: {
+      types: [],
+      startDate: null,
+      endDate: null,
+    },
   });
 
   useEffect(() => {
@@ -89,47 +97,56 @@ const Movimientos: React.FC = () => {
 
     const prefillSearchTerm = routeState.prefillSearchTerm?.trim();
     if (prefillSearchTerm) {
-      setSearchTerm(prefillSearchTerm);
+      onSearchChange(prefillSearchTerm);
     }
 
     if (
       Array.isArray(routeState.prefillTypes) &&
       routeState.prefillTypes.length
     ) {
-      setFilters((current) => ({
-        ...current,
-        types: routeState.prefillTypes || current.types,
-      }));
+      onFilter('types', routeState.prefillTypes);
     }
 
-    setPage(1);
+    onPageChange(null, 1);
     navigate(location.pathname, { replace: true, state: null });
-  }, [location.pathname, location.state, navigate]);
+  }, [
+    location.pathname,
+    location.state,
+    navigate,
+    onFilter,
+    onPageChange,
+    onSearchChange,
+  ]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const dataLoad = await fetchMovimientos({
-        page,
-        limit: pageSize,
-        searchTerm,
-        type: filters.types.length > 0 ? filters.types : undefined,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        searchTerm: queryParams.searchTerm,
+        type:
+          (tableFilters.types as TipoMovimiento[])?.length > 0
+            ? (tableFilters.types as TipoMovimiento[])
+            : undefined,
+        startDate: (tableFilters.startDate as string) || undefined,
+        endDate: (tableFilters.endDate as string) || undefined,
+        sortBy: queryParams.sortBy as string,
+        sortOrder: queryParams.order.toUpperCase() as 'ASC' | 'DESC',
       });
 
       setData(dataLoad.data);
-      setTotalItems(dataLoad.total);
-      setTotalPages(dataLoad.totalPages);
+      syncPaginationFromResponse(dataLoad);
     } catch (err: unknown) {
+      syncPaginationFromResponse({ total: 0, data: [] });
       const message =
         err instanceof Error ? err.message : t('movimientos.error');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, filters, t]);
+  }, [queryParams, tableFilters, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
@@ -169,6 +186,8 @@ const Movimientos: React.FC = () => {
             </Typography>
           </Box>
         ),
+        sortable: true,
+        sortType: 'date',
         responsiveDisplay: { xs: 'table-cell', sm: 'table-cell' },
       },
       {
@@ -191,6 +210,8 @@ const Movimientos: React.FC = () => {
             />
           </Tooltip>
         ),
+        sortable: true,
+        sortType: 'string',
       },
       {
         id: 'cantidad',
@@ -273,26 +294,6 @@ const Movimientos: React.FC = () => {
       },
     ],
     [theme, t]
-  );
-
-  const handleViewClick = (row: Movimiento) => {
-    setItemToView(row);
-  };
-
-  const renderActions = (row: Movimiento) => (
-    <Stack direction="row" spacing={0.5} justifyContent="center">
-      <Tooltip title={t('movimientos.verDetalle')}>
-        <IconButton
-          onClick={() => handleViewClick(row)}
-          size="small"
-          aria-label={t('movimientos.verDetalle')}
-          id="btn-ver-detalle-movimiento"
-          sx={{ color: 'text.secondary' }}
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </Stack>
   );
 
   const detailSections = useMemo(() => {
@@ -385,31 +386,33 @@ const Movimientos: React.FC = () => {
   }, [itemToView, navigate, t]);
 
   return (
-    <Box>
+    <Box data-testid="movimientos-vista-principal">
       <PageToolbar
         id="movimientos-toolbar"
         title={t('movimientos.titulo')}
         totalItems={totalItems}
         totalItemsLabel={t('movimientos.totalItemsLabel')}
         searchValue={searchTerm}
-        onSearchChange={(val) => {
-          setSearchTerm(val);
-          setPage(1);
-        }}
+        onSearchChange={onSearchChange}
         filters={
           <Box id="movimientos-filters">
             <MovimientoFilters
-              filters={filters}
+              filters={{
+                types: (tableFilters.types as TipoMovimiento[]) || [],
+                startDate: (tableFilters.startDate as string) || null,
+                endDate: (tableFilters.endDate as string) || null,
+              }}
               onChange={(newFilters) => {
-                setFilters(newFilters);
-                setPage(1);
+                onFilter('types', newFilters.types);
+                onFilter('startDate', newFilters.startDate);
+                onFilter('endDate', newFilters.endDate);
               }}
             />
           </Box>
         }
       />
 
-      {error && (
+      {!isLoading && error && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
           {error}
         </Alert>
@@ -420,7 +423,17 @@ const Movimientos: React.FC = () => {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        renderActions={renderActions}
+        onRowClick={setItemToView}
+        onSort={onSort}
+        sortConfig={sortConfig}
+        filters={tableFilters}
+        onFilter={onFilter}
+        pagination={paginationProps}
+        getRowAriaLabel={(row: Movimiento) =>
+          t('movimientos.actions.ariaVerDetalle', {
+            producto: getMovimientoNombreProducto(row),
+          })
+        }
         emptyStateMessage={
           <Box sx={{ py: 8, textAlign: 'center' }}>
             <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -433,24 +446,14 @@ const Movimientos: React.FC = () => {
               sx={{ maxWidth: 400, mx: 'auto' }}
             >
               {searchTerm ||
-              filters.types.length > 0 ||
-              filters.startDate ||
-              filters.endDate
+              ((tableFilters.types as TipoMovimiento[]) || []).length > 0 ||
+              tableFilters.startDate ||
+              tableFilters.endDate
                 ? t('movimientos.empty.noResultados')
                 : t('movimientos.empty.noRegistros')}
             </Typography>
           </Box>
         }
-        pagination={{
-          currentPage: page,
-          totalPages: totalPages,
-          onPageChange: (_, newPage) => setPage(newPage),
-          pageSize: pageSize,
-          onPageSizeChange: (e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-          },
-        }}
       />
       <DetailModal
         isOpen={!!itemToView}

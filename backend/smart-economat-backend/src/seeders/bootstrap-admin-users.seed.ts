@@ -28,12 +28,89 @@ function readOptionalEnv(env: NodeJS.ProcessEnv, key: string): string {
   return env[key]?.trim() || '';
 }
 
+/**
+ * Controla si al re-ejecutar el bootstrap se aplica de nuevo el hash de la contraseña
+ * temporal sobre usuarios admin/superadmin que ya existen.
+ *
+ * - `SEED_BOOTSTRAP_OVERWRITE_EXISTING_ADMIN_PASSWORD` explícita: true/false (también 1/0, yes/no).
+ * - Sin variable: **false** en todos los entornos (no pisar contraseñas salvo orden explícita).
+ */
+export function parseSeedBootstrapOverwriteExistingAdminPassword(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  const raw =
+    env.SEED_BOOTSTRAP_OVERWRITE_EXISTING_ADMIN_PASSWORD?.trim().toLowerCase();
+  if (raw === 'true' || raw === '1' || raw === 'yes') {
+    return true;
+  }
+  if (raw === 'false' || raw === '0' || raw === 'no') {
+    return false;
+  }
+  return false;
+}
+
+type FixedMassiveSeedAdminActor = Readonly<{
+  username: string;
+  email: string;
+  password: string;
+  nombre: string;
+  role: rolUsuario;
+}>;
+
+/**
+ * Credenciales canónicas del seed masivo alineadas con `resolveBootstrapAdminUsersFromEnv`
+ * (una sola lectura → contraseñas aleatorias en dev coherentes entre admin/superadmin).
+ */
+export function resolveMassiveSeedFixedAdminCredentials(
+  env: NodeJS.ProcessEnv = process.env
+): Readonly<{
+  superAdmin: FixedMassiveSeedAdminActor;
+  admin: FixedMassiveSeedAdminActor;
+}> {
+  const users = resolveBootstrapAdminUsersFromEnv(env);
+  const superEntry = users.find((u) => u.rol === rolUsuario.SUPER_ADMIN);
+  const adminEntry = users.find((u) => u.rol === rolUsuario.ADMIN);
+
+  if (!superEntry || !adminEntry) {
+    throw new Error(
+      `${SEED_TAG} Faltan entradas de bootstrap para SUPER_ADMIN o ADMIN.`
+    );
+  }
+
+  return {
+    superAdmin: {
+      username: superEntry.username,
+      email: superEntry.email,
+      password: superEntry.tempPassword,
+      nombre: 'Super Administrador Seed',
+      role: rolUsuario.SUPER_ADMIN,
+    },
+    admin: {
+      username: adminEntry.username,
+      email: adminEntry.email,
+      password: adminEntry.tempPassword,
+      nombre: 'Administrador Seed',
+      role: rolUsuario.ADMIN,
+    },
+  };
+}
+
+/**
+ * Expone "resolveBootstrapAdminUsersFromEnv" en smart-economat-backend (Nest).
+ * @undefined {NodeJS.ProcessEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {readonly BootstrapAdminUserSeed[]} Datos efectivos después de ejecutar la operación.
+ */
 export function resolveBootstrapAdminUsersFromEnv(
   env: NodeJS.ProcessEnv = process.env
 ): readonly BootstrapAdminUserSeed[] {
   const providedLegacyTempPassword = readOptionalEnv(
     env,
     'SEED_DEFAULT_ADMIN_TEMP_PASSWORD'
+  );
+  /** Compartida con HTTP seed / `ensureBootstrapAdminCredentials`; evita contraseñas aleatorias si solo está definida en `.env`. */
+  const sharedBootstrapPlainPassword = readOptionalEnv(
+    env,
+    'SEED_BOOTSTRAP_ADMIN_PASSWORD'
   );
   const providedAdminTempPassword = readOptionalEnv(
     env,
@@ -60,11 +137,12 @@ export function resolveBootstrapAdminUsersFromEnv(
   const hasAnyProvidedTempPassword =
     providedLegacyTempPassword.length > 0 ||
     providedAdminTempPassword.length > 0 ||
-    providedSuperAdminTempPassword.length > 0;
+    providedSuperAdminTempPassword.length > 0 ||
+    sharedBootstrapPlainPassword.length > 0;
 
   if (isProductionEnv && !hasAnyProvidedTempPassword) {
     throw new Error(
-      `${SEED_TAG} En produccion debes definir credenciales temporales para admin/superadmin (SEED_DEFAULT_ADMIN_TEMP_PASSWORD legacy o variables dedicadas).`
+      `${SEED_TAG} En produccion debes definir credenciales temporales para admin/superadmin (SEED_DEFAULT_ADMIN_TEMP_PASSWORD legacy, SEED_BOOTSTRAP_ADMIN_PASSWORD u otras dedicadas).`
     );
   }
 
@@ -82,14 +160,18 @@ export function resolveBootstrapAdminUsersFromEnv(
       ? providedAdminTempPassword
       : providedLegacyTempPassword.length > 0
         ? providedLegacyTempPassword
-        : generateSecureTemporaryPassword();
+        : sharedBootstrapPlainPassword.length > 0
+          ? sharedBootstrapPlainPassword
+          : generateSecureTemporaryPassword();
 
   const defaultSuperAdminTempPassword =
     providedSuperAdminTempPassword.length > 0
       ? providedSuperAdminTempPassword
       : providedLegacyTempPassword.length > 0
         ? providedLegacyTempPassword
-        : generateSecureTemporaryPassword();
+        : sharedBootstrapPlainPassword.length > 0
+          ? sharedBootstrapPlainPassword
+          : generateSecureTemporaryPassword();
 
   return [
     {
@@ -151,7 +233,8 @@ async function resolveRoleIds(
 async function upsertBootstrapUser(
   queryRunner: QueryRunner,
   seedUser: BootstrapAdminUserSeed,
-  hashedTemporaryPassword: string
+  plainTemporaryPassword: string,
+  overwriteExistingPassword: boolean
 ): Promise<string> {
   const existingRows = (await queryRunner.query(
     `SELECT "id"
@@ -165,36 +248,68 @@ async function upsertBootstrapUser(
   const existingUserId = normalizeId(existingRows[0]?.id);
 
   if (existingUserId) {
-    await queryRunner.query(
-      `UPDATE "usuario"
-       SET "nombre" = $1,
-           "username" = $2,
-           "email" = $3,
-           "rol" = $4,
-           "status" = $5,
-           "password" = $6,
-           "idioma" = $7,
-           "activo" = TRUE,
-           "resetPasswordOtp" = NULL,
-           "resetPasswordOtpExpires" = NULL,
-           "deleted_at" = NULL,
-           "deleted_by" = NULL,
-           "updated_at" = NOW()
-       WHERE "id" = $8`,
-      [
-        seedUser.nombre,
-        seedUser.username,
-        seedUser.email,
-        seedUser.rol,
-        UserStatus.ACTIVE,
-        hashedTemporaryPassword,
-        seedUser.idioma,
-        existingUserId,
-      ]
-    );
+    if (overwriteExistingPassword) {
+      const hashedTemporaryPassword = await bcrypt.hash(
+        plainTemporaryPassword,
+        10
+      );
+      await queryRunner.query(
+        `UPDATE "usuario"
+         SET "nombre" = $1,
+             "username" = $2,
+             "email" = $3,
+             "rol" = $4,
+             "status" = $5,
+             "password" = $6,
+             "idioma" = $7,
+             "activo" = TRUE,
+             "resetPasswordOtp" = NULL,
+             "resetPasswordOtpExpires" = NULL,
+             "deleted_at" = NULL,
+             "deleted_by" = NULL,
+             "updated_at" = NOW()
+         WHERE "id" = $8`,
+        [
+          seedUser.nombre,
+          seedUser.username,
+          seedUser.email,
+          seedUser.rol,
+          UserStatus.ACTIVE,
+          hashedTemporaryPassword,
+          seedUser.idioma,
+          existingUserId,
+        ]
+      );
+    } else {
+      await queryRunner.query(
+        `UPDATE "usuario"
+         SET "nombre" = $1,
+             "username" = $2,
+             "email" = $3,
+             "rol" = $4,
+             "status" = $5,
+             "idioma" = $6,
+             "activo" = TRUE,
+             "deleted_at" = NULL,
+             "deleted_by" = NULL,
+             "updated_at" = NOW()
+         WHERE "id" = $7`,
+        [
+          seedUser.nombre,
+          seedUser.username,
+          seedUser.email,
+          seedUser.rol,
+          UserStatus.ACTIVE,
+          seedUser.idioma,
+          existingUserId,
+        ]
+      );
+    }
 
     return existingUserId;
   }
+
+  const hashedTemporaryPassword = await bcrypt.hash(plainTemporaryPassword, 10);
 
   const insertedRows = (await queryRunner.query(
     `INSERT INTO "usuario" (
@@ -262,12 +377,24 @@ async function ensureUserRoleAssignments(
   );
 }
 
+/**
+ * Expone "runBootstrapAdminUsersSeed" en smart-economat-backend (Nest).
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function runBootstrapAdminUsersSeed(): Promise<void> {
   const defaultUsers = resolveBootstrapAdminUsersFromEnv();
+  const overwriteExistingPassword =
+    parseSeedBootstrapOverwriteExistingAdminPassword();
   const shouldDestroyDataSource = !AppDataSource.isInitialized;
 
   if (shouldDestroyDataSource) {
     await AppDataSource.initialize();
+  }
+
+  if (!overwriteExistingPassword) {
+    console.log(
+      `${SEED_TAG} Modo conservador (sin SEED_BOOTSTRAP_OVERWRITE_EXISTING_ADMIN_PASSWORD=true): usuarios admin existentes conservan contraseña y OTP.`
+    );
   }
 
   const queryRunner = AppDataSource.createQueryRunner();
@@ -285,15 +412,11 @@ export async function runBootstrapAdminUsersSeed(): Promise<void> {
         );
       }
 
-      const hashedTemporaryPassword = await bcrypt.hash(
-        seedUser.tempPassword,
-        10
-      );
-
       const userId = await upsertBootstrapUser(
         queryRunner,
         seedUser,
-        hashedTemporaryPassword
+        seedUser.tempPassword,
+        overwriteExistingPassword
       );
 
       await ensureUserRoleAssignments(queryRunner, userId, roleId);
@@ -304,7 +427,9 @@ export async function runBootstrapAdminUsersSeed(): Promise<void> {
       `${SEED_TAG} Usuarios admin/superadmin asegurados correctamente.`
     );
   } catch (error) {
-    await queryRunner.rollbackTransaction();
+    if (queryRunner.isTransactionActive) {
+      await queryRunner.rollbackTransaction();
+    }
     throw error;
   } finally {
     await queryRunner.release();

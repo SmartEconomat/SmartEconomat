@@ -18,12 +18,12 @@ import { ChangeProfesorDto } from '../dto/change-profesor.dto';
 import { Rol } from '../../roles/rol.entity/rol.entity';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para alumno.
  */
 @Injectable()
 export class AlumnoService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(Alumno) private readonly alumnoRepo: Repository<Alumno>,
@@ -31,7 +31,7 @@ export class AlumnoService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async resolveSlotForRegistration(
     manager: {
@@ -99,7 +99,7 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async findSlotByCode(
     manager: {
@@ -119,7 +119,7 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async countStudentsInSlot(
     manager: {
@@ -145,7 +145,14 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Crea register.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   */
+  /**
+   * Registra manejadores IPC, rutas Nest o integraciones equivalentes según contexto.
+   * @undefined {RegisterAlumnoDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; username: string; status: UserStatus; message: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async register(dto: RegisterAlumnoDto) {
     return this.dataSource.transaction(async (manager) => {
@@ -204,7 +211,14 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene slot by code.
+   *
+   * @param codigoClase Parámetro de entrada para la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} codigoClase - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ codigoClase: string | undefined; aula: string; numeroClase: number; profesor: string; cialProfesor: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async getSlotByCode(codigoClase: string) {
     const normalizedCode = codigoClase.trim().toUpperCase();
@@ -231,7 +245,15 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "changeProfesor" en smart-economat-backend (Nest).
+   * @undefined {string} alumnoUserId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} reqUserId - Entrada efectiva esperada por el contrato.
+   * @undefined {rolUsuario} reqUserRole - Entrada efectiva esperada por el contrato.
+   * @undefined {ChangeProfesorDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async changeProfesor(
     alumnoUserId: string,
@@ -312,7 +334,11 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene aulas.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<string[]>} Datos efectivos después de ejecutar la operación.
    */
   async getAulas() {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
@@ -323,7 +349,14 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene clases by aula.
+   *
+   * @param aula Parámetro de entrada para la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} aula - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<number[]>} Datos efectivos después de ejecutar la operación.
    */
   async getClasesByAula(aula: string) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({
@@ -335,7 +368,16 @@ export class AlumnoService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene profesores by slot.
+   *
+   * @param aula Parámetro de entrada para la operación.
+   * @param numeroClase Parámetro de entrada para la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} aula - Entrada efectiva esperada por el contrato.
+   * @undefined {number} numeroClase - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ cial: string; nombre: string; codigoSlot: string | undefined; }[]>} Datos efectivos después de ejecutar la operación.
    */
   async getProfesoresBySlot(aula: string, numeroClase: number) {
     const slots = await this.dataSource.getRepository(AlumnoSlot).find({

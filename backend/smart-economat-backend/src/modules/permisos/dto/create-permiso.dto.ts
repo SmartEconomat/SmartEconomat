@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (CreatePermisoDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePermisoDto {
   @ApiProperty({
     description: 'docs.C_DIGO_NICO_DEL_PERMISO_FORMATO_MODULO_A',

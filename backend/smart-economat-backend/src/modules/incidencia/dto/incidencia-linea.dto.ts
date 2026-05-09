@@ -2,36 +2,47 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   TipoDiferencia,
   EstadoReclamacion,
-} from '../incidencia-linea.entity/incidencia-linea.entity';
+  EstadoLineaIncidencia,
+} from '../enums/incidencia.enums';
 
+/** Clase pública (IncidenciaLineaDto). Paquete: smart-economat-backend (Nest). */
 export class IncidenciaLineaDto {
-  @ApiProperty({ description: 'docs.ID_DE_LA_L_NEA_DE_INCIDENCIA' })
+  @ApiProperty({ description: 'ID de la línea de incidencia' })
   id!: string;
 
-  @ApiProperty({ description: 'docs.CANTIDAD_PEDIDA_ORIGINALMENTE_AL_PROVEED' })
-  cantidadEsperada!: number;
+  @ApiProperty({ description: 'Cantidad pedida originalmente' })
+  cantidadPedida!: number;
 
-  @ApiProperty({ description: 'docs.CANTIDAD_ESCANEADA_RECIBIDA_REALMENTE' })
+  @ApiProperty({ description: 'Cantidad recibida realmente' })
   cantidadRecibida!: number;
 
-  @ApiProperty({ description: 'docs.DIFERENCIA_DE_CANTIDADES' })
+  @ApiProperty({ description: 'Cantidad ajustada tras resolución' })
+  cantidadAjustada!: number;
+
+  @ApiProperty({ description: 'Diferencia de cantidades' })
   diferencia!: number;
 
   @ApiProperty({ enum: TipoDiferencia })
   tipoDiferencia!: TipoDiferencia;
 
+  @ApiProperty({ enum: EstadoLineaIncidencia })
+  estado!: EstadoLineaIncidencia;
+
+  @ApiProperty({ description: 'Indica si la línea aún requiere ajustes' })
+  necesitaAjuste!: boolean;
+
   @ApiProperty({ enum: EstadoReclamacion })
   estadoReclamacion!: EstadoReclamacion;
 
   @ApiProperty({
-    description: 'docs.OBSERVACIONES_PARA_ESTA_L_NEA_EN_PARTICU',
+    description: 'Observaciones para esta línea',
     required: false,
   })
   observaciones?: string;
 
-  @ApiProperty({ description: 'docs.ID_DEL_PRODUCTO_PEDIDO', required: false })
+  @ApiProperty({ description: 'ID del producto pedido', required: false })
   pedidoProductoId?: string;
 
-  @ApiProperty({ description: 'docs.NOMBRE_DEL_PRODUCTO', required: false })
+  @ApiProperty({ description: 'Nombre del producto', required: false })
   nombreProducto?: string;
 }

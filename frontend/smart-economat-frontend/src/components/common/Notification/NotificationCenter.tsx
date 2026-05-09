@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  getNotificationPriorityLabel,
+  getNotificationPriorityColor,
+} from '../../../utils/notification-priority.utils';
+import {
   Badge,
   Box,
   Button,
@@ -37,6 +41,10 @@ const getNotificationIcon = (priority: AppNotification['priority']) =>
     <PendingActionsRoundedIcon color="warning" fontSize="medium" />
   );
 
+/**
+ * Expone "NotificationCenter" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export default function NotificationCenter() {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -225,7 +233,7 @@ export default function NotificationCenter() {
                         setError(t('notifications.loadError'));
                       })
                   }
-                  aria-label="Actualizar notificaciones"
+                  aria-label={t('notificaciones.actualizarNotificaciones')}
                   sx={{
                     bgcolor: 'action.hover',
                     '&:hover': { bgcolor: 'action.selected' },
@@ -237,7 +245,7 @@ export default function NotificationCenter() {
               <IconButton
                 size="small"
                 onClick={handleClose}
-                aria-label="Cerrar panel de notificaciones"
+                aria-label={t('notificaciones.cerrarPanel')}
                 sx={{
                   bgcolor: 'action.hover',
                   '&:hover': { bgcolor: 'error.50', color: 'error.main' },
@@ -408,21 +416,14 @@ export default function NotificationCenter() {
                               {notification.title}
                             </Typography>
                             <Chip
-                              label={t(
-                                `notifications.priority.${notification.priority}`,
-                                {
-                                  defaultValue:
-                                    notification.priority === 'urgent'
-                                      ? 'Urgente'
-                                      : 'Pendiente',
-                                }
+                              label={getNotificationPriorityLabel(
+                                t,
+                                notification.priority
                               )}
                               size="small"
-                              color={
-                                notification.priority === 'urgent'
-                                  ? 'error'
-                                  : 'warning'
-                              }
+                              color={getNotificationPriorityColor(
+                                notification.priority
+                              )}
                               sx={{
                                 height: 18,
                                 fontSize: '0.65rem',

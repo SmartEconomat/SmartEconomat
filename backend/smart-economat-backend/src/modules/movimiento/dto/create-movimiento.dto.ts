@@ -1,36 +1,51 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
   IsEnum,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   Min,
   MaxLength,
+  IsObject,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { TipoMovimiento } from '../enums/movimiento.enums';
+import { TipoMovimiento, AccionMovimiento } from '../enums/movimiento.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
+/** Clase pública (CreateMovimientoDto). Paquete: smart-economat-backend (Nest). */
 export class CreateMovimientoDto {
   @IsEnum(TipoMovimiento, {
     message: i18nValidationMessage(
       'validation.EL_TIPO_DE_MOVIMIENTO_NO_ES_V_LIDO'
     ),
   })
-  tipo!: TipoMovimiento;
+  @IsOptional()
+  tipo?: TipoMovimiento = TipoMovimiento.AUDITORIA;
 
-  @IsInt({
+  @IsEnum(AccionMovimiento, {
     message: i18nValidationMessage(
-      'validation.LA_CANTIDAD_DEBE_SER_UN_N_MERO_ENTERO'
+      'validation.LA_ACCI_N_DE_MOVIMIENTO_NO_ES_V_LIDA'
     ),
   })
+  @IsOptional()
+  accion?: AccionMovimiento;
+
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.LA_CANTIDAD_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
   @Min(0, {
     message: i18nValidationMessage(
       'validation.LA_CANTIDAD_NO_PUEDE_SER_NEGATIVA'
     ),
   })
-  cantidad!: number;
+  @IsOptional()
+  cantidad?: number;
 
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString({
@@ -80,9 +95,54 @@ export class CreateMovimientoDto {
 
   @IsUUID('all', {
     message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
+  @IsOptional()
+  ubicacionOrigen?: string;
+
+  @IsUUID('all', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
+  @IsOptional()
+  ubicacionDestino?: string;
+
+  @IsUUID('all', {
+    message: i18nValidationMessage(
+      'validation.EL_ID_DE_LA_ENTIDAD_DEBE_SER_UN_UUID_V_L'
+    ),
+  })
+  @IsOptional()
+  transferencia?: string;
+
+  @Transform((params) => TrimStringTransformer.transform(params))
+  @IsOptional()
+  @MaxLength(128)
+  idempotenciaKey?: string;
+
+  @IsUUID('all', {
+    message: i18nValidationMessage(
       'validation.EL_ID_DEL_USUARIO_DEBE_SER_UN_UUID_V_LID'
     ),
   })
   @IsOptional()
   usuario?: string;
+
+  @IsObject({
+    message: i18nValidationMessage(
+      'validation.LOS_DATOS_ANTES_DEBEN_SER_UN_OBJETO'
+    ),
+  })
+  @IsOptional()
+  datosAntes?: any;
+
+  @IsObject({
+    message: i18nValidationMessage(
+      'validation.LOS_DATOS_DESPUES_DEBEN_SER_UN_OBJETO'
+    ),
+  })
+  @IsOptional()
+  datosDespues?: any;
 }

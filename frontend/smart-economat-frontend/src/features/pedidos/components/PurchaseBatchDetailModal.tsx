@@ -40,7 +40,7 @@ interface PurchaseBatchDetailModalProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PurchaseBatchDetailModal: React.FC<PurchaseBatchDetailModalProps> = ({
   detail,

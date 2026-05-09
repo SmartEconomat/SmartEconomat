@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,

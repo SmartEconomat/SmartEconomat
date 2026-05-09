@@ -3,7 +3,7 @@ import request from 'supertest';
 import { getTestApp } from '../setup/test-app';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('MovimientoController (e2e)', () => {
   let app: INestApplication;
@@ -33,7 +33,7 @@ describe('MovimientoController (e2e)', () => {
 
   describe('Listado General', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos - Debe listar movimientos (200)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -66,7 +66,7 @@ describe('MovimientoController (e2e)', () => {
 
   describe('Trazabilidad de Movimientos (Caso de Uso Principal)', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial - Sin parámetros debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -78,7 +78,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?entityId=<uuid> - Debe retornar historial por producto (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -98,7 +98,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?userId=<uuid> - Debe retornar historial por usuario (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -110,7 +110,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?entityId=<uuid>&type=entrada - Debe filtrar por tipo (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -132,7 +132,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?entityId=<uuid>&startDate=2026-01-01&endDate=2026-02-28 - Debe filtrar por rango (200 o 404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -148,7 +148,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial - Fechas inválidas deben fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -164,7 +164,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?entityId=invalid - UUID inválido debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -176,7 +176,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial - Sin autorización debe fallar (403)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -187,7 +187,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/historial?sortBy=cantidad&sortOrder=ASC - Debe ordenar personalizadamente', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -205,7 +205,7 @@ describe('MovimientoController (e2e)', () => {
 
   describe('Detalle y Operaciones CRUD', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/:id - Debe retornar detalles del movimiento (200 o 404)', async () => {
       const listResponse = await request(app.getHttpServer() as string)
@@ -228,7 +228,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /movimientos/:id - UUID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -239,7 +239,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('DELETE /movimientos/:id - Solo administrador puede eliminar (403 para profesor)', async () => {
       if (testMovimientoId) {
@@ -252,7 +252,7 @@ describe('MovimientoController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('DELETE /movimientos/:id - ID inexistente debe fallar (404)', async () => {
       const response = await request(app.getHttpServer() as string)
@@ -265,7 +265,7 @@ describe('MovimientoController (e2e)', () => {
 
   describe('Validación de DTOs', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /movimientos - DTO inválido debe fallar (400)', async () => {
       const response = await request(app.getHttpServer() as string)

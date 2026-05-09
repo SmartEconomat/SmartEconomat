@@ -35,6 +35,7 @@ function toOptionalBoolean(value: unknown): unknown {
   return value;
 }
 
+/** Clase pública (IncidenciaQueryDto). Paquete: smart-economat-backend (Nest). */
 export class IncidenciaQueryDto extends PaginationQueryDto {
   @IsOptional()
   @Transform(({ value }) => toOptionalBoolean(value))

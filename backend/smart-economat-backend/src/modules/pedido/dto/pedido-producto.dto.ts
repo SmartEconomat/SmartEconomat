@@ -6,6 +6,7 @@ import {
   Min,
 } from 'class-validator';
 
+/** Clase pública (PedidoProductoDto). Paquete: smart-economat-backend (Nest). */
 export class PedidoProductoDto {
   @IsString()
   @IsNotEmpty()

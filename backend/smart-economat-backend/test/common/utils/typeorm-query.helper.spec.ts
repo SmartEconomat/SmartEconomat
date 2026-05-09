@@ -17,6 +17,7 @@ describe('buildFindManyOptions', () => {
       skip: 10,
       take: 10,
       order: { createdAt: 'DESC' },
+      where: {},
     });
   });
 
@@ -29,7 +30,7 @@ describe('buildFindManyOptions', () => {
       'createdAt'
     );
 
-    expect(options.take).toBe(50);
+    expect(options.take).toBe(100);
     expect(options.skip).toBe(0);
     expect(options.order).toEqual({ createdAt: 'ASC' });
   });

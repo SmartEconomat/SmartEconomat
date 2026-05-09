@@ -32,11 +32,17 @@ interface PersistedSecrets {
   JWT_SECRET?: string;
 }
 
+/** Servicio del proceso principal: EnvRendererService. */
 export class EnvRendererService {
   private readonly ajv: Ajv;
   private readonly envFileName = ".env.prod";
   private readonly snapshotFileName = ".env.prod.snapshot.json";
 
+  /**
+   * Construye la instancia del servicio.
+   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
+   * @param {SecretStoreService} secretStore - Entrada esperada por la función.
+   */
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly secretStore = new SecretStoreService(),
@@ -45,6 +51,11 @@ export class EnvRendererService {
     addFormats(this.ajv);
   }
 
+  /**
+   * Renderiza valores hacia archivo o representación estable.
+   * @param {InstallerConfigPayload} config - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<EnvRenderResult>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async render(
     config: InstallerConfigPayload,
   ): Promise<OperationResult<EnvRenderResult>> {
@@ -112,6 +123,11 @@ export class EnvRendererService {
     };
   }
 
+  /**
+   * Expone la operación "regenerateFromSnapshot" del instalador SmartEconomat.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async regenerateFromSnapshot(runtimePath: string): Promise<OperationResult> {
     try {
       const snapshotPath = this.getSnapshotPath(runtimePath);

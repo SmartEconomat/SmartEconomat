@@ -3,7 +3,7 @@ import { Typography, Box, Paper } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Usuario: React.FC = () => {
   const { t } = useTranslation();

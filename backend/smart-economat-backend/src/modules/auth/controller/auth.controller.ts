@@ -24,14 +24,22 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { CookieInterceptor } from '../../../common/interceptors/cookie.interceptor';
 
 /**
- * Documentación en español.
+ * Controlador encargado de los procesos de autenticación y seguridad.
+ * Gestiona el registro, inicio de sesión (JWT), cierre de sesión,
+ * y los flujos de recuperación y cambio de contraseña.
  */
 @Controller('auth')
 export class AuthController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {AuthService} authService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly authService: AuthService) {}
 
   /**
-   * Documentación en español.
+   * Registra un nuevo usuario en el sistema.
+   * @param registerUserDto Datos del nuevo usuario.
+   * @returns El usuario creado.
    */
   @Public()
   @Post('register')
@@ -40,7 +48,10 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Inicia sesión de un usuario y establece la cookie de autenticación.
+   * @param loginUserDto Credenciales de acceso.
+   * @param res Respuesta Express para la gestión de cookies.
+   * @returns Datos de sesión y token JWT.
    */
   @Public()
   @UseInterceptors(CookieInterceptor)
@@ -55,7 +66,9 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Cierra la sesión del usuario invalidando la cookie de autenticación.
+   * @param res Respuesta Express.
+   * @returns Mensaje de éxito.
    */
   @Public()
   @Post('logout')
@@ -66,7 +79,9 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene la información del perfil del usuario autenticado actual.
+   * @param req Petición con el usuario inyectado por el guard.
+   * @returns Datos básicos del usuario.
    */
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -77,7 +92,10 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Permite al usuario autenticado cambiar su contraseña.
+   * @param req Petición para obtener el ID del usuario.
+   * @param dto Datos con la contraseña actual y la nueva.
+   * @returns Mensaje de éxito.
    */
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
@@ -95,7 +113,10 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Inicia el flujo de recuperación de contraseña olvidada.
+   * Envía un correo electrónico con el token de recuperación.
+   * @param dto DTO con el email del usuario.
+   * @returns Confirmación de envío del correo.
    */
   @Public()
   @Post('forgot-password')
@@ -109,7 +130,9 @@ export class AuthController {
   }
 
   /**
-   * Documentación en español.
+   * Restablece la contraseña utilizando un token válido.
+   * @param dto DTO con el token y la nueva contraseña.
+   * @returns Mensaje de éxito.
    */
   @Public()
   @Post('reset-password')

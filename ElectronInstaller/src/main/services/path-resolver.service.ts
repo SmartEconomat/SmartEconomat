@@ -25,6 +25,11 @@ function pickExistingPath(
   return candidates[0] ?? "";
 }
 
+/**
+ * Expone la operación "resolveTemplatesRoot" del instalador SmartEconomat.
+ * @param {ResolverContext} context - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function resolveTemplatesRoot(context: ResolverContext): string {
   const candidates = context.isPackaged
     ? [
@@ -47,6 +52,11 @@ export function resolveTemplatesRoot(context: ResolverContext): string {
   return pickExistingPath(candidates, context.exists);
 }
 
+/**
+ * Expone la operación "resolveInstallerScriptsRoot" del instalador SmartEconomat.
+ * @param {ResolverContext} context - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function resolveInstallerScriptsRoot(context: ResolverContext): string {
   const candidates = context.isPackaged
     ? [
@@ -69,11 +79,20 @@ export function resolveInstallerScriptsRoot(context: ResolverContext): string {
   return pickExistingPath(candidates, context.exists);
 }
 
+/** Servicio del proceso principal: PathResolverService. */
 export class PathResolverService {
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getInstallerRoot(): string {
     return app.isPackaged ? process.resourcesPath : app.getAppPath();
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getProjectRoot(): string {
     if (app.isPackaged) {
       return path.join(process.resourcesPath, "project");
@@ -81,6 +100,10 @@ export class PathResolverService {
     return path.resolve(this.getInstallerRoot(), "..");
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getTemplatesRoot(): string {
     return resolveTemplatesRoot({
       appPath: app.getAppPath(),
@@ -89,6 +112,10 @@ export class PathResolverService {
     });
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getInstallerScriptsRoot(): string {
     return resolveInstallerScriptsRoot({
       appPath: app.getAppPath(),
@@ -97,6 +124,12 @@ export class PathResolverService {
     });
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @param {string} fileName - Entrada esperada por la función.
+   * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getRuntimeFile(runtimePath: string, fileName: string): string {
     return path.join(runtimePath, fileName);
   }

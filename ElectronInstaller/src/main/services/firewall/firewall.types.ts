@@ -1,5 +1,7 @@
+/** Alias de tipo público (FirewallDecisionSeverity). */
 export type FirewallDecisionSeverity = "critical" | "degraded" | "warning";
 
+/** Alias de tipo público (FirewallPlanAction). */
 export type FirewallPlanAction =
   | "noop"
   | "update"
@@ -7,6 +9,7 @@ export type FirewallPlanAction =
   | "createVersioned"
   | "warnOnly";
 
+/** Contrato tipado público (FirewallPortRuleSnapshot). */
 export interface FirewallPortRuleSnapshot {
   ruleName: string;
   localPort: number;
@@ -17,6 +20,7 @@ export interface FirewallPortRuleSnapshot {
   profileRaw: string;
 }
 
+/** Contrato tipado público (FirewallDetectionResult). */
 export interface FirewallDetectionResult {
   isWindows: boolean;
   ports: number[];
@@ -27,6 +31,7 @@ export interface FirewallDetectionResult {
   detectionErrors: string[];
 }
 
+/** Contrato tipado público (FirewallPlanOperation). */
 export interface FirewallPlanOperation {
   type: "delete" | "set" | "create";
   port: number;
@@ -34,6 +39,7 @@ export interface FirewallPlanOperation {
   reason: string;
 }
 
+/** Contrato tipado público (FirewallPlan). */
 export interface FirewallPlan {
   action: FirewallPlanAction;
   severity: FirewallDecisionSeverity;
@@ -42,6 +48,7 @@ export interface FirewallPlan {
   canContinue: boolean;
 }
 
+/** Contrato tipado público (FirewallExecutionStep). */
 export interface FirewallExecutionStep {
   startedAt: string;
   finishedAt: string;
@@ -53,6 +60,7 @@ export interface FirewallExecutionStep {
   message: string;
 }
 
+/** Contrato tipado público (FirewallExecutionResult). */
 export interface FirewallExecutionResult {
   ok: boolean;
   usedElevation: boolean;
@@ -62,6 +70,7 @@ export interface FirewallExecutionResult {
   errors: string[];
 }
 
+/** Contrato tipado público (FirewallConnectivityResult). */
 export interface FirewallConnectivityResult {
   localhostHttp: boolean;
   localhostHttps: boolean;
@@ -77,16 +86,18 @@ export interface FirewallConnectivityResult {
   lanProbeOk: boolean;
 }
 
+/** Contrato tipado público (FirewallVerificationResult). */
 export interface FirewallVerificationResult {
   rulesConsistent: boolean;
   connectivity: FirewallConnectivityResult;
   message: string;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   connectivityChecksDeferred?: boolean;
 }
 
+/** Contrato tipado público (FirewallEnsureSummary). */
 export interface FirewallEnsureSummary {
   ok: boolean;
   canContinue: boolean;
@@ -102,14 +113,15 @@ export interface FirewallEnsureSummary {
   };
 }
 
+/** Contrato tipado público (FirewallEnsureContext). */
 export interface FirewallEnsureContext {
   httpPort: number;
   httpsPort: number;
   host: string;
   runtimePath: string;
   log: (line: string) => void;
-        /**
-     * Documentación en español.
-     */
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
   verificationMode?: "preHostMapping" | "postHostMapping" | "default";
 }

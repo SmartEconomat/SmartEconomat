@@ -5,6 +5,7 @@ import {
 } from '../../../services/pedido.service';
 import { PedidoFormValues } from '../types/pedidos-ui.types';
 
+/** Contrato de tipos público (NormalizedPedidoLine). Contexto: smart-economat-frontend (SPA). */
 export interface NormalizedPedidoLine {
   id?: string;
   productoProveedorId: string;
@@ -13,7 +14,12 @@ export interface NormalizedPedidoLine {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "extractPedidoLines" en smart-economat-frontend (SPA).
+ * @undefined {PedidoFormValues} formData - Entrada efectiva esperada por el contrato.
+ * @undefined {NormalizedPedidoLine[]} Datos efectivos después de ejecutar la operación.
  */
 export const extractPedidoLines = (
   formData: PedidoFormValues
@@ -60,7 +66,13 @@ export const extractPedidoLines = (
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "groupPedidoLinesByProvider" en smart-economat-frontend (SPA).
+ * @undefined {NormalizedPedidoLine[]} lines - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} fallbackProviderId - Entrada efectiva esperada por el contrato.
+ * @undefined {Map<string, NormalizedPedidoLine[]>} Datos efectivos después de ejecutar la operación.
  */
 export const groupPedidoLinesByProvider = (
   lines: NormalizedPedidoLine[],
@@ -84,7 +96,14 @@ export const groupPedidoLinesByProvider = (
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "buildPedidoUpdatePayload" en smart-economat-frontend (SPA).
+ * @undefined {string} proveedorId - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} observaciones - Entrada efectiva esperada por el contrato.
+ * @undefined {NormalizedPedidoLine[]} lines - Entrada efectiva esperada por el contrato.
+ * @undefined {UpdatePedidoPayload} Datos efectivos después de ejecutar la operación.
  */
 export const buildPedidoUpdatePayload = (
   proveedorId: string,
@@ -100,7 +119,14 @@ export const buildPedidoUpdatePayload = (
 });
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "buildCreatePedidoPayload" en smart-economat-frontend (SPA).
+ * @undefined {string} proveedorId - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} observaciones - Entrada efectiva esperada por el contrato.
+ * @undefined {NormalizedPedidoLine[]} lines - Entrada efectiva esperada por el contrato.
+ * @undefined {CreatePedidoPayload} Datos efectivos después de ejecutar la operación.
  */
 export const buildCreatePedidoPayload = (
   proveedorId: string,
@@ -116,7 +142,13 @@ export const buildCreatePedidoPayload = (
 });
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "buildPurchaseBatchPayload" en smart-economat-frontend (SPA).
+ * @undefined {string | undefined} observaciones - Entrada efectiva esperada por el contrato.
+ * @undefined {NormalizedPedidoLine[]} lines - Entrada efectiva esperada por el contrato.
+ * @undefined {CreatePurchaseBatchPayload} Datos efectivos después de ejecutar la operación.
  */
 export const buildPurchaseBatchPayload = (
   observaciones: string | undefined,

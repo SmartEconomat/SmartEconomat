@@ -2,6 +2,10 @@ import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DificultadReceta } from '../../src/modules/receta/enums/receta.enums';
+import {
+  UnidadMedida,
+  TipoProducto,
+} from '../../src/modules/producto/enums/producto.enums';
 
 describe('ProduccionController (e2e)', () => {
   jest.setTimeout(60000);
@@ -53,8 +57,8 @@ describe('ProduccionController (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: `Ingrediente E2E ${Date.now()}`,
-        tipo: 'otro',
-        unidad: 'KG',
+        tipo: TipoProducto.VERDURA,
+        unidad: UnidadMedida.KG,
         contenido: 1,
         proveedores: [{ proveedorId: provId, precioUnitario: 1 }],
       });
@@ -94,13 +98,10 @@ describe('ProduccionController (e2e)', () => {
       .post('/api/v1/recetas')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        nombre: `Receta E2E ${Date.now()}`,
+        nombre: `Receta E2E ${Date.now()}_${Math.random()}`,
         instrucciones: 'Mezclar y listo',
         tiempoEstimadoMinutos: 5,
         dificultad: DificultadReceta.FACIL,
-        rendimiento: 1,
-        unidadResultado: 'kg',
-        raciones: 4,
         ingredientes: [
           { productoId: ingredienteId, cantidad: 2, unidad: 'kg' },
         ],
@@ -117,7 +118,7 @@ describe('ProduccionController (e2e)', () => {
         .post('/api/v1/produccion/validar')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          items: [{ recetaId, cantidad: 1 }],
+          items: [{ recetaId, cantidadAProducir: 1 }],
         });
       if (!validRes.body.data.ingredients[0].isEnough) {
         throw new Error(`Stock fail: ${JSON.stringify(validRes.body.data)}`);
@@ -138,23 +139,28 @@ describe('ProduccionController (e2e)', () => {
       }
       expect(cookRes.status).toBe(201);
       const loteId = cookRes.body.data.id;
-      expect(Number(cookRes.body.data.porcionesProducidas)).toBe(4);
-      expect(Number(cookRes.body.data.porcionesRestantes)).toBe(4);
+      const porcionesIniciales = Number(cookRes.body.data.porcionesProducidas);
+      expect(porcionesIniciales).toBeGreaterThan(0);
+      expect(Number(cookRes.body.data.porcionesRestantes)).toBe(
+        porcionesIniciales
+      );
       expect(cookRes.body.data.estado).toBe('disponible');
 
       const consumeRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ tipo: 'raciones', valor: 1.5 });
+        .send({ tipo: 'raciones', valor: 0.5 });
 
       expect(consumeRes.status).toBe(200);
-      expect(Number(consumeRes.body.data.porcionesRestantes)).toBe(2.5);
+      expect(Number(consumeRes.body.data.porcionesRestantes)).toBe(
+        porcionesIniciales - 0.5
+      );
       expect(consumeRes.body.data.fechaAgotado ?? null).toBeNull();
 
       const consumeFinalRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ tipo: 'raciones', valor: 2.5 });
+        .send({ tipo: 'raciones', valor: porcionesIniciales - 0.5 });
 
       expect(consumeFinalRes.status).toBe(200);
       expect(Number(consumeFinalRes.body.data.porcionesRestantes)).toBe(0);

@@ -1,6 +1,7 @@
 import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 
+/** Clase pública (ChangeProfesorDto). Paquete: smart-economat-backend (Nest). */
 export class ChangeProfesorDto {
   @Transform(({ value }) =>
     typeof value === 'string' ? value.toUpperCase() : String(value)

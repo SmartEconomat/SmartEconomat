@@ -69,7 +69,7 @@ docker compose --env-file .env.prod --file docker-compose.prod.yml up -d
 Para configurar la contraseña inicial de los usuarios `admin` y `superadmin` (especialmente útil en el primer despliegue o para reseteos), define la siguiente variable de entorno en tu archivo `.env.dev` (local) o `.env.prod` (servidor):
 
 ```env
-SEED_DEFAULT_ADMIN_TEMP_PASSWORD=tu_contraseña_secreta
+SEED_DEFAULT_ADMIN_TEMP_PASSWORD=SmartEconomat2026!
 ```
 
 Una vez definida, ejecuta el seeder de bootstrap para aplicar los cambios:

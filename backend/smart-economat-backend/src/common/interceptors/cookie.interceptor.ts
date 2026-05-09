@@ -9,7 +9,11 @@ import { tap } from 'rxjs/operators';
 import { Response } from 'express';
 
 /**
- * Documentación en español.
+ * Obtiene auth cookie options.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {{ httpOnly: boolean; secure: boolean; sameSite: "strict"; maxAge: number; path: string; }} Datos efectivos después de ejecutar la operación.
  */
 export const getAuthCookieOptions = () => ({
   httpOnly: true,
@@ -20,12 +24,16 @@ export const getAuthCookieOptions = () => ({
 });
 
 /**
- * Documentación en español.
+ * Representa cookie interceptor en el sistema.
  */
 @Injectable()
 export class CookieInterceptor implements NestInterceptor {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de intercept dentro del flujo de la aplicación.
+   *
+   * @param context Parámetro de entrada para la operación.
+   * @param next Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(

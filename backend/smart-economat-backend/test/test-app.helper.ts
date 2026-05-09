@@ -12,7 +12,8 @@ import { GlobalExceptionFilter } from '../src/common/filters/global-exception.fi
 const g = global as any;
 
 /**
- * Documentación en español.
+ * Obtiene test app.
+ * @returns Valor resultante de la operación.
  */
 export async function getTestApp(): Promise<INestApplication> {
   if (g.__TEST_APP__) return g.__TEST_APP__ as INestApplication;

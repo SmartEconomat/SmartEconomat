@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import {
@@ -17,7 +17,7 @@ import { I18nHelper } from '../helpers/i18n.helper';
 import { APP_VERSION } from '../helpers/app-version.helper';
 
 /**
- * Documentación en español.
+ * Representa transform interceptor en el sistema.
  */
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<
@@ -25,7 +25,11 @@ export class TransformInterceptor<T> implements NestInterceptor<
   ApiResponse<T>
 > {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de intercept dentro del flujo de la aplicación.
+   *
+   * @param context Parámetro de entrada para la operación.
+   * @param next Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();

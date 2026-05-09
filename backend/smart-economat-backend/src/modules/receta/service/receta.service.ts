@@ -20,21 +20,22 @@ import {
 } from '../dto/receta-cost-response.dto';
 import { RecetaPreviewCostDto } from '../dto/receta-preview-cost.dto';
 import { Producto } from '../../producto/producto.entity/producto.entity';
+import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Alergeno } from '../../producto/enums/producto.enums';
+import { RecetaListQueryDto } from '../dto/receta-list-query.dto';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para receta.
  */
 @Injectable()
 export class RecetaService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     private readonly recetaRepository: RecetaRepository,
@@ -42,7 +43,10 @@ export class RecetaService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param createRecetaDto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(createRecetaDto: CreateRecetaDto): Promise<Receta> {
     const receta = await this.recetaRepository.create(createRecetaDto);
@@ -50,17 +54,27 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {RecetaListQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Receta>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
-    query: PaginationQueryDto,
+    query: RecetaListQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
     return this.recetaRepository.findAllPaginated(query, userRole);
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userRole Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string, userRole?: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id, userRole);
@@ -73,7 +87,11 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param updateRecetaDto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, updateRecetaDto: UpdateRecetaDto): Promise<Receta> {
     await this.findOne(id);
@@ -82,7 +100,10 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     await this.findOne(id);
@@ -90,7 +111,10 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de duplicate dentro del flujo de la aplicación.
+   *
+   * @param duplicateRecetaDto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async duplicate(duplicateRecetaDto: DuplicateRecetaDto): Promise<Receta> {
     return this.recetaRepository.duplicate(
@@ -100,7 +124,10 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene detalle.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async getDetalle(id: string): Promise<DetalleRecetaDto> {
     const receta = await this.recetaRepository.findById(id);
@@ -165,7 +192,10 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de calcular escandallo dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async calcularEscandallo(id: string): Promise<RecetaCostResponseDto> {
     const receta = await this.recetaRepository.findById(id);
@@ -204,7 +234,12 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "calculatePreviewCost" en smart-economat-backend (Nest).
+   * @undefined {RecetaPreviewCostDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecetaCostResponseDto>} Datos efectivos después de ejecutar la operación.
    */
   async calculatePreviewCost(
     dto: RecetaPreviewCostDto
@@ -225,14 +260,49 @@ export class RecetaService {
     const productos = await this.dataSource
       .getRepository(Producto)
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.proveedores', 'pp')
-      .leftJoinAndSelect('pp.proveedor', 'proveedor')
       .where('p.id IN (:...productoIds)', { productoIds })
       .getMany();
 
     const productosMap = new Map<string, Producto>();
     for (const p of productos) {
       productosMap.set(p.id, p);
+    }
+
+    const providersRaw = await this.dataSource
+      .getRepository(ProductoProveedor)
+      .createQueryBuilder('pp')
+      .where('pp.productoId IN (:...productoIds)', { productoIds })
+      .select('pp.productoId', 'productoId')
+      .addSelect('pp.proveedorId', 'proveedorId')
+      .addSelect('pp.precioUnitario', 'precioUnitario')
+      .getRawMany<{
+        productoId: string;
+        proveedorId: string;
+        precioUnitario: string | number | null;
+      }>();
+
+    const providersByProducto = new Map<
+      string,
+      Array<{ proveedorId: string; precioUnitario: number }>
+    >();
+
+    for (const provider of providersRaw) {
+      const parsedPrecio = Number(provider.precioUnitario);
+      if (
+        !provider.productoId ||
+        !provider.proveedorId ||
+        !Number.isFinite(parsedPrecio) ||
+        parsedPrecio <= 0
+      ) {
+        continue;
+      }
+
+      const existing = providersByProducto.get(provider.productoId) ?? [];
+      existing.push({
+        proveedorId: provider.proveedorId,
+        precioUnitario: parsedPrecio,
+      });
+      providersByProducto.set(provider.productoId, existing);
     }
 
     let costoTotal = 0;
@@ -242,36 +312,37 @@ export class RecetaService {
       const producto = productosMap.get(ing.productoId);
       if (!producto) continue;
 
-      let precioUnitario = 0;
+      const providerPrices = providersByProducto.get(ing.productoId) ?? [];
 
-      if (ing.proveedorFavoritoId) {
-        const favPP = producto.proveedores?.find(
-          (pp) => pp.proveedorId === ing.proveedorFavoritoId
-        );
-        if (favPP && (favPP.precioUnitario ?? 0) > 0) {
-          precioUnitario = favPP.precioUnitario!;
-        }
-      }
+      const preferredProviderPrice = ing.proveedorFavoritoId
+        ? providerPrices.find(
+            (provider) => provider.proveedorId === ing.proveedorFavoritoId
+          )
+        : undefined;
 
-      if (precioUnitario === 0 && (producto.pmp ?? 0) > 0) {
-        precioUnitario = producto.pmp;
-      }
+      const cheapestProviderPrice =
+        preferredProviderPrice ||
+        (providerPrices.length > 0
+          ? providerPrices.reduce((cheapest, current) =>
+              current.precioUnitario < cheapest.precioUnitario
+                ? current
+                : cheapest
+            )
+          : undefined);
 
-      if (precioUnitario === 0 && producto.proveedores?.length) {
-        const preciosValidos = producto.proveedores
-          .map((pp) => pp.precioUnitario)
-          .filter((p): p is number => (p ?? 0) > 0);
+      const fallbackPmp = Number(producto.pmp);
+      const precioUnitario =
+        cheapestProviderPrice?.precioUnitario ??
+        (Number.isFinite(fallbackPmp) && fallbackPmp > 0 ? fallbackPmp : 0);
 
-        if (preciosValidos.length > 0) {
-          precioUnitario =
-            preciosValidos.reduce((sum, p) => sum + p, 0) /
-            preciosValidos.length;
-        }
-      }
+      const mermaBaseProducto = this.normalizarMerma(producto.mermaPorcentaje);
+      const mermaIngrediente = this.normalizarMerma(ing.mermaAplicada);
+      const mermaEfectiva =
+        mermaIngrediente > 0 ? mermaIngrediente : mermaBaseProducto;
 
-      const merma = Number(ing.mermaAplicada ?? 0) / 100;
+      const factorUtilizable = 1 - mermaEfectiva / 100;
       const cantidadReal =
-        merma > 0 && merma < 1 ? ing.cantidad / (1 - merma) : ing.cantidad;
+        factorUtilizable > 0 ? ing.cantidad / factorUtilizable : ing.cantidad;
 
       const costoIngrediente = precioUnitario * cantidadReal;
       costoTotal += costoIngrediente;
@@ -300,8 +371,25 @@ export class RecetaService {
     };
   }
 
+  private normalizarMerma(value?: number | null): number {
+    if (value === null || value === undefined) {
+      return 0;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return 0;
+    }
+
+    return Math.min(parsed, 99.99);
+  }
+
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de cocinar dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async cocinar(id: string, dto: CocinarRecetaDto): Promise<void> {
     const cantidadRecetas = dto.cantidad || 1;
@@ -381,7 +469,10 @@ export class RecetaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de recalcular costes dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async recalcularCostes(id: string): Promise<Receta> {
     const receta = await this.recetaRepository.findById(id);

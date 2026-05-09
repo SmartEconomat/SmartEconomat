@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import { I18nHelper } from '../../common/helpers/i18n.helper';
 import { resolveWritableLocalStoragePath } from '../../common/utils/local-storage-path.util';
 
+/** Clase pública (ArchivoModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([Archivo]),

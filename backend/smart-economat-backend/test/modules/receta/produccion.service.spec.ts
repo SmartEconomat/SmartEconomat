@@ -336,12 +336,107 @@ describe('ProduccionService', () => {
       });
 
       const result = await service.validarMultiple({
-        items: [{ recetaId: 'rec-1', cantidad: 1 }],
+        items: [{ recetaId: 'rec-1', cantidadAProducir: 1 }],
       });
 
       expect(result.ingredients[0].isEnough).toBe(true);
       expect(result.ingredients[0].requerido).toBe(10);
       expect(result.ingredients[0].disponible).toBe(100);
+      expect(result.itemsResumen).toHaveLength(1);
+      expect(result.itemsResumen[0].factorEscalado).toBe(1);
+    });
+
+    it('debe agregar el mismo producto convirtiendo unidades antes de comparar stock', async () => {
+      recetaRepository.findByIds.mockResolvedValue([
+        {
+          id: 'rec-kg',
+          rendimiento: 1,
+          ingredientes: [
+            {
+              producto: { id: 'p-1', nombre: 'Harina' },
+              cantidad: 1,
+              unidad: 'kg',
+            },
+          ],
+        },
+        {
+          id: 'rec-g',
+          rendimiento: 1,
+          ingredientes: [
+            {
+              producto: { id: 'p-1', nombre: 'Harina' },
+              cantidad: 500,
+              unidad: 'g',
+            },
+          ],
+        },
+      ]);
+
+      dataSource.getRepository
+        .mockReturnValueOnce({
+          find: jest.fn().mockResolvedValue([
+            {
+              cantidadActual: 2,
+              productoProveedor: {
+                producto: { id: 'p-1', nombre: 'Harina', unidad: 'KG' },
+              },
+            },
+          ]),
+        })
+        .mockReturnValueOnce({
+          find: jest.fn().mockResolvedValue([]),
+        });
+
+      const result = await service.validarMultiple({
+        items: [
+          { recetaId: 'rec-kg', cantidadAProducir: 1 },
+          { recetaId: 'rec-g', cantidadAProducir: 1 },
+        ],
+      });
+
+      expect(result.ingredients[0].requerido).toBe(1.5);
+      expect(result.ingredients[0].disponible).toBe(2);
+      expect(result.ingredients[0].isEnough).toBe(true);
+    });
+
+    it('debe aplicar merma en la validación igual que al ejecutar producción', async () => {
+      recetaRepository.findByIds.mockResolvedValue([
+        {
+          id: 'rec-1',
+          rendimiento: 1,
+          ingredientes: [
+            {
+              producto: { id: 'p-1', nombre: 'Tomate' },
+              cantidad: 1,
+              unidad: 'kg',
+              mermaAplicada: 10,
+            },
+          ],
+        },
+      ]);
+
+      dataSource.getRepository
+        .mockReturnValueOnce({
+          find: jest.fn().mockResolvedValue([
+            {
+              cantidadActual: 1.05,
+              productoProveedor: {
+                producto: { id: 'p-1', nombre: 'Tomate', unidad: 'KG' },
+              },
+            },
+          ]),
+        })
+        .mockReturnValueOnce({
+          find: jest.fn().mockResolvedValue([]),
+        });
+
+      const result = await service.validarMultiple({
+        items: [{ recetaId: 'rec-1', cantidadAProducir: 1 }],
+      });
+
+      expect(result.ingredients[0].requerido).toBe(1.111);
+      expect(result.ingredients[0].disponible).toBe(1.05);
+      expect(result.ingredients[0].isEnough).toBe(false);
     });
   });
 });

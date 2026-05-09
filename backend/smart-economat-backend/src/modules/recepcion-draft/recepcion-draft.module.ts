@@ -8,6 +8,7 @@ import { RecepcionDraft } from './recepcion-draft.entity/recepcion-draft.entity'
 import { RECEPCION_DRAFT_REDIS } from './constants/recepcion-draft.constants';
 import { createInMemoryRedisClient } from '../../common/testing/in-memory-redis';
 
+/** Clase pública (RecepcionDraftModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [TypeOrmModule.forFeature([RecepcionDraft])],
   controllers: [RecepcionDraftController],

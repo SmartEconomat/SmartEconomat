@@ -7,6 +7,7 @@ import { PlantillasRolesController } from './controller/plantillas-roles.control
 import { PermisosModule } from '../permisos/permisos.module';
 import { RolesModule } from '../roles/roles.module';
 
+/** Clase pública (PlantillasRolesModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([PlantillaRol, PlantillaRolPermiso]),

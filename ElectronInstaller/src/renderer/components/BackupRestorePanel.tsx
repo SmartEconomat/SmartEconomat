@@ -47,6 +47,23 @@ function formatBackupDate(value: string): string {
   });
 }
 
+/**
+ * Expone la operación "BackupRestorePanel" del instalador SmartEconomat.
+ * @returns {BackupRestorePanelProps} {
+ *   lastBackup,
+ *   busy,
+ *   backupDefaultDirectory,
+ *   onSaveBackupDefaultDirectory,
+ *   onPickBackupDirectory,
+ *   onBackup,
+ *   onRestore,
+ *   onPickRestoreArtifact,
+ *   initialBackupLabel = "",
+ *   initialArtifactPath = "",
+ *   initialRestoreAcknowledged = false,
+ * } - Entrada esperada por la función.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function BackupRestorePanel({
   lastBackup,
   busy,

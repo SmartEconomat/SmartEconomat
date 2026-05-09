@@ -5,7 +5,10 @@ const SUPPORTED_LANGS = ['es', 'en'];
 const DEFAULT_LANG = 'es';
 
 /**
- * Documentación en español.
+ * Resuelve language a partir del contexto disponible.
+ *
+ * @param req Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function resolveLanguage(req: Request): string {
   const queryLang = req.query['lang'];
@@ -24,7 +27,14 @@ function resolveLanguage(req: Request): string {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "languageDetector" en smart-economat-backend (Nest).
+ * @undefined {Request<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/express-serve-static-core/index").ParamsDictionary, any, any, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/qs/index").ParsedQs, Record<string, any>>} req - Entrada efectiva esperada por el contrato.
+ * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+ * @undefined {NextFunction} next - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
  */
 export function languageDetector(
   req: Request,

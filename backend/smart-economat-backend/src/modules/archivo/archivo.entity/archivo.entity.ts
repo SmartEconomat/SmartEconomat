@@ -3,6 +3,7 @@ import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
+/** Clase pública (Archivo). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'archivo' })
 export class Archivo extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })

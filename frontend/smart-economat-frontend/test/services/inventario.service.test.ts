@@ -76,7 +76,7 @@ describe('inventario.service agregarInventarioPorProducto', () => {
     expect(result[0].bajoStock).toBe(true);
   });
 
-  it('mantiene visible un producto sin stock cuando esta bajo minimo', () => {
+  it('no incluye productos cuyos lotes tienen cantidad cero', () => {
     const items: InventarioItem[] = [
       buildInventarioItem({
         id: 'inv-3',
@@ -91,9 +91,7 @@ describe('inventario.service agregarInventarioPorProducto', () => {
 
     const result = agregarInventarioPorProducto(items);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].cantidadTotal).toBe(0);
-    expect(result[0].bajoStock).toBe(true);
+    expect(result).toHaveLength(0);
   });
 
   it('agrega proveedores y ubicaciones sin duplicados', () => {
@@ -161,5 +159,73 @@ describe('inventario.service agregarInventarioPorProducto', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].cantidadTotal).toBe(10);
+  });
+
+  it('ordena productos alfabéticamente por nombre', () => {
+    const items: InventarioItem[] = [
+      buildInventarioItem({
+        id: 'inv-z',
+        productoId: 'prod-z',
+        nombreProducto: 'Zanahoria',
+        cantidadActual: 1,
+        cantidadMinima: 1,
+        proveedorNombre: 'P',
+        ubicacionNombre: 'U',
+      }),
+      buildInventarioItem({
+        id: 'inv-a',
+        productoId: 'prod-a',
+        nombreProducto: 'Aceite',
+        cantidadActual: 2,
+        cantidadMinima: 1,
+        proveedorNombre: 'P',
+        ubicacionNombre: 'U',
+      }),
+    ];
+
+    const result = agregarInventarioPorProducto(items);
+
+    expect(result.map((r) => r.nombre)).toEqual(['Aceite', 'Zanahoria']);
+  });
+
+  it('consolida contenidoPorUnidad cuando el primer lote no lo trae y uno posterior sí', () => {
+    const items: InventarioItem[] = [
+      buildInventarioItem({
+        id: 'inv-1',
+        productoId: 'prod-k',
+        nombreProducto: 'Kiwi',
+        cantidadActual: 1,
+        cantidadMinima: 0,
+        proveedorNombre: 'P',
+        ubicacionNombre: 'U1',
+      }),
+      {
+        ...buildInventarioItem({
+          id: 'inv-2',
+          productoId: 'prod-k',
+          nombreProducto: 'Kiwi',
+          cantidadActual: 2,
+          cantidadMinima: 0,
+          proveedorNombre: 'P',
+          ubicacionNombre: 'U2',
+        }),
+        productoProveedor: {
+          id: 'pp-k',
+          producto: {
+            id: 'prod-k',
+            nombre: 'Kiwi',
+            unidad: 'kg',
+            contenido: 500,
+            tipo: 'fruta',
+          },
+          proveedor: { id: 'pr', nombre: 'P' },
+        },
+      } as InventarioItem,
+    ];
+
+    const result = agregarInventarioPorProducto(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].contenidoPorUnidad).toBe(500);
   });
 });

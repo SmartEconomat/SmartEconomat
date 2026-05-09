@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (MotivoMerma) dentro de smart-economat-backend (Nest). */
 export enum MotivoMerma {
   ROTURA = 'rotura',
   DETERIORO = 'deterioro',
@@ -6,6 +7,7 @@ export enum MotivoMerma {
   OTROS = 'otros',
 }
 
+/** Catálogo de valores enumerados (TipoMerma) dentro de smart-economat-backend (Nest). */
 export enum TipoMerma {
   RECEPCION = 'recepcion',
   PRODUCCION = 'produccion',

@@ -11,32 +11,44 @@ import Box from '@mui/material/Box';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface SmartFilterAutocompleteProps<T> extends Omit<
   AutocompleteProps<T, true, false, false>,
   'renderInput' | 'multiple'
 > {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   placeholder?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   ariaLabel?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   icon?: ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   inputWidth?: string | number;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "SmartFilterAutocomplete" en smart-economat-frontend (SPA).
+ * @undefined {SmartFilterAutocompleteProps<T>} {
+ *   placeholder = 'Filtrar...',
+ *   ariaLabel = 'Filtrar elementos',
+ *   icon = <FilterListIcon sx={{ fontSize: 18 }} />,
+ *   inputWidth: _inputWidth,
+ *   sx,
+ *   ...props
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export function SmartFilterAutocomplete<T>({
   placeholder = 'Filtrar...',

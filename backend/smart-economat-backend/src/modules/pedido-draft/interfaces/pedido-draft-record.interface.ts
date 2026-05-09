@@ -1,3 +1,4 @@
+/** Contrato de tipos público (PedidoDraftRecord). Contexto: smart-economat-backend (Nest). */
 export interface PedidoDraftRecord {
   id?: string;
   userId: string;

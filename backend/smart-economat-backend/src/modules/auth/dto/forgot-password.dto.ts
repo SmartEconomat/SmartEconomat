@@ -1,6 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
+/** Clase pública (ForgotPasswordDto). Paquete: smart-economat-backend (Nest). */
 export class ForgotPasswordDto {
   @IsNotEmpty({
     message: i18nValidationMessage('validation.EL_EMAIL_ES_REQUERIDO'),

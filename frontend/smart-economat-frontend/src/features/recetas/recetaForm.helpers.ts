@@ -4,11 +4,11 @@ import {
   Receta,
   type RecetaIngredientePayload,
   type RecetaPayload,
-  TiempoReceta,
   UnidadIngrediente,
 } from '../../services/receta.types';
 import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { toOptionalTrimmedString } from '../../services/api.utils';
+import { parseRequiredRecetaTiempoMinutos } from './receta-tiempo.utils';
 
 type RecetaIngredienteFormValue = {
   productoId?: string;
@@ -45,35 +45,6 @@ function normalizeIngredienteForForm(
   };
 }
 
-function getMinutesFromValue(value: unknown): number {
-  const match = String(value ?? '').match(/\d+/);
-  return match ? Number.parseInt(match[0], 10) : 30;
-}
-
-function mapMinutesToTiempoPreparacion(minutes?: number | null): TiempoReceta {
-  if (!minutes || Number.isNaN(minutes)) {
-    return TiempoReceta.MIN_30;
-  }
-
-  if (minutes <= 10) {
-    return TiempoReceta.MIN_10;
-  }
-
-  if (minutes <= 20) {
-    return TiempoReceta.MIN_20;
-  }
-
-  if (minutes <= 30) {
-    return TiempoReceta.MIN_30;
-  }
-
-  if (minutes <= 45) {
-    return TiempoReceta.MIN_45;
-  }
-
-  return TiempoReceta.MIN_60;
-}
-
 function parsePositiveOptionalNumber(
   value: string | number | null | undefined,
   label: string
@@ -107,7 +78,8 @@ function parsePositiveOptionalInteger(
 }
 
 function normalizeIngredients(
-  ingredients: RecetaIngredienteFormValue[]
+  ingredients: RecetaIngredienteFormValue[],
+  t: (key: string) => string
 ): RecetaIngredientePayload[] {
   return ingredients.reduce<RecetaIngredientePayload[]>(
     (acc, ingredient, index) => {
@@ -119,9 +91,7 @@ function normalizeIngredients(
           Boolean(ingredient.unidad);
 
         if (hasIngredientData) {
-          throw new Error(
-            `La receta contiene un producto inactivo o no disponible en el ingrediente ${index + 1}.`
-          );
+          throw new Error(t('recipes.errors.productoInvalido'));
         }
 
         return acc;
@@ -161,7 +131,10 @@ function normalizeIngredients(
 }
 
 /**
- * Documentación en español.
+ * Mapea receta to form data al formato de dominio esperado.
+ *
+ * @param receta Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export function mapRecetaToFormData(receta: Receta): Record<string, unknown> {
   const imagen = resolveStoredFileUrl(
@@ -174,18 +147,22 @@ export function mapRecetaToFormData(receta: Receta): Record<string, unknown> {
   return {
     ...receta,
     ingredientes,
-    tiempoPreparacion: mapMinutesToTiempoPreparacion(
-      receta.tiempoEstimadoMinutos
-    ),
     imagen,
   };
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "buildRecetaPayload" en smart-economat-frontend (SPA).
+ * @undefined {Record<string, unknown>} formData - Entrada efectiva esperada por el contrato.
+ * @undefined {(key: string) => string} t - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<RecetaPayload>} Datos efectivos después de ejecutar la operación.
  */
 export async function buildRecetaPayload(
-  formData: Record<string, unknown>
+  formData: Record<string, unknown>,
+  t: (key: string) => string = (key) => key
 ): Promise<RecetaPayload> {
   const nombre = toOptionalTrimmedString(formData.nombre);
   if (!nombre) {
@@ -205,11 +182,12 @@ export async function buildRecetaPayload(
   const ingredientes = normalizeIngredients(
     Array.isArray(formData.ingredientes)
       ? (formData.ingredientes as RecetaIngredienteFormValue[])
-      : []
+      : [],
+    t
   );
 
   if (ingredientes.length === 0) {
-    throw new Error('La receta debe incluir al menos un ingrediente valido.');
+    throw new Error(t('recipes.errors.ingredienteObligatorio'));
   }
 
   let finalPathImg: string | undefined;
@@ -236,7 +214,9 @@ export async function buildRecetaPayload(
   return {
     nombre,
     instrucciones,
-    tiempoEstimadoMinutos: getMinutesFromValue(formData.tiempoPreparacion),
+    tiempoEstimadoMinutos: parseRequiredRecetaTiempoMinutos(
+      formData.tiempoEstimadoMinutos ?? formData.tiempoPreparacion
+    ),
     dificultad,
     rendimiento: parsePositiveOptionalNumber(
       formData.rendimiento as string | number | null | undefined,
@@ -252,10 +232,29 @@ export async function buildRecetaPayload(
         formData.raciones as string | number | null | undefined,
         'Las raciones'
       ) ?? 1,
-    tamanioRacion: parsePositiveOptionalNumber(
-      formData.tamanioRacion as string | number | null | undefined,
-      'El tamano de racion'
-    ),
+    tamanioRacion: (() => {
+      const explicit = parsePositiveOptionalNumber(
+        formData.tamanioRacion as string | number | null | undefined,
+        'El tamano de racion'
+      );
+      if (explicit != null) return explicit;
+
+      const rendimientoVal = parsePositiveOptionalNumber(
+        formData.rendimiento as string | number | null | undefined,
+        'El rendimiento'
+      );
+      const racionesVal =
+        parsePositiveOptionalNumber(
+          formData.raciones as string | number | null | undefined,
+          'Las raciones'
+        ) ?? 1;
+
+      if (rendimientoVal != null && racionesVal > 0) {
+        return rendimientoVal / racionesVal;
+      }
+
+      return undefined;
+    })(),
     ingredientes,
     ...(finalPathImg ? { pathImg: finalPathImg } : {}),
   };

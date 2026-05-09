@@ -24,21 +24,29 @@ import { MermaKpiQueryDto } from '../dto/merma-kpi-query.dto';
 import { Merma } from '../merma.entity/merma.entity';
 import { MermaKpiResponse, MermaService } from '../service/merma.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { validateDateRange } from '../../../common/utils/date-range.util';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la gestión de mermas y desperdicios.
+ * Permite registrar mermas manuales, mermas derivadas de la producción
+ * y consultar indicadores de rendimiento (KPIs).
  */
 @ApiTags('Merma')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('merma')
 export class MermaController {
   /**
-   * Documentación en español.
+   * Crea una instancia de MermaController.
+   * @param mermaService Servicio para la gestión lógica de mermas.
    */
   constructor(private readonly mermaService: MermaService) {}
 
   /**
-   * Documentación en español.
+   * Registra una nueva merma manual, descontando automáticamente el stock del inventario.
+   * @param dto Datos de la merma (producto, cantidad, motivo).
+   * @param userId ID del usuario que registra la merma.
+   * @returns El registro de merma creado.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.merma.crear)
@@ -60,7 +68,10 @@ export class MermaController {
   }
 
   /**
-   * Documentación en español.
+   * Registra una merma de ingrediente ocurrida durante un proceso de producción.
+   * @param dto Datos de la merma vinculada a un lote de producción.
+   * @param userId ID del usuario que reporta la merma.
+   * @returns El registro de merma creado.
    */
   @Post('produccion/reportar')
   @RequirePermissions(PERMISSIONS.merma.crear)
@@ -83,7 +94,9 @@ export class MermaController {
   }
 
   /**
-   * Documentación en español.
+   * Recupera los indicadores clave de rendimiento (KPIs) sobre las mermas.
+   * @param query Filtros de fecha y categoría para los KPIs.
+   * @returns Objeto con métricas de pérdida y porcentaje.
    */
   @Get('kpis')
   @RequirePermissions(PERMISSIONS.merma.stats)
@@ -93,11 +106,17 @@ export class MermaController {
   })
   @ApiResponse({ status: 200 })
   getKpis(@Query() query: MermaKpiQueryDto): Promise<MermaKpiResponse> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Mermas');
     return this.mermaService.getKpis(query);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene estadísticas agregadas de mermas por motivo y por producto.
+   * @returns Agregaciones para visualización en dashboards.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<{ porMotivo: unknown[]; porProducto: unknown[]; }>} Datos efectivos después de ejecutar la operación.
    */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.merma.stats)
@@ -110,21 +129,25 @@ export class MermaController {
   }
 
   /**
-   * Documentación en español.
+   * Lista todas las mermas registradas con soporte para paginación.
+   * @param query Parámetros de paginación y ordenación.
+   * @returns Lista paginada de mermas.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.merma.listar)
   @ApiOperation({ summary: 'Listar todas las mermas con paginación' })
   @ApiResponse({ status: 200, type: [Merma] })
   findAll(
-    @SortableFields(['createdAt', 'cantidad', 'motivo'])
+    @SortableFields(SORTABLE_FIELDS.mermas)
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Merma>> {
     return this.mermaService.findAll(query);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle de una merma específica por su ID.
+   * @param id UUID de la merma.
+   * @returns El registro de merma solicitado.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.merma.ver)

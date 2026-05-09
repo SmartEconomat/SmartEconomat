@@ -12,7 +12,7 @@ import { DataSource } from 'typeorm';
 import {
   EstadoReclamacion,
   TipoDiferencia,
-} from '../../../src/modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
+} from '../../../src/modules/incidencia/enums/incidencia.enums';
 import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
 
 function makeProveedor(id: string, nombre: string, nif?: string): Proveedor {

@@ -25,13 +25,25 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
+/** Clase pública (ProduccionController). Paquete: smart-economat-backend (Nest). */
 @ApiTags('Producción')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('produccion')
 export class ProduccionController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {ProduccionService} produccionService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly produccionService: ProduccionService) {}
 
+  /**
+   * Expone "ejecutarProduccion" en smart-economat-backend (Nest).
+   * @undefined {EjecutarProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
+   */
   @Post('ejecutar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.CREATED)
@@ -51,6 +63,11 @@ export class ProduccionController {
     return this.produccionService.ejecutarProduccion(dto, userId);
   }
 
+  /**
+   * Expone "validarStock" en smart-economat-backend (Nest).
+   * @undefined {ValidarProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ ingredients: { productoId: any; nombre: string; requerido: number; disponible: number; unidad: string; isEnough: boolean; cheapestProveedorId: string; cheapestProveedorNombre: string; cheapestProductoProveedorId: string; cheapestPrecio: number | undefined; isFavorite: boolean; }[]; }>} Datos efectivos después de ejecutar la operación.
+   */
   @Post('validar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @HttpCode(HttpStatus.OK)
@@ -61,24 +78,29 @@ export class ProduccionController {
     return this.produccionService.validarMultiple(dto);
   }
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<ProduccionLote>>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   @ApiOperation({ summary: 'Listar todos los lotes de producción' })
   @ApiResponse({ status: 200, type: [ProduccionLote] })
   findAll(
-    @SortableFields([
-      'fechaProduccion',
-      'fechaCaducidad',
-      'cantidadProducida',
-      'costeTotalReal',
-      'createdAt',
-    ])
+    @SortableFields(SORTABLE_FIELDS.produccion)
     @Query()
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<ProduccionLote>> {
     return this.produccionService.findAll(query);
   }
 
+  /**
+   * Expone "consumirPorciones" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {ConsumirProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch('lote/:id/consumir')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   @ApiOperation({
@@ -92,6 +114,11 @@ export class ProduccionController {
     return this.produccionService.consumirPorciones(id, dto);
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   @ApiOperation({ summary: 'Obtener un lote de producción por ID' })

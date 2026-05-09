@@ -29,29 +29,30 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useBreakpoints } from '../../utils/useBreakpoints';
 import { useTranslation } from 'react-i18next';
 
+/** Contrato de tipos público (PageToolbarProps). Contexto: smart-economat-frontend (SPA). */
 export interface PageToolbarProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   title?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   icon?: React.ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   searchValue?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onSearchChange?: (value: string) => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   searchPlaceholder?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   searchId?: string;
   primaryAction?: {
@@ -63,7 +64,7 @@ export interface PageToolbarProps {
     isLoading?: boolean;
   };
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   secondaryAction?: {
     label: string;
@@ -74,35 +75,35 @@ export interface PageToolbarProps {
     isLoading?: boolean;
   };
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   filters?: React.ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   totalItems?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   totalItemsLabel?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   viewMode?: 'list' | 'grid';
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onScanBarcode?: () => void; // Added onScanBarcode prop
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   autoFocusSearch?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   sticky?: boolean;
   extraActions?: {
@@ -123,13 +124,13 @@ export interface PageToolbarProps {
     variant?: 'text' | 'outlined' | 'contained';
   }[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   id?: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PageToolbar: React.FC<PageToolbarProps> = ({
   title,
@@ -152,11 +153,85 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
   id,
 }) => {
   const { t } = useTranslation();
+
+  const resolvedSearchPlaceholder = searchPlaceholder || t('comun.buscar');
+  const resolvedTotalItemsLabel = totalItemsLabel || t('comun.elementos');
+
   const { isMobile, isTabletOrBelow } = useBreakpoints();
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   const hasFiltersOrSearch = onSearchChange || filters;
+  const extraActionsInFilterRow =
+    extraActions.length > 0 && Boolean(hasFiltersOrSearch);
+
+  const renderExtraActionButtons = () =>
+    extraActions.map((action) => (
+      <React.Fragment key={action.id || action.label}>
+        {isTabletOrBelow ? (
+          <Tooltip title={action.label}>
+            <span>
+              <IconButton
+                id={action.id}
+                data-testid={action.id}
+                onClick={action.onClick}
+                disabled={action.disabled || action.isLoading}
+                color={action.color || 'primary'}
+                sx={{
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  width: isMobile ? 36 : 40,
+                  height: isMobile ? 36 : 40,
+                  borderRadius: 2,
+                }}
+              >
+                {action.isLoading ? (
+                  <CircularProgress size={isMobile ? 18 : 20} color="inherit" />
+                ) : (
+                  action.icon
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
+        ) : (
+          <Button
+            id={action.id}
+            data-testid={action.id}
+            variant={action.variant || 'outlined'}
+            color={action.color || 'primary'}
+            size="small"
+            startIcon={
+              action.isLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                action.icon
+              )
+            }
+            onClick={action.onClick}
+            disabled={action.disabled || action.isLoading}
+            sx={{
+              borderRadius: 2,
+              height: 36,
+              px: 1.5,
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {action.label}
+          </Button>
+        )}
+      </React.Fragment>
+    ));
+
+  const showActionsRowLeft = Boolean(onViewModeChange && viewMode);
+  const showActionsRowRight =
+    Boolean(primaryAction) ||
+    Boolean(secondaryAction) ||
+    (extraActions.length > 0 && !extraActionsInFilterRow);
+  const showActionsRow = showActionsRowLeft || showActionsRowRight;
 
   return (
     <Paper
@@ -226,14 +301,16 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               sx={{ ml: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}
             >
               {totalItems !== undefined && (
-                <Tooltip title={`Total de ${totalItemsLabel}: ${totalItems}`}>
+                <Tooltip
+                  title={`${t('comun.total')} de ${resolvedTotalItemsLabel}: ${totalItems}`}
+                >
                   <Chip
                     icon={
                       <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
                     }
                     label={
                       <>
-                        Total: <strong>{totalItems}</strong>
+                        {t('comun.total')}: <strong>{totalItems}</strong>
                       </>
                     }
                     size="small"
@@ -252,7 +329,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               )}
               {totalItems !== undefined && (
                 <Chip
-                  label={`Total: ${totalItems}`}
+                  label={`${t('comun.total')}: ${totalItems}`}
                   size="small"
                   color="success"
                   variant="outlined"
@@ -283,16 +360,18 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
             >
               <TextField
                 id={searchId}
-                placeholder={searchPlaceholder}
+                data-testid={searchId}
+                placeholder={resolvedSearchPlaceholder}
                 value={searchValue}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 size="small"
                 autoFocus={autoFocusSearch}
                 fullWidth
                 sx={{
-                  flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
-                  width: { xs: '100%', sm: 'calc(50% - 8px)' },
-                  minWidth: 0,
+                  flex: { xs: '1 1 100%', sm: '1 1 200px' },
+                  width: { xs: '100%', sm: 'auto' },
+                  minWidth: { sm: 200 },
+                  maxWidth: { sm: '100%' },
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
                     bgcolor: 'background.paper',
@@ -300,7 +379,7 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
                 }}
                 slotProps={{
                   htmlInput: {
-                    'aria-label': searchPlaceholder,
+                    'aria-label': resolvedSearchPlaceholder,
                   },
                   input: {
                     startAdornment: onScanBarcode && (
@@ -354,14 +433,30 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
               {filters && (
                 <Box
                   sx={{
-                    flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+                    flex: { xs: '1 1 100%', sm: '0 1 auto' },
                     display: 'flex',
-                    width: { xs: '100%', sm: 'calc(50% - 8px)' },
+                    width: { xs: '100%', sm: 'auto' },
                     minWidth: 0,
-                    '& > *': { width: '100%' },
+                    '& > *': { width: { xs: '100%', sm: '100%' } },
                   }}
                 >
                   {filters}
+                </Box>
+              )}
+              {extraActionsInFilterRow && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 1.25,
+                    flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                    width: { xs: '100%', sm: 'auto' },
+                    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                    ml: { xs: 0, sm: 'auto' },
+                  }}
+                >
+                  {renderExtraActionButtons()}
                 </Box>
               )}
             </Box>
@@ -369,225 +464,180 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
         )}
 
         {/* FILA 3: ACCIONES Y CONTROLES */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="wrap"
-          gap={1.5}
-          pt={0.5}
-          sx={{
-            mt: isMobile ? 0 : 0.25,
-          }}
-        >
-          {/* IZQUIERDA: Vista Toggle */}
-          <Box display="flex" alignItems="center" gap={1.5}>
-            {onViewModeChange && viewMode && (
-              <ToggleButtonGroup
-                value={viewMode}
-                exclusive
-                onChange={(_, next) => next && onViewModeChange(next)}
-                size="small"
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 1.5,
-                  '& .MuiToggleButton-root': { py: 0.5, px: 1 },
-                }}
-              >
-                <ToggleButton
-                  value="list"
-                  aria-label={t('layout.pageToolbar.vistaLista')}
-                >
-                  <ViewListIcon fontSize="small" />
-                </ToggleButton>
-                <ToggleButton
-                  value="grid"
-                  aria-label={t('layout.pageToolbar.vistaCuadricula')}
-                >
-                  <ViewModuleIcon fontSize="small" />
-                </ToggleButton>
-              </ToggleButtonGroup>
-            )}
-          </Box>
-
-          {/* DERECHA: Acciones */}
+        {showActionsRow && (
           <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
+            gap={1.5}
+            pt={0.5}
             sx={{
-              ml: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.25,
+              mt: isMobile ? 0 : 0.25,
             }}
           >
-            {extraActions.map((action) => (
-              <React.Fragment key={action.id || action.label}>
-                {isTabletOrBelow ? (
-                  <Tooltip title={action.label}>
-                    <IconButton
-                      id={action.id}
-                      onClick={action.onClick}
-                      disabled={action.disabled || action.isLoading}
-                      color={action.color || 'primary'}
-                      sx={{
-                        bgcolor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        width: isMobile ? 36 : 40,
-                        height: isMobile ? 36 : 40,
-                        borderRadius: 2,
-                      }}
-                    >
-                      {action.isLoading ? (
-                        <CircularProgress
-                          size={isMobile ? 18 : 20}
-                          color="inherit"
-                        />
-                      ) : (
-                        action.icon
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    id={action.id}
-                    variant={action.variant || 'outlined'}
-                    color={action.color || 'primary'}
-                    size="small"
-                    startIcon={
-                      action.isLoading ? (
-                        <CircularProgress size={16} color="inherit" />
-                      ) : (
-                        action.icon
-                      )
-                    }
-                    onClick={action.onClick}
-                    disabled={action.disabled || action.isLoading}
-                    sx={{
-                      borderRadius: 2,
-                      height: 36,
-                      px: 1.5,
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                    }}
+            {/* IZQUIERDA: Vista Toggle */}
+            <Box display="flex" alignItems="center" gap={1.5}>
+              {onViewModeChange && viewMode && (
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, next) => next && onViewModeChange(next)}
+                  size="small"
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 1.5,
+                    '& .MuiToggleButton-root': { py: 0.5, px: 1 },
+                  }}
+                >
+                  <ToggleButton
+                    value="list"
+                    aria-label={t('layout.pageToolbar.vistaLista')}
                   >
-                    {action.label}
-                  </Button>
-                )}
-              </React.Fragment>
-            ))}
+                    <ViewListIcon fontSize="small" />
+                  </ToggleButton>
+                  <ToggleButton
+                    value="grid"
+                    aria-label={t('layout.pageToolbar.vistaCuadricula')}
+                  >
+                    <ViewModuleIcon fontSize="small" />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              )}
+            </Box>
 
-            {primaryAction && (
-              <>
-                {isTabletOrBelow ? (
-                  <Tooltip title={primaryAction.label}>
-                    <IconButton
+            {/* DERECHA: Acciones */}
+            <Box
+              sx={{
+                ml: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+              }}
+            >
+              {!extraActionsInFilterRow && renderExtraActionButtons()}
+
+              {primaryAction && (
+                <>
+                  {isTabletOrBelow ? (
+                    <Tooltip title={primaryAction.label}>
+                      <span>
+                        <IconButton
+                          id={primaryAction.id}
+                          data-testid={primaryAction.id}
+                          onClick={primaryAction.onClick}
+                          disabled={primaryAction.disabled}
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': { bgcolor: 'primary.dark' },
+                            width: isMobile ? 36 : 40,
+                            height: isMobile ? 36 : 40,
+                            borderRadius: 2,
+                          }}
+                        >
+                          {primaryAction.icon || <AddIcon />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <Button
                       id={primaryAction.id}
+                      data-testid={primaryAction.id}
+                      variant="contained"
+                      size="small"
+                      startIcon={
+                        primaryAction.isLoading ? (
+                          <CircularProgress size={16} color="inherit" />
+                        ) : (
+                          primaryAction.icon || <AddIcon />
+                        )
+                      }
                       onClick={primaryAction.onClick}
-                      disabled={primaryAction.disabled}
+                      disabled={
+                        primaryAction.disabled || primaryAction.isLoading
+                      }
                       sx={{
+                        borderRadius: 2,
+                        height: 36,
+                        px: 1.5,
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
                         bgcolor: 'primary.main',
-                        color: 'white',
                         '&:hover': { bgcolor: 'primary.dark' },
-                        width: isMobile ? 36 : 40,
-                        height: isMobile ? 36 : 40,
-                        borderRadius: 2,
                       }}
                     >
-                      {primaryAction.icon || <AddIcon />}
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    id={primaryAction.id}
-                    variant="contained"
-                    size="small"
-                    startIcon={
-                      primaryAction.isLoading ? (
-                        <CircularProgress size={16} color="inherit" />
-                      ) : (
-                        primaryAction.icon || <AddIcon />
-                      )
-                    }
-                    onClick={primaryAction.onClick}
-                    disabled={primaryAction.disabled || primaryAction.isLoading}
-                    sx={{
-                      borderRadius: 2,
-                      height: 36,
-                      px: 1.5,
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                      bgcolor: 'primary.main',
-                      '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                  >
-                    {primaryAction.label}
-                  </Button>
-                )}
-              </>
-            )}
+                      {primaryAction.label}
+                    </Button>
+                  )}
+                </>
+              )}
 
-            {secondaryAction && (
-              <>
-                {isTabletOrBelow ? (
-                  <Tooltip title={secondaryAction.label}>
-                    <IconButton
+              {secondaryAction && (
+                <>
+                  {isTabletOrBelow ? (
+                    <Tooltip title={secondaryAction.label}>
+                      <span>
+                        <IconButton
+                          id={secondaryAction.id}
+                          data-testid={secondaryAction.id}
+                          onClick={secondaryAction.onClick}
+                          disabled={secondaryAction.disabled}
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            color: 'text.secondary',
+                            '&:hover': {
+                              bgcolor: alpha(theme.palette.primary.main, 0.08),
+                              borderColor: 'primary.main',
+                              color: 'primary.main',
+                            },
+                            width: isMobile ? 36 : 40,
+                            height: isMobile ? 36 : 40,
+                            borderRadius: 2,
+                          }}
+                        >
+                          {secondaryAction.icon || <AddIcon />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <Button
                       id={secondaryAction.id}
+                      data-testid={secondaryAction.id}
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        secondaryAction.isLoading ? (
+                          <CircularProgress size={16} color="inherit" />
+                        ) : (
+                          secondaryAction.icon || <AddIcon />
+                        )
+                      }
                       onClick={secondaryAction.onClick}
-                      disabled={secondaryAction.disabled}
+                      disabled={
+                        secondaryAction.disabled || secondaryAction.isLoading
+                      }
                       sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          borderColor: 'primary.main',
-                          color: 'primary.main',
-                        },
-                        width: isMobile ? 36 : 40,
-                        height: isMobile ? 36 : 40,
                         borderRadius: 2,
+                        height: 36,
+                        px: 1.5,
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {secondaryAction.icon || <AddIcon />}
-                    </IconButton>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    id={secondaryAction.id}
-                    variant="outlined"
-                    size="small"
-                    startIcon={
-                      secondaryAction.isLoading ? (
-                        <CircularProgress size={16} color="inherit" />
-                      ) : (
-                        secondaryAction.icon || <AddIcon />
-                      )
-                    }
-                    onClick={secondaryAction.onClick}
-                    disabled={
-                      secondaryAction.disabled || secondaryAction.isLoading
-                    }
-                    sx={{
-                      borderRadius: 2,
-                      height: 36,
-                      px: 1.5,
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {secondaryAction.label}
-                  </Button>
-                )}
-              </>
-            )}
+                      {secondaryAction.label}
+                    </Button>
+                  )}
+                </>
+              )}
+            </Box>
           </Box>
-        </Box>
+        )}
 
         {/* FILA DE COLAPSO (PARTE INFERIOR) */}
         {hasFiltersOrSearch && (
@@ -607,7 +657,11 @@ const PageToolbar: React.FC<PageToolbarProps> = ({
             <IconButton
               size="small"
               onClick={() => setIsExpanded(!isExpanded)}
-              aria-label={isExpanded ? 'Ocultar filtros' : 'Mostrar filtros'}
+              aria-label={
+                isExpanded
+                  ? t('comun.ocultarFiltros')
+                  : t('comun.mostrarFiltros')
+              }
               sx={{
                 p: 0,
                 width: 40,

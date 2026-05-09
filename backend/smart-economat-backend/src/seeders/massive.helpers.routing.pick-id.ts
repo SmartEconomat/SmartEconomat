@@ -8,6 +8,14 @@ import {
   removeStateValue,
 } from './massive.state';
 
+/**
+ * Expone "pickIdForRoute" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {HttpMethod} method - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function pickIdForRoute(
   context: SeedContext,
   path: string,
@@ -157,6 +165,9 @@ export function pickIdForRoute(
     return pick('alumnoIds');
   }
   if (path.startsWith('/proveedor')) {
+    if (path.includes('/restore')) {
+      return consumeRequiredStateValue(context, 'seedSoftDeletedProveedorIds');
+    }
     if (consume) {
       const deletableProveedorIds = getStateArray(
         context,

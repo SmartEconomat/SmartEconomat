@@ -1,7 +1,7 @@
 import { StringToDateTransformer } from '../../../src/common/transformers/string-to-date.transformer';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('StringToDateTransformer', () => {
   describe('transform()', () => {

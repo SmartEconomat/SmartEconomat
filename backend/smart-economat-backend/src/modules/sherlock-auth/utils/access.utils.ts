@@ -6,7 +6,13 @@ import {
 } from '../../../common/constants/system-roles.constants';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {{ nombre: string; }[] | null | undefined} roles - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null | undefined} fallbackRole - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export const getRolPrincipal = (
   roles?: Array<{ nombre: string }> | null,
@@ -24,12 +30,15 @@ export const getRolPrincipal = (
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export type SherlockAuthRoleAlias = SystemRoleName;
 
 /**
- * Documentación en español.
+ * Normaliza sherlock auth role para mantener consistencia.
+ *
+ * @param role Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export const normalizeSherlockAuthRole = (role?: string | null): string =>
   String(role ?? '')
@@ -37,7 +46,10 @@ export const normalizeSherlockAuthRole = (role?: string | null): string =>
     .toUpperCase();
 
 /**
- * Documentación en español.
+ * Determina si sherlock elevated role.
+ *
+ * @param role Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export const isSherlockElevatedRole = (role?: string | null): boolean => {
   const normalized = normalizeSherlockAuthRole(role);
@@ -45,7 +57,12 @@ export const isSherlockElevatedRole = (role?: string | null): boolean => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "uniqueStrings" en smart-economat-backend (Nest).
+ * @undefined {(string | null | undefined)[]} values - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
  */
 export const uniqueStrings = (
   values: Array<string | null | undefined>
@@ -60,29 +77,34 @@ export const uniqueStrings = (
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface SherlockEffectivePermissionsInput {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   role?: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   rolePermissions?: string[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   directPermissions?: string[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   excludedPermissions?: string[];
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "resolveSherlockEffectivePermissions" en smart-economat-backend (Nest).
+ * @undefined {SherlockEffectivePermissionsInput} input - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
  */
 export const resolveSherlockEffectivePermissions = (
   input: SherlockEffectivePermissionsInput

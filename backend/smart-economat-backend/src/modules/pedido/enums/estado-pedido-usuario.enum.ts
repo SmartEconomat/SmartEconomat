@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (EstadoPedidoUsuario) dentro de smart-economat-backend (Nest). */
 export enum EstadoPedidoUsuario {
   BORRADOR = 'borrador',
 
@@ -5,7 +6,7 @@ export enum EstadoPedidoUsuario {
 
   APROBADO = 'aprobado',
 
-  CANCELADO = 'cancelado',
-
   CONSOLIDADO = 'consolidado',
+
+  CANCELADO = 'cancelado',
 }

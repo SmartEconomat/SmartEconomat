@@ -1,5 +1,6 @@
 /**
- * Documentación en español.
+ * Mapa centralizado de códigos de permisos de la aplicación.
+ * Actúa como fuente de verdad para guards, decoradores y vistas del frontend.
  */
 export const PERMISSIONS = {
   usuarios: {
@@ -78,6 +79,7 @@ export const PERMISSIONS = {
     editar: 'inventario:editar',
     eliminar: 'inventario:eliminar',
     ajustar_stock: 'inventario:ajustar_stock',
+    transferir: 'inventario:transferir',
   },
   recetas: {
     listar: 'recetas:listar',
@@ -131,7 +133,8 @@ export const PERMISSIONS = {
 } as const;
 
 /**
- * Documentación en español.
+ * Tipo que representa cualquier código de permiso válido del sistema.
+ * Se infiere automáticamente de las claves del mapa PERMISSIONS.
  */
 export type PermissionCode =
   (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]] extends infer V
@@ -141,6 +144,6 @@ export type PermissionCode =
     : never;
 
 /**
- * Documentación en español.
+ * Tipo que representa un módulo de permisos (primera clave de PERMISSIONS).
  */
 export type PermissionModule = keyof typeof PERMISSIONS;

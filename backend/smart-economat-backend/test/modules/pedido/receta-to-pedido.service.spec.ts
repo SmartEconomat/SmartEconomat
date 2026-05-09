@@ -254,6 +254,31 @@ describe('RecetaToPedidoService', () => {
     ).rejects.toThrow(/producto inactivo o no disponible/i);
   });
 
+  it('rechaza si la receta referencia un producto con activo=false', async () => {
+    mockRecetaRepository.findById.mockResolvedValue({
+      id: 'receta-1',
+      nombre: 'Receta Catálogo',
+      ingredientes: [
+        {
+          productoId: 'prod-1',
+          cantidad: 1,
+          mermaAplicada: 0,
+          unidad: 'KILOGRAMO',
+          producto: {
+            id: 'prod-1',
+            nombre: 'Harina',
+            deletedAt: null,
+            activo: false,
+          },
+        },
+      ],
+    });
+
+    await expect(
+      service.generateFromRecetas({ recetaIds: ['receta-1'] }, 'user-1')
+    ).rejects.toThrow(/producto inactivo o no disponible/i);
+  });
+
   it('rechaza si el mismo producto aparece con unidades incompatibles', async () => {
     mockRecetaRepository.findById
       .mockResolvedValueOnce({

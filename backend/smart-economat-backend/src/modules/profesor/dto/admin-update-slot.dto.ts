@@ -1,6 +1,7 @@
 import { IsOptional, IsUUID } from 'class-validator';
 import { UpdateSlotDto } from './update-slot.dto';
 
+/** Clase pública (AdminUpdateSlotDto). Paquete: smart-economat-backend (Nest). */
 export class AdminUpdateSlotDto extends UpdateSlotDto {
   @IsOptional()
   @IsUUID()

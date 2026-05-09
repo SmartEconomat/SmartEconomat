@@ -59,7 +59,7 @@ const getWeekRangeLabel = (
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
   batches,

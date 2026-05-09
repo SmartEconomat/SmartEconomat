@@ -5,11 +5,12 @@ import {
 } from './producto.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
 
-const PRODUCTOS_CACHE_TTL_MS = 1000;
+const PRODUCTOS_CACHE_TTL_MS = 15000;
+const PRODUCTOS_BY_ID_CACHE_TTL_MS = 30000;
+const PRODUCTOS_CACHE_MAX_ENTRIES = 120;
 const PRODUCTOS_MAX_LIMIT = 50;
 const PRODUCTOS_DEFAULT_LIMIT = 20;
-
-type ProductSortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
+const PRODUCTOS_FETCH_ALL_MAX_PAGES = 20;
 
 const productosRequestCache = new Map<
   string,
@@ -19,6 +20,15 @@ const productosRequestCache = new Map<
   }
 >();
 
+const productosByIdRequestCache = new Map<
+  string,
+  {
+    promise: Promise<Producto | null>;
+    expiresAt: number;
+  }
+>();
+
+/** Contrato de tipos público (ProductoProveedorPayload). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoProveedorPayload {
   proveedorId: string;
   marcaEspecifica?: string;
@@ -26,6 +36,7 @@ export interface ProductoProveedorPayload {
   precioUnitario?: number;
 }
 
+/** Contrato de tipos público (ProductoMutationPayload). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoMutationPayload {
   nombre?: string;
   marca?: string;
@@ -37,79 +48,73 @@ export interface ProductoMutationPayload {
   pathImg?: string;
   alergenos?: string[];
   proveedores?: ProductoProveedorPayload[];
+  activo?: boolean;
 }
 
-function normalizePage(page?: number): number | undefined {
-  if (page == null || Number.isNaN(page)) return undefined;
-  return Math.max(1, Math.trunc(page));
-}
+import { buildQueryParams } from './api.service';
 
-function normalizeLimit(limit?: number): number | undefined {
-  if (limit == null || Number.isNaN(limit)) return undefined;
-  const normalized = Math.max(1, Math.trunc(limit));
-  return Math.min(normalized, PRODUCTOS_MAX_LIMIT);
-}
-
-function normalizeProductSortOrder(
-  value?: ProductSortOrder
-): 'ASC' | 'DESC' | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  return String(value).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-}
-
-function buildProductosQueryString(params?: ProductosQueryParams): string {
+function buildProductosQueryString(params?: Record<string, unknown>): string {
   if (!params) return `?limit=${PRODUCTOS_MAX_LIMIT}`;
 
-  const search = new URLSearchParams();
+  // Preprocesar params para adaptar a los nombres esperados si es necesario,
+  // pero intentaremos usar los estándar.
+  const processedParams = { ...params };
 
-  const normalizedPage = normalizePage(params.page);
-  const normalizedLimit = normalizeLimit(params.limit);
+  // Categorías y alérgenos vienen como arrays o strings
+  if (params.categorias && Array.isArray(params.categorias)) {
+    processedParams.categorias = params.categorias.join(',');
+  }
+  if (params.alergenos && Array.isArray(params.alergenos)) {
+    processedParams.alergenos = params.alergenos.join(',');
+  }
 
-  if (normalizedPage != null) search.set('page', String(normalizedPage));
-  if (normalizedLimit != null) search.set('limit', String(normalizedLimit));
-  if (params.searchTerm?.trim())
-    search.set('searchTerm', params.searchTerm.trim());
-  if (params.codigoBarras?.trim())
-    search.set('codigoBarras', params.codigoBarras.trim());
-  if (params.tipo) search.set('tipo', params.tipo);
-  if (params.categorias?.length)
-    search.set('categorias', params.categorias.join(','));
-  if (params.alergenos?.length)
-    search.set('alergenos', params.alergenos.join(','));
-  if (params.sortBy?.trim()) search.set('sortBy', params.sortBy.trim());
-
-  const normalizedOrder = normalizeProductSortOrder(params.order);
-  if (normalizedOrder) search.set('order', normalizedOrder);
-  if (params.soloEliminados) search.set('soloEliminados', 'true');
-
-  const qs = search.toString();
+  const qs = buildQueryParams(
+    processedParams,
+    PRODUCTOS_DEFAULT_LIMIT,
+    PRODUCTOS_MAX_LIMIT
+  ).toString();
   return qs ? `?${qs}` : `?limit=${PRODUCTOS_MAX_LIMIT}`;
 }
 
-function clearExpiredProductosCache() {
+function pruneProductosCache<T>(cache: Map<string, T>): void {
+  while (cache.size > PRODUCTOS_CACHE_MAX_ENTRIES) {
+    const oldestEntry = cache.keys().next();
+    if (oldestEntry.done) {
+      break;
+    }
+    cache.delete(oldestEntry.value);
+  }
+}
+
+function clearExpiredProductosCache<T extends { expiresAt: number }>(
+  cache: Map<string, T>
+) {
   const now = Date.now();
 
-  productosRequestCache.forEach((entry, key) => {
+  cache.forEach((entry, key) => {
     if (entry.expiresAt <= now) {
-      productosRequestCache.delete(key);
+      cache.delete(key);
     }
   });
 }
 
 /**
- * Documentación en español.
+ * Invalida manualmente todas las cachés de productos.
+ * Útil tras operaciones de creación, edición o borrado.
+ */
+/**
+ * Expone "invalidateProductosCache" en smart-economat-frontend (SPA).
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
  */
 export function invalidateProductosCache() {
   productosRequestCache.clear();
+  productosByIdRequestCache.clear();
 }
 
 async function requestProductos(
   query: string
 ): Promise<PaginatedData<Producto>> {
-  clearExpiredProductosCache();
+  clearExpiredProductosCache(productosRequestCache);
 
   const cacheKey = query;
   const cached = productosRequestCache.get(cacheKey);
@@ -140,40 +145,98 @@ async function requestProductos(
     promise: requestPromise,
     expiresAt: Date.now() + PRODUCTOS_CACHE_TTL_MS,
   });
+  pruneProductosCache(productosRequestCache);
+
+  return requestPromise;
+}
+
+async function requestProductoById(id: string): Promise<Producto | null> {
+  const normalizedId = id.trim();
+  if (!normalizedId) {
+    return null;
+  }
+
+  clearExpiredProductosCache(productosByIdRequestCache);
+
+  const cacheKey = normalizedId;
+  const cached = productosByIdRequestCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.promise;
+  }
+
+  const requestPromise = baseFetch(`/productos/${normalizedId}`)
+    .then(async (response) => {
+      if (!response.ok) {
+        return null;
+      }
+
+      const body = (await response.json()) as ApiResponse<Producto>;
+      return body.data ?? null;
+    })
+    .catch((error) => {
+      productosByIdRequestCache.delete(cacheKey);
+      throw error;
+    });
+
+  productosByIdRequestCache.set(cacheKey, {
+    promise: requestPromise,
+    expiresAt: Date.now() + PRODUCTOS_BY_ID_CACHE_TTL_MS,
+  });
+  pruneProductosCache(productosByIdRequestCache);
 
   return requestPromise;
 }
 
 /**
- * Documentación en español.
+ * Expone "fetchProductos" en smart-economat-frontend (SPA).
+ * @undefined {Record<string, unknown>} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Producto>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchProductos(
-  page: number = 1,
-  limit: number = 10,
-  search: string = '',
-  categorias: string[] = [],
-  sortBy?: string,
-  sortOrder?: ProductSortOrder,
-  soloEliminados?: boolean
+  page: number,
+  limit: number,
+  searchTerm: string,
+  alergenos: string[],
+  sortBy: string,
+  order: 'asc' | 'desc' | 'ASC' | 'DESC'
+): Promise<PaginatedData<Producto>>;
+export async function fetchProductos(
+  params: Record<string, unknown>
+): Promise<PaginatedData<Producto>>;
+export async function fetchProductos(
+  arg1: number | Record<string, unknown>,
+  arg2?: number,
+  arg3?: string,
+  arg4?: string[],
+  arg5?: string,
+  arg6?: 'asc' | 'desc' | 'ASC' | 'DESC'
 ): Promise<PaginatedData<Producto>> {
-  const query = buildProductosQueryString({
-    page,
-    limit,
-    searchTerm: search,
-    categorias: categorias.length > 0 ? categorias : undefined,
-    sortBy,
-    order: sortOrder,
-    soloEliminados,
-  });
+  const params =
+    typeof arg1 === 'number'
+      ? {
+          page: arg1,
+          limit: arg2,
+          searchTerm: arg3,
+          alergenos: arg4 ?? [],
+          sortBy: arg5,
+          order: arg6,
+        }
+      : arg1;
+  const query = buildProductosQueryString(params);
   return requestProductos(query);
 }
 
 // ─── Tipos para listados ──────────────────────────────────────────────────
 
+/** Alias público (ProductosPaginatedResult) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ProductosPaginatedResult = PaginatedData<Producto>;
 
 /**
- * Documentación en español.
+ * Recupera todos los productos que coinciden con los filtros, recorriendo todas
+ * las páginas disponibles (con un límite de seguridad para evitar bloqueos).
+ * @param params Parámetros de búsqueda y filtrado.
+ * @returns Lista plana de todos los productos encontrados.
  */
 export async function fetchAllProductos(
   params?: Omit<ProductosQueryParams, 'page' | 'limit'>
@@ -188,8 +251,19 @@ export async function fetchAllProductos(
     return firstPage.data;
   }
 
+  const cappedTotalPages = Math.min(
+    firstPage.totalPages,
+    PRODUCTOS_FETCH_ALL_MAX_PAGES
+  );
+
+  if (firstPage.totalPages > PRODUCTOS_FETCH_ALL_MAX_PAGES) {
+    console.warn(
+      `fetchAllProductos limitado a ${PRODUCTOS_FETCH_ALL_MAX_PAGES} páginas para evitar sobrecarga.`
+    );
+  }
+
   const remainingPages = await Promise.all(
-    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+    Array.from({ length: cappedTotalPages - 1 }, (_, index) =>
       fetchProductosPaginated({
         ...params,
         page: index + 2,
@@ -202,7 +276,9 @@ export async function fetchAllProductos(
 }
 
 /**
- * Documentación en español.
+ * Wrapper sobre `fetchProductos` que acepta un objeto de parámetros consolidado.
+ * @param params DTO de parámetros de consulta.
+ * @returns Datos paginados normalizados.
  */
 export async function fetchProductosPaginated(
   params?: ProductosQueryParams
@@ -231,7 +307,10 @@ export async function fetchProductosPaginated(
 }
 
 /**
- * Documentación en español.
+ * Crea un nuevo producto en el catálogo maestro.
+ * @param producto Datos del producto e ingredientes/proveedores iniciales.
+ * @returns El producto creado.
+ * @throws Error Con el detalle del fallo devuelto por el backend.
  */
 export async function createProducto(
   producto: ProductoMutationPayload
@@ -257,7 +336,10 @@ export async function createProducto(
 }
 
 /**
- * Documentación en español.
+ * Actualiza los datos de un producto existente.
+ * @param id UUID del producto.
+ * @param producto Nuevos datos a aplicar.
+ * @returns El producto actualizado.
  */
 export async function updateProducto(
   id: string,
@@ -283,6 +365,11 @@ export async function updateProducto(
   return body.data;
 }
 
+/**
+ * Expone "restoreProducto" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Producto>} Datos efectivos después de ejecutar la operación.
+ */
 export async function restoreProducto(id: string): Promise<Producto> {
   invalidateProductosCache();
   const response = await baseFetch(`/productos/${id}/restore`, {
@@ -303,42 +390,76 @@ export async function restoreProducto(id: string): Promise<Producto> {
 }
 
 /**
- * Documentación en español.
+ * Busca un producto específico mediante su código de barras (EAN, UPC, etc).
+ * @param barcode Código de barras a buscar.
+ * @returns El producto encontrado o null.
  */
 export async function getProductoByBarcode(
   barcode: string
 ): Promise<Producto | null> {
-  const query = new URLSearchParams({ codigoBarras: barcode });
-  const response = await baseFetch(`/productos?${query.toString()}`);
-  if (!response.ok) return null;
-  const body = (await response.json()) as ApiResponse<PaginatedData<Producto>>;
-  const list = body.data.data;
+  const normalizedBarcode = barcode.trim();
+  if (!normalizedBarcode) {
+    return null;
+  }
+
+  const query = buildProductosQueryString({
+    page: 1,
+    limit: 1,
+    codigoBarras: normalizedBarcode,
+  });
+
+  const response = await requestProductos(query);
+  const list = response.data;
   return list.length > 0 ? list[0] : null;
 }
 
 /**
- * Documentación en español.
+ * Busca productos por coincidencia parcial en el nombre.
+ * @param name Término de búsqueda.
+ * @returns Lista de productos coincidentes (máx 10).
  */
 export async function searchProductosByName(name: string): Promise<Producto[]> {
-  const query = new URLSearchParams({ searchTerm: name, limit: '10' });
-  const response = await baseFetch(`/productos?${query.toString()}`);
-  if (!response.ok) return [];
-  const body = (await response.json()) as ApiResponse<PaginatedData<Producto>>;
-  return body.data.data;
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    return [];
+  }
+
+  const query = buildProductosQueryString({
+    page: 1,
+    limit: 10,
+    searchTerm: normalizedName,
+    sortBy: 'nombre',
+    order: 'ASC',
+  });
+
+  const response = await requestProductos(query);
+  return response.data;
 }
 
 /**
- * Documentación en español.
+ * Recupera un producto por su identificador único (UUID).
+ * @param id UUID del producto.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Producto | null>} Datos efectivos después de ejecutar la operación.
  */
 export async function getProductoById(id: string): Promise<Producto | null> {
-  const response = await baseFetch(`/productos/${id}`);
-  if (!response.ok) return null;
-  const body = (await response.json()) as ApiResponse<Producto>;
-  return body.data;
+  return requestProductoById(id);
 }
 
 /**
- * Documentación en español.
+ * Obtiene el historial de variaciones de precio de un producto,
+ * opcionalmente filtrado por un proveedor específico.
+ * @param productoId UUID del producto.
+ * @param proveedorId UUID del proveedor (opcional).
+ */
+/**
+ * Expone "fetchHistorialPrecios" en smart-economat-frontend (SPA).
+ * @undefined {string} productoId - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} proveedorId - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<HistorialPrecio[]>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchHistorialPrecios(
   productoId: string,
@@ -359,7 +480,13 @@ export async function fetchHistorialPrecios(
 }
 
 /**
- * Documentación en español.
+ * Solicita al backend la generación de un nuevo código de barras EAN-13 único.
+ * Utiliza el prefijo de la organización definido en la configuración global.
+ * @returns El nuevo código EAN-13 generado.
+ */
+/**
+ * Genera artefactos sintéticos a partir del estado conocido.
+ * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
  */
 export async function generateProductoEan13(): Promise<string> {
   const response = await baseFetch('/productos/generar-ean13');

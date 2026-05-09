@@ -94,6 +94,11 @@ function createMessageFromArgs(args: unknown[]): string {
   return args.map((arg) => formatUnknown(arg)).join(" ");
 }
 
+/**
+ * Interpreta y normaliza datos de texto o estructuras intermedias.
+ * @param {string | undefined} value - Entrada esperada por la función.
+ * @returns {boolean} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function parseDebugFlag(value: string | undefined): boolean {
   if (!value) {
     return false;
@@ -108,6 +113,7 @@ export function parseDebugFlag(value: string | undefined): boolean {
   );
 }
 
+/** Servicio del proceso principal: DebugLogService. */
 export class DebugLogService {
   private readonly enabled: boolean;
   private readonly exitOnFatal: boolean;
@@ -117,6 +123,10 @@ export class DebugLogService {
   private consoleCaptureInstalled = false;
   private processCaptureInstalled = false;
 
+  /**
+   * Construye la instancia del servicio.
+   * @param {DebugLogServiceOptions} options - Entrada esperada por la función.
+   */
   constructor(options: DebugLogServiceOptions) {
     this.enabled = options.enabled;
     this.exitOnFatal = parseDebugFlag(process.env.INSTALLER_EXIT_ON_FATAL);
@@ -127,10 +137,19 @@ export class DebugLogService {
     electronLog.transports.file.level = this.enabled ? "debug" : "info";
   }
 
+  /**
+   * Expone la operación "isEnabled" del instalador SmartEconomat.
+   * @returns {boolean} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   isEnabled(): boolean {
     return this.enabled;
   }
 
+  /**
+   * Expone la operación "attachDebugWindow" del instalador SmartEconomat.
+   * @param {BrowserWindow | null} window - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   attachDebugWindow(window: BrowserWindow | null): void {
     this.debugWindow = window;
 
@@ -143,6 +162,10 @@ export class DebugLogService {
     }
   }
 
+  /**
+   * Expone la operación "installMainConsoleCapture" del instalador SmartEconomat.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   installMainConsoleCapture(): void {
     if (!this.enabled || this.consoleCaptureInstalled) {
       return;
@@ -195,6 +218,10 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "installProcessErrorCapture" del instalador SmartEconomat.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   installProcessErrorCapture(): void {
     if (this.processCaptureInstalled) {
       return;
@@ -284,6 +311,12 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "logIpcRequest" del instalador SmartEconomat.
+   * @param {string} channel - Entrada esperada por la función.
+   * @param {unknown} payload - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   logIpcRequest(channel: string, payload: unknown): void {
     this.publish({
       type: "ipc",
@@ -298,6 +331,12 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "logIpcResponse" del instalador SmartEconomat.
+   * @param {string} channel - Entrada esperada por la función.
+   * @param {unknown} payload - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   logIpcResponse(channel: string, payload: unknown): void {
     this.publish({
       type: "ipc",
@@ -312,6 +351,12 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "logIpcPush" del instalador SmartEconomat.
+   * @param {string} channel - Entrada esperada por la función.
+   * @param {unknown} payload - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   logIpcPush(channel: string, payload: unknown): void {
     this.publish({
       type: "ipc",
@@ -326,6 +371,12 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "logIpcError" del instalador SmartEconomat.
+   * @param {string} channel - Entrada esperada por la función.
+   * @param {unknown} error - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   logIpcError(channel: string, error: unknown): void {
     const message =
       error instanceof Error
@@ -341,6 +392,11 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Expone la operación "publish" del instalador SmartEconomat.
+   * @param {DebugLogEntry} entry - Entrada esperada por la función.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   publish(entry: DebugLogEntry): void {
     if (!this.enabled) {
       return;
@@ -365,6 +421,10 @@ export class DebugLogService {
     this.sendToDebugWindow(normalized);
   }
 
+  /**
+   * Expone la operación "clear" del instalador SmartEconomat.
+   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   clear(): void {
     this.logs.length = 0;
     this.publish({
@@ -376,6 +436,10 @@ export class DebugLogService {
     });
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {DebugLogEntry[]} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getLogs(): DebugLogEntry[] {
     return [...this.logs];
   }

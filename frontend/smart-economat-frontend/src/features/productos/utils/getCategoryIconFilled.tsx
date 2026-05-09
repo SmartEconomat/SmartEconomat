@@ -23,7 +23,13 @@ import { CategoriaProducto } from '../../../services/producto.types';
 const defaultIconProps: SvgIconProps = { sx: { fontSize: 20 } };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {CategoriaProducto | undefined} tipo - Entrada efectiva esperada por el contrato.
+ * @undefined {SvgIconProps} iconProps - Entrada efectiva esperada por el contrato.
+ * @undefined {React.ReactElement<unknown, string | React.JSXElementConstructor<any>>} Datos efectivos después de ejecutar la operación.
  */
 export function getCategoryIconFilled(
   tipo: CategoriaProducto | undefined,

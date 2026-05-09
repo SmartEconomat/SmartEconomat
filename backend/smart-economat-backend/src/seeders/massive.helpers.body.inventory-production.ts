@@ -90,6 +90,70 @@ function pickProductoParaUnidad(
   );
 }
 
+/**
+ * Construye una línea de transferencia usando inventarios capturados en warmCollections
+ * (`inventarioTransferOrigenTriples`) y `ubicacionIds`.
+ */
+function buildTransferenciaLineaDesdeEstado(
+  context: BuildBodyEnv['context'],
+  iteration: number
+):
+  | {
+      inventarioOrigenId: string;
+      ubicacionDestinoId: string;
+      cantidad: number;
+    }
+  | undefined {
+  const triples = getStateArray(context, 'inventarioTransferOrigenTriples');
+  const ubicaciones = getStateArray(context, 'ubicacionIds').filter(
+    (u): u is string => typeof u === 'string' && u.trim().length > 0
+  );
+
+  if (triples.length === 0 || ubicaciones.length === 0) {
+    return undefined;
+  }
+
+  for (let j = 0; j < triples.length; j++) {
+    const raw = triples[(iteration + j) % triples.length] ?? '';
+    const parts = raw.split('|');
+    const invId = parts[0]?.trim() ?? '';
+    const origUb = parts[1]?.trim() ?? '';
+    const disponible = Number(parts[2]);
+
+    if (!invId || !Number.isFinite(disponible) || disponible < 0.002) {
+      continue;
+    }
+
+    const destUb =
+      ubicaciones.find((u) => u !== origUb) ??
+      (origUb === '' ? ubicaciones[0] : undefined);
+
+    if (!destUb || destUb === origUb) {
+      continue;
+    }
+
+    const cantidadBruta = Math.min(
+      disponible * 0.35,
+      Math.max(0.002, disponible - 0.000_5)
+    );
+    const cantidad = Number(
+      Math.min(Math.max(0.001, cantidadBruta), disponible).toFixed(3)
+    );
+
+    if (!Number.isFinite(cantidad) || cantidad <= 0 || cantidad > disponible) {
+      continue;
+    }
+
+    return {
+      inventarioOrigenId: invId,
+      ubicacionDestinoId: destUb,
+      cantidad,
+    };
+  }
+
+  return undefined;
+}
+
 function buildRecetaIngredientes(
   env: BuildBodyEnv
 ): Array<Record<string, unknown>> {
@@ -170,6 +234,11 @@ function buildRecetaIngredientes(
   });
 }
 
+/**
+ * Expone "buildBodyInventoryAndProduction" en smart-economat-backend (Nest).
+ * @undefined {BuildBodyEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown> | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function buildBodyInventoryAndProduction(
   env: BuildBodyEnv
 ): Record<string, unknown> | undefined {
@@ -180,6 +249,7 @@ export function buildBodyInventoryAndProduction(
     templatePath,
     iteration,
     suffix,
+    runTag,
     productoProveedorId,
     productoId,
     recetaId,
@@ -189,6 +259,7 @@ export function buildBodyInventoryAndProduction(
     incidenciaTipo,
     recepcionId,
     pedidoId,
+    proveedorId,
     usuarioId,
     pedidoProductoId,
     incidenciaEstadoObjetivo,
@@ -223,6 +294,25 @@ export function buildBodyInventoryAndProduction(
         iteration,
         'inventario-ajuste-observacion'
       ),
+    };
+  }
+
+  if (resolvedPath === '/inventario/transferencias') {
+    const linea = buildTransferenciaLineaDesdeEstado(context, iteration);
+    if (!linea) {
+      throw new Error(
+        '[seed-massive] POST /inventario/transferencias: sin candidatos (inventario con stock ≥ 0.002 y al menos una ubicación destino distinta del origen). Ejecuta warmCollections y asegura ≥ 2 ubicaciones o inventario sin ubicación.'
+      );
+    }
+
+    return {
+      idempotenciaKey: `seed-mtransfer-${runTag}-${iteration}`,
+      observaciones: pickDeterministic(
+        DETERMINISTIC_SHORT_NOTES,
+        iteration,
+        'inventario-transfer-obs'
+      ),
+      lineas: [linea],
     };
   }
 
@@ -342,17 +432,20 @@ export function buildBodyInventoryAndProduction(
       recetaId ||
       env.pickRequired('recetaIds');
 
+    const raw = deterministicFloat(
+      1,
+      6,
+      2,
+      iteration,
+      'produccion-validar-porciones'
+    );
+    const cantidadAProducir = Math.round(raw * 2) / 2;
+
     return {
       items: [
         {
           recetaId: preferredProduccionRecetaId,
-          cantidad: deterministicFloat(
-            0.8,
-            3.5,
-            2,
-            iteration,
-            'produccion-validar-cantidad'
-          ),
+          cantidadAProducir: cantidadAProducir >= 0.5 ? cantidadAProducir : 1,
         },
       ],
     };
@@ -362,20 +455,24 @@ export function buildBodyInventoryAndProduction(
     resolvedPath.startsWith('/produccion/lote/') &&
     resolvedPath.endsWith('/consumir')
   ) {
-    const maxPorciones = Number(
-      context.getState<number>('consumirMaxPorciones') ?? 1
+    const maxPorciones = Math.max(
+      0.5,
+      Number(context.getState<number>('consumirMaxPorciones') ?? 1)
     );
-    const safeMax = Math.max(0.1, Math.min(maxPorciones * 0.5, 0.8));
-    const safeMin = Math.min(0.1, safeMax);
+    const maxHalfSteps = Math.max(1, Math.floor(Number(maxPorciones) * 2));
+    const cappedMax = maxHalfSteps * 0.5;
+    const raw = deterministicFloat(
+      0.5,
+      cappedMax,
+      2,
+      iteration,
+      'produccion-consumir-valor'
+    );
+    let valor = Math.round(raw * 2) / 2;
+    valor = Math.max(0.5, Math.min(valor, cappedMax));
     return {
       tipo: 'raciones',
-      valor: deterministicFloat(
-        safeMin,
-        safeMax,
-        2,
-        iteration,
-        'produccion-consumir-valor'
-      ),
+      valor,
     };
   }
 
@@ -392,15 +489,21 @@ export function buildBodyInventoryAndProduction(
       recetaId ||
       env.pickRequired('recetaIds');
 
+    const rawPreparacionCantidad = deterministicFloat(
+      1,
+      4,
+      2,
+      iteration,
+      'preparacion-cantidad'
+    );
+    const cantidadAProducirPreparacion = Math.max(
+      0.5,
+      Math.round(rawPreparacionCantidad * 2) / 2
+    );
+
     return {
       recetaId: preferredPreparacionRecetaId,
-      cantidadAProducir: deterministicFloat(
-        1,
-        4,
-        2,
-        iteration,
-        'preparacion-cantidad'
-      ),
+      cantidadAProducir: cantidadAProducirPreparacion,
       fechaProgramada: seedDateFromIteration(
         iteration + 2,
         30,
@@ -443,6 +546,19 @@ export function buildBodyInventoryAndProduction(
   }
 
   if (resolvedPath === '/incidencias') {
+    const recepcionIdResolved =
+      recepcionId && recepcionId.length > 0
+        ? recepcionId
+        : env.pickRequired('recepcionIds');
+    const pedidoIdResolved =
+      pedidoId && pedidoId.length > 0
+        ? pedidoId
+        : env.pickRequired('pedidoIds');
+    const proveedorIdResolved =
+      proveedorId && proveedorId.length > 0
+        ? proveedorId
+        : env.pickRequired('proveedorIds');
+
     const pedidoProductoCandidates = Array.from(
       new Set([
         ...getStateArray(context, 'pedidoProductoIdsFresh'),
@@ -451,31 +567,32 @@ export function buildBodyInventoryAndProduction(
       ])
     ).filter((id) => id.length > 0);
 
-    const pedidoProductoId =
+    const pedidoProductoIdLinea =
       pedidoProductoCandidates[
         iteration % Math.max(1, pedidoProductoCandidates.length)
       ] ||
       pickStateValue(context, 'pedidoProductoIds', iteration) ||
       env.pickRequired('pedidoProductoIds');
 
-    const cantidadEsperada = deterministicInt(
+    const cantidadPedida = deterministicInt(
       5,
       25,
       iteration,
       'incidencia-cantidad-esperada'
     );
     const cantidadRecibida =
-      incidenciaEstadoObjetivo === 'pendiente_validacion'
-        ? cantidadEsperada
+      incidenciaEstadoObjetivo === 'en_proceso' && iteration % 2 === 0
+        ? cantidadPedida
         : Math.max(
             0,
-            cantidadEsperada -
+            cantidadPedida -
               deterministicInt(1, 4, iteration, 'incidencia-cantidad-recibida')
           );
 
     return {
-      recepcionId,
-      pedidoId,
+      recepcionId: recepcionIdResolved,
+      pedidoId: pedidoIdResolved,
+      proveedorId: proveedorIdResolved,
       observacionesRecepcion: pickDeterministic(
         DETERMINISTIC_LONG_NOTES,
         iteration,
@@ -483,8 +600,8 @@ export function buildBodyInventoryAndProduction(
       ),
       lineas: [
         {
-          pedidoProductoId,
-          cantidadEsperada,
+          pedidoProductoId: pedidoProductoIdLinea,
+          cantidadPedida,
           cantidadRecibida,
           tipoDiferencia: 'FALTANTE',
           observaciones: pickDeterministic(
@@ -543,7 +660,7 @@ export function buildBodyInventoryAndProduction(
         };
       }
 
-      if (incidenciaEstadoObjetivo === 'en_ajuste') {
+      if (incidenciaEstadoObjetivo === 'en_proceso' && iteration % 2 === 1) {
         const incidenciaId =
           resolvedPath.split('/').filter((segment) => segment.length > 0)[1] ||
           '';

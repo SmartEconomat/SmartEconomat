@@ -1,278 +1,150 @@
-/**
- * Documentación en español.
- */
+/** Relación pivote entre un albarán y la recepción-pedido que cubre. */
 export interface AlbaranPedidoRecepcion {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del registro. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** UUID del albarán principal. */
   albaranId: string;
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la relación recepcion-pedido vinculada. */
   recepcionPedidoId: string;
-  /**
-   * Documentación en español.
-   */
-  recepcionPedido?: AlbaranRecepcionPedido;
-  /**
-   * Documentación en español.
-   */
+  /** Datos de la relación recepcion-pedido, si se cargó. */
+  recepcion?: AlbaranRecepcionPedido;
+  /** Fecha de creación ISO. */
   createdAt?: string;
 }
 
-/**
- * Documentación en español.
- */
+/** Relación pivote entre una recepción y un pedido. */
 export interface AlbaranRecepcionPedido {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del registro. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la recepción. */
   recepcionId: string;
-  /**
-   * Documentación en español.
-   */
+  /** UUID del pedido. */
   pedidoId: string;
-  /**
-   * Documentación en español.
-   */
+  /** Datos de la recepción, si se cargó. */
   recepcion?: AlbaranRecepcion;
 }
 
-/**
- * Documentación en español.
- */
+/** Snapshot de recepción embebido en el contexto de un albarán. */
 export interface AlbaranRecepcion {
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la recepción. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Fecha en que se realizó la recepción física. */
   fechaRecepcion?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Estado actual del proceso de recepción. */
   estado?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Indica si existen incidencias detectadas en esta recepción. */
   incidencia?: boolean;
-  /**
-   * Documentación en español.
-   */
+  /** Productos recibidos en la recepción. */
   recepcionProductos?: AlbaranRecepcionProducto[];
 }
 
-/**
- * Documentación en español.
- */
+/** Producto individual recibido en el contexto de un albarán. */
 export interface AlbaranRecepcionProducto {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del registro. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la línea de pedido-producto asociada. */
   pedidoProductoId: string;
-  /**
-   * Documentación en español.
-   */
+  /** Cantidad efectivamente recibida de este producto. */
   cantidadRecibida?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Estado del producto recibido (correcto, defectuoso, etc.). */
   estadoProducto?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Observaciones del receptor. */
   observaciones?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Datos del pedido-producto, si se cargó. */
   pedidoProducto?: AlbaranPedidoProducto;
 }
 
-/**
- * Documentación en español.
- */
+/** Línea de pedido-producto embebida en el albarán. */
 export interface AlbaranPedidoProducto {
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la línea de pedido. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Cantidad pedida originalmente. */
   cantidad?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Precio unitario acordado. */
   precioUnitario?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Datos de la relación producto-proveedor. */
   productoProveedor?: AlbaranProductoProveedor;
 }
 
-/**
- * Documentación en español.
- */
+/** Relación producto-proveedor embebida en el albarán. */
 export interface AlbaranProductoProveedor {
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la relación. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Datos del producto. */
   producto?: AlbaranProducto;
-  /**
-   * Documentación en español.
-   */
+  /** Datos del proveedor. */
   proveedor?: AlbaranProveedor;
 }
 
-/**
- * Documentación en español.
- */
+/** Producto resumido para contexto de albarán. */
 export interface AlbaranProducto {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del producto. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Nombre comercial del producto. */
   nombre?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Unidad de medida (kg, unidad, etc.). */
   unidad?: string;
 }
 
-/**
- * Documentación en español.
- */
+/** Proveedor resumido para contexto de albarán. */
 export interface AlbaranProveedor {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del proveedor. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Nombre fiscal o comercial del proveedor. */
   nombre?: string;
 }
 
-/**
- * Documentación en español.
- */
+/** Albarán de entrega que certifica la recepción de mercancía. */
 export interface Albaran {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del albarán. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Número de referencia del albarán del proveedor. */
   nAlbaran: string;
-  /**
-   * Documentación en español.
-   */
+  /** Indica si el albarán coincide con lo pedido/recibido. */
   concordancia?: boolean;
-  /**
-   * Documentación en español.
-   */
+  /** Fecha del albarán del proveedor (ISO). */
   fecha?: string;
-  /**
-   * Documentación en español.
-   */
+  /** URL del documento escaneado. */
   documentoUrl?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Nombre original del fichero subido. */
   documentoNombre?: string;
-  /**
-   * Documentación en español.
-   */
+  /** MIME type del documento. */
   documentoMimeType?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Tamaño del fichero en bytes. */
   documentoTamano?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Relaciones pivote con recepciones. */
   albaranPedidoRecepcion?: AlbaranPedidoRecepcion[];
-  /**
-   * Documentación en español.
-   */
+  /** Fecha de creación del registro. */
   createdAt: string;
-  /**
-   * Documentación en español.
-   */
+  /** Fecha de última actualización. */
   updatedAt: string;
-  /**
-   * Documentación en español.
-   */
+  /** Fecha de borrado lógico, si aplica. */
   deletedAt?: string;
 }
 
-/**
- * Documentación en español.
- */
+/** DTO para crear un nuevo albarán. */
 export interface CreateAlbaranDto {
-  /**
-   * Documentación en español.
-   */
+  /** Número de albarán del proveedor. */
   nAlbaran: string;
-  /**
-   * Documentación en español.
-   */
+  /** Si se ha verificado la concordancia con el pedido. */
   concordancia?: boolean;
-  /**
-   * Documentación en español.
-   */
+  /** Fecha del albarán. */
   fecha?: string;
 }
 
-/**
- * Documentación en español.
- */
+/** DTO para actualizar un albarán existente (todos los campos opcionales). */
 export type UpdateAlbaranDto = Partial<CreateAlbaranDto>;
 
-/**
- * Documentación en español.
- */
+/** Parámetros de consulta para el listado paginado de albaranes. */
 export interface AlbaranQueryParams {
-  /**
-   * Documentación en español.
-   */
+  /** Número de página (1-based). */
   page?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Elementos por página. */
   limit?: number;
-  /**
-   * Documentación en español.
-   */
+  /** Término de búsqueda por referencia. */
   searchTerm?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Campo de ordenación. */
   sortBy?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Dirección de la ordenación. */
   order?: 'ASC' | 'DESC';
 }

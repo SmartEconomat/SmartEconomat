@@ -8,6 +8,7 @@ interface DashboardQuickActionProps {
   color: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
   onClick: () => void;
   description?: string;
+  testId?: string;
 }
 
 const DashboardQuickAction: React.FC<DashboardQuickActionProps> = ({
@@ -16,6 +17,7 @@ const DashboardQuickAction: React.FC<DashboardQuickActionProps> = ({
   color,
   onClick,
   description,
+  testId,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -31,6 +33,7 @@ const DashboardQuickAction: React.FC<DashboardQuickActionProps> = ({
     <Paper
       elevation={0}
       role="button"
+      data-testid={testId}
       tabIndex={0}
       onClick={onClick}
       onKeyDown={handleKeyDown}

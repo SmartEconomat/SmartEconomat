@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { FileResponseDto } from './file-response.dto';
 
+/** Clase pública (ProcessedFileResponseDto). Paquete: smart-economat-backend (Nest). */
 export class ProcessedFileResponseDto extends FileResponseDto {
   @ApiProperty({
     description: 'Tamaño original para comparación',

@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import React, { useState } from 'react';
@@ -30,27 +30,28 @@ import { useTranslation } from 'react-i18next';
 // ─────────────────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface DetailField {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   label: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   value: React.ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   fullWidth?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   colSpan?: number;
 }
 
+/** Contrato de tipos público (DetailSection). Contexto: smart-economat-frontend (SPA). */
 export interface DetailSection {
   title?: string;
   columns?: number;
@@ -58,6 +59,7 @@ export interface DetailSection {
   content?: React.ReactNode;
 }
 
+/** Contrato de tipos público (DetailModalProps). Contexto: smart-economat-frontend (SPA). */
 export interface DetailModalProps {
   isOpen: boolean;
   onClose: () => void;

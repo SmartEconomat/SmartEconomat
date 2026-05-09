@@ -13,7 +13,7 @@ import {
 import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para auth permissions.
  */
 @Injectable()
 export class AuthPermissionsService {
@@ -21,6 +21,12 @@ export class AuthPermissionsService {
   private readonly CACHE_TTL = 300;
   private readonly CACHE_PREFIX = 'user:permissions:';
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Usuario>} usuarioRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {Repository<Permiso>} permisoRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {Cache} cacheManager - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
@@ -31,7 +37,10 @@ export class AuthPermissionsService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Obtiene user permissions.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async getUserPermissions(userId: string): Promise<string[]> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
@@ -65,7 +74,10 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de load user permissions from db dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async loadUserPermissionsFromDB(userId: string): Promise<string[]> {
     const usuario = await this.usuarioRepo.findOne({
@@ -147,7 +159,13 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "userHasAllPermissions" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string[]} requiredPermissions - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
    */
   async userHasAllPermissions(
     userId: string,
@@ -164,7 +182,13 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "userHasAnyPermission" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string[]} requiredPermissions - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
    */
   async userHasAnyPermission(
     userId: string,
@@ -181,7 +205,10 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de invalidate user cache dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async invalidateUserCache(userId: string): Promise<void> {
     const cacheKey = `${this.CACHE_PREFIX}${userId}`;
@@ -197,7 +224,10 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de invalidate users cache dentro del flujo de la aplicación.
+   *
+   * @param userIds Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async invalidateUsersCache(userIds: string[]): Promise<void> {
     try {
@@ -214,7 +244,12 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de invalidate all cache dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "invalidateAllCache" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async invalidateAllCache(): Promise<void> {
     try {
@@ -234,7 +269,10 @@ export class AuthPermissionsService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de preload user permissions dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async preloadUserPermissions(userId: string): Promise<string[]> {
     const permisos = await this.loadUserPermissionsFromDB(userId);

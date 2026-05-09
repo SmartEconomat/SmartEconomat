@@ -4,17 +4,25 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
+/** Clase pública (PedidoRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 /**
- * Documentación en español.
+ * Repositorio para operaciones de persistencia de pedido.
  */
 export class PedidoRepository extends Repository<Pedido> {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(private dataSource: DataSource) {
     super(Pedido, dataSource.createEntityManager());
   }
 
   /**
-   * Documentación en español.
+   * Busca all with relations.
+   *
+   * @param loadRelations Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findAllWithRelations(loadRelations = false): Promise<Pedido[]> {
     return await this.find({
@@ -38,7 +46,13 @@ export class PedidoRepository extends Repository<Pedido> {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAllPaginated" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} loadRelations - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Pedido>>} Datos efectivos después de ejecutar la operación.
    */
   async findAllPaginated(
     query: PaginationQueryDto,
@@ -178,7 +192,13 @@ export class PedidoRepository extends Repository<Pedido> {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOneWithRelations" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} loadRelations - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Pedido | null>} Datos efectivos después de ejecutar la operación.
    */
   async findOneWithRelations(
     id: string,
@@ -203,7 +223,11 @@ export class PedidoRepository extends Repository<Pedido> {
   }
 
   /**
-   * Documentación en español.
+   * Busca by estado.
+   *
+   * @param estado Parámetro de entrada para la operación.
+   * @param loadRelations Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findByEstado(estado: string, loadRelations = false): Promise<Pedido[]> {
     return await this.find({
@@ -223,7 +247,13 @@ export class PedidoRepository extends Repository<Pedido> {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findByUsuario" en smart-economat-backend (Nest).
+   * @undefined {string} idUsuario - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} loadRelations - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Pedido[]>} Datos efectivos después de ejecutar la operación.
    */
   async findByUsuario(
     idUsuario: string,

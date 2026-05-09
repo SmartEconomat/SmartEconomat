@@ -18,7 +18,6 @@ import {
   FormControl,
   InputLabel,
   TextField,
-  Tooltip,
 } from '@mui/material';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -30,17 +29,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
 import PersonIcon from '@mui/icons-material/Person';
 import { AlumnoSlot, ProfesorInfo } from '../../../services/profesor.service';
-import type { Ubicacion } from '../../../services/ubicacion.types';
-import QuickLocationDialog from '../../../components/inventario/QuickLocationDialog';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { normalizeNumericInput } from '../../../utils/numberUtils';
 
 interface ProfessorSlotsManagerProps {
   isEditing: boolean;
   slots: AlumnoSlot[];
   allSlots?: AlumnoSlot[];
   allProfesores?: ProfesorInfo[];
-  ubicaciones?: Ubicacion[];
   isLoading: boolean;
   isSaving: boolean;
   newSlot: {
@@ -48,7 +45,6 @@ interface ProfessorSlotsManagerProps {
     numeroClase: string;
     capacidad: string;
     profesorId?: string;
-    ubicacionId?: string;
   };
   onNewSlotChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCreateSlot: (e: React.FormEvent) => void;
@@ -63,18 +59,16 @@ interface ProfessorSlotsManagerProps {
       profesorId?: string;
     }
   ) => Promise<void>;
-  onRefreshUbicaciones?: () => Promise<void>;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   isEditing,
   slots,
   allSlots = [],
   allProfesores = [],
-  ubicaciones = [],
   isLoading,
   isSaving,
   newSlot,
@@ -83,17 +77,14 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
   onDeleteSlot,
   onUpdateSlot,
   onAdminUpdateSlot,
-  onRefreshUbicaciones,
 }) => {
   const { t } = useTranslation();
   const [editingSlotId, setEditingSlotId] = React.useState<string | null>(null);
-  const [openLocDialog, setOpenLocDialog] = React.useState(false);
   const [editData, setEditData] = React.useState({
     aula: '',
     numeroClase: '',
     capacidad: '',
     profesorId: '',
-    ubicacionId: '',
   });
 
   // Paginación "Mis Aulas"
@@ -111,7 +102,6 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
       numeroClase: String(slot.numeroClase),
       capacidad: String(slot.capacidad),
       profesorId: isAdminView ? (slot.profesor?.id ?? '') : '',
-      ubicacionId: slot.ubicacionId ?? slot.ubicacion?.id ?? '',
     });
   };
 
@@ -126,14 +116,12 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
         numeroClase: Number(editData.numeroClase),
         capacidad: Number(editData.capacidad),
         profesorId: editData.profesorId || undefined,
-        ubicacionId: editData.ubicacionId || undefined,
       });
     } else {
       await onUpdateSlot(id, {
         aula: editData.aula,
         numeroClase: Number(editData.numeroClase),
         capacidad: Number(editData.capacidad),
-        ubicacionId: editData.ubicacionId || undefined,
       });
     }
     setEditingSlotId(null);
@@ -292,7 +280,11 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       label={t('perfil.campoNumeroClase')}
                       name="numeroClase"
                       size="small"
-                      type="number"
+                      type="text"
+                      inputProps={{
+                        inputMode: 'numeric',
+                        pattern: '[0-9]*',
+                      }}
                       value={editData.numeroClase}
                       onChange={handleEditChange}
                       disabled={isSaving}
@@ -302,67 +294,16 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                       label={t('perfil.campoCapacidad')}
                       name="capacidad"
                       size="small"
-                      type="number"
+                      type="text"
+                      inputProps={{
+                        inputMode: 'numeric',
+                        pattern: '[0-9]*',
+                      }}
                       value={editData.capacidad}
                       onChange={handleEditChange}
                       disabled={isSaving}
                       sx={{ flex: '1 1 80px', minWidth: 80 }}
                     />
-
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      gap={0.5}
-                      sx={{ flex: '2 1 180px', minWidth: 180 }}
-                    >
-                      <FormControl size="small" fullWidth>
-                        <InputLabel id={`ubicacion-select-${slot.id}`}>
-                          {t('comun.ubicacion')}
-                        </InputLabel>
-                        <Select
-                          labelId={`ubicacion-select-${slot.id}`}
-                          label={t('comun.ubicacion')}
-                          value={editData.ubicacionId}
-                          onChange={(e) => {
-                            const val = e.target.value as string;
-                            if (val === 'CREATE_NEW_LOC') {
-                              setOpenLocDialog(true);
-                            } else {
-                              setEditData((prev) => ({
-                                ...prev,
-                                ubicacionId: val,
-                              }));
-                            }
-                          }}
-                          disabled={isSaving}
-                        >
-                          <MenuItem value="">
-                            <em>{t('perfil.sinUbicacion')}</em>
-                          </MenuItem>
-                          {ubicaciones.map((u) => (
-                            <MenuItem key={u.id} value={u.id}>
-                              {u.nombre}
-                            </MenuItem>
-                          ))}
-                          <Divider />
-                          <MenuItem
-                            value="CREATE_NEW_LOC"
-                            sx={{ color: 'primary.main', fontWeight: 'bold' }}
-                          >
-                            {t('perfil.menuCrearNuevaUbicacion')}
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
-                      <Tooltip title={t('perfil.crearNuevaUbicacion')}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => setOpenLocDialog(true)}
-                        >
-                          <AddCircleIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
 
                     {showOwner && onAdminUpdateSlot && (
                       <FormControl
@@ -408,16 +349,6 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
                         >
                           {t('perfil.capacidadMaxAlumnos', {
                             n: slot.capacidad,
-                          })}
-                        </Typography>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{ display: 'block' }}
-                        >
-                          {t('perfil.ubicacionConNombre', {
-                            nombre:
-                              slot.ubicacion?.nombre || t('perfil.sinAsignar'),
                           })}
                         </Typography>
                         {showOwner && (
@@ -535,9 +466,18 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               <Input
                 label={t('perfil.numeroClaseEj')}
                 name="numeroClase"
-                type="number"
+                type="text"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
                 value={newSlot.numeroClase}
-                onChange={onNewSlotChange}
+                onChange={(e) => {
+                  const val = normalizeNumericInput(e.target.value);
+                  onNewSlotChange({
+                    target: { name: 'numeroClase', value: val },
+                  } as React.ChangeEvent<HTMLInputElement>);
+                }}
                 required
                 disabled={isSaving}
               />
@@ -546,72 +486,21 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
               <Input
                 label={t('perfil.capacidadAlumnos')}
                 name="capacidad"
-                type="number"
+                type="text"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
                 value={newSlot.capacidad}
-                onChange={onNewSlotChange}
+                onChange={(e) => {
+                  const val = normalizeNumericInput(e.target.value);
+                  onNewSlotChange({
+                    target: { name: 'capacidad', value: val },
+                  } as React.ChangeEvent<HTMLInputElement>);
+                }}
                 required
                 disabled={isSaving}
               />
-            </Box>
-
-            <Box
-              flex={2}
-              width="100%"
-              display="flex"
-              alignItems="center"
-              gap={0.5}
-            >
-              <FormControl fullWidth size="small">
-                <InputLabel id="new-slot-ubicacion-label">
-                  {t('comun.ubicacion')}
-                </InputLabel>
-                <Select
-                  labelId="new-slot-ubicacion-label"
-                  label={t('comun.ubicacion')}
-                  name="ubicacionId"
-                  value={newSlot.ubicacionId || ''}
-                  onChange={(e) => {
-                    const val = e.target.value as string;
-                    if (val === 'CREATE_NEW_LOC') {
-                      setOpenLocDialog(true);
-                    } else {
-                      onNewSlotChange({
-                        target: {
-                          name: 'ubicacionId',
-                          value: val,
-                        },
-                      } as React.ChangeEvent<HTMLInputElement>);
-                    }
-                  }}
-                  disabled={isSaving}
-                  sx={{ bgcolor: 'background.paper' }}
-                >
-                  <MenuItem value="">
-                    <em>{t('perfil.sinUbicacion')}</em>
-                  </MenuItem>
-                  {ubicaciones.map((u) => (
-                    <MenuItem key={u.id} value={u.id}>
-                      {u.nombre}
-                    </MenuItem>
-                  ))}
-                  <Divider />
-                  <MenuItem
-                    value="CREATE_NEW_LOC"
-                    sx={{ color: 'primary.main', fontWeight: 'bold' }}
-                  >
-                    {t('perfil.menuCrearNuevaUbicacion')}
-                  </MenuItem>
-                </Select>
-              </FormControl>
-              <Tooltip title={t('perfil.crearNuevaUbicacion')}>
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => setOpenLocDialog(true)}
-                >
-                  <AddCircleIcon />
-                </IconButton>
-              </Tooltip>
             </Box>
 
             {allProfesores.length > 0 && (
@@ -735,26 +624,6 @@ const ProfessorSlotsManager: React.FC<ProfessorSlotsManagerProps> = ({
           </AccordionDetails>
         </Accordion>
       )}
-
-      <QuickLocationDialog
-        open={openLocDialog}
-        onClose={() => setOpenLocDialog(false)}
-        onSuccess={async (newLoc) => {
-          if (onRefreshUbicaciones) {
-            await onRefreshUbicaciones();
-          }
-          if (editingSlotId) {
-            setEditData((prev) => ({ ...prev, ubicacionId: newLoc.id }));
-          } else {
-            onNewSlotChange({
-              target: {
-                name: 'ubicacionId',
-                value: newLoc.id,
-              },
-            } as React.ChangeEvent<HTMLInputElement>);
-          }
-        }}
-      />
     </Box>
   );
 };

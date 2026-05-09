@@ -14,24 +14,24 @@ import { Producto } from '../producto.entity/producto.entity';
 import { Alergeno } from '../enums/producto.enums';
 
 /**
- * Documentación en español.
+ * Representa producto alergeno en el sistema.
  */
 @Entity({ name: 'producto_alergeno' })
 export class ProductoAlergeno {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @PrimaryColumn('uuid', { name: 'producto_id' })
   productoId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @PrimaryColumn({ type: 'enum', enum: Alergeno, name: 'alergeno' })
   alergeno!: Alergeno;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Exclude()
   @ManyToOne(() => Producto, (producto) => producto.alergenos, {
@@ -41,25 +41,25 @@ export class ProductoAlergeno {
   producto!: Relation<Producto>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   readonly createdAt!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   readonly updatedAt!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at', nullable: true })
   deletedAt?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @VersionColumn({ name: 'version', default: 1 })
   version!: number;

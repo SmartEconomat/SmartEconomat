@@ -406,6 +406,78 @@ describe('ProductoController (e2e) - Alta compleja', () => {
     ).toBe(false);
   });
 
+  it('sin stock usa la media de precios de referencia como PMP global y la actualiza al cambiar precios en ABM', async () => {
+    const proveedorA = await createProveedor();
+    const proveedorB = await createProveedor();
+    const nombreProducto = generateUniqueName('Producto pmp abm');
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/v1/productos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        nombre: nombreProducto,
+        tipo: 'lacteo',
+        unidad: 'L',
+        contenido: 1,
+        proveedores: [
+          {
+            proveedorId: proveedorA.id,
+            precioUnitario: 2,
+            marcaEspecifica: 'Marca A',
+          },
+          {
+            proveedorId: proveedorB.id,
+            precioUnitario: 4,
+            marcaEspecifica: 'Marca B',
+          },
+        ],
+      })
+      .expect(201);
+
+    const productoId = createResponse.body.data.id as string;
+
+    const pmpInicialResponse = await request(app.getHttpServer())
+      .get(`/api/v1/productos/${productoId}/pmp`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(Number(pmpInicialResponse.body.data.pmp)).toBeCloseTo(3, 4);
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/productos/${productoId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        proveedores: [
+          {
+            proveedorId: proveedorA.id,
+            precioUnitario: 6,
+            marcaEspecifica: 'Marca A',
+          },
+          {
+            proveedorId: proveedorB.id,
+            precioUnitario: 4,
+            marcaEspecifica: 'Marca B',
+          },
+        ],
+      })
+      .expect(200);
+
+    const pmpActualizadoResponse = await request(app.getHttpServer())
+      .get(`/api/v1/productos/${productoId}/pmp`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(Number(pmpActualizadoResponse.body.data.pmp)).toBeCloseTo(5, 4);
+
+    const proveedorActualizado =
+      pmpActualizadoResponse.body.data.porProveedor.find(
+        (pp: { proveedorId: string; pmp: number }) =>
+          pp.proveedorId === proveedorA.id
+      );
+
+    expect(Number(proveedorActualizado?.pmp ?? 0)).toBeCloseTo(0, 4);
+  });
+
   it('permite vaciar alérgenos y proveedores enviando arrays vacíos en PATCH', async () => {
     const proveedor = await createProveedor();
     const nombreProducto = generateUniqueName('Producto limpieza patch');

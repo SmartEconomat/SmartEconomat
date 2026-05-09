@@ -1,6 +1,7 @@
 import { Receta } from '../../receta/receta.entity/receta.entity';
 import { ExportColumn } from './producto-export.mapper';
 
+/** Constantes públicas (RECETA_COLUMNS) expuestas en smart-economat-backend (Nest). */
 export const RECETA_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Nombre', key: 'nombre', width: 30 },
@@ -11,6 +12,11 @@ export const RECETA_COLUMNS: ExportColumn[] = [
   { header: 'Fecha Creación', key: 'createdAt', width: 15 },
 ];
 
+/**
+ * Expone "mapRecetaToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Receta} receta - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function mapRecetaToExcelRow(receta: Receta): Record<string, unknown> {
   const ingredientes = (receta.ingredientes ?? [])
     .map((i) => `${i.producto?.nombre ?? ''} (${i.cantidad} ${i.unidad})`)

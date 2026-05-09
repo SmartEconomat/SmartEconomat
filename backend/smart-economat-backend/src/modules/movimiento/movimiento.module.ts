@@ -8,7 +8,9 @@ import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { MovimientoAdapter } from './adapter/movimiento.adapter';
 import { MovimientoPort } from './ports/movimiento.port';
 import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
+import { AuditListener } from './listeners/audit.listener';
 
+/** Clase pública (MovimientoModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [TypeOrmModule.forFeature([Movimiento, Usuario])],
   controllers: [MovimientoController],
@@ -18,6 +20,7 @@ import { MovimientoHelper } from '../../common/helpers/movimiento.helper';
     MovimientoAdapter,
     { provide: MovimientoPort, useClass: MovimientoAdapter },
     MovimientoHelper,
+    AuditListener,
   ],
   exports: [MovimientoService, MovimientoPort, MovimientoHelper],
 })

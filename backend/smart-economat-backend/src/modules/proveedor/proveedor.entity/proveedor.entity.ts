@@ -5,7 +5,7 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 
 /**
- * Documentación en español.
+ * Representa proveedor en el sistema.
  */
 @Entity({ name: 'proveedor' })
 @Index(['nombre'])

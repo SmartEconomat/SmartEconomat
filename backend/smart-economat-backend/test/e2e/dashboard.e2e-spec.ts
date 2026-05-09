@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
@@ -28,7 +28,7 @@ describe('DashboardController (e2e)', () => {
 
   describe('Estadísticas', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /api/v1/dashboard/stats - Debe retornar estadísticas (200)', () => {
       return request(app.getHttpServer() as string)
@@ -44,7 +44,7 @@ describe('DashboardController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /api/v1/dashboard/stats - Debe fallar sin token (401)', () => {
       return request(app.getHttpServer() as string)

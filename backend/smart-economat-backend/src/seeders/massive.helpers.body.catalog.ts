@@ -45,6 +45,33 @@ function buildSeedUniqueBarcode(
   return `${normalizedBase}-${runTag}-${iteration}`.slice(0, 130);
 }
 
+/** El API exige `nombre` único entre productos activos; el catálogo OFF es estable entre ejecuciones. */
+function mergeSeedProductoNombreUnico(
+  nombreBase: string,
+  seedSuffix: string
+): string {
+  const maxLen = 100;
+  const token = seedSuffix
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-14)
+    .toUpperCase();
+  const suffixPart = token.length > 0 ? ` ${token}` : '';
+  const trimmedBase = nombreBase.trim();
+  if (trimmedBase.length + suffixPart.length <= maxLen) {
+    return (trimmedBase + suffixPart).slice(0, maxLen);
+  }
+  const available = maxLen - suffixPart.length;
+  return (trimmedBase.slice(0, Math.max(1, available)) + suffixPart).slice(
+    0,
+    maxLen
+  );
+}
+
+/**
+ * Expone "buildBodyCatalogProducts" en smart-economat-backend (Nest).
+ * @undefined {BuildBodyEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown> | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function buildBodyCatalogProducts(
   env: BuildBodyEnv
 ): Record<string, unknown> | undefined {
@@ -106,12 +133,13 @@ export function buildBodyCatalogProducts(
   if (resolvedPath.startsWith('/productos')) {
     if (endpoint.method === 'PATCH') {
       const imageRef = pickSeedUploadedImageRef(context, iteration);
+      const patchNombreBase = pickDeterministic(
+        PRODUCT_PATCH_NAMES,
+        iteration,
+        'patch-product-name'
+      );
       return {
-        nombre: pickDeterministic(
-          PRODUCT_PATCH_NAMES,
-          iteration,
-          'patch-product-name'
-        ),
+        nombre: mergeSeedProductoNombreUnico(patchNombreBase, suffix),
         marca: pickDeterministic(
           PRODUCT_PATCH_BRANDS,
           iteration,
@@ -215,6 +243,11 @@ export function buildBodyCatalogProducts(
         },
       ];
     }
+
+    payloadFromOff.nombre = mergeSeedProductoNombreUnico(
+      payloadFromOff.nombre || 'Producto seed',
+      suffix
+    );
 
     return payloadFromOff;
   }

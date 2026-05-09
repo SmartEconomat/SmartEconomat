@@ -3,8 +3,7 @@ import fs from "node:fs/promises";
 import type { ProcessRunnerService } from "./process-runner.service";
 
 const PROGRAM_FILES_DOCKER_ROOT = "C:\\Program Files\\Docker\\Docker";
-const PROGRAM_FILES_X86_DOCKER_ROOT =
-  "C:\\Program Files (x86)\\Docker\\Docker";
+const PROGRAM_FILES_X86_DOCKER_ROOT = "C:\\Program Files (x86)\\Docker\\Docker";
 
 const dockerDesktopExeCandidates = [
   `${PROGRAM_FILES_DOCKER_ROOT}\\frontend\\Docker Desktop.exe`,
@@ -34,7 +33,12 @@ async function firstExistingPath(candidates: string[]): Promise<string | null> {
 }
 
 /**
- * Documentación en español.
+ * Construye windows docker desktop resolve command a partir de los parámetros recibidos.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone la operación "buildWindowsDockerDesktopResolveCommand" del instalador SmartEconomat.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
  */
 export function buildWindowsDockerDesktopResolveCommand(): string {
   return [
@@ -112,7 +116,12 @@ export function buildWindowsDockerDesktopResolveCommand(): string {
 }
 
 /**
- * Documentación en español.
+ * Construye windows docker cli resolve command a partir de los parámetros recibidos.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone la operación "buildWindowsDockerCliResolveCommand" del instalador SmartEconomat.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
  */
 export function buildWindowsDockerCliResolveCommand(): string {
   return [
@@ -178,6 +187,11 @@ export function buildWindowsDockerCliResolveCommand(): string {
   ].join(" ");
 }
 
+/**
+ * Interpreta y normaliza datos de texto o estructuras intermedias.
+ * @param {string} stdout - Entrada esperada por la función.
+ * @returns {{ found: boolean; exePath: string | null; }} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function parseWindowsDockerDesktopResolveStdout(stdout: string): {
   found: boolean;
   exePath: string | null;
@@ -192,6 +206,12 @@ export function parseWindowsDockerDesktopResolveStdout(stdout: string): {
   return { found: false, exePath: null };
 }
 
+/**
+ * Expone la operación "resolveWindowsDockerDesktopExePath" del instalador SmartEconomat.
+ * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
+ * @param {number} timeoutMs - Entrada esperada por la función.
+ * @returns {Promise<string | null>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export async function resolveWindowsDockerDesktopExePath(
   processRunner: ProcessRunnerService,
   timeoutMs = 20_000,
@@ -221,6 +241,12 @@ export async function resolveWindowsDockerDesktopExePath(
   return found && exePath ? exePath : null;
 }
 
+/**
+ * Expone la operación "resolveWindowsDockerCliPath" del instalador SmartEconomat.
+ * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
+ * @param {number} timeoutMs - Entrada esperada por la función.
+ * @returns {Promise<string | null>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export async function resolveWindowsDockerCliPath(
   processRunner: ProcessRunnerService,
   timeoutMs = 20_000,

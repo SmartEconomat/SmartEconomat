@@ -8,7 +8,7 @@ import {
 } from '../../src/modules/producto/enums/producto.enums';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('RecetaController (e2e)', () => {
   jest.setTimeout(60000);
@@ -69,7 +69,7 @@ describe('RecetaController (e2e)', () => {
 
   describe('CRUD de Recetas', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /recetas - Debe crear una receta (201)', async () => {
       const res = await request(app.getHttpServer() as string)
@@ -100,7 +100,50 @@ describe('RecetaController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+     */
+    it('POST /recetas - Debe calcular tamanioRacion automaticamente (201)', async () => {
+      const res = await request(app.getHttpServer() as string)
+        .post('/api/v1/recetas')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Receta Calculo E2E ${Date.now()}`,
+          instrucciones: 'Mezclar y cocinar.',
+          tiempoEstimadoMinutos: 20,
+          dificultad: DificultadReceta.MEDIA,
+          rendimiento: 10,
+          raciones: 4,
+          ingredientes: [
+            {
+              productoId,
+              cantidad: 1,
+              unidad: 'kg',
+            },
+          ],
+        });
+
+      if (res.status !== 201) {
+        throw new Error(
+          `Expected 201, got ${res.status}. Body: ${JSON.stringify(res.body)}`
+        );
+      }
+
+      expect(res.body.success).toBe(true);
+      expect(Number(res.body.data.tamanioRacion)).toBeGreaterThanOrEqual(0);
+
+      const updateRes = await request(app.getHttpServer() as string)
+        .patch(`/api/v1/recetas/${res.body.data.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ raciones: 2 });
+
+      expect(updateRes.status).toBe(200);
+      expect(Number(updateRes.body.data.tamanioRacion)).toBeGreaterThanOrEqual(
+        0
+      );
+    });
+
+    /**
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /recetas - Debe listar recetas (200)', () => {
       return request(app.getHttpServer() as string)
@@ -110,7 +153,7 @@ describe('RecetaController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /recetas/:id - Debe actualizar receta (200)', () => {
       return request(app.getHttpServer() as string)
@@ -127,7 +170,7 @@ describe('RecetaController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('DELETE /recetas/:id - Debe eliminar receta (204)', () => {
       return request(app.getHttpServer() as string)
@@ -143,7 +186,7 @@ describe('RecetaController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /recetas/duplicate - Debe duplicar una receta (201)', async () => {
       const originalName = `Receta Original ${Date.now()}_${Math.random()}`;

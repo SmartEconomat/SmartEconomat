@@ -29,7 +29,6 @@ import {
   Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SecurityIcon from '@mui/icons-material/Security';
 import type { Permiso, RolOption } from '../../../types/usuario';
@@ -41,17 +40,21 @@ import { useToast } from '../../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface PlantillasRolesViewProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   canEdit: boolean;
 }
 
 /**
- * Documentación en español.
+ * Obtiene api error message.
+ *
+ * @param error Parámetro de entrada para la operación.
+ * @param fallback Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function getApiErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -66,25 +69,34 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const KNOWN_TEMPLATE_NAMES = ['SUPER_ADMIN', 'ADMIN', 'PROFESOR', 'ALUMNO'];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const SUPERADMIN_KEYWORDS = ['SUPERADMIN', 'SUPER_ADMIN'];
+const PROTECTED_TEMPLATE_NAMES = ['SUPER_ADMIN', 'ADMIN'];
 
 /**
- * Documentación en español.
+ * Determina si superadmin plantilla.
+ *
+ * @param nombre Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function isSuperadminPlantilla(nombre: string): boolean {
   const upper = nombre.toUpperCase();
   return SUPERADMIN_KEYWORDS.some((kw) => upper.includes(kw));
 }
 
+function isProtectedPlantilla(nombre: string): boolean {
+  const upper = nombre.toUpperCase();
+  return PROTECTED_TEMPLATE_NAMES.some((template) => upper === template);
+}
+
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   canEdit,
@@ -109,7 +121,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   const [isReadonly, setIsReadonly] = useState(false);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -145,7 +157,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   }, [loadData]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const rolesCountByPlantillaId = useMemo(() => {
     const counts = new Map<string, number>();
@@ -163,7 +175,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   }, [roles]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const groupedPermissions = useMemo(() => {
     const grouped = new Map<string, Permiso[]>();
@@ -192,7 +204,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   }, [permisos]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const togglePermisoSelection = useCallback((permisoId: string) => {
     setSelectedPermisoIds((prev) => {
@@ -207,7 +219,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   }, []);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const toggleModuleSelection = useCallback((modulePermisos: Permiso[]) => {
     setSelectedPermisoIds((prev) => {
@@ -226,15 +238,15 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   }, []);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const openEditDialog = useCallback(
     (plantilla: PlantillaRol) => {
-      const isSuperadmin = isSuperadminPlantilla(plantilla.nombre);
+      const isProtected = isProtectedPlantilla(plantilla.nombre);
       setEditingPlantilla(plantilla);
-      setIsReadonly(isSuperadmin);
+      setIsReadonly(isProtected);
 
-      if (isSuperadmin) {
+      if (isProtected) {
         setSelectedPermisoIds(new Set(permisos.map((p) => p.id)));
       } else {
         setSelectedPermisoIds(new Set(plantilla.permisos.map((p) => p.id)));
@@ -246,7 +258,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   );
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de close dialog dentro del flujo de la aplicación.
    */
   const closeDialog = () => {
     if (saving) {
@@ -260,7 +272,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona submit y aplica la lógica correspondiente.
    */
   const handleSubmit = async () => {
     if (!editingPlantilla || isReadonly) {
@@ -355,11 +367,7 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
               <TableCell align="center">
                 {t('plantillasRoles.columnas.rolesVinculados')}
               </TableCell>
-              {canEdit && (
-                <TableCell align="right">
-                  {t('plantillasRoles.columnas.acciones')}
-                </TableCell>
-              )}
+              {canEdit && <TableCell align="right" />}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -367,9 +375,15 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
               const linkedRoles =
                 rolesCountByPlantillaId.get(plantilla.id) ?? 0;
               const isSuperadmin = isSuperadminPlantilla(plantilla.nombre);
+              const isProtected = isProtectedPlantilla(plantilla.nombre);
 
               return (
-                <TableRow key={plantilla.id} hover>
+                <TableRow
+                  key={plantilla.id}
+                  hover
+                  onClick={() => openEditDialog(plantilla)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     <Stack spacing={0.5}>
                       <Typography fontWeight={600}>
@@ -408,30 +422,27 @@ const PlantillasRolesView: React.FC<PlantillasRolesViewProps> = ({
                   <TableCell align="center">{linkedRoles}</TableCell>
                   {canEdit && (
                     <TableCell align="right">
-                      <Tooltip
-                        title={
-                          isSuperadmin
-                            ? t('plantillasRoles.verPermisos')
-                            : plantilla.esEditable
-                              ? t('plantillasRoles.editarPermisos')
-                              : t('plantillasRoles.plantillaSistema')
-                        }
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => openEditDialog(plantilla)}
-                            disabled={!plantilla.esEditable && !isSuperadmin}
-                          >
-                            {isSuperadmin ? (
-                              <VisibilityIcon fontSize="small" />
-                            ) : (
+                      {!isSuperadmin && (
+                        <Tooltip
+                          title={
+                            isProtected
+                              ? t('plantillasRoles.plantillaSistema')
+                              : plantilla.esEditable
+                                ? t('plantillasRoles.editarPermisos')
+                                : t('plantillasRoles.plantillaSistema')
+                          }
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              disabled={!plantilla.esEditable || isProtected}
+                            >
                               <EditIcon fontSize="small" />
-                            )}
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>

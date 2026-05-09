@@ -14,7 +14,7 @@ import { Recepcion } from '../recepcion.entity/recepcion.entity';
 import { AlbaranPedidoRecepcion } from '../../albaran/albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
 /**
- * Documentación en español.
+ * Representa recepcion pedido en el sistema.
  */
 @Unique(['recepcionId', 'pedidoId'])
 @Entity({ name: 'recepcion_pedido' })

@@ -13,6 +13,7 @@ import { IncidenciaResuelaService } from './service/incidencia-resuelta.service'
 import { IncidenciaController } from './controller/incidencia.controller';
 import { IncidenciaResuelaController } from './controller/incidencia-resuelta.controller';
 
+/** Clase pública (IncidenciaModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

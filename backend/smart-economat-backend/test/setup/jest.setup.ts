@@ -18,7 +18,7 @@ import {
 import { useContainer } from 'class-validator';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 const envPaths = [
@@ -93,7 +93,7 @@ global.describe.only = wrapDescribe(originalDescribe.only);
 jest.setTimeout(60000);
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 beforeAll(async () => {
   await initTestDataSource();
@@ -112,7 +112,7 @@ beforeAll(async () => {
 }, 120000);
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 beforeEach(() => {
   const fileSnapshot = getFileSnapshot();
@@ -126,10 +126,10 @@ beforeEach(() => {
 });
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 afterEach(() => {});
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */

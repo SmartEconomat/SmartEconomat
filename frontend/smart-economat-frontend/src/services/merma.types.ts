@@ -1,6 +1,7 @@
 import { Producto } from './producto.types';
 import { Usuario } from '../types/usuario';
 
+/** Catálogo de valores enumerados (MotivoMerma) dentro de smart-economat-frontend (SPA). */
 export enum MotivoMerma {
   ROTURA = 'rotura',
   DETERIORO = 'deterioro',
@@ -9,6 +10,7 @@ export enum MotivoMerma {
   OTROS = 'otros',
 }
 
+/** Catálogo de valores enumerados (TipoMerma) dentro de smart-economat-frontend (SPA). */
 export enum TipoMerma {
   RECEPCION = 'recepcion',
   PRODUCCION = 'produccion',
@@ -17,6 +19,7 @@ export enum TipoMerma {
   INVENTARIO = 'inventario',
 }
 
+/** Contrato de tipos público (Merma). Contexto: smart-economat-frontend (SPA). */
 export interface Merma {
   id: string;
   productoId: string;
@@ -35,6 +38,7 @@ export interface Merma {
   updatedAt: string;
 }
 
+/** Contrato de tipos público (CreateMermaPayload). Contexto: smart-economat-frontend (SPA). */
 export interface CreateMermaPayload {
   productoId: string;
   cantidad: number;
@@ -47,6 +51,7 @@ export interface CreateMermaPayload {
   notas?: string;
 }
 
+/** Contrato de tipos público (CreateMermaProduccionPayload). Contexto: smart-economat-frontend (SPA). */
 export interface CreateMermaProduccionPayload {
   produccionLoteId: string;
   productoId: string;
@@ -56,6 +61,7 @@ export interface CreateMermaProduccionPayload {
   idempotencyKey?: string;
 }
 
+/** Contrato de tipos público (MermaStats). Contexto: smart-economat-frontend (SPA). */
 export interface MermaStats {
   porMotivo: Array<{
     motivo: MotivoMerma;
@@ -70,11 +76,12 @@ export interface MermaStats {
   }>;
 }
 
+/** Contrato de tipos público (MermasQueryParams). Contexto: smart-economat-frontend (SPA). */
 export interface MermasQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  order?: 'ASC' | 'DESC';
+  order?: 'ASC' | 'DESC' | 'asc' | 'desc';
   motivo?: MotivoMerma;
   startDate?: string;
   endDate?: string;

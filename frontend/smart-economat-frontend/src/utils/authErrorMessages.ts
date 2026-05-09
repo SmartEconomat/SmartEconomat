@@ -2,7 +2,7 @@ import { ApiError, extractApiMessage } from '../services/api.service';
 import i18n from '../i18n';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 type AuthAction =
@@ -47,7 +47,10 @@ const actionMessageMap: Record<AuthAction, Array<[RegExp, string]>> = {
 };
 
 /**
- * Documentación en español.
+ * Normaliza error message para mantener consistencia.
+ *
+ * @param error Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function normalizeErrorMessage(error: unknown): string | null {
   if (typeof error === 'string' && error.trim()) {
@@ -66,7 +69,14 @@ function normalizeErrorMessage(error: unknown): string | null {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {unknown} error - Entrada efectiva esperada por el contrato.
+ * @undefined {AuthAction} action - Entrada efectiva esperada por el contrato.
+ * @undefined {string} fallbackMessage - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export function getAuthErrorMessage(
   error: unknown,

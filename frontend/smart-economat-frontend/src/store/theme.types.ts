@@ -1,6 +1,7 @@
 import { Theme } from '@mui/material/styles';
 import { ThemeName, FontSize } from '../utils/theme/themes';
 
+/** Contrato de tipos público (ThemeContextType). Contexto: smart-economat-frontend (SPA). */
 export interface ThemeContextType {
   currentThemeName: ThemeName;
   fontSize: FontSize;

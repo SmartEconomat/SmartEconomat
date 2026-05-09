@@ -23,14 +23,16 @@ import {
   isSherlockElevatedRole,
   getRolPrincipal,
 } from '../../sherlock-auth/utils/access.utils';
+import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
+import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para admin.
  */
 @Injectable()
 export class AdminService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(Usuario)
@@ -45,18 +47,23 @@ export class AdminService {
     private readonly authPermissionsService?: AuthPermissionsService,
     @InjectRepository(Permiso)
     @Optional()
-    private readonly permisoRepo?: Repository<Permiso>
+    private readonly permisoRepo?: Repository<Permiso>,
+    private readonly movimientoHelper?: MovimientoHelper
   ) {}
 
   /**
-   * Documentación en español.
+   * Determina si admin role.
+   *
+   * @param role Parámetro de entrada para la operación. Opcional.
    */
   private isAdminRole(role?: string) {
     return isSherlockElevatedRole(role);
   }
 
   /**
-   * Documentación en español.
+   * Determina si super admin.
+   *
+   * @param role Parámetro de entrada para la operación. Opcional.
    */
   private isSuperAdmin(role?: string) {
     const normalized = role?.trim().toUpperCase();
@@ -64,7 +71,7 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async ensureNotDemotingAdmin(
     actorId: string,
@@ -107,7 +114,7 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async ensureNotLastActiveAdmin(
     user: Usuario,
@@ -143,7 +150,11 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene roles.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<Rol[]>} Datos efectivos después de ejecutar la operación.
    */
   async getRoles() {
     if (!this.rolRepo) {
@@ -158,7 +169,11 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene permissions.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<Permiso[]>} Datos efectivos después de ejecutar la operación.
    */
   async getPermissions() {
     if (!this.permisoRepo) {
@@ -172,68 +187,99 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Crea profesor.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateProfesorDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; user_id: string; username: string; cial: string; status: UserStatus; }>} Datos efectivos después de ejecutar la operación.
    */
   async createProfesor(dto: CreateProfesorDto) {
-    return this.dataSource.transaction(async (manager) => {
-      const whereConditions: FindOptionsWhere<Usuario>[] = [
-        { username: dto.username },
-      ];
-      if (dto.email) {
-        whereConditions.push({ email: dto.email });
+    const createdProfesor = await this.dataSource.transaction(
+      async (manager) => {
+        const whereConditions: FindOptionsWhere<Usuario>[] = [
+          { username: dto.username },
+        ];
+        if (dto.email) {
+          whereConditions.push({ email: dto.email });
+        }
+
+        const isExisting = await manager.findOne(Usuario, {
+          where: whereConditions,
+        });
+
+        if (isExisting)
+          throw new ConflictException(
+            I18nHelper.getError('USER_OR_EMAIL_ALREADY_EXISTS')
+          );
+
+        const isCialExisting = await manager.findOne(Profesor, {
+          where: { cial: dto.cial },
+        });
+        if (isCialExisting)
+          throw new ConflictException(
+            I18nHelper.getError('CIAL_ALREADY_EXISTS')
+          );
+
+        const passwordHash = await bcrypt.hash(dto.password, 10);
+        const profesorRole = this.rolRepo
+          ? await manager.findOne(Rol, {
+              where: { nombre: SYSTEM_ROLES.PROFESOR },
+            })
+          : null;
+
+        const user = manager.create(Usuario, {
+          username: dto.username,
+          email: dto.email,
+          password: passwordHash,
+          rol: rolUsuario.PROFESOR,
+          status: UserStatus.INACTIVE,
+          activo: false,
+          roles: profesorRole ? [profesorRole] : [],
+        });
+        await manager.save(user);
+
+        const profesor = manager.create(Profesor, {
+          user: { id: user.id },
+          cial: dto.cial,
+        });
+        await manager.save(profesor);
+
+        return {
+          id: profesor.id,
+          user_id: user.id,
+          username: user.username,
+          cial: profesor.cial,
+          status: user.status,
+        };
       }
+    );
 
-      const isExisting = await manager.findOne(Usuario, {
-        where: whereConditions,
-      });
-
-      if (isExisting)
-        throw new ConflictException(
-          I18nHelper.getError('USER_OR_EMAIL_ALREADY_EXISTS')
-        );
-
-      const isCialExisting = await manager.findOne(Profesor, {
-        where: { cial: dto.cial },
-      });
-      if (isCialExisting)
-        throw new ConflictException(I18nHelper.getError('CIAL_ALREADY_EXISTS'));
-
-      const passwordHash = await bcrypt.hash(dto.password, 10);
-      const profesorRole = this.rolRepo
-        ? await manager.findOne(Rol, {
-            where: { nombre: SYSTEM_ROLES.PROFESOR },
-          })
-        : null;
-
-      const user = manager.create(Usuario, {
-        username: dto.username,
-        email: dto.email,
-        password: passwordHash,
-        rol: rolUsuario.PROFESOR,
-        status: UserStatus.INACTIVE,
-        activo: false,
-        roles: profesorRole ? [profesorRole] : [],
-      });
-      await manager.save(user);
-
-      const profesor = manager.create(Profesor, {
-        user: { id: user.id },
-        cial: dto.cial,
-      });
-      await manager.save(profesor);
-
-      return {
-        id: profesor.id,
-        user_id: user.id,
-        username: user.username,
-        cial: profesor.cial,
-        status: user.status,
-      };
+    await this.movimientoHelper?.log({
+      userId: createdProfesor.user_id,
+      entidad: 'Profesor',
+      entidadId: createdProfesor.id,
+      accion: AccionMovimiento.CREATE,
+      descripcion: `Alta de profesor ${createdProfesor.id}`,
+      after: createdProfesor,
     });
+
+    return createdProfesor;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} actorUserId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} roleId - Entrada efectiva esperada por el contrato.
+   * @undefined {string[] | undefined} extraPermisosIds - Entrada efectiva esperada por el contrato.
+   * @undefined {string[] | undefined} excludedPermisosIds - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Usuario | null>} Datos efectivos después de ejecutar la operación.
    */
   async updateUserRole(
     actorUserId: string,
@@ -294,17 +340,54 @@ export class AdminService {
       }
     }
 
+    const before = {
+      rol: getRolPrincipal(user.roles, user.rol),
+      permisosAdicionales:
+        user.permisosAdicionales?.map((permiso) => permiso.id) || [],
+      permisosExcluidos:
+        user.permisosExcluidos?.map((permiso) => permiso.id) || [],
+    };
+
     await this.usuarioRepo.save(user);
     await this.authPermissionsService?.invalidateUserCache(user.id);
 
-    return this.usuarioRepo.findOne({
+    const updated = await this.usuarioRepo.findOne({
       where: { id: user.id },
       relations: ['roles', 'permisosAdicionales', 'permisosExcluidos'],
     });
+
+    await this.movimientoHelper?.trackAction({
+      userId: actorUserId,
+      entidad: 'Usuario',
+      entidadId: user.id,
+      accion: AccionMovimiento.CONFIG_CHANGE,
+      descripcion: `Cambio de rol/permisos del usuario ${user.id}`,
+      before,
+      after: updated
+        ? {
+            rol: getRolPrincipal(updated.roles, updated.rol),
+            permisosAdicionales:
+              updated.permisosAdicionales?.map((permiso) => permiso.id) || [],
+            permisosExcluidos:
+              updated.permisosExcluidos?.map((permiso) => permiso.id) || [],
+          }
+        : undefined,
+    });
+
+    return updated;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de activate user dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @param active Parámetro de entrada para la operación. Opcional.
+   */
+  /**
+   * Expone "activateUser" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean | undefined} active - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; id: string; status: UserStatus.INACTIVE | UserStatus.ACTIVE; activo: boolean; }>} Datos efectivos después de ejecutar la operación.
    */
   async activateUser(userId: string, active?: boolean) {
     const user = await this.usuarioRepo.findOne({
@@ -328,10 +411,23 @@ export class AdminService {
       nextActive
     );
 
+    const beforeStatus = user.status;
+    const beforeActivo = user.activo;
+
     user.status = nextActive ? UserStatus.ACTIVE : UserStatus.INACTIVE;
     user.activo = nextActive;
     await this.usuarioRepo.save(user);
     await this.authPermissionsService?.invalidateUserCache(user.id);
+
+    await this.movimientoHelper?.log({
+      userId: user.id,
+      entidad: 'Usuario',
+      entidadId: user.id,
+      accion: AccionMovimiento.CONFIG_CHANGE,
+      descripcion: `Cambio administrativo de activación de usuario ${user.id}`,
+      before: { status: beforeStatus, activo: beforeActivo },
+      after: { status: user.status, activo: user.activo },
+    });
 
     return {
       message: nextActive
@@ -344,7 +440,14 @@ export class AdminService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de force password reset dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "forcePasswordReset" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; provisionalPassword: string; mustChangePassword: boolean; }>} Datos efectivos después de ejecutar la operación.
    */
   async forcePasswordReset(userId: string) {
     const user = await this.usuarioRepo.findOne({ where: { id: userId } });
@@ -365,6 +468,15 @@ export class AdminService {
     user.resetPasswordOtpExpires = null;
 
     await this.usuarioRepo.save(user);
+
+    await this.movimientoHelper?.log({
+      userId: user.id,
+      entidad: 'Usuario',
+      entidadId: user.id,
+      accion: AccionMovimiento.CONFIG_CHANGE,
+      descripcion: `Reset administrativo de contraseña para usuario ${user.id}`,
+      after: { mustChangePassword: true },
+    });
 
     return {
       message: I18nHelper.translate(

@@ -99,6 +99,10 @@ function createConsoleMessage(args: unknown[]): string {
   return args.map((arg) => formatUnknown(arg)).join(" ");
 }
 
+/**
+ * Expone la operación "installRendererDebugCapture" del instalador SmartEconomat.
+ * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export async function installRendererDebugCapture(): Promise<void> {
   if (rendererDebugInstalled) {
     return;

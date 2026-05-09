@@ -19,13 +19,25 @@ interface DiagnosticsBundle {
   serviceHealth: unknown;
 }
 
+/** Servicio del proceso principal: DiagnosticsService. */
 export class DiagnosticsService {
+  /**
+   * Construye la instancia del servicio.
+   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
+   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
+   * @param {DockerOrchestratorService} dockerOrchestrator - Entrada esperada por la función.
+   */
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
     private readonly dockerOrchestrator = new DockerOrchestratorService(),
   ) {}
 
+  /**
+   * Genera artefactos o informes solicitados.
+   * @param {RuntimePaths} payload - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<string>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async generate(payload: RuntimePaths): Promise<OperationResult<string>> {
     const runtimePath = payload.runtimePath;
     const diagnosticsDir = path.join(runtimePath, "diagnostics");

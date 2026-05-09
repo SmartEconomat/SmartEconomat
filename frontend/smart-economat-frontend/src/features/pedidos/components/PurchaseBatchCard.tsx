@@ -31,7 +31,7 @@ interface PurchaseBatchCardProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PurchaseBatchCard: React.FC<PurchaseBatchCardProps> = ({
   batch,

@@ -113,6 +113,69 @@ describe('InventarioController (e2e)', () => {
       expect(typeof response.body.data.limit).toBe('number');
     });
 
+    it('E2E-INV-06B-GET: Listar inventario filtrado por ubicacionIds', async () => {
+      const item = await createInventario();
+      const otraUbi = await request(app.getHttpServer() as string)
+        .post('/api/v1/ubicacion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ nombre: `Ubi aislamiento ${Date.now()}` });
+
+      await request(app.getHttpServer() as string)
+        .post('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          productoProveedorId,
+          ubicacionId: otraUbi.body.data.id,
+          cantidadActual: 1,
+          cantidadMinima: 1,
+        })
+        .expect(201);
+
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ ubicacionIds: ubicacionId, limit: 50 });
+
+      expect(response.status).toBe(200);
+      expect(
+        response.body.data.data.every(
+          (row: { ubicacionId: string }) => row.ubicacionId === ubicacionId
+        )
+      ).toBe(true);
+      expect(
+        response.body.data.data.some(
+          (row: { id: string }) => row.id === item.id
+        )
+      ).toBe(true);
+    });
+
+    it('E2E-INV-06C-GET: Buscar inventario por searchTerm (producto)', async () => {
+      await createInventario();
+      const list = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ limit: 1 });
+
+      const nombreProducto =
+        list.body.data.data[0]?.productoProveedor?.producto?.nombre;
+      expect(typeof nombreProducto).toBe('string');
+
+      const term = String(nombreProducto).slice(0, 12);
+      const response = await request(app.getHttpServer() as string)
+        .get('/api/v1/inventario')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ searchTerm: term, limit: 50 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.data.length).toBeGreaterThan(0);
+      expect(
+        response.body.data.data.some(
+          (row: { productoProveedor?: { producto?: { nombre?: string } } }) =>
+            row.productoProveedor?.producto?.nombre?.includes(term.trim())
+        )
+      ).toBe(true);
+    });
+
     it('E2E-INV-10-UPD-ADJ: Ajustar cantidad', async () => {
       const item = await createInventario();
       const response = await request(app.getHttpServer() as string)

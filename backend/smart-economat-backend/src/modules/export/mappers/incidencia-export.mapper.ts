@@ -2,7 +2,7 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { ExportColumn } from './producto-export.mapper';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export const INCIDENCIA_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
@@ -17,7 +17,12 @@ export const INCIDENCIA_COLUMNS: ExportColumn[] = [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "mapIncidenciaToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Incidencia} incidencia - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
  */
 export function mapIncidenciaToExcelRow(
   incidencia: Incidencia

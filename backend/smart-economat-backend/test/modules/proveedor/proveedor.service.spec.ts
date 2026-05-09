@@ -10,6 +10,8 @@ describe('ProveedorService', () => {
     save: jest.fn(),
     merge: jest.fn(),
     remove: jest.fn(),
+    update: jest.fn(),
+    softDelete: jest.fn(),
   };
 
   let service: ProveedorService;
@@ -87,29 +89,14 @@ describe('ProveedorService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('remove rechaza proveedores con productos vinculados', async () => {
-    mockProveedorRepository.findOne.mockResolvedValue({
-      id: 'prov-1',
-      productos: [{ id: 'producto-1' }],
-      pedidos: [],
+  it('remove realiza un borrado lógico del proveedor', async () => {
+    mockProveedorRepository.findOne.mockResolvedValue({ id: 'prov-1' });
+
+    await service.remove('prov-1', 'user-test');
+
+    expect(mockProveedorRepository.update).toHaveBeenCalledWith('prov-1', {
+      deletedBy: 'user-test',
     });
-
-    await expect(service.remove('prov-1')).rejects.toBeInstanceOf(
-      BadRequestException
-    );
-    expect(mockProveedorRepository.remove).not.toHaveBeenCalled();
-  });
-
-  it('remove rechaza proveedores con pedidos vinculados', async () => {
-    mockProveedorRepository.findOne.mockResolvedValue({
-      id: 'prov-2',
-      productos: [],
-      pedidos: [{ id: 'pedido-1' }],
-    });
-
-    await expect(service.remove('prov-2')).rejects.toBeInstanceOf(
-      BadRequestException
-    );
-    expect(mockProveedorRepository.remove).not.toHaveBeenCalled();
+    expect(mockProveedorRepository.softDelete).toHaveBeenCalledWith('prov-1');
   });
 });

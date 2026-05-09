@@ -3,13 +3,10 @@ import { IncidenciaService } from '../../../src/modules/incidencia/service/incid
 import {
   EstadoIncidencia,
   TipoResolucion,
+  EstadoReclamacion,
 } from '../../../src/modules/incidencia/enums/incidencia.enums';
 import { EstadoFinalIncidenciaDto } from '../../../src/modules/incidencia/dto/resolver-incidencia.dto';
 import { TipoMovimiento } from '../../../src/modules/movimiento/enums/movimiento.enums';
-import {
-  EstadoReclamacion,
-  TipoDiferencia,
-} from '../../../src/modules/incidencia/incidencia-linea.entity/incidencia-linea.entity';
 
 describe('IncidenciaService', () => {
   const mockIncidenciaRepo = {
@@ -29,6 +26,7 @@ describe('IncidenciaService', () => {
   };
   const mockMovimientoHelper = {
     createMovimiento: jest.fn(),
+    log: jest.fn(),
   };
   const mockPedidoService = {
     handleStatusTransition: jest.fn(),
@@ -67,7 +65,7 @@ describe('IncidenciaService', () => {
     );
   });
 
-  it('resolverIncidencia marca fecha y usuario resolutor', async () => {
+  it('resolverIncidencia no deja la incidencia en estado resuelta', async () => {
     const incidencia = {
       id: 'inc-3',
       pedidoId: null,
@@ -75,29 +73,45 @@ describe('IncidenciaService', () => {
         {
           id: 'lin-1',
           pedidoProductoId: 'pp-1',
-          cantidadEsperada: 10,
+          cantidadPedida: 10,
           cantidadRecibida: 8,
+          cantidadAjustada: 0,
           estadoReclamacion: EstadoReclamacion.PENDIENTE,
         },
       ],
       resolver: jest.fn(),
-      estaResuelta: () => false,
+      estaResuelta: function () {
+        return this.estado === 'RESUELTA';
+      },
+      estado: EstadoIncidencia.ABIERTA,
+      fechaResolucion: null as Date | null,
     };
     const manager = {
       findOne: jest
         .fn()
         .mockResolvedValueOnce(incidencia)
         .mockResolvedValueOnce(incidencia),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: jest
+        .fn()
+        .mockImplementation((arg1, arg2) => Promise.resolve(arg2 || arg1)),
     };
     mockDataSource.transaction.mockImplementation((cb) => cb(manager));
 
     await service.resolverIncidencia('inc-3', {
       usuarioId: 'user-1',
       observacionesResolucion: 'ok',
+      lineas: [
+        {
+          id: 'lin-1',
+          cantidadRecibida: 10,
+          cantidadAjustada: 0,
+        },
+      ],
     } as any);
 
-    expect(incidencia.resolver).toHaveBeenCalledWith('user-1', 'ok');
+    expect(incidencia.resolver).not.toHaveBeenCalled();
+    expect(incidencia.estado).toBe(EstadoIncidencia.EN_PROCESO);
+    expect(incidencia.fechaResolucion ?? null).toBeNull();
   });
 
   it('resolverIncidencia permite cierre manual en estado cancelada', async () => {
@@ -108,20 +122,26 @@ describe('IncidenciaService', () => {
         {
           id: 'lin-1',
           pedidoProductoId: 'pp-1',
-          cantidadEsperada: 10,
+          cantidadPedida: 10,
           cantidadRecibida: 8,
+          cantidadAjustada: 0,
           estadoReclamacion: EstadoReclamacion.PENDIENTE,
         },
       ],
       resolver: jest.fn(),
-      estaResuelta: () => false,
+      estaResuelta: function () {
+        return this.estado === 'RESUELTA';
+      },
+      estado: EstadoIncidencia.ABIERTA,
     };
     const manager = {
       findOne: jest
         .fn()
         .mockResolvedValueOnce(incidencia)
         .mockResolvedValueOnce(incidencia),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: jest
+        .fn()
+        .mockImplementation((arg1, arg2) => Promise.resolve(arg2 || arg1)),
     };
     mockDataSource.transaction.mockImplementation((cb) => cb(manager));
 
@@ -145,21 +165,28 @@ describe('IncidenciaService', () => {
         {
           id: 'lin-1',
           pedidoProductoId: 'pp-1',
-          cantidadEsperada: 10,
+          cantidadPedida: 10,
           cantidadRecibida: 8,
+          cantidadAjustada: 0,
           estadoReclamacion: EstadoReclamacion.PENDIENTE,
         },
       ],
       resolver: jest.fn(),
-      estaResuelta: () => false,
+      estaResuelta: function () {
+        return this.estado === 'RESUELTA';
+      },
+      estado: EstadoIncidencia.ABIERTA,
     };
     const manager = {
-      create: jest
-        .fn()
-        .mockImplementation((_: unknown, payload: unknown) => payload),
+      create: jest.fn().mockImplementation((_: unknown, payload: unknown) => ({
+        ...((payload as object) || {}),
+        estaResuelta: function () {
+          return this.estado === 'RESUELTA';
+        },
+      })),
       save: jest
         .fn()
-        .mockImplementation((value: unknown) => Promise.resolve(value)),
+        .mockImplementation((arg1, arg2) => Promise.resolve(arg2 || arg1)),
     };
     jest.spyOn(service, 'findOne').mockResolvedValue(incidencia as any);
     mockDataSource.transaction.mockImplementation((cb) => cb(manager));
@@ -170,30 +197,18 @@ describe('IncidenciaService', () => {
       'user-2'
     );
 
-    expect(mockMovimientoHelper.createMovimiento).toHaveBeenCalledWith(
-      'user-2',
-      TipoMovimiento.SALIDA_AJUSTE,
-      'Incidencia',
-      'inc-4',
-      0,
-      undefined,
-      undefined,
-      expect.stringContaining('dev')
+    expect(mockMovimientoHelper.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-2',
+        tipo: TipoMovimiento.SALIDA_AJUSTE,
+        entidad: 'Incidencia',
+        entidadId: 'inc-4',
+      })
     );
   });
 
   it('reportarIncidencia activa el flag de recepción', async () => {
     const recepcion = { id: 'rec-1', incidencia: false };
-    const lineaPersistida = {
-      id: 'lin-1',
-      pedidoProductoId: 'pp-1',
-      cantidadEsperada: 10,
-      cantidadRecibida: 8,
-      diferencia: -2,
-      tipoDiferencia: TipoDiferencia.FALTANTE,
-      estadoReclamacion: EstadoReclamacion.PENDIENTE,
-      observaciones: undefined,
-    };
 
     mockRecepcionRepo.findOne.mockResolvedValue(recepcion);
     const manager = {
@@ -202,42 +217,40 @@ describe('IncidenciaService', () => {
           recepcionId: 'rec-1',
           pedidoProductoId: 'pp-1',
           cantidadRecibida: 8,
-          pedidoProducto: { id: 'pp-1', cantidad: 10 },
+          pedidoProducto: {
+            id: 'pp-1',
+            cantidad: 10,
+            pedido: { id: 'ped-1', proveedorId: 'prov-1' },
+          },
           estadoProducto: 'PERFECTO',
           observaciones: undefined,
         },
       ]),
       create: jest.fn().mockImplementation((_: unknown, payload: unknown) => ({
         ...((payload as object) || {}),
+        estaResuelta: function () {
+          return this.estado === 'RESUELTA';
+        },
+        resolver: jest.fn(),
       })),
-      save: jest
-        .fn()
-        .mockImplementation((entity: unknown, maybeValue?: unknown) => {
-          const value = maybeValue ?? entity;
+      save: jest.fn().mockImplementation((arg1: any, arg2?: any) => {
+        const value = arg2 !== undefined ? arg2 : arg1;
 
-          if (Array.isArray(value)) {
-            if (value.length > 0 && value[0].pedidoProducto) {
-              return Promise.resolve([lineaPersistida]);
-            }
+        if (Array.isArray(value)) {
+          return Promise.resolve(
+            value.map((v) => ({ ...v, id: v.id || 'mock-id' }))
+          );
+        }
 
-            return Promise.resolve(value);
+        if (value && typeof value === 'object') {
+          if (!value.id && (value.recepcionId || value.pedidoId)) {
+            value.id = 'inc-5';
           }
-
-          if ((value as any)?.recepcion) {
-            return Promise.resolve({
-              ...(value as any),
-              id: 'inc-5',
-              estaResuelta: () => false,
-              lineas: [],
-            });
-          }
-
-          if ((value as any)?.id === 'rec-1') {
-            return Promise.resolve(value);
-          }
-
           return Promise.resolve(value);
-        }),
+        }
+
+        return Promise.resolve(value);
+      }),
     };
     mockDataSource.transaction.mockImplementation((cb) => cb(manager));
 
@@ -247,9 +260,9 @@ describe('IncidenciaService', () => {
     } as any);
 
     expect(recepcion.incidencia).toBe(true);
-    expect(result.id).toBe('inc-5');
-    expect(result.lineas).toHaveLength(1);
-    expect(result.estado).toBe(EstadoIncidencia.NUEVA);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('inc-5');
+    expect(result[0].estado).toBe(EstadoIncidencia.ABIERTA);
   });
 
   it('reportarIncidencia rechaza cuando no hay discrepancias', async () => {
@@ -261,7 +274,11 @@ describe('IncidenciaService', () => {
           recepcionId: 'rec-2',
           pedidoProductoId: 'pp-2',
           cantidadRecibida: 10,
-          pedidoProducto: { id: 'pp-2', cantidad: 10 },
+          pedidoProducto: {
+            id: 'pp-2',
+            cantidad: 10,
+            pedido: { id: 'ped-2', proveedorId: 'prov-2' },
+          },
           estadoProducto: 'PERFECTO',
           observaciones: undefined,
         },

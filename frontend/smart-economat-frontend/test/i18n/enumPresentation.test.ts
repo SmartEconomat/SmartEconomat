@@ -39,4 +39,15 @@ describe('enumPresentation', () => {
     expect(getEnumLabel(t as never, 'pedidoEstado', '')).toBe('—');
     expect(getEnumLabel(t as never, 'pedidoEstado', null)).toBe('—');
   });
+
+  it('falls back to humanized label when i18n returns raw key', () => {
+    const tReturnsKey = (key: string) => key;
+    expect(
+      getEnumLabel(
+        tReturnsKey as never,
+        'recetaDificultad',
+        'pendiente_de_aprobacion'
+      )
+    ).toBe('Pendiente De Aprobacion');
+  });
 });

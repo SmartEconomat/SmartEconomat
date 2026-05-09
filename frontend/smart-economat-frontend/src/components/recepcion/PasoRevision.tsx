@@ -28,19 +28,28 @@ import {
 } from '../../services/recepcion.types';
 
 /**
- * Documentación en español.
+ * Verifica si una cadena de texto tiene contenido real (no vacía ni solo espacios).
+ * @param {string} value - Cadena a validar
+ * @returns {boolean} True si tiene contenido
  */
 const hasDraftText = (value?: string): boolean =>
   typeof value === 'string' && value.trim().length > 0;
 
 /**
- * Documentación en español.
+ * Determina si una línea tiene definida una cantidad de albarán.
+ * @param {LineaDraft} linea - Línea de borrador a comprobar
+ * @returns {boolean} True si la cantidad no es nula ni vacía
  */
 const hasCantidadAlbaran = (linea: LineaDraft): boolean =>
   linea.cantidadAlbaran !== '' && linea.cantidadAlbaran != null;
 
 /**
- * Documentación en español.
+ * Determina si una línea debe mostrarse en el resumen de revisión.
+ * Se muestra si ha sido intervenida, tiene cantidades recibidas/albarán,
+ * observaciones, fecha de caducidad o estado físico no óptimo.
+ *
+ * @param {LineaDraft} linea - Línea a evaluar
+ * @returns {boolean} True si es relevante para la revisión
  */
 const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
   Boolean(
@@ -53,27 +62,32 @@ const isLineaVisibleEnRevision = (linea: LineaDraft): boolean =>
   );
 
 /**
- * Documentación en español.
+ * Propiedades para el componente PasoRevision.
  */
 interface PasoRevisionProps {
   /**
-   * Documentación en español.
+  /**
+   * Estado actual del borrador de recepción.
    */
   draft: RecepcionDraft;
   /**
-   * Documentación en español.
+  /**
+   * Función para actualizar el estado completo del borrador.
    */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
   /**
-   * Documentación en español.
+  /**
+   * ID del panel de acordeón (pedido) que está expandido actualmente.
    */
   expandedPanel: string | false;
   /**
-   * Documentación en español.
+  /**
+   * Función para cambiar el panel expandido.
    */
   setExpandedPanel: (panel: string | false) => void;
   /**
-   * Documentación en español.
+  /**
+   * Función callback para actualizar campos específicos de una línea de producto.
    */
   onUpdateLinea: (
     pIdx: number | null,
@@ -84,7 +98,8 @@ interface PasoRevisionProps {
 }
 
 /**
- * Documentación en español.
+ * Paso del wizard de recepción que permite revisar todas las discrepancias detectadas,
+ * añadir números de albarán por pedido y finalizar el proceso.
  */
 const PasoRevision: React.FC<PasoRevisionProps> = ({
   draft,

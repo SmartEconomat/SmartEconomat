@@ -14,7 +14,7 @@ type ButtonColor =
   | 'warning';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface ConfirmDialogProps {
   isOpen: boolean;
@@ -33,7 +33,26 @@ export interface ConfirmDialogProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "ConfirmDialog" en smart-economat-frontend (SPA).
+ * @undefined {ConfirmDialogProps} {
+ *   isOpen,
+ *   onClose,
+ *   onConfirm,
+ *   title,
+ *   message,
+ *   confirmText,
+ *   cancelText,
+ *   cancelColor = 'inherit',
+ *   cancelVariant = 'text',
+ *   onCancel,
+ *   confirmColor = 'error',
+ *   confirmVariant = 'contained',
+ *   isLoading = false,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,

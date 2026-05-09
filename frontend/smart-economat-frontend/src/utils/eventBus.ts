@@ -23,12 +23,15 @@ class EventBus {
   }
 }
 
+/** Constantes públicas (eventBus) expuestas en smart-economat-frontend (SPA). */
 export const eventBus = new EventBus();
+/** Constantes públicas (AUTH_EVENTS) expuestas en smart-economat-frontend (SPA). */
 export const AUTH_EVENTS = {
   UNAUTHORIZED: 'AUTH_UNAUTHORIZED',
   REFRESH_USER: 'AUTH_REFRESH_USER',
 };
 
+/** Constantes públicas (UI_EVENTS) expuestas en smart-economat-frontend (SPA). */
 export const UI_EVENTS = {
   OPEN_NOTIFICATION_CENTER: 'UI_OPEN_NOTIFICATION_CENTER',
 };

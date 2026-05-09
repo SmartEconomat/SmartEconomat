@@ -1,11 +1,18 @@
 import i18next from '../i18n';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "translate" en smart-economat-backend (Nest).
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} lang - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown> | undefined} options - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export function translate(
   key: string,

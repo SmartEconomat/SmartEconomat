@@ -6,14 +6,16 @@ import {
   IsDateString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { TipoDiferencia } from '../../incidencia/incidencia-linea.entity/incidencia-linea.entity';
+import { TipoDiferencia } from '../../incidencia/enums/incidencia.enums';
 
+/** Catálogo de valores enumerados (TipoReportePdf) dentro de smart-economat-backend (Nest). */
 export enum TipoReportePdf {
   PEDIDO = 'pedido',
   INCIDENCIAS = 'incidencias',
   RECEPCION = 'recepcion',
 }
 
+/** Clase pública (RecepcionReportePdfDto). Paquete: smart-economat-backend (Nest). */
 export class RecepcionReportePdfDto {
   @IsOptional()
   @IsEnum(TipoReportePdf)

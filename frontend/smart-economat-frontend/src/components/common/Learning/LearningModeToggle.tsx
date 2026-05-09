@@ -17,6 +17,14 @@ interface LearningModeToggleProps {
   isOpen?: boolean;
 }
 
+/**
+ * Expone "LearningModeToggle" en smart-economat-frontend (SPA).
+ * @undefined {LearningModeToggleProps} {
+ *   mode = 'icon',
+ *   isOpen = true,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element | null} Datos efectivos después de ejecutar la operación.
+ */
 export default function LearningModeToggle({
   mode = 'icon',
   isOpen = true,

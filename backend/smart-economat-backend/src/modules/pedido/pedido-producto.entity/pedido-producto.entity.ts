@@ -7,7 +7,7 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuario-linea.entity';
 
 /**
- * Documentación en español.
+ * Representa pedido producto en el sistema.
  */
 @Entity({ name: 'pedido_producto' })
 @Index(['pedidoId'])
@@ -17,30 +17,30 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Check(`"precio_unitario" >= 0`)
 export class PedidoProducto extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   hasLinkedMovements?: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'pedido_id' })
   pedidoId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'pedido_usuario_linea_id', nullable: true })
   pedidoUsuarioLineaId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Pedido, (pedido) => pedido.pedidoProductos, {
     onDelete: 'CASCADE',
@@ -50,7 +50,7 @@ export class PedidoProducto extends BaseEntity {
   pedido!: Relation<Pedido>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.pedidoProductos, {
     onDelete: 'RESTRICT',
@@ -67,7 +67,7 @@ export class PedidoProducto extends BaseEntity {
   pedidoUsuarioLinea?: Relation<PedidoUsuarioLinea>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -78,7 +78,7 @@ export class PedidoProducto extends BaseEntity {
   cantidad!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -90,7 +90,7 @@ export class PedidoProducto extends BaseEntity {
   precioUnitario!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
@@ -98,7 +98,7 @@ export class PedidoProducto extends BaseEntity {
   /* --- Métodos de Dominio --- */
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   get subtotal(): number {
     return Number(this.cantidad) * Number(this.precioUnitario);

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Clase pública (FileResponseDto). Paquete: smart-economat-backend (Nest). */
 export class FileResponseDto {
   @ApiProperty({ description: 'docs.ID_NICO_DEL_ARCHIVO', format: 'uuid' })
   id: string;

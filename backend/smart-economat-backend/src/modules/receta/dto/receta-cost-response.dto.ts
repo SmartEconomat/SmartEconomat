@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UnidadIngrediente } from '../enums/receta.enums';
 
+/** Clase pública (IngredienteCostoDto). Paquete: smart-economat-backend (Nest). */
 export class IngredienteCostoDto {
   @ApiProperty()
   productoId!: string;
@@ -24,6 +25,7 @@ export class IngredienteCostoDto {
   costoIngrediente!: number;
 }
 
+/** Clase pública (RecetaCostResponseDto). Paquete: smart-economat-backend (Nest). */
 export class RecetaCostResponseDto {
   @ApiProperty()
   recetaId!: string;

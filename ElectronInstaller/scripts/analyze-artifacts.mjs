@@ -51,7 +51,9 @@ async function main() {
     );
   }
 
-  console.log(`Total: ${toMb(totalBytes)} MB en ${artifacts.length} archivo(s).`);
+  console.log(
+    `Total: ${toMb(totalBytes)} MB en ${artifacts.length} archivo(s).`,
+  );
 }
 
 await main();

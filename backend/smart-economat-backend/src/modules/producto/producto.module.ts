@@ -18,6 +18,7 @@ import { MovimientoModule } from '../movimiento/movimiento.module';
 import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
 import { ArchivoModule } from '../archivo/archivo.module';
 
+/** Clase pública (ProductoModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

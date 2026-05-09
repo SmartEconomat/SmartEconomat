@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsNumber, Min, IsOptional, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Clase pública (CreateHistorialPrecioDto). Paquete: smart-economat-backend (Nest). */
 export class CreateHistorialPrecioDto {
   @IsUUID('all', {
     message: i18nValidationMessage(

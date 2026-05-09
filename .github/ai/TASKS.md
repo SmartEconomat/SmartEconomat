@@ -21,4 +21,6 @@
 - [x] **Automatización de Costes**: Lógica de sincronización `PMP` -> `precioReferencia` en el backend para mantener costes maestros actualizados.
 - [x] **Rediseño UX de Productos**: Nuevo layout de formulario responsivo con imagen lateral, alineación vertical centrada y fila técnica optimizada.
 - [x] **Limpieza de UI**: Implementación de visibilidad condicionada de precios y avisos de suministro ("Sin Prov.") en tablas y tarjetas.
+- [x] **Herencia de Códigos de Barras**: Implementación de lógica de herencia automática Producto -> Proveedor con soporte para override y visualización dinámica en el frontend.
+- [x] **Estandarización UX de Interacción**: Eliminación de redundancias (ojo de visualización) y unificación del patrón de navegación (click en fila = ver detalle) en los módulos de Recetas, Proveedores e Inventario.
 - [x] **Estabilidad de Entorno**: Sincronización manual de esquema de BD ante fallos de entorno.

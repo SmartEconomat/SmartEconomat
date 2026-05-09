@@ -54,6 +54,16 @@ function serviceAccent(service: string): string {
   return "#fbbf24";
 }
 
+/**
+ * Expone la operación "LogsViewer" del instalador SmartEconomat.
+ * @returns {LogsViewerProps} {
+ *   logs,
+ *   busy,
+ *   onClearLogs,
+ *   onExportLogs,
+ * } - Entrada esperada por la función.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function LogsViewer({
   logs,
   busy,

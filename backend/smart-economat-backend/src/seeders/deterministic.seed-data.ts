@@ -1,7 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
+/** Constantes públicas (SEED_REFERENCE_DATE) expuestas en smart-economat-backend (Nest). */
 export const SEED_REFERENCE_DATE = new Date('2026-01-05T08:00:00.000Z');
 
+/** Alias público (DeterministicProviderProfile) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type DeterministicProviderProfile = {
   nombre: string;
   contacto: string;
@@ -11,6 +13,7 @@ export type DeterministicProviderProfile = {
   nif: string;
 };
 
+/** Constantes públicas (DETERMINISTIC_PROVIDER_PROFILES) expuestas en smart-economat-backend (Nest). */
 export const DETERMINISTIC_PROVIDER_PROFILES: readonly DeterministicProviderProfile[] =
   [
     {
@@ -111,6 +114,7 @@ export const DETERMINISTIC_PROVIDER_PROFILES: readonly DeterministicProviderProf
     },
   ] as const;
 
+/** Constantes públicas (DETERMINISTIC_PERSON_NAMES) expuestas en smart-economat-backend (Nest). */
 export const DETERMINISTIC_PERSON_NAMES: readonly string[] = [
   'Ana Romero',
   'Luis Martinez',
@@ -126,6 +130,7 @@ export const DETERMINISTIC_PERSON_NAMES: readonly string[] = [
   'Adrian Fuentes',
 ] as const;
 
+/** Constantes públicas (DETERMINISTIC_SHORT_NOTES) expuestas en smart-economat-backend (Nest). */
 export const DETERMINISTIC_SHORT_NOTES: readonly string[] = [
   'Revision operativa semanal del economato.',
   'Ajuste de stock segun consumo real de cocina.',
@@ -137,6 +142,7 @@ export const DETERMINISTIC_SHORT_NOTES: readonly string[] = [
   'Actualizacion administrativa de registro operativo.',
 ] as const;
 
+/** Constantes públicas (DETERMINISTIC_LONG_NOTES) expuestas en smart-economat-backend (Nest). */
 export const DETERMINISTIC_LONG_NOTES: readonly string[] = [
   'Se registra la operacion con datos contrastados y trazabilidad completa para auditoria interna del centro.',
   'La entrada se documenta con criterios de seguridad alimentaria y control de costes para el periodo semanal.',
@@ -149,6 +155,13 @@ function stableHash(raw: string): number {
   return Number.parseInt(hex, 16);
 }
 
+/**
+ * Expone "deterministicIndex" en smart-economat-backend (Nest).
+ * @undefined {number} length - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicIndex(
   length: number,
   iteration: number,
@@ -162,6 +175,13 @@ export function deterministicIndex(
   return Math.abs(base) % length;
 }
 
+/**
+ * Expone "pickDeterministic" en smart-economat-backend (Nest).
+ * @undefined {readonly T[]} values - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {T} Datos efectivos después de ejecutar la operación.
+ */
 export function pickDeterministic<T>(
   values: readonly T[],
   iteration: number,
@@ -174,6 +194,14 @@ export function pickDeterministic<T>(
   return values[deterministicIndex(values.length, iteration, salt)];
 }
 
+/**
+ * Expone "deterministicInt" en smart-economat-backend (Nest).
+ * @undefined {number} min - Entrada efectiva esperada por el contrato.
+ * @undefined {number} max - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicInt(
   min: number,
   max: number,
@@ -187,6 +215,15 @@ export function deterministicInt(
   return safeMin + idx;
 }
 
+/**
+ * Expone "deterministicFloat" en smart-economat-backend (Nest).
+ * @undefined {number} min - Entrada efectiva esperada por el contrato.
+ * @undefined {number} max - Entrada efectiva esperada por el contrato.
+ * @undefined {number} fractionDigits - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicFloat(
   min: number,
   max: number,
@@ -201,10 +238,22 @@ export function deterministicFloat(
   return Number(value.toFixed(Math.max(0, fractionDigits)));
 }
 
+/**
+ * Expone "deterministicBool" en smart-economat-backend (Nest).
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicBool(iteration: number, salt = ''): boolean {
   return deterministicInt(0, 1, iteration, salt) === 1;
 }
 
+/**
+ * Expone "seedDateIso" en smart-economat-backend (Nest).
+ * @undefined {number} daysOffset - Entrada efectiva esperada por el contrato.
+ * @undefined {number} minutesOffset - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function seedDateIso(daysOffset: number, minutesOffset = 0): string {
   const ms =
     SEED_REFERENCE_DATE.getTime() +
@@ -214,6 +263,13 @@ export function seedDateIso(daysOffset: number, minutesOffset = 0): string {
   return new Date(ms).toISOString();
 }
 
+/**
+ * Expone "seedDateFromIteration" en smart-economat-backend (Nest).
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {number} dayModulo - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function seedDateFromIteration(
   iteration: number,
   dayModulo = 180,
@@ -223,6 +279,13 @@ export function seedDateFromIteration(
   return seedDateIso(days);
 }
 
+/**
+ * Expone "deterministicToken" en smart-economat-backend (Nest).
+ * @undefined {string} prefix - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicToken(
   prefix: string,
   iteration: number,
@@ -235,6 +298,14 @@ export function deterministicToken(
   return `${prefix}_${hash}`;
 }
 
+/**
+ * Expone "deterministicCode" en smart-economat-backend (Nest).
+ * @undefined {string} prefix - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {number} width - Entrada efectiva esperada por el contrato.
+ * @undefined {string} salt - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function deterministicCode(
   prefix: string,
   iteration: number,
@@ -247,14 +318,28 @@ export function deterministicCode(
   return `${prefix}${seq}`;
 }
 
+/**
+ * Expone "buildSeedRunTag" en smart-economat-backend (Nest).
+ * @undefined {number} multiplier - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function buildSeedRunTag(multiplier: number): string {
   return `seed-m${String(Math.max(1, multiplier)).padStart(2, '0')}`;
 }
 
+/**
+ * Expone "buildSeedSuffix" en smart-economat-backend (Nest).
+ * @undefined {string} runTag - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {number} uniqueCursor - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function buildSeedSuffix(
   runTag: string,
   iteration: number,
   uniqueCursor: number
 ): string {
-  return `${runTag}_${String(iteration).padStart(4, '0')}_${String(uniqueCursor).padStart(5, '0')}`;
+  /** Evita colisiones de unicidad cuando `Promise.all` reanuda tras `await` y el cursor compartido se solapa. */
+  const nonce = randomBytes(4).toString('hex');
+  return `${runTag}_${String(iteration).padStart(4, '0')}_${String(uniqueCursor).padStart(5, '0')}_${nonce}`;
 }

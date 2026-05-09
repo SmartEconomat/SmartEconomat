@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   BadRequestException,
@@ -18,12 +18,12 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para incidencia resuela.
  */
 @Injectable()
 export class IncidenciaResuelaService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     private readonly incidenciaResuelaRepository: IncidenciaResuelaRepository,
@@ -32,7 +32,10 @@ export class IncidenciaResuelaService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateIncidenciaResuelaDto): Promise<IncidenciaResuelta> {
     const incidencia = await this.incidenciaRepository.findOne({
@@ -67,7 +70,13 @@ export class IncidenciaResuelaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<IncidenciaResuelta>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto,
@@ -77,7 +86,11 @@ export class IncidenciaResuelaService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userRole Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string, userRole?: string): Promise<IncidenciaResuelta> {
     const isAdmin =
@@ -100,7 +113,13 @@ export class IncidenciaResuelaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateIncidenciaResuelaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<IncidenciaResuelta>} Datos efectivos después de ejecutar la operación.
    */
   async update(
     id: string,
@@ -120,7 +139,10 @@ export class IncidenciaResuelaService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const resolucion = await this.findOne(id);

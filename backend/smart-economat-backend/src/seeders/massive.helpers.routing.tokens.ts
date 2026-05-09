@@ -38,16 +38,31 @@ function matchesAnyPrefix(path: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => path.startsWith(prefix));
 }
 
+/**
+ * Expone "isPublicPath" en smart-economat-backend (Nest).
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function isPublicPath(path: string): boolean {
   return PUBLIC_PATH_PREFIXES.some((prefix) =>
     prefix === '/' ? path === '/' : path.startsWith(prefix)
   );
 }
 
+/**
+ * Expone "supportsPagination" en smart-economat-backend (Nest).
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function supportsPagination(path: string): boolean {
   return PAGINATED_PATHS.has(path);
 }
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
+ */
 export function getTargetSuccessForEndpoint(key: string): number {
   const explicitTarget = SPECIAL_TARGETS.get(key);
   const isRecepcionesOrDistribuciones =
@@ -77,10 +92,22 @@ export function getTargetSuccessForEndpoint(key: string): number {
   return scaleTargetForHeavyFlows(DEFAULT_TARGET_SUCCESS_PER_ENDPOINT);
 }
 
+/**
+ * Expone "isAdminFocusEndpoint" en smart-economat-backend (Nest).
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function isAdminFocusEndpoint(endpoint: Endpoint): boolean {
   return ADMIN_FOCUS_ENDPOINT_KEYS.has(`${endpoint.method} ${endpoint.path}`);
 }
 
+/**
+ * Expone "chooseTokenForPath" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {HttpMethod | undefined} method - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function chooseTokenForPath(
   context: SeedContext,
   path: string,

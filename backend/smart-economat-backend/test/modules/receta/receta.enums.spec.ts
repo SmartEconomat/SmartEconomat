@@ -7,7 +7,6 @@ import {
 describe('receta.enums', () => {
   it('expone los tiempos canónicos de receta en el orden esperado', () => {
     expect(TIEMPO_RECETA_VALUES).toEqual([
-      TiempoReceta.MIN_5,
       TiempoReceta.MIN_10,
       TiempoReceta.MIN_15,
       TiempoReceta.MIN_20,
@@ -28,6 +27,6 @@ describe('receta.enums', () => {
       TIEMPO_RECETA_VALUES.map((tiempoReceta) =>
         getTiempoRecetaMinutos(tiempoReceta)
       )
-    ).toEqual([5, 10, 15, 20, 25, 30, 40, 45, 50, 60, 75, 90, 120]);
+    ).toEqual([10, 15, 20, 25, 30, 40, 45, 50, 60, 75, 90, 120]);
   });
 });

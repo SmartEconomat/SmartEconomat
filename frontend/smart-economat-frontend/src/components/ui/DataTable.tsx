@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
  */
 
 import React, { ReactNode, useState } from 'react';
@@ -35,33 +35,47 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { Tooltip } from './Tooltip';
 import Spinner from './Spinner';
 import { useTranslation } from 'react-i18next';
+import type { FilterValue } from '../../hooks/useDataTable';
 
 /**
- * Documentación en español.
+ * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
  */
 export interface Column<T> {
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   id: keyof T | string;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   label: ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   render?: (row: T) => ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   hideOnMobile?: boolean;
   /**
-   * Documentación en español.
+   * Indica si la columna es ordenable.
+   */
+  sortable?: boolean;
+  /**
+   * Tipo de ordenaci?n esperado para la columna.
+   */
+  sortType?: 'string' | 'number' | 'date';
+  /**
+   * Clave enviada al backend para ordenar.
+   * Si no se define, se usa `id`.
+   */
+  sortKey?: string;
+  /**
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   responsiveDisplay?: {
     xs?: string;
@@ -72,165 +86,215 @@ export interface Column<T> {
     [key: string]: string | undefined;
   };
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
-  sortable?: boolean;
   /**
-   * Documentación en español.
+   * Indica si la columna es filtrable.
+   */
+  filterable?: boolean;
+  /**
+   * Tipo de filtro a mostrar.
+   */
+  filterType?: 'string' | 'number' | 'enum' | 'date';
+  /**
+   * Opciones para filtros de tipo enum.
+   */
+  filterOptions?: { label: string; value: unknown }[];
+  /**
+   * Ancho de la columna.
    */
   width?: number | string;
   /**
-   * Documentación en español.
+   * Ancho m?nimo de la columna.
    */
   minWidth?: number | string;
   /**
-   * Documentación en español.
+   * Estilos personalizados para la cabecera.
    */
   headerSx?: SxProps<Theme>;
   /**
-   * Documentación en español.
+   * Estilos personalizados para las celdas.
    */
   cellSx?: SxProps<Theme>;
 }
 
+/** Contrato de tipos p?blico (ExportHandlers). Contexto: smart-economat-frontend (SPA). */
 export interface ExportHandlers {
   onExportPdf?: () => void;
   onExportExcel?: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   exportLabel?: string;
 }
 
+/** Contrato de tipos p?blico (DataTableProps). Contexto: smart-economat-frontend (SPA). */
 export interface DataTableProps<T> {
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   columns: Column<T>[];
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   data: T[];
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   isLoading?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   emptyStateMessage?: ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
-  pagination?: {
-    currentPage: number;
-    totalPages: number;
-    /**
-     * Documentación en español.
-     */
-    totalItems?: number;
-    onPageChange: (event: React.ChangeEvent<unknown>, page: number) => void;
-    pageSize?: number;
-    onPageSizeChange?: (event: SelectChangeEvent<number>) => void;
-    pageSizeOptions?: number[];
-  };
+  pagination?: import('../../hooks/useDataTable').DataTablePaginationProps;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   renderActions?: (row: T) => ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   actionsLabel?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   actionsAlign?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   actionsWidth?: number | string;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   renderGridItem?: (row: T) => ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   defaultViewMode?: 'list' | 'grid';
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   viewMode?: 'list' | 'grid';
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   onViewModeChange?: (mode: 'list' | 'grid') => void;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   sortConfig?: {
-    key: keyof T | string;
+    key: string;
     direction: 'asc' | 'desc';
   };
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
-  onSort?: (key: keyof T | string) => void;
+  onSort?: (key: string) => void;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   leftHeaderAction?: ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   rightHeaderAction?: ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   hideTopBar?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   selectable?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   selectedIds?: string[];
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   uniqueKey?: keyof T | string;
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
-  exportHandlers?: ExportHandlers;
   /**
-   * Documentación en español.
+   * Configuraci?n de filtros actuales.
+   */
+  filters?: Record<string, FilterValue>;
+  /**
+   * Callback cuando un filtro cambia.
+   */
+  onFilter?: (key: string, value: FilterValue) => void;
+  /**
+   * Callback cuando se hace clic en una fila.
    */
   onRowClick?: (row: T) => void;
   /**
-   * Documentación en español.
+   * Generador de etiquetas aria para las filas.
    */
   getRowAriaLabel?: (row: T) => string;
   /**
-   * Documentación en español.
+   * Handlers para exportaci?n de datos.
+   */
+  exportHandlers?: ExportHandlers;
+  /**
+   * ID ?nico de la tabla.
    */
   id?: string;
+  /**
+   * Oculta los botones de toggle de vista lista/cuadrícula.
+   */
+  hideViewModeToggle?: boolean;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
  */
 
 // Eliminada la utilidad extractText local para usar la global en a11y-format.ts
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function DataTable<T extends Record<string, any>>({
+/**
+ * Expone "DataTable" en smart-economat-frontend (SPA).
+ * @undefined {DataTableProps<T>} {
+ *   columns,
+ *   data,
+ *   isLoading = false,
+ *   emptyStateMessage,
+ *   pagination,
+ *   renderActions,
+ *   actionsLabel,
+ *   actionsAlign = 'center',
+ *   actionsWidth,
+ *   renderGridItem,
+ *   defaultViewMode = 'list',
+ *   sortConfig,
+ *   onSort,
+ *   leftHeaderAction,
+ *   rightHeaderAction,
+ *   hideTopBar = false,
+ *   selectable = false,
+ *   selectedIds = [],
+ *   onSelectionChange,
+ *   uniqueKey = 'id',
+ *   exportHandlers,
+ *   onRowClick,
+ *   getRowAriaLabel,
+ *   viewMode: controlledViewMode,
+ *   onViewModeChange: onControlledViewModeChange,
+ *   filters = {},
+ *   onFilter,
+ *   id,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos despu?s de ejecutar la operaci?n.
+ */
+export function DataTable<T>({
   columns,
   data,
   isLoading = false,
@@ -256,9 +320,14 @@ export function DataTable<T extends Record<string, any>>({
   getRowAriaLabel,
   viewMode: controlledViewMode,
   onViewModeChange: onControlledViewModeChange,
+  filters: _filters = {},
+  onFilter: _onFilter,
   id,
+  hideViewModeToggle = false,
 }: DataTableProps<T>) {
   const { t } = useTranslation();
+  void _filters;
+  void _onFilter;
   const colSpanCount =
     columns.length + (renderActions ? 1 : 0) + (selectable ? 1 : 0);
   const [internalViewMode, setInternalViewMode] = useState<'list' | 'grid'>(
@@ -269,14 +338,14 @@ export function DataTable<T extends Record<string, any>>({
   const resolvedEmptyStateMessage = emptyStateMessage ?? t('comun.sinDatos');
   const resolvedActionsLabel = actionsLabel ?? t('comun.acciones');
 
-  // Capturar la altura del contenedor antes de que cambie el contenido (prevención de CLS)
+  // Capturar la altura del contenedor antes de que cambie el contenido (prevenci?n de CLS)
   React.useLayoutEffect(() => {
     if (!isLoading && containerRef.current) {
       setMinHeight(containerRef.current.offsetHeight);
     }
   }, [isLoading]);
 
-  // Determinar qué modo usar (el prop controlado tiene prioridad)
+  // Determinar qu? modo usar (el prop controlado tiene prioridad)
   const viewMode = controlledViewMode || internalViewMode;
 
   const hasTopBarControls =
@@ -298,7 +367,7 @@ export function DataTable<T extends Record<string, any>>({
     }
   };
 
-  // Calcular valores para TablePagination (usa índice 0, el sistema usa índice 1)
+  // Calcular valores para TablePagination (usa ?ndice 0, el sistema usa ?ndice 1)
   const pageSize = pagination?.pageSize ?? 10;
   const currentPage0 = pagination ? pagination.currentPage - 1 : 0;
   const totalItems =
@@ -315,6 +384,12 @@ export function DataTable<T extends Record<string, any>>({
       onRowClick(row);
     }
   };
+  const resolveColumnSortKey = React.useCallback(
+    (column: Column<T>): string => {
+      return column.sortKey ?? String(column.id);
+    },
+    []
+  );
 
   return (
     <Box id={id} sx={{ width: '100%', mb: 2 }}>
@@ -327,9 +402,9 @@ export function DataTable<T extends Record<string, any>>({
           gap={2}
           mb={3}
         >
-          {/* SECCIÓN IZQUIERDA: Botones vista + actions izquierda */}
+          {/* SECCI��N IZQUIERDA: Botones vista + actions izquierda */}
           <Box display="flex" alignItems="center" gap={2}>
-            {renderGridItem && (
+            {renderGridItem && !hideViewModeToggle && (
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
@@ -353,7 +428,7 @@ export function DataTable<T extends Record<string, any>>({
             {leftHeaderAction && <Box>{leftHeaderAction}</Box>}
           </Box>
 
-          {/* SECCIÓN DERECHA */}
+          {/* SECCI��N DERECHA */}
           <Box display="flex" alignItems="center" gap={1}>
             {exportHandlers?.onExportPdf && (
               <Tooltip
@@ -480,54 +555,73 @@ export function DataTable<T extends Record<string, any>>({
                     />
                   </TableCell>
                 )}
-                {columns.map((column, index) => (
-                  <TableCell
-                    key={String(column.id)}
-                    id={
-                      index === 0 && column.sortable
-                        ? 'table-header-sort'
-                        : undefined
-                    }
-                    align={column.align || 'left'}
-                    sx={{
-                      width: column.width,
-                      minWidth: column.minWidth,
-                      fontWeight: 'bold',
-                      display:
-                        column.responsiveDisplay ||
-                        (column.hideOnMobile
-                          ? { xs: 'none', md: 'table-cell' }
-                          : undefined),
-                      ...column.headerSx,
-                    }}
-                    sortDirection={
-                      sortConfig?.key === column.id
-                        ? sortConfig.direction
-                        : false
-                    }
-                  >
-                    {column.sortable ? (
-                      <TableSortLabel
-                        active={sortConfig?.key === column.id}
-                        direction={
-                          sortConfig?.key === column.id
-                            ? sortConfig.direction
-                            : 'asc'
-                        }
-                        onClick={() => onSort && onSort(column.id)}
+                {columns.map((column, index) => {
+                  // La columna puede renderizar un valor derivado, pero ordenar por otra clave (`sortKey`).
+                  const columnSortKey = resolveColumnSortKey(column);
+                  const isActiveSort = sortConfig?.key === columnSortKey;
+
+                  return (
+                    <TableCell
+                      key={String(column.id)}
+                      id={
+                        index === 0 && column.sortable
+                          ? 'table-header-sort'
+                          : undefined
+                      }
+                      align={column.align || 'left'}
+                      sx={{
+                        width: column.width,
+                        minWidth: column.minWidth,
+                        fontWeight: 'bold',
+                        display:
+                          column.responsiveDisplay ||
+                          (column.hideOnMobile
+                            ? { xs: 'none', md: 'table-cell' }
+                            : undefined),
+                        ...column.headerSx,
+                      }}
+                      sortDirection={
+                        isActiveSort ? sortConfig.direction : false
+                      }
+                      aria-sort={
+                        column.sortable
+                          ? isActiveSort
+                            ? sortConfig?.direction === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                          : undefined
+                      }
+                    >
+                      <Box
                         sx={{
-                          width: '100%',
-                          justifyContent: 'space-between',
-                          '& .MuiTableSortLabel-icon': { ml: 0 },
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1,
                         }}
                       >
-                        {column.label}
-                      </TableSortLabel>
-                    ) : (
-                      column.label
-                    )}
-                  </TableCell>
-                ))}
+                        {column.sortable ? (
+                          <TableSortLabel
+                            active={isActiveSort}
+                            direction={
+                              isActiveSort ? sortConfig.direction : 'asc'
+                            }
+                            onClick={() => onSort?.(columnSortKey)}
+                            sx={{
+                              width: '100%',
+                              justifyContent: 'space-between',
+                              '& .MuiTableSortLabel-icon': { ml: 0 },
+                            }}
+                          >
+                            {column.label}
+                          </TableSortLabel>
+                        ) : (
+                          column.label
+                        )}
+                      </Box>
+                    </TableCell>
+                  );
+                })}
                 {renderActions && (
                   <TableCell
                     align={actionsAlign}
@@ -557,7 +651,7 @@ export function DataTable<T extends Record<string, any>>({
                         key={`skeleton-col-${j}`}
                         align={column.align || 'left'}
                         sx={{
-                          height: 53, // Altura estándar de una fila de tabla MUI con padding
+                          height: 53, // Altura est?ndar de una fila de tabla MUI con padding
                           width: column.width,
                           minWidth: column.minWidth,
                           display:
@@ -644,7 +738,10 @@ export function DataTable<T extends Record<string, any>>({
                     }}
                   >
                     {selectable && (
-                      <TableCell padding="checkbox">
+                      <TableCell
+                        padding="checkbox"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Checkbox
                           checked={selectedIds.includes(
                             String(row[uniqueKey as keyof T])
@@ -816,7 +913,7 @@ export function DataTable<T extends Record<string, any>>({
         </Grid>
       )}
 
-      {/* Paginación unificada: TablePagination al final (estilo consistente con aulas) */}
+      {/* Paginaci?n unificada: TablePagination al final (estilo consistente con aulas) */}
       {pagination && pagination.totalPages > 0 && (
         <Box
           sx={{

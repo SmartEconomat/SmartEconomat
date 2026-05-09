@@ -12,6 +12,7 @@ import { rolUsuario, UserLanguage } from '../../usuario/enums/usuario.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
+/** Clase pública (RegisterUserDto). Paquete: smart-economat-backend (Nest). */
 export class RegisterUserDto {
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
@@ -49,6 +50,7 @@ export class RegisterUserDto {
   idioma?: UserLanguage;
 }
 
+/** Contrato de tipos público (JwtPayload). Contexto: smart-economat-backend (Nest). */
 export interface JwtPayload {
   sub: string;
   username: string;

@@ -1,6 +1,9 @@
 import { UseCase } from '../../../common/ddd/use-case';
 import { RepositoryInterface } from '../../../common/ddd/repository.interface';
+import { BadRequestException } from '@nestjs/common';
+import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
+/** Alias público (CreateProductInput) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type CreateProductInput = {
   nombre: string;
   descripcion?: string;
@@ -11,6 +14,7 @@ export type CreateProductInput = {
   codigoBarras?: string;
 };
 
+/** Alias público (ProductOutput) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type ProductOutput = {
   id: string;
   nombre: string;
@@ -18,17 +22,28 @@ export type ProductOutput = {
 };
 
 /**
- * Documentación en español.
+ * Representa create product use case en el sistema.
  */
 export class CreateProductUseCase implements UseCase<
   CreateProductInput,
   ProductOutput
 > {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RepositoryInterface<any, string>} productoRepo - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly productoRepo: RepositoryInterface<any>) {}
 
+  /**
+   * Expone "execute" en smart-economat-backend (Nest).
+   * @undefined {CreateProductInput} input - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductOutput>} Datos efectivos después de ejecutar la operación.
+   */
   async execute(input: CreateProductInput): Promise<ProductOutput> {
     if (!input.nombre || input.nombre.trim().length === 0) {
-      throw new Error('El nombre es obligatorio');
+      throw new BadRequestException(
+        I18nHelper.getError('PRODUCT_NAME_REQUIRED')
+      );
     }
 
     const toSave = {

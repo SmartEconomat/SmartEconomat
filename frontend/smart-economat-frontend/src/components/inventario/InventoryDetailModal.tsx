@@ -18,13 +18,21 @@ import {
   IconButton,
   CircularProgress,
   Box,
+  FormControl,
+  Select,
+  MenuItem,
+  Stack,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import {
   CreateAjusteManualInventarioPayload,
   InventarioItem,
 } from '../../services/inventario.types';
-import { createAjusteManualInventario } from '../../services/inventario.service';
+import {
+  createAjusteManualInventario,
+  ejecutarTransferenciaInventario,
+} from '../../services/inventario.service';
 import { useToast } from '../../store/toast.hooks';
 import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import DynamicFormModal, { DynamicField } from '../ui/DynamicFormModal';
@@ -32,69 +40,26 @@ import { SelectOption } from '../ui/Select';
 import { mermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
-import { fetchAllProductos } from '../../services/producto.service';
+import { fetchProductosPaginated } from '../../services/producto.service';
 import { formatLocalizedDate } from '../../utils/intlFormat';
+import {
+  normalizeNumericInput,
+  parseLocalizedNumber,
+} from '../../utils/numberUtils';
+import { UbicacionService } from '../../services/ubicacion.service';
+import type { Ubicacion } from '../../services/ubicacion.types';
 
-const AUDIT_MANUAL_REASON = 'Ajuste de auditoria desde inventario';
+const AUDIT_MANUAL_REASON_KEY = 'inventario.detalle.auditManualReason';
+const MERMA_PRODUCT_SEARCH_LIMIT = 20;
 
 const parseAdjustmentValue = (value: string | undefined): number | null => {
   if (!value) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseLocalizedNumber(value);
 };
 
 const MEASURABLE_STOCK_UNITS = new Set(['KG', 'G', 'L', 'ML']);
 
-const formatStockUnits = (value: number): string => {
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return `${safeValue.toFixed(2)} uds`;
-};
-
-const formatEquivalentAmount = (value: number, unit: string): string => {
-  if (unit === 'ML' && Math.abs(value) >= 1000) {
-    return `${(value / 1000).toFixed(2)} L`;
-  }
-
-  if (unit === 'G' && Math.abs(value) >= 1000) {
-    return `${(value / 1000).toFixed(2)} KG`;
-  }
-
-  return `${value.toFixed(2)} ${unit}`;
-};
-
-const formatEquivalentFromConstruction = (
-  stockUnits: number,
-  contenidoPorUnidad?: number,
-  unidadContenido?: string
-): string | null => {
-  const normalizedUnit = unidadContenido?.toUpperCase();
-  if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
-    return null;
-  }
-
-  if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
-    return null;
-  }
-
-  const equivalent = stockUnits * contenidoPorUnidad;
-  return `≈ ${formatEquivalentAmount(equivalent, normalizedUnit)}`;
-};
-
-const formatProductConstruction = (
-  contenidoPorUnidad?: number,
-  unidadContenido?: string
-): string | null => {
-  const normalizedUnit = unidadContenido?.toUpperCase();
-  if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
-    return null;
-  }
-
-  if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
-    return null;
-  }
-
-  return `1 ud stock = ${contenidoPorUnidad.toFixed(2)} ${normalizedUnit}`;
-};
+// Moved helpers inside component or they take t
 
 const formatProductoMedidaLabel = (
   contenido?: number,
@@ -114,6 +79,8 @@ interface InventoryDetailModalProps {
   items: InventarioItem[];
   onClose: () => void;
   onRefreshItem: () => void | Promise<void>;
+  /** Habilita traslados formales cuando el servidor concede inventario:transferir. */
+  canTransferStock?: boolean;
 }
 
 const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
@@ -123,9 +90,64 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   items,
   onClose,
   onRefreshItem,
+  canTransferStock = false,
 }) => {
   const { t } = useTranslation();
   const toast = useToast();
+
+  const formatStockUnits = (value: number): string => {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return `${safeValue.toFixed(2)} ${t('comun.elementos')}`;
+  };
+
+  const formatEquivalentAmount = (value: number, unit: string): string => {
+    if (unit === 'ML' && Math.abs(value) >= 1000) {
+      return `${(value / 1000).toFixed(2)} L`;
+    }
+
+    if (unit === 'G' && Math.abs(value) >= 1000) {
+      return `${(value / 1000).toFixed(2)} KG`;
+    }
+
+    return `${value.toFixed(2)} ${unit}`;
+  };
+
+  const formatEquivalentFromConstruction = (
+    stockUnits: number,
+    contenidoPorUnidad?: number,
+    unidadContenido?: string
+  ): string | null => {
+    const normalizedUnit = unidadContenido?.toUpperCase();
+    if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
+      return null;
+    }
+
+    if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
+      return null;
+    }
+
+    const equivalent = stockUnits * contenidoPorUnidad;
+    return `≈ ${formatEquivalentAmount(equivalent, normalizedUnit)}`;
+  };
+
+  const formatProductConstruction = (
+    contenidoPorUnidad?: number,
+    unidadContenido?: string
+  ): string | null => {
+    const normalizedUnit = unidadContenido?.toUpperCase();
+    if (!normalizedUnit || !MEASURABLE_STOCK_UNITS.has(normalizedUnit)) {
+      return null;
+    }
+
+    if (!contenidoPorUnidad || !Number.isFinite(contenidoPorUnidad)) {
+      return null;
+    }
+
+    return t('inventario.detalle.productConstruction', {
+      contenido: contenidoPorUnidad.toFixed(2),
+      unidad: normalizedUnit,
+    });
+  };
   // Filter items matching the product – memoized to avoid new reference each render
   const relevantItems = React.useMemo(
     () =>
@@ -159,19 +181,62 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   const [isMermaModalOpen, setIsMermaModalOpen] = useState(false);
   const [isSavingMerma, setIsSavingMerma] = useState(false);
   const [productosOptions, setProductosOptions] = useState<SelectOption[]>([]);
+  const [isSearchingProductos, setIsSearchingProductos] = useState(false);
+  const mermaProductSearchRequestIdRef = React.useRef(0);
+  const [ubicacionesTransfer, setUbicacionesTransfer] = useState<Ubicacion[]>(
+    []
+  );
+  const [loadingUbicacionesTransfer, setLoadingUbicacionesTransfer] =
+    useState(false);
+  const [transferDestinoByLote, setTransferDestinoByLote] = useState<
+    Record<string, string>
+  >({});
+  const [transferCantidadByLote, setTransferCantidadByLote] = useState<
+    Record<string, string>
+  >({});
+  const [isTransferring, setIsTransferring] = useState<Record<string, boolean>>(
+    {}
+  );
 
-  // Initialize local edit state ONLY when modal opens
   React.useEffect(() => {
-    if (open) {
-      const initialAdjustments: Record<string, string> = {};
-      relevantItems.forEach((item) => {
-        initialAdjustments[item.id] = '';
-      });
-      setStockAdjustments(initialAdjustments);
-      setIsSaving({});
+    if (!open || !canTransferStock || mode !== 'audit') {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, productoId]);
+    setLoadingUbicacionesTransfer(true);
+    void UbicacionService.findAll()
+      .then((list) => {
+        setUbicacionesTransfer(list);
+      })
+      .catch((err: unknown) => {
+        console.error(err);
+        toast.error(t('inventario.detalle.transfer.errors.cargarUbicaciones'));
+        setUbicacionesTransfer([]);
+      })
+      .finally(() => setLoadingUbicacionesTransfer(false));
+  }, [open, mode, canTransferStock, t, toast]);
+
+  React.useEffect(() => {
+    if (!open || !canTransferStock) {
+      return;
+    }
+    setTransferDestinoByLote({});
+    setTransferCantidadByLote({});
+    setIsTransferring({});
+  }, [open, canTransferStock, productoId]);
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setStockAdjustments((prev) => {
+      const next: Record<string, string> = {};
+      for (const item of relevantItems) {
+        next[item.id] = prev[item.id] ?? '';
+      }
+      return next;
+    });
+    setIsSaving({});
+  }, [open, productoId, relevantItems]);
 
   const totalCurrentStock = React.useMemo(
     () =>
@@ -207,21 +272,21 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   ): string | null => {
     const rawValue = stockAdjustments[item.id]?.trim() ?? '';
     if (!rawValue) {
-      return requireValue ? t('inventoryDetail.errorRequireValue') : null;
+      return requireValue ? t('inventario.detalle.errorRequireValue') : null;
     }
 
     const adjustment = parseAdjustmentValue(rawValue);
     if (adjustment === null) {
-      return t('inventoryDetail.errorInvalidNumber');
+      return t('inventario.detalle.errorInvalidNumber');
     }
 
     if (adjustment === 0) {
-      return t('inventoryDetail.errorZeroAdjustment');
+      return t('inventario.detalle.errorZeroAdjustment');
     }
 
     const currentStock = Number(item.cantidadActual) || 0;
     if (currentStock + adjustment < 0) {
-      return t('inventoryDetail.errorNegativeStock');
+      return t('inventario.detalle.errorNegativeStock');
     }
 
     return null;
@@ -240,7 +305,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
     const adjustment = parseAdjustmentValue(stockAdjustments[item.id]);
     if (adjustment === null) {
-      toast.error(t('inventoryDetail.errorParseAdjustment'));
+      toast.error(t('inventario.detalle.toast.errorParseAdjustment'));
       return;
     }
 
@@ -248,25 +313,25 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       inventarioId: item.id,
       tipo: adjustment > 0 ? 'entrada' : 'salida_ajuste',
       ajuste: adjustment,
-      motivo: AUDIT_MANUAL_REASON,
+      motivo: t(AUDIT_MANUAL_REASON_KEY),
     };
 
     setIsSaving((prev) => ({ ...prev, [item.id]: true }));
     try {
       await createAjusteManualInventario(payload);
       setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-      toast.success(t('inventoryDetail.adjustSuccessful'));
+      toast.success(t('inventario.detalle.toast.adjustSuccessful'));
       onRefreshItem();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : t('inventoryDetail.errorParseAdjustment');
+          : t('inventario.detalle.toast.errorParseAdjustment');
 
       if (errorMessage.toLowerCase().includes('inventario no encontrado')) {
         await onRefreshItem();
         setStockAdjustments((prev) => ({ ...prev, [item.id]: '' }));
-        toast.error(t('inventoryDetail.batchNotFound'));
+        toast.error(t('inventario.detalle.toast.batchNotFound'));
       } else {
         toast.error(errorMessage);
       }
@@ -275,19 +340,150 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
     }
   };
 
-  const handleOpenMerma = async () => {
-    if (productosOptions.length === 0) {
-      const productos = await fetchAllProductos();
-      setProductosOptions(
-        productos.map((p) => ({
+  const resolveTransferQty = (
+    inventarioItem: InventarioItem
+  ): { ok: false } | { ok: true; value: number } => {
+    const raw = transferCantidadByLote[inventarioItem.id]?.trim() ?? '';
+    if (!raw) {
+      return { ok: false };
+    }
+    const parsed = parseLocalizedNumber(raw);
+    if (parsed === null || !Number.isFinite(parsed) || parsed <= 0) {
+      return { ok: false };
+    }
+    const max = Number(inventarioItem.cantidadActual);
+    if (parsed > max + 1e-9) {
+      return { ok: false };
+    }
+    return { ok: true, value: parsed };
+  };
+
+  const handleExecuteTransfer = async (inventarioItem: InventarioItem) => {
+    const destId = transferDestinoByLote[inventarioItem.id]?.trim();
+    if (!destId) {
+      toast.error(t('inventario.detalle.transfer.errors.sinDestino'));
+      return;
+    }
+    const origenUb = inventarioItem.ubicacion?.id ?? null;
+    if (origenUb !== null && destId === origenUb) {
+      toast.error(t('inventario.detalle.transfer.errors.mismoNodo'));
+      return;
+    }
+    const qtyCheck = resolveTransferQty(inventarioItem);
+    if (!qtyCheck.ok) {
+      toast.error(t('inventario.detalle.transfer.errors.cantidadInvalida'));
+      return;
+    }
+
+    const idempotency =
+      typeof globalThis.crypto !== 'undefined' &&
+      typeof globalThis.crypto.randomUUID === 'function'
+        ? globalThis.crypto.randomUUID()
+        : `fe-${inventarioItem.id}-${destId}-${Date.now()}`;
+
+    setIsTransferring((prev) => ({ ...prev, [inventarioItem.id]: true }));
+    try {
+      await ejecutarTransferenciaInventario({
+        idempotenciaKey: idempotency,
+        lineas: [
+          {
+            inventarioOrigenId: inventarioItem.id,
+            ubicacionDestinoId: destId,
+            cantidad: qtyCheck.value,
+          },
+        ],
+      });
+      toast.success(t('inventario.detalle.transfer.toast.ok'));
+      setTransferCantidadByLote((prev) => ({
+        ...prev,
+        [inventarioItem.id]: '',
+      }));
+      await onRefreshItem();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : t('inventario.detalle.transfer.errors.generico');
+      toast.error(message);
+    } finally {
+      setIsTransferring((prev) => ({ ...prev, [inventarioItem.id]: false }));
+    }
+  };
+
+  const selectedProductOption = React.useMemo<SelectOption | null>(() => {
+    if (!productoId) {
+      return null;
+    }
+
+    const medida = formatProductoMedidaLabel(
+      productContentPerUnit,
+      productMeasureUnit
+    );
+
+    return {
+      value: productoId,
+      label: medida
+        ? `${productName} · ${medida} ${t('comun.porUnidad')}`
+        : productName,
+    };
+  }, [productoId, productContentPerUnit, productMeasureUnit, productName, t]);
+
+  const searchMermaProductos = React.useCallback(
+    async (query: string) => {
+      const normalizedQuery = query.trim();
+      const requestId = ++mermaProductSearchRequestIdRef.current;
+
+      setIsSearchingProductos(true);
+      try {
+        const response = await fetchProductosPaginated({
+          page: 1,
+          limit: MERMA_PRODUCT_SEARCH_LIMIT,
+          searchTerm: normalizedQuery || undefined,
+          sortBy: 'nombre',
+          order: 'ASC',
+        });
+
+        if (requestId !== mermaProductSearchRequestIdRef.current) {
+          return;
+        }
+
+        const fetchedOptions: SelectOption[] = response.data.map((p) => ({
           value: p.id,
           label: formatProductoMedidaLabel(p.contenido, p.unidad)
-            ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} por unidad`
+            ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} ${t('comun.porUnidad')}`
             : p.nombre,
-        }))
-      );
+        }));
+
+        setProductosOptions(() => {
+          const merged = new Map<string | number, SelectOption>();
+          if (selectedProductOption) {
+            merged.set(selectedProductOption.value, selectedProductOption);
+          }
+          fetchedOptions.forEach((option) => {
+            merged.set(option.value, option);
+          });
+          return Array.from(merged.values());
+        });
+      } catch (err) {
+        console.error('Error buscando productos para merma:', err);
+      } finally {
+        if (requestId === mermaProductSearchRequestIdRef.current) {
+          setIsSearchingProductos(false);
+        }
+      }
+    },
+    [selectedProductOption, t]
+  );
+
+  const handleOpenMerma = () => {
+    if (selectedProductOption) {
+      setProductosOptions([selectedProductOption]);
+    } else {
+      setProductosOptions([]);
     }
+
     setIsMermaModalOpen(true);
+    void searchMermaProductos('');
   };
 
   const handleSaveMerma = async (formData: Record<string, unknown>) => {
@@ -299,32 +495,55 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
       });
-      toast.success(t('inventoryDetail.wasteSuccess'));
+      toast.success(t('inventario.detalle.toast.wasteSuccess'));
       setIsMermaModalOpen(false);
       onRefreshItem();
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : t('inventoryDetail.wasteError');
+        err instanceof Error
+          ? err.message
+          : t('inventario.detalle.toast.wasteError');
       toast.error(message);
     } finally {
       setIsSavingMerma(false);
     }
   };
 
-  const dynamicMermaSchema: DynamicField[] = mermaSchema.map((field) => {
-    if (field.name === 'productoId') {
-      return { ...field, options: productosOptions, defaultValue: productoId };
-    }
-    return field;
-  });
+  const dynamicMermaSchema: DynamicField[] = React.useMemo(
+    () =>
+      mermaSchema.map((field) => {
+        if (field.name === 'productoId') {
+          return {
+            ...field,
+            type: 'autocomplete' as const,
+            options: productosOptions,
+            defaultValue: productoId,
+            onSearch: (query: string) => {
+              void searchMermaProductos(query);
+            },
+            loading: isSearchingProductos,
+          };
+        }
+        return field;
+      }),
+    [isSearchingProductos, productoId, productosOptions, searchMermaProductos]
+  );
+
+  const mermaInitialData = React.useMemo(() => ({ productoId }), [productoId]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      data-testid="inventario-detalle-modal"
+      open={open}
+      onClose={onClose}
+      maxWidth={mode === 'audit' && canTransferStock ? 'lg' : 'md'}
+      fullWidth
+    >
       <DialogTitle component="div">
         <Typography variant="h6" component="h2">
           {mode === 'audit'
-            ? t('inventoryDetail.auditTitle')
-            : t('inventoryDetail.detailTitle')}
+            ? t('inventario.detalle.auditTitle')
+            : t('inventario.detalle.detailTitle')}
         </Typography>
         <Typography
           variant="subtitle2"
@@ -340,7 +559,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
             color="text.secondary"
             sx={{ display: 'block', mt: 0.5 }}
           >
-            {t('inventoryDetail.auditReadOnlyHint')}
+            {t('inventario.detalle.auditReadOnlyHint')}
           </Typography>
         )}
         {mode === 'audit' && productConstruction && (
@@ -349,16 +568,14 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
             color="text.secondary"
             sx={{ display: 'block' }}
           >
-            {t('inventoryDetail.productConstruction', {
-              value: productConstruction,
-            })}
+            {productConstruction}
           </Typography>
         )}
       </DialogTitle>
       <DialogContent dividers>
         {relevantItems.length === 0 ? (
           <Typography color="text.secondary">
-            {t('inventoryDetail.noBatches')}
+            {t('inventario.detalle.noBatches')}
           </Typography>
         ) : (
           <>
@@ -374,7 +591,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 }}
               >
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  {t('inventoryDetail.auditSummary')}
+                  {t('inventario.detalle.auditSummary')}
                 </Typography>
                 <Box
                   sx={{
@@ -386,7 +603,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 >
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('inventoryDetail.currentStock')}
+                      {t('inventario.detalle.currentStock')}
                     </Typography>
                     <Typography variant="h6">
                       {formatStockUnits(totalCurrentStock)}
@@ -407,7 +624,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('inventoryDetail.pendingAdjustment')}
+                      {t('inventario.detalle.pendingAdjustment')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -432,7 +649,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('inventoryDetail.projectedStock')}
+                      {t('inventario.detalle.projectedStock')}
                     </Typography>
                     <Typography
                       variant="h6"
@@ -463,33 +680,40 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                 <TableHead>
                   <TableRow>
                     <TableCell>
-                      {t('inventoryDetail.columns.batchId')}
+                      {t('inventario.detalle.columns.batchId')}
                     </TableCell>
                     <TableCell>
-                      {t('inventoryDetail.columns.supplier')}
+                      {t('inventario.detalle.columns.supplier')}
                     </TableCell>
                     <TableCell>
-                      {t('inventoryDetail.columns.location')}
+                      {t('inventario.detalle.columns.location')}
                     </TableCell>
-                    <TableCell>{t('inventoryDetail.columns.expiry')}</TableCell>
+                    <TableCell>
+                      {t('inventario.detalle.columns.expiry')}
+                    </TableCell>
                     {mode === 'audit' ? (
                       <>
                         <TableCell align="right">
-                          {t('inventoryDetail.columns.currentStockUnits')}
+                          {t('inventario.detalle.columns.currentStockUnits')}
                         </TableCell>
                         <TableCell align="right">
-                          {t('inventoryDetail.columns.adjustment')}
+                          {t('inventario.detalle.columns.adjustment')}
                         </TableCell>
                         <TableCell align="right">
-                          {t('inventoryDetail.columns.resultingStock')}
+                          {t('inventario.detalle.columns.resultingStock')}
                         </TableCell>
+                        {canTransferStock ? (
+                          <TableCell align="center" sx={{ minWidth: 260 }}>
+                            {t('inventario.detalle.columns.transfer')}
+                          </TableCell>
+                        ) : null}
                         <TableCell align="center">
-                          {t('inventoryDetail.columns.action')}
+                          {t('inventario.detalle.columns.action')}
                         </TableCell>
                       </>
                     ) : (
                       <TableCell align="right">
-                        {t('inventoryDetail.columns.currentQty')}
+                        {t('inventario.detalle.columns.currentQty')}
                       </TableCell>
                     )}
                   </TableRow>
@@ -567,23 +791,25 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                             <TableCell align="right" sx={{ minWidth: 200 }}>
                               <TextField
                                 size="small"
-                                type="number"
+                                type="text"
                                 value={adjustmentInput}
-                                onChange={(e) =>
-                                  handleAdjustmentChange(
-                                    lote.id,
-                                    e.target.value
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const normalized = normalizeNumericInput(
+                                    e.target.value,
+                                    true
+                                  );
+                                  handleAdjustmentChange(lote.id, normalized);
+                                }}
                                 placeholder="+2 / -1"
                                 error={Boolean(fieldError)}
                                 helperText={
                                   fieldError ??
-                                  t('inventoryDetail.adjustmentHelperText')
+                                  t('inventario.detalle.adjustmentHelperText')
                                 }
                                 sx={{ width: '170px' }}
                                 inputProps={{
-                                  step: 'any',
+                                  inputMode: 'decimal',
+                                  pattern: '^-?[0-9]*[.,]?[0-9]*',
                                   style: { textAlign: 'right' },
                                 }}
                                 disabled={isSaving[lote.id]}
@@ -608,9 +834,156 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
                                 ) : null}
                               </Box>
                             </TableCell>
+                            {canTransferStock ? (
+                              <TableCell align="center">
+                                {(() => {
+                                  const opcionesDestino =
+                                    ubicacionesTransfer.filter(
+                                      (u) => u.id !== lote.ubicacion?.id
+                                    );
+                                  return opcionesDestino.length === 0 &&
+                                    !loadingUbicacionesTransfer ? (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      {t(
+                                        'inventario.detalle.transfer.sinDestinos'
+                                      )}
+                                    </Typography>
+                                  ) : (
+                                    <Stack spacing={1} sx={{ py: 0.5 }}>
+                                      <FormControl
+                                        size="small"
+                                        fullWidth
+                                        disabled={
+                                          loadingUbicacionesTransfer ||
+                                          isTransferring[lote.id]
+                                        }
+                                        sx={{ minWidth: 0 }}
+                                      >
+                                        <Select<string>
+                                          labelId={`inv-tr-dest-${lote.id}`}
+                                          id={`inv-tr-dest-select-${lote.id}`}
+                                          label={t(
+                                            'inventario.detalle.transfer.destino'
+                                          )}
+                                          value={
+                                            transferDestinoByLote[lote.id] ?? ''
+                                          }
+                                          displayEmpty
+                                          onChange={(ev) =>
+                                            setTransferDestinoByLote(
+                                              (prev) => ({
+                                                ...prev,
+                                                [lote.id]: String(
+                                                  ev.target.value
+                                                ),
+                                              })
+                                            )
+                                          }
+                                          renderValue={(v) =>
+                                            !v ? (
+                                              <Typography
+                                                component="span"
+                                                variant="body2"
+                                                color="text.secondary"
+                                                sx={{
+                                                  overflow: 'hidden',
+                                                  textOverflow: 'ellipsis',
+                                                  whiteSpace: 'nowrap',
+                                                  display: 'block',
+                                                  width: '100%',
+                                                }}
+                                              >
+                                                {t(
+                                                  'inventario.detalle.transfer.placeholderDestino'
+                                                )}
+                                              </Typography>
+                                            ) : (
+                                              (ubicacionesTransfer.find(
+                                                (u) => u.id === v
+                                              )?.nombre ?? v)
+                                            )
+                                          }
+                                        >
+                                          <MenuItem value="">
+                                            <em>
+                                              {t(
+                                                'inventario.detalle.transfer.placeholderDestino'
+                                              )}
+                                            </em>
+                                          </MenuItem>
+                                          {opcionesDestino.map((ub) => (
+                                            <MenuItem key={ub.id} value={ub.id}>
+                                              {ub.nombre}
+                                            </MenuItem>
+                                          ))}
+                                        </Select>
+                                      </FormControl>
+                                      <TextField
+                                        size="small"
+                                        fullWidth
+                                        label={t(
+                                          'inventario.detalle.transfer.cantidad'
+                                        )}
+                                        value={
+                                          transferCantidadByLote[lote.id] ?? ''
+                                        }
+                                        onChange={(e) =>
+                                          setTransferCantidadByLote((prev) => ({
+                                            ...prev,
+                                            [lote.id]: normalizeNumericInput(
+                                              e.target.value,
+                                              false
+                                            ),
+                                          }))
+                                        }
+                                        disabled={isTransferring[lote.id]}
+                                        inputProps={{
+                                          inputMode: 'decimal',
+                                          style: { textAlign: 'right' },
+                                        }}
+                                      />
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          justifyContent: 'center',
+                                        }}
+                                      >
+                                        <IconButton
+                                          color="secondary"
+                                          size="small"
+                                          aria-label={t(
+                                            'inventario.detalle.transfer.runAria'
+                                          )}
+                                          onClick={() =>
+                                            void handleExecuteTransfer(lote)
+                                          }
+                                          disabled={
+                                            isTransferring[lote.id] ||
+                                            loadingUbicacionesTransfer
+                                          }
+                                          data-testid={`inventario-traslado-submit-${lote.id}`}
+                                        >
+                                          {isTransferring[lote.id] ? (
+                                            <CircularProgress size={22} />
+                                          ) : (
+                                            <SyncAltIcon fontSize="small" />
+                                          )}
+                                        </IconButton>
+                                      </Box>
+                                    </Stack>
+                                  );
+                                })()}
+                              </TableCell>
+                            ) : null}
                             <TableCell align="center">
                               <IconButton
                                 color="primary"
+                                aria-label={t(
+                                  'inventario.detalle.saveAdjustmentAria'
+                                )}
                                 onClick={() => void handleSaveAdjustment(lote)}
                                 disabled={
                                   isSaving[lote.id] || Boolean(saveError)
@@ -657,13 +1030,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
           variant="outlined"
           onClick={handleOpenMerma}
         >
-          {t('inventoryDetail.reportWaste')}
+          {t('inventario.detalle.reportWaste')}
         </Button>
         <Box>
           <Button onClick={onClose} variant="contained" color="primary">
             {mode === 'audit'
-              ? t('inventoryDetail.closeAudit')
-              : t('inventoryDetail.close')}
+              ? t('inventario.detalle.closeAudit')
+              : t('inventario.detalle.close')}
           </Button>
         </Box>
       </DialogActions>
@@ -671,13 +1044,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       <DynamicFormModal
         isOpen={isMermaModalOpen}
         onClose={() => setIsMermaModalOpen(false)}
-        title={t('inventoryDetail.registerWaste')}
+        title={t('inventario.detalle.registerWaste')}
         fields={dynamicMermaSchema}
         onSubmit={handleSaveMerma}
         isSubmitting={isSavingMerma}
-        initialData={{ productoId }}
+        initialData={mermaInitialData}
         requireConfirmation={true}
-        confirmationMessage={t('inventoryDetail.wasteWarning')}
+        confirmationMessage={t('inventario.detalle.wasteWarning')}
       />
     </Dialog>
   );

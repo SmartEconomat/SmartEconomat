@@ -12,6 +12,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
 
+/** Clase pública (RecepcionMasivaProductoDto). Paquete: smart-economat-backend (Nest). */
 export class RecepcionMasivaProductoDto {
   @ApiProperty({
     description: 'docs.ID_DE_LA_L_NEA_ORIGINAL_DE_PEDIDOPRODUCT',
@@ -69,6 +70,7 @@ export class RecepcionMasivaProductoDto {
   observaciones?: string;
 }
 
+/** Clase pública (RecepcionMasivaLoteDto). Paquete: smart-economat-backend (Nest). */
 export class RecepcionMasivaLoteDto {
   @ApiProperty({
     description: 'docs.UUID_DEL_PEDIDO_QUE_SE_EST_RECEPCIONANDO',

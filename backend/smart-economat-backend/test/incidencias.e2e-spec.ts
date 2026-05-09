@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface TestApiResponse<T = any> {
   success: boolean;
@@ -13,7 +13,7 @@ interface TestApiResponse<T = any> {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('IncidenciaController (e2e)', () => {
   jest.setTimeout(20000);

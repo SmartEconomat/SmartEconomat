@@ -36,7 +36,7 @@ interface PedidoCardProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidoCard: React.FC<PedidoCardProps> = ({
   pedido,

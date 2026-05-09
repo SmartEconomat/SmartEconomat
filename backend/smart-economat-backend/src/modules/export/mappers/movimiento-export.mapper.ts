@@ -1,6 +1,7 @@
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 import { ExportColumn } from './producto-export.mapper';
 
+/** Constantes públicas (MOVIMIENTO_COLUMNS) expuestas en smart-economat-backend (Nest). */
 export const MOVIMIENTO_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Tipo', key: 'tipo', width: 18 },
@@ -13,6 +14,11 @@ export const MOVIMIENTO_COLUMNS: ExportColumn[] = [
   { header: 'Fecha', key: 'createdAt', width: 15 },
 ];
 
+/**
+ * Expone "mapMovimientoToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Movimiento} movimiento - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function mapMovimientoToExcelRow(
   movimiento: Movimiento
 ): Record<string, unknown> {

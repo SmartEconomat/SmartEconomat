@@ -3,11 +3,18 @@ import { BadRequestException } from '@nestjs/common';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Documentación en español.
+ * Utilidad de transformación para decoradores de class-transformer.
+ * Permite normalizar strings aplicando recortes (trim) y cambios de caja (mayúsculas/minúsculas).
  */
 export class NormalizeStringPipe {
   /**
-   * Documentación en español.
+   * Genera una función de transformación basada en las opciones proporcionadas.
+   * @param options Configuración de normalización.
+   * @param options.trim Si se deben eliminar espacios en blanco al inicio y final (por defecto true).
+   * @param options.uppercase Si se debe convertir a mayúsculas.
+   * @param options.lowercase Si se debe convertir a minúsculas.
+   * @returns Función compatible con @Transform de class-transformer.
+   * @throws BadRequestException Si se activan simultáneamente uppercase y lowercase.
    */
   static transform(
     options: {

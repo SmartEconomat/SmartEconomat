@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { validateDateRange } from '../../../common/utils/date-range.util';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, SelectQueryBuilder } from 'typeorm';
 import { PassThrough } from 'stream';
@@ -90,17 +91,27 @@ const HEADER_FILL: ExcelJS.Fill = {
 };
 
 /**
- * Documentación en español.
+ * Servicio de dominio para export.
  */
 @Injectable()
 export class ExportService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamProductosToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportProductoFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamProductosToExcel(
     query: ExportProductoFilterDto,
@@ -117,12 +128,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamPedidosToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportPedidoFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamPedidosToExcel(
     query: ExportPedidoFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Pedidos');
     await this.streamQueryToExcel(
       res,
       'Pedidos',
@@ -134,7 +152,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamProveedoresToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportProveedorFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamProveedoresToExcel(
     query: ExportProveedorFilterDto,
@@ -151,12 +175,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamAlbaranesToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportAlbaranFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamAlbaranesToExcel(
     query: ExportAlbaranFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Albaranes');
     await this.streamQueryToExcel(
       res,
       'Albaranes',
@@ -168,12 +199,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamIncidenciasToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportIncidenciaFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamIncidenciasToExcel(
     query: ExportIncidenciaFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Incidencias');
     await this.streamQueryToExcel(
       res,
       'Incidencias',
@@ -185,7 +223,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamInventarioToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportInventarioFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamInventarioToExcel(
     query: ExportInventarioFilterDto,
@@ -202,12 +246,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamMovimientosToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportMovimientoFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamMovimientosToExcel(
     query: ExportMovimientoFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Movimientos');
     await this.streamQueryToExcel(
       res,
       'Movimientos',
@@ -219,12 +270,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamRecepcionesToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportRecepcionFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamRecepcionesToExcel(
     query: ExportRecepcionFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Recepciones');
     await this.streamQueryToExcel(
       res,
       'Recepciones',
@@ -236,7 +294,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamRecetasToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportRecetaFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamRecetasToExcel(
     query: ExportRecetaFilterDto,
@@ -253,7 +317,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamUbicacionesToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportUbicacionFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamUbicacionesToExcel(
     query: ExportUbicacionFilterDto,
@@ -270,7 +340,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamUsuariosToExcel" en smart-economat-backend (Nest).
+   * @undefined {ExportUsuarioFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamUsuariosToExcel(
     query: ExportUsuarioFilterDto,
@@ -287,7 +363,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamProductosToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportProductoFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamProductosToPdf(
     query: ExportProductoFilterDto,
@@ -304,7 +386,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamProveedoresToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportProveedorFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamProveedoresToPdf(
     query: ExportProveedorFilterDto,
@@ -321,7 +409,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamInventarioToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportInventarioFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamInventarioToPdf(
     query: ExportInventarioFilterDto,
@@ -338,12 +432,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamPedidosToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportPedidoFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamPedidosToPdf(
     query: ExportPedidoFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Pedidos');
     await this.streamQueryToPdf(
       res,
       'Pedidos',
@@ -355,12 +456,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamAlbaranesToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportAlbaranFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamAlbaranesToPdf(
     query: ExportAlbaranFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.fechaDesde, query.fechaHasta, 365, 'Albaranes');
     await this.streamQueryToPdf(
       res,
       'Albaranes',
@@ -372,12 +480,19 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamIncidenciasToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportIncidenciaFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamIncidenciasToPdf(
     query: ExportIncidenciaFilterDto,
     res: Response
   ): Promise<void> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Incidencias');
     await this.streamQueryToPdf(
       res,
       'Incidencias',
@@ -389,7 +504,13 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "streamRecetasToPdf" en smart-economat-backend (Nest).
+   * @undefined {ExportRecetaFilterDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async streamRecetasToPdf(
     query: ExportRecetaFilterDto,
@@ -406,7 +527,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async streamQueryToPdf<T extends object>(
     res: Response,
@@ -427,7 +548,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async streamQueryToExcel<T extends object>(
     res: Response,
@@ -448,7 +569,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async ensureWithinLimit<T extends object>(
     qb: SelectQueryBuilder<T>,
@@ -464,7 +585,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async streamToPdf(
     res: Response,
@@ -485,20 +606,21 @@ export class ExportService {
 
       const batch = await fetchBatch(offset, limit);
 
-      if (batch.length === 0) break;
+      if (!batch || batch.length === 0) break;
 
-      rows.push(...batch);
+      const validBatch = batch.filter(
+        (item) => item && Object.keys(item).length > 0
+      );
+      rows.push(...validBatch);
 
-      if (batch.length < limit) break;
-
-      offset += batch.length;
+      offset += limit;
     }
 
     await buildPdfTable(res, title, columns, rows);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async streamToExcel(
     res: Response,
@@ -541,9 +663,13 @@ export class ExportService {
       const limit = Math.min(BATCH_SIZE, remaining);
       const batch = await fetchBatch(offset, limit);
 
-      if (batch.length === 0) break;
+      if (!batch || batch.length === 0) break;
 
-      for (const item of batch) {
+      const validBatch = batch.filter(
+        (item) => item && Object.keys(item).length > 0
+      );
+
+      for (const item of validBatch) {
         const row = worksheet.addRow(item);
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           cell.border = BORDER_STYLE;
@@ -588,9 +714,8 @@ export class ExportService {
         row.commit();
       }
 
-      totalWritten += batch.length;
-      if (batch.length < limit) break;
-      offset += batch.length;
+      totalWritten += validBatch.length;
+      offset += limit;
     }
 
     worksheet.commit();
@@ -598,7 +723,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async fetchBatch<T extends object>(
     qb: SelectQueryBuilder<T>,
@@ -612,7 +737,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildProductoQueryBuilder(
     query: ExportProductoFilterDto
@@ -665,7 +790,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildPedidoQueryBuilder(
     query: ExportPedidoFilterDto
@@ -703,7 +828,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildProveedorQueryBuilder(
     query: ExportProveedorFilterDto
@@ -722,7 +847,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildAlbaranQueryBuilder(
     query: ExportAlbaranFilterDto
@@ -754,7 +879,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildIncidenciaQueryBuilder(
     query: ExportIncidenciaFilterDto
@@ -807,7 +932,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildInventarioQueryBuilder(
     query: ExportInventarioFilterDto
@@ -840,7 +965,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildMovimientoQueryBuilder(
     query: ExportMovimientoFilterDto
@@ -872,7 +997,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildRecepcionQueryBuilder(
     query: ExportRecepcionFilterDto
@@ -903,7 +1028,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildRecetaQueryBuilder(
     query: ExportRecetaFilterDto
@@ -912,6 +1037,10 @@ export class ExportService {
       .createQueryBuilder(Receta, 'receta')
       .leftJoinAndSelect('receta.ingredientes', 'ingredientes')
       .leftJoinAndSelect('ingredientes.producto', 'producto');
+
+    if (query.ids && query.ids.length > 0) {
+      qb.andWhere('receta.id IN (:...ids)', { ids: query.ids });
+    }
 
     if (query.searchTerm) {
       qb.andWhere('receta.nombre ILIKE :search', {
@@ -922,6 +1051,12 @@ export class ExportService {
     if (query.dificultad) {
       qb.andWhere('receta.dificultad = :dificultad', {
         dificultad: query.dificultad,
+      });
+    }
+
+    if (query.minTiempoMinutos) {
+      qb.andWhere('receta.tiempoEstimadoMinutos >= :minTiempoMinutos', {
+        minTiempoMinutos: query.minTiempoMinutos,
       });
     }
 
@@ -936,7 +1071,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildUbicacionQueryBuilder(
     query: ExportUbicacionFilterDto
@@ -955,7 +1090,7 @@ export class ExportService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private buildUsuarioQueryBuilder(
     query: ExportUsuarioFilterDto

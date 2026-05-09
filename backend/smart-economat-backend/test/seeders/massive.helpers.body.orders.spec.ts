@@ -39,7 +39,7 @@ describe('massive.helpers.body.orders', () => {
       recetaDificultad: '',
       recetaUnidad: '',
       incidenciaTipo: '',
-      incidenciaEstadoObjetivo: 'nueva',
+      incidenciaEstadoObjetivo: 'abierta',
       resolucionTipo: '',
       mermaMotivo: '',
       estadoVisual: '',
@@ -144,8 +144,14 @@ describe('massive.helpers.body.orders', () => {
         observaciones:
           'Reposicion por falta de stock detectada en produccion y servicio.',
         items: [
-          expect.objectContaining({ recetaId: 'receta-1', cantidad: 1500 }),
-          expect.objectContaining({ recetaId: 'receta-2', cantidad: 2200 }),
+          expect.objectContaining({
+            recetaId: 'receta-1',
+            cantidadAProducir: 1,
+          }),
+          expect.objectContaining({
+            recetaId: 'receta-2',
+            cantidadAProducir: 1.5,
+          }),
         ],
       })
     );

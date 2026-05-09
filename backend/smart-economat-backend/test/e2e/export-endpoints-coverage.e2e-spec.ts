@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';

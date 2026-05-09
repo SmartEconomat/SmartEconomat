@@ -3,7 +3,7 @@ import { languageDetector } from './middlewares/languageDetector';
 import { loginController } from './controllers/authController';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 const app = express();
@@ -14,7 +14,7 @@ app.use(languageDetector);
 app.post('/api/login', loginController);
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 app.listen(3000, () => {
   console.log('Backend running on http://localhost:3000');

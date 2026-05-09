@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Check, Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
@@ -7,48 +7,56 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { EstadoLote } from '../enums/receta.enums';
 
 /**
- * Documentación en español.
+ * Representa produccion lote en el sistema.
  */
 @Entity('produccion_lote')
 @Index(['recetaId'])
 @Index(['usuarioId'])
 @Index(['preparacionId'])
 @Index(['fechaProduccion'])
+@Check(
+  'CHK_produccion_lote_producidas_step_05',
+  `("porciones_producidas" * 2) = floor("porciones_producidas" * 2) AND "porciones_producidas" >= 0`
+)
+@Check(
+  'CHK_produccion_lote_restantes_step_05',
+  `("porciones_restantes" * 2) = floor("porciones_restantes" * 2) AND "porciones_restantes" >= 0`
+)
 export class ProduccionLote extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'preparacion_id', nullable: true })
   preparacionId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -60,7 +68,7 @@ export class ProduccionLote extends BaseEntity {
   cantidadProducida!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -70,7 +78,7 @@ export class ProduccionLote extends BaseEntity {
   fechaProduccion!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -80,7 +88,7 @@ export class ProduccionLote extends BaseEntity {
   fechaCaducidad?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -90,7 +98,7 @@ export class ProduccionLote extends BaseEntity {
   fechaAgotado?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -102,7 +110,7 @@ export class ProduccionLote extends BaseEntity {
   costeTotalReal!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -115,7 +123,7 @@ export class ProduccionLote extends BaseEntity {
   porcionesProducidas!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -128,7 +136,7 @@ export class ProduccionLote extends BaseEntity {
   porcionesRestantes!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',

@@ -7,6 +7,9 @@ const {
   parseBooleanEnv,
   assertSchemaReadyForAlignment,
 } = require('./prod-bootstrap-guards');
+const {
+  ensureEntityColumnsFromMetadata,
+} = require('./ensure-entity-columns-from-metadata');
 
 const MAX_INIT_ATTEMPTS = 30;
 const RETRY_DELAY_MS = 2000;
@@ -95,6 +98,10 @@ async function applySchemaAlignment(dataSource) {
     `ALTER TABLE IF EXISTS "produccion_lote" ADD COLUMN IF NOT EXISTS "fecha_agotado" TIMESTAMP WITH TIME ZONE`,
 
     `ALTER TABLE IF EXISTS "pedido_usuario" ADD COLUMN IF NOT EXISTS "ubicacion_entrega_sugerida_id" uuid`,
+
+    `ALTER TABLE IF EXISTS "producto" ADD COLUMN IF NOT EXISTS "merma_porcentaje" numeric(5,2) NOT NULL DEFAULT '0'`,
+
+    `ALTER TABLE IF EXISTS "recepcion_producto" ADD COLUMN IF NOT EXISTS "cantidad_albaran" numeric(12,3)`,
 
     `ALTER TABLE IF EXISTS "rol" ADD COLUMN IF NOT EXISTS "plantilla_rol_id" uuid`,
     `CREATE INDEX IF NOT EXISTS "idx_rol_plantilla_rol_id" ON "rol" ("plantilla_rol_id")`,
@@ -240,6 +247,20 @@ async function applySchemaAlignment(dataSource) {
      END $$;`,
     `DO $$
      BEGIN
+       IF NOT EXISTS (
+         SELECT 1
+         FROM pg_enum e
+         JOIN pg_type t ON e.enumtypid = t.oid
+         JOIN pg_namespace n ON n.oid = t.typnamespace
+         WHERE n.nspname = 'public'
+           AND t.typname = 'movimiento_tipo_enum'
+           AND e.enumlabel = 'auditoria'
+       ) THEN
+         ALTER TYPE "public"."movimiento_tipo_enum" ADD VALUE 'auditoria';
+       END IF;
+     END $$;`,
+    `DO $$
+     BEGIN
        IF EXISTS (
          SELECT 1 FROM pg_type t
          JOIN pg_namespace n ON n.oid = t.typnamespace
@@ -368,6 +389,13 @@ async function runBootstrap() {
     await runMigrationsIfEnabled(dataSource);
     await assertSchemaReadyForAlignment(dataSource);
     await applySchemaAlignment(dataSource);
+    if (parseBooleanEnv(process.env.STARTUP_ENSURE_ENTITY_COLUMNS, true)) {
+      await ensureEntityColumnsFromMetadata(dataSource);
+    } else {
+      console.warn(
+        '[prod-bootstrap-runner] STARTUP_ENSURE_ENTITY_COLUMNS=false, se omite la comprobacion automatica de columnas frente a entidades.'
+      );
+    }
   } finally {
     if (dataSource.isInitialized) {
       await dataSource.destroy();

@@ -2,11 +2,12 @@ import { Entity, Column, ManyToOne, JoinColumn, Index, Check } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
+import { NullableColumnNumericTransformer } from '../../../common/transformers/nullable-column-numeric.transformer';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
 /**
- * Documentación en español.
+ * Representa inventario en el sistema.
  */
 @Entity({ name: 'inventario' })
 @Index(['productoProveedorId'])
@@ -18,19 +19,19 @@ import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 @Check(`"cantidad_maxima" IS NULL OR "cantidad_maxima" >= "cantidad_minima"`)
 export class Inventario extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  @Column({ name: 'ubicacion_id' })
-  ubicacionId!: string;
+  @Column({ name: 'ubicacion_id', nullable: true })
+  ubicacionId?: string | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.inventarios, {
     onDelete: 'RESTRICT',
@@ -40,7 +41,7 @@ export class Inventario extends BaseEntity {
   productoProveedor!: Relation<ProductoProveedor>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -52,7 +53,7 @@ export class Inventario extends BaseEntity {
   cantidadActual!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -64,7 +65,7 @@ export class Inventario extends BaseEntity {
   cantidadMinima!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -72,22 +73,22 @@ export class Inventario extends BaseEntity {
     scale: 3,
     nullable: true,
     name: 'cantidad_maxima',
-    transformer: new ColumnNumericTransformer(),
+    transformer: new NullableColumnNumericTransformer(),
   })
   cantidadMaxima?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Ubicacion, (ubicacion) => ubicacion.inventarios, {
-    onDelete: 'RESTRICT',
-    nullable: false,
+    onDelete: 'SET NULL',
+    nullable: true,
   })
   @JoinColumn({ name: 'ubicacion_id' })
   ubicacion!: Relation<Ubicacion>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -97,7 +98,7 @@ export class Inventario extends BaseEntity {
   fechaEntrada!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -109,7 +110,14 @@ export class Inventario extends BaseEntity {
   /* --- Métodos de Dominio --- */
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de ajustar cantidad dentro del flujo de la aplicación.
+   *
+   * @param delta Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "ajustarCantidad" en smart-economat-backend (Nest).
+   * @undefined {number} delta - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   ajustarCantidad(delta: number): void {
     this.cantidadActual = Number(this.cantidadActual) + delta;
@@ -121,14 +129,22 @@ export class Inventario extends BaseEntity {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de es bajo stock dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "esBajoStock" en smart-economat-backend (Nest).
+   * @undefined {boolean} Datos efectivos después de ejecutar la operación.
    */
   esBajoStock(): boolean {
     return Number(this.cantidadActual) < Number(this.cantidadMinima);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de proximo acaducar dentro del flujo de la aplicación.
+   *
+   * @param diasUmbral Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   proximoACaducar(diasUmbral: number = 7): boolean {
     if (!this.fechaCaducidad) return false;

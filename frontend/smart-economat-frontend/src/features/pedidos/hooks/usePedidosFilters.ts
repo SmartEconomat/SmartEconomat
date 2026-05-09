@@ -18,7 +18,11 @@ const isMisPedidosStatusFilter = (
   value === 'pendientes' || value === 'activos' || value === 'finalizados';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de use pedidos filters dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "usePedidosFilters" en smart-economat-frontend (SPA).
+ * @undefined {{ searchTerm: string; setSearchTerm: (value: string) => void; viewMode: PedidosViewMode; setViewMode: (mode: PedidosViewMode) => void; tabIndex: PedidosTabValue; setTabIndex: (value: PedidosTabValue) => void; misPedidosStatus: MisPedidosStatusFilter; setMisPedidosStatus: (value: MisPedidosStatusFilter) => void; isWeeklyTab: boolean; isBatchTab: boolean; isOwnOrdersTab: boolean; }} Datos efectivos después de ejecutar la operación.
  */
 export function usePedidosFilters() {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -14,7 +14,6 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -58,38 +57,45 @@ import {
   formatLocalizedDate,
   formatLocalizedDateTime,
 } from '../utils/intlFormat';
+import { useDataTable } from '../hooks/useDataTable';
 
 const INCIDENCIA_STATUS_CHIP: Record<EstadoIncidencia, string> = {
   [EstadoIncidencia.NUEVA]: 'pending',
-  [EstadoIncidencia.EN_AJUSTE]: 'review',
+  [EstadoIncidencia.ABIERTA]: 'pending',
+  [EstadoIncidencia.EN_PROCESO]: 'warning',
+  [EstadoIncidencia.EN_AJUSTE]: 'warning',
   [EstadoIncidencia.PENDIENTE_VALIDACION]: 'warning',
   [EstadoIncidencia.RESUELTA]: 'completed',
   [EstadoIncidencia.CANCELADA]: 'cancelled',
-  [EstadoIncidencia.INVALIDA]: 'error',
+  [EstadoIncidencia.INVALIDA]: 'cancelled',
 };
 
 type ResolveDialogMode = 'adjust' | 'resolve';
 
 const Incidencias: React.FC = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
   const toast = useToast();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const theme = useTheme();
   const hasDashboardFilter = searchParams.get('resolucion') === 'por_resolver';
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [data, setData] = useState<Incidencia[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [resolucionTab, setResolucionTab] =
-    useState<IncidenciasResolucionTab>('por_resolver');
-  const [filters, setFilters] = useState<IncidenciaFiltersState>({
-    startDate: null,
-    endDate: null,
+
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'createdAt',
+    order: 'desc',
   });
 
   useEffect(() => {
@@ -103,6 +109,16 @@ const Incidencias: React.FC = () => {
     nextParams.delete('resolucion');
     setSearchParams(nextParams, { replace: true });
   };
+  const [data, setData] = useState<Incidencia[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [resolucionTab, setResolucionTab] =
+    useState<IncidenciasResolucionTab>('por_resolver');
+  const [filters, setFilters] = useState<IncidenciaFiltersState>({
+    startDate: null,
+    endDate: null,
+  });
+
   const [itemToView, setItemToView] = useState<Incidencia | null>(null);
   const [itemToResolve, setItemToResolve] = useState<Incidencia | null>(null);
   const [resolveDialogMode, setResolveDialogMode] =
@@ -121,25 +137,25 @@ const Incidencias: React.FC = () => {
     setError(null);
     try {
       const params: IncidenciasQueryParams = {
-        page,
-        limit: pageSize,
-        searchTerm: searchTerm || undefined,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        searchTerm: queryParams.searchTerm,
         resuelta: resolucionTab === 'resueltas',
         startDate: filters.startDate || undefined,
         endDate: filters.endDate || undefined,
       };
       const result = await fetchIncidencias(params);
       setData(result.data);
-      setTotalItems(result.total);
-      setTotalPages(result.totalPages);
+      syncPaginationFromResponse(result);
     } catch (err: unknown) {
+      syncPaginationFromResponse({ total: 0, data: [] });
       const message =
         err instanceof Error ? err.message : t('incidencias.errors.cargar');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, resolucionTab, filters, t]);
+  }, [queryParams, resolucionTab, filters, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
@@ -207,7 +223,7 @@ const Incidencias: React.FC = () => {
 
   const handleResolucionTabChange = (nextTab: IncidenciasResolucionTab) => {
     setResolucionTab(nextTab);
-    setPage(1);
+    onPageChange(null, 1);
   };
 
   const columns: Column<Incidencia>[] = useMemo(
@@ -217,12 +233,14 @@ const Incidencias: React.FC = () => {
         label: t('incidencias.table.fecha'),
         render: (row) => formatLocalizedDate(row.createdAt),
         sortable: true,
+        sortType: 'date',
       },
       {
         id: 'proveedorNombre',
         label: t('incidencias.table.proveedor'),
         render: (row) => row.proveedorNombre || '—',
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'productos',
@@ -262,9 +280,9 @@ const Incidencias: React.FC = () => {
                     <>
                       {t('incidencias.table.cantidadLinea', {
                         producto: linea.nombreProducto,
-                        esperada: linea.cantidadEsperada,
+                        pedida: linea.cantidadPedida,
                         recibida: linea.cantidadRecibida,
-                        pendiente: linea.cantidadPendiente,
+                        ajustada: linea.cantidadAjustada,
                         unidad,
                       })}
                     </>
@@ -306,24 +324,13 @@ const Incidencias: React.FC = () => {
       sx={{ minWidth: 160, justifyContent: 'flex-start' }}
     >
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title={t('incidencias.actions.verDetalle')}>
-          <IconButton
-            color="primary"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setItemToView(row);
-            }}
-            size="small"
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.resuelta && canResolve && (
           <Tooltip title={t('incidencias.actions.ajustarCantidades')}>
             <IconButton
-              onClick={() => openResolveModal(row, 'adjust')}
+              onClick={(e) => {
+                e.stopPropagation();
+                openResolveModal(row, 'adjust');
+              }}
               size="small"
               color="warning"
               id="btn-ajustar-incidencia"
@@ -338,7 +345,10 @@ const Incidencias: React.FC = () => {
         {!row.resuelta && canResolve && (
           <Tooltip title={t('incidencias.actions.resolverIncidencia')}>
             <IconButton
-              onClick={() => openResolveModal(row, 'resolve')}
+              onClick={(e) => {
+                e.stopPropagation();
+                openResolveModal(row, 'resolve');
+              }}
               size="small"
               color="success"
               id="btn-resolver-incidencia"
@@ -353,7 +363,10 @@ const Incidencias: React.FC = () => {
         {canDelete && (
           <Tooltip title={t('incidencias.actions.eliminar')}>
             <IconButton
-              onClick={() => setItemToDelete(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setItemToDelete(row);
+              }}
               size="small"
               color="error"
             >
@@ -536,7 +549,7 @@ const Incidencias: React.FC = () => {
                       {t('incidencias.detail.pedida')}
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      {linea.cantidadEsperada}{' '}
+                      {linea.cantidadPedida}{' '}
                       {linea.unidad || t('incidencias.units.default')}
                     </Typography>
                   </Box>
@@ -567,18 +580,16 @@ const Incidencias: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      {t('incidencias.detail.pendiente')}
+                      {t('incidencias.detail.ajustada')}
                     </Typography>
                     <Typography
                       variant="body2"
                       fontWeight={600}
                       color={
-                        linea.cantidadPendiente > 0
-                          ? 'warning.main'
-                          : 'success.main'
+                        linea.necesitaAjuste ? 'warning.main' : 'success.main'
                       }
                     >
-                      {linea.cantidadPendiente}{' '}
+                      {linea.cantidadAjustada}{' '}
                       {linea.unidad || t('incidencias.units.default')}
                     </Typography>
                   </Box>
@@ -607,10 +618,7 @@ const Incidencias: React.FC = () => {
         totalItems={totalItems}
         totalItemsLabel={t('incidencias.totalItemsLabel')}
         searchValue={searchTerm}
-        onSearchChange={(v) => {
-          setSearchTerm(v);
-          setPage(1);
-        }}
+        onSearchChange={onSearchChange}
         searchPlaceholder={t('incidencias.buscar')}
         extraActions={[
           {
@@ -635,7 +643,7 @@ const Incidencias: React.FC = () => {
             filters={filters}
             onChange={(newFilters) => {
               setFilters(newFilters);
-              setPage(1);
+              onPageChange(null, 1);
             }}
           />
         }
@@ -681,7 +689,7 @@ const Incidencias: React.FC = () => {
         </Box>
 
         <Box sx={{ p: { xs: 2, sm: 4 } }}>
-          {error && (
+          {!isLoading && error && (
             <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
               {error}
             </Alert>
@@ -721,6 +729,17 @@ const Incidencias: React.FC = () => {
             data={data}
             isLoading={isLoading}
             renderActions={renderActions}
+            onRowClick={setItemToView}
+            onSort={onSort}
+            sortConfig={sortConfig}
+            filters={tableFilters}
+            onFilter={onFilter}
+            pagination={paginationProps}
+            getRowAriaLabel={(row: Incidencia) =>
+              t('incidencias.actions.ariaVerDetalle', {
+                proveedor: row.proveedorNombre || '',
+              })
+            }
             emptyStateMessage={
               <Box sx={{ py: 8, textAlign: 'center' }}>
                 <ReportProblemOutlinedIcon
@@ -744,16 +763,6 @@ const Incidencias: React.FC = () => {
                 </Typography>
               </Box>
             }
-            pagination={{
-              currentPage: page,
-              totalPages: totalPages,
-              onPageChange: (_, p) => setPage(p),
-              pageSize: pageSize,
-              onPageSizeChange: (e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              },
-            }}
           />
         </Box>
       </Paper>

@@ -18,12 +18,23 @@ import { RecepcionDraftService } from '../service/recepcion-draft.service';
 import { UpsertRecepcionDraftDto } from '../dto/upsert-recepcion-draft.dto';
 import { RecepcionDraftResponseDto } from '../dto/recepcion-draft-response.dto';
 
+/** Clase pública (RecepcionDraftController). Paquete: smart-economat-backend (Nest). */
 @ApiTags('Recepcion Draft')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepcion/draft')
 export class RecepcionDraftController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RecepcionDraftService} recepcionDraftService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly recepcionDraftService: RecepcionDraftService) {}
 
+  /**
+   * Expone "saveDraft" en smart-economat-backend (Nest).
+   * @undefined {UpsertRecepcionDraftDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecepcionDraftResponseDto>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
   @HttpCode(HttpStatus.OK)
@@ -39,6 +50,11 @@ export class RecepcionDraftController {
     return this.recepcionDraftService.upsertDraft(req.user.id, dto);
   }
 
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecepcionDraftResponseDto | null>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
   @ApiOperation({ summary: 'Recuperar el borrador de recepción más reciente' })
@@ -49,6 +65,11 @@ export class RecepcionDraftController {
     return this.recepcionDraftService.getLatestDraft(req.user.id);
   }
 
+  /**
+   * Expone "clearDraft" en smart-economat-backend (Nest).
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
   @HttpCode(HttpStatus.NO_CONTENT)

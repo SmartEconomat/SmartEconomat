@@ -4,6 +4,7 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 import { CreateProveedorDto } from './create-proveedor.dto';
 
+/** Clase pública (UpdateProveedorDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateProveedorDto extends PartialType(CreateProveedorDto) {
   @Transform((params) => TrimStringTransformer.transform(params))
   nombre?: string;

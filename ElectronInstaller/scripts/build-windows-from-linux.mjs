@@ -57,7 +57,7 @@ function runDockerBuild(attempt) {
     "electronuserland/builder:wine",
     "/bin/bash",
     "-lc",
-    "set -euo pipefail && mkdir -p /root/.cache/electron /root/.cache/electron-builder && if [[ -n \"${WIN_CSC_LINK:-}\" ]]; then export CSC_LINK=\"$WIN_CSC_LINK\"; fi && if [[ -n \"${WIN_CSC_KEY_PASSWORD:-}\" ]]; then export CSC_KEY_PASSWORD=\"$WIN_CSC_KEY_PASSWORD\"; fi && npm ci --no-audit --fund=false --prefer-offline && npm run build:app && npx electron-builder --win --x64 --publish never --config.compression=store && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete && chown -R \"$HOST_UID:$HOST_GID\" out dist",
+    'set -euo pipefail && mkdir -p /root/.cache/electron /root/.cache/electron-builder && if [[ -n "${WIN_CSC_LINK:-}" ]]; then export CSC_LINK="$WIN_CSC_LINK"; fi && if [[ -n "${WIN_CSC_KEY_PASSWORD:-}" ]]; then export CSC_KEY_PASSWORD="$WIN_CSC_KEY_PASSWORD"; fi && npm ci --no-audit --fund=false --prefer-offline && npm run build:app && npx electron-builder --win --x64 --publish never --config.compression=store && find dist -maxdepth 1 -type f -name \'*.__uninstaller.exe\' -delete && chown -R "$HOST_UID:$HOST_GID" out dist',
   ];
 
   return new Promise((resolve) => {

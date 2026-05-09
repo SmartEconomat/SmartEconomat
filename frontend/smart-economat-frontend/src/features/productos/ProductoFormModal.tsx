@@ -127,6 +127,7 @@ function mapOFFToForm(p: OFFProduct): Record<string, unknown> {
 
 // ── Component ──────────────────────────────────────────────────────────
 
+/** Alias público (ProductoFormModalProps) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ProductoFormModalProps = Pick<
   DynamicFormModalProps,
   'isOpen' | 'onClose' | 'initialData' | 'onSubmit' | 'isSubmitting'
@@ -135,7 +136,7 @@ export type ProductoFormModalProps = Pick<
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   isOpen,

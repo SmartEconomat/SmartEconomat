@@ -14,11 +14,13 @@ import { SearchProductoProveedorDto } from '../dto/search-producto-proveedor.dto
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 
+/** Contrato de tipos público (ComparacionProveedorItem). Contexto: smart-economat-backend (Nest). */
 export interface ComparacionProveedorItem {
   productoProveedorId: string;
-  proveedorId: string;
-  proveedorNombre: string;
-  marca?: string;
+  proveedorId?: string;
+  proveedorNombre?: string;
+  marca?: string | null;
+  codigoBarras?: string | null;
   precioUnitario: number;
   mermaEsperada: number;
   costeEfectivoUnitario: number;
@@ -27,6 +29,7 @@ export interface ComparacionProveedorItem {
   ahorroAbsolutoPct: number;
 }
 
+/** Contrato de tipos público (ComparacionProveedoresResponse). Contexto: smart-economat-backend (Nest). */
 export interface ComparacionProveedoresResponse {
   productoId: string;
   productoNombre: string;
@@ -34,10 +37,16 @@ export interface ComparacionProveedoresResponse {
 }
 
 /**
- * Documentación en español.
+ * Servicio para la gestión avanzada de las relaciones entre productos y proveedores.
+ * Maneja el historial de precios, la comparativa de costes efectivos (incluyendo mermas)
+ * y la búsqueda optimizada de variantes de proveedor.
  */
 @Injectable()
 export class ProductoProveedorService {
+  /**
+   * Crea una instancia de ProductoProveedorService.
+   * @param dataSource Fuente de datos para transacciones y consultas.
+   */
   constructor(private readonly dataSource: DataSource) {}
 
   private validatePrecioMayorQueCero(precio: number): void {
@@ -66,6 +75,15 @@ export class ProductoProveedorService {
     return latestHistorial.precio;
   }
 
+  /**
+   * Actualiza el precio unitario de una relación producto-proveedor.
+   * Registra el cambio en el historial de precios antes de actualizar el precio vigente.
+   * @param idProductoProveedor UUID de la relación.
+   * @param updatePrecioDto DTO con el nuevo precio.
+   * @returns La relación actualizada con el nuevo precio unitario.
+   * @throws NotFoundException Si no se encuentra la relación.
+   * @throws ConflictException Si el precio es idéntico al actual.
+   */
   async updatePrecio(
     idProductoProveedor: string,
     updatePrecioDto: UpdatePrecioProductoDto
@@ -103,6 +121,12 @@ export class ProductoProveedorService {
     });
   }
 
+  /**
+   * Obtiene el historial paginado de cambios de precio de una relación específica.
+   * @param idProductoProveedor UUID de la relación.
+   * @param query Parámetros de paginación.
+   * @returns Lista paginada del historial de precios.
+   */
   async getHistorial(
     idProductoProveedor: string,
     query: PaginationQueryDto
@@ -132,6 +156,12 @@ export class ProductoProveedorService {
     return { data, total, page, limit, totalPages };
   }
 
+  /**
+   * Actualiza el porcentaje de merma esperada para un proveedor concreto.
+   * @param idProductoProveedor UUID de la relación.
+   * @param dto DTO con el nuevo porcentaje de merma.
+   * @returns La relación actualizada.
+   */
   async updateMerma(
     idProductoProveedor: string,
     dto: UpdateMermaProveedorDto
@@ -158,6 +188,13 @@ export class ProductoProveedorService {
     });
   }
 
+  /**
+   * Realiza una comparativa de costes entre todos los proveedores de un producto.
+   * Calcula el coste efectivo unitario basándose en el precio y la merma esperada,
+   * identificando la opción óptima (más económica) y el ahorro potencial.
+   * @param productoId UUID del producto maestro.
+   * @returns Objeto con la comparativa detallada.
+   */
   async compararProveedores(
     productoId: string
   ): Promise<ComparacionProveedoresResponse> {
@@ -183,7 +220,7 @@ export class ProductoProveedorService {
 
     if (rows.length === 0) {
       throw new NotFoundException(
-        'No se encontraron proveedores con precio para este producto.'
+        I18nHelper.getError('PROVIDERS_WITH_PRICE_NOT_FOUND')
       );
     }
 
@@ -192,7 +229,9 @@ export class ProductoProveedorService {
     const conCoste = rows.map((pp) => {
       const precio = pp.precioUnitario ?? 0;
       const merma = pp.mermaEsperada ?? 0;
-      const costeEfectivo = precio * (1 + merma / 100);
+      const factorUtilizable = 1 - merma / 100;
+      const costeEfectivo =
+        factorUtilizable > 0 ? precio / factorUtilizable : Number.MAX_VALUE;
       return { pp, precio, merma, costeEfectivo };
     });
 
@@ -213,7 +252,7 @@ export class ProductoProveedorService {
           productoProveedorId: pp.id,
           proveedorId: pp.proveedor?.id,
           proveedorNombre: pp.proveedor?.nombre,
-          marca: pp.marca,
+          marca: pp.marca ?? undefined,
           precioUnitario: precio,
           mermaEsperada: merma,
           costeEfectivoUnitario: parseFloat(costeEfectivo.toFixed(4)),
@@ -226,6 +265,12 @@ export class ProductoProveedorService {
     return { productoId, productoNombre, proveedores };
   }
 
+  /**
+   * Realiza una búsqueda global de productos vinculados a proveedores.
+   * Filtra por nombre de producto, nombre de proveedor, marca o código de barras.
+   * @param dto Parámetros de búsqueda y paginación.
+   * @returns Lista de resultados con información consolidada.
+   */
   async search(dto: SearchProductoProveedorDto): Promise<
     Array<{
       id: string;
@@ -258,6 +303,7 @@ export class ProductoProveedorService {
         'producto.nombre',
         'producto.unidad',
         'producto.contenido',
+        'producto.codigoBarras',
         'proveedor.id',
         'proveedor.nombre',
       ])
@@ -268,10 +314,14 @@ export class ProductoProveedorService {
 
     if (q.length > 0) {
       qb.where(
-        '(producto.nombre ILIKE :q OR proveedor.nombre ILIKE :q OR pp.marca ILIKE :q OR pp.codigoBarras ILIKE :q)',
+        '(producto.nombre ILIKE :q OR proveedor.nombre ILIKE :q OR pp.marca ILIKE :q OR pp.codigoBarras ILIKE :q OR producto.codigoBarras ILIKE :q)',
         { q: `%${q}%` }
       );
     }
+
+    qb.andWhere('producto.deleted_at IS NULL');
+    qb.andWhere('proveedor.deleted_at IS NULL');
+    qb.andWhere('pp.deleted_at IS NULL');
 
     const rows = await qb.getMany();
 
@@ -284,7 +334,7 @@ export class ProductoProveedorService {
       proveedorId: pp.proveedor?.id,
       proveedorNombre: pp.proveedor?.nombre,
       marca: pp.marca,
-      codigoBarras: pp.codigoBarras,
+      codigoBarras: pp.codigoBarras || pp.producto?.codigoBarras,
       precioUnitario: pp.precioUnitario,
     }));
   }

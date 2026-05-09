@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Delete,
-  Query,
   UseGuards,
   ParseUUIDPipe,
   HttpCode,
@@ -25,21 +24,28 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { validateDateRange } from '../../../common/utils/date-range.util';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la consulta y gestión de movimientos de stock.
+ * Proporciona trazabilidad completa de todas las entradas, salidas y ajustes del inventario,
+ * permitiendo filtrar por usuario, producto, rango de fechas y tipo de operación.
  */
 @ApiTags('movimientos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('movimientos')
 export class MovimientoController {
   /**
-   * Documentación en español.
+   * Crea una instancia de MovimientoController.
+   * @param movimientoService Servicio para la gestión lógica de movimientos.
    */
   constructor(private readonly movimientoService: MovimientoService) {}
 
   /**
-   * Documentación en español.
+   * Crea un nuevo registro de movimiento de stock.
+   * @param dto Datos del movimiento (tipo, cantidad, entidad vinculada).
+   * @returns El movimiento creado.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
@@ -64,7 +70,9 @@ export class MovimientoController {
   }
 
   /**
-   * Documentación en español.
+   * Lista todos los movimientos registrados con soporte para paginación y ordenación dinámica.
+   * @param query Parámetros de consulta (página, límite, sortBy, order).
+   * @returns Lista paginada de movimientos.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.movimientos.listar)
@@ -77,17 +85,17 @@ export class MovimientoController {
     description: 'docs.LISTA_DE_MOVIMIENTOS_PAGINADA',
   })
   findAll(
-    @SortableFields(
-      ['tipo', 'cantidad', 'entidad', 'createdAt'],
-      MovimientoListQueryDto
-    )
+    @SortableFields(SORTABLE_FIELDS.movimientos, MovimientoListQueryDto)
     query: MovimientoListQueryDto
   ): Promise<PaginatedResponseDto<any>> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Movimientos');
     return this.movimientoService.findAll(query);
   }
 
   /**
-   * Documentación en español.
+   * Recupera el historial detallado de movimientos (Trazabilidad) con filtros avanzados.
+   * @param dto Filtros de búsqueda (entidad, usuario, rango temporal, tipo).
+   * @returns Lista de movimientos que coinciden con los criterios.
    */
   @Get('historial')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
@@ -133,7 +141,7 @@ export class MovimientoController {
     description: 'docs.CAMPO_POR_EL_QUE_ORDENAR',
   })
   @ApiQuery({
-    name: 'sortOrder',
+    name: 'order',
     required: false,
     enum: ['ASC', 'DESC'],
     description: 'docs.ORDEN_DE_CLASIFICACI_N_ASCENDENTE_O_DESC',
@@ -155,13 +163,22 @@ export class MovimientoController {
     description: 'docs.NO_SE_ENCONTRARON_MOVIMIENTOS_QUE_COINCI',
   })
   getMovimientoHistory(
-    @Query() dto: MovimientoHistoryDto
+    @SortableFields(SORTABLE_FIELDS.movimientoHistorial, MovimientoHistoryDto)
+    dto: MovimientoHistoryDto
   ): Promise<PaginatedResponseDto<Movimiento>> {
+    validateDateRange(
+      dto.startDate,
+      dto.endDate,
+      365,
+      'Historial de Movimientos'
+    );
     return this.movimientoService.getMovimientoHistory(dto);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle de un movimiento específico por su ID.
+   * @param id UUID del movimiento.
+   * @returns El movimiento encontrado.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
@@ -182,7 +199,10 @@ export class MovimientoController {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza los datos de un movimiento existente (solo campos auditables).
+   * @param id UUID del movimiento.
+   * @param dto Nuevos datos.
+   * @returns El movimiento actualizado.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.inventario.ajustar_stock)
@@ -214,7 +234,13 @@ export class MovimientoController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina un registro de movimiento (eliminación lógica).
+   * @param id UUID del movimiento.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

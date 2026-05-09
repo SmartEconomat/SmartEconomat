@@ -21,6 +21,19 @@ interface ConfirmDangerDialogProps {
   onConfirm: (phrase: string) => Promise<void>;
 }
 
+/**
+ * Expone la operación "ConfirmDangerDialog" del instalador SmartEconomat.
+ * @returns {ConfirmDangerDialogProps} {
+ *   open,
+ *   title,
+ *   description,
+ *   confirmationText,
+ *   confirmButtonLabel = "Ejecutar limpieza agresiva",
+ *   onCancel,
+ *   onConfirm,
+ * } - Entrada esperada por la función.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element | null} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function ConfirmDangerDialog({
   open,
   title,

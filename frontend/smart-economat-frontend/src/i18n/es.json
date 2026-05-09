@@ -12,6 +12,16 @@
     "INVENTARIO_DELETED_CANNOT_ADJUST": "No se puede ajustar un inventario eliminado",
     "INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE": "El ajuste dejaría la cantidad en negativo"
   },
+  "dateRange": {
+    "invalidFormat": "Formato de fecha inválido",
+    "startAfterEnd": "La fecha de inicio no puede ser posterior a la fecha de fin",
+    "exceeded": "El rango máximo permitido es de 1 año ({{maxDays}} días). Ajusta las fechas para continuar."
+  },
+  "confirmDialog": {
+    "title": "Confirmación",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
   "auth": {
     "login": {
       "title": "Iniciar sesión",
@@ -154,7 +164,14 @@
       "errorConexion": "Error de conexión con el servidor.",
       "errorValidarCodigo": "No se pudo validar el código de la clase.",
       "strongPasswordHint": "La contraseña debe tener al menos 8 caracteres e incluir mayúscula, minúscula, número y símbolo."
-    }
+    },
+    "usernameOrEmail": "Usuario o Email",
+    "password": "Contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "email": "Correo Electrónico",
+    "rememberMe": "Recordarme",
+    "resetPasswordMessage": "Su administrador ha restablecido su contraseña. Por seguridad, debe elegir una nueva antes de continuar."
   },
   "toast": {
     "success": "¡Operación completada correctamente!",
@@ -177,16 +194,21 @@
       "alertasStock": "Alertas de Stock",
       "proveedores": "Proveedores",
       "notificaciones": "Notificaciones",
-      "productosEsteMes": "+{{count}} agregado{{count, plural, one {} other {s}}} este mes",
+      "productosEsteMes_one": "+{{count}} agregado este mes",
+      "productosEsteMes_other": "+{{count}} agregados este mes",
       "sinNuevosProductos": "Sin nuevos productos este mes",
-      "pedidosHoy": "{{count}} recibido{{count, plural, one {} other {s}}} hoy",
+      "pedidosHoy_one": "{{count}} recibido hoy",
+      "pedidosHoy_other": "{{count}} recibidos hoy",
       "sinRecepcionesHoy": "Sin recepciones hoy",
-      "pedidosConIncidencias": "{{count}} pedido{{count, plural, one {} other {s}}} con incidencias",
+      "pedidosConIncidencias_one": "{{count}} pedido con incidencias",
+      "pedidosConIncidencias_other": "{{count}} pedidos con incidencias",
       "sinIncidencias": "Sin incidencias",
-      "itemsBajoMinimo": "{{count}} ítem{{count, plural, one {} other {s}}} bajo mínimo",
+      "itemsBajoMinimo_one": "{{count}} ítem bajo mínimo",
+      "itemsBajoMinimo_other": "{{count}} ítems bajo mínimo",
       "stockCorrecto": "Stock correcto",
       "catalogoActualizado": "Catálogo actualizado",
-      "accionesPendientes": "{{count}} acción{{count, plural, one {} other {es}}} pendiente{{count, plural, one {} other {s}}}",
+      "accionesPendientes_one": "{{count}} acción pendiente",
+      "accionesPendientes_other": "{{count}} acciones pendientes",
       "sinNotificaciones": "Sin notificaciones"
     },
     "summary": {
@@ -282,17 +304,10 @@
       "navegacionPrincipal": "Navegación principal"
     }
   },
-  "receta": {
+  "recipes": {
     "form": {
       "nombre": "Nombre de la Receta",
       "tiempoPreparacion": "Tiempo de preparación",
-      "tiempo": {
-        "10min": "10 min",
-        "20min": "20 min",
-        "30min": "30 min",
-        "45min": "45 min",
-        "60min": "60 min"
-      },
       "dificultad": "Dificultad",
       "dificultadFacil": "Fácil",
       "dificultadMedia": "Media",
@@ -311,32 +326,11 @@
       "confirmarEdicion": "¿Estás seguro de que deseas guardar los cambios realizados en esta receta?",
       "confirmarCreacion": "¿Estás seguro de que deseas añadir esta nueva receta al sistema?"
     },
-    "cocinar": {
-      "configuracionLote": "Configuración del Lote",
-      "ubicacionDestino": "Ubicación de destino",
-      "fechaCaducidadManual": "Fecha de caducidad (manual)"
-    },
-    "ingredientes": {
-      "titulo": "Ingredientes de la Receta",
-      "anadir": "Añadir Ingrediente",
-      "alergenos": "Alérgenos en esta receta:",
-      "proveedorFav": "Proveedor fav.",
-      "vacio": "No hay ingredientes añadidos a la receta",
-      "sinProveedor": "Sin proveedor disponible",
-      "masBarato": "Seleccionar automáticamente el más barato",
-      "masBaratoLabel": "Más barato"
-    },
-    "alergenos": {
-      "sinAlergenos": "No se han detectado alérgenos en los ingredientes de esta receta.",
-      "contiene": "Contiene {{nombre}}",
-      "sin": "Sin {{nombre}}"
-    }
-  },
-  "recetas": {
     "ingredientes": {
       "titulo": "Ingredientes de la Receta",
       "anadir": "Añadir Ingrediente",
       "empty": "Sin ingredientes registrados.",
+      "vacio": "No hay ingredientes registrados.",
       "producto": "Producto",
       "cantidad": "Cantidad",
       "unidad": "Unidad",
@@ -380,36 +374,36 @@
       "pedidoGeneradoDesdeRecetas_other": "Pedido #{{numero}} generado correctamente desde {{count}} recetas.",
       "errorPedidoDesdeRecetas": "Error al generar el pedido desde recetas."
     },
-    "prepararAhora": "Preparar ahora",
-    "preparar": "Preparar",
-    "crearPedido": "Crear pedido",
-    "exportarPdf": "Exportar PDF",
-    "verDetalles": "Ver detalles",
-    "gestionTitulo": "Gestión de Recetas",
-    "eliminarReceta": "Eliminar receta",
-    "sinGluten": "Sin Gluten",
-    "sinLacteos": "Sin Lácteos",
-    "incluirImagenReceta": "Incluir imagen de la receta",
-    "buscarMinLetras": "Escribe al menos 2 letras para buscar productos.",
-    "editarReceta": "Editar receta",
-    "exportPdf": {
-      "titulo": "Exportar recetas a PDF",
-      "resumen_one": "Vas a exportar 1 receta.",
-      "resumen_other": "Vas a exportar {{count}} recetas.",
-      "imagenAyuda": "Si la imagen no existe, el PDF se generará igualmente sin ella.",
-      "exportando": "Exportando...",
-      "botonExportar": "Exportar PDF"
+    "errors": {
+      "cargaDesconocida": "Error desconocido al cargar recetas.",
+      "errorEnReceta": "Error en esta receta",
+      "nombreObligatorio": "El nombre de la receta es obligatorio.",
+      "instruccionesObligatorias": "Las instrucciones de la receta son obligatorias.",
+      "dificultadObligatoria": "La dificultad de la receta es obligatoria.",
+      "ingredienteObligatorio": "Debes añadir al menos un ingrediente.",
+      "errorSubirImagen": "Hubo un error al subir la imagen de la receta.",
+      "unidadInvalida": "La unidad de resultado de la receta no es válida.",
+      "productoInvalido": "Producto no válido en la lista de ingredientes.",
+      "unidadIngredienteInvalida": "La unidad del ingrediente {{index}} no es válida.",
+      "mermaInvalida": "La merma del ingrediente {{index}} debe ser un número mayor o igual que 0.",
+      "mayorQueCero": "{{label}} debe ser mayor que 0.",
+      "enteroMayorQueCero": "{{label}} debe ser un número entero mayor o igual que 1.",
+      "tiempoInvalido": "El tiempo de preparación debe ser un número entero mayor o igual que 10 minutos."
     },
     "preparacionLote": {
       "tituloMultiples": "Producción en Lote ({{count}} recetas)",
       "tituloUna": "Preparar Receta: {{nombre}}",
-      "subtitulo": "Configura las cantidades y valida el stock antes de iniciar.",
+      "subtitulo": "Define la cantidad objetivo (admite decimales), revisa la previsión del servidor y valida el stock antes de iniciar.",
       "seccionRecetas": "Recetas a procesar",
       "colReceta": "Receta",
       "colCantidad": "Cantidad",
       "colRaciones": "Raciones",
+      "colPorcionesPreparacion": "Cantidad objetivo",
+      "colPrevisionServidor": "Previsión (backend)",
       "colUnidadAbrev": "Und.",
       "rendimientoBase": "Rendimiento base: {{rendimiento}} {{unidad}}",
+      "racionesReferencia": "Raciones de referencia (receta): {{n}}",
+      "equivProduccion": "{{cantidad}} {{unidad}} · escala ×{{factor}}",
       "verificacionStock": "Verificación de Stock",
       "validandoStock": "Garantizando stock...",
       "insufTitulo": "INGREDIENTES INSUFICIENTES",
@@ -421,26 +415,17 @@
       "iniciarPreparacion": "Iniciar Preparación",
       "crearPedidoFaltantes": "Crear pedido de faltantes"
     },
-    "errors": {
-      "cargaDesconocida": "Error desconocido al cargar recetas.",
-      "errorEnReceta": "Error en esta receta"
-    },
-    "tiempoMinutos": "{{count}} min",
-    "franjaMinutos": "{{count}} min",
-    "imageAlt": "Imagen de {{nombre}}",
-    "altImagenDefecto": "Receta",
-    "listado": {
-      "ingredientesCount_one": "{{count}} ingrediente",
-      "ingredientesCount_other": "{{count}} ingredientes"
-    },
-    "columns": {
-      "nombre": "Nombre",
-      "dificultad": "Dificultad",
-      "tiempo": "Tiempo",
-      "ingredientes": "Ingredientes"
+    "exportPdf": {
+      "titulo": "Exportar recetas a PDF",
+      "resumen_one": "Vas a exportar 1 receta.",
+      "resumen_other": "Vas a exportar {{count}} recetas.",
+      "imagenAyuda": "Si la imagen no existe, el PDF se generará igualmente sin ella.",
+      "exportando": "Exportando...",
+      "botonExportar": "Exportar PDF"
     },
     "toolbar": {
       "buscarPlaceholder": "Buscar por nombre, instrucciones, ingredientes...",
+      "filtroTiempo": "Tiempo",
       "totalItemsLabel": "recetas",
       "nuevaReceta": "Nueva Receta",
       "prepararConCount": "Preparar ({{count}})",
@@ -448,8 +433,17 @@
       "exportarPdfConCount": "Exportar PDF ({{count}})",
       "exportarPdf": "Exportar PDF",
       "exportarExcel": "Exportar Excel",
+      "exportExcelFilename": "recetas.xlsx",
       "crearPedidoConCount": "Crear pedido ({{count}})",
       "crearPedido": "Crear pedido"
+    },
+    "filters": {
+      "tiempo": {
+        "all": "Todos los tiempos",
+        "rapidas": "Rápidas (10-29 min)",
+        "medias": "Medias (30-59 min)",
+        "largas": "Largas (60+ min)"
+      }
     },
     "empty": {
       "sinCoincidencias": "No hay recetas que coincidan con tu búsqueda",
@@ -458,9 +452,6 @@
       "hintInicial": "Crea la primera receta del economato para comenzar.",
       "anadirReceta": "Añadir Receta"
     },
-    "rowAria": "Editar receta {{nombre}}",
-    "confirmEliminarMsj": "¿Estás seguro de que deseas eliminar la receta {{nombre}}? Esta acción no se puede deshacer.",
-    "confirmSiEliminar": "Sí, eliminar",
     "detalle": {
       "ingredientesCount_one": "{{count}} ingrediente",
       "ingredientesCount_other": "{{count}} ingredientes",
@@ -482,8 +473,52 @@
       "seccionIngredientes": "Ingredientes",
       "alergenosDetectados": "Alérgenos detectados"
     },
+    "columns": {
+      "nombre": "Nombre",
+      "dificultad": "Dificultad",
+      "tiempo": "Tiempo",
+      "ingredientes": "Ingredientes"
+    },
+    "alergenos": {
+      "sinAlergenos": "No se han detectado alérgenos en los ingredientes de esta receta.",
+      "contiene": "Contiene {{nombre}}",
+      "sin": "Sin {{nombre}}",
+      "sinGluten": "Sin Gluten",
+      "sinLacteos": "Sin Lácteos"
+    },
+    "cocinar": {
+      "configuracionLote": "Configuración del Lote",
+      "ubicacionDestino": "Ubicación de destino",
+      "fechaCaducidadManual": "Fecha de caducidad (manual)"
+    },
+    "prepararAhora": "Preparar ahora",
+    "preparar": "Preparar",
+    "crearPedido": "Crear pedido",
+    "exportarPdf": "Exportar PDF",
+    "verDetalles": "Ver detalles",
+    "gestionTitulo": "Gestión de Recetas",
+    "eliminarReceta": "Eliminar receta",
+    "incluirImagenReceta": "Incluir imagen de la receta",
+    "editarReceta": "Editar receta",
+    "tiempoMinutos": "{{count}} min",
+    "tiempoMinutos60Plus": "{{count}}+ min",
+    "franjaRapida": "Rápida (10-29 min)",
+    "franjaMedia": "Media (30-59 min)",
+    "franjaLarga": "Larga (60+ min)",
+    "imageAlt": "Imagen de {{nombre}}",
+    "altImagenDefecto": "Receta",
+    "rowAria": "Ver detalles de receta {{nombre}}",
+    "confirmEliminarMsj": "¿Estás seguro de que deseas eliminar la receta {{nombre}}? Esta acción no se puede deshacer.",
+    "confirmSiEliminar": "Sí, eliminar",
     "observacionesPedidoAutoStock": "Pedido automático por falta de stock para: {{lista}}",
-    "observacionesPedidoDesdeRecetas": "Pedido generado desde recetas: {{lista}}"
+    "observacionesPedidoDesdeRecetas": "Pedido generado desde recetas: {{lista}}",
+    "ingrediente": "Ingrediente",
+    "labels": {
+      "rendimiento": "El rendimiento",
+      "diasCaducidad": "Los días de caducidad",
+      "raciones": "Las raciones",
+      "tamanioRacion": "El tamaño de ración"
+    }
   },
   "usuarios": {
     "columns": {
@@ -501,10 +536,14 @@
       "estadoActivo": "Filtro de estado activo: {{estado}}."
     },
     "actions": {
+      "verDetalle": "Ver detalle",
       "activar": "Activar",
       "suspender": "Suspender",
       "refrescar": "Refrescar",
       "nuevoUsuario": "Nuevo Usuario"
+    },
+    "aria": {
+      "filaUsuario": "Ver detalles del usuario {{nombre}}"
     },
     "confirm": {
       "eliminarPregunta": "¿Seguro que quieres eliminar a",
@@ -571,12 +610,9 @@
     "totalItemsLabel": "incidencias",
     "buscar": "Buscar por proveedor u observaciones...",
     "estados": {
-      "nueva": "Nueva",
-      "enAjuste": "En ajuste",
-      "pendienteValidacion": "Pendiente validación",
-      "resuelta": "Resuelta",
-      "cancelada": "Cancelada",
-      "invalida": "Inválida"
+      "abierta": "Abierta",
+      "enProceso": "En proceso",
+      "resuelta": "Resuelta"
     },
     "tabs": {
       "abiertas": "Abiertas",
@@ -677,7 +713,7 @@
       "lineasCount": "{{count}} línea",
       "lineasCount_plural": "{{count}} líneas",
       "cantidadesPorProducto": "Cantidades por producto",
-      "cantidadLinea": "{{producto}}: P {{esperada}} {{unidad}} · R {{recibida}} {{unidad}} · Pe {{pendiente}} {{unidad}}",
+      "cantidadLinea": "{{producto}}: P {{pedida}} {{unidad}} · R {{recibida}} {{unidad}} · Aj {{ajustada}} {{unidad}}",
       "masProductos": "+{{count}} producto(s)",
       "estado": "Estado"
     },
@@ -861,6 +897,7 @@
       "alumnos": "Alumnos",
       "gestionUsuarios": "Gestión Usuarios",
       "plantillasRoles": "Plantillas Roles",
+      "ubicaciones": "Ubicaciones",
       "ariaLabel": "admin tabs"
     },
     "actions": {
@@ -1047,7 +1084,13 @@
       "error": "Error de sync",
       "errorTooltip": "Error al sincronizar el borrador",
       "conflicto": "Conflicto",
-      "conflictoTooltip": "El borrador cambió en otro dispositivo"
+      "conflictoTooltip": "El borrador cambió en otro dispositivo",
+      "saving": "Guardando...",
+      "synced": "Sincronizado",
+      "conflict": "Conflicto",
+      "savingTooltip": "Sincronizando borrador con el servidor",
+      "syncedTooltip": "Borrador sincronizado de forma segura",
+      "conflictTooltip": "El borrador cambió en otro dispositivo"
     },
     "recovery": {
       "titulo": "Recuperar recepción pendiente",
@@ -1080,7 +1123,16 @@
       "sinBasculaDisponible": "No hay una báscula autorizada disponible.",
       "perdidaComunicacion": "Se perdió la comunicación con la báscula.",
       "noSePudoIniciarLectura": "No se pudo iniciar la lectura de la báscula."
-    }
+    },
+    "draftRecoveryTitle": "Recuperar recepción pendiente",
+    "draftRecoveryMessage": "Has dejado una recepción a medias. ¿Deseas recuperarla y continuar donde lo dejaste?",
+    "draftDiscardTitle": "Descartar recepción",
+    "draftDiscardMessage": "¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado.",
+    "lastUpdate": "Última actualización:",
+    "unknownTime": "desconocida",
+    "yesRecover": "Sí, recuperar",
+    "noDiscard": "No, descartar",
+    "yesDiscard": "Sí, descartar"
   },
   "inventario": {
     "acciones": {
@@ -1107,18 +1159,73 @@
       "cerrarAuditoria": "Cerrar Auditoría",
       "registrarMerma": "Registrar Merma",
       "confirmarMerma": "Esta acción descontará el stock del inventario de forma permanente. ¿Estás seguro?",
+      "errors": {
+        "interpretarAjuste": "No se pudo interpretar el ajuste de stock."
+      },
+      "placeholderAjuste": "+2 / -1",
+      "helperAjuste": "Ajuste en unidades de envase (+/-)",
+      "auditManualReason": "Ajuste manual de auditoría de inventario",
+      "auditTitle": "Auditar stock por ajuste (+/−)",
+      "detailTitle": "Detalle de lotes",
+      "auditReadOnlyHint": "Solo lectura: stock por lote. Indica ajustes (+/−) por línea y guarda.",
+      "noBatches": "No hay lotes de inventario para este producto.",
+      "auditSummary": "Resumen del ajuste",
+      "currentStock": "Stock actual",
+      "pendingAdjustment": "Ajuste pendiente",
+      "projectedStock": "Stock proyectado",
+      "productConstruction": "{{contenido}} {{unidad}} por unidad de envase",
+      "errorRequireValue": "Indica una cantidad de ajuste.",
+      "errorInvalidNumber": "Cantidad no válida.",
+      "errorZeroAdjustment": "El ajuste no puede ser 0.",
+      "errorNegativeStock": "El resultado no puede ser negativo.",
+      "adjustmentHelperText": "Cantidad a sumar o restar del lote",
+      "columns": {
+        "batchId": "Lote",
+        "supplier": "Proveedor",
+        "location": "Ubicación",
+        "expiry": "Caducidad",
+        "currentStockUnits": "Stock actual",
+        "adjustment": "Ajuste",
+        "resultingStock": "Stock resultante",
+        "transfer": "Traslado de stock",
+        "action": "Guardar",
+        "currentQty": "Cantidad"
+      },
+      "reportWaste": "Registrar merma",
+      "registerWaste": "Registrar merma",
+      "closeAudit": "Cerrar",
+      "close": "Cerrar",
+      "wasteWarning": "La merma descontará stock de forma permanente. ¿Continuar?",
+      "saveAdjustmentAria": "Guardar ajuste de stock del lote",
+      "transfer": {
+        "destino": "Destino",
+        "cantidad": "Cantidad a mover",
+        "placeholderDestino": "Elegir ubicación destino…",
+        "sinDestinos": "No hay otra ubicación disponible.",
+        "runAria": "Ejecutar traslado de stock",
+        "toast": {
+          "ok": "Traslado completado correctamente."
+        },
+        "errors": {
+          "sinDestino": "Selecciona ubicación destino.",
+          "mismoNodo": "Origen y destino no pueden ser la misma ubicación.",
+          "cantidadInvalida": "Indica cantidad válida (mayor que cero y no mayor que el disponible).",
+          "generico": "No se pudo completar el traslado.",
+          "cargarUbicaciones": "No se pudieron cargar ubicaciones para el traslado."
+        }
+      },
       "toast": {
         "ajusteAplicado": "Ajuste de stock aplicado correctamente.",
         "errorAjuste": "Error al aplicar ajuste de stock.",
         "loteNoExiste": "El lote seleccionado ya no existe. Se recargó el inventario para continuar con lotes activos.",
         "mermaRegistrada": "Merma registrada correctamente",
-        "errorMerma": "Error al registrar merma"
-      },
-      "errors": {
-        "interpretarAjuste": "No se pudo interpretar el ajuste de stock."
-      },
-      "placeholderAjuste": "+2 / -1",
-      "helperAjuste": "Ajuste en unidades de envase (+/-)"
+        "errorMerma": "Error al registrar merma",
+        "adjustSuccessful": "Ajuste guardado correctamente.",
+        "errorParseAdjustment": "No se pudo interpretar el ajuste.",
+        "batchNotFound": "Lote no encontrado; inventario actualizado.",
+        "wasteSuccess": "Merma registrada correctamente.",
+        "wasteError": "Error al registrar la merma."
+      }
     },
     "ubicaciones": {
       "titulo": "Gestionar Ubicaciones",
@@ -1150,6 +1257,21 @@
       "inventarioGeneral": "Inventario General",
       "ariaLabel": "pestañas de inventario",
       "general": "Inventario general"
+    },
+    "misUbicacionesConfig": {
+      "titulo": "Tus ubicaciones de trabajo",
+      "descripcion": "Elige una o varias ubicaciones del centro para filtrar tu inventario. La misma ubicación puede usarla otros usuarios: aquí solo indicas con cuáles trabajas.",
+      "selectorLabel": "Ubicaciones enlazadas a tu cuenta",
+      "selectorPlaceholder": "Buscar y seleccionar…",
+      "predeterminadaLabel": "Ubicación predeterminada",
+      "unaSolaPredeterminada": "Se usará como predeterminada la única ubicación seleccionada.",
+      "guardar": "Guardar ubicaciones",
+      "guardando": "Guardando…",
+      "exito": "Ubicaciones actualizadas.",
+      "error": "No se pudieron guardar las ubicaciones.",
+      "errorCargarCatalogo": "No se pudo cargar el catálogo de ubicaciones.",
+      "sinCatalogo": "No hay ubicaciones dadas de alta en el sistema. Un responsable debe crearlas (Inventario → Gestionar ubicaciones o administración de ubicaciones).",
+      "ayudaAdministracion": "Si falta una ubicación, pídele a tu administrador que la cree en el catálogo. Si tienes permiso, usa «Gestionar ubicaciones» en la barra superior."
     },
     "columns": {
       "producto": "Producto",
@@ -1256,7 +1378,7 @@
       "noStockLocations": "No hay stock en {{locations}}",
       "noStock": "No hay stock en inventario",
       "tryOtherTerms": "Prueba con otros términos o limpia los filtros.",
-      "contactAdmin": "Contacta con tu profesor o administrador para que te asigne un slot.",
+      "contactAdmin": "Asocia ubicaciones arriba. Si la lista está vacía, primero debe existir esa ubicación en el sistema.",
       "registraRecepciones": "Registra recepciones o crea entradas de inventario para ver el stock."
     },
     "productoCreateFields": {
@@ -1338,6 +1460,7 @@
       "numeroMayorIgualCero": "Debe ser un número ≥ 0",
       "maxMenorMin": "No puede ser menor que la mínima",
       "ubicacion": "Ubicación de almacén",
+      "sinUbicacion": "Sin ubicación",
       "fechaCaducidad": "Fecha de caducidad (opcional)"
     }
   },
@@ -1561,6 +1684,9 @@
     "empty": {
       "noPreparaciones": "No hay preparaciones registradas",
       "ejecutaReceta": "Ejecuta una receta para ver su historial aquí.",
+      "noProducciones": "No hay producciones registradas",
+      "noDisponibles": "No hay preparaciones disponibles ahora mismo.",
+      "noHistorial": "Aún no hay preparaciones consumidas.",
       "titulo": "No hay preparaciones registradas",
       "descripcion": "Ejecuta una receta para ver su historial aquí."
     },
@@ -1581,6 +1707,9 @@
     },
     "merma": {
       "titulo": "Reportar merma de producción",
+      "descripcion": "Registra la merma real de un ingrediente usado en esta preparación sin alterar estados históricos del lote.",
+      "lote": "Lote: {{id}}",
+      "receta": "Receta: {{nombre}}",
       "motivo": "Motivo",
       "observaciones": "Observaciones",
       "registrar": "Registrar merma",
@@ -1590,6 +1719,10 @@
       "helperConUnidad": "Registra la merma en {{unidad}}. Ejemplo: {{ejemplo}} {{unidadCorta}}.",
       "seleccionaIngrediente": "Selecciona primero el ingrediente para ver en qué medida registrar la merma.",
       "ingrediente": "Ingrediente",
+      "cargandoIngredientes": "Cargando ingredientes de la receta...",
+      "sinIngredientes": "No se encontraron ingredientes válidos para reportar merma en este lote.",
+      "registraEn": "Se registrará en {{unidad}}.",
+      "ejemplo": "Ejemplo: {{valor}}",
       "errorResolverReceta": "No se pudo resolver la receta del lote para cargar ingredientes.",
       "errorCargarIngredientes": "No se pudo cargar el detalle de ingredientes para reportar merma.",
       "seleccionaLote": "Selecciona un lote de producción válido.",
@@ -1623,16 +1756,9 @@
   "merma": {
     "form": {
       "producto": "Producto",
-      "cantidad": "¿Cuánto se perdió? (según la medida del producto)",
+      "cantidad": "Cantidad",
       "motivo": "Motivo de la merma",
-      "motivoOpciones": {
-        "roturaEnvase": "Rotura de envase",
-        "deterioroCaducidad": "Deterioro / Caducidad",
-        "hurto": "Hurto / Pérdida",
-        "errorPreparacion": "Error de preparación",
-        "otros": "Otros motivos"
-      },
-      "observaciones": "Observaciones / Notas"
+      "observaciones": "Notas adicionales"
     },
     "tabla": {
       "fecha": "Fecha",
@@ -1642,24 +1768,29 @@
       "registradoPor": "Registrado por",
       "verNotas": "Ver notas",
       "notas": "Notas",
-      "sinNotas": "Sin notas"
+      "sinNotas": "Sin notas",
+      "ariaVerNotas": "Ver notas de la merma de {{producto}}"
+    },
+    "stats": {
+      "totalPerdidas": "Total pérdidas",
+      "totalRegistros": "Total registros",
+      "distribucionPorMotivo": "Distribución por motivo",
+      "sinDatos": "No hay datos de mermas para este periodo"
     },
     "filtros": {
       "motivo": "Motivo",
       "todosMotivos": "Todos los motivos",
       "desde": "Desde",
       "hasta": "Hasta"
-    },
-    "motivos": {
-      "rotura": "Rotura",
-      "deterioro": "Deterioro",
-      "hurto": "Hurto",
-      "errorPreparacion": "Error de preparación",
-      "otros": "Otros"
     }
   },
   "usuario": {
-    "perfilDescripcion": "Esta es la página de configuración del perfil de usuario."
+    "perfilDescripcion": "Esta es la página de configuración del perfil de usuario.",
+    "status": {
+      "activo": "Activo",
+      "inactivo": "Inactivo",
+      "bloqueado": "Bloqueado"
+    }
   },
   "perfil": {
     "titulo": "Perfil de Usuario",
@@ -1796,11 +1927,19 @@
     "confirmar": "Confirmar",
     "si": "Sí",
     "no": "No",
+    "desde": "Desde",
+    "hasta": "Hasta",
+    "limiteRango_one": "Rango máximo: {{count}} {{unit}}",
+    "limiteRango_other": "Rango máximo: {{count}} {{unit}}s",
+    "anio": "año",
+    "hoy": "Hoy",
     "cargando": "Cargando...",
     "sinDatos": "No hay datos disponibles.",
     "porPagina": "Por página:",
     "ocultarFiltros": "Ocultar filtros",
     "mostrarFiltros": "Mostrar filtros",
+    "total": "Total",
+    "elementos": "uds.",
     "totalDe": "Total de",
     "escanearCamara": "Escanear con cámara",
     "escanearCodigo": "Escanear código",
@@ -1896,7 +2035,9 @@
         "descripcion_other": "Hay {{count}} productos que caducan en los próximos {{days}} días.",
         "accion": "Ver inventario"
       }
-    }
+    },
+    "actualizarNotificaciones": "Actualizar notificaciones",
+    "cerrarPanel": "Cerrar panel de notificaciones"
   },
   "configuracion": {
     "titulo": "Configuración",
@@ -1933,7 +2074,9 @@
     "ayuda": "Ayuda",
     "verGuiaAyuda": "Ver guía de ayuda de esta página",
     "verGuia": "Ver guía de ayuda",
-    "cerrar": "Cerrar"
+    "cerrar": "Cerrar",
+    "omitirTour": "Omitir tour",
+    "iniciarTutorial": "Iniciar tutorial"
   },
   "aprendizaje": {
     "activar": "Activar modo aprendizaje (Mostrar descripciones detalladas)",
@@ -2149,7 +2292,7 @@
     "marcaGenerica": "Genérica",
     "aria": {
       "codigoBarras": "Código de barras: {{codigo}}",
-      "filaProducto": "Producto: {{nombre}}, Marca: {{marca}}"
+      "filaProducto": "Producto: {{nombre}}, Marca: {{marca}}. Click para ver detalle."
     },
     "detail": {
       "infoGeneral": "Información general",
@@ -2372,12 +2515,21 @@
       "eliminarMensaje": "¿Estás seguro de que deseas eliminar el pedido del {{fecha}}? Esta acción no se puede deshacer.",
       "eliminarConfirm": "Sí, eliminar",
       "aprobarTitulo": "Aprobar Pedido",
-      "aprobarCompra": "¿Estás seguro de que deseas tramitar la compra {{numero}}({{id}})? La compra avanzará a su siguiente estado operativo.",
-      "aprobarPedido": "¿Estás seguro de que deseas aprobar el pedido {{numero}}({{id}}) al proveedor {{proveedor}}? Pasará a estar «En Proceso» y se considerará tramitado.",
+      "aprobarCompra": "¿Estás seguro de que deseas tramitar la compra {{numero}}({{id}})?\nLa compra avanzará a su siguiente estado operativo.",
+      "aprobarPedido_one": "¿Estás seguro de que deseas aprobar el pedido {{numero}}({{id}})?\nSe enviará al proveedor y pasará a estado «En proceso».",
+      "aprobarPedido_other": "¿Estás seguro de que deseas aprobar el pedido {{numero}}({{id}})?\nSe enviará a {{count}} proveedores y pasará a estado «En proceso».",
       "aprobarConfirm": "Sí, Aprobar",
       "guardarCompra": "¿Estás seguro de que deseas guardar los cambios en esta compra?",
       "guardarPedido": "¿Estás seguro de que deseas guardar los cambios en este pedido?",
-      "registrarNuevo": "¿Estás seguro de que deseas registrar este nuevo pedido?"
+      "registrarNuevo": "¿Estás seguro de que deseas registrar este nuevo pedido?",
+      "consolidarPaso1Titulo": "Pedidos pendientes en la semana",
+      "consolidarPaso1MensajeUnico": "Hay 1 pedido en estado pendiente. Para consolidar la semana, el sistema lo aprobará automáticamente antes de generar el lote. Pulsa «Continuar» para la confirmación final.",
+      "consolidarPaso1MensajeMultiple": "Hay {{count}} pedidos en estado pendiente. Para consolidar la semana, el sistema los aprobará automáticamente antes de generar el lote. Pulsa «Continuar» para la confirmación final.",
+      "consolidarPaso1Continuar": "Continuar",
+      "consolidarPaso2Titulo": "Confirmación final",
+      "consolidarPaso2MensajeUnico": "¿Confirma que desea aprobar automáticamente este pedido pendiente y consolidar la semana en un lote de compra? Esta acción implica aceptación formal de esas solicitudes.",
+      "consolidarPaso2MensajeMultiple": "¿Confirma que desea aprobar automáticamente estos {{count}} pedidos pendientes y consolidar la semana en un lote de compra? Esta acción implica aceptación formal de esas solicitudes.",
+      "consolidarPaso2Confirmar": "Aprobar y consolidar"
     },
     "recovery": {
       "titulo": "Recuperar Pedido Pendiente",
@@ -2443,6 +2595,17 @@
     "buscarPlaceholder": "Buscar por proveedor, estado, usuario...",
     "nuevoPedido": "Nuevo Pedido",
     "continuarPedido": "Continuar Pedido",
+    "card": {
+      "orderPrefix": "Pedido #",
+      "estimatedCost": "Coste estimado"
+    },
+    "draft": {
+      "recover": "Recuperar",
+      "discard": "Descartar",
+      "pending": "Tienes un borrador de pedido pendiente.",
+      "lastUpdate": "Ultima actualizacion:",
+      "noDate": "Sin fecha"
+    },
     "toast": {
       "compraActualizada": "Compra actualizada correctamente.",
       "pedidoActualizado": "Pedido actualizado correctamente.",
@@ -2480,6 +2643,23 @@
       "createdAt": "Creado:",
       "estimatedInvestment": "Inversión estimada"
     },
+    "batchDetail": {
+      "downloadError": "No se pudo descargar el PDF.",
+      "printError": "No se pudo abrir la impresion del PDF.",
+      "orderTitle": "Detalle del pedido",
+      "purchaseTitle": "Detalle de la compra",
+      "orderPrefix": "Pedido #",
+      "batchPrefix": "Lote #",
+      "downloading": "Descargando...",
+      "downloadPdf": "Descargar PDF",
+      "preparing": "Preparando impresion...",
+      "printPdf": "Imprimir PDF",
+      "approvePedido": "Aprobar pedido",
+      "cancelPedido": "Cancelar pedido",
+      "editPedido": "Editar pedido",
+      "editCompra": "Editar compra",
+      "recepcion": "Recepcionar"
+    },
     "weeklyBoard": {
       "infoMessage": "Vista semanal de pedidos agrupados por usuario.",
       "emptyMessage": "No hay pedidos para mostrar en esta semana.",
@@ -2489,10 +2669,25 @@
       "unknownUser": "Usuario desconocido",
       "selectUserOrders": "Seleccionar pedidos del usuario",
       "selectOrder": "Seleccionar pedido {{id}}",
+      "selectionDisabled": {
+        "alreadyConsolidated": "No se puede consolidar: este pedido ya está consolidado semanalmente.",
+        "hasRecepciones": "No se puede consolidar: el pedido tiene recepciones registradas.",
+        "cancelled": "No se puede consolidar: el pedido está cancelado.",
+        "invalidState": "No se puede consolidar: el pedido no está en un estado consolidable."
+      },
       "usersAndOrders": "{{users}} usuario(s), {{orders}} pedido(s)",
       "totalEstimated": "Total estimado: {{amount}}",
       "consolidate": "Consolidar semana",
       "ordersCount": "{{count}} pedido(s)"
+    },
+    "purchasesWeeklyBoard": {
+      "infoMessage": "Vista semanal de compras agrupadas por semana de creacion.",
+      "emptyMessage": "No hay compras para mostrar en esta semana.",
+      "invalidWeek": "Semana no valida",
+      "weekLabel": "Semana {{start}} - {{end}}",
+      "batchesCount": "{{count}} lote(s)",
+      "weeklyInvestment": "Inversion semanal: {{amount}}",
+      "openDetail": "Abrir detalle del lote {{id}}"
     },
     "drawer": {
       "title": "Detalle del pedido"
@@ -2668,12 +2863,9 @@
       "CANCELADO": "Cancelado"
     },
     "incidenciaEstado": {
-      "NUEVA": "Nueva",
-      "EN_AJUSTE": "En ajuste",
-      "PENDIENTE_VALIDACION": "Pendiente validación",
-      "RESUELTA": "Resuelta",
-      "CANCELADA": "Cancelada",
-      "INVALIDA": "Inválida"
+      "ABIERTA": "Abierta",
+      "EN_PROCESO": "En proceso",
+      "RESUELTA": "Resuelta"
     },
     "tipoDiferencia": {
       "FALTANTE": "Faltante",
@@ -2694,14 +2886,15 @@
       "ENTRADA_COMPRA": "Entrada por compra",
       "SALIDA_DISTRIBUCION": "Salida por distribución",
       "ENTRADA_DISTRIBUCION": "Entrada por distribución",
-      "SALIDA_ELABORACION": "Salida por elaboración"
+      "SALIDA_ELABORACION": "Salida por elaboración",
+      "MERMA": "Merma"
     },
     "mermaMotivo": {
-      "ROTURA": "Rotura",
-      "DETERIORO": "Deterioro",
-      "HURTO": "Hurto",
-      "ERROR_PREPARACION": "Error de preparación",
-      "OTROS": "Otros"
+      "ROTURA": "Rotura de envase / accidente",
+      "DETERIORO": "Deterioro / Caducidad",
+      "HURTO": "Hurto / Pérdida no justificada",
+      "ERROR_PREPARACION": "Error de preparación / cocina",
+      "OTROS": "Otros motivos (especificar en notas)"
     },
     "rolUsuario": {
       "ADMIN": "Administrador",
@@ -2717,9 +2910,9 @@
       "CANCELADA": "Cancelada"
     },
     "recetaDificultad": {
-      "FÁCIL": "Fácil",
+      "FACIL": "Fácil",
       "MEDIA": "Media",
-      "DIFÍCIL": "Difícil"
+      "DIFICIL": "Difícil"
     },
     "recetaTiempo": {
       "10_MIN": "10 min",
@@ -2737,6 +2930,22 @@
       "CDA": "cda",
       "CDTA": "cdta"
     },
+    "alergeno": {
+      "GLUTEN": "Gluten",
+      "CRUSTACEOS": "Crustáceos",
+      "HUEVOS": "Huevos",
+      "PESCADO": "Pescado",
+      "CACAHUETES": "Cacahuetes",
+      "SOJA": "Soja",
+      "LACTEOS": "Lácteos",
+      "FRUTOS_CON_CASCARA": "Frutos de cáscara",
+      "APIO": "Apio",
+      "MOSTAZA": "Mostaza",
+      "SESAMO": "Sésamo",
+      "SULFITO": "Sulfitos",
+      "ALTRAMUCES": "Altramuces",
+      "MOLUSCOS": "Moluscos"
+    },
     "productoCategoria": {
       "VERDURA": "Verdura",
       "FRUTA": "Fruta",
@@ -2753,22 +2962,6 @@
       "AZUCAR": "Azúcar",
       "BEBIDA": "Bebida",
       "OTRO": "Otro"
-    },
-    "alergeno": {
-      "GLUTEN": "Gluten",
-      "CRUSTACEOS": "Crustáceos",
-      "HUEVOS": "Huevos",
-      "PESCADO": "Pescado",
-      "CACAHUETES": "Cacahuetes",
-      "SOJA": "Soja",
-      "LACTEOS": "Lácteos",
-      "FRUTOS_CON_CASCARA": "Frutos de cáscara",
-      "APIO": "Apio",
-      "MOSTAZA": "Mostaza",
-      "SESAMO": "Sésamo",
-      "SULFITO": "Sulfitos",
-      "ALTRAMUCES": "Altramuces",
-      "MOLUSCOS": "Moluscos"
     }
   },
   "notifications": {
@@ -2788,6 +2981,13 @@
       "medium": "Prioritaria",
       "high": "Alta",
       "urgent": "Urgente"
+    }
+  },
+  "notificacion": {
+    "prioridad": {
+      "urgente": "Urgente",
+      "pendiente": "Pendiente",
+      "info": "Información"
     }
   }
 }

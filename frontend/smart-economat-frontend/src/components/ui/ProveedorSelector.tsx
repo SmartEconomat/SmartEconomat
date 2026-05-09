@@ -12,12 +12,16 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
+import HistoryIcon from '@mui/icons-material/History';
 import { Proveedor } from '../../services/proveedor.types';
 import QuickProveedorModal from './QuickProveedorModal';
 import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 import { useTranslation } from 'react-i18next';
+import NumericInput from './NumericInput';
 
+/** Contrato de tipos público (ProveedorAsociado). Contexto: smart-economat-frontend (SPA). */
 export interface ProveedorAsociado {
   proveedorId: string;
   nombre?: string;
@@ -49,8 +53,10 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleAdd = (_event?: any, newValue?: Proveedor | null) => {
+  const handleAdd = (
+    _event: React.SyntheticEvent | null,
+    newValue?: Proveedor | null
+  ) => {
     if (!newValue) return;
     if (value.find((p) => p.proveedorId === newValue.id)) return;
 
@@ -59,8 +65,8 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
       {
         proveedorId: newValue.id,
         nombre: newValue.nombre,
-        marca: masterMarca || '',
-        codigoBarras: masterBarcode || '',
+        marca: '',
+        codigoBarras: '',
         precioUnitario: 0,
       },
     ]);
@@ -87,7 +93,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
 
   const handleQuickSuccess = (newProveedor: Proveedor) => {
     // Añadirlo a la selección actual
-    handleAdd(undefined, newProveedor);
+    handleAdd(null, newProveedor);
     // Notificar al padre para que refresque la lista de opciones
     if (onRefreshProveedores) {
       onRefreshProveedores();
@@ -135,7 +141,15 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                           <IconButton
                             size="small"
                             color="primary"
-                            onClick={() => setIsQuickCreateOpen(true)}
+                            type="button"
+                            aria-label={t(
+                              'proveedores.selectorInline.tooltipCrearRapido'
+                            )}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setIsQuickCreateOpen(true);
+                            }}
                           >
                             <AddCircleOutlineIcon fontSize="small" />
                           </IconButton>
@@ -162,6 +176,7 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
             <IconButton
               size="small"
               color="error"
+              type="button"
               disabled={disabled}
               onClick={() => handleRemove(prov.proveedorId)}
               sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -197,7 +212,46 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 onChange={(e) =>
                   handleChangeField(prov.proveedorId, 'marca', e.target.value)
                 }
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  input: {
+                    endAdornment:
+                      !prov.marca && masterMarca ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={t('proveedores.selectorInline.heredado')}
+                          >
+                            <AutoFixHighOutlinedIcon
+                              data-testid="AutoFixHighOutlinedIcon"
+                              fontSize="small"
+                              color="primary"
+                              sx={{ opacity: 0.6 }}
+                            />
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : prov.marca && prov.marca !== masterMarca ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={t(
+                              'proveedores.selectorInline.usarValorProducto'
+                            )}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleChangeField(prov.proveedorId, 'marca', '')
+                              }
+                            >
+                              <HistoryIcon
+                                data-testid="HistoryIcon"
+                                fontSize="small"
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : null,
+                  },
+                }}
                 disabled={disabled}
                 fullWidth
               />
@@ -219,24 +273,64 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                     e.target.value
                   )
                 }
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  input: {
+                    endAdornment:
+                      !prov.codigoBarras && masterBarcode ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={t('proveedores.selectorInline.heredado')}
+                          >
+                            <AutoFixHighOutlinedIcon
+                              data-testid="AutoFixHighOutlinedIcon"
+                              fontSize="small"
+                              color="primary"
+                              sx={{ opacity: 0.6 }}
+                            />
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : prov.codigoBarras &&
+                        prov.codigoBarras !== masterBarcode ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={t(
+                              'proveedores.selectorInline.usarValorProducto'
+                            )}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleChangeField(
+                                  prov.proveedorId,
+                                  'codigoBarras',
+                                  ''
+                                )
+                              }
+                            >
+                              <HistoryIcon
+                                data-testid="HistoryIcon"
+                                fontSize="small"
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : null,
+                  },
+                }}
                 disabled={disabled}
                 fullWidth
               />
-              <TextField
+              <NumericInput
                 label={t('proveedores.campoPrecioCompra')}
                 size="small"
-                type="number"
-                slotProps={{
-                  inputLabel: { shrink: true },
-                  input: { inputProps: { min: 0, step: 0.01 } },
-                }}
+                name={`precio-${prov.proveedorId}`}
                 value={prov.precioUnitario ?? ''}
-                onChange={(e) =>
+                onChange={(parsed) =>
                   handleChangeField(
                     prov.proveedorId,
                     'precioUnitario',
-                    parseFloat(e.target.value)
+                    parsed ?? 0
                   )
                 }
                 disabled={disabled}

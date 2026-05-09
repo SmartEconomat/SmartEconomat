@@ -40,6 +40,14 @@ const permissionsSlice = createSlice({
   },
 });
 
+/**
+ * Constantes públicas ({
+ *   setPermissions,
+ *   resetPermissions,
+ *   addPermission,
+ *   removePermission,
+ * }) expuestas en smart-economat-frontend (SPA).
+ */
 export const {
   setPermissions,
   resetPermissions,

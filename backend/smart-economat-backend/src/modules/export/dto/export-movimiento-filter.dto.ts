@@ -9,6 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 
+/** Clase pública (ExportMovimientoFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportMovimientoFilterDto {
   @IsOptional()
   @IsEnum(TipoMovimiento)

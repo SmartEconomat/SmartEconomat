@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsObject, IsOptional, Min } from 'class-validator';
 
+/** Clase pública (UpsertPedidoDraftDto). Paquete: smart-economat-backend (Nest). */
 export class UpsertPedidoDraftDto {
   @ApiProperty({
     description:

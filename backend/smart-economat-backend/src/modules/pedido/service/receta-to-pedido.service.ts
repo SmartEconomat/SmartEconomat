@@ -43,12 +43,18 @@ type ResolvedRecetaIngredientContext = {
 };
 
 /**
- * Documentación en español.
+ * Servicio de dominio para receta to pedido.
  */
 @Injectable()
 export class RecetaToPedidoService {
   private readonly logger = new Logger(RecetaToPedidoService.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RecetaRepository} recetaRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoService} pedidoService - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly recetaRepository: RecetaRepository,
     private readonly pedidoService: PedidoService,
@@ -56,7 +62,13 @@ export class RecetaToPedidoService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {GeneratePedidoFromRecetasDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Pedido>} Datos efectivos después de ejecutar la operación.
    */
   async generateFromRecetas(
     dto: GeneratePedidoFromRecetasDto,
@@ -83,7 +95,12 @@ export class RecetaToPedidoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "buildBatchOrderFromRecetas" en smart-economat-backend (Nest).
+   * @undefined {GeneratePedidoFromRecetasDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<CreatePedidoUsuarioDto>} Datos efectivos después de ejecutar la operación.
    */
   async buildBatchOrderFromRecetas(
     dto: GeneratePedidoFromRecetasDto
@@ -202,7 +219,11 @@ export class RecetaToPedidoService {
 
     for (const receta of recetas) {
       for (const ingrediente of receta.ingredientes ?? []) {
-        if (!ingrediente.producto || ingrediente.producto.deletedAt) {
+        if (
+          !ingrediente.producto ||
+          ingrediente.producto.deletedAt ||
+          ingrediente.producto.activo === false
+        ) {
           throw new BadRequestException(
             `La receta ${receta.nombre} contiene un producto inactivo o no disponible.`
           );

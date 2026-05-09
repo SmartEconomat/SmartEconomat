@@ -70,7 +70,14 @@ function buildProductoProveedorPayload(
 }
 
 /**
- * Documentación en español.
+ * Construye producto payload a partir de los parámetros recibidos.
+ *
+ * @param formData Parámetro de entrada para la operación.
+ */
+/**
+ * Expone "buildProductoPayload" en smart-economat-frontend (SPA).
+ * @undefined {Record<string, unknown>} formData - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<{ nombre: string; marca: string | undefined; descripcion: string | undefined; unidad: import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/src/services/producto.types").UnidadMedida; tipo: CategoriaProducto | undefined; contenido: number; codigoBarras: string | undefined; pathImg: string | undefined; alergenos: NonNullable<"GLUTEN" | "CRUSTACEOS" | "HUEVOS" | "PESCADO" | "CACAHUETES" | "SOJA" | "LACTEOS" | "FRUTOS_CON_CASCARA" | "APIO" | "MOSTAZA" | "SESAMO" | "SULFITO" | "ALTRAMUCES" | "MOLUSCOS" | undefined>[] | undefined; proveedores: { proveedorId: string; marcaEspecifica?: string; codigoBarras?: string; precioUnitario: number; }[] | undefined; }>} Datos efectivos después de ejecutar la operación.
  */
 export async function buildProductoPayload(formData: Record<string, unknown>) {
   const typedFormData = formData as ProductoFormData;
@@ -125,6 +132,11 @@ export async function buildProductoPayload(formData: Record<string, unknown>) {
     finalPathImg = typedFormData.imagen.trim();
   }
 
+  const activoExplicit =
+    typeof typedFormData.activo === 'boolean'
+      ? typedFormData.activo
+      : undefined;
+
   const proveedores = Array.isArray(typedFormData.proveedores)
     ? typedFormData.proveedores.reduce<
         Array<{
@@ -158,5 +170,6 @@ export async function buildProductoPayload(formData: Record<string, unknown>) {
     pathImg: finalPathImg,
     alergenos: normalizedAlergenos,
     proveedores: proveedores?.length ? proveedores : undefined,
+    ...(activoExplicit !== undefined ? { activo: activoExplicit } : {}),
   };
 }

@@ -14,6 +14,8 @@ import { SortableFields } from '../../../common/decorators/sortable-fields.decor
 import { UsuarioService } from '../service/usuario.service';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
+import { UpdateSelfPerfilDto } from '../dto/update-self-perfil.dto';
+import { UpdateMisUbicacionesDto } from '../dto/update-mis-ubicaciones.dto';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -28,20 +30,26 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { rolUsuario } from '../enums/usuario.enums';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la gestión de usuarios, perfiles y permisos granulares.
+ * Permite la administración de cuentas de usuario, cambios de contraseña,
+ * y la asignación/exclusión de permisos adicionales sobre los roles base.
  */
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   /**
-   * Documentación en español.
+   * Crea una instancia de UsuarioController.
+   * @param usuarioService Servicio para la gestión lógica de usuarios.
    */
   constructor(private readonly usuarioService: UsuarioService) {}
 
   /**
-   * Documentación en español.
+   * Crea un nuevo usuario en el sistema.
+   * @param dto Datos del usuario (nombre, email, rol, contraseña).
+   * @returns El usuario creado.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.usuarios.crear)
@@ -50,7 +58,9 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Crea un usuario con privilegios administrativos (solo accesible por ADMIN).
+   * @param dto Datos extendidos de creación administrativa.
+   * @returns El usuario administrativo creado.
    */
   @Post('admin')
   @Roles(rolUsuario.ADMIN)
@@ -60,7 +70,9 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene la información del perfil del usuario autenticado, incluyendo sus permisos efectivos.
+   * @param id ID del usuario obtenido del token JWT.
+   * @returns Perfil completo del usuario.
    */
   @Get('perfil')
   async getPerfil(@GetUser('id') id: string) {
@@ -73,15 +85,54 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Catálogo mínimo de ubicaciones para enlazar la cuenta (Inventario → Mis ubicaciones).
+   */
+  @Get('perfil/catalogo-ubicaciones')
+  getCatalogoUbicacionesParaPerfil() {
+    return this.usuarioService.findCatalogoUbicacionesParaEnlaces();
+  }
+
+  /**
+   * Actualiza los vínculos usuario↔ubicación del propio usuario.
+   */
+  @Patch('perfil/mis-ubicaciones')
+  updateMisUbicacionesPerfil(
+    @GetUser('id') id: string,
+    @Body() dto: UpdateMisUbicacionesDto
+  ) {
+    return this.usuarioService.updateMisUbicaciones(id, dto);
+  }
+
+  /**
+   * Actualiza la información del perfil del usuario autenticado.
+   * @param id ID del usuario.
+   * @param dto Datos a actualizar.
+   * @returns El usuario actualizado.
    */
   @Patch('perfil')
-  updatePerfil(@GetUser('id') id: string, @Body() dto: UpdateUsuarioDto) {
+  updatePerfil(@GetUser('id') id: string, @Body() dto: UpdateSelfPerfilDto) {
     return this.usuarioService.update(id, dto);
   }
 
   /**
-   * Documentación en español.
+   * Actualiza las preferencias del usuario (tutoriales, configuración UI).
+   * @param id ID del usuario.
+   * @param preferences Objeto de preferencias.
+   * @returns El usuario actualizado.
+   */
+  @Patch('perfil/preferences')
+  updatePreferences(
+    @GetUser('id') id: string,
+    @Body() preferences: Record<string, any>
+  ) {
+    return this.usuarioService.updatePreferences(id, preferences);
+  }
+
+  /**
+   * Cambia la contraseña del usuario autenticado verificando la anterior.
+   * @param id ID del usuario.
+   * @param dto Contraseña antigua y nueva.
+   * @returns Resultado de la operación.
    */
   @Patch('perfil/password')
   changePassword(@GetUser('id') id: string, @Body() dto: ChangePasswordDto) {
@@ -89,20 +140,15 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Lista todos los usuarios con soporte para paginación y ordenación.
+   * @param query Parámetros de consulta.
+   * @param userRole Rol del usuario que realiza la consulta.
+   * @returns Lista paginada de usuarios.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   findAll(
-    @SortableFields([
-      'username',
-      'email',
-      'rol',
-      'status',
-      'activo',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields(SORTABLE_FIELDS.usuarios)
     query: PaginationQueryDto,
     @GetUser('rol') userRole: string
   ) {
@@ -110,7 +156,12 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene una lista minimalista de usuarios (ID y nombre) para selectores.
+   * @returns Lista de usuarios simplificada.
+   */
+  /**
+   * Expone "findAllMinimal" en smart-economat-backend (Nest).
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('minimos')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
@@ -119,7 +170,9 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle de un usuario por su UUID.
+   * @param id UUID del usuario.
+   * @returns El usuario encontrado.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.usuarios.ver)
@@ -128,7 +181,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza la información de un usuario específico.
+   * @param id UUID del usuario.
+   * @param dto Datos a actualizar.
+   * @returns El usuario actualizado.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -140,7 +196,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Actualización administrativa de un usuario (solo para ADMIN).
+   * @param id UUID del usuario.
+   * @param dto Datos administrativos.
+   * @returns El usuario actualizado.
    */
   @Patch(':id/admin')
   @Roles(rolUsuario.ADMIN)
@@ -153,7 +212,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Activa o desactiva la cuenta de un usuario.
+   * @param id UUID del usuario.
+   * @param dto Estado de activación.
+   * @returns El usuario con el nuevo estado.
    */
   @Patch(':id/activar')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -165,7 +227,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Cambia el rol principal de un usuario.
+   * @param id UUID del usuario.
+   * @param dto Nuevo rol.
+   * @returns El usuario actualizado.
    */
   @Patch(':id/rol')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -177,7 +242,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Fuerza el restablecimiento de la contraseña de un usuario por un administrador.
+   * @param id UUID del usuario.
+   * @param dto Nueva contraseña.
+   * @returns Resultado de la operación.
    */
   @Patch(':id/password')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -189,7 +257,13 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina un usuario del sistema (eliminación lógica).
+   * @param id UUID del usuario.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.usuarios.eliminar)
@@ -198,7 +272,10 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Añade un permiso individual adicional a un usuario, independientemente de su rol.
+   * @param id UUID del usuario.
+   * @param permisoId UUID del permiso.
+   * @returns Resultado de la asociación.
    */
   @Post(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -210,7 +287,15 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina un permiso adicional previamente asignado.
+   * @param id UUID del usuario.
+   * @param permisoId UUID del permiso.
+   */
+  /**
+   * Expone "removeAdditionalPermission" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -222,7 +307,16 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Añade un permiso a la lista de exclusiones de un usuario.
+   * El usuario NO tendrá este permiso aunque su rol se lo otorgue.
+   * @param id UUID del usuario.
+   * @param permisoId UUID del permiso.
+   */
+  /**
+   * Expone "addExcludedPermission" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -234,7 +328,15 @@ export class UsuarioController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina un permiso de la lista de exclusiones.
+   * @param id UUID del usuario.
+   * @param permisoId UUID del permiso.
+   */
+  /**
+   * Expone "removeExcludedPermission" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ success: boolean; }>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)

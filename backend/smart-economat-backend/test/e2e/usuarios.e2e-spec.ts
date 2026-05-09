@@ -5,7 +5,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('UsuarioController (e2e)', () => {
   let app: INestApplication;
@@ -30,7 +30,7 @@ describe('UsuarioController (e2e)', () => {
 
   describe('Perfil (Auto-servicio)', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /usuarios/perfil - Debe obtener mi perfil (200)', async () => {
       await request(app.getHttpServer() as Server)
@@ -44,7 +44,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /usuarios/perfil - Debe actualizar mi nombre de usuario (200)', async () => {
       await request(app.getHttpServer() as Server)
@@ -58,7 +58,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /usuarios/perfil/password - Debe cambiar contraseña validando la anterior (200)', async () => {
       await request(app.getHttpServer() as Server)
@@ -85,11 +85,63 @@ describe('UsuarioController (e2e)', () => {
         })
         .expect(200);
     });
+
+    it('PATCH /usuarios/perfil/mis-ubicaciones - Debe vincular ubicaciones válidas (200)', async () => {
+      const ubiRes = await request(app.getHttpServer() as Server)
+        .post('/api/v1/ubicacion')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          nombre: `Perfil ubicación E2E ${Date.now()}`,
+          descripcion: 'asignación usuario',
+        })
+        .expect(201);
+
+      const ubicacionId = ubiRes.body.data.id as string;
+
+      await request(app.getHttpServer() as Server)
+        .patch('/api/v1/usuarios/perfil/mis-ubicaciones')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          ubicacionesIds: [ubicacionId],
+          ubicacionPredeterminadaId: ubicacionId,
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.ubicacionId).toBe(ubicacionId);
+        });
+
+      const perfil = await request(app.getHttpServer() as Server)
+        .get('/api/v1/usuarios/perfil')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(perfil.body.data.ubicacionId).toBe(ubicacionId);
+    });
+
+    it('PATCH /usuarios/perfil/mis-ubicaciones - Debe fallar con ubicacionesIds inexistente (404)', async () => {
+      await request(app.getHttpServer() as Server)
+        .patch('/api/v1/usuarios/perfil/mis-ubicaciones')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          ubicacionesIds: ['01900000-0000-7000-8000-000000000099'],
+        })
+        .expect(404);
+    });
+
+    it('PATCH /usuarios/perfil - debe rechazar campos de ubicación (whitelist)', async () => {
+      await request(app.getHttpServer() as Server)
+        .patch('/api/v1/usuarios/perfil')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          ubicacionId: '01900000-0000-7000-8000-000000000099',
+        })
+        .expect(400);
+    });
   });
 
   describe('Administración (Solo Admin)', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /usuarios - Debe listar usuarios (200)', async () => {
       const res = await request(app.getHttpServer() as string)
@@ -111,7 +163,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /usuarios/:id - Debe obtener un usuario (200)', async () => {
       if (!testUserId) return;
@@ -122,7 +174,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /usuarios/:id/activar - Debe cambiar estado activo (200)', async () => {
       if (!testUserId) return;
@@ -134,7 +186,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /usuarios/:id/rol - Debe cambiar el rol (200)', async () => {
       if (!testUserId) return;
@@ -146,7 +198,7 @@ describe('UsuarioController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /usuarios/:id - Debe fallar con UUID inválido (400)', async () => {
       await request(app.getHttpServer() as string)

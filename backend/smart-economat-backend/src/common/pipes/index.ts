@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 export { ParseUUIDv7Pipe } from './parse-uuid-v7.pipe';

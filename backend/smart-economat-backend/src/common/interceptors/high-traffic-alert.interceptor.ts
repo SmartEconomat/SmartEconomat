@@ -9,14 +9,14 @@ import { Observable } from 'rxjs';
 import type { Request } from 'express';
 
 /**
- * Documentación en español.
+ * Representa high traffic alert interceptor en el sistema.
  */
 @Injectable()
 export class HighTrafficAlertInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HighTrafficAlert');
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private readonly userRequestCount = new Map<
     string,
@@ -24,17 +24,21 @@ export class HighTrafficAlertInterceptor implements NestInterceptor {
   >();
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private readonly ALERT_THRESHOLD = 100;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private readonly ALERT_WINDOW_MS = 10000;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de intercept dentro del flujo de la aplicación.
+   *
+   * @param context Parámetro de entrada para la operación.
+   * @param next Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (
@@ -57,7 +61,10 @@ export class HighTrafficAlertInterceptor implements NestInterceptor {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de monitor user dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @param path Parámetro de entrada para la operación.
    */
   private monitorUser(userId: string, path: string) {
     const now = Date.now();

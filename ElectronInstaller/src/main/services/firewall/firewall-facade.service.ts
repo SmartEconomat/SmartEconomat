@@ -11,7 +11,16 @@ import type {
 } from "./firewall.types";
 import { FirewallVerifierService } from "./firewall-verifier.service";
 
+/** Servicio del proceso principal: FirewallFacadeService. */
 export class FirewallFacadeService {
+  /**
+   * Construye la instancia del servicio.
+   * @param {FirewallDetectorService} detector - Entrada esperada por la función.
+   * @param {FirewallPlannerService} planner - Entrada esperada por la función.
+   * @param {FirewallExecutorService} executor - Entrada esperada por la función.
+   * @param {FirewallVerifierService} verifier - Entrada esperada por la función.
+   * @param {FirewallReporterService} reporter - Entrada esperada por la función.
+   */
   constructor(
     private readonly detector = new FirewallDetectorService(),
     private readonly planner = new FirewallPlannerService(),
@@ -89,6 +98,11 @@ export class FirewallFacadeService {
   }
   // #endregion
 
+  /**
+   * Garantiza la existencia o validez del recurso indicado.
+   * @param {FirewallEnsureContext} context - Entrada esperada por la función.
+   * @returns {Promise<FirewallEnsureSummary>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async ensure(context: FirewallEnsureContext): Promise<FirewallEnsureSummary> {
     this.agentLog("IPC-FW-0", "firewall.facade.ensure.start", {
       verificationMode: context.verificationMode ?? "default",

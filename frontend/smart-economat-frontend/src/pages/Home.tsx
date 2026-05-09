@@ -86,9 +86,8 @@ interface QuickActionFormData {
   alergenos?: string[];
   nombre?: string;
   instrucciones?: string;
-  tiempo?: Receta['tiempo'];
   dificultad?: Receta['dificultad'];
-  tiempoPreparacion?: string;
+  tiempoEstimadoMinutos?: number | string;
   ingredientes?: IngredienteFormValue[];
   [key: string]: unknown;
 }
@@ -680,6 +679,7 @@ const Home: React.FC = () => {
               >
                 {canCreatePedido && (
                   <DashboardQuickAction
+                    testId="dashboard-quick-action-order"
                     title={t('dashboard.quickActions.nuevoPedido')}
                     description={t('dashboard.quickActions.descNuevoPedido')}
                     icon={<ShoppingCartIcon fontSize="small" />}
@@ -689,6 +689,7 @@ const Home: React.FC = () => {
                 )}
                 {canCreateProducto && (
                   <DashboardQuickAction
+                    testId="dashboard-quick-action-product"
                     title={t('dashboard.quickActions.anadirProducto')}
                     description={t('dashboard.quickActions.descAnadirProducto')}
                     icon={<InventoryIcon fontSize="small" />}
@@ -698,6 +699,7 @@ const Home: React.FC = () => {
                 )}
                 {canCreateRecepcion && (
                   <DashboardQuickAction
+                    testId="dashboard-quick-action-reception"
                     title={t('dashboard.quickActions.registrarRecepcion')}
                     description={t(
                       'dashboard.quickActions.descRegistrarRecepcion'
@@ -709,6 +711,7 @@ const Home: React.FC = () => {
                 )}
                 {canCreateReceta && (
                   <DashboardQuickAction
+                    testId="dashboard-quick-action-recipe"
                     title={t('dashboard.quickActions.nuevaReceta')}
                     description={t('dashboard.quickActions.descNuevaReceta')}
                     icon={<AssignmentIcon fontSize="small" />}

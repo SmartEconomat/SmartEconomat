@@ -129,5 +129,23 @@ describe('AlumnoController (e2e)', () => {
       expect(response.status).toBe(201);
       expect(response.body.data).toHaveProperty('provisionalPassword');
     });
+
+    it('DELETE /profesores/alumnos/:id - El profesor elimina a su alumno', async () => {
+      const response = await request(app.getHttpServer() as string)
+        .delete(`/api/v1/profesores/alumnos/${alumnoId}`)
+        .set('Authorization', `Bearer ${profesorToken}`);
+
+      expect(response.status).toBe(200);
+
+      const listResponse = await request(app.getHttpServer() as string)
+        .get('/api/v1/profesores/alumnos')
+        .set('Authorization', `Bearer ${profesorToken}`);
+
+      expect(listResponse.status).toBe(200);
+      expect(
+        Array.isArray(listResponse.body.data) &&
+          listResponse.body.data.some((a: { id: string }) => a.id === alumnoId)
+      ).toBe(false);
+    });
   });
 });

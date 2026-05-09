@@ -1,13 +1,19 @@
 import { DynamicField } from '../components/ui/DynamicFormModal';
 import { MotivoMerma } from '../services/merma.types';
 import i18n from '../i18n';
+import { getEnumLabel } from '../i18n/enumPresentation';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 /**
- * Documentación en español.
+ * Obtiene merma schema.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {DynamicField[]} Datos efectivos después de ejecutar la operación.
  */
 export function getMermaSchema(): DynamicField[] {
   const t = i18n.t.bind(i18n);
@@ -30,28 +36,10 @@ export function getMermaSchema(): DynamicField[] {
       label: t('merma.form.motivo'),
       type: 'select',
       required: true,
-      options: [
-        {
-          value: MotivoMerma.ROTURA,
-          label: t('merma.form.motivoOpciones.roturaEnvase'),
-        },
-        {
-          value: MotivoMerma.DETERIORO,
-          label: t('merma.form.motivoOpciones.deterioroCaducidad'),
-        },
-        {
-          value: MotivoMerma.HURTO,
-          label: t('merma.form.motivoOpciones.hurto'),
-        },
-        {
-          value: MotivoMerma.ERROR_PREPARACION,
-          label: t('merma.form.motivoOpciones.errorPreparacion'),
-        },
-        {
-          value: MotivoMerma.OTROS,
-          label: t('merma.form.motivoOpciones.otros'),
-        },
-      ],
+      options: Object.values(MotivoMerma).map((value) => ({
+        value,
+        label: getEnumLabel(i18n.t.bind(i18n), 'mermaMotivo', value),
+      })),
     },
     {
       name: 'notas',
@@ -63,6 +51,6 @@ export function getMermaSchema(): DynamicField[] {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export const mermaSchema: DynamicField[] = getMermaSchema();

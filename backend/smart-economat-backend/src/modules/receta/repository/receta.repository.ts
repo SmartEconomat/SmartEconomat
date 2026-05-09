@@ -12,7 +12,6 @@ import { Producto } from '../../producto/producto.entity/producto.entity';
 import { CreateRecetaDto } from '../dto/create-receta.dto';
 import { UpdateRecetaDto } from '../dto/update-receta.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import {
   TipoProducto,
@@ -22,6 +21,7 @@ import { UnidadIngrediente } from '../enums/receta.enums';
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { ProductoAlergeno } from '../../producto/producto-alergeno.entity/producto-alergeno.entity';
+import { RecetaListQueryDto } from '../dto/receta-list-query.dto';
 
 const INGREDIENTES_RELATIONS = [
   'ingredientes',
@@ -30,8 +30,14 @@ const INGREDIENTES_RELATIONS = [
   'ingredientes.proveedorFavorito',
 ] as const;
 
+/** Clase pública (RecetaRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class RecetaRepository {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Receta>} recetaRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Receta)
     private readonly recetaRepo: Repository<Receta>,
@@ -39,6 +45,11 @@ export class RecetaRepository {
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateRecetaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
+   */
   async create(dto: CreateRecetaDto): Promise<Receta> {
     return this.dataSource.transaction(async (manager) => {
       const productoIds = dto.ingredientes.map((ing) => ing.productoId);
@@ -116,35 +127,81 @@ export class RecetaRepository {
     });
   }
 
+  /**
+   * Expone "findAllPaginated" en smart-economat-backend (Nest).
+   * @undefined {RecetaListQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Receta>>} Datos efectivos después de ejecutar la operación.
+   */
   async findAllPaginated(
-    query: PaginationQueryDto,
+    query: RecetaListQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Receta>> {
     void userRole;
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
-    let sortBy = query.sortBy ?? 'nombre';
+    const sortBy = query.sortBy ?? 'nombre';
     const order = query.order ?? 'ASC';
 
-    if (sortBy === 'tiempo' || sortBy === 'tiempoPreparacion') {
-      sortBy = 'tiempoEstimadoMinutos';
+    const minTiempo = query.minTiempoMinutos;
+    const maxTiempo = query.maxTiempoMinutos;
+
+    if (
+      minTiempo !== undefined &&
+      maxTiempo !== undefined &&
+      minTiempo > maxTiempo
+    ) {
+      throw new BadRequestException(
+        'El filtro de tiempo es invalido: minTiempoMinutos no puede ser mayor que maxTiempoMinutos.'
+      );
     }
 
-    const whereCondition = query.searchTerm
-      ? [
-          { nombre: ILike(`%${query.searchTerm}%`) },
-          { instrucciones: ILike(`%${query.searchTerm}%`) },
-        ]
-      : {};
+    const sortColumnMap: Readonly<Record<string, string>> = {
+      nombre: 'receta.nombre',
+      tiempo: 'receta.tiempoEstimadoMinutos',
+      tiempoPreparacion: 'receta.tiempoEstimadoMinutos',
+      tiempoEstimadoMinutos: 'receta.tiempoEstimadoMinutos',
+      dificultad: 'receta.dificultad',
+      rendimiento: 'receta.rendimiento',
+      costeUnitarioEstimado: 'receta.costeUnitarioEstimado',
+      createdAt: 'receta.createdAt',
+      updatedAt: 'receta.updatedAt',
+    };
 
-    const [data, total] = await this.recetaRepo.findAndCount({
-      where: whereCondition,
-      relations: [...INGREDIENTES_RELATIONS],
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
-      withDeleted: false,
-    });
+    const sortColumn = sortColumnMap[sortBy] ?? sortColumnMap.nombre;
+
+    const qb = this.recetaRepo
+      .createQueryBuilder('receta')
+      .leftJoinAndSelect('receta.ingredientes', 'ingredientes')
+      .leftJoinAndSelect('ingredientes.producto', 'producto')
+      .leftJoinAndSelect('producto.alergenos', 'alergenos')
+      .leftJoinAndSelect('ingredientes.proveedorFavorito', 'proveedorFavorito')
+      .orderBy(sortColumn, order)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.searchTerm) {
+      qb.andWhere(
+        '(receta.nombre ILIKE :search OR receta.instrucciones ILIKE :search)',
+        {
+          search: `%${query.searchTerm}%`,
+        }
+      );
+    }
+
+    if (minTiempo !== undefined) {
+      qb.andWhere('receta.tiempoEstimadoMinutos >= :minTiempo', {
+        minTiempo,
+      });
+    }
+
+    if (maxTiempo !== undefined) {
+      qb.andWhere('receta.tiempoEstimadoMinutos <= :maxTiempo', {
+        maxTiempo,
+      });
+    }
+
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
@@ -155,6 +212,11 @@ export class RecetaRepository {
     };
   }
 
+  /**
+   * Expone "findByIds" en smart-economat-backend (Nest).
+   * @undefined {string[]} ids - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta[]>} Datos efectivos después de ejecutar la operación.
+   */
   async findByIds(ids: string[]): Promise<Receta[]> {
     return this.recetaRepo.find({
       where: { id: In(ids) },
@@ -162,6 +224,12 @@ export class RecetaRepository {
     });
   }
 
+  /**
+   * Expone "findById" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta | null>} Datos efectivos después de ejecutar la operación.
+   */
   async findById(id: string, userRole?: string): Promise<Receta | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -184,6 +252,12 @@ export class RecetaRepository {
     return receta;
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateRecetaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
+   */
   async update(id: string, dto: UpdateRecetaDto): Promise<Receta> {
     return this.dataSource.transaction(async (manager) => {
       if (dto.ingredientes) {
@@ -273,6 +347,11 @@ export class RecetaRepository {
     });
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async remove(id: string): Promise<void> {
     const result = await this.recetaRepo.softDelete(id);
     if (result.affected === 0) {
@@ -280,6 +359,12 @@ export class RecetaRepository {
     }
   }
 
+  /**
+   * Expone "duplicate" en smart-economat-backend (Nest).
+   * @undefined {string} sourceId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} newName - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
+   */
   async duplicate(sourceId: string, newName: string): Promise<Receta> {
     const sourceReceta = await this.findById(sourceId);
 
@@ -337,6 +422,12 @@ export class RecetaRepository {
     });
   }
 
+  /**
+   * Garantiza la existencia, coherencia o validez del recurso indicado.
+   * @undefined {EntityManager} manager - Entrada efectiva esperada por el contrato.
+   * @undefined {Pick<Receta, "nombre" | "unidadResultado" | "ingredientes">} receta - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Producto>} Datos efectivos después de ejecutar la operación.
+   */
   async ensureProductoElaborado(
     manager: EntityManager,
     receta: Pick<Receta, 'nombre' | 'unidadResultado' | 'ingredientes'>

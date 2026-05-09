@@ -13,6 +13,15 @@ import {
   pickDeterministic,
 } from './deterministic.seed-data';
 
+/**
+ * Expone "buildBody" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {string} resolvedPath - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function buildBody(
   context: SeedContext,
   endpoint: Endpoint,

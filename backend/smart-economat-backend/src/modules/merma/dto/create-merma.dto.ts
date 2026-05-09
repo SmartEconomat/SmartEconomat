@@ -13,6 +13,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MotivoMerma, TipoMerma } from '../enums/merma.enums';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
+/** Clase pública (CreateMermaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateMermaDto {
   @ApiProperty({ description: 'UUID del producto al que se registra la merma' })
   @IsUUID('all')

@@ -18,13 +18,22 @@ const result = spawnSync(
 );
 
 if (result.error) {
-  console.error("[fix-local-hosts] No se pudo lanzar elevación:", result.error.message);
+  console.error(
+    "[fix-local-hosts] No se pudo lanzar elevación:",
+    result.error.message,
+  );
   process.exit(1);
 }
 
 if (result.status !== 0) {
-  console.error(result.stderr || result.stdout || "[fix-local-hosts] Falló la elevación/UAC.");
+  console.error(
+    result.stderr ||
+      result.stdout ||
+      "[fix-local-hosts] Falló la elevación/UAC.",
+  );
   process.exit(result.status ?? 1);
 }
 
-console.log("[fix-local-hosts] Reparación de hosts completada (con elevación).");
+console.log(
+  "[fix-local-hosts] Reparación de hosts completada (con elevación).",
+);

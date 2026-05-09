@@ -19,6 +19,7 @@ import { Jimp } from 'jimp';
 import { ImageProcessOptionsDto } from '../dto/image-process-options.dto';
 import { resolveWritableLocalStoragePath } from '../../../common/utils/local-storage-path.util';
 
+/** Contrato de tipos público (PaginatedFiles). Contexto: smart-economat-backend (Nest). */
 export interface PaginatedFiles {
   data: Archivo[];
   total: number;
@@ -30,7 +31,7 @@ export interface PaginatedFiles {
 type ProcessedImageFormat = 'webp';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para archivo.
  */
 @Injectable()
 export class ArchivoService {
@@ -39,6 +40,11 @@ export class ArchivoService {
   private readonly storageType: string;
   private readonly uploadDir: string;
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Archivo>} archivoRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Archivo)
     private readonly archivoRepository: Repository<Archivo>,
@@ -51,7 +57,15 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "uploadFile" en smart-economat-backend (Nest).
+   * @undefined {Express.Multer.File} file - Entrada efectiva esperada por el contrato.
+   * @undefined {Usuario} user - Entrada efectiva esperada por el contrato.
+   * @undefined {ImageProcessOptionsDto | undefined} processOptions - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} shouldProcess - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Archivo>} Datos efectivos después de ejecutar la operación.
    */
   async uploadFile(
     file: Express.Multer.File,
@@ -114,7 +128,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de compress image file dentro del flujo de la aplicación.
+   *
+   * @param file Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async compressImageFile(file: Express.Multer.File): Promise<{
     filename: string;
@@ -160,7 +177,7 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async processImage(
     inputPath: string,
@@ -236,7 +253,7 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private resolveOutputFormat(
     requestedFormat?: ImageProcessOptionsDto['formatoSalida']
@@ -246,7 +263,8 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de initialize webp encoder dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
    */
   private async initializeWebpEncoder(): Promise<void> {
     if (!ArchivoService.webpEncoderInitPromise) {
@@ -277,7 +295,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Normaliza quality para mantener consistencia.
+   *
+   * @param quality Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   private normalizeQuality(quality?: number): number {
     const normalized = quality ?? 80;
@@ -286,7 +307,7 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async loadEsmModule<T>(specifier: string): Promise<T> {
     const moduleNamespace: unknown = await import(specifier);
@@ -303,7 +324,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   *
+   * @param filterDto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findAll(filterDto: FileListFilterDto): Promise<PaginatedFiles> {
     const { page = 1, limit = 20, usuarioId, mimeType } = filterDto;
@@ -338,7 +362,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<Archivo> {
     const archivo = await this.archivoRepository.findOne({
@@ -354,7 +381,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene file content.
+   *
+   * @param filename Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   getFileContent(filename: string): string {
     if (this.storageType === 'local') {
@@ -378,7 +408,11 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param user Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string, user: Usuario): Promise<void> {
     const archivo = await this.findOne(id);
@@ -398,7 +432,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de cleanup by url dentro del flujo de la aplicación.
+   *
+   * @param fileUrl Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async cleanupByUrl(fileUrl?: string): Promise<void> {
     if (!fileUrl?.trim()) {
@@ -425,7 +462,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina managed files.
+   *
+   * @param archivo Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async deleteManagedFiles(archivo: Archivo): Promise<void> {
     await this.deletePhysicalFileFromUrl(archivo.url);
@@ -436,7 +476,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina physical file from url.
+   *
+   * @param fileUrl Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   private async deletePhysicalFileFromUrl(fileUrl?: string): Promise<void> {
     const filename = this.extractFilenameFromUrl(fileUrl);
@@ -465,7 +508,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina local file quietly.
+   *
+   * @param filePath Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   private async deleteLocalFileQuietly(filePath?: string): Promise<void> {
     if (!filePath) {
@@ -486,7 +532,10 @@ export class ArchivoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de extract filename from url dentro del flujo de la aplicación.
+   *
+   * @param fileUrl Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   private extractFilenameFromUrl(fileUrl?: string): string | null {
     if (!fileUrl?.trim()) {

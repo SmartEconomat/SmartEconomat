@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   Body,
@@ -11,7 +11,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -26,22 +25,29 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para incidencia resuela.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('incidencias-resueltas')
 export class IncidenciaResuelaController {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     private readonly incidenciaResuelaService: IncidenciaResuelaService
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateIncidenciaResuelaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<IncidenciaResuelta>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.incidencias.crear)
@@ -51,12 +57,19 @@ export class IncidenciaResuelaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<IncidenciaResuelta>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
-    @Query() query: PaginationQueryDto,
+    @SortableFields(SORTABLE_FIELDS.incidenciasResueltas)
+    query: PaginationQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<IncidenciaResuelta>> {
     const userRole = req.user?.rol;
@@ -64,7 +77,13 @@ export class IncidenciaResuelaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<IncidenciaResuelta>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.incidencias.ver)
@@ -77,7 +96,13 @@ export class IncidenciaResuelaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateIncidenciaResuelaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<IncidenciaResuelta>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.incidencias.editar)
@@ -89,7 +114,12 @@ export class IncidenciaResuelaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.incidencias.eliminar)

@@ -1,40 +1,31 @@
 import { baseFetch } from './api.service';
 
 /**
- * Documentación en español.
+ * Servicio centralizado para operaciones de descarga y generación de documentos.
+ * Encapsula lógica de timeouts, manejo de errores y feedback al usuario via toasts.
  */
 
 const EXPORT_TIMEOUT_MS = 30000;
 
 /**
- * Documentación en español.
+ * Opciones de configuración para operaciones de descarga de archivos.
  */
 export interface DownloadOptions {
-  /**
-   * Documentación en español.
-   */
+  /** Nombre del archivo resultante (incluida la extensión). */
   filename: string;
-  /**
-   * Documentación en español.
-   */
+  /** Objeto de notificaciones toast para feedback al usuario. */
   toast: {
-    /**
-     * Documentación en español.
-     */
+    /** Muestra un toast de éxito. */
     success: (msg: string) => void;
-    /**
-     * Documentación en español.
-     */
+    /** Muestra un toast de error. */
     error: (msg: string) => void;
-    /**
-     * Documentación en español.
-     */
+    /** Muestra un toast informativo. */
     info: (msg: string) => void;
   };
 }
 
 /**
- * Documentación en español.
+ * Forma tipada de un error de API para distinguir AbortError de errores de red.
  */
 interface ApiError {
   name?: string;
@@ -42,11 +33,20 @@ interface ApiError {
 }
 
 /**
- * Documentación en español.
+ * Servicio estático para descarga de ficheros y apertura de PDFs desde endpoints REST.
  */
 export class DownloadService {
   /**
-   * Documentación en español.
+   * Descarga un fichero desde un endpoint y lo persiste en el disco del usuario.
+   * Implementa timeout configurable y feedback de progreso via toasts.
+   * @param path Ruta del endpoint que sirve el fichero.
+   * @param options Nombre de archivo y callbacks de notificación.
+   */
+  /**
+   * Expone "downloadFile" en smart-economat-frontend (SPA).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {DownloadOptions} options - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   static async downloadFile(
     path: string,
@@ -107,7 +107,13 @@ export class DownloadService {
   }
 
   /**
-   * Documentación en español.
+   * Abre un Blob de PDF en una nueva pestaña del navegador.
+   * @param blob Blob de datos binarios del documento PDF.
+   */
+  /**
+   * Expone "openPdfInNewTab" en smart-economat-frontend (SPA).
+   * @undefined {Blob} blob - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   static openPdfInNewTab(blob: Blob) {
     const url = window.URL.createObjectURL(blob);
@@ -117,7 +123,16 @@ export class DownloadService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el Blob de un documento generado por el backend.
+   * Útil cuando se quiere manipular el binario antes de descargarlo o abrirlo.
+   * @param path Ruta del endpoint generador del documento.
+   * @param toast Callbacks de notificación al usuario.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {{ success: (msg: string) => void; error: (msg: string) => void; info: (msg: string) => void; }} toast - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Blob>} Datos efectivos después de ejecutar la operación.
    */
   static async getBlob(
     path: string,

@@ -6,17 +6,17 @@ import {
 } from '@mui/material';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface CheckboxProps extends MuiCheckboxProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   label: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Checkbox: React.FC<CheckboxProps> = ({ label, ...props }) => {
   return (

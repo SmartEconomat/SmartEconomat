@@ -10,6 +10,12 @@ import {
 } from '../../../src/modules/movimiento/enums/movimiento.enums';
 
 describe('InventarioService', () => {
+  const mockGrainQb = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getOne: jest.fn().mockResolvedValue(null),
+  };
+
   const mockInventarioRepo = {
     create: jest.fn(),
     save: jest.fn(),
@@ -20,6 +26,7 @@ describe('InventarioService', () => {
     findCaducidadProxima: jest.fn(),
     findStockBajo: jest.fn(),
     queryStock: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue(mockGrainQb),
   };
   const mockProductoProveedorRepo = {
     findOne: jest.fn(),
@@ -35,11 +42,14 @@ describe('InventarioService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGrainQb.getOne.mockResolvedValue(null);
     service = new InventarioService(
       mockInventarioRepo as any,
       mockProductoProveedorRepo as any,
       mockMovimientoHelper as any,
-      mockDataSource as any
+      mockDataSource as any,
+      { ejecutarTransferenciaInmediata: jest.fn() } as any,
+      { assertPuedeTransferirEnUbicaciones: jest.fn() } as any
     );
   });
 
@@ -202,6 +212,7 @@ describe('InventarioService', () => {
     const queryBuilder = {
       withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(inventario),
@@ -304,6 +315,7 @@ describe('InventarioService', () => {
     const queryBuilder = {
       withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(null),
@@ -350,6 +362,7 @@ describe('InventarioService', () => {
     const queryBuilder = {
       withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(inventario),
@@ -393,6 +406,7 @@ describe('InventarioService', () => {
     const queryBuilder = {
       withDeleted: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(inventarioEliminado),

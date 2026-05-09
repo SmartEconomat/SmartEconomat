@@ -13,25 +13,26 @@ import { getEnumLabel } from '../../i18n/enumPresentation';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface ProductFiltersState {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   categorias: CategoriaProducto[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   alergenos: string[];
 }
 
+/** Contrato de tipos público (ProductFiltersProps). Contexto: smart-economat-frontend (SPA). */
 export interface ProductFiltersProps {
   filters: ProductFiltersState;
   onChange: (filters: ProductFiltersState) => void;
   onClear?: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   inline?: boolean;
 }
@@ -63,7 +64,7 @@ const CATEGORIA_OPTIONS: CategoryOption[] = [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ProductFilters: React.FC<ProductFiltersProps> = ({
   filters,

@@ -1,5 +1,11 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene el estado o valor solicitado.
+ * @param {NodeJS.Platform} platform - Entrada esperada por la función.
+ * @param {string} homeDir - Entrada esperada por la función.
+ * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
  */
 export function getDefaultRuntimePath(
   platform: NodeJS.Platform,

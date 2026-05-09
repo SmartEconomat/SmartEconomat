@@ -12,6 +12,7 @@ import {
   Chip,
   Paper,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -19,6 +20,7 @@ import DataTable, { Column } from '../../../components/ui/DataTable';
 import {
   isPendingPedidoUsuarioStatus,
   PedidoListItem,
+  EstadoPedidoUsuario,
 } from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
@@ -35,7 +37,10 @@ import {
   formatCurrency,
   formatPedidoListNumber,
 } from '../utils/pedidoFormatters';
-import { getPedidoUsuarioSelectionIds } from '../utils/pedidoOwnOrders';
+import {
+  getPedidoUsuarioSelectionIds,
+  isPedidoUsuarioRow,
+} from '../utils/pedidoOwnOrders';
 import { formatLocalizedDate } from '../../../utils/intlFormat';
 
 dayjs.extend(isoWeek);
@@ -101,11 +106,46 @@ const getPedidoUserName = (
   pedido.usuario?.email ||
   unknownLabel;
 
-const isPendingPedido = (pedido: PedidoListItem): boolean =>
-  isPendingPedidoUsuarioStatus(String(pedido.estado));
+const isConsolidatablePedido = (pedido: PedidoListItem): boolean => {
+  return getConsolidationBlockReason(pedido) === undefined;
+};
+
+const getConsolidationBlockReason = (
+  pedido: PedidoListItem
+):
+  | 'notPedidoUsuario'
+  | 'cancelled'
+  | 'invalidState'
+  | 'alreadyConsolidated'
+  | 'hasRecepciones'
+  | undefined => {
+  if (!isPedidoUsuarioRow(pedido)) return 'notPedidoUsuario';
+
+  if (String(pedido.estado) === EstadoPedidoUsuario.CANCELADO)
+    return 'cancelled';
+
+  if (String(pedido.estado) === EstadoPedidoUsuario.CONSOLIDADO) {
+    return 'alreadyConsolidated';
+  }
+
+  const isValidState =
+    isPendingPedidoUsuarioStatus(String(pedido.estado)) ||
+    String(pedido.estado) === EstadoPedidoUsuario.APROBADO;
+  if (!isValidState) return 'invalidState';
+
+  if (
+    (pedido.pedidos || []).some(
+      (p) => (p as { recepcionesPedido?: unknown[] }).recepcionesPedido?.length
+    )
+  ) {
+    return 'hasRecepciones';
+  }
+
+  return undefined;
+};
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   data,
@@ -213,10 +253,12 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
   };
 
   const getSelectablePedidoUsuarioIds = (pedido: PedidoListItem): string[] =>
-    isPendingPedido(pedido) ? getPedidoUsuarioSelectionIds(pedido) : [];
+    isConsolidatablePedido(pedido) ? getPedidoUsuarioSelectionIds(pedido) : [];
 
   const hasSelectablePedidos = (group: WeeklyGroup): boolean =>
-    group.users.some((user) => user.visiblePedidos.some(isPendingPedido));
+    group.users.some((user) =>
+      user.visiblePedidos.some(isConsolidatablePedido)
+    );
 
   const buildSelectableColumns = (
     pedidoUsuarioIdsInScope: string[]
@@ -255,6 +297,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
         (() => {
           const pedidoUsuarioIds = getSelectablePedidoUsuarioIds(pedido);
           const isSelectable = pedidoUsuarioIds.length > 0;
+          const blockReason = getConsolidationBlockReason(pedido);
           const allSelected = pedidoUsuarioIds.every((id) =>
             selectedPedidoUsuarioIds.includes(id)
           );
@@ -262,18 +305,28 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
             selectedPedidoUsuarioIds.includes(id)
           );
 
-          return (
+          const disabled = !isSelectable || Boolean(blockReason);
+          const tooltip =
+            blockReason === 'alreadyConsolidated'
+              ? t('pedidos.weeklyBoard.selectionDisabled.alreadyConsolidated')
+              : blockReason === 'hasRecepciones'
+                ? t('pedidos.weeklyBoard.selectionDisabled.hasRecepciones')
+                : blockReason === 'cancelled'
+                  ? t('pedidos.weeklyBoard.selectionDisabled.cancelled')
+                  : blockReason === 'invalidState'
+                    ? t('pedidos.weeklyBoard.selectionDisabled.invalidState')
+                    : '';
+
+          const checkbox = (
             <Checkbox
               size="small"
-              checked={isSelectable && allSelected}
-              indeterminate={isSelectable && someSelected && !allSelected}
-              disabled={!isSelectable}
+              checked={!disabled && allSelected}
+              indeterminate={!disabled && someSelected && !allSelected}
+              disabled={disabled}
               onClick={(event) => event.stopPropagation()}
               onChange={(event) => {
                 event.stopPropagation();
-                if (!isSelectable) {
-                  return;
-                }
+                if (disabled) return;
                 toggleUserSelection(pedidoUsuarioIds);
               }}
               inputProps={{
@@ -282,6 +335,15 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                 }),
               }}
             />
+          );
+
+          // Tooltip needs a wrapper element when child is disabled
+          return tooltip ? (
+            <Tooltip title={tooltip}>
+              <span>{checkbox}</span>
+            </Tooltip>
+          ) : (
+            checkbox
           );
         })(),
     },
@@ -462,7 +524,8 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                           const pedidoUsuarioIds =
                             getSelectablePedidoUsuarioIds(row);
                           const isSelectable =
-                            isPendingPedido(row) && pedidoUsuarioIds.length > 0;
+                            isConsolidatablePedido(row) &&
+                            pedidoUsuarioIds.length > 0;
                           const allSelected =
                             isSelectable &&
                             pedidoUsuarioIds.every((id) =>

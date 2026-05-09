@@ -12,6 +12,12 @@ import type {
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
+/**
+ * Expone la operación "evaluateDockerChecks" del instalador SmartEconomat.
+ * @param {CommandResult} dockerVersion - Entrada esperada por la función.
+ * @param {CommandResult} composeVersion - Entrada esperada por la función.
+ * @returns {PreflightCheck[]} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function evaluateDockerChecks(
   dockerVersion: CommandResult,
   composeVersion: CommandResult,
@@ -39,6 +45,14 @@ export function evaluateDockerChecks(
   return [dockerCheck, composeCheck];
 }
 
+/**
+ * Expone la operación "downgradeWindowsDockerDesktopChecks" del instalador SmartEconomat.
+ * @param {PreflightCheck[]} checks - Entrada esperada por la función.
+ * @param {CommandResult} dockerVersion - Entrada esperada por la función.
+ * @param {CommandResult} composeVersion - Entrada esperada por la función.
+ * @param {NodeJS.Platform} platform - Entrada esperada por la función.
+ * @returns {PreflightCheck[]} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function downgradeWindowsDockerDesktopChecks(
   checks: PreflightCheck[],
   dockerVersion: CommandResult,
@@ -84,12 +98,23 @@ interface PortInspectionResult {
   ownerProcessName?: string;
 }
 
+/** Servicio del proceso principal: PreflightService. */
 export class PreflightService {
+  /**
+   * Construye la instancia del servicio.
+   * @param {OSDetectorService} osDetector - Entrada esperada por la función.
+   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
+   */
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
   ) {}
 
+  /**
+   * Expone la operación "run" del instalador SmartEconomat.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async run(runtimePath: string): Promise<OperationResult<PreflightReport>> {
     const checks: PreflightCheck[] = [];
 
@@ -114,6 +139,11 @@ export class PreflightService {
     };
   }
 
+  /**
+   * Expone la operación "runAutoRepair" del instalador SmartEconomat.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async runAutoRepair(
     runtimePath: string,
   ): Promise<OperationResult<PreflightReport>> {
@@ -125,6 +155,11 @@ export class PreflightService {
     return this.run(runtimePath);
   }
 
+  /**
+   * Expone la operación "releaseBusyPort" del instalador SmartEconomat.
+   * @param {PortRepairPayload} payload - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async releaseBusyPort(
     payload: PortRepairPayload,
   ): Promise<OperationResult<PreflightReport>> {

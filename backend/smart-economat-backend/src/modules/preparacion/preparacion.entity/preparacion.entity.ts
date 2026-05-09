@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Check, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
@@ -7,44 +7,48 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { PreparacionEstado } from '../enums/preparacion.enums';
 
 /**
- * Documentación en español.
+ * Representa preparacion en el sistema.
  */
 @Entity('preparacion')
+@Check(
+  'CHK_preparacion_cantidad_step_05',
+  `("cantidad_a_producir" * 2) = floor("cantidad_a_producir" * 2) AND "cantidad_a_producir" > 0`
+)
 export class Preparacion extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'ubicacion_destino_id', nullable: true })
   ubicacionDestinoId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Receta, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'receta_id' })
   receta!: Relation<Receta>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -56,7 +60,7 @@ export class Preparacion extends BaseEntity {
   cantidadAProducir!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -66,7 +70,7 @@ export class Preparacion extends BaseEntity {
   estado!: PreparacionEstado;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -76,7 +80,7 @@ export class Preparacion extends BaseEntity {
   fechaProgramada?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -86,7 +90,7 @@ export class Preparacion extends BaseEntity {
   fechaInicio?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -96,7 +100,7 @@ export class Preparacion extends BaseEntity {
   fechaFinalizacion?: Date | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;

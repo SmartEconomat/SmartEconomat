@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Clase pública (SearchProductoProveedorDto). Paquete: smart-economat-backend (Nest). */
 export class SearchProductoProveedorDto {
   @IsOptional()
   @IsString({

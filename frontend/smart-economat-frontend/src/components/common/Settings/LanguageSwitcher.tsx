@@ -23,6 +23,10 @@ const SUPPORTED_LANGS = [
 
 type LangCode = (typeof SUPPORTED_LANGS)[number]['code'];
 
+/**
+ * Expone "LanguageSwitcher" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
   const { changeLanguage } = useAuth();

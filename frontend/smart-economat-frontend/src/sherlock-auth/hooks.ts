@@ -3,6 +3,10 @@ import { useAppSelector } from '../store/hooks';
 import { AuthContext } from './context';
 import { isElevatedRole } from './permissions';
 
+/**
+ * Expone "useAuth" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/src/sherlock-auth/types").AuthContextType} Datos efectivos después de ejecutar la operación.
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -11,6 +15,11 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Expone "usePermission" en smart-economat-frontend (SPA).
+ * @undefined {string | string[] | undefined} permiso - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export const usePermission = (
   permiso: string | string[] | undefined
 ): boolean => {
@@ -30,6 +39,11 @@ export const usePermission = (
   }, [permissionsMap, permiso, userRole]);
 };
 
+/**
+ * Expone "useAnyPermission" en smart-economat-frontend (SPA).
+ * @undefined {string[]} permisos - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export const useAnyPermission = (permisos: string[]): boolean => {
   const userRole = useContext(AuthContext)?.user?.rol;
   const permissionsMap = useAppSelector(

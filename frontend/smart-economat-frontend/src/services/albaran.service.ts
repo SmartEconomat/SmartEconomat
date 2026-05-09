@@ -4,20 +4,35 @@ import {
   CreateAlbaranDto,
   UpdateAlbaranDto,
 } from './albaran.types';
-import { baseFetch, ApiResponse, PaginatedData } from './api.service';
+import {
+  baseFetch,
+  ApiResponse,
+  buildQueryParams,
+  PaginatedData,
+} from './api.service';
 
 /**
- * Documentación en español.
+ * Recupera una lista paginada de albaranes de entrega.
+ */
+/**
+ * Expone "fetchAlbaranes" en smart-economat-frontend (SPA).
+ * @undefined {AlbaranQueryParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Albaran>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchAlbaranes(
   params: AlbaranQueryParams = {}
 ): Promise<PaginatedData<Albaran>> {
-  const queryParams = new URLSearchParams();
-  if (params.page) queryParams.append('page', params.page.toString());
-  if (params.limit) queryParams.append('limit', params.limit.toString());
-  if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
-  if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-  if (params.order) queryParams.append('order', params.order);
+  const queryParams = buildQueryParams(
+    {
+      page: params.page,
+      limit: params.limit,
+      search: params.searchTerm,
+      sortBy: params.sortBy,
+      order: params.order,
+    },
+    20,
+    50
+  );
 
   const response = await baseFetch(`/albaranes?${queryParams.toString()}`);
   if (!response.ok) {
@@ -42,7 +57,12 @@ export async function fetchAlbaranes(
 }
 
 /**
- * Documentación en español.
+ * Obtiene el detalle completo de un albarán por su ID.
+ */
+/**
+ * Expone "fetchAlbaranById" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchAlbaranById(id: string): Promise<Albaran> {
   const response = await baseFetch(`/albaranes/${id}`);
@@ -58,7 +78,12 @@ export async function fetchAlbaranById(id: string): Promise<Albaran> {
 }
 
 /**
- * Documentación en español.
+ * Crea un nuevo albarán de entrega.
+ */
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {CreateAlbaranDto} dto - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
  */
 export async function createAlbaran(dto: CreateAlbaranDto): Promise<Albaran> {
   const response = await baseFetch('/albaranes', {
@@ -78,7 +103,13 @@ export async function createAlbaran(dto: CreateAlbaranDto): Promise<Albaran> {
 }
 
 /**
- * Documentación en español.
+ * Actualiza la información de un albarán existente.
+ */
+/**
+ * Persiste modificaciones válidas sobre entidades existentes.
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Partial<CreateAlbaranDto>} dto - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
  */
 export async function updateAlbaran(
   id: string,
@@ -101,7 +132,12 @@ export async function updateAlbaran(
 }
 
 /**
- * Documentación en español.
+ * Elimina un albarán del sistema.
+ */
+/**
+ * Expone "removeAlbaran" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export async function removeAlbaran(id: string): Promise<void> {
   const response = await baseFetch(`/albaranes/${id}`, {
@@ -117,7 +153,16 @@ export async function removeAlbaran(id: string): Promise<void> {
 }
 
 /**
- * Documentación en español.
+ * Sube un documento físico (PDF/imagen) vinculado a un albarán,
+ * creando automáticamente el registro de albarán si no existe.
+ */
+/**
+ * Expone "uploadDocumentoAlbaran" en smart-economat-frontend (SPA).
+ * @undefined {File} file - Entrada efectiva esperada por el contrato.
+ * @undefined {string} numeroReferencia - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} recepcionId - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} observaciones - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
  */
 export async function uploadDocumentoAlbaran(
   file: File,

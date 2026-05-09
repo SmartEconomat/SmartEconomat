@@ -7,6 +7,7 @@ import {
   UnidadMedida,
 } from '../modules/producto/enums/producto.enums';
 
+/** Contrato de tipos público (OffProduct). Contexto: smart-economat-backend (Nest). */
 export interface OffProduct {
   product_name_es?: string;
   product_name?: string;
@@ -28,6 +29,7 @@ export interface OffProduct {
   seedAlergenos?: Alergeno[];
 }
 
+/** Contrato de tipos público (SeedUploadedImageRef). Contexto: smart-economat-backend (Nest). */
 export interface SeedUploadedImageRef {
   key: string;
   sourceUrl: string;
@@ -36,6 +38,7 @@ export interface SeedUploadedImageRef {
   archivoId?: string;
 }
 
+/** Contrato de tipos público (CreateProductoPayloadFromOff). Contexto: smart-economat-backend (Nest). */
 export interface CreateProductoPayloadFromOff {
   [key: string]: unknown;
   nombre: string;
@@ -331,6 +334,12 @@ function applyUploadedImageToProduct(
   return ref;
 }
 
+/**
+ * Expone "pickSeedUploadedImageRef" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {{ pathImg: string; pathImgOptimized?: string; } | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function pickSeedUploadedImageRef(
   context: SeedContext,
   iteration: number
@@ -351,6 +360,13 @@ export function pickSeedUploadedImageRef(
   };
 }
 
+/**
+ * Expone "uploadOpenFoodFactsProductImage" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {OffProduct} product - Entrada efectiva esperada por el contrato.
+ * @undefined {{ timeoutMs?: number; } | undefined} options - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<SeedUploadedImageRef | undefined>} Datos efectivos después de ejecutar la operación.
+ */
 export async function uploadOpenFoodFactsProductImage(
   context: SeedContext,
   product: OffProduct,
@@ -444,6 +460,13 @@ export async function uploadOpenFoodFactsProductImage(
   }
 }
 
+/**
+ * Expone "hydrateOpenFoodFactsProductAssets" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {OffProduct[]} products - Entrada efectiva esperada por el contrato.
+ * @undefined {{ timeoutMs?: number; } | undefined} options - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<OffProduct[]>} Datos efectivos después de ejecutar la operación.
+ */
 export async function hydrateOpenFoodFactsProductAssets(
   context: SeedContext,
   products: OffProduct[],
@@ -571,6 +594,11 @@ function uniqueAlergenos(tags: string[] | undefined): Alergeno[] {
   }
   return [...mapped];
 }
+/**
+ * Genera artefactos sintéticos a partir del estado conocido.
+ * @undefined {number} count - Entrada efectiva esperada por el contrato.
+ * @undefined {OffProduct[]} Datos efectivos después de ejecutar la operación.
+ */
 export function generateFallbackOffProducts(count: number): OffProduct[] {
   const target = Math.max(0, Math.floor(count));
   if (target === 0) {
@@ -594,6 +622,11 @@ export function generateFallbackOffProducts(count: number): OffProduct[] {
   });
 }
 
+/**
+ * Expone "fetchOpenFoodFactsProducts" en smart-economat-backend (Nest).
+ * @undefined {{ pageSize?: number; page?: number; timeoutMs?: number; fallbackToCatalog?: boolean; } | undefined} options - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<OffProduct[]>} Datos efectivos después de ejecutar la operación.
+ */
 export function fetchOpenFoodFactsProducts(options?: {
   pageSize?: number;
   page?: number;
@@ -638,6 +671,12 @@ export function fetchOpenFoodFactsProducts(options?: {
   );
 }
 
+/**
+ * Expone "offProductToCreateProductoPayload" en smart-economat-backend (Nest).
+ * @undefined {OffProduct} product - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} providerId - Entrada efectiva esperada por el contrato.
+ * @undefined {CreateProductoPayloadFromOff | null} Datos efectivos después de ejecutar la operación.
+ */
 export function offProductToCreateProductoPayload(
   product: OffProduct,
   providerId?: string

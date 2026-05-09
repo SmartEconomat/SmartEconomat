@@ -30,7 +30,7 @@ function run(command, args, options = {}) {
 function hasSigningMaterial() {
   return Boolean(
     (process.env.WIN_CSC_PFX_PATH && process.env.WIN_CSC_PFX_PATH.trim()) ||
-      (process.env.WIN_CSC_THUMBPRINT && process.env.WIN_CSC_THUMBPRINT.trim()),
+    (process.env.WIN_CSC_THUMBPRINT && process.env.WIN_CSC_THUMBPRINT.trim()),
   );
 }
 

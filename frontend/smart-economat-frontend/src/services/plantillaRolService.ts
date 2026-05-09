@@ -12,7 +12,7 @@ interface ServiceResponse<T> {
 }
 
 /**
- * Documentación en español.
+ * Servicio para la gestión de plantillas de rol: CRUD, activación y asignación de permisos.
  */
 export const plantillaRolService = {
   async getPlantillas(): Promise<ServiceResponse<PlantillaRol[]>> {

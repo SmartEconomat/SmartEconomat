@@ -11,6 +11,7 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
+/** Clase pública (GeneratePedidoFromRecetasDto). Paquete: smart-economat-backend (Nest). */
 export class GeneratePedidoFromRecetasDto {
   @ApiProperty({
     description:

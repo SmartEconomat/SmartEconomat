@@ -24,7 +24,7 @@ import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para ubicacion.
  */
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
@@ -37,14 +37,21 @@ export class UbicacionController extends BaseController<
   UbicacionService
 > {
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param service Parámetro de entrada para la operación.
    */
   constructor(service: UbicacionService) {
     super(service);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateUbicacionDto} createUbicacionDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.ubicaciones.crear)
@@ -54,7 +61,13 @@ export class UbicacionController extends BaseController<
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/common/dto/paginated-response.dto").PaginatedResponseDto<Ubicacion>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
@@ -67,7 +80,13 @@ export class UbicacionController extends BaseController<
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.ver)
@@ -80,7 +99,13 @@ export class UbicacionController extends BaseController<
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateUbicacionDto} updateUbicacionDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.editar)
@@ -93,7 +118,12 @@ export class UbicacionController extends BaseController<
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.eliminar)
@@ -103,7 +133,12 @@ export class UbicacionController extends BaseController<
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "restore" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/restore')
   @RequirePermissions(PERMISSIONS.ubicaciones.restaurar)

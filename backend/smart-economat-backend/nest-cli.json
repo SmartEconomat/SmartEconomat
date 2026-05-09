@@ -7,7 +7,7 @@
     "builder": "swc",
     "typeCheck": true,
     "assets": ["i18n/**/*", "seeders/datos-base-economato/**/*"],
-    "watchAssets": false
+    "watchAssets": true
   },
   "watchOptions": {
     "ignored": [

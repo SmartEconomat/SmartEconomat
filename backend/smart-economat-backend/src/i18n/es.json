@@ -17,7 +17,11 @@
     "internalServer": "Se ha producido un error interno del servidor.",
     "validationFailed": "La validación ha fallado.",
     "onlySuperAdmin": "Solo un Super Administrador puede asignar este rol.",
-    "onlyAdmin": "Solo un administrador puede realizar esta acción."
+    "onlyAdmin": "Solo un administrador puede realizar esta acción.",
+    "ENTITY_ALREADY_EXISTS_BUT_DELETED": "Ya existe un registro igual pero ha sido eliminado anteriormente. Puedes buscarlo en la papelera y restaurarlo.",
+    "invalidDateFormat": "Formato de fecha inválido.",
+    "startDateAfterEndDate": "La fecha de inicio no puede ser posterior a la fecha de fin.",
+    "dateRangeExceeded": "El rango máximo permitido es de {maxDays} días. Ajusta las fechas para continuar."
   },
   "success": {
     "created": "Recurso creado correctamente.",

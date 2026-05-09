@@ -9,25 +9,34 @@ import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export type SortableFieldsConfig = string[] | Record<string, string>;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type SortableQueryDtoClass<T extends PaginationQueryDto = PaginationQueryDto> =
   new () => T;
 
 /**
- * Documentación en español.
+ * Obtiene allowed sortable fields.
+ *
+ * @param config Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function getAllowedSortableFields(config: SortableFieldsConfig): string[] {
   return Array.isArray(config) ? config : Object.keys(config);
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "transformAndValidateSortableQuery" en smart-economat-backend (Nest).
+ * @undefined {Record<string, unknown>} query - Entrada efectiva esperada por el contrato.
+ * @undefined {SortableQueryDtoClass<T>} dtoClass - Entrada efectiva esperada por el contrato.
+ * @undefined {T} Datos efectivos después de ejecutar la operación.
  */
 export function transformAndValidateSortableQuery<
   T extends PaginationQueryDto = PaginationQueryDto,
@@ -35,7 +44,15 @@ export function transformAndValidateSortableQuery<
   query: Record<string, unknown>,
   dtoClass: SortableQueryDtoClass<T> = PaginationQueryDto as SortableQueryDtoClass<T>
 ): T {
-  const transformedQuery = plainToInstance(dtoClass, query);
+  const normalizedQuery = { ...query };
+  if (!normalizedQuery.order && typeof normalizedQuery.sortOrder === 'string') {
+    normalizedQuery.order = normalizedQuery.sortOrder;
+  }
+  if (typeof normalizedQuery.order === 'string') {
+    normalizedQuery.order = normalizedQuery.order.toUpperCase();
+  }
+
+  const transformedQuery = plainToInstance(dtoClass, normalizedQuery);
   const errors = validateSync(transformedQuery as object, {
     whitelist: true,
     forbidNonWhitelisted: false,
@@ -53,7 +70,13 @@ export function transformAndValidateSortableQuery<
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "validateSortableField" en smart-economat-backend (Nest).
+ * @undefined {string | undefined} sortBy - Entrada efectiva esperada por el contrato.
+ * @undefined {SortableFieldsConfig} allowedFields - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
  */
 export function validateSortableField(
   sortBy: string | undefined,
@@ -72,7 +95,13 @@ export function validateSortableField(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "SortableFields" en smart-economat-backend (Nest).
+ * @undefined {SortableFieldsConfig} allowedFields - Entrada efectiva esperada por el contrato.
+ * @undefined {SortableQueryDtoClass<PaginationQueryDto>} dtoClass - Entrada efectiva esperada por el contrato.
+ * @undefined {ParameterDecorator} Datos efectivos después de ejecutar la operación.
  */
 export const SortableFields = (
   allowedFields: SortableFieldsConfig,

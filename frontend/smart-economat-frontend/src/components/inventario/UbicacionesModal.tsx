@@ -20,19 +20,19 @@ import { useToast } from '../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface Props {
   open: boolean;
   onClose: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChanged: () => void;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
@@ -42,7 +42,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   const { t } = useTranslation();
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de load ubicaciones dentro del flujo de la aplicación.
    */
   const loadUbicaciones = async () => {
     setLoading(true);
@@ -67,7 +67,7 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   }, [open]);
 
   /**
-   * Documentación en español.
+   * Gestiona add y aplica la lógica correspondiente.
    */
   const handleAdd = async () => {
     if (!newNombre.trim()) return;
@@ -84,7 +84,9 @@ const UbicacionesModal: React.FC<Props> = ({ open, onClose, onChanged }) => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona delete y aplica la lógica correspondiente.
+   *
+   * @param id Parámetro de entrada para la operación.
    */
   const handleDelete = async (id: string) => {
     try {

@@ -23,20 +23,25 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la gestión de proveedores.
+ * Permite realizar operaciones CRUD sobre los proveedores registrados en el sistema.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('proveedor')
 export class ProveedorController {
   /**
-   * Documentación en español.
+   * Crea una instancia de ProveedorController.
+   * @param proveedorService Servicio para la gestión lógica de proveedores.
    */
   constructor(private readonly proveedorService: ProveedorService) {}
 
   /**
-   * Documentación en español.
+   * Registra un nuevo proveedor en el sistema.
+   * @param dto Datos del nuevo proveedor.
+   * @returns El proveedor creado.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.proveedores.crear)
@@ -46,21 +51,15 @@ export class ProveedorController {
   }
 
   /**
-   * Documentación en español.
+   * Lista los proveedores con soporte para paginación y ordenación.
+   * @param query Parámetros de paginación y búsqueda.
+   * @param req Petición para obtener el rol del usuario solicitante.
+   * @returns Lista paginada de proveedores.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findAll(
-    @SortableFields([
-      'nombre',
-      'contacto',
-      'telefono',
-      'email',
-      'direccion',
-      'nif',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields(SORTABLE_FIELDS.proveedores)
     query: PaginationQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Proveedor>> {
@@ -69,7 +68,12 @@ export class ProveedorController {
   }
 
   /**
-   * Documentación en español.
+   * Recupera únicamente los proveedores que tienen pedidos asociados.
+   * @returns Lista de proveedores con actividad de pedidos.
+   */
+  /**
+   * Expone "findWithOrders" en smart-economat-backend (Nest).
+   * @undefined {Promise<Proveedor[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('con-pedidos')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
@@ -78,7 +82,10 @@ export class ProveedorController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle de un proveedor por su ID.
+   * @param id UUID del proveedor.
+   * @param req Petición para contexto de usuario.
+   * @returns El proveedor solicitado.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
@@ -91,7 +98,10 @@ export class ProveedorController {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza la información de un proveedor existente.
+   * @param id UUID del proveedor.
+   * @param dto Datos a actualizar.
+   * @returns El proveedor actualizado.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.proveedores.editar)
@@ -103,12 +113,37 @@ export class ProveedorController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina un proveedor del sistema (eliminación lógica).
+   * @param id UUID del proveedor.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.proveedores.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.proveedorService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<void> {
+    return this.proveedorService.remove(id, req.user.id);
+  }
+
+  /**
+   * Restaura un proveedor previamente eliminado.
+   * @param id UUID del proveedor a restaurar.
+   * @returns El proveedor restaurado.
+   */
+  @Post(':id/restore')
+  @RequirePermissions(PERMISSIONS.proveedores.editar)
+  @HttpCode(HttpStatus.OK)
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<Proveedor> {
+    return this.proveedorService.restore(id, req.user.id);
   }
 }

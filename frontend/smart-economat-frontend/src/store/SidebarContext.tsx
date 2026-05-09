@@ -2,6 +2,13 @@ import React, { useState, useCallback, ReactNode, useEffect } from 'react';
 import { useBreakpoints } from '../utils/useBreakpoints';
 import { SidebarContext } from './sidebar.context';
 
+/**
+ * Expone "SidebarProvider" en smart-economat-frontend (SPA).
+ * @undefined {{ children: ReactNode; }} {
+ *   children,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export const SidebarProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {

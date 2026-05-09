@@ -8,6 +8,7 @@ import {
   Max,
 } from 'class-validator';
 
+/** Clase pública (ImageProcessOptionsDto). Paquete: smart-economat-backend (Nest). */
 export class ImageProcessOptionsDto {
   @ApiProperty({
     description: 'Ancho máximo de la imagen',

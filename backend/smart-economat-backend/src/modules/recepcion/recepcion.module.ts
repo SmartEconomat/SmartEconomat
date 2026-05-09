@@ -22,6 +22,7 @@ import { PdfReportService } from './service/pdf-report.service';
 import { PedidoModule } from '../pedido/pedido.module';
 import { ProductoModule } from '../producto/producto.module';
 
+/** Clase pública (RecepcionModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

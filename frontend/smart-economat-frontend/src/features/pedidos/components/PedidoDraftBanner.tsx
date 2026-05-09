@@ -11,7 +11,7 @@ interface PedidoDraftBannerProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidoDraftBanner: React.FC<PedidoDraftBannerProps> = ({
   draft,

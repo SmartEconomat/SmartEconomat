@@ -1,10 +1,18 @@
 import { I18nHelper } from '../helpers/i18n.helper';
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 /**
- * Documentación en español.
+ * Calcula check digit según las reglas de negocio.
+ *
+ * @param digits Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone "calculateCheckDigit" en smart-economat-backend (Nest).
+ * @undefined {string} digits - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
  */
 export function calculateCheckDigit(digits: string): number {
   if (!/^\d{12}$/.test(digits)) {
@@ -24,7 +32,10 @@ export function calculateCheckDigit(digits: string): number {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de generate ean13 dentro del flujo de la aplicación.
+ *
+ * @param prefix Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export function generateEan13(prefix = '200'): string {
   if (!/^\d+$/.test(prefix) || prefix.length > 12) {
@@ -45,7 +56,10 @@ export function generateEan13(prefix = '200'): string {
 }
 
 /**
- * Documentación en español.
+ * Valida ean13 y aplica las reglas definidas.
+ *
+ * @param code Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export function validateEan13(code: string): boolean {
   if (!code || typeof code !== 'string' || !/^\d{13}$/.test(code)) {

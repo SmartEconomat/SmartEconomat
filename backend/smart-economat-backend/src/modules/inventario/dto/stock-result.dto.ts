@@ -1,3 +1,4 @@
+/** Clase pública (StockPorUbicacionDto). Paquete: smart-economat-backend (Nest). */
 export class StockPorUbicacionDto {
   productoId: string;
   productoNombre: string;
@@ -6,6 +7,7 @@ export class StockPorUbicacionDto {
   stock: number;
 }
 
+/** Clase pública (StockConsolidadoDto). Paquete: smart-economat-backend (Nest). */
 export class StockConsolidadoDto {
   productoId: string;
   productoNombre: string;

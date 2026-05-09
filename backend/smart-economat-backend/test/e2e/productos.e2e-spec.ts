@@ -18,7 +18,9 @@ describe('ProductoController (e2e)', () => {
   });
 
   /**
-   * Documentación en español.
+   * Crea producto.
+   *
+   * @param nombre Parámetro de entrada para la operación. Opcional.
    */
   async function createProducto(nombre?: string) {
     const productoNombre = nombre || generateUniqueName('Producto');

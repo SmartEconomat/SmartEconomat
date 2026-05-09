@@ -33,6 +33,34 @@ const formatExportDateLong = (date: Date): string =>
     day: 'numeric',
   }).format(date);
 
+/** Texto PDF seguro ante objetos (evita "[object Object]"). */
+const cellValueToText = (val: unknown): string => {
+  if (val === null || val === undefined) {
+    return '';
+  }
+  if (
+    typeof val === 'string' ||
+    typeof val === 'number' ||
+    typeof val === 'boolean' ||
+    typeof val === 'bigint'
+  ) {
+    return String(val);
+  }
+  try {
+    return JSON.stringify(val);
+  } catch {
+    return '[object]';
+  }
+};
+
+/**
+ * Expone "buildPdfTable" en smart-economat-backend (Nest).
+ * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+ * @undefined {string} title - Entrada efectiva esperada por el contrato.
+ * @undefined {ExportColumn[]} columns - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>[]} rows - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export function buildPdfTable(
   res: Response,
   title: string,
@@ -64,7 +92,7 @@ export function buildPdfTable(
         .fontSize(7)
         .fillColor(GRAY_COLOR)
         .text(
-          `SmartEconomat — Exportación de Productos | Pág. ${pageNum} | ${formatExportDateShort(now)}`,
+          `SmartEconomat — ${title} | Pág. ${pageNum} | ${formatExportDateShort(now)}`,
           PAGE_MARGIN,
           footerY,
           {
@@ -111,16 +139,17 @@ export function buildPdfTable(
         .fontSize(HEADER_FONT_SIZE);
       let x = PAGE_MARGIN;
       for (let i = 0; i < columns.length; i++) {
-        doc.text(columns[i].header, x + CELL_PAD_X, startY + CELL_PAD_Y, {
+        doc.text(columns[i].header, x + CELL_PAD_X, startY + CELL_PAD_Y + 2, {
           width: colWidths[i] - CELL_PAD_X * 2,
-          lineBreak: false,
-          ellipsis: true,
+          lineBreak: true,
+          align: 'center',
         });
         x += colWidths[i];
       }
       doc
         .rect(PAGE_MARGIN, startY, usableWidth, HEADER_HEIGHT)
         .stroke(BORDER_COLOR);
+
       x = PAGE_MARGIN;
       for (let i = 0; i < columns.length - 1; i++) {
         x += colWidths[i];
@@ -132,59 +161,70 @@ export function buildPdfTable(
       return startY + HEADER_HEIGHT;
     };
 
+    const getCellAlignment = (key: string): 'left' | 'center' | 'right' => {
+      const centerKeys = [
+        'id',
+        'tipo',
+        'unidad',
+        'contenido',
+        'codigoBarras',
+        'createdAt',
+      ];
+      const rightKeys = ['pmp', 'precioUnitario', 'cantidad'];
+      if (centerKeys.includes(key)) return 'center';
+      if (rightKeys.includes(key)) return 'right';
+      return 'left';
+    };
+
+    const calculateRowHeight = (row: Record<string, unknown>): number => {
+      const heights = columns.map((col, i) => {
+        const val = row[col.key];
+
+        const text = cellValueToText(val);
+        return (
+          doc.heightOfString(text, {
+            width: colWidths[i] - CELL_PAD_X * 2,
+            align: getCellAlignment(col.key),
+          }) +
+          CELL_PAD_Y * 2
+        );
+      });
+      return Math.max(...heights, ROW_HEIGHT);
+    };
+
     const drawRow = (
       row: Record<string, unknown>,
       startY: number,
       even: boolean
     ): number => {
-      doc.fillColor(TEXT_COLOR).font('Helvetica').fontSize(FONT_SIZE);
-      let x = PAGE_MARGIN;
+      const rowHeight = calculateRowHeight(row);
 
-      const cellHeights: number[] = [];
-      const cellTexts: string[] = [];
-      for (let i = 0; i < columns.length; i++) {
-        const value = row[columns[i].key];
-        let text = '';
-        if (value !== null && value !== undefined) {
-          if (typeof value === 'string') {
-            text = value;
-          } else if (typeof value === 'number' || typeof value === 'boolean') {
-            text = value.toString();
-          } else {
-            text = JSON.stringify(value);
-          }
-        }
-        cellTexts.push(text);
-
-        const cellHeight =
-          doc.heightOfString(text, {
-            width: colWidths[i] - CELL_PAD_X * 2,
-            align: 'center',
-          }) +
-          CELL_PAD_Y * 2;
-        cellHeights.push(cellHeight);
-      }
-
-      const rowHeight = Math.max(...cellHeights, ROW_HEIGHT);
       if (even) {
         doc
           .rect(PAGE_MARGIN, startY, usableWidth, rowHeight)
           .fill(EVEN_ROW_FILL);
       }
-      x = PAGE_MARGIN;
+
+      doc.fillColor(TEXT_COLOR).font('Helvetica').fontSize(FONT_SIZE);
+      let x = PAGE_MARGIN;
       for (let i = 0; i < columns.length; i++) {
-        const text = cellTexts[i];
+        const col = columns[i];
+        const val = row[col.key];
+
+        const text = cellValueToText(val);
+        const align = getCellAlignment(col.key);
 
         const textHeight = doc.heightOfString(text, {
           width: colWidths[i] - CELL_PAD_X * 2,
-          align: 'center',
+          align,
         });
+
         const yOffset = (rowHeight - textHeight) / 2;
+
         doc.text(text, x + CELL_PAD_X, startY + yOffset, {
           width: colWidths[i] - CELL_PAD_X * 2,
           lineBreak: true,
-          ellipsis: true,
-          align: 'center',
+          align,
         });
         x += colWidths[i];
       }
@@ -192,56 +232,34 @@ export function buildPdfTable(
       doc
         .rect(PAGE_MARGIN, startY, usableWidth, rowHeight)
         .stroke(BORDER_COLOR);
-      x = PAGE_MARGIN;
+
+      let lx = PAGE_MARGIN;
       for (let i = 0; i < columns.length - 1; i++) {
-        x += colWidths[i];
+        lx += colWidths[i];
         doc
-          .moveTo(x, startY)
-          .lineTo(x, startY + rowHeight)
+          .moveTo(lx, startY)
+          .lineTo(lx, startY + rowHeight)
           .stroke(BORDER_COLOR);
       }
+
       return startY + rowHeight;
     };
 
-    const pageBottom = doc.page.height - PAGE_MARGIN - 16;
+    const pageBottom = doc.page.height - PAGE_MARGIN - 20;
     currentY = drawHeader(currentY);
+
     for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      let maxHeight = ROW_HEIGHT;
-      {
-        const cellHeights: number[] = [];
-        for (let j = 0; j < columns.length; j++) {
-          const value = row[columns[j].key];
-          let text = '';
-          if (value !== null && value !== undefined) {
-            if (typeof value === 'string') {
-              text = value;
-            } else if (
-              typeof value === 'number' ||
-              typeof value === 'boolean'
-            ) {
-              text = value.toString();
-            } else {
-              text = JSON.stringify(value);
-            }
-          }
-          const cellHeight =
-            doc.heightOfString(text, {
-              width: colWidths[j] - CELL_PAD_X * 2,
-              align: 'left',
-            }) +
-            CELL_PAD_Y * 2;
-          cellHeights.push(cellHeight);
-        }
-        maxHeight = Math.max(...cellHeights, ROW_HEIGHT);
-      }
-      if (currentY + maxHeight > pageBottom) {
+      const rowHeight = calculateRowHeight(rows[i]);
+
+      if (currentY + rowHeight > pageBottom) {
         doc.addPage();
         currentY = PAGE_MARGIN;
         currentY = drawHeader(currentY);
       }
+
       currentY = drawRow(rows[i], currentY, i % 2 === 0);
     }
+
     doc.end();
   });
 }

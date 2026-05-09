@@ -8,11 +8,13 @@ import {
 } from 'typeorm';
 
 /**
- * Documentación en español.
+ * Clase base abstracta para todas las entidades del sistema.
+ * Proporciona campos comunes de auditoría, control de versiones y soft delete.
  */
 export abstract class BaseEntity {
   /**
-   * Documentación en español.
+   * Identificador único universal (UUID v7).
+   * Se genera automáticamente en la base de datos.
    */
   @PrimaryColumn('uuid', {
     default: () => 'uuid_generate_v7()',
@@ -20,7 +22,8 @@ export abstract class BaseEntity {
   readonly id!: string;
 
   /**
-   * Documentación en español.
+   * Fecha y hora de creación del registro.
+   * Gestionado automáticamente por TypeORM.
    */
   @CreateDateColumn({
     type: 'timestamptz',
@@ -29,7 +32,8 @@ export abstract class BaseEntity {
   readonly createdAt!: Date;
 
   /**
-   * Documentación en español.
+   * Fecha y hora de la última actualización del registro.
+   * Actualizado automáticamente por TypeORM.
    */
   @UpdateDateColumn({
     type: 'timestamptz',
@@ -38,7 +42,8 @@ export abstract class BaseEntity {
   readonly updatedAt!: Date;
 
   /**
-   * Documentación en español.
+   * Fecha y hora de eliminación lógica (soft delete).
+   * Si tiene valor, el registro se considera eliminado del sistema.
    */
   @DeleteDateColumn({
     type: 'timestamptz',
@@ -48,7 +53,7 @@ export abstract class BaseEntity {
   deletedAt?: Date | null;
 
   /**
-   * Documentación en español.
+   * ID del usuario que realizó la eliminación lógica.
    */
   @Column({
     type: 'uuid',
@@ -58,7 +63,7 @@ export abstract class BaseEntity {
   deletedBy?: string | null;
 
   /**
-   * Documentación en español.
+   * ID del último usuario que modificó el registro.
    */
   @Column({
     type: 'uuid',
@@ -68,7 +73,7 @@ export abstract class BaseEntity {
   modifiedBy?: string | null;
 
   /**
-   * Documentación en español.
+   * Número de versión del registro para control de concurrencia optimista.
    */
   @VersionColumn({
     default: 1,

@@ -1,3 +1,4 @@
+/** Contrato de tipos público (RecepcionDraftRecord). Contexto: smart-economat-backend (Nest). */
 export interface RecepcionDraftRecord {
   id?: string;
   userId: string;

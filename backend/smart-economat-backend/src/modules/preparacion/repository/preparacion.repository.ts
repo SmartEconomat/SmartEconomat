@@ -7,15 +7,28 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { UpdatePreparacionDto } from '../dto/update-preparacion.dto';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
+/** Clase pública (PreparacionRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class PreparacionRepository {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Preparacion>} preparacionRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Preparacion)
     private readonly preparacionRepo: Repository<Preparacion>,
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePreparacionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion>} Datos efectivos después de ejecutar la operación.
+   */
   async create(
     dto: CreatePreparacionDto,
     userId: string
@@ -30,6 +43,12 @@ export class PreparacionRepository {
     return this.preparacionRepo.save(preparacion);
   }
 
+  /**
+   * Expone "findAllPaginated" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Preparacion>>} Datos efectivos después de ejecutar la operación.
+   */
   async findAllPaginated(
     query: PaginationQueryDto,
     userRole?: string
@@ -39,7 +58,10 @@ export class PreparacionRepository {
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
-    const sortBy = query.sortBy ?? 'createdAt';
+    const requestedSort = query.sortBy ?? 'createdAt';
+    const sortBy = SORTABLE_FIELDS.preparaciones.includes(requestedSort)
+      ? requestedSort
+      : 'createdAt';
     const order = query.order ?? 'DESC';
 
     const [data, total] = await this.preparacionRepo.findAndCount({
@@ -59,6 +81,12 @@ export class PreparacionRepository {
     };
   }
 
+  /**
+   * Expone "findById" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion | null>} Datos efectivos después de ejecutar la operación.
+   */
   async findById(id: string, userRole?: string): Promise<Preparacion | null> {
     const isAdmin =
       userRole?.toUpperCase() === 'ADMIN' ||
@@ -76,6 +104,12 @@ export class PreparacionRepository {
     });
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePreparacionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion>} Datos efectivos después de ejecutar la operación.
+   */
   async update(id: string, dto: UpdatePreparacionDto): Promise<Preparacion> {
     await this.preparacionRepo.update(id, {
       ...dto,
@@ -95,6 +129,11 @@ export class PreparacionRepository {
     return updated;
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async remove(id: string): Promise<void> {
     const result = await this.preparacionRepo.softDelete(id);
     if (result.affected === 0) {
@@ -102,6 +141,11 @@ export class PreparacionRepository {
     }
   }
 
+  /**
+   * Expone "save" en smart-economat-backend (Nest).
+   * @undefined {Preparacion} preparacion - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion>} Datos efectivos después de ejecutar la operación.
+   */
   async save(preparacion: Preparacion): Promise<Preparacion> {
     return this.preparacionRepo.save(preparacion);
   }

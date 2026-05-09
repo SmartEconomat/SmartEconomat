@@ -14,9 +14,82 @@ import * as pedidoService from '../../src/services/pedido.service';
 import * as proveedorService from '../../src/services/proveedor.service';
 import * as productoProveedorService from '../../src/services/productoProveedor.service';
 import { PedidoDraftRecord } from '../../src/services/pedidoDraft.service';
+import type {
+  PedidoListItem,
+  PurchaseBatch,
+} from '../../src/services/pedido.types';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from '../../src/i18n';
+
+/**
+ * Los hooks pueden invocarse en cada render del componente. Si el mock crea nuevos arrays
+ * u objetos en cada llamada (`data: [], batches: []`), las dependencias de los useEffect que
+ * referencian `data`/`batches` (p. ej. syncPaginationFromResponse en Pedidos.tsx) cambian
+ * en cada commit y provocan un bucle infinito: efecto → setState(useDataTable) → re-render
+ * → mock nuevo reference → efecto → …
+ *
+ * Una sola instancia estable evita ese antipatrón típico de tests con páginas "smart".
+ */
+const stablePedidosMocks = vi.hoisted(() => {
+  const data: PedidoListItem[] = [];
+  const batches: PurchaseBatch[] = [];
+  const pedidosReload = vi.fn();
+  const pedidosSetData = vi.fn();
+
+  const setSearchTerm = vi.fn();
+  const setViewMode = vi.fn();
+  const setTabIndex = vi.fn();
+  const setMisPedidosStatus = vi.fn();
+
+  const filtersReturn = Object.freeze({
+    searchTerm: '',
+    setSearchTerm,
+    viewMode: 'table' as const,
+    setViewMode,
+    tabIndex: 0 as const,
+    setTabIndex,
+    misPedidosStatus: 'pendientes' as const,
+    setMisPedidosStatus,
+    isWeeklyTab: false as const,
+    isBatchTab: false as const,
+    isOwnOrdersTab: true as const,
+  });
+
+  const usePedidosDataReturn = Object.freeze({
+    data,
+    batches,
+    isLoading: false as const,
+    error: null as null,
+    totalPages: 1,
+    totalItems: 0,
+    reload: pedidosReload,
+    setData: pedidosSetData,
+  });
+
+  const usePedidoActionsReturn = Object.freeze({
+    savePedido: vi.fn(),
+    deletePedidoById: vi.fn(),
+    approvePedidoById: vi.fn(),
+    approvePurchaseBatchById: vi.fn(),
+    cancelPedidoById: vi.fn(),
+    cancelPurchaseBatchById: vi.fn(),
+    fetchBatchDetail: vi.fn(),
+    consolidatePedidosByIds: vi.fn(),
+    startRecepcionFromBatch: vi.fn(),
+    isSaving: false as const,
+    isDeleting: false as const,
+    isAceptando: false as const,
+    isCancelando: false as const,
+    isConsolidatingBatch: false as const,
+  });
+
+  return {
+    filtersReturn,
+    usePedidosDataReturn,
+    usePedidoActionsReturn,
+  };
+});
 
 // Mocking hooks and components
 vi.mock('../../src/hooks/usePedidoDraft', () => ({
@@ -135,49 +208,13 @@ vi.mock('../../src/features/pedidos/components/PedidoDraftBanner', () => ({
   default: () => <div>pedido-draft-banner</div>,
 }));
 vi.mock('../../src/features/pedidos/hooks/usePedidosFilters', () => ({
-  usePedidosFilters: vi.fn(() => ({
-    searchTerm: '',
-    setSearchTerm: vi.fn(),
-    viewMode: 'table',
-    setViewMode: vi.fn(),
-    tabIndex: 0,
-    setTabIndex: vi.fn(),
-    misPedidosStatus: 'pendientes',
-    setMisPedidosStatus: vi.fn(),
-    isWeeklyTab: false,
-    isBatchTab: false,
-    isOwnOrdersTab: true,
-  })),
+  usePedidosFilters: vi.fn(() => stablePedidosMocks.filtersReturn),
 }));
 vi.mock('../../src/features/pedidos/hooks/usePedidosData', () => ({
-  usePedidosData: vi.fn(() => ({
-    data: [],
-    batches: [],
-    isLoading: false,
-    error: null,
-    totalPages: 1,
-    totalItems: 0,
-    reload: vi.fn(),
-    setData: vi.fn(),
-  })),
+  usePedidosData: vi.fn(() => stablePedidosMocks.usePedidosDataReturn),
 }));
 vi.mock('../../src/features/pedidos/hooks/usePedidoActions', () => ({
-  usePedidoActions: vi.fn(() => ({
-    savePedido: vi.fn(),
-    deletePedidoById: vi.fn(),
-    approvePedidoById: vi.fn(),
-    approvePurchaseBatchById: vi.fn(),
-    cancelPedidoById: vi.fn(),
-    cancelPurchaseBatchById: vi.fn(),
-    fetchBatchDetail: vi.fn(),
-    consolidatePedidosByIds: vi.fn(),
-    startRecepcionFromBatch: vi.fn(),
-    isSaving: false,
-    isDeleting: false,
-    isAceptando: false,
-    isCancelando: false,
-    isConsolidatingBatch: false,
-  })),
+  usePedidoActions: vi.fn(() => stablePedidosMocks.usePedidoActionsReturn),
 }));
 
 describe('Pedidos Page - Recovery Modal Bug', () => {
@@ -305,7 +342,7 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     // El modal de recuperación NO debería haber aparecido porque hasPromptedRef.current es true
     // (Ya sea porque se puso a true al terminar la carga inicial sin draft, o al hacer click en Nuevo Pedido)
     expect(
-      screen.queryByText('pedidos.recovery.titulo')
+      screen.queryByText(i18n.t('pedidos.recovery.titulo'))
     ).not.toBeInTheDocument();
   });
 

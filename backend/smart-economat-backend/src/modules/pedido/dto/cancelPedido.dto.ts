@@ -1,6 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
+/** Clase pública (CancelPedidoDto). Paquete: smart-economat-backend (Nest). */
 export class CancelPedidoDto {
   @IsString({
     message: i18nValidationMessage(

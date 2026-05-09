@@ -12,12 +12,12 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para recepcion producto.
  */
 @Injectable()
 export class RecepcionProductoService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(RecepcionProducto)
@@ -29,7 +29,10 @@ export class RecepcionProductoService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateRecepcionProductoDto): Promise<RecepcionProducto> {
     const recepcion = await this.recepcionRepository.findOne({
@@ -59,13 +62,19 @@ export class RecepcionProductoService {
       ...(dto.fechaRecepcion
         ? { fechaRecepcion: new Date(dto.fechaRecepcion) }
         : {}),
+      cantidadAlbaran: dto.cantidadAlbaran,
     });
 
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<RecepcionProducto>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto
@@ -94,7 +103,10 @@ export class RecepcionProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<RecepcionProducto> {
     const recepcionProducto = await this.recepcionProductoRepository.findOne({
@@ -119,7 +131,13 @@ export class RecepcionProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateRecepcionProductoDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecepcionProducto>} Datos efectivos después de ejecutar la operación.
    */
   async update(
     id: string,
@@ -169,11 +187,18 @@ export class RecepcionProductoService {
       recepcionProducto.fechaRecepcion = new Date(dto.fechaRecepcion);
     }
 
+    if (dto.cantidadAlbaran !== undefined) {
+      recepcionProducto.cantidadAlbaran = dto.cantidadAlbaran;
+    }
+
     return await this.recepcionProductoRepository.save(recepcionProducto);
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const recepcionProducto = await this.findOne(id);

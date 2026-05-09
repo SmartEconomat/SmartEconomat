@@ -6,7 +6,10 @@ import { getStateArray, pickRequiredStateValue } from './massive.state';
 const SEED_BASE_FECHA = new Date('2026-01-05T08:00:00.000Z');
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de seed date dentro del flujo de la aplicación.
+ *
+ * @param daysOffset Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function seedDate(daysOffset: number): string {
   return new Date(
@@ -15,7 +18,10 @@ function seedDate(daysOffset: number): string {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de seed week offset dentro del flujo de la aplicación.
+ *
+ * @param iteration Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function seedWeekOffset(iteration: number): number {
   return Math.floor(iteration / 5) * 7;
@@ -94,7 +100,7 @@ const PEDIDO_PERFILES: readonly PedidoPerfil[] = [
   },
   {
     observaciones:
-      'Compra para menu completo con base de almacen y refuerzo de frescos.',
+      'Compra para menu completo con base de secos y refuerzo de frescos.',
     proveedoresObjetivo: 2,
     lineasPorProveedor: 3,
   },
@@ -257,6 +263,11 @@ function resolvePedidoProductoForRecepcion(
   return pairs[iteration % pairs.length] || fallbackPedidoProductoId;
 }
 
+/**
+ * Expone "buildBodyOrdersAndReception" en smart-economat-backend (Nest).
+ * @undefined {BuildBodyEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown> | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function buildBodyOrdersAndReception(
   env: BuildBodyEnv
 ): Record<string, unknown> | undefined {
@@ -434,6 +445,7 @@ export function buildBodyOrdersAndReception(
         pedidoUsuarioIds: forcedConsolidatePedidoUsuarioIds,
         observaciones:
           'Consolidacion de lotes pendientes de usuario para el periodo actual.',
+        autoApprovePending: true,
       };
     }
 
@@ -450,6 +462,7 @@ export function buildBodyOrdersAndReception(
       pedidoUsuarioIds: [selectedPedidoUsuarioId],
       observaciones:
         'Consolidacion de pedidos de usuario pendientes por proveedor.',
+      autoApprovePending: true,
     };
   }
 
@@ -468,7 +481,7 @@ export function buildBodyOrdersAndReception(
 
     const items = recetaIdsForMissingStock.map((selectedRecetaId, index) => ({
       recetaId: selectedRecetaId,
-      cantidad: [1500, 2200, 3000, 3800][(iteration + index) % 4] || 1500,
+      cantidadAProducir: ([1, 1.5, 2, 2.5] as const)[(iteration + index) % 4],
     }));
 
     return {

@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../../i18n/enumPresentation';
 import { formatLocalizedDate, getResolvedLocale } from '../../utils/intlFormat';
 
+/** Alias público (SummaryModalType) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type SummaryModalType =
   | 'productos'
   | 'pedidos'
@@ -91,6 +92,7 @@ const isSummaryProducto = (item: SummaryItem): item is SummaryProducto =>
   !isAlertaStock(item);
 
 const SUMMARY_PAGE_SIZE = 50;
+const SUMMARY_MAX_FETCH_PAGES = 5;
 const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.PENDIENTE_DE_APROBACION,
   EstadoPedido.POR_RECEPCIONAR,
@@ -141,13 +143,23 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     async (estado: EstadoPedido): Promise<Pedido[]> => {
       const firstPage = await fetchPedidos(1, SUMMARY_PAGE_SIZE, '', estado);
       const allPedidos = [...firstPage.data];
+      const cappedTotalPages = Math.min(
+        firstPage.totalPages,
+        SUMMARY_MAX_FETCH_PAGES
+      );
 
-      if (firstPage.totalPages <= 1) {
+      if (firstPage.totalPages > SUMMARY_MAX_FETCH_PAGES) {
+        console.warn(
+          `SummaryModal: pedidos limitado a ${SUMMARY_MAX_FETCH_PAGES} páginas para evitar sobrecarga.`
+        );
+      }
+
+      if (cappedTotalPages <= 1) {
         return allPedidos;
       }
 
       const remainingPages = await Promise.all(
-        Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+        Array.from({ length: cappedTotalPages - 1 }, (_, index) =>
           fetchPedidos(index + 2, SUMMARY_PAGE_SIZE, '', estado)
         )
       );
@@ -190,8 +202,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     });
 
     const incidencias = [...firstPage.data];
+    const cappedTotalPages = Math.min(
+      firstPage.totalPages,
+      SUMMARY_MAX_FETCH_PAGES
+    );
 
-    if (firstPage.totalPages <= 1) {
+    if (firstPage.totalPages > SUMMARY_MAX_FETCH_PAGES) {
+      console.warn(
+        `SummaryModal: incidencias limitado a ${SUMMARY_MAX_FETCH_PAGES} páginas para evitar sobrecarga.`
+      );
+    }
+
+    if (cappedTotalPages <= 1) {
       return incidencias.sort(
         (left, right) =>
           new Date(right.createdAt).getTime() -
@@ -200,7 +222,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     }
 
     const remainingPages = await Promise.all(
-      Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+      Array.from({ length: cappedTotalPages - 1 }, (_, index) =>
         fetchIncidencias({
           page: index + 2,
           limit: SUMMARY_PAGE_SIZE,
@@ -231,7 +253,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     try {
       let result: SummaryItem[] = [];
       if (type === 'productos') {
-        const res = await fetchProductos(1, 50);
+        const res = await fetchProductos(1, 50, '', [], 'createdAt', 'desc');
         result = res.data as SummaryProducto[];
       } else if (type === 'pedidos') {
         result = await fetchDashboardPendingPedidos();
@@ -579,7 +601,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
                             {t('resumen.incidencias.lineaResumen', {
-                              esperado: linea.cantidadEsperada,
+                              esperado: linea.cantidadPedida,
                               recibido: linea.cantidadRecibida,
                               diferencia: linea.diferencia,
                             })}

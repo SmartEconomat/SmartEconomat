@@ -14,43 +14,44 @@ import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 
+/** Clase pública (Rol). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'rol' })
 @Index('idx_rol_nombre', ['nombre'])
 @Index('idx_rol_activo', ['activo'])
 @Index('idx_rol_plantilla_rol_id', ['plantillaRolId'])
 export class Rol extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'varchar', length: 100, unique: true })
   nombre!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'boolean', default: false, name: 'es_sistema' })
   esSistema!: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'uuid', nullable: true, name: 'plantilla_rol_id' })
   plantillaRolId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => PlantillaRol, (plantilla) => plantilla.roles, {
     nullable: true,
@@ -60,7 +61,7 @@ export class Rol extends BaseEntity {
   plantillaRol?: Relation<PlantillaRol>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToMany(() => Permiso, (permiso) => permiso.roles, { cascade: false })
   @JoinTable({

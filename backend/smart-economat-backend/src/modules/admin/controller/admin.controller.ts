@@ -21,18 +21,24 @@ import { RolesGuard } from '../../auth/guards/role.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para admin.
  */
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 export class AdminController {
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param private readonly adminService Parámetro de entrada para la operación.
    */
   constructor(private readonly adminService: AdminService) {}
 
   /**
-   * Documentación en español.
+   * Obtiene roles.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/roles/rol.entity/rol.entity").Rol[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('roles')
   @Roles(rolUsuario.ADMIN)
@@ -42,7 +48,11 @@ export class AdminController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene permissions.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('permissions')
   @Roles(rolUsuario.ADMIN)
@@ -52,7 +62,12 @@ export class AdminController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateProfesorDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; user_id: string; username: string; cial: string; status: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus; }>} Datos efectivos después de ejecutar la operación.
    */
   @Post('profesores')
   @Roles(rolUsuario.ADMIN)
@@ -62,7 +77,14 @@ export class AdminController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} actorUserId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateAdminUserRoleDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario | null>} Datos efectivos después de ejecutar la operación.
    */
   @Patch('users/:id/role')
   @Roles(rolUsuario.ADMIN)
@@ -82,7 +104,13 @@ export class AdminController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "activateUser" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateAdminUserActivationDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; id: string; status: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus.INACTIVE | import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus.ACTIVE; activo: boolean; }>} Datos efectivos después de ejecutar la operación.
    */
   @Patch('users/:id/activate')
   @Roles(rolUsuario.ADMIN)
@@ -95,7 +123,12 @@ export class AdminController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "forcePasswordReset" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; provisionalPassword: string; mustChangePassword: boolean; }>} Datos efectivos después de ejecutar la operación.
    */
   @Post('users/:id/force-reset')
   @Roles(rolUsuario.ADMIN)

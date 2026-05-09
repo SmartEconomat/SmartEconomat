@@ -1,15 +1,20 @@
 import { expect, type Page } from '@playwright/test';
+import { TUTORIAL_COMPLETED_STORAGE_KEY } from '../../../src/store/tutorial.persistence';
 
 const allPermissions = [
   'dashboard:ver_estadisticas',
   'productos:listar',
+  'productos:crear',
   'proveedores:listar',
+  'proveedores:crear',
   'recetas:listar',
   'pedidos:listar',
   'recepciones:listar',
   'distribuciones:listar',
   'albaranes:listar',
   'inventario:listar',
+  'inventario:ajustar_stock',
+  'ubicaciones:listar',
   'movimientos:listar',
   'merma:listar',
   'incidencias:listar',
@@ -32,7 +37,7 @@ function okJson(data: unknown, message = 'ok') {
 }
 
 export async function installApiMocks(page: Page): Promise<void> {
-  await page.route('**/api/v1/usuarios/perfil', async (route) => {
+  await page.route('**/api/v1/usuarios/perfil**', async (route) => {
     await route.fulfill(
       okJson({
         id: 'e2e-user-id',
@@ -65,9 +70,10 @@ export async function installApiMocks(page: Page): Promise<void> {
 }
 
 export async function bootstrapSession(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+  await page.addInitScript((storageKey: string) => {
     window.localStorage.setItem('sm_has_session', 'true');
-  });
+    window.localStorage.setItem(storageKey, 'true');
+  }, TUTORIAL_COMPLETED_STORAGE_KEY);
 }
 
 export async function gotoProtected(page: Page, path = '/'): Promise<void> {

@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (UnidadMedida) dentro de smart-economat-backend (Nest). */
 export enum UnidadMedida {
   KG = 'KG',
   G = 'G',
@@ -7,6 +8,7 @@ export enum UnidadMedida {
   PAQ = 'PAQ',
 }
 
+/** Catálogo de valores enumerados (Alergeno) dentro de smart-economat-backend (Nest). */
 export enum Alergeno {
   GLUTEN = 'GLUTEN',
   CRUSTACEOS = 'CRUSTACEOS',
@@ -24,6 +26,7 @@ export enum Alergeno {
   MOLUSCOS = 'MOLUSCOS',
 }
 
+/** Catálogo de valores enumerados (TipoProducto) dentro de smart-economat-backend (Nest). */
 export enum TipoProducto {
   VERDURA = 'verdura',
   FRUTA = 'fruta',

@@ -2,7 +2,7 @@ import React from 'react';
 import { SvgIcon, SvgIconProps } from '@mui/material';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const BarcodeIcon: React.FC<SvgIconProps> = (props) => (
   <SvgIcon {...props}>

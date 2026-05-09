@@ -17,7 +17,10 @@
     "internalServer": "An internal server error occurred.",
     "validationFailed": "Validation failed.",
     "onlySuperAdmin": "Only a Super Administrator can assign this role.",
-    "onlyAdmin": "Only an administrator can perform this action."
+    "onlyAdmin": "Only an administrator can perform this action.",
+    "invalidDateFormat": "Invalid date format.",
+    "startDateAfterEndDate": "Start date cannot be after end date.",
+    "dateRangeExceeded": "The maximum allowed range is {maxDays} days. Please adjust the dates to continue."
   },
   "success": {
     "created": "Resource created successfully.",

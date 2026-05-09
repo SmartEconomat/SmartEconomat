@@ -5,8 +5,10 @@ import type { Usuario } from '../types/usuario';
 import { formatLocalizedDate } from '../utils/intlFormat';
 import i18n from '../i18n';
 
+/** Alias público (NotificationPriority) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type NotificationPriority = 'urgent' | 'pending';
 
+/** Contrato de tipos público (AppNotification). Contexto: smart-economat-frontend (SPA). */
 export interface AppNotification {
   id: string;
   title: string;
@@ -88,15 +90,13 @@ const getLowStockNamesFromInventario = (items: InventarioItem[]): string[] => {
 };
 
 async function getPendingUsersNotification(): Promise<AppNotification | null> {
-  const response = await usuarioService.getUsuarios(
-    1,
-    3,
-    '',
-    '',
-    'createdAt',
-    'desc',
-    'Inactivo'
-  );
+  const response = await usuarioService.getUsuarios({
+    page: 1,
+    limit: 3,
+    sortBy: 'createdAt',
+    order: 'DESC',
+    status: 'Inactivo',
+  });
 
   const pendingUsers = response.total;
   const latestPendingUsers = response.data.map(buildPendingUserPreview);
@@ -254,7 +254,14 @@ async function getInventoryNotifications(): Promise<AppNotification[]> {
 }
 
 /**
- * Documentación en español.
+ * Agrega y devuelve las notificaciones globales de la aplicación:
+ * usuarios pendientes de activación, alertas de stock bajo, productos vencidos y próximos a vencer.
+ * Implementa caché TTL y deduplicación de peticiones en vuelo.
+ */
+/**
+ * Expone "fetchAppNotifications" en smart-economat-frontend (SPA).
+ * @undefined {FetchNotificationsOptions} options - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<AppNotification[]>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchAppNotifications(
   options: FetchNotificationsOptions

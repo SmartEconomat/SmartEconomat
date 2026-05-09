@@ -1,11 +1,11 @@
 import { SEED_REFERENCE_DATE } from './deterministic.seed-data';
 
 /**
- * Documentación en español.
+ * Representa http seed request error en el sistema.
  */
 export class HttpSeedRequestError extends Error {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     public readonly status: number,
@@ -19,14 +19,22 @@ export class HttpSeedRequestError extends Error {
 }
 
 /**
- * Documentación en español.
+ * Determina si data envelope.
+ *
+ * @param value Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export function hasDataEnvelope(value: unknown): value is { data: unknown } {
   return !!value && typeof value === 'object' && 'data' in value;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Interpreta y normaliza datos de entrada o texto estructurado.
+ * @undefined {Response} response - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<string | Record<string, unknown> | null>} Datos efectivos después de ejecutar la operación.
  */
 export async function parseSeedResponseBody(
   response: Response
@@ -57,7 +65,14 @@ export async function parseSeedResponseBody(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "computeSeedBackoffMs" en smart-economat-backend (Nest).
+ * @undefined {number} backoffBaseMs - Entrada efectiva esperada por el contrato.
+ * @undefined {number} backoffMaxMs - Entrada efectiva esperada por el contrato.
+ * @undefined {number} attempt - Entrada efectiva esperada por el contrato.
+ * @undefined {number} Datos efectivos después de ejecutar la operación.
  */
 export function computeSeedBackoffMs(
   backoffBaseMs: number,
@@ -71,7 +86,12 @@ export function computeSeedBackoffMs(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Interpreta y normaliza datos de entrada o texto estructurado.
+ * @undefined {string | null} headerValue - Entrada efectiva esperada por el contrato.
+ * @undefined {number | undefined} Datos efectivos después de ejecutar la operación.
  */
 export function parseSeedRetryAfterMs(
   headerValue: string | null
@@ -94,7 +114,10 @@ export function parseSeedRetryAfterMs(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de seed safe stringify dentro del flujo de la aplicación.
+ *
+ * @param value Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export function seedSafeStringify(value: unknown): string {
   if (value === undefined) {

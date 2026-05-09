@@ -52,6 +52,8 @@ const isMigrationCliCommand = process.argv.some((arg) =>
 const synchronizeEnabled =
   process.env.DB_SYNC === 'true' && !isMigrationCliCommand && !isProductionEnv;
 
+const isSeedingProcess = process.env.IS_SEEDING === 'true';
+
 if (isProductionEnv && process.env.DB_SYNC === 'true') {
   console.warn(
     '[database.config] DB_SYNC=true ignorado en produccion por seguridad. Usa migraciones.'
@@ -77,6 +79,16 @@ export const dbConfig: DataSourceOptions = {
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],
   subscribers: [],
+  ...(isSeedingProcess && !isTestEnv
+    ? {
+        extra: {
+          connectionTimeoutMillis: Math.max(
+            4000,
+            parseInt(process.env.SEED_DB_CONNECT_TIMEOUT_MS ?? '15000', 10)
+          ),
+        },
+      }
+    : {}),
 };
 
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {

@@ -5,7 +5,7 @@ import { ColumnNumericTransformer } from '../../../common/transformers/column-nu
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 
 /**
- * Documentación en español.
+ * Representa historial precio en el sistema.
  */
 @Entity({ name: 'historial_precio' })
 @Index(['productoProveedorId'])
@@ -13,13 +13,13 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 @Check(`"precio" > 0`)
 export class HistorialPrecio extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => ProductoProveedor, (pp) => pp.historialPrecios, {
     onDelete: 'CASCADE',
@@ -29,7 +29,7 @@ export class HistorialPrecio extends BaseEntity {
   productoProveedor!: Relation<ProductoProveedor>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -41,7 +41,7 @@ export class HistorialPrecio extends BaseEntity {
   precio!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -53,7 +53,7 @@ export class HistorialPrecio extends BaseEntity {
   cantidad?: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -64,7 +64,7 @@ export class HistorialPrecio extends BaseEntity {
   documentoOrigen?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'uuid',
@@ -74,7 +74,7 @@ export class HistorialPrecio extends BaseEntity {
   recepcionId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',

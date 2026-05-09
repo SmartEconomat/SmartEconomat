@@ -9,7 +9,7 @@ import { RecetaModule } from '../receta/receta.module';
 import { UsuarioModule } from '../usuario/usuario.module';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 @Module({
   imports: [

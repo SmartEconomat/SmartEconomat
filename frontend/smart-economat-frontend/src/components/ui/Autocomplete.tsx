@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Autocomplete as MuiAutocomplete,
   TextField,
@@ -6,6 +7,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
+import type { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import { SelectOption } from './Select';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -13,6 +15,7 @@ type AutocompleteRenderProps = React.HTMLAttributes<HTMLLIElement> & {
   key: string;
 };
 
+/** Contrato de tipos público (AutocompleteProps). Contexto: smart-economat-frontend (SPA). */
 export interface AutocompleteProps {
   name: string;
   label: string;
@@ -42,17 +45,49 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
   placeholder,
   disabled = false,
 }) => {
-  const [, setInternalInputValue] = useState('');
+  const { t } = useTranslation();
+  const selectedOptionCacheRef = useRef<SelectOption | null>(null);
 
-  // Sincronizar el valor inicial si existe
-  const selectedOption = options.find((opt) => opt.value === value) || null;
+  useEffect(() => {
+    if (value == null || value === '') {
+      selectedOptionCacheRef.current = null;
+      return;
+    }
+
+    const matchedOption = options.find((opt) => opt.value === value) || null;
+    if (matchedOption) {
+      selectedOptionCacheRef.current = matchedOption;
+    }
+  }, [options, value]);
+
+  // Conserva la opción seleccionada aunque lleguen resultados asíncronos que no la incluyan.
+  const selectedOption = useMemo(() => {
+    if (value == null || value === '') {
+      return null;
+    }
+
+    const matchedOption = options.find((opt) => opt.value === value) || null;
+    if (matchedOption) {
+      return matchedOption;
+    }
+
+    if (selectedOptionCacheRef.current?.value === value) {
+      return selectedOptionCacheRef.current;
+    }
+
+    return null;
+  }, [options, value]);
 
   const handleInputChange = (
     _event: React.SyntheticEvent,
-    newInputValue: string
+    newInputValue: string,
+    reason: AutocompleteInputChangeReason
   ) => {
-    setInternalInputValue(newInputValue);
-    if (onSearch) {
+    if (!onSearch) {
+      return;
+    }
+
+    if (reason === 'input' || reason === 'clear') {
       onSearch(newInputValue);
     }
   };
@@ -65,11 +100,15 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
       getOptionLabel={(option) => option.label}
       value={selectedOption}
       onChange={(_event, newValue) => {
+        selectedOptionCacheRef.current = newValue;
         onChange(name, newValue ? newValue.value : null);
       }}
       onInputChange={handleInputChange}
       loading={loading}
       fullWidth
+      disablePortal
+      openOnFocus
+      filterOptions={(availableOptions) => availableOptions}
       isOptionEqualToValue={(option, val) => option.value === val.value}
       sx={{
         '& .MuiOutlinedInput-root': {
@@ -90,7 +129,7 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
           required={required}
           error={error}
           helperText={helperText}
-          placeholder={placeholder || 'Escribe para buscar...'}
+          placeholder={placeholder || t('comun.escribeParaBuscar')}
           margin="normal"
           slotProps={{
             inputLabel: {
@@ -160,8 +199,8 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
           },
         },
       }}
-      noOptionsText="No se encontraron productos"
-      loadingText="Buscando..."
+      noOptionsText={t('comun.sinResultados')}
+      loadingText={t('comun.buscando')}
     />
   );
 };

@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { MotivoMerma } from '../enums/merma.enums';
 
+/** Clase pública (CreateMermaProduccionDto). Paquete: smart-economat-backend (Nest). */
 export class CreateMermaProduccionDto {
   @ApiProperty({
     description: 'UUID del lote de producción al que se asocia la merma',

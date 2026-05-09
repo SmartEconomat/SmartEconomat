@@ -15,6 +15,7 @@ import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 import { EstadoDistribucion } from '../enums/estado-distribucion.enum';
 import { DistribucionLinea } from '../distribucion-linea.entity/distribucion-linea.entity';
 
+/** Clase pública (Distribucion). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'distribucion' })
 @Index(['pedidoUsuarioId'])
 @Index(['usuarioResponsableId'])

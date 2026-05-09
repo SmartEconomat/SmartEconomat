@@ -9,6 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { EstadoRecepcion } from '../../recepcion/enums/estado-recepcion.enum';
 
+/** Clase pública (ExportRecepcionFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportRecepcionFilterDto {
   @IsOptional()
   @IsEnum(EstadoRecepcion)

@@ -1,6 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
+/** Clase pública (ChangePasswordDto). Paquete: smart-economat-backend (Nest). */
 export class ChangePasswordDto {
   @IsNotEmpty({
     message: i18nValidationMessage(

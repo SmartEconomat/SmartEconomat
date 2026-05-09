@@ -10,6 +10,7 @@ import type {
   ServiceHealth,
 } from "@shared/contracts";
 
+/** Alias de tipo público (WizardStep). */
 export type WizardStep =
   | "welcome"
   | "preflight"
@@ -22,9 +23,9 @@ const defaultConfig: InstallerConfigPayload = {
   runtimePath: `${globalThis.navigator?.platform?.startsWith("Win") ? "C:/SmartEconomatRuntime" : "/tmp/smarteconomat-runtime"}`,
   instanceName: "smarteconomat-local",
   adminUsername: "admin",
-  adminPassword: "AdminTemporal2026",
+  adminPassword: "SmartEconomat2026!",
   superAdminUsername: "superadmin",
-  superAdminPassword: "AdminTemporal2026",
+  superAdminPassword: "SmartEconomat2026!",
   useSamePasswordForBoth: true,
   localHost: "smarteconomat.app",
   timezone: "Europe/Madrid",
@@ -54,6 +55,10 @@ function resolveSmartEconomatBridge(
   return maybeBridge ?? null;
 }
 
+/**
+ * Expone la operación "useInstallerFlow" del instalador SmartEconomat.
+ * @returns {{ step: WizardStep; setStep: import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").SetStateAction<WizardStep>>; config: InstallerConfigPayload; setConfig: import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").SetStateAction<InstallerConfigPayload>>; preflightReport: PreflightReport | null; installerState: InstallerStateSnapshot | null; blockersCount: number; health: ServiceHealth[]; logs: RuntimeLogEvent[]; busy: boolean; error: string | null; setError: import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/index").SetStateAction<string | null>>; lastBackup: BackupMetadata | null; runPreflight: () => Promise<void>; runAutoRepair: () => Promise<void>; closeBusyPort: (port: number) => Promise<void>; startInstallation: () => Promise<void>; refreshHealth: () => Promise<void>; startStack: () => Promise<void>; stopStack: () => Promise<void>; restartStack: () => Promise<void>; tailLogs: (service: "frontend" | "backend" | "db" | "redis") => Promise<void>; stopLogs: () => Promise<void>; clearVisibleLogs: () => void; exportVisibleLogs: () => Promise<void>; prune: (level: "safe" | "aggressive", confirmationPhrase: string) => Promise<void>; backupNow: (label: string) => Promise<void>; restoreFrom: (artifactPath: string) => Promise<void>; pickRestoreArtifact: () => Promise<string | null>; generateDiagnostics: () => Promise<void>; pickInstallerFile: (payload: InstallerFilePickerPayload) => Promise<string | null>; }} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function useInstallerFlow() {
   const [step, setStep] = useState<WizardStep>("welcome");
   const [config, setConfig] = useState<InstallerConfigPayload>(defaultConfig);

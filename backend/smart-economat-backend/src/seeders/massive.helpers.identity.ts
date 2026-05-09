@@ -6,6 +6,12 @@ import {
   toEntityArray,
 } from './massive.helpers.common';
 
+/**
+ * Expone "findUserIdInResponseByIdentity" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {{ email?: string; username?: string; }} identity - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function findUserIdInResponseByIdentity(
   response: unknown,
   identity: { email?: string; username?: string }
@@ -49,6 +55,12 @@ export function findUserIdInResponseByIdentity(
   return null;
 }
 
+/**
+ * Expone "findProfesorIdByUserId" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function findProfesorIdByUserId(
   response: unknown,
   userId: string
@@ -71,6 +83,11 @@ export function findProfesorIdByUserId(
   return null;
 }
 
+/**
+ * Expone "extractClassCodeFromResponse" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function extractClassCodeFromResponse(response: unknown): string | null {
   for (const entity of toEntityArray(response)) {
     const classCode = entity.codigoClase || entity.codigoSlot;
@@ -82,6 +99,13 @@ export function extractClassCodeFromResponse(response: unknown): string | null {
   return null;
 }
 
+/**
+ * Expone "activateUserByIdentity" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} adminToken - Entrada efectiva esperada por el contrato.
+ * @undefined {{ email?: string; username?: string; }} identity - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
+ */
 export async function activateUserByIdentity(
   context: SeedContext,
   adminToken: string,
@@ -120,6 +144,14 @@ export async function activateUserByIdentity(
   );
 }
 
+/**
+ * Establece referencias mutables internas del componente/servicio.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} adminToken - Entrada efectiva esperada por el contrato.
+ * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+ * @undefined {string} role - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function setUserRoleForSeed(
   context: SeedContext,
   adminToken: string,

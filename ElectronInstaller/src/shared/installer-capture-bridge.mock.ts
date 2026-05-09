@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import type {
   BackupMetadata,
@@ -16,6 +16,7 @@ import type {
   TailLogsPayload,
 } from "./contracts";
 
+/** Alias de tipo público (InstallerBridgeCallCounts). */
 export type InstallerBridgeCallCounts = {
   runPreflight: number;
   startInstallation: number;
@@ -46,6 +47,10 @@ type RuntimeLogListener = (event: {
   timestamp: string;
 }) => void;
 
+/**
+ * Expone la operación "createInstallerCaptureBridgeMock" del instalador SmartEconomat.
+ * @returns {Record<string, unknown>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function createInstallerCaptureBridgeMock(): Record<string, unknown> {
   const installerProgressListeners: InstallerProgressListener[] = [];
   const runtimeLogListeners: RuntimeLogListener[] = [];

@@ -1,3 +1,4 @@
+/** Contrato de tipos público (User). Contexto: smart-economat-frontend (SPA). */
 export interface User {
   id: string;
   name: string;
@@ -7,6 +8,7 @@ export interface User {
   permisos?: string[];
   slotId?: string;
   ubicacionId?: string;
+  ubicaciones?: Array<{ id: string; nombre: string }>;
   alumno?: {
     id: string;
     slot?: {
@@ -30,8 +32,10 @@ export interface User {
     }>;
   };
   idioma?: 'es' | 'en';
+  preferences?: Record<string, unknown>;
 }
 
+/** Contrato de tipos público (AuthContextType). Contexto: smart-economat-frontend (SPA). */
 export interface AuthContextType {
   isAuthenticated: boolean;
   isAuthResolved: boolean;
@@ -40,5 +44,6 @@ export interface AuthContextType {
   login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
+  updateUser: (data: Partial<User>) => void;
   changeLanguage: (idioma: 'es' | 'en') => Promise<void>;
 }

@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsOptional,
   IsString,
   IsUUID,
@@ -11,6 +12,7 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { CreatePedidoLineDto } from './create-pedido-line.dto';
 
+/** Clase pública (CreatePurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePurchaseBatchDto {
   @ApiProperty({
     description:
@@ -45,6 +47,7 @@ export class CreatePurchaseBatchDto {
   ubicacionEntregaSugeridaId?: string;
 }
 
+/** Clase pública (ConsolidatePurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class ConsolidatePurchaseBatchDto {
   @ApiProperty({
     description:
@@ -70,6 +73,15 @@ export class ConsolidatePurchaseBatchDto {
   observaciones?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Si es true, permite auto-aprobar pedidos pendientes antes de consolidar',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  autoApprovePending?: boolean;
+
+  @ApiPropertyOptional({
     description: 'ID de la ubicación donde se sugiere entregar el pedido',
     required: false,
   })
@@ -78,8 +90,10 @@ export class ConsolidatePurchaseBatchDto {
   ubicacionEntregaSugeridaId?: string;
 }
 
+/** Clase pública (UpdatePurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class UpdatePurchaseBatchDto extends CreatePurchaseBatchDto {}
 
+/** Clase pública (CancelPurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class CancelPurchaseBatchDto {
   @ApiPropertyOptional({
     description: 'Motivo de cancelación para todo el pedido',

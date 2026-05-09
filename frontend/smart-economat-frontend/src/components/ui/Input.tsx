@@ -3,33 +3,33 @@ import { TextField, TextFieldProps } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type InputProps = TextFieldProps & {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   label: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   name: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   type?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   value?: unknown;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChange?: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement>;
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 /** Oculta el control nativo de revelar contraseña (Edge/Chromium en Windows) para no duplicar el icono de MUI. */
 const hideNativePasswordRevealSx: SxProps<Theme> = {

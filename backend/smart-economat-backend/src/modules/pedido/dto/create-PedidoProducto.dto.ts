@@ -1,6 +1,7 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 
+/** Clase pública (CreatePedidoProductoDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePedidoProductoDto {
   @IsUUID('all', {
     message: i18nValidationMessage(

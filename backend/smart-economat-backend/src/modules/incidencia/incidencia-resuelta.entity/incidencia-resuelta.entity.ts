@@ -6,7 +6,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { TipoResolucion } from '../enums/incidencia.enums';
 
 /**
- * Documentación en español.
+ * Representa incidencia resuelta en el sistema.
  */
 @Entity({ name: 'incidencia_resuelta' })
 @Index(['incidenciaId'])
@@ -19,7 +19,7 @@ export class IncidenciaResuelta extends BaseEntity {
   usuarioResolutorId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Incidencia, {
     onDelete: 'CASCADE',
@@ -29,7 +29,7 @@ export class IncidenciaResuelta extends BaseEntity {
   incidencia!: Relation<Incidencia>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, {
     onDelete: 'SET NULL',
@@ -39,7 +39,7 @@ export class IncidenciaResuelta extends BaseEntity {
   usuarioResolutor?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -49,7 +49,7 @@ export class IncidenciaResuelta extends BaseEntity {
   tipoResolucion!: TipoResolucion;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -58,7 +58,7 @@ export class IncidenciaResuelta extends BaseEntity {
   fechaResolucion!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;

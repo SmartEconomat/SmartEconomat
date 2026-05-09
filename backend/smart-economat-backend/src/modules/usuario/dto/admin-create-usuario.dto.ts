@@ -1,15 +1,19 @@
 import {
+  ArrayUnique,
   IsEmail,
   IsEnum,
+  IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsStrongPassword,
+  IsUUID,
   MaxLength,
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { rolUsuario, UserLanguage } from '../enums/usuario.enums';
 
+/** Clase pública (AdminCreateUsuarioDto). Paquete: smart-economat-backend (Nest). */
 export class AdminCreateUsuarioDto {
   @IsOptional()
   @IsEnum(UserLanguage, {
@@ -86,4 +90,19 @@ export class AdminCreateUsuarioDto {
     message: i18nValidationMessage('validation.CIAL_DEBE_SER_CADENA'),
   })
   cial?: string;
+
+  @IsOptional()
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID('all', {
+    each: true,
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionesIds?: string[];
 }

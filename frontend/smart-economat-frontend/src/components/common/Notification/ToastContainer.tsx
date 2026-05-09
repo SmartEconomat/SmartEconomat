@@ -5,12 +5,16 @@ import { getCategoryIconFilled } from '../../../features/productos/utils/getCate
 import NearMeIcon from '@mui/icons-material/NearMeOutlined';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const TOAST_WIDTH = 360;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "ToastContainer" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export default function ToastContainer() {
   const { toasts, removeToast } = useToastList();

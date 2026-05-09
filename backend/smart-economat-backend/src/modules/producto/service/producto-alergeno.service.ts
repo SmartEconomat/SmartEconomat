@@ -14,12 +14,12 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Alergeno } from '../enums/producto.enums';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para producto alergeno.
  */
 @Injectable()
 export class ProductoAlergenoService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(ProductoAlergeno)
@@ -29,7 +29,10 @@ export class ProductoAlergenoService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateProductoAlergenoDto): Promise<ProductoAlergeno> {
     const { idProducto, alergeno } = dto;
@@ -60,7 +63,10 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   *
+   * @param idProducto Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findAll(idProducto?: string): Promise<ProductoAlergeno[]> {
     const qb = this.productoAlergenoRepository
@@ -75,7 +81,10 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param idProducto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(idProducto: string): Promise<ProductoAlergeno[]> {
     const productoExiste = await this.productoRepository.findOne({
@@ -92,7 +101,13 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} idProducto - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateProductoAlergenoDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductoAlergeno[]>} Datos efectivos después de ejecutar la operación.
    */
   async update(
     idProducto: string,
@@ -125,7 +140,11 @@ export class ProductoAlergenoService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param idProducto Parámetro de entrada para la operación.
+   * @param alergeno Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(idProducto: string, alergeno: string): Promise<void> {
     if (!Object.values(Alergeno).includes(alergeno as Alergeno)) {

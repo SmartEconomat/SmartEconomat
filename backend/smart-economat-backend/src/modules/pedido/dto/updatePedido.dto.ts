@@ -13,6 +13,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { CreatePedidoLineDto } from './create-pedido-line.dto';
 
+/** Clase pública (UpdatePedidoDto). Paquete: smart-economat-backend (Nest). */
 export class UpdatePedidoDto {
   @ApiPropertyOptional({
     description: 'ID del proveedor',

@@ -15,9 +15,11 @@ import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { DificultadReceta, UnidadIngrediente } from '../enums/receta.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { IsPortion } from '../../../common/decorators/is-portion.decorator';
 import { AddIngredienteDto } from './add-ingrediente.dto';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
+/** Clase pública (CreateRecetaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateRecetaDto {
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()
@@ -31,7 +33,7 @@ export class CreateRecetaDto {
   instrucciones!: string;
 
   @IsInt()
-  @Min(0)
+  @Min(10)
   tiempoEstimadoMinutos!: number;
 
   @IsEnum(DificultadReceta)
@@ -72,8 +74,7 @@ export class CreateRecetaDto {
 
   @IsOptional()
   @Transform((params) => StringToNumberTransformer.transform(params))
-  @IsNumber()
-  @Min(0.001)
+  @IsPortion()
   raciones?: number;
 
   @IsOptional()

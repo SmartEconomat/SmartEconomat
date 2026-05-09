@@ -9,12 +9,17 @@ import { validate } from 'class-validator';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Documentación en español.
+ * Pipe global para la normalización y validación de datos de entrada.
+ * Realiza limpieza de espacios en blanco (trim) en strings y transforma objetos planos a instancias de clases.
  */
 @Injectable()
 export class NormalizeDataPipe implements PipeTransform<unknown> {
   /**
-   * Documentación en español.
+   * Transforma y valida los datos de entrada según los metadatos del argumento.
+   * @param value El valor enviado en la petición (body, query, param).
+   * @param metadata Metadatos sobre el tipo de dato esperado.
+   * @returns El valor normalizado y validado.
+   * @throws BadRequestException Si la validación de class-validator falla.
    */
   async transform(
     value: unknown,
@@ -66,7 +71,9 @@ export class NormalizeDataPipe implements PipeTransform<unknown> {
   }
 
   /**
-   * Documentación en español.
+   * Recorre recursivamente un objeto o array para limpiar espacios en blanco de sus propiedades de tipo string.
+   * @param obj El objeto o array a normalizar.
+   * @returns Una copia del objeto con los strings limpios.
    */
   private normalizeObject(obj: object): unknown {
     if (!obj || typeof obj !== 'object') {

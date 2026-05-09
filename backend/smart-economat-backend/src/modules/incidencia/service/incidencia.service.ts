@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   BadRequestException,
@@ -24,14 +24,16 @@ import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { IncidenciaResuelta } from '../incidencia-resuelta.entity/incidencia-resuelta.entity';
-import { EstadoIncidencia, TipoResolucion } from '../enums/incidencia.enums';
+import {
+  EstadoIncidencia,
+  TipoResolucion,
+  EstadoLineaIncidencia,
+  EstadoReclamacion,
+  TipoDiferencia,
+} from '../enums/incidencia.enums';
 import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import {
-  EstadoReclamacion,
-  IncidenciaLinea,
-  TipoDiferencia,
-} from '../incidencia-linea.entity/incidencia-linea.entity';
+import { IncidenciaLinea } from '../incidencia-linea.entity/incidencia-linea.entity';
 import { Pedido } from '../../pedido/pedido.entity/pedido.entity';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { PedidoStatusTrigger } from '../../pedido/enums/pedido-status-trigger.enum';
@@ -39,19 +41,20 @@ import { PedidoService } from '../../pedido/service/pedido.service';
 import { EstadoProductoRecepcion } from '../../recepcion/enums/estado-producto.enum';
 import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-producto-state.util';
 import { PedidoProducto } from '../../pedido/pedido-producto.entity/pedido-producto.entity';
+import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para incidencia.
  */
 @Injectable()
 export class IncidenciaService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static readonly CANTIDAD_EPSILON = 0.0005;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     private readonly incidenciaRepository: IncidenciaRepository,
@@ -63,29 +66,39 @@ export class IncidenciaService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateIncidenciaDto): Promise<Incidencia> {
     return this.dataSource.transaction(async (manager) => {
       const incidencia = manager.create(Incidencia, {
         recepcion: { id: dto.recepcionId } as Recepcion,
-        ...(dto.pedidoId ? { pedido: { id: dto.pedidoId } as Pedido } : {}),
+        pedido: { id: dto.pedidoId } as Pedido,
+        proveedor: { id: dto.proveedorId } as any,
         observacionesRecepcion: dto.observacionesRecepcion,
+        estado: EstadoIncidencia.ABIERTA,
       });
 
       const savedIncidencia = await manager.save(Incidencia, incidencia);
 
       const lineas = dto.lineas.map((lineaDto) => {
-        const cantidadEsperada = Number(lineaDto.cantidadEsperada);
+        const cantidadPedida = Number(lineaDto.cantidadPedida);
         const cantidadRecibida = Number(lineaDto.cantidadRecibida);
+        const diferencia = cantidadRecibida - cantidadPedida;
 
         return manager.create(IncidenciaLinea, {
           incidencia: savedIncidencia,
           pedidoProducto: { id: lineaDto.pedidoProductoId } as PedidoProducto,
-          cantidadEsperada,
+          cantidadPedida,
           cantidadRecibida,
-          diferencia: cantidadRecibida - cantidadEsperada,
+          cantidadAjustada: 0,
+          diferencia,
           tipoDiferencia: lineaDto.tipoDiferencia,
+          estado: EstadoLineaIncidencia.PENDIENTE_AJUSTE,
+          necesitaAjuste:
+            Math.abs(diferencia) > IncidenciaService.CANTIDAD_EPSILON,
           observaciones: lineaDto.observaciones,
         });
       });
@@ -93,12 +106,32 @@ export class IncidenciaService {
       const lineasPersistidas = await manager.save(IncidenciaLinea, lineas);
       savedIncidencia.lineas = lineasPersistidas;
 
-      return this.attachEstadoComputado(savedIncidencia);
+      const created = await this.recalcularEstadoIncidencia(
+        savedIncidencia,
+        manager
+      );
+
+      await this.movimientoHelper.log({
+        entidad: 'Incidencia',
+        entidadId: created.id,
+        accion: AccionMovimiento.CREATE,
+        descripcion: `Creación de incidencia ${created.id}`,
+        after: created,
+        manager,
+      });
+
+      return created;
     });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {IncidenciaQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Incidencia>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: IncidenciaQueryDto,
@@ -109,15 +142,17 @@ export class IncidenciaService {
       userRole
     );
 
-    result.data = result.data.map((incidencia) =>
-      this.attachEstadoComputado(incidencia)
-    );
+    return result;
 
     return result;
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userRole Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string, userRole?: string): Promise<Incidencia> {
     const incidencia = await this.incidenciaRepository.findOneWithRelations(
@@ -129,14 +164,19 @@ export class IncidenciaService {
       throw new NotFoundException(I18nHelper.getError('INCIDENCIA_NOT_FOUND'));
     }
 
-    return this.attachEstadoComputado(incidencia);
+    return incidencia;
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, dto: UpdateIncidenciaDto): Promise<Incidencia> {
     const incidencia = await this.findOne(id);
+    const before = JSON.parse(JSON.stringify(incidencia)) as Incidencia;
 
     if (incidencia.estaResuelta()) {
       throw new BadRequestException(
@@ -151,14 +191,28 @@ export class IncidenciaService {
     });
 
     const saved = await this.incidenciaRepository.save(incidencia);
-    return this.attachEstadoComputado(saved);
+
+    await this.movimientoHelper.log({
+      entidad: 'Incidencia',
+      entidadId: id,
+      accion: AccionMovimiento.UPDATE,
+      descripcion: `Actualización de incidencia ${id}`,
+      before,
+      after: saved,
+    });
+
+    return saved;
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const incidencia = await this.findOne(id);
+    const before = JSON.parse(JSON.stringify(incidencia)) as Incidencia;
 
     if (incidencia.estaResuelta()) {
       throw new BadRequestException(
@@ -167,10 +221,25 @@ export class IncidenciaService {
     }
 
     await this.incidenciaRepository.remove(incidencia);
+
+    await this.movimientoHelper.log({
+      entidad: 'Incidencia',
+      entidadId: id,
+      accion: AccionMovimiento.DELETE,
+      descripcion: `Eliminación de incidencia ${id}`,
+      before,
+    });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "resolverIncidencia" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {ResolverIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} usuarioAutenticadoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   async resolverIncidencia(
     id: string,
@@ -189,9 +258,6 @@ export class IncidenciaService {
           'usuarioResolutor',
           'lineas',
           'lineas.pedidoProducto',
-          'lineas.pedidoProducto.productoProveedor',
-          'lineas.pedidoProducto.productoProveedor.producto',
-          'lineas.pedidoProducto.productoProveedor.proveedor',
         ],
       });
 
@@ -207,82 +273,89 @@ export class IncidenciaService {
         );
       }
 
-      if ((incidencia.lineas ?? []).length === 0) {
-        throw new BadRequestException(
-          'No se puede resolver una incidencia sin líneas de producto.'
-        );
-      }
+      const before = JSON.parse(JSON.stringify(incidencia)) as Incidencia;
 
       const ajustesLinea = dto.lineas ?? [];
-      if (ajustesLinea.length > 0) {
-        this.applyLineaAjustes(incidencia.lineas ?? [], ajustesLinea);
-        await manager.save(IncidenciaLinea, incidencia.lineas);
-      }
+      const lineasIncidencia = incidencia.lineas ?? [];
+      for (const ajuste of ajustesLinea) {
+        const linea =
+          (ajuste.id
+            ? lineasIncidencia.find((l) => l.id === ajuste.id)
+            : undefined) ??
+          (ajuste.pedidoProductoId
+            ? lineasIncidencia.find(
+                (l) => l.pedidoProductoId === ajuste.pedidoProductoId
+              )
+            : undefined);
+        if (!linea) continue;
 
-      const resolverExplicito =
-        dto.marcarComoResuelta ?? ajustesLinea.length === 0;
-      const todasLasLineasBalanceadas = (incidencia.lineas ?? []).every(
-        (linea) => this.isLineaBalanceada(linea)
-      );
-      const estadoFinalManual = dto.estadoFinal;
-      const solicitaCierreTerminal =
-        estadoFinalManual === EstadoFinalIncidenciaDto.CANCELADA ||
-        estadoFinalManual === EstadoFinalIncidenciaDto.INVALIDA ||
-        estadoFinalManual === EstadoFinalIncidenciaDto.RESUELTA;
-
-      if (
-        resolverExplicito ||
-        todasLasLineasBalanceadas ||
-        solicitaCierreTerminal
-      ) {
-        if (!usuarioResolutorId) {
-          throw new BadRequestException(
-            'No se pudo determinar el usuario resolutor de la incidencia.'
-          );
+        if (ajuste.cantidadRecibida !== undefined) {
+          linea.cantidadRecibida = Number(ajuste.cantidadRecibida);
+        }
+        if (ajuste.cantidadAjustada !== undefined) {
+          linea.cantidadAjustada = Number(ajuste.cantidadAjustada);
         }
 
-        incidencia.resolver(
-          usuarioResolutorId,
-          this.composeObservacionesResolucion(
-            dto.observacionesResolucion,
-            estadoFinalManual
-          )
-        );
+        linea.diferencia = linea.cantidadRecibida - linea.cantidadPedida;
+
+        const total = linea.cantidadRecibida + linea.cantidadAjustada;
+        if (
+          Math.abs(total - linea.cantidadPedida) <
+          IncidenciaService.CANTIDAD_EPSILON
+        ) {
+          linea.estado = EstadoLineaIncidencia.AJUSTADO;
+          linea.necesitaAjuste = false;
+        } else {
+          linea.estado = EstadoLineaIncidencia.PENDIENTE_AJUSTE;
+          linea.necesitaAjuste = true;
+        }
+
+        if (ajuste.observaciones !== undefined) {
+          linea.observaciones = ajuste.observaciones;
+        }
+
+        await manager.save(IncidenciaLinea, linea);
       }
 
-      await manager.save(Incidencia, incidencia);
-
-      if (incidencia.pedidoId) {
-        await this.syncPedidoStatusAfterIncidenciaResolution(
-          incidencia.pedidoId,
-          manager
-        );
+      let obs = dto.observacionesResolucion;
+      if (dto.estadoFinal === EstadoFinalIncidenciaDto.CANCELADA) {
+        obs = `[cancelada] ${obs || ''}`.trim();
+        incidencia.resolver(usuarioResolutorId || 'sistema', obs || '');
+      } else if (dto.estadoFinal === EstadoFinalIncidenciaDto.INVALIDA) {
+        obs = `[invalida] ${obs || ''}`.trim();
+        incidencia.resolver(usuarioResolutorId || 'sistema', obs || '');
+      } else if (obs) {
+        incidencia.observacionesResolucion = obs;
       }
 
-      const hydrated =
-        (await manager.findOne(Incidencia, {
-          where: { id: incidencia.id },
-          relations: [
-            'recepcion',
-            'pedido',
-            'pedido.proveedor',
-            'usuarioResolutor',
-            'lineas',
-            'lineas.pedidoProducto',
-            'lineas.pedidoProducto.productoProveedor',
-            'lineas.pedidoProducto.productoProveedor.producto',
-            'lineas.pedidoProducto.productoProveedor.proveedor',
-          ],
-        })) ?? incidencia;
+      const saved = await manager.save(Incidencia, incidencia);
+      const resolved = await this.recalcularEstadoIncidencia(saved, manager);
 
-      return this.attachEstadoComputado(hydrated);
+      await this.movimientoHelper.log({
+        userId: usuarioResolutorId,
+        entidad: 'Incidencia',
+        entidadId: id,
+        accion: AccionMovimiento.RESOLVEINCIDENCIA,
+        descripcion: `Resolución de incidencia ${id}`,
+        before,
+        after: resolved,
+        manager,
+      });
+
+      return resolved;
     });
   }
 
   /**
-   * Documentación en español.
+   * Genera incidencias automáticas basadas en las discrepancias detectadas en una recepción.
+   * Agrupa las discrepancias por pedido y proveedor.
    */
-  async reportarIncidencia(dto: ReportIncidenciaDto): Promise<Incidencia> {
+  /**
+   * Expone "reportarIncidencia" en smart-economat-backend (Nest).
+   * @undefined {ReportIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia[]>} Datos efectivos después de ejecutar la operación.
+   */
+  async reportarIncidencia(dto: ReportIncidenciaDto): Promise<Incidencia[]> {
     const recepcion = await this.recepcionRepository.findOne({
       where: { id: dto.recepcionId },
     });
@@ -294,97 +367,154 @@ export class IncidenciaService {
     return this.dataSource.transaction(async (manager) => {
       const recepcionProductos = await manager.find(RecepcionProducto, {
         where: { recepcionId: recepcion.id },
-        relations: ['pedidoProducto'],
+        relations: {
+          pedidoProducto: {
+            pedido: true,
+          },
+        },
       });
 
-      const lineasPorPedidoProducto = new Map<
+      const grupos = new Map<
         string,
         {
-          pedidoProductoId: string;
-          cantidadEsperada: number;
-          cantidadRecibida: number;
-          tipoDiferencia: TipoDiferencia;
-          observaciones: string | undefined;
+          pedidoId: string;
+          proveedorId?: string;
+          lineas: Map<string, any>;
         }
       >();
 
       for (const item of recepcionProductos) {
-        const expected = Number(item.pedidoProducto?.cantidad ?? 0);
-        const current = lineasPorPedidoProducto.get(item.pedidoProductoId) ?? {
-          pedidoProductoId: item.pedidoProductoId,
-          cantidadEsperada: expected,
-          cantidadRecibida: 0,
-          tipoDiferencia: TipoDiferencia.FALTANTE,
-          observaciones: undefined,
-        };
+        const ppId = item.pedidoProductoId;
+        const pedido = item.pedidoProducto?.pedido;
+        if (!ppId || !pedido) continue;
 
-        current.cantidadRecibida += Number(item.cantidadRecibida ?? 0);
+        const key = `${pedido.id}_${pedido.proveedorId}`;
+        if (!grupos.has(key)) {
+          grupos.set(key, {
+            pedidoId: pedido.id,
+            proveedorId: pedido.proveedorId,
+            lineas: new Map(),
+          });
+        }
 
-        const diferencia = current.cantidadRecibida - current.cantidadEsperada;
+        const grupo = grupos.get(key)!;
+
+        if (!grupo.lineas.has(ppId)) {
+          grupo.lineas.set(ppId, {
+            pedidoProductoId: ppId,
+            cantidadPedida: Number(item.pedidoProducto?.cantidad ?? 0),
+            cantidadRecibida: 0,
+            tipoDiferencia: TipoDiferencia.FALTANTE,
+            observaciones: undefined,
+          });
+        }
+
+        const linea = grupo.lineas.get(ppId);
+        linea.cantidadRecibida += Number(item.cantidadRecibida ?? 0);
+
         if (item.estadoProducto === EstadoProductoRecepcion.ROTO) {
-          current.tipoDiferencia = TipoDiferencia.DEFECTUOSO;
-        } else if (diferencia > IncidenciaService.CANTIDAD_EPSILON) {
-          current.tipoDiferencia = TipoDiferencia.EXCESO;
-        } else {
-          current.tipoDiferencia = TipoDiferencia.FALTANTE;
+          linea.tipoDiferencia = TipoDiferencia.DEFECTUOSO;
         }
 
         if (item.observaciones?.trim()) {
-          current.observaciones = current.observaciones
-            ? `${current.observaciones}; ${item.observaciones.trim()}`
+          linea.observaciones = linea.observaciones
+            ? `${linea.observaciones}; ${item.observaciones.trim()}`
             : item.observaciones.trim();
         }
-
-        lineasPorPedidoProducto.set(item.pedidoProductoId, current);
       }
 
-      const lineasValidas = Array.from(lineasPorPedidoProducto.values()).filter(
-        (linea) => {
-          const diferencia = linea.cantidadRecibida - linea.cantidadEsperada;
-          return (
-            Math.abs(diferencia) >= IncidenciaService.CANTIDAD_EPSILON ||
-            linea.tipoDiferencia === TipoDiferencia.DEFECTUOSO
-          );
-        }
-      );
+      const incidenciasCreadas: Incidencia[] = [];
 
-      if (lineasValidas.length === 0) {
+      for (const [, grupo] of grupos.entries()) {
+        const lineasConDiscrepancia = Array.from(grupo.lineas.values()).filter(
+          (l) => {
+            const dif = l.cantidadRecibida - l.cantidadPedida;
+            const tieneRoto = l.tipoDiferencia === TipoDiferencia.DEFECTUOSO;
+
+            if (!tieneRoto) {
+              if (dif > IncidenciaService.CANTIDAD_EPSILON) {
+                l.tipoDiferencia = TipoDiferencia.EXCESO;
+              } else {
+                l.tipoDiferencia = TipoDiferencia.FALTANTE;
+              }
+            }
+
+            return (
+              tieneRoto || Math.abs(dif) >= IncidenciaService.CANTIDAD_EPSILON
+            );
+          }
+        );
+
+        if (lineasConDiscrepancia.length === 0) continue;
+
+        const incidencia = manager.create(Incidencia, {
+          recepcionId: recepcion.id,
+          pedidoId: grupo.pedidoId,
+          proveedorId: grupo.proveedorId,
+          estado: EstadoIncidencia.ABIERTA,
+          observacionesRecepcion: `Incidencia automática desde recepción. Tipo: ${dto.tipo}`,
+        });
+
+        const savedIncidencia = await manager.save(Incidencia, incidencia);
+
+        const entityLineas = lineasConDiscrepancia.map((l) =>
+          manager.create(IncidenciaLinea, {
+            incidencia: savedIncidencia,
+            pedidoProductoId: l.pedidoProductoId,
+            cantidadPedida: l.cantidadPedida,
+            cantidadRecibida: l.cantidadRecibida,
+            cantidadAjustada: 0,
+            diferencia: l.cantidadRecibida - l.cantidadPedida,
+            tipoDiferencia: l.tipoDiferencia,
+            necesitaAjuste: true,
+            estado: EstadoLineaIncidencia.PENDIENTE_AJUSTE,
+            estadoReclamacion: EstadoReclamacion.PENDIENTE,
+            observaciones: l.observaciones,
+          })
+        );
+
+        savedIncidencia.lineas = await manager.save(
+          IncidenciaLinea,
+          entityLineas
+        );
+
+        const finalInc = await this.recalcularEstadoIncidencia(
+          savedIncidencia,
+          manager
+        );
+        await this.movimientoHelper.log({
+          entidad: 'Incidencia',
+          entidadId: finalInc.id,
+          accion: AccionMovimiento.CREATE,
+          descripcion: `Creación automática de incidencia ${finalInc.id}`,
+          after: finalInc,
+          manager,
+        });
+        incidenciasCreadas.push(finalInc);
+      }
+
+      if (incidenciasCreadas.length > 0) {
+        recepcion.incidencia = true;
+        await manager.save(Recepcion, recepcion);
+      } else {
         throw new BadRequestException(
-          'No se puede reportar una incidencia sin productos con discrepancia.'
+          'No se detectaron discrepancias que justifiquen la creación de una incidencia.'
         );
       }
 
-      recepcion.incidencia = true;
-      await manager.save(Recepcion, recepcion);
-
-      const incidencia = manager.create(Incidencia, {
-        recepcion: { id: dto.recepcionId } as Recepcion,
-        observacionesRecepcion: `Incidencia reportada de tipo: ${dto.tipo}`,
-      });
-
-      const savedIncidencia = await manager.save(Incidencia, incidencia);
-
-      const lineas = lineasValidas.map((linea) =>
-        manager.create(IncidenciaLinea, {
-          incidencia: savedIncidencia,
-          pedidoProducto: { id: linea.pedidoProductoId } as PedidoProducto,
-          cantidadEsperada: linea.cantidadEsperada,
-          cantidadRecibida: linea.cantidadRecibida,
-          diferencia: linea.cantidadRecibida - linea.cantidadEsperada,
-          tipoDiferencia: linea.tipoDiferencia,
-          observaciones: linea.observaciones,
-        })
-      );
-
-      const lineasPersistidas = await manager.save(IncidenciaLinea, lineas);
-      savedIncidencia.lineas = lineasPersistidas;
-
-      return this.attachEstadoComputado(savedIncidencia);
+      return incidenciasCreadas;
     });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "resolverIncidenciaTransaccional" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {ResolveIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} usuarioId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   async resolverIncidenciaTransaccional(
     id: string,
@@ -392,6 +522,7 @@ export class IncidenciaService {
     usuarioId: string
   ): Promise<Incidencia> {
     const incidencia = await this.findOne(id);
+    const before = JSON.parse(JSON.stringify(incidencia)) as Incidencia;
 
     if (incidencia.estaResuelta()) {
       throw new BadRequestException(
@@ -416,19 +547,6 @@ export class IncidenciaService {
 
       await manager.save(resolucion);
 
-      if (dto.accion === TipoResolucion.DEVOLUCION) {
-        await this.movimientoHelper.createMovimiento(
-          usuarioId,
-          TipoMovimiento.SALIDA_AJUSTE,
-          'Incidencia',
-          incidencia.id,
-          0,
-          undefined,
-          undefined,
-          `Ajuste por resolución de incidencia (${dto.accion}): ${dto.observaciones || ''}`
-        );
-      }
-
       incidencia.resolver(usuarioId, dto.observaciones);
       await manager.save(incidencia);
 
@@ -439,75 +557,70 @@ export class IncidenciaService {
         );
       }
 
-      return this.attachEstadoComputado(incidencia);
+      const resolved = await this.recalcularEstadoIncidencia(
+        incidencia,
+        manager
+      );
+
+      await this.movimientoHelper.log({
+        userId: usuarioId,
+        tipo:
+          dto.accion === TipoResolucion.DEVOLUCION
+            ? TipoMovimiento.SALIDA_AJUSTE
+            : TipoMovimiento.AUDITORIA,
+        entidad: 'Incidencia',
+        entidadId: incidencia.id,
+        accion: AccionMovimiento.RESOLVEINCIDENCIA,
+        descripcion: `Resolución transaccional de incidencia (${dto.accion}): ${dto.observaciones || ''}`,
+        before,
+        after: resolved,
+        manager,
+      });
+
+      return resolved;
     });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  private attachEstadoComputado(incidencia: Incidencia): Incidencia {
-    incidencia.resuelta = incidencia.estaResuelta();
-    incidencia.estado = this.resolveEstadoIncidencia(incidencia);
-    return incidencia;
-  }
-
-  /**
-   * Documentación en español.
-   */
-  private resolveEstadoIncidencia(incidencia: Incidencia): EstadoIncidencia {
-    const observacionesResolucion =
-      incidencia.observacionesResolucion?.toLowerCase() ?? '';
-
-    if (
-      observacionesResolucion.includes('[cancelada]') ||
-      observacionesResolucion.includes('#cancelada') ||
-      observacionesResolucion.includes('cancelad')
-    ) {
-      return EstadoIncidencia.CANCELADA;
-    }
-
-    if (
-      observacionesResolucion.includes('[invalida]') ||
-      observacionesResolucion.includes('[inválida]') ||
-      observacionesResolucion.includes('#invalida') ||
-      observacionesResolucion.includes('#inválida') ||
-      observacionesResolucion.includes('inválid') ||
-      observacionesResolucion.includes('invalid')
-    ) {
-      return EstadoIncidencia.INVALIDA;
-    }
-
-    if (incidencia.estaResuelta()) {
-      return EstadoIncidencia.RESUELTA;
-    }
-
+  private async recalcularEstadoIncidencia(
+    incidencia: Incidencia,
+    manager: EntityManager
+  ): Promise<Incidencia> {
     const lineas = incidencia.lineas ?? [];
     if (lineas.length === 0) {
-      return EstadoIncidencia.INVALIDA;
+      throw new BadRequestException(
+        'No se puede persistir una incidencia sin líneas de producto.'
+      );
     }
 
-    const todasBalanceadas = lineas.every((linea) =>
-      this.isLineaBalanceada(linea)
+    const todasAjustadas = lineas.every(
+      (l) =>
+        l.estado === EstadoLineaIncidencia.AJUSTADO ||
+        l.estado === EstadoLineaIncidencia.SIN_PROBLEMA
+    );
+    const algunaAjustada = lineas.some(
+      (l) => l.estado === EstadoLineaIncidencia.AJUSTADO
     );
 
-    if (todasBalanceadas) {
-      return EstadoIncidencia.PENDIENTE_VALIDACION;
+    if (todasAjustadas) {
+      incidencia.estado = EstadoIncidencia.EN_PROCESO;
+      incidencia.fechaResolucion = null;
+      incidencia.usuarioResolutorId = undefined;
+    } else if (algunaAjustada) {
+      incidencia.estado = EstadoIncidencia.EN_PROCESO;
+    } else {
+      incidencia.estado = EstadoIncidencia.ABIERTA;
     }
 
-    const tieneGestionManual = lineas.some(
-      (linea) => linea.estadoReclamacion !== EstadoReclamacion.PENDIENTE
-    );
+    const saved = await manager.save(Incidencia, incidencia);
 
-    if (!tieneGestionManual) {
-      return EstadoIncidencia.NUEVA;
-    }
-
-    return EstadoIncidencia.EN_AJUSTE;
+    return saved;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private composeObservacionesResolucion(
     observaciones: string | undefined,
@@ -527,7 +640,11 @@ export class IncidenciaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de append state tag dentro del flujo de la aplicación.
+   *
+   * @param base Parámetro de entrada para la operación.
+   * @param tag Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private appendStateTag(base: string | undefined, tag: string): string {
     if (!base) {
@@ -542,18 +659,23 @@ export class IncidenciaService {
   }
 
   /**
-   * Documentación en español.
+   * Determina si linea balanceada.
+   *
+   * @param linea Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private isLineaBalanceada(linea: IncidenciaLinea): boolean {
     return (
-      Math.abs(
-        Number(linea.cantidadRecibida) - Number(linea.cantidadEsperada)
-      ) < IncidenciaService.CANTIDAD_EPSILON
+      Math.abs(Number(linea.cantidadRecibida) - Number(linea.cantidadPedida)) <
+      IncidenciaService.CANTIDAD_EPSILON
     );
   }
 
   /**
-   * Documentación en español.
+   * Resuelve estado reclamacion a partir del contexto disponible.
+   *
+   * @param linea Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private resolveEstadoReclamacion(linea: IncidenciaLinea): EstadoReclamacion {
     if (this.isLineaBalanceada(linea)) {
@@ -568,7 +690,7 @@ export class IncidenciaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private applyLineaAjustes(
     lineas: IncidenciaLinea[],
@@ -601,12 +723,12 @@ export class IncidenciaService {
         );
       }
 
-      const ajusteCantidadDefinido = ajuste.ajusteCantidad !== undefined;
+      const ajusteCantidadDefinido = ajuste.cantidadAjustada !== undefined;
       const cantidadRecibidaDefinida = ajuste.cantidadRecibida !== undefined;
 
       if (ajusteCantidadDefinido && cantidadRecibidaDefinida) {
         throw new BadRequestException(
-          'No se puede enviar cantidadRecibida y ajusteCantidad al mismo tiempo en la misma línea.'
+          'No se puede enviar cantidadRecibida y cantidadAjustada al mismo tiempo en la misma línea.'
         );
       }
 
@@ -623,10 +745,10 @@ export class IncidenciaService {
         const cantidadBase = Number(linea.cantidadRecibida);
         linea.cantidadRecibida = Math.max(
           0,
-          cantidadBase + Number(ajuste.ajusteCantidad)
+          cantidadBase + Number(ajuste.cantidadAjustada)
         );
         linea.diferencia =
-          Number(linea.cantidadRecibida) - Number(linea.cantidadEsperada);
+          Number(linea.cantidadRecibida) - Number(linea.cantidadPedida);
 
         if (linea.diferencia > 0) {
           linea.tipoDiferencia = TipoDiferencia.EXCESO;
@@ -638,7 +760,7 @@ export class IncidenciaService {
       if (cantidadRecibidaDefinida) {
         linea.cantidadRecibida = Number(ajuste.cantidadRecibida);
         linea.diferencia =
-          Number(linea.cantidadRecibida) - Number(linea.cantidadEsperada);
+          Number(linea.cantidadRecibida) - Number(linea.cantidadPedida);
 
         if (linea.diferencia > 0) {
           linea.tipoDiferencia = TipoDiferencia.EXCESO;
@@ -660,7 +782,7 @@ export class IncidenciaService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async syncPedidoStatusAfterIncidenciaResolution(
     pedidoId: string,
@@ -710,6 +832,10 @@ export class IncidenciaService {
         continue;
       }
 
+      if (!recepcionProducto.pedidoProducto) {
+        continue;
+      }
+
       const pedidoProductoId = recepcionProducto.pedidoProducto.id;
       const acumulado = cantidadesRecibidas.get(pedidoProductoId) ?? 0;
       cantidadesRecibidas.set(
@@ -719,10 +845,10 @@ export class IncidenciaService {
     }
 
     const recepcionCompleta = pedido.pedidoProductos.every((lineaPedido) => {
-      const cantidadEsperada = Number(lineaPedido.cantidad);
+      const cantidadPedida = Number(lineaPedido.cantidad);
       const cantidadRecibida = cantidadesRecibidas.get(lineaPedido.id) ?? 0;
       return (
-        Math.abs(cantidadEsperada - cantidadRecibida) <
+        Math.abs(cantidadPedida - cantidadRecibida) <
         IncidenciaService.CANTIDAD_EPSILON
       );
     });

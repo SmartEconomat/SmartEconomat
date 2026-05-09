@@ -4,6 +4,7 @@ import { ProductoService } from '../../../src/modules/producto/service/producto.
 import { DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PedidoService } from '../../../src/modules/pedido/service/pedido.service';
+import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
 import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
@@ -49,6 +50,13 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
         { provide: PedidoService, useValue: {} },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: ProductoService, useValue: mockProductoService },
+        {
+          provide: MovimientoHelper,
+          useValue: {
+            trackAction: jest.fn(),
+            trackInventarioMovimiento: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

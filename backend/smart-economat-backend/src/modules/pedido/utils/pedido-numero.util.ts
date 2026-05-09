@@ -45,6 +45,11 @@ async function reserveNextPedidoProveedorNumeroWithSequence(
   }
 }
 
+/**
+ * Expone "reserveNextPedidoProveedorNumero" en smart-economat-backend (Nest).
+ * @undefined {Pick<EntityManager, "query">} manager - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
+ */
 export async function reserveNextPedidoProveedorNumero(
   manager: Pick<EntityManager, 'query'>
 ): Promise<string> {

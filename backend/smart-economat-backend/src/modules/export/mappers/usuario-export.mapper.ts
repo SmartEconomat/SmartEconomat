@@ -2,7 +2,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { ExportColumn } from './producto-export.mapper';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export const USUARIO_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
@@ -17,7 +17,12 @@ export const USUARIO_COLUMNS: ExportColumn[] = [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "mapUsuarioToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Usuario} usuario - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
  */
 export function mapUsuarioToExcelRow(
   usuario: Usuario

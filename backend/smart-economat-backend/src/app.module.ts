@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SmartAuthThrottlerGuard } from './common/guards/smart-throttler.guard';
 import { HighTrafficAlertInterceptor } from './common/interceptors/high-traffic-alert.interceptor';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -41,9 +42,10 @@ import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.
 import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
 import { DistribucionModule } from './modules/distribucion/distribucion.module';
 import { I18nConfigModule } from './config/i18n.module';
-
 /**
- * Documentación en español.
+ * Módulo raíz de la aplicación SmartEconomat.
+ * Centraliza la configuración global de infraestructura (Base de Datos, Redis, Sentry, Rate Limiting)
+ * e integra los módulos de dominio que componen el sistema.
  */
 @Module({
   imports: [
@@ -122,6 +124,10 @@ import { I18nConfigModule } from './config/i18n.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: HighTrafficAlertInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
   ],
 })

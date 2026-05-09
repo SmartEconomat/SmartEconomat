@@ -1,12 +1,6 @@
-import {
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
+/** Clase pública (CreateSlotDto). Paquete: smart-economat-backend (Nest). */
 export class CreateSlotDto {
   @IsString()
   @IsNotEmpty()
@@ -20,8 +14,4 @@ export class CreateSlotDto {
   @IsInt()
   @Min(1)
   capacidad?: number;
-
-  @IsOptional()
-  @IsUUID()
-  ubicacionId?: string;
 }

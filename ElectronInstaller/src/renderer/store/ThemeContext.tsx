@@ -4,6 +4,13 @@ import { FontSize, getTheme, ThemeName } from "@renderer/utils/theme/themes";
 
 import { ThemeContext } from "./theme.context";
 
+/**
+ * Expone la operación "ThemeContextProvider" del instalador SmartEconomat.
+ * @returns {{ children: React.ReactNode; }} {
+ *   children,
+ * } - Entrada esperada por la función.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {

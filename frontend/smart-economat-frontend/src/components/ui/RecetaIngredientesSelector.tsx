@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   Box,
   Button,
@@ -17,12 +23,12 @@ import {
   Tooltip,
 } from '@mui/material';
 import Select from './Select';
+import NumericInput from './NumericInput';
 import MenuItem from '@mui/material/MenuItem';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import {
-  fetchProductos,
   getProductoById,
   searchProductosByName,
 } from '../../services/producto.service';
@@ -31,6 +37,7 @@ import { UnidadIngrediente } from '../../services/receta.types';
 import { EU_ALLERGENS } from '../../utils/constants';
 import { useTranslation } from 'react-i18next';
 
+/** Contrato de tipos público (UI_RecetaIngrediente). Contexto: smart-economat-frontend (SPA). */
 export interface UI_RecetaIngrediente {
   productoId: string;
   cantidad: number;
@@ -51,22 +58,57 @@ interface RecetaIngredientesSelectorProps {
   onChange: (value: UI_RecetaIngrediente[]) => void;
 }
 
+const PRODUCT_SEARCH_MIN_CHARS = 2;
+const PRODUCT_SEARCH_DEBOUNCE_MS = 300;
+const PRODUCT_SEARCH_CACHE_MAX_ENTRIES = 50;
+
 const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   value = [],
   onChange,
 }) => {
   const { t } = useTranslation();
-  const [allProducts, setAllProducts] = useState<Producto[]>([]);
   const [productDetails, setProductDetails] = useState<
     Record<string, Producto>
   >({});
-  const [isLoading, setIsLoading] = useState(false);
   const [searchResultsByLine, setSearchResultsByLine] = useState<
     Record<number, Producto[]>
   >({});
   const [isSearchingByLine, setIsSearchingByLine] = useState<
     Record<number, boolean>
   >({});
+  const searchDebounceTimersRef = useRef<
+    Record<number, ReturnType<typeof setTimeout> | undefined>
+  >({});
+  const searchRequestIdRef = useRef<Record<number, number>>({});
+  const productSearchCacheRef = useRef<Map<string, Producto[]>>(new Map());
+
+  const upsertProductDetails = useCallback(
+    (products: Array<Producto | null | undefined>) => {
+      if (products.length === 0) {
+        return;
+      }
+
+      setProductDetails((prev) => {
+        let hasChanges = false;
+        const next = { ...prev };
+
+        products.forEach((product) => {
+          if (!product?.id) {
+            return;
+          }
+
+          const existing = next[product.id];
+          if (!existing || !existing.proveedores?.length) {
+            next[product.id] = product;
+            hasChanges = true;
+          }
+        });
+
+        return hasChanges ? next : prev;
+      });
+    },
+    []
+  );
 
   const getAvailableProviders = useCallback(
     (
@@ -126,37 +168,15 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     []
   );
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      setIsLoading(true);
-      try {
-        const limit = 50;
-        let currentPage = 1;
-        let totalPages = 1;
-        const loadedProducts: Producto[] = [];
-
-        do {
-          const response = await fetchProductos(currentPage, limit);
-          loadedProducts.push(...response.data);
-          totalPages = response.totalPages || 1;
-          currentPage += 1;
-        } while (currentPage <= totalPages);
-
-        const uniqueProducts = Array.from(
-          new Map(
-            loadedProducts.map((product) => [product.id, product])
-          ).values()
-        );
-
-        setAllProducts(uniqueProducts);
-      } catch (error) {
-        console.error('Error loading products for recipe:', error);
-      } finally {
-        setIsLoading(false);
+  const clearPendingSearchTimers = useCallback(() => {
+    Object.values(searchDebounceTimersRef.current).forEach((timer) => {
+      if (timer) {
+        clearTimeout(timer);
       }
-    };
-    loadProducts();
+    });
   }, []);
+
+  useEffect(() => clearPendingSearchTimers, [clearPendingSearchTimers]);
 
   useEffect(() => {
     const productIdsToLoad = Array.from(
@@ -185,15 +205,11 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
         return;
       }
 
-      setProductDetails((prev) => {
-        const next = { ...prev };
-        loadedProducts.forEach((product) => {
-          if (product) {
-            next[product.id] = product;
-          }
-        });
-        return next;
-      });
+      upsertProductDetails(
+        loadedProducts.filter((product): product is Producto =>
+          Boolean(product?.id)
+        )
+      );
     };
 
     void loadMissingProductDetails();
@@ -201,7 +217,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [value, productDetails]);
+  }, [value, productDetails, upsertProductDetails]);
 
   useEffect(() => {
     let hasChanges = false;
@@ -285,6 +301,13 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   const handleRemoveLine = (index: number) => {
     const newLines = value.filter((_, i) => i !== index);
     onChange(newLines);
+
+    if (searchDebounceTimersRef.current[index]) {
+      clearTimeout(searchDebounceTimersRef.current[index]);
+      delete searchDebounceTimersRef.current[index];
+    }
+    delete searchRequestIdRef.current[index];
+
     setSearchResultsByLine((prev) => {
       const next = { ...prev };
       delete next[index];
@@ -297,27 +320,76 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     });
   };
 
-  const handleProductSearch = async (index: number, query: string) => {
-    const trimmedQuery = query.trim();
+  const handleProductSearch = useCallback(
+    (index: number, query: string) => {
+      const trimmedQuery = query.trim();
 
-    if (trimmedQuery.length < 2) {
-      setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
-      setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
-      return;
-    }
+      if (searchDebounceTimersRef.current[index]) {
+        clearTimeout(searchDebounceTimersRef.current[index]);
+        delete searchDebounceTimersRef.current[index];
+      }
 
-    setIsSearchingByLine((prev) => ({ ...prev, [index]: true }));
+      const requestId = (searchRequestIdRef.current[index] ?? 0) + 1;
+      searchRequestIdRef.current[index] = requestId;
 
-    try {
-      const products = await searchProductosByName(trimmedQuery);
-      setSearchResultsByLine((prev) => ({ ...prev, [index]: products }));
-    } catch (error) {
-      console.error('Error searching products for recipe:', error);
-      setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
-    } finally {
-      setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
-    }
-  };
+      if (trimmedQuery.length < PRODUCT_SEARCH_MIN_CHARS) {
+        setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
+        setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
+        return;
+      }
+
+      setIsSearchingByLine((prev) => ({ ...prev, [index]: true }));
+
+      searchDebounceTimersRef.current[index] = setTimeout(async () => {
+        const cacheKey = trimmedQuery.toLowerCase();
+        const cachedResults = productSearchCacheRef.current.get(cacheKey);
+
+        if (cachedResults) {
+          if (searchRequestIdRef.current[index] === requestId) {
+            setSearchResultsByLine((prev) => ({
+              ...prev,
+              [index]: cachedResults,
+            }));
+            setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
+          }
+          return;
+        }
+
+        try {
+          const products = await searchProductosByName(trimmedQuery);
+
+          if (searchRequestIdRef.current[index] !== requestId) {
+            return;
+          }
+
+          productSearchCacheRef.current.set(cacheKey, products);
+          while (
+            productSearchCacheRef.current.size >
+            PRODUCT_SEARCH_CACHE_MAX_ENTRIES
+          ) {
+            const oldestEntry = productSearchCacheRef.current.keys().next();
+            if (oldestEntry.done) {
+              break;
+            }
+            productSearchCacheRef.current.delete(oldestEntry.value);
+          }
+
+          upsertProductDetails(products);
+          setSearchResultsByLine((prev) => ({ ...prev, [index]: products }));
+        } catch (error) {
+          if (searchRequestIdRef.current[index] === requestId) {
+            console.error('Error searching products for recipe:', error);
+            setSearchResultsByLine((prev) => ({ ...prev, [index]: [] }));
+          }
+        } finally {
+          if (searchRequestIdRef.current[index] === requestId) {
+            setIsSearchingByLine((prev) => ({ ...prev, [index]: false }));
+          }
+        }
+      }, PRODUCT_SEARCH_DEBOUNCE_MS);
+    },
+    [upsertProductDetails]
+  );
 
   const handleUpdateLine = (
     index: number,
@@ -328,26 +400,44 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
     newLines[index] = { ...newLines[index], [field]: newValue };
 
     if (field === 'productoId' && typeof newValue === 'string' && newValue) {
-      // Fetch the complete product with providers
-      getProductoById(newValue).then((product) => {
-        if (product) {
-          setProductDetails((prev) => ({ ...prev, [product.id]: product }));
+      const selectedProduct =
+        productDetails[newValue] ||
+        searchResultsByLine[index]?.find(
+          (product) => product.id === newValue
+        ) ||
+        null;
 
-          const cheapestProvider = getCheapestProvider(
-            product.proveedores || []
-          );
+      if (selectedProduct) {
+        upsertProductDetails([selectedProduct]);
+      }
 
-          newLines[index].producto = {
-            ...buildInlineProduct(product),
-          };
+      const availableProviders = getAvailableProviders(
+        newLines[index],
+        selectedProduct
+      );
+      const cheapestProviderId =
+        getCheapestProvider(availableProviders)?.proveedor?.id;
 
-          newLines[index].proveedorFavoritoId = cheapestProvider?.proveedor?.id;
-          newLines[index].proveedorFavoritoAuto = Boolean(
-            cheapestProvider?.proveedor?.id
-          );
-          onChange(newLines);
-        }
-      });
+      newLines[index].producto = selectedProduct
+        ? {
+            ...buildInlineProduct(selectedProduct),
+          }
+        : undefined;
+      newLines[index].proveedorFavoritoId = cheapestProviderId;
+      newLines[index].proveedorFavoritoAuto = Boolean(cheapestProviderId);
+      onChange(newLines);
+
+      if (!selectedProduct || !selectedProduct.proveedores?.length) {
+        getProductoById(newValue)
+          .then((product) => {
+            if (product) {
+              upsertProductDetails([product]);
+            }
+          })
+          .catch((error) => {
+            console.error('Error loading product details for recipe:', error);
+          });
+      }
     } else if (field === 'productoId' && !newValue) {
       // Reset if product is cleared
       newLines[index].producto = undefined;
@@ -376,21 +466,21 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   const uniqueAllergens = useMemo(() => {
     const allergenSet = new Set<string>();
     value.forEach((line) => {
-      const product = allProducts.find((p) => p.id === line.productoId);
+      const product = line.productoId
+        ? productDetails[line.productoId] || line.producto
+        : line.producto;
       if (product && product.alergenos) {
         product.alergenos.forEach((a) => allergenSet.add(a.alergeno));
-      } else if (line.producto && line.producto.alergenos) {
-        line.producto.alergenos.forEach((a) => allergenSet.add(a.alergeno));
       }
     });
 
-    return (
-      Array.from(allergenSet)
-        .map((id) => EU_ALLERGENS.find((ea) => ea.id === id))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((a): a is any => a !== undefined)
-    );
-  }, [value, allProducts]);
+    return Array.from(allergenSet)
+      .map((id) => EU_ALLERGENS.find((ea) => ea.id === id))
+      .filter(
+        (allergen): allergen is (typeof EU_ALLERGENS)[number] =>
+          allergen !== undefined
+      );
+  }, [value, productDetails]);
 
   return (
     <Box sx={{ mt: 3 }}>
@@ -403,18 +493,25 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-          {t('recetas.ingredientes.titulo')}
+          {t('recipes.ingredientes.titulo')}
         </Typography>
         <Button
           startIcon={<AddIcon />}
           variant="outlined"
           size="small"
           onClick={handleAddLine}
-          disabled={isLoading}
         >
-          {t('recetas.ingredientes.anadir')}
+          {t('recipes.ingredientes.anadir')}
         </Button>
       </Box>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 1.5 }}
+      >
+        {t('recipes.ingredientes.buscarAyuda')}
+      </Typography>
 
       {/* Display de alérgenos derivados */}
       {uniqueAllergens.length > 0 && (
@@ -440,7 +537,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
           >
             <ErrorOutlineIcon />
             <Typography variant="body2" fontWeight="bold">
-              {t('recetas.ingredientes.alergenosTitulo')}
+              {t('recipes.ingredientes.alergenosTitulo')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -468,289 +565,382 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
         </Box>
       )}
 
-      {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress size={24} />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-          <Table size="small">
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{ mb: 2, overflowX: 'auto' }}
+      >
+        <Table
+          size="small"
+          aria-label={t('recipes.ingredientes.titulo')}
+          sx={{ minWidth: 860, tableLayout: 'fixed' }}
+        >
+          <TableHead sx={{ bgcolor: 'action.hover' }}>
+            <TableRow>
+              <TableCell
+                sx={{ fontWeight: 'bold', width: '44%', whiteSpace: 'nowrap' }}
+              >
+                {t('recipes.ingredientes.columns.producto')}
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 'bold', width: '10%', whiteSpace: 'nowrap' }}
+              >
+                {t('recipes.ingredientes.columns.cantidad')}
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 'bold', width: '10%', whiteSpace: 'nowrap' }}
+              >
+                {t('recipes.ingredientes.columns.unidad')}
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 'bold', width: '30%', whiteSpace: 'nowrap' }}
+              >
+                {t('recipes.ingredientes.columns.proveedorFav')}
+              </TableCell>
+              <TableCell sx={{ width: '6%' }}></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {value.length === 0 ? (
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
-                  {t('recetas.ingredientes.columns.producto')}
+                <TableCell
+                  colSpan={5}
+                  align="center"
+                  sx={{ py: 3, color: 'text.secondary' }}
+                >
+                  {t('recipes.ingredientes.empty')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>
-                  {t('recetas.ingredientes.columns.cantidad')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>
-                  {t('recetas.ingredientes.columns.unidad')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
-                  {t('recetas.ingredientes.columns.proveedorFav')}
-                </TableCell>
-                <TableCell sx={{ width: '8%' }}></TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {value.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ py: 3, color: 'text.secondary' }}
-                  >
-                    {t('recetas.ingredientes.empty')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                value.map((line, index) => {
-                  const selectedProduct = line.productoId
-                    ? productDetails[line.productoId] ||
-                      allProducts.find((p) => p.id === line.productoId) ||
-                      null
-                    : null;
-                  const availableProviders = getAvailableProviders(
-                    line,
-                    selectedProduct
-                  );
-                  const cheapestProviderId =
-                    getCheapestProvider(availableProviders)?.proveedor?.id;
+            ) : (
+              value.map((line, index) => {
+                const selectedProduct = line.productoId
+                  ? productDetails[line.productoId] ||
+                    searchResultsByLine[index]?.find(
+                      (product) => product.id === line.productoId
+                    ) ||
+                    (line.producto as Producto | null) ||
+                    null
+                  : null;
+                const availableProviders = getAvailableProviders(
+                  line,
+                  selectedProduct
+                );
+                const cheapestProviderId =
+                  getCheapestProvider(availableProviders)?.proveedor?.id;
 
-                  const optionsMap = new Map<string, Producto>();
+                const optionsMap = new Map<string, Producto>();
 
-                  [
-                    ...allProducts,
-                    ...(searchResultsByLine[index] || []),
-                  ].forEach((product) => {
-                    optionsMap.set(product.id, product);
-                  });
+                (searchResultsByLine[index] || []).forEach((product) => {
+                  optionsMap.set(product.id, product);
+                });
 
-                  if (selectedProduct?.id) {
-                    optionsMap.set(selectedProduct.id, selectedProduct);
-                  }
+                if (selectedProduct?.id) {
+                  optionsMap.set(selectedProduct.id, selectedProduct);
+                }
 
-                  if (line.producto?.id) {
-                    optionsMap.set(line.producto.id, line.producto as Producto);
-                  }
+                if (line.producto?.id) {
+                  optionsMap.set(line.producto.id, line.producto as Producto);
+                }
 
-                  const options = Array.from(optionsMap.values());
+                const options = Array.from(optionsMap.values());
 
-                  return (
-                    <TableRow key={`ing-row-${index}`}>
-                      <TableCell>
-                        <Autocomplete
-                          options={options}
-                          getOptionLabel={(option) => option.nombre || ''}
-                          value={selectedProduct || line.producto || null}
-                          loading={Boolean(isSearchingByLine[index])}
-                          openOnFocus
-                          isOptionEqualToValue={(option, currentValue) =>
-                            getOptionId(option) === getOptionId(currentValue)
+                return (
+                  <TableRow key={`ing-row-${index}`}>
+                    <TableCell
+                      sx={{ verticalAlign: 'top', py: 1, minWidth: 0 }}
+                    >
+                      <Autocomplete
+                        options={options}
+                        getOptionLabel={(option) => option.nombre || ''}
+                        value={selectedProduct || line.producto || null}
+                        loading={Boolean(isSearchingByLine[index])}
+                        openOnFocus
+                        isOptionEqualToValue={(option, currentValue) =>
+                          getOptionId(option) === getOptionId(currentValue)
+                        }
+                        onInputChange={(_, inputValue, reason) => {
+                          if (reason === 'input' || reason === 'clear') {
+                            void handleProductSearch(index, inputValue);
                           }
-                          onInputChange={(_, inputValue, reason) => {
-                            if (reason === 'input') {
-                              void handleProductSearch(index, inputValue);
-                            }
-                          }}
-                          onChange={(_, newValue) =>
-                            handleUpdateLine(
-                              index,
-                              'productoId',
-                              newValue?.id || ''
-                            )
-                          }
-                          renderOption={(props, option) => {
-                            const listItemProps = {
-                              ...props,
-                            } as React.HTMLAttributes<HTMLLIElement> & {
-                              keepMounted?: boolean;
-                              key?: React.Key;
-                            };
+                        }}
+                        onChange={(_, newValue) =>
+                          handleUpdateLine(
+                            index,
+                            'productoId',
+                            newValue?.id || ''
+                          )
+                        }
+                        renderOption={(props, option) => {
+                          const listItemProps = {
+                            ...props,
+                          } as React.HTMLAttributes<HTMLLIElement> & {
+                            keepMounted?: boolean;
+                            key?: React.Key;
+                          };
 
-                            delete listItemProps.keepMounted;
-                            delete listItemProps.key;
+                          delete listItemProps.keepMounted;
+                          delete listItemProps.key;
 
-                            return (
-                              <li {...listItemProps} key={option.id}>
-                                {option.nombre}
-                              </li>
-                            );
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              variant="outlined"
-                              placeholder={t(
-                                'recetas.ingredientes.buscarProducto'
-                              )}
-                              helperText={t('recetas.ingredientes.buscarAyuda')}
-                              InputLabelProps={{ shrink: true }}
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {isSearchingByLine[index] ? (
-                                      <CircularProgress
-                                        color="inherit"
-                                        size={16}
-                                      />
-                                    ) : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                ),
-                              }}
-                            />
-                          )}
-                          noOptionsText={t('recetas.ingredientes.sinProductos')}
-                          size="small"
-                          fullWidth
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={line.cantidad || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              index,
-                              'cantidad',
-                              Number(e.target.value)
-                            )
-                          }
-                          variant="outlined"
-                          size="small"
-                          inputProps={{ min: 0.01, step: 'any' }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          name={`ing-unidad-${index}`}
-                          label=""
-                          value={line.unidad || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(index, 'unidad', e.target.value)
-                          }
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          margin="none"
-                        >
-                          {Object.values(UnidadIngrediente).map((unidad) => (
-                            <MenuItem key={unidad} value={unidad}>
-                              {unidad}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          name={`ing-prov-${index}`}
-                          label=""
-                          value={line.proveedorFavoritoId || ''}
-                          onChange={(e) =>
-                            handleUpdateLine(
-                              index,
-                              'proveedorFavoritoId',
-                              e.target.value
-                            )
-                          }
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          margin="none"
-                          SelectProps={{
-                            displayEmpty: true,
-                            renderValue: (val) => {
-                              if (!val) {
-                                return (
-                                  <em>
-                                    {t('recetas.ingredientes.sinProveedor')}
-                                  </em>
-                                );
-                              }
-
-                              const selected = availableProviders.find(
-                                (pp) => pp.proveedor?.id === val
+                          return (
+                            <li {...listItemProps} key={option.id}>
+                              {option.nombre}
+                            </li>
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="outlined"
+                            placeholder={t(
+                              'recipes.ingredientes.buscarProducto'
+                            )}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {isSearchingByLine[index] ? (
+                                    <CircularProgress
+                                      color="inherit"
+                                      size={16}
+                                    />
+                                  ) : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                        noOptionsText={t('recipes.ingredientes.sinProductos')}
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                      <NumericInput
+                        name={`ing-cant-${index}`}
+                        label=""
+                        value={line.cantidad || ''}
+                        onChange={(parsed) =>
+                          handleUpdateLine(index, 'cantidad', parsed ?? 0)
+                        }
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                      <Select
+                        name={`ing-unidad-${index}`}
+                        label=""
+                        value={line.unidad || ''}
+                        onChange={(e) =>
+                          handleUpdateLine(index, 'unidad', e.target.value)
+                        }
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        margin="none"
+                      >
+                        {Object.values(UnidadIngrediente).map((unidad) => (
+                          <MenuItem key={unidad} value={unidad}>
+                            {unidad}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </TableCell>
+                    <TableCell
+                      sx={{ verticalAlign: 'top', py: 1, minWidth: 0 }}
+                    >
+                      <Select
+                        name={`ing-prov-${index}`}
+                        label=""
+                        value={
+                          availableProviders.some(
+                            (p) => p.proveedor?.id === line.proveedorFavoritoId
+                          )
+                            ? line.proveedorFavoritoId || ''
+                            : ''
+                        }
+                        onChange={(e) =>
+                          handleUpdateLine(
+                            index,
+                            'proveedorFavoritoId',
+                            e.target.value
+                          )
+                        }
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        margin="none"
+                        SelectProps={{
+                          displayEmpty: true,
+                          renderValue: (val) => {
+                            if (!val) {
+                              return (
+                                <em>
+                                  {t('recipes.ingredientes.sinProveedor')}
+                                </em>
                               );
+                            }
 
-                              if (selected) {
-                                const isAutomatic =
-                                  line.proveedorFavoritoAuto ||
-                                  selected.proveedor?.id === cheapestProviderId;
+                            const selected = availableProviders.find(
+                              (pp) => pp.proveedor?.id === val
+                            );
 
-                                return (
+                            if (selected) {
+                              const isAutomatic =
+                                line.proveedorFavoritoAuto ||
+                                selected.proveedor?.id === cheapestProviderId;
+
+                              const selectedProviderName =
+                                selected.proveedor?.nombre ||
+                                t('recipes.ingredientes.proveedorDesconocido');
+
+                              const selectedProviderPrice =
+                                typeof selected.precioUnitario === 'number' &&
+                                Number.isFinite(selected.precioUnitario)
+                                  ? `${selected.precioUnitario}€`
+                                  : '—';
+
+                              return (
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'center',
+                                    gap: 0.2,
+                                    maxWidth: '100%',
+                                    minWidth: 0,
+                                    lineHeight: 1.15,
+                                  }}
+                                >
+                                  <Typography
+                                    component="span"
+                                    variant="body2"
+                                    sx={{
+                                      color: isAutomatic
+                                        ? 'success.dark'
+                                        : 'primary.dark',
+                                      fontWeight: 700,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      minWidth: 0,
+                                      width: '100%',
+                                    }}
+                                  >
+                                    {selectedProviderName}
+                                  </Typography>
                                   <Box
+                                    component="span"
                                     sx={{
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: 0.75,
-                                      color: isAutomatic
-                                        ? 'success.dark'
-                                        : 'primary.dark',
-                                      fontWeight: 'bold',
+                                      maxWidth: '100%',
+                                      minWidth: 0,
+                                      color: 'text.secondary',
+                                      fontSize: '0.72rem',
                                     }}
                                   >
-                                    <span>
-                                      {selected.proveedor?.nombre} (
-                                      {selected.precioUnitario}€)
-                                    </span>
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {selectedProviderPrice}
+                                    </Box>
                                     {isAutomatic && (
                                       <Box
                                         component="span"
                                         sx={{
-                                          fontSize: '0.7rem',
+                                          fontSize: '0.68rem',
                                           textTransform: 'uppercase',
-                                          letterSpacing: 0.5,
+                                          letterSpacing: 0.35,
                                           fontWeight: 700,
+                                          color: 'success.dark',
                                         }}
                                       >
-                                        {t('recetas.ingredientes.auto')}
+                                        {t('recipes.ingredientes.auto')}
                                       </Box>
                                     )}
                                   </Box>
-                                );
-                              }
-                              return val as string;
+                                </Box>
+                              );
+                            }
+                            return val as string;
+                          },
+                          sx: {
+                            '& .MuiSelect-select': {
+                              minWidth: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              overflow: 'hidden',
                             },
-                          }}
-                          disabled={!line.productoId}
-                        >
-                          <MenuItem value="">
-                            <em>{t('recetas.ingredientes.autoMasBarato')}</em>
-                          </MenuItem>
-                          {availableProviders.map((pp) => (
-                            <MenuItem
-                              key={pp.proveedor?.id || 'unknown'}
-                              value={pp.proveedor?.id}
+                          },
+                        }}
+                        disabled={!line.productoId}
+                      >
+                        <MenuItem value="">
+                          <em>{t('recipes.ingredientes.autoMasBarato')}</em>
+                        </MenuItem>
+                        {availableProviders.map((pp) => (
+                          <MenuItem
+                            key={pp.proveedor?.id || 'unknown'}
+                            value={pp.proveedor?.id}
+                          >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                gap: 0.15,
+                                minWidth: 0,
+                                width: '100%',
+                                fontWeight:
+                                  pp.proveedor?.id === cheapestProviderId
+                                    ? 700
+                                    : 400,
+                                color:
+                                  pp.proveedor?.id === cheapestProviderId
+                                    ? 'success.dark'
+                                    : 'inherit',
+                              }}
                             >
                               <Box
+                                component="span"
                                 sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                  fontWeight:
-                                    pp.proveedor?.id === cheapestProviderId
-                                      ? 700
-                                      : 400,
-                                  color:
-                                    pp.proveedor?.id === cheapestProviderId
-                                      ? 'success.dark'
-                                      : 'inherit',
+                                  width: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                <span>
-                                  {pp.proveedor?.nombre ||
-                                    t(
-                                      'recetas.ingredientes.proveedorDesconocido'
-                                    )}{' '}
-                                  ({pp.precioUnitario}€)
-                                </span>
+                                {pp.proveedor?.nombre ||
+                                  t(
+                                    'recetas.ingredientes.proveedorDesconocido'
+                                  )}
+                              </Box>
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  color: 'text.secondary',
+                                  fontSize: '0.72rem',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                <Box component="span">{pp.precioUnitario}€</Box>
                                 {pp.proveedor?.id === cheapestProviderId && (
                                   <Box
                                     component="span"
                                     sx={{
-                                      fontSize: '0.72rem',
+                                      fontSize: '0.68rem',
                                       bgcolor: 'success.light',
                                       color: 'success.dark',
                                       px: 0.75,
@@ -759,33 +949,33 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                                       fontWeight: 700,
                                     }}
                                   >
-                                    {t('recetas.ingredientes.masBarato')}
+                                    {t('recipes.ingredientes.masBarato')}
                                   </Box>
                                 )}
                               </Box>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title={t('comun.quitar')}>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleRemoveLine(index)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                      <Tooltip title={t('comun.quitar')}>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleRemoveLine(index)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };

@@ -1,4 +1,9 @@
-import { baseFetch, PaginatedData, parseApiResponse } from './api.service';
+import {
+  baseFetch,
+  buildQueryParams,
+  PaginatedData,
+  parseApiResponse,
+} from './api.service';
 import type {
   CreateDistribucionPayload,
   Distribucion,
@@ -6,7 +11,12 @@ import type {
 } from './distribucion.types';
 
 /**
- * Documentación en español.
+ * Recupera la lista paginada de distribuciones (entregas a alumnos/aulas).
+ */
+/**
+ * Expone "fetchDistribuciones" en smart-economat-frontend (SPA).
+ * @undefined {{ page?: number; limit?: number; searchTerm?: string; estado?: string; }} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Distribucion>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchDistribuciones(
   params: {
@@ -16,12 +26,7 @@ export async function fetchDistribuciones(
     estado?: string;
   } = {}
 ): Promise<PaginatedData<Distribucion>> {
-  const query = new URLSearchParams();
-
-  if (params.page) query.set('page', String(params.page));
-  if (params.limit) query.set('limit', String(params.limit));
-  if (params.searchTerm) query.set('searchTerm', params.searchTerm);
-  if (params.estado) query.set('estado', params.estado);
+  const query = buildQueryParams(params, 20, 50);
 
   const response = await baseFetch(`/distribuciones?${query.toString()}`);
   const body = await parseApiResponse<PaginatedData<Distribucion>>(
@@ -33,7 +38,12 @@ export async function fetchDistribuciones(
 }
 
 /**
- * Documentación en español.
+ * Obtiene los pedidos de usuario disponibles para ser distribuidos (estado correcto).
+ */
+/**
+ * Expone "fetchDistribucionesDisponibles" en smart-economat-frontend (SPA).
+ * @undefined {{ limit?: number; searchTerm?: string; }} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<DistribucionDisponible[]>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchDistribucionesDisponibles(
   params: {
@@ -41,10 +51,14 @@ export async function fetchDistribucionesDisponibles(
     searchTerm?: string;
   } = {}
 ): Promise<DistribucionDisponible[]> {
-  const query = new URLSearchParams();
-
-  if (params.limit) query.set('limit', String(Math.min(params.limit, 50)));
-  if (params.searchTerm) query.set('searchTerm', params.searchTerm);
+  const query = buildQueryParams(
+    {
+      limit: params.limit ? Math.min(params.limit, 50) : undefined,
+      search: params.searchTerm,
+    },
+    20,
+    50
+  );
 
   const response = await baseFetch(
     `/distribuciones/disponibles?${query.toString()}`
@@ -58,7 +72,12 @@ export async function fetchDistribucionesDisponibles(
 }
 
 /**
- * Documentación en español.
+ * Crea un nuevo registro de distribución (entrega física de productos a un destinatario).
+ */
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {CreateDistribucionPayload} payload - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Distribucion>} Datos efectivos después de ejecutar la operación.
  */
 export async function createDistribucion(
   payload: CreateDistribucionPayload
@@ -77,7 +96,12 @@ export async function createDistribucion(
 }
 
 /**
- * Documentación en español.
+ * Confirma la entrega de una distribución, actualizando su estado a 'entregado'.
+ */
+/**
+ * Expone "confirmDistribucion" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Distribucion>} Datos efectivos después de ejecutar la operación.
  */
 export async function confirmDistribucion(id: string): Promise<Distribucion> {
   const response = await baseFetch(`/distribuciones/${id}/confirmar`, {
@@ -93,7 +117,13 @@ export async function confirmDistribucion(id: string): Promise<Distribucion> {
 }
 
 /**
- * Documentación en español.
+ * Cancela una distribución con un motivo opcional.
+ */
+/**
+ * Expone "cancelDistribucion" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} motivoCancelacion - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Distribucion>} Datos efectivos después de ejecutar la operación.
  */
 export async function cancelDistribucion(
   id: string,
@@ -113,7 +143,12 @@ export async function cancelDistribucion(
 }
 
 /**
- * Documentación en español.
+ * Obtiene el detalle completo de una distribución por su ID.
+ */
+/**
+ * Expone "fetchDistribucionById" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Distribucion>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchDistribucionById(id: string): Promise<Distribucion> {
   const response = await baseFetch(`/distribuciones/${id}`);

@@ -2,25 +2,25 @@ import React from 'react';
 import { Box, Skeleton, Paper, Stack, Divider } from '@mui/material';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface ListSkeletonProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   count?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   hasHeader?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   type?: 'list' | 'accordion' | 'table';
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ListSkeleton: React.FC<ListSkeletonProps> = ({
   count = 3,
@@ -28,7 +28,9 @@ const ListSkeleton: React.FC<ListSkeletonProps> = ({
   type = 'list',
 }) => {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de render item dentro del flujo de la aplicación.
+   *
+   * @param index Parámetro de entrada para la operación.
    */
   const renderItem = (index: number) => (
     <Box key={index} sx={{ py: 2, px: 3 }}>
@@ -49,7 +51,9 @@ const ListSkeleton: React.FC<ListSkeletonProps> = ({
   );
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de render accordion dentro del flujo de la aplicación.
+   *
+   * @param index Parámetro de entrada para la operación.
    */
   const renderAccordion = (index: number) => (
     <Paper

@@ -7,6 +7,7 @@ import { PedidoUsuarioLinea } from '../../pedido/pedido-usuario-linea.entity/ped
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { EstadoDistribucionLinea } from '../enums/estado-distribucion.enum';
 
+/** Clase pública (DistribucionLinea). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'distribucion_linea' })
 @Index(['distribucionId'])
 @Index(['pedidoUsuarioLineaId'])

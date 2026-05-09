@@ -7,11 +7,25 @@ import {
 import i18n from '../i18n/index';
 import { TutorialContext } from './tutorial.context';
 import { useAuth } from './auth.hooks';
+import { usuarioService } from '../services/usuarioService';
+import {
+  isBooleanTrue,
+  isTutorialGloballyCompleted,
+  TUTORIAL_COMPLETED_PREFERENCE_KEY,
+  TUTORIAL_COMPLETED_STORAGE_KEY,
+} from './tutorial.persistence';
 
+/**
+ * Expone "TutorialProvider" en smart-economat-frontend (SPA).
+ * @undefined {{ children: ReactNode; }} {
+ *   children,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const location = useLocation();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -41,9 +55,44 @@ export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
     [userRole]
   );
 
-  const setTourSeen = useCallback((path: string) => {
-    localStorage.setItem(`has_seen_tour_${path}`, 'true');
-  }, []);
+  const setTourSeen = useCallback(
+    async (path: string) => {
+      if (!user) return;
+
+      const pathKey = `has_seen_tour_${path.replace(/\//g, '_')}`;
+      const currentPreferences =
+        (user.preferences as Record<string, unknown> | undefined) || {};
+      const alreadyCompleted =
+        isTutorialGloballyCompleted(currentPreferences) ||
+        isBooleanTrue(localStorage.getItem(TUTORIAL_COMPLETED_STORAGE_KEY));
+
+      if (alreadyCompleted) {
+        return;
+      }
+
+      const optimisticPreferences = {
+        ...currentPreferences,
+        [pathKey]: true,
+        [TUTORIAL_COMPLETED_PREFERENCE_KEY]: true,
+      };
+
+      localStorage.setItem(TUTORIAL_COMPLETED_STORAGE_KEY, 'true');
+      updateUser({ preferences: optimisticPreferences });
+
+      try {
+        const response = await usuarioService.updatePreferences({
+          [pathKey]: true,
+          [TUTORIAL_COMPLETED_PREFERENCE_KEY]: true,
+        });
+        if (response.data) {
+          updateUser({ preferences: response.data.preferences });
+        }
+      } catch (error) {
+        console.error('Error updating tutorial preferences:', error);
+      }
+    },
+    [user, updateUser]
+  );
 
   const nextStep = useCallback(() => {
     setCurrentStepIndex((prev) => {
@@ -67,17 +116,23 @@ export const TutorialProvider: React.FC<{ children: ReactNode }> = ({
 
   // Auto-lanzamiento
   useEffect(() => {
-    const currentPath = location.pathname;
-    const hasSeen = localStorage.getItem(`has_seen_tour_${currentPath}`);
+    if (!user) return;
 
-    if (!hasSeen) {
+    const currentPath = location.pathname;
+    const currentPreferences =
+      (user.preferences as Record<string, unknown> | undefined) || {};
+    const hasCompletedTutorial =
+      isTutorialGloballyCompleted(currentPreferences) ||
+      isBooleanTrue(localStorage.getItem(TUTORIAL_COMPLETED_STORAGE_KEY));
+
+    if (!hasCompletedTutorial) {
       // Pequeño delay para asegurar que la página ha cargado y los elementos están en el DOM
       const timer = setTimeout(() => {
         startTour(currentPath);
-      }, 1000);
+      }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [location.pathname, startTour]);
+  }, [location.pathname, startTour, user]);
 
   return (
     <TutorialContext.Provider

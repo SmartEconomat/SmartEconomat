@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UserStatusEnum } from '../../enums/user-status.enum';
+import {
+  mapUserStatusBackendToEnum,
+  getUserStatusColor,
+  getUserStatusLabel,
+} from '../../utils/usuario-status.utils';
 import {
   Alert,
   Box,
@@ -14,7 +20,6 @@ import {
   AccordionDetails,
   TextField,
   InputAdornment,
-  SelectChangeEvent,
 } from '@mui/material';
 import ListSkeleton from '../../components/ui/ListSkeleton';
 import EditIcon from '@mui/icons-material/Edit';
@@ -35,6 +40,12 @@ import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import StatusChip from '../../components/ui/StatusChip';
 import UserModal from './UserModal';
+import {
+  useDataTable,
+  DataTablePaginationProps,
+  SortConfig,
+  type FilterValue,
+} from '../../hooks/useDataTable';
 
 import { usuarioService } from '../../services/usuarioService';
 import {
@@ -52,44 +63,35 @@ import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
 // Eliminada función isAdminRole en favor de hasPermission
 
-const updatePaginationTotal = (
-  current: { total: number; page: number; limit: number },
-  nextTotal: number
-) => {
-  if (current.total === nextTotal) {
-    return current;
-  }
-
-  return { ...current, total: nextTotal };
-};
-
 const UserAccordion = React.memo(
   ({
     title,
     icon,
     data,
-    role,
     color,
-    rolePagination,
     columns,
     renderActions,
-    setPagination,
+    canEdit,
+    handleEditUser,
+    paginationProps,
+    onSort,
+    sortConfig,
+    filters,
+    onFilter,
   }: {
     title: string;
     icon: React.ReactNode;
     data: Usuario[];
-    role: 'admin' | 'professor' | 'student';
     color: string;
-    rolePagination: { total: number; page: number; limit: number };
     columns: Column<Usuario>[];
     renderActions: (row: Usuario) => React.ReactNode;
-    setPagination: React.Dispatch<
-      React.SetStateAction<{
-        admin: { total: number; page: number; limit: number };
-        professor: { total: number; page: number; limit: number };
-        student: { total: number; page: number; limit: number };
-      }>
-    >;
+    canEdit: boolean;
+    handleEditUser: (row: Usuario) => void;
+    paginationProps: DataTablePaginationProps;
+    onSort: (key: string) => void;
+    sortConfig?: SortConfig;
+    filters: Record<string, FilterValue>;
+    onFilter: (key: string, value: FilterValue) => void;
   }) => {
     const { t } = useTranslation();
     return (
@@ -112,55 +114,28 @@ const UserAccordion = React.memo(
               {icon}
             </Avatar>
             <Typography fontWeight={700}>
-              {t(title)} ({rolePagination.total})
+              {t(title)} ({paginationProps.totalItems || 0})
             </Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ p: 0 }}>
-          {rolePagination.total === 0 ? (
-            <Typography
-              variant="body2"
-              sx={{
-                p: 3,
-                textAlign: 'center',
-                fontStyle: 'italic',
-                color: 'text.secondary',
-              }}
-            >
-              {t('usuarios.empty.noUsuariosRol')}
-            </Typography>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              isLoading={false}
-              renderActions={renderActions}
-              pagination={{
-                currentPage: rolePagination.page,
-                totalPages: Math.ceil(
-                  rolePagination.total / rolePagination.limit
-                ),
-                onPageChange: (_, newPage) => {
-                  setPagination((prev) => ({
-                    ...prev,
-                    [role]: { ...prev[role], page: newPage },
-                  }));
-                },
-                pageSize: rolePagination.limit,
-                onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                  setPagination((prev) => ({
-                    ...prev,
-                    [role]: {
-                      ...prev[role],
-                      limit: Number(e.target.value),
-                      page: 1,
-                    },
-                  }));
-                },
-                pageSizeOptions: [10, 20, 50],
-              }}
-            />
-          )}
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={false}
+            renderActions={renderActions}
+            onRowClick={canEdit ? handleEditUser : undefined}
+            pagination={paginationProps}
+            onSort={onSort}
+            sortConfig={sortConfig}
+            filters={filters}
+            onFilter={onFilter}
+            getRowAriaLabel={(row: Usuario) =>
+              t('usuarios.aria.filaUsuario', {
+                nombre: row.nombre || row.username,
+              })
+            }
+          />
         </AccordionDetails>
       </Accordion>
     );
@@ -170,7 +145,11 @@ const UserAccordion = React.memo(
 UserAccordion.displayName = 'UserAccordion';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "UsuariosView" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export const UsuariosView: React.FC = () => {
   const { t } = useTranslation();
@@ -183,16 +162,11 @@ export const UsuariosView: React.FC = () => {
   const [roleOptions, setRoleOptions] = useState<RolOption[]>([]);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
 
-  // Metadatos de paginación para cada rol
-  const [pagination, setPagination] = useState({
-    admin: { total: 0, page: 1, limit: 20 },
-    professor: { total: 0, page: 1, limit: 20 },
-    student: { total: 0, page: 1, limit: 20 },
-  });
+  const adminTable = useDataTable({ sortBy: 'username' });
+  const professorTable = useDataTable({ sortBy: 'username' });
+  const studentTable = useDataTable({ sortBy: 'username' });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Estados para modales
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -214,6 +188,7 @@ export const UsuariosView: React.FC = () => {
 
   const canList = usePermission(PERMISSIONS.usuarios.listar);
   const canEdit = usePermission(PERMISSIONS.usuarios.editar);
+  const canActivate = usePermission(PERMISSIONS.usuarios.activar_desactivar);
   const canDelete = usePermission(PERMISSIONS.usuarios.eliminar);
   const canCreate = usePermission(PERMISSIONS.usuarios.crear);
 
@@ -222,24 +197,6 @@ export const UsuariosView: React.FC = () => {
       navigate('/');
     }
   }, [canList, navigate]);
-
-  // Debounce para el buscador
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-      // Resetear páginas al buscar
-      setPagination((prev) => ({
-        admin: { ...prev.admin, page: 1 },
-        professor: { ...prev.professor, page: 1 },
-        student: { ...prev.student, page: 1 },
-      }));
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  // Ref to read pagination without adding it as a dependency to fetchRoleData
-  const paginationRef = React.useRef(pagination);
-  paginationRef.current = pagination;
 
   const loadRoles = useCallback(async () => {
     setIsLoadingRoles(true);
@@ -257,67 +214,73 @@ export const UsuariosView: React.FC = () => {
     }
   }, [t, toast]);
 
-  const loadUsersByRole = useCallback(async () => {
-    setIsLoading(true);
+  const loadUsersByRole = useCallback(
+    async () => {
+      setIsLoading(true);
 
-    try {
-      const currentPagination = paginationRef.current;
-      const [adminRes, professorRes, studentRes] = await Promise.all([
-        usuarioService.getUsuarios(
-          currentPagination.admin.page,
-          currentPagination.admin.limit,
-          debouncedSearch,
-          'ADMIN',
-          undefined,
-          undefined,
-          statusFilter || undefined
-        ),
-        usuarioService.getUsuarios(
-          currentPagination.professor.page,
-          currentPagination.professor.limit,
-          debouncedSearch,
-          'PROFESOR',
-          undefined,
-          undefined,
-          statusFilter || undefined
-        ),
-        usuarioService.getUsuarios(
-          currentPagination.student.page,
-          currentPagination.student.limit,
-          debouncedSearch,
-          'ALUMNO',
-          undefined,
-          undefined,
-          statusFilter || undefined
-        ),
-      ]);
+      try {
+        const [adminRes, professorRes, studentRes] = await Promise.all([
+          usuarioService.getUsuarios({
+            ...adminTable.queryParams,
+            rol: 'ADMIN',
+            status: statusFilter || undefined,
+          }),
+          usuarioService.getUsuarios({
+            ...professorTable.queryParams,
+            rol: 'PROFESOR',
+            status: statusFilter || undefined,
+          }),
+          usuarioService.getUsuarios({
+            ...studentTable.queryParams,
+            rol: 'ALUMNO',
+            status: statusFilter || undefined,
+          }),
+        ]);
 
-      setAdmins(adminRes.data);
-      setProfessors(professorRes.data);
-      setStudents(studentRes.data);
-      setPagination((prev) => ({
-        admin: updatePaginationTotal(prev.admin, adminRes.total),
-        professor: updatePaginationTotal(prev.professor, professorRes.total),
-        student: updatePaginationTotal(prev.student, studentRes.total),
-      }));
-    } catch {
-      toast.error(t('usuarios.toast.errorCargar'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [debouncedSearch, statusFilter, t, toast]);
+        setAdmins(adminRes.data);
+        setProfessors(professorRes.data);
+        setStudents(studentRes.data);
+
+        adminTable.onTotalItemsChange(adminRes.total);
+        professorTable.onTotalItemsChange(professorRes.total);
+        studentTable.onTotalItemsChange(studentRes.total);
+      } catch {
+        toast.error(t('usuarios.toast.errorCargar'));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    // useDataTable devuelve un objeto nuevo en cada render: queryParams/handlers memo son suficientes
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ver comentario previo
+    [
+      adminTable.queryParams,
+      professorTable.queryParams,
+      studentTable.queryParams,
+      statusFilter,
+      t,
+      toast,
+    ]
+  );
 
   const fetchAllData = useCallback(async () => {
     await loadUsersByRole();
   }, [loadUsersByRole]);
 
-  useEffect(() => {
-    setPagination((prev) => ({
-      admin: { ...prev.admin, page: 1 },
-      professor: { ...prev.professor, page: 1 },
-      student: { ...prev.student, page: 1 },
-    }));
-  }, [statusFilter]);
+  useEffect(
+    () => {
+      // Resetear páginas al cambiar el filtro de estado (handlers estables de useDataTable)
+      adminTable.onPageChange(null, 1);
+      professorTable.onPageChange(null, 1);
+      studentTable.onPageChange(null, 1);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onTotalItems/onPageChange estable; identidad objeto tabla cambia cada render
+    [
+      statusFilter,
+      adminTable.onPageChange,
+      professorTable.onPageChange,
+      studentTable.onPageChange,
+    ]
+  );
 
   const clearNotificationFilters = () => {
     const nextParams = new URLSearchParams(searchParams);
@@ -366,15 +329,7 @@ export const UsuariosView: React.FC = () => {
 
   useEffect(() => {
     void loadUsersByRole();
-  }, [
-    pagination.admin.page,
-    pagination.admin.limit,
-    pagination.professor.page,
-    pagination.professor.limit,
-    pagination.student.page,
-    pagination.student.limit,
-    loadUsersByRole,
-  ]);
+  }, [loadUsersByRole]);
 
   const handleSaveUsuario = async (
     data: CrearUsuarioDTO | ActualizarUsuarioDTO
@@ -387,6 +342,8 @@ export const UsuariosView: React.FC = () => {
           username: payload.username,
           email: payload.email,
           nombre: payload.nombre,
+          ubicacionesIds: payload.ubicacionesIds ?? [],
+          ubicacionId: payload.ubicacionId ?? null,
         };
         const previousRoleId = userToEdit.roleId || '';
         const previousStatus = userToEdit.estado;
@@ -411,7 +368,11 @@ export const UsuariosView: React.FC = () => {
         const profileChanged =
           updatePayload.username !== userToEdit.username ||
           (updatePayload.email ?? '') !== (userToEdit.email ?? '') ||
-          updatePayload.nombre !== userToEdit.nombre;
+          updatePayload.nombre !== userToEdit.nombre ||
+          JSON.stringify(updatePayload.ubicacionesIds ?? []) !==
+            JSON.stringify(userToEdit.ubicacionesIds ?? []) ||
+          (updatePayload.ubicacionId ?? null) !==
+            (userToEdit.ubicacionId ?? null);
 
         if (profileChanged) {
           await usuarioService.actualizarUsuario(userToEdit.id, updatePayload);
@@ -432,10 +393,12 @@ export const UsuariosView: React.FC = () => {
         }
 
         if (payload.estado && payload.estado !== previousStatus) {
-          await usuarioService.setUserActivation(
-            userToEdit.id,
-            payload.estado === 'Activo'
-          );
+          if (!canActivate) {
+            throw new Error(t('auth.forbidden'));
+          }
+          const currentStatus = mapUserStatusBackendToEnum(payload.estado);
+          const shouldActivate = currentStatus !== UserStatusEnum.ACTIVE;
+          await usuarioService.setUserActivation(userToEdit.id, shouldActivate);
         }
 
         if (
@@ -512,21 +475,36 @@ export const UsuariosView: React.FC = () => {
 
   const columns = useMemo<Column<Usuario>[]>(
     () => [
-      { id: 'username', label: t('usuarios.columns.usuario'), sortable: true },
+      {
+        id: 'username',
+        label: t('usuarios.columns.usuario'),
+        sortable: true,
+        sortType: 'string',
+        filterable: true,
+      },
       {
         id: 'email',
         label: t('usuarios.columns.email'),
         sortable: true,
+        sortType: 'string',
+        filterable: true,
         hideOnMobile: true,
       },
       {
         id: 'estado',
         label: t('usuarios.columns.estado'),
         align: 'center',
+        filterable: true,
+        filterType: 'enum',
+        filterOptions: [
+          { label: t('usuario.status.activo'), value: 'ACTIVE' },
+          { label: t('usuario.status.inactivo'), value: 'INACTIVE' },
+          { label: t('usuario.status.bloqueado'), value: 'BLOCKED' },
+        ],
         render: (row) => (
           <StatusChip
-            status={row.estado === 'Activo' ? 'success' : 'default'}
-            label={row.estado}
+            status={getUserStatusColor(row.estado)}
+            label={getUserStatusLabel(t, row.estado)}
           />
         ),
       },
@@ -537,12 +515,18 @@ export const UsuariosView: React.FC = () => {
   const renderActions = useCallback(
     (row: Usuario) => (
       <Stack direction="row" spacing={0.5} justifyContent="center">
-        {row.id.toString() !== currentUser?.id.toString() && canEdit && (
+        {row.id.toString() !== currentUser?.id.toString() && canActivate && (
           <IconButton
-            color={row.estado === 'Activo' ? 'warning' : 'success'}
-            onClick={async () => {
+            color={
+              getUserStatusColor(row.estado) === 'success'
+                ? 'warning'
+                : 'success'
+            }
+            onClick={async (e) => {
+              e.stopPropagation();
               try {
-                const shouldActivate = row.estado !== 'Activo';
+                const currentStatus = mapUserStatusBackendToEnum(row.estado);
+                const shouldActivate = currentStatus !== UserStatusEnum.ACTIVE;
                 await usuarioService.setUserActivation(row.id, shouldActivate);
                 toast.success(
                   shouldActivate
@@ -560,12 +544,13 @@ export const UsuariosView: React.FC = () => {
             }}
             size="small"
             title={
-              row.estado === 'Activo'
+              mapUserStatusBackendToEnum(row.estado) === UserStatusEnum.ACTIVE
                 ? t('usuarios.actions.suspender')
                 : t('usuarios.actions.activar')
             }
           >
-            {row.estado === 'Activo' ? (
+            {mapUserStatusBackendToEnum(row.estado) ===
+            UserStatusEnum.ACTIVE ? (
               <BlockIcon fontSize="small" />
             ) : (
               <CheckCircleOutlineIcon fontSize="small" />
@@ -575,7 +560,10 @@ export const UsuariosView: React.FC = () => {
         {canResetTemporaryPassword(row) && canEdit && (
           <IconButton
             color="primary"
-            onClick={() => setUserToReset(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserToReset(row);
+            }}
             size="small"
             title={t('usuarios.resetPassword')}
           >
@@ -585,7 +573,10 @@ export const UsuariosView: React.FC = () => {
         {canEdit && (
           <IconButton
             color="secondary"
-            onClick={() => void handleEditUser(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleEditUser(row);
+            }}
             disabled={isLoadingUserDetail}
             size="small"
             title={t('comun.editar')}
@@ -596,7 +587,10 @@ export const UsuariosView: React.FC = () => {
         {canDelete && (
           <IconButton
             color="error"
-            onClick={() => setUserToDelete(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserToDelete(row);
+            }}
             size="small"
             title={t('comun.eliminar')}
           >
@@ -608,6 +602,7 @@ export const UsuariosView: React.FC = () => {
     [
       canDelete,
       canEdit,
+      canActivate,
       canResetTemporaryPassword,
       currentUser?.id,
       fetchAllData,
@@ -651,7 +646,9 @@ export const UsuariosView: React.FC = () => {
           >
             {focus === 'pending-activation'
               ? t('usuarios.filters.pendientesInfo')
-              : t('usuarios.filters.estadoActivo', { estado: statusFilter })}
+              : t('usuarios.filters.estadoActivo', {
+                  estado: getUserStatusLabel(t, statusFilter),
+                })}
           </Alert>
         ) : null}
 
@@ -666,8 +663,13 @@ export const UsuariosView: React.FC = () => {
             <TextField
               placeholder={t('usuarios.buscarPlaceholder')}
               size="small"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={adminTable.searchTerm}
+              onChange={(e) => {
+                const val = e.target.value;
+                adminTable.onSearchChange(val);
+                professorTable.onSearchChange(val);
+                studentTable.onSearchChange(val);
+              }}
               sx={{ maxWidth: 400, flex: 1 }}
               InputProps={{
                 startAdornment: (
@@ -713,37 +715,49 @@ export const UsuariosView: React.FC = () => {
       ) : (
         <Box>
           <UserAccordion
-            title={t('usuarios.roles.administradores')}
+            title="usuarios.roles.administradores"
             icon={<AdminPanelSettingsIcon sx={{ fontSize: 20 }} />}
             data={admins}
-            role="admin"
             color={ROLE_COLORS.Administrador}
-            rolePagination={pagination.admin}
             columns={columns}
             renderActions={renderActions}
-            setPagination={setPagination}
+            canEdit={canEdit}
+            handleEditUser={handleEditUser}
+            paginationProps={adminTable.paginationProps}
+            onSort={adminTable.onSort}
+            sortConfig={adminTable.sortConfig}
+            filters={adminTable.filters}
+            onFilter={adminTable.onFilter}
           />
           <UserAccordion
-            title={t('usuarios.roles.profesores')}
+            title="usuarios.roles.profesores"
             icon={<SupervisorAccountIcon sx={{ fontSize: 20 }} />}
             data={professors}
-            role="professor"
             color={ROLE_COLORS.Profesor}
-            rolePagination={pagination.professor}
             columns={columns}
             renderActions={renderActions}
-            setPagination={setPagination}
+            canEdit={canEdit}
+            handleEditUser={handleEditUser}
+            paginationProps={professorTable.paginationProps}
+            onSort={professorTable.onSort}
+            sortConfig={professorTable.sortConfig}
+            filters={professorTable.filters}
+            onFilter={professorTable.onFilter}
           />
           <UserAccordion
-            title={t('usuarios.roles.alumnos')}
+            title="usuarios.roles.alumnos"
             icon={<SchoolIcon sx={{ fontSize: 20 }} />}
             data={students}
-            role="student"
             color={ROLE_COLORS.Alumno}
-            rolePagination={pagination.student}
             columns={columns}
             renderActions={renderActions}
-            setPagination={setPagination}
+            canEdit={canEdit}
+            handleEditUser={handleEditUser}
+            paginationProps={studentTable.paginationProps}
+            onSort={studentTable.onSort}
+            sortConfig={studentTable.sortConfig}
+            filters={studentTable.filters}
+            onFilter={studentTable.onFilter}
           />
         </Box>
       )}

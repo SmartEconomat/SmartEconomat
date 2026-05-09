@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import { TransformFnParams } from 'class-transformer/types/interfaces';
@@ -7,16 +7,19 @@ import { BadRequestException } from '@nestjs/common';
 import { I18nHelper } from '../helpers/i18n.helper';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
 /**
- * Documentación en español.
+ * Representa string to number transformer en el sistema.
  */
 export class StringToNumberTransformer {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de transform dentro del flujo de la aplicación.
+   *
+   * @param params Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   static transform(params: TransformValueParams): number | null | undefined {
     const value = params.value;

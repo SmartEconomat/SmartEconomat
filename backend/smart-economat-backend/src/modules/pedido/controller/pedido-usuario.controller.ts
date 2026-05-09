@@ -49,10 +49,20 @@ import { PurchaseBatchService } from '../service/purchase-batch.service';
 import { PedidoUsuarioService } from '../service/pedido-usuario.service';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
+/** Clase pública (PedidoUsuarioController). Paquete: smart-economat-backend (Nest). */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido-usuarios')
 export class PedidoUsuarioController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {PedidoUsuarioService} pedidoUsuarioService - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoDraftService} pedidoDraftService - Entrada efectiva esperada por el contrato.
+   * @undefined {PdfReportService} pdfReportService - Entrada efectiva esperada por el contrato.
+   * @undefined {PurchaseBatchService} purchaseBatchService - Entrada efectiva esperada por el contrato.
+   * @undefined {RecetaToPedidoService} recetaToPedidoService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly pedidoUsuarioService: PedidoUsuarioService,
     private readonly pedidoDraftService: PedidoDraftService,
@@ -61,6 +71,12 @@ export class PedidoUsuarioController {
     private readonly recetaToPedidoService: RecetaToPedidoService
   ) {}
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -71,6 +87,12 @@ export class PedidoUsuarioController {
     return this.pedidoDraftService.saveAndFinalize(req.user.id, dto);
   }
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateMissingStockBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Post('from-missing-stock')
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -86,6 +108,12 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.create(pedidoUsuarioDto, req.user.id);
   }
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {GeneratePedidoFromRecetasDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Post('from-recipes')
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)
@@ -99,29 +127,38 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.create(pedidoUsuarioDto, req.user.id);
   }
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PedidoUsuarioQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<PedidoUsuario>>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   findAll(
-    @SortableFields({
-      fechaPedido: 'fechaPedido',
-      fechaEntrega: 'fechaEntrega',
-      costeTotal: 'costeTotal',
-      estado: 'estado',
-      numeroGlobal: 'numeroGlobal',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-    })
+    @SortableFields(SORTABLE_FIELDS.pedidoUsuarios)
     query: PedidoUsuarioQueryDto
   ): Promise<PaginatedResponseDto<PedidoUsuario>> {
     return this.pedidoUsuarioService.findAll(query);
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.pedidos.ver)
   findOne(@Param('id', ParseUUIDv7Pipe) id: string): Promise<PedidoUsuario> {
     return this.pedidoUsuarioService.findOne(id);
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   update(
@@ -132,6 +169,12 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.update(id, dto, req.user.id);
   }
 
+  /**
+   * Expone "accept" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/aceptar')
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   accept(
@@ -141,6 +184,13 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.accept(id, req.user.id);
   }
 
+  /**
+   * Expone "cancel" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CancelPedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.pedidos.cancelar)
   cancel(
@@ -151,6 +201,12 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.cancel(id, dto, req.user.id);
   }
 
+  /**
+   * Expone "restore" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/restaurar')
   @RequirePermissions(PERMISSIONS.pedidos.restaurar)
   restore(
@@ -160,6 +216,14 @@ export class PedidoUsuarioController {
     return this.pedidoUsuarioService.restore(id, req.user.id);
   }
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioPdfDto} _query - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id/pdf')
   @RequirePermissions(PERMISSIONS.pedidos.ver)
   async generatePdf(
@@ -193,6 +257,12 @@ export class PedidoUsuarioController {
     await this.pdfReportService.generateReport(reportQuery, res);
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioRequest} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete(':id')
   @RequireAnyPermission(
     PERMISSIONS.pedidos.eliminar,

@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import { useTheme } from '@mui/material/styles';
@@ -9,50 +9,51 @@ import { useMediaQuery } from '@mui/material';
 // Tipo de retorno
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Contrato de tipos público (Breakpoints). Contexto: smart-economat-frontend (SPA). */
 export interface Breakpoints {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isMobile: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isTablet: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isDesktop: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isLargeDesktop: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isXLarge: boolean;
 
   // ── Rangos compuestos (los más usados en condiciones responsive) ──
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isMobileOrTablet: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isTabletOrAbove: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isTabletOrBelow: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isDesktopOrAbove: boolean;
 
   // ── Valor numérico del ancho actual (útil para lógica JS pura) ──
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   screenWidth: number;
 }
@@ -62,7 +63,12 @@ export interface Breakpoints {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de use breakpoints dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone "useBreakpoints" en smart-economat-frontend (SPA).
+ * @undefined {Breakpoints} Datos efectivos después de ejecutar la operación.
  */
 export function useBreakpoints(): Breakpoints {
   const theme = useTheme();

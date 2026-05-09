@@ -7,7 +7,12 @@ import {
 } from '../services/pedidoDraft.service';
 
 /**
- * Documentación en español.
+ * Hook para la gestión persistente de borradores de pedidos a proveedores.
+ * Permite guardar y recuperar el estado de un pedido en construcción para evitar pérdida de datos.
+ */
+/**
+ * Expone "usePedidoDraft" en smart-economat-frontend (SPA).
+ * @undefined {{ draft: PedidoDraftRecord | null; loadDraft: () => Promise<void>; saveDraft: (payload: Record<string, unknown>) => Promise<void>; discardDraft: () => Promise<void>; flushSave: (payload: Record<string, unknown>) => Promise<void>; isLoadingDraft: boolean; }} Datos efectivos después de ejecutar la operación.
  */
 export function usePedidoDraft() {
   const [draft, _setDraft] = useState<PedidoDraftRecord | null>(null);

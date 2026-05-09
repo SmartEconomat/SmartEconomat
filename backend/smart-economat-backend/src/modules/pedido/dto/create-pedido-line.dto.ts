@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsUUID, IsNumber, Min, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (CreatePedidoLineDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePedidoLineDto {
   @ApiPropertyOptional({
     description: 'ID de la línea de pedido existente, solo para edición',

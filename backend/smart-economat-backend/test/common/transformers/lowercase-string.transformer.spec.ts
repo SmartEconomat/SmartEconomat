@@ -1,7 +1,7 @@
 import { LowercaseStringTransformer } from '../../../src/common/transformers/lowercase-string.transformer';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('LowercaseStringTransformer', () => {
   describe('transform()', () => {

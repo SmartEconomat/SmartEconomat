@@ -9,6 +9,7 @@ import {
   Check,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
+import { Expose } from 'class-transformer';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 import { Producto } from '../producto.entity/producto.entity';
@@ -18,7 +19,7 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 
 /**
- * Documentación en español.
+ * Representa producto proveedor en el sistema.
  */
 @Unique(['productoId', 'proveedorId'])
 @Entity({ name: 'producto_proveedor' })
@@ -27,19 +28,19 @@ import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.
 @Check(`"precio_unitario" IS NULL OR "precio_unitario" > 0`)
 export class ProductoProveedor extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'proveedor_id' })
   proveedorId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Producto, (producto) => producto.proveedores, {
     onDelete: 'RESTRICT',
@@ -49,24 +50,24 @@ export class ProductoProveedor extends BaseEntity {
   producto!: Relation<Producto>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  marca?: string;
+  @Column({ name: 'marca', type: 'varchar', length: 150, nullable: true })
+  marca?: string | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
-    type: 'varchar',
-    length: 130,
-    nullable: true,
     name: 'codigo_barras',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
   })
-  codigoBarras?: string;
+  codigoBarras?: string | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -79,7 +80,7 @@ export class ProductoProveedor extends BaseEntity {
   precioUnitario?: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -93,7 +94,7 @@ export class ProductoProveedor extends BaseEntity {
   mermaEsperada?: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -106,7 +107,7 @@ export class ProductoProveedor extends BaseEntity {
   pmp!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.productos, {
     onDelete: 'RESTRICT',
@@ -116,20 +117,28 @@ export class ProductoProveedor extends BaseEntity {
   proveedor!: Relation<Proveedor>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => Inventario, (inventario) => inventario.productoProveedor)
   inventarios!: Relation<Inventario[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => HistorialPrecio, (historial) => historial.productoProveedor)
   historialPrecios!: Relation<HistorialPrecio[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => PedidoProducto, (pp) => pp.productoProveedor)
   pedidoProductos!: Relation<PedidoProducto[]>;
+
+  /**
+   * Devuelve el código de barras efectivo (específico o heredado del producto).
+   */
+  @Expose()
+  get effectiveBarcode(): string | undefined {
+    return this.codigoBarras || this.producto?.codigoBarras;
+  }
 }

@@ -1,52 +1,44 @@
 import React from 'react';
-import { Box, TextField } from '@mui/material';
+import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import DateRangeFilter from '../../components/ui/DateRangeFilter';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface IncidenciaFiltersState {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   startDate: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   endDate: string | null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface IncidenciaFiltersProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   filters: IncidenciaFiltersState;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChange: (filters: IncidenciaFiltersState) => void;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
   filters,
   onChange,
 }) => {
   const { t } = useTranslation();
-
-  /**
-   * Documentación en español.
-   */
-  const handleDateChange =
-    (field: 'startDate' | 'endDate') =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...filters, [field]: e.target.value || null });
-    };
 
   return (
     <Box
@@ -58,38 +50,14 @@ const IncidenciaFilters: React.FC<IncidenciaFiltersProps> = ({
         alignItems: 'stretch',
       }}
     >
-      <TextField
-        id="start-date"
-        label={t('incidencias.filters.desde')}
-        type="date"
-        size="small"
-        value={filters.startDate || ''}
-        onChange={handleDateChange('startDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
-      />
-
-      <TextField
-        id="end-date"
-        label={t('incidencias.filters.hasta')}
-        type="date"
-        size="small"
-        value={filters.endDate || ''}
-        onChange={handleDateChange('endDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
+      <DateRangeFilter
+        startDate={filters.startDate}
+        endDate={filters.endDate}
+        onChange={(start, end) =>
+          onChange({ ...filters, startDate: start, endDate: end })
+        }
+        startLabel={t('incidencias.filters.desde')}
+        endLabel={t('incidencias.filters.hasta')}
       />
     </Box>
   );

@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Clase pública (CreateDistribucionLineaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateDistribucionLineaDto {
   @IsUUID()
   pedidoUsuarioLineaId!: string;
@@ -24,6 +25,7 @@ export class CreateDistribucionLineaDto {
   observaciones?: string;
 }
 
+/** Clase pública (CreateDistribucionDto). Paquete: smart-economat-backend (Nest). */
 export class CreateDistribucionDto {
   @IsUUID()
   pedidoUsuarioId!: string;

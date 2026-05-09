@@ -1,9 +1,8 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 module.exports = (): void => {
-  // Variables de entorno compartidas entre todos los workers
   process.env.NODE_ENV = 'test';
   process.env.OFF_API_ENABLED = 'false';
   process.env.LOCAL_STORAGE_PATH = './uploads_test';

@@ -131,7 +131,11 @@ async function readCache(cacheFile) {
 }
 
 async function writeCache(cacheFile, payload) {
-  await fs.writeFile(cacheFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  await fs.writeFile(
+    cacheFile,
+    `${JSON.stringify(payload, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 async function withTiming(label, fn) {
@@ -244,7 +248,9 @@ async function assertOutputExists(outputPath, label) {
     if (entries.length === 0) {
       throw new Error(`El directorio ${outputPath} existe pero está vacío.`);
     }
-    success(`${label} generado con ${entries.length} entradas en: ${outputPath}`);
+    success(
+      `${label} generado con ${entries.length} entradas en: ${outputPath}`,
+    );
   } catch (err) {
     throw new Error(
       `La compilación de ${label} no generó output en: ${outputPath}\n` +
@@ -273,11 +279,17 @@ async function buildBackend() {
   const backendBuildReady = await hasBuildTools(BACKEND_DIR, ["nest"]);
 
   if (reuseBackendDependencies && backendBuildReady) {
-    success("Dependencias del backend reutilizadas desde la compilación anterior");
+    success(
+      "Dependencias del backend reutilizadas desde la compilación anterior",
+    );
   } else {
     // Instalar dependencias (incluyendo devDependencies para compilar)
     info("Instalando dependencias del backend...");
-    await run("npm", ["ci", "--prefer-offline", "--no-audit", "--no-fund"], BACKEND_DIR);
+    await run(
+      "npm",
+      ["ci", "--prefer-offline", "--no-audit", "--no-fund"],
+      BACKEND_DIR,
+    );
     success("Dependencias del backend instaladas");
   }
 
@@ -316,11 +328,17 @@ async function buildFrontend() {
   const frontendBuildReady = await hasBuildTools(FRONTEND_DIR, ["vite", "tsc"]);
 
   if (reuseFrontendDependencies && frontendBuildReady) {
-    success("Dependencias del frontend reutilizadas desde la compilación anterior");
+    success(
+      "Dependencias del frontend reutilizadas desde la compilación anterior",
+    );
   } else {
     // Instalar dependencias (incluyendo devDependencies para compilar)
     info("Instalando dependencias del frontend...");
-    await run("npm", ["ci", "--prefer-offline", "--no-audit", "--no-fund"], FRONTEND_DIR);
+    await run(
+      "npm",
+      ["ci", "--prefer-offline", "--no-audit", "--no-fund"],
+      FRONTEND_DIR,
+    );
     success("Dependencias del frontend instaladas");
   }
 
@@ -407,7 +425,10 @@ async function main() {
         warn(
           `Build paralelo falló (${parallelError instanceof Error ? parallelError.message : String(parallelError)}). Reintentando en modo secuencial por estabilidad.`,
         );
-        const backendMetrics = await withTiming("build-backend-sequential", buildBackend);
+        const backendMetrics = await withTiming(
+          "build-backend-sequential",
+          buildBackend,
+        );
         const frontendMetrics = await withTiming(
           "build-frontend-sequential",
           buildFrontend,
@@ -447,9 +468,7 @@ async function main() {
     error("================================================================");
     error("Pre-build FALLIDO");
     error(err instanceof Error ? err.message : String(err));
-    error(
-      "Corrige los errores anteriores antes de empaquetar el instalador.",
-    );
+    error("Corrige los errores anteriores antes de empaquetar el instalador.");
     error("================================================================");
     process.exit(1);
   }

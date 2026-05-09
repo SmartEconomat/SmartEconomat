@@ -6,6 +6,7 @@ import { Producto } from '../../producto/producto.entity/producto.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { MotivoMerma, TipoMerma } from '../enums/merma.enums';
 
+/** Clase pública (Merma). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'merma' })
 @Index(['productoId'])
 @Index(['motivo'])

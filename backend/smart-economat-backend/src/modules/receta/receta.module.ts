@@ -14,6 +14,7 @@ import { RecetaRepository } from './repository/receta.repository';
 import { RecetaPdfService } from './service/receta-pdf.service';
 import { RecetaRecepcionListener } from './listeners/receta-recepcion.listener';
 
+/** Clase pública (RecetaModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

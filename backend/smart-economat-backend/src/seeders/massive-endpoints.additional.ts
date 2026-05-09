@@ -1,5 +1,6 @@
 import type { MassiveEndpointDefinition } from './massive-endpoints.constants';
 
+/** Constantes públicas (MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL) expuestas en smart-economat-backend (Nest). */
 export const MASSIVE_ENDPOINT_DEFINITIONS_ADDITIONAL: readonly MassiveEndpointDefinition[] =
   [
     { method: 'POST', path: '/api/v1/admin/users/:id/force-reset' },

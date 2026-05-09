@@ -8,11 +8,19 @@ import type {
 
 import { CertificateService } from "./certificate.service";
 
+/** Servicio del proceso principal: TLSService. */
 export class TLSService {
-  constructor(
-    private readonly certificateService = new CertificateService(),
-  ) {}
+  /**
+   * Construye la instancia del servicio.
+   * @param {CertificateService} certificateService - Entrada esperada por la función.
+   */
+  constructor(private readonly certificateService = new CertificateService()) {}
 
+  /**
+   * Establece la referencia o configuración interna.
+   * @param {InstallerConfigPayload} config - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async setup(config: InstallerConfigPayload): Promise<OperationResult> {
     const runtimePath = config.runtimePath;
 

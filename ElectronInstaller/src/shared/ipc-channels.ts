@@ -1,3 +1,4 @@
+/** Constantes exportadas (IPCChannels) compartidas por el instalador. */
 export const IPCChannels = {
   installer: {
     runPreflight: "installer:run-preflight",

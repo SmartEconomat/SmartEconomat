@@ -3,7 +3,7 @@ import { I18nHelper } from '../../../src/common/helpers/i18n.helper';
 import { ParseUUIDv7Pipe } from '../../../src/common/pipes/parse-uuid-v7.pipe';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('ParseUUIDv7Pipe', () => {
   const pipe = new ParseUUIDv7Pipe();

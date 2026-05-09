@@ -10,10 +10,17 @@ import type {
 } from '@nestjs/throttler';
 import { Reflector } from '@nestjs/core';
 
+/** Clase pública (SmartAuthThrottlerGuard). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class SmartAuthThrottlerGuard extends ThrottlerGuard {
   private readonly smartLogger = new Logger(SmartAuthThrottlerGuard.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {ThrottlerModuleOptions} options - Entrada efectiva esperada por el contrato.
+   * @undefined {ThrottlerStorage} storageService - Entrada efectiva esperada por el contrato.
+   * @undefined {Reflector} reflector - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @Inject('THROTTLER:MODULE_OPTIONS')
     options: ThrottlerModuleOptions,
@@ -25,7 +32,10 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene tracker.
+   *
+   * @param req Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   protected async getTracker(req: Record<string, any>): Promise<string> {
     await Promise.resolve();
@@ -45,6 +55,11 @@ export class SmartAuthThrottlerGuard extends ThrottlerGuard {
       : String(req.ip || 'unknown_ip');
   }
 
+  /**
+   * Enruta o procesa una petición o evento de dominio.
+   * @undefined {ThrottlerRequest} requestProps - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
+   */
   protected async handleRequest(
     requestProps: ThrottlerRequest
   ): Promise<boolean> {

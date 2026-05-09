@@ -11,15 +11,19 @@ import {
   IsArray,
   ArrayUnique,
   ValidateNested,
+  Max,
+  IsBoolean,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AddProveedorToProductoDto } from './producto-proveedor.dto/add-proveedor-to-producto.dto';
 import { TipoProducto, UnidadMedida, Alergeno } from '../enums/producto.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
+import { parseOptionalBoolean } from './product-filter.dto';
 import { UppercaseStringTransformer } from '../../../common/transformers/uppercase-string.transformer';
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
+/** Clase pública (CreateProductoDto). Paquete: smart-economat-backend (Nest). */
 export class CreateProductoDto {
   @ApiProperty({
     description: 'Nombre genérico del producto maestro.',
@@ -176,6 +180,34 @@ export class CreateProductoDto {
   contenido!: number;
 
   @ApiPropertyOptional({
+    description:
+      'Porcentaje de merma base del producto para cálculo de coste utilizable.',
+    example: 8.5,
+    minimum: 0,
+    maximum: 99.99,
+  })
+  @IsOptional()
+  @IsNumber(
+    {},
+    {
+      message: i18nValidationMessage(
+        'validation.EL_CONTENIDO_DEBE_SER_UN_N_MERO'
+      ),
+    }
+  )
+  @Min(0, {
+    message: i18nValidationMessage(
+      'validation.EL_CONTENIDO_NO_PUEDE_SER_NEGATIVO'
+    ),
+  })
+  @Max(99.99, {
+    message: i18nValidationMessage(
+      'validation.MERMA_ESPERADA_NO_DEFAULT_SUPERAR'
+    ),
+  })
+  mermaPorcentaje?: number;
+
+  @ApiPropertyOptional({
     description: 'Listado de alérgenos a registrar en la misma operación.',
     enum: Alergeno,
     isArray: true,
@@ -217,4 +249,19 @@ export class CreateProductoDto {
   @ValidateNested({ each: true })
   @Type(() => AddProveedorToProductoDto)
   proveedores?: AddProveedorToProductoDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Si es false, el producto queda fuera del catálogo operativo sin borrado lógico.',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean({
+    message: i18nValidationMessage(
+      'validation.ESTADO_ACTIVO_DEBE_SER_BOOLEANO'
+    ),
+  })
+  @Transform(({ value }) => parseOptionalBoolean(value))
+  activo?: boolean;
 }

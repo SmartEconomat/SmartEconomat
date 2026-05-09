@@ -1,14 +1,14 @@
-/**
- * Documentación en español.
- */
+/** Categorías de capturas automatizadas del instalador. */
 export type ScreenshotCategory = "wizard" | "admin" | "debug";
 
+/** Contrato tipado público (ScreenshotMatrixEntry). */
 export interface ScreenshotMatrixEntry {
   readonly relativePath: string;
   readonly category: ScreenshotCategory;
   readonly description: string;
 }
 
+/** Constantes exportadas (SCREENSHOT_CAPTURE_MATRIX) compartidas por el instalador. */
 export const SCREENSHOT_CAPTURE_MATRIX: readonly ScreenshotMatrixEntry[] = [
   {
     relativePath: "wizard/01-welcome-light.png",

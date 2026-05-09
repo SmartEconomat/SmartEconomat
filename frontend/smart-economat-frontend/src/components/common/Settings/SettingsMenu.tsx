@@ -26,6 +26,14 @@ interface SettingsMenuProps {
   isOpen?: boolean;
 }
 
+/**
+ * Establece referencias mutables internas del componente/servicio.
+ * @undefined {SettingsMenuProps} {
+ *   mode = 'icon',
+ *   isOpen = true,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export default function SettingsMenu({
   mode = 'icon',
   isOpen = true,

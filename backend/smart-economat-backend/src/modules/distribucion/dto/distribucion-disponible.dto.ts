@@ -1,3 +1,4 @@
+/** Contrato de tipos público (DistribucionDisponibleLineaDto). Contexto: smart-economat-backend (Nest). */
 export interface DistribucionDisponibleLineaDto {
   pedidoUsuarioLineaId: string;
   productoProveedorId: string;
@@ -8,6 +9,7 @@ export interface DistribucionDisponibleLineaDto {
   cantidadPendiente: number;
 }
 
+/** Contrato de tipos público (DistribucionDisponibleDto). Contexto: smart-economat-backend (Nest). */
 export interface DistribucionDisponibleDto {
   pedidoUsuarioId: string;
   numeroGlobal: string;
@@ -21,8 +23,6 @@ export interface DistribucionDisponibleDto {
     id: string;
     aula: string;
     numeroClase: number;
-    ubicacionId?: string;
-    ubicacionNombre?: string;
   } | null;
   ubicacionDestinoSugerida: {
     id: string;

@@ -15,10 +15,16 @@ import { Preparacion } from '../preparacion.entity/preparacion.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para preparacion.
  */
 @Injectable()
 export class PreparacionService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {PreparacionRepository} preparacionRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {ProduccionService} produccionService - Entrada efectiva esperada por el contrato.
+   * @undefined {RecetaRepository} recetaRepository - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly preparacionRepository: PreparacionRepository,
     private readonly produccionService: ProduccionService,
@@ -26,7 +32,13 @@ export class PreparacionService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePreparacionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   async create(
     dto: CreatePreparacionDto,
@@ -41,7 +53,13 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Preparacion>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto,
@@ -51,7 +69,11 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userRole Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string, userRole?: string): Promise<Preparacion> {
     const preparacion = await this.preparacionRepository.findById(id, userRole);
@@ -62,7 +84,10 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de iniciar preparacion dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async iniciarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
@@ -80,7 +105,14 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "finalizarPreparacion" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} ubicacionDestinoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   async finalizarPreparacion(
     id: string,
@@ -107,7 +139,7 @@ export class PreparacionService {
     await this.produccionService.ejecutarProduccion(
       {
         recetaId: preparacion.recetaId,
-        cantidadProducida: preparacion.cantidadAProducir,
+        cantidadAProducir: preparacion.cantidadAProducir,
         ubicacionDestinoId: destinoId,
       },
       userId,
@@ -122,7 +154,10 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Determina si cancelar preparacion.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async cancelarPreparacion(id: string): Promise<Preparacion> {
     const preparacion = await this.findOne(id);
@@ -137,7 +172,10 @@ export class PreparacionService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     return this.preparacionRepository.remove(id);

@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNumber, Min, Max, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Clase pública (UpdateMermaProveedorDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateMermaProveedorDto {
   @ApiProperty({
     description:

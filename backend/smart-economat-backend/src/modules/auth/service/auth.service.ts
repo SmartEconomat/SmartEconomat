@@ -19,10 +19,17 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 import { getRolPrincipal } from '../../sherlock-auth/utils/access.utils';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para auth.
  */
 @Injectable()
 export class AuthService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Usuario>} usuarioRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {JwtService} jwtService - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   * @undefined {MailService} mailService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
@@ -32,7 +39,14 @@ export class AuthService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea register.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   */
+  /**
+   * Registra manejadores IPC, rutas Nest o integraciones equivalentes según contexto.
+   * @undefined {RegisterUserDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ access_token: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async register(dto: RegisterUserDto) {
     return await this.dataSource.transaction(async (manager) => {
@@ -68,7 +82,14 @@ export class AuthService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de login dentro del flujo de la aplicación.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "login" en smart-economat-backend (Nest).
+   * @undefined {LoginUserDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ requirePasswordChange: boolean; access_token: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async login(dto: LoginUserDto) {
     const usuario = await this.usuarioRepo
@@ -100,7 +121,10 @@ export class AuthService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de forgot password dentro del flujo de la aplicación.
+   *
+   * @param email Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async forgotPassword(email: string): Promise<void> {
     if (!email) return;
@@ -121,7 +145,11 @@ export class AuthService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de reset password dentro del flujo de la aplicación.
+   *
+   * @param token Parámetro de entrada para la operación.
+   * @param newPassword Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -150,7 +178,14 @@ export class AuthService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "changePassword" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} currentPassword - Entrada efectiva esperada por el contrato.
+   * @undefined {string} newPassword - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async changePassword(
     userId: string,
@@ -179,7 +214,9 @@ export class AuthService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de generate token dentro del flujo de la aplicación.
+   *
+   * @param usuario Parámetro de entrada para la operación.
    */
   private generateToken(usuario: Usuario) {
     const payload: JwtPayload = {

@@ -20,7 +20,10 @@ const calculateEstado = (rec: number, ped: number): LineaDraft['estado'] => {
 };
 
 /**
- * Documentación en español.
+ * Mapea pedido to draft lines al formato de dominio esperado.
+ *
+ * @param pedido Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
   const lineas = pedido.pedidoProductos || [];
@@ -52,7 +55,12 @@ export const mapPedidoToDraftLines = (pedido: Pedido): LineaDraft[] => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "mapPurchaseBatchToRecepcionDraft" en smart-economat-frontend (SPA).
+ * @undefined {PurchaseBatch} batch - Entrada efectiva esperada por el contrato.
+ * @undefined {RecepcionDraft} Datos efectivos después de ejecutar la operación.
  */
 export const mapPurchaseBatchToRecepcionDraft = (
   batch: PurchaseBatch

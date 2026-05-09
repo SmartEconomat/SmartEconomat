@@ -116,7 +116,7 @@ describe('pedido.service', () => {
 
     await createPedidoUsuarioFromMissingStock({
       observaciones: 'Faltantes',
-      items: [{ recetaId: 'receta-1', cantidad: 2 }],
+      items: [{ recetaId: 'receta-1', cantidadAProducir: 2 }],
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -125,7 +125,7 @@ describe('pedido.service', () => {
         method: 'POST',
         body: JSON.stringify({
           observaciones: 'Faltantes',
-          items: [{ recetaId: 'receta-1', cantidad: 2 }],
+          items: [{ recetaId: 'receta-1', cantidadAProducir: 2 }],
         }),
       })
     );

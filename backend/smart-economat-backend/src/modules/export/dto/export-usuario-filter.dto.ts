@@ -10,6 +10,7 @@ import {
 import { Type, Transform } from 'class-transformer';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 
+/** Clase pública (ExportUsuarioFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportUsuarioFilterDto {
   @IsOptional()
   @IsString()

@@ -9,13 +9,13 @@ import { useContainer } from 'class-validator';
 import { runTestSeeders } from './seed-test-database';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 const g = global as any;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export async function getTestApp(
   options: { silent?: boolean } = {}
@@ -69,7 +69,8 @@ export async function getTestApp(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de close test app dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 export async function closeTestApp(): Promise<void> {
   if (!g.__TEST_APP__) {
@@ -94,14 +95,15 @@ export async function closeTestApp(): Promise<void> {
 }
 
 /**
- * Documentación en español.
+ * Determina si test app initialized.
+ * @returns Valor resultante de la operación.
  */
 export function isTestAppInitialized(): boolean {
   return !!g.__TEST_APP__;
 }
 
 /**
- * Documentación en español.
+ * Obtiene test server.
  */
 export function getTestServer() {
   if (!g.__TEST_APP__) {

@@ -1,6 +1,6 @@
-import { execSync } from 'node:child_process';
+import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import AppDataSource from '../config/typeorm.config';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
 import {
@@ -18,12 +18,14 @@ import {
   seedSafeStringify,
 } from './seed-context.http-utils';
 import { seedDateIso } from './deterministic.seed-data';
+import { parseSeedBootstrapOverwriteExistingAdminPassword } from './bootstrap-admin-users.seed';
 
 type SeedCredential = {
   email: string;
   password: string;
 };
 
+/** Alias público (SeedContextConfig) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type SeedContextConfig = {
   apiBaseUrl?: string;
   requestDelayMs?: number;
@@ -40,7 +42,7 @@ export type SeedContextConfig = {
 export { HttpSeedRequestError } from './seed-context.http-utils';
 
 /**
- * Documentación en español.
+ * Representa seed context en el sistema.
  */
 export class SeedContext {
   private static readonly DEFAULT_API_BASE_URL = 'http://localhost:3000/api/v1';
@@ -94,7 +96,8 @@ export class SeedContext {
   ];
 
   /**
-   * Documentación en español.
+   * Resuelve writable log file path a partir del contexto disponible.
+   * @returns Valor resultante de la operación.
    */
   private resolveWritableLogFilePath(): string {
     const candidates = [
@@ -125,7 +128,9 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param config Parámetro de entrada para la operación. Opcional.
    */
   constructor(config: SeedContextConfig = {}) {
     this.resolveConfig(config);
@@ -156,7 +161,7 @@ export class SeedContext {
   apiBaseUrl = SeedContext.DEFAULT_API_BASE_URL;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private ensurePositiveInt(
     value: number | undefined,
@@ -175,7 +180,7 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private ensureNonNegativeInt(
     value: number | undefined,
@@ -194,7 +199,9 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Resuelve config a partir del contexto disponible.
+   *
+   * @param config Parámetro de entrada para la operación.
    */
   private resolveConfig(config: SeedContextConfig): void {
     this.apiBaseUrl =
@@ -246,8 +253,33 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Invoca `docker compose` con raíz del proyecto y `.env.dev` si existen,
+   * para evitar cuelgues y variables vacías al ejecutar desde `backend/smart-economat-backend`.
    */
+  private dockerComposeSpawn(
+    composeSubcommandArgs: readonly string[],
+    timeoutMs: number
+  ): SpawnSyncReturns<string> {
+    const composePath = resolve(__dirname, this.dockerComposeFile);
+    const projectDir = dirname(composePath);
+    const envDevPath = join(projectDir, '.env.dev');
+    const args = [
+      'compose',
+      ...(existsSync(envDevPath) ? (['--env-file', envDevPath] as const) : []),
+      '--project-directory',
+      projectDir,
+      '-f',
+      composePath,
+      ...composeSubcommandArgs,
+    ];
+    return spawnSync('docker', args, {
+      encoding: 'utf8',
+      timeout: timeoutMs,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      maxBuffer: 10 * 1024 * 1024,
+    });
+  }
+
   async ensureDockerInfra(): Promise<void> {
     const isDocker = existsSync('/.dockerenv');
     if (isDocker) {
@@ -255,16 +287,21 @@ export class SeedContext {
       return;
     }
 
-    const composeFile = resolve(__dirname, this.dockerComposeFile);
-
     try {
-      const runningServicesRaw = execSync(
-        `docker compose -f "${composeFile}" ps --services --filter status=running`,
-        {
-          stdio: ['ignore', 'pipe', 'pipe'],
-          encoding: 'utf8',
-        }
+      const composePsTimeoutMs = Number.parseInt(
+        process.env.SEED_DOCKER_PS_TIMEOUT_MS ?? '60000',
+        10
       );
+      const psResult = this.dockerComposeSpawn(
+        ['ps', '--services', '--filter', 'status=running'],
+        Math.max(5_000, composePsTimeoutMs)
+      );
+
+      if (psResult.error) {
+        throw psResult.error;
+      }
+
+      const runningServicesRaw = psResult.stdout || '';
 
       const runningServices = new Set(
         runningServicesRaw
@@ -291,14 +328,18 @@ export class SeedContext {
         requiredDockerServices.every((service) => runningServices.has(service))
       ) {
         try {
-          const backendResponse = await this.fetchWithTimeout(
-            `${this.apiBaseUrl}/auth/login`,
-            {
-              method: 'OPTIONS',
-            }
+          const probeMs = Number.parseInt(
+            process.env.SEED_BACKEND_PROBE_TIMEOUT_MS ?? '8000',
+            10
+          );
+          const probeUrl = this.apiBaseUrl.replace(/\/+$/, '');
+          const backendResponse = await this.fetchWithTimeoutAt(
+            probeUrl,
+            { method: 'GET', headers: { Accept: '*/*' } },
+            probeMs
           );
 
-          if (backendResponse.status >= 200) {
+          if (backendResponse.status >= 200 && backendResponse.status < 500) {
             console.log(
               `[seed] Infra Docker base levantada (${requiredDockerServices.join(', ')}) y backend local accesible, omitiendo docker compose up del backend`
             );
@@ -312,29 +353,53 @@ export class SeedContext {
       void error;
     }
 
-    const services = this.dockerServices.join(' ');
-    execSync(`docker compose -f "${composeFile}" up -d ${services}`, {
-      stdio: 'inherit',
-    });
+    const services = this.dockerServices;
+    const upResult = this.dockerComposeSpawn(
+      ['up', '-d', ...services],
+      Number.parseInt(process.env.SEED_DOCKER_UP_TIMEOUT_MS ?? '300000', 10)
+    );
+    if (upResult.error || upResult.status !== 0) {
+      console.error(
+        `[seed] docker compose up falló: ${upResult.stderr?.slice(0, 1200) || upResult.error || 'sin detalle'}`
+      );
+      throw new Error(
+        '[seed] No se pudo levantar servicios Docker requeridos para el seed'
+      );
+    }
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de wait for backend dentro del flujo de la aplicación.
+   *
+   * @param retries Parámetro de entrada para la operación. Opcional.
+   * @param delayMs Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async waitForBackend(retries = 60, delayMs = 2000): Promise<void> {
     let lastStatusCode: number | undefined;
     let lastErrorMessage = '';
 
+    const probeTimeoutMs = Number.parseInt(
+      process.env.SEED_BACKEND_PROBE_TIMEOUT_MS ?? '8000',
+      10
+    );
+    const probeUrl = this.apiBaseUrl.replace(/\/+$/, '');
+    console.log(
+      `[seed] Sonda GET ${probeUrl} (timeout ${probeTimeoutMs} ms por intento, máx. ${retries})...`
+    );
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const res = await this.fetchWithTimeout(
-          `${this.apiBaseUrl}/auth/login`,
-          {
-            method: 'OPTIONS',
-          }
+        const res = await this.fetchWithTimeoutAt(
+          probeUrl,
+          { method: 'GET', headers: { Accept: '*/*' } },
+          probeTimeoutMs
         );
         lastStatusCode = res.status;
-        if (res.status >= 200) {
+        if (res.status >= 200 && res.status < 500) {
+          console.log(
+            `[seed] Backend respondió (${res.status}) en ${probeUrl}, continuando.`
+          );
           return;
         }
       } catch {
@@ -358,19 +423,24 @@ export class SeedContext {
       await new Promise((resolveDelay) => setTimeout(resolveDelay, delayMs));
     }
 
-    const composeFile = resolve(__dirname, this.dockerComposeFile);
     const lastDetail =
       typeof lastStatusCode === 'number'
         ? `status=${lastStatusCode}`
         : `error=${lastErrorMessage || 'sin detalle'}`;
 
+    const composeHint = resolve(__dirname, this.dockerComposeFile);
     throw new Error(
-      `[seed] Backend no disponible en ${this.apiBaseUrl} tras ${retries} intentos. Ultimo resultado: ${lastDetail}. Revisa logs con: docker compose -f "${composeFile}" logs --tail=120 backend`
+      `[seed] Backend no disponible en ${this.apiBaseUrl} tras ${retries} intentos. Ultimo resultado: ${lastDetail}. Revisa logs con: docker compose -f "${composeHint}" logs --tail=120 backend`
     );
   }
 
   /**
-   * Documentación en español.
+   * Garantiza database compatibility antes de continuar el flujo.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Garantiza la existencia, coherencia o validez del recurso indicado.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async ensureDatabaseCompatibility(): Promise<void> {
     await Promise.resolve();
@@ -379,115 +449,222 @@ export class SeedContext {
       return;
     }
 
-    const composeFile = resolve(__dirname, this.dockerComposeFile);
+    const skipDockerDb = /^1|true|yes$/i.test(
+      String(process.env.SEED_SKIP_DOCKER_DB_CHECK || '').trim()
+    );
+    if (skipDockerDb) {
+      console.log(
+        '[seed] SEED_SKIP_DOCKER_DB_CHECK está activo: se omite la consulta opcional `docker compose exec db` (evita cuelgues en host).'
+      );
+      return;
+    }
+
+    const execTimeoutMs = Number.parseInt(
+      process.env.SEED_DOCKER_EXEC_TIMEOUT_MS ?? '45000',
+      10
+    );
+    console.log(
+      `[seed] Comprobación opcional en BD (precio_unitario): docker compose exec db (timeout ${Math.max(1, Math.round(execTimeoutMs / 1000))}s)...`
+    );
+
     const dbUser = process.env.POSTGRES_USER || 'postgres';
     const dbName = process.env.POSTGRES_DB || 'smart_economat';
-
-    const countCommand =
-      `docker compose -f "${composeFile}" exec -T db ` +
-      `psql -U "${dbUser}" -d "${dbName}" -t -A ` +
-      `-c "SELECT COUNT(*)::int FROM producto_proveedor WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;"`;
-
-    const normalizeCommand =
-      `docker compose -f "${composeFile}" exec -T db ` +
-      `psql -U "${dbUser}" -d "${dbName}" -c ` +
-      `"UPDATE producto_proveedor SET precio_unitario = NULL WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;"`;
+    const countSql =
+      'SELECT COUNT(*)::int FROM producto_proveedor WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;';
 
     try {
-      const rawCount = execSync(countCommand, {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        encoding: 'utf8',
-      })
-        .trim()
-        .replace(/\s+/g, '');
+      const countResult = this.dockerComposeSpawn(
+        [
+          'exec',
+          '-T',
+          'db',
+          'psql',
+          '-U',
+          dbUser,
+          '-d',
+          dbName,
+          '-t',
+          '-A',
+          '-c',
+          countSql,
+        ],
+        Math.max(3_000, execTimeoutMs)
+      );
+
+      if (countResult.error) {
+        console.warn(
+          `[seed] No se ejecutó la comprobación en PostgreSQL (${countResult.error.message}). Se continúa. Si es timeout, usa SEED_SKIP_DOCKER_DB_CHECK=1 o revisa Docker. stderr: ${String(countResult.stderr || '').slice(0, 400)}`
+        );
+        return;
+      }
+
+      if (countResult.status !== 0) {
+        console.warn(
+          `[seed] psql COUNT omitido (exit ${countResult.status}): ${String(countResult.stderr || '').slice(0, 500)}`
+        );
+        return;
+      }
+
+      const rawCount = (countResult.stdout || '').trim().replace(/\s+/g, '');
       const invalidCount = Number.parseInt(rawCount, 10);
 
       if (!Number.isFinite(invalidCount) || invalidCount <= 0) {
         return;
       }
 
-      execSync(normalizeCommand, {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        encoding: 'utf8',
-      });
+      const normSql =
+        'UPDATE producto_proveedor SET precio_unitario = NULL WHERE precio_unitario IS NOT NULL AND precio_unitario <= 0;';
+      const normResult = this.dockerComposeSpawn(
+        ['exec', '-T', 'db', 'psql', '-U', dbUser, '-d', dbName, '-c', normSql],
+        Math.max(3_000, execTimeoutMs)
+      );
+
+      if (normResult.error || normResult.status !== 0) {
+        console.warn(
+          `[seed] No se aplicó normalización de precios (exit ${normResult.status}): ${String(normResult.stderr || normResult.error || '').slice(0, 400)}`
+        );
+        return;
+      }
 
       console.warn(
         `[seed] Normalizados ${invalidCount} registros incompatibles en producto_proveedor (precio_unitario <= 0) para permitir arranque del backend.`
       );
     } catch (error) {
-      void error;
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[seed] ensureDatabaseCompatibility: excepción ignorada (${msg})`
+      );
     }
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de login dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Extrae token JWT de la respuesta de login (plana o envuelta en `data`).
+   */
+  private extractLoginTokenFromPayload(
+    parsed: Record<string, unknown> | string | null
+  ): string | null {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null;
+    }
+    const raw = hasDataEnvelope(parsed)
+      ? (parsed as { data: unknown }).data
+      : parsed;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return null;
+    }
+    const o = raw as Record<string, unknown>;
+    const t =
+      (typeof o.access_token === 'string' && o.access_token) ||
+      (typeof o.token === 'string' && o.token) ||
+      (typeof o.accessToken === 'string' && o.accessToken);
+    return typeof t === 'string' && t.trim().length > 0 ? t.trim() : null;
+  }
+
+  /**
+   * POST /auth/login sin `withConcurrency` ni el timeout largo de peticiones del seed (60s),
+   * para que el arranque no parezca colgado.
+   */
+  private async postAuthLoginDirect(
+    credentials: SeedCredential,
+    timeoutMs: number
+  ): Promise<{ ok: boolean; token: string | null; status: number }> {
+    const base = this.apiBaseUrl.replace(/\/+$/, '');
+    const res = await this.fetchWithTimeoutAt(
+      `${base}/auth/login`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Seeding': 'true',
+        },
+        body: JSON.stringify(credentials),
+      },
+      timeoutMs
+    );
+    let token: string | null = null;
+    try {
+      const parsed = await this.parseResponseBody(res);
+      token = this.extractLoginTokenFromPayload(parsed);
+    } catch {
+      token = null;
+    }
+    return { ok: res.ok, token, status: res.status };
+  }
+
+  /**
+   * Expone "login" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async login(): Promise<void> {
+    const loginTimeout = Number.parseInt(
+      process.env.SEED_LOGIN_HTTP_TIMEOUT_MS ?? '25000',
+      10
+    );
+    console.log(
+      `[seed] Autenticación: POST /auth/login (hasta ${this.authCandidates.length} candidatos, ${loginTimeout} ms por intento; sin cola de concurrencia)...`
+    );
+
     let lastError: unknown;
+
+    const applyToken = (
+      current: SeedCredential,
+      token: string,
+      status: number
+    ) => {
+      this.token = token;
+      this.store.set('seedAdminLoginEmail', current.email);
+      this.store.set('seedAdminCurrentPassword', current.password);
+      console.log(
+        `[seed] Sesión obtenida para ${current.email} (HTTP ${status}).`
+      );
+    };
 
     for (const current of this.authCandidates) {
       try {
-        const response = await this.request<{ access_token: string }>(
-          '/auth/login',
-          {
-            method: 'POST',
-            body: current,
-            auth: false,
-          }
+        const { ok, token, status } = await this.postAuthLoginDirect(
+          current,
+          loginTimeout
         );
-
-        const token =
-          response?.access_token ||
-          (response as any)?.token ||
-          (response as any)?.accessToken;
-
-        if (!token) {
-          this.logEvent({
-            method: 'POST',
-            path: '/auth/login',
-            payload: current,
-            statusCode: 200,
-            responseBody: response,
-            error: 'Login sin token en respuesta',
-          });
-          continue;
+        if (ok && token) {
+          applyToken(current, token, status);
+          return;
         }
-
-        this.token = token;
-        this.store.set('seedAdminLoginEmail', current.email);
-        this.store.set('seedAdminCurrentPassword', current.password);
-        return;
+        if (!ok) {
+          lastError = new Error(
+            `[seed] Login HTTP ${status} para identificador ${current.email}`
+          );
+        }
       } catch (error) {
         lastError = error;
       }
     }
 
+    console.log(
+      '[seed] Ningún candidato HTTP válido; alineando superadmin en PostgreSQL (bootstrap TypeORM)...'
+    );
     await this.ensureBootstrapAdminCredentials();
 
+    console.log('[seed] Reintentando POST /auth/login tras bootstrap...');
     for (const current of this.authCandidates) {
       try {
-        const response = await this.request<{ access_token: string }>(
-          '/auth/login',
-          {
-            method: 'POST',
-            body: current,
-            auth: false,
-          }
+        const { ok, token, status } = await this.postAuthLoginDirect(
+          current,
+          loginTimeout
         );
-
-        const token =
-          response?.access_token ||
-          (response as any)?.token ||
-          (response as any)?.accessToken;
-
-        if (!token) {
-          continue;
+        if (ok && token) {
+          applyToken(current, token, status);
+          return;
         }
-
-        this.token = token;
-        this.store.set('seedAdminLoginEmail', current.email);
-        this.store.set('seedAdminCurrentPassword', current.password);
-        return;
+        if (!ok) {
+          lastError = new Error(
+            `[seed] Login HTTP ${status} para identificador ${current.email}`
+          );
+        }
       } catch (error) {
         lastError = error;
       }
@@ -499,7 +676,8 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Garantiza bootstrap admin credentials antes de continuar el flujo.
+   * @returns Valor resultante de la operación.
    */
   private async ensureBootstrapAdminCredentials(): Promise<void> {
     if (this.bootstrapAdminAttempted) {
@@ -517,7 +695,11 @@ export class SeedContext {
 
     try {
       if (!AppDataSource.isInitialized) {
+        console.log(
+          '[seed] Conectando TypeORM a PostgreSQL (bootstrap de admin de seed)...'
+        );
         await AppDataSource.initialize();
+        console.log('[seed] PostgreSQL disponible vía TypeORM.');
       }
 
       const repo = AppDataSource.getRepository(Usuario);
@@ -534,7 +716,9 @@ export class SeedContext {
       if (existing) {
         existing.email = existing.email || email;
         existing.username = existing.username || username;
-        existing.password = hashedPassword;
+        if (parseSeedBootstrapOverwriteExistingAdminPassword()) {
+          existing.password = hashedPassword;
+        }
         existing.rol = rolUsuario.SUPER_ADMIN;
         existing.status = UserStatus.ACTIVE;
         existing.activo = true;
@@ -581,21 +765,42 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene access token.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} Datos efectivos después de ejecutar la operación.
    */
   getAccessToken(): string {
     return this.token;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de set access token dentro del flujo de la aplicación.
+   *
+   * @param token Parámetro de entrada para la operación.
+   */
+  /**
+   * Establece referencias mutables internas del componente/servicio.
+   * @undefined {string} token - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   setAccessToken(token: string): void {
     this.token = token;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de set session token dentro del flujo de la aplicación.
+   *
+   * @param sessionKey Parámetro de entrada para la operación.
+   * @param token Parámetro de entrada para la operación.
+   */
+  /**
+   * Establece referencias mutables internas del componente/servicio.
+   * @undefined {string} sessionKey - Entrada efectiva esperada por el contrato.
+   * @undefined {string} token - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   setSessionToken(sessionKey: string, token: string): void {
     const normalizedKey = sessionKey.trim();
@@ -606,14 +811,20 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene session token.
+   *
+   * @param sessionKey Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   getSessionToken(sessionKey: string): string | undefined {
     return this.sessions.get(sessionKey.trim());
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de require session token dentro del flujo de la aplicación.
+   *
+   * @param sessionKey Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   requireSessionToken(sessionKey: string): string {
     const token = this.getSessionToken(sessionKey);
@@ -624,7 +835,10 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene session tokens by prefix.
+   *
+   * @param prefix Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   getSessionTokensByPrefix(prefix: string): string[] {
     const normalizedPrefix = prefix.trim();
@@ -641,7 +855,13 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "loginWithCredentials" en smart-economat-backend (Nest).
+   * @undefined {{ email: string; password: string; }} credentials - Entrada efectiva esperada por el contrato.
+   * @undefined {{ setActiveToken?: boolean; sessionKey?: string; } | undefined} options - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
    */
   async loginWithCredentials(
     credentials: {
@@ -679,21 +899,41 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene last response status code.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {number | undefined} Datos efectivos después de ejecutar la operación.
    */
   getLastResponseStatusCode(): number | undefined {
     return this.lastResponseStatusCode;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de set dentro del flujo de la aplicación.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @param value Parámetro de entrada para la operación.
+   */
+  /**
+   * Establece referencias mutables internas del componente/servicio.
+   * @undefined {string} key - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} value - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   set(key: string, value: unknown): void {
     this.store.set(key, value);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "appendToStateArray" en smart-economat-backend (Nest).
+   * @undefined {string} key - Entrada efectiva esperada por el contrato.
+   * @undefined {T} value - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   appendToStateArray<T>(key: string, value: T): void {
     const current = this.getState<T[]>(key) || [];
@@ -702,35 +942,61 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} key - Entrada efectiva esperada por el contrato.
+   * @undefined {T | undefined} Datos efectivos después de ejecutar la operación.
    */
   getState<T>(key: string): T | undefined {
     return this.store.get(key) as T | undefined;
   }
 
   /**
-   * Documentación en español.
+   * Determina si state.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   hasState(key: string): boolean {
     return this.store.has(key);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async getJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'GET' });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "postJson" en smart-economat-backend (Nest).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} body - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async postJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'POST', body });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "postMultipart" en smart-economat-backend (Nest).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {Record<string, string | Blob>} form - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} tokenOverride - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async postMultipart<T>(
     path: string,
@@ -827,28 +1093,51 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "patchJson" en smart-economat-backend (Nest).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} body - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async patchJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PATCH', body });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "putJson" en smart-economat-backend (Nest).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} body - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async putJson<T>(path: string, body: unknown): Promise<T> {
     return this.request<T>(path, { method: 'PUT', body });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Elimina o marca entidades siguendo las políticas configuradas.
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async deleteJson<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "requestJson" en smart-economat-backend (Nest).
+   * @undefined {string} path - Entrada efectiva esperada por el contrato.
+   * @undefined {{ method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE"; body?: unknown; auth?: boolean; tokenOverride?: string; }} options - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async requestJson<T>(
     path: string,
@@ -863,7 +1152,12 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "withConcurrency" en smart-economat-backend (Nest).
+   * @undefined {() => Promise<T>} task - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async withConcurrency<T>(task: () => Promise<T>): Promise<T> {
     await this.acquireSlot();
@@ -875,14 +1169,22 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de delay dentro del flujo de la aplicación.
+   *
+   * @param ms Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async delay(ms: number): Promise<void> {
     await new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de close dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "close" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   close(): Promise<void> {
     this.logRaw(`=== SEED HTTP LOG END ${this.nextLogTimestamp()} ===\n\n`);
@@ -890,7 +1192,12 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {unknown} token - Entrada efectiva esperada por el contrato.
+   * @undefined {T} Datos efectivos después de ejecutar la operación.
    */
   get<T>(token: unknown): T {
     void token;
@@ -898,7 +1205,12 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene data source.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {any} Datos efectivos después de ejecutar la operación.
    */
   getDataSource(): any {
     return {
@@ -919,7 +1231,12 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {unknown} entity - Entrada efectiva esperada por el contrato.
+   * @undefined {T} Datos efectivos después de ejecutar la operación.
    */
   getRepository<T>(entity: unknown): T {
     void entity;
@@ -932,7 +1249,12 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "transaction" en smart-economat-backend (Nest).
+   * @undefined {(queryRunner: any) => Promise<T>} callback - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   async transaction<T>(callback: (queryRunner: any) => Promise<T>): Promise<T> {
     return callback({
@@ -943,7 +1265,13 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "validateDto" en smart-economat-backend (Nest).
+   * @undefined {unknown} dtoClass - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} payload - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T>} Datos efectivos después de ejecutar la operación.
    */
   validateDto<T extends object>(
     dtoClass: unknown,
@@ -954,7 +1282,13 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "find" en smart-economat-backend (Nest).
+   * @undefined {unknown} entity - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} options - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T[]>} Datos efectivos después de ejecutar la operación.
    */
   find<T>(entity: unknown, options?: unknown): Promise<T[]> {
     void entity;
@@ -963,7 +1297,13 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {unknown} entity - Entrada efectiva esperada por el contrato.
+   * @undefined {unknown} options - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<T | null>} Datos efectivos después de ejecutar la operación.
    */
   findOne<T>(entity: unknown, options: unknown): Promise<T | null> {
     void entity;
@@ -972,7 +1312,11 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de count dentro del flujo de la aplicación.
+   *
+   * @param entity Parámetro de entrada para la operación.
+   * @param where Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   count(entity: unknown, where?: unknown): Promise<number> {
     void entity;
@@ -981,14 +1325,19 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene seed actor user id.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
    */
   getSeedActorUserId(): Promise<string> {
     return Promise.resolve('');
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async request<T>(
     path: string,
@@ -1105,7 +1454,7 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async parseResponseBody(
     response: Response
@@ -1114,24 +1463,26 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Calcula backoff ms según las reglas de negocio.
+   *
+   * @param attempt Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private computeBackoffMs(attempt: number): number {
     return computeSeedBackoffMs(this.backoffBaseMs, this.backoffMaxMs, attempt);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  private async fetchWithTimeout(
+  private async fetchWithTimeoutAt(
     url: string,
-    init: RequestInit
+    init: RequestInit,
+    timeoutMs: number
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      this.requestTimeoutMs
-    );
+    const safeMs = Math.max(500, timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), safeMs);
 
     try {
       return await fetch(url, {
@@ -1143,15 +1494,26 @@ export class SeedContext {
     }
   }
 
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit
+  ): Promise<Response> {
+    return this.fetchWithTimeoutAt(url, init, this.requestTimeoutMs);
+  }
+
   /**
-   * Documentación en español.
+   * Parsea y valida retry after ms.
+   *
+   * @param headerValue Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private parseRetryAfterMs(headerValue: string | null): number | undefined {
     return parseSeedRetryAfterMs(headerValue);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de acquire slot dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
    */
   private async acquireSlot(): Promise<void> {
     if (this.inFlight < this.maxConcurrency) {
@@ -1168,7 +1530,7 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de release slot dentro del flujo de la aplicación.
    */
   private releaseSlot(): void {
     this.inFlight = Math.max(0, this.inFlight - 1);
@@ -1179,14 +1541,16 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de log raw dentro del flujo de la aplicación.
+   *
+   * @param content Parámetro de entrada para la operación.
    */
   private logRaw(content: string): void {
     appendFileSync(this.logFilePath, content, 'utf8');
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private logEvent(event: {
     method: string;
@@ -1208,14 +1572,18 @@ export class SeedContext {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de safe stringify dentro del flujo de la aplicación.
+   *
+   * @param value Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private safeStringify(value: unknown): string {
     return seedSafeStringify(value);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de next log timestamp dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
    */
   private nextLogTimestamp(): string {
     const timestamp = seedDateIso(0, this.logEventCursor);

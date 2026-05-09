@@ -6,15 +6,26 @@ import { DataSource } from 'typeorm';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 import { RecepcionPedido } from '../../recepcion/recepcion-pedido.entity/recepcion-pedido.entity';
 
+/** Clase pública (AlbaranRecepcionListener). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class AlbaranRecepcionListener {
   private readonly logger = new Logger(AlbaranRecepcionListener.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {AlbaranService} albaranService - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly albaranService: AlbaranService,
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Enruta o procesa una petición o evento de dominio.
+   * @undefined {RecepcionCompletadaEvent} event - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @OnEvent('recepcion.completada')
   async handleRecepcionCompletada(event: RecepcionCompletadaEvent) {
     this.logger.log(`Procesando albarán para recepción ${event.recepcionId}`);

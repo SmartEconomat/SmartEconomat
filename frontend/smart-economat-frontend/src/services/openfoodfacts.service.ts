@@ -1,5 +1,6 @@
 import { baseFetch, parseApiResponse } from './api.service';
 
+/** Contrato de tipos público (OFFProduct). Contexto: smart-economat-frontend (SPA). */
 export interface OFFProduct {
   name: string;
   brand?: string;
@@ -56,7 +57,12 @@ const EU_ALLERGEN_IDS = new Set([
 ]);
 
 /**
- * Documentación en español.
+ * Normaliza los tags de alérgenos de OpenFoodFacts al formato de enum interno de la aplicación.
+ */
+/**
+ * Expone "normalizeOFFAllergens" en smart-economat-frontend (SPA).
+ * @undefined {string[]} tags - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
  */
 export function normalizeOFFAllergens(tags: string[]): string[] {
   const result = new Set<string>();
@@ -70,7 +76,13 @@ export function normalizeOFFAllergens(tags: string[]): string[] {
 }
 
 /**
- * Documentación en español.
+ * Busca un producto en el catálogo de OpenFoodFacts mediante su código de barras.
+ * @returns El producto normalizado o null si no se encuentra.
+ */
+/**
+ * Expone "searchByBarcode" en smart-economat-frontend (SPA).
+ * @undefined {string} code - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<OFFProduct | null>} Datos efectivos después de ejecutar la operación.
  */
 export async function searchByBarcode(
   code: string
@@ -95,7 +107,12 @@ export async function searchByBarcode(
 }
 
 /**
- * Documentación en español.
+ * Busca productos en OpenFoodFacts por nombre para el autocompletado del formulario.
+ */
+/**
+ * Expone "searchByName" en smart-economat-frontend (SPA).
+ * @undefined {string} name - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<OFFProduct[]>} Datos efectivos después de ejecutar la operación.
  */
 export async function searchByName(name: string): Promise<OFFProduct[]> {
   const trimmedName = name.trim();

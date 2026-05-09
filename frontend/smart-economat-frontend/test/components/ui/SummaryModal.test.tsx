@@ -66,5 +66,14 @@ describe('SummaryModal', () => {
     await waitFor(() => {
       expect(screen.getByText('resumen.sinElementos')).toBeInTheDocument();
     });
+
+    expect(fetchProductos).toHaveBeenCalledWith(
+      1,
+      50,
+      '',
+      [],
+      'createdAt',
+      'desc'
+    );
   });
 });

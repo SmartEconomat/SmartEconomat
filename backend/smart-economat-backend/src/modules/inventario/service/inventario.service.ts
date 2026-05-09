@@ -25,25 +25,43 @@ import {
   TipoMovimiento,
   TipoMovimientoManual,
 } from '../../movimiento/enums/movimiento.enums';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { InventarioListQueryDto } from '../dto/inventario-list-query.dto';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
+import { InventarioTransferenciaStockService } from './inventario-transferencia-stock.service';
+import { UbicacionAccesoPoliticaService } from '../../ubicacion/service/ubicacion-acceso-politica.service';
+import { CrearTransferenciaInventarioDto } from '../dto/crear-transferencia-inventario.dto';
+import { Transferencia } from '../transferencia.entity/transferencia.entity';
 
 /**
- * Documentación en español.
+ * Servicio encargado de la lógica de negocio para la gestión de inventario físico.
+ * Gestiona el stock por ubicaciones, el registro de movimientos y el cálculo de alertas de stock bajo y caducidad.
  */
 @Injectable()
 export class InventarioService {
+  /**
+   * Crea una instancia de InventarioService.
+   * @param inventarioRepository Repositorio personalizado para inventario.
+   * @param productoProveedorRepository Repositorio para la relación producto-proveedor.
+   * @param movimientoHelper Ayudante para el registro de auditoría de movimientos.
+   * @param dataSource Fuente de datos para gestión de transacciones manuales.
+   */
   constructor(
     private readonly inventarioRepository: InventarioRepository,
     @InjectRepository(ProductoProveedor)
     private readonly productoProveedorRepository: Repository<ProductoProveedor>,
     private readonly movimientoHelper: MovimientoHelper,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly transferenciaStock: InventarioTransferenciaStockService,
+    private readonly accesoUbicacion: UbicacionAccesoPoliticaService
   ) {}
 
   /**
-   * Documentación en español.
+   * Registra una nueva entrada de stock en una ubicación específica.
+   * @param dto Datos de la nueva entrada de inventario.
+   * @param userId ID del usuario que realiza el registro.
+   * @returns El registro de inventario persistido.
+   * @throws NotFoundException Si la relación producto-proveedor no existe.
    */
   async create(
     dto: CreateInventarioItemDto,
@@ -59,33 +77,30 @@ export class InventarioService {
       );
     }
 
-    let cantidadMaxima = dto.cantidadMaxima as any;
-    if (
-      cantidadMaxima !== undefined &&
-      cantidadMaxima !== null &&
-      cantidadMaxima < dto.cantidadMinima
-    ) {
-      cantidadMaxima = null;
+    const cantidadMinima = Number(dto.cantidadMinima);
+    const cantidadActual = Number(dto.cantidadActual);
+    /** NULL si no viene o si viola chk cantidad_maxima >= cantidad_minima (ej. legacy 0). */
+    let cantidadMaxima: number | null = null;
+    if (dto.cantidadMaxima !== undefined && dto.cantidadMaxima !== null) {
+      const parsedMax = Number(dto.cantidadMaxima);
+      if (Number.isFinite(parsedMax) && parsedMax >= cantidadMinima) {
+        cantidadMaxima = parsedMax;
+      }
     }
 
     const inventario = this.inventarioRepository.create({
       productoProveedor,
-      cantidadActual: dto.cantidadActual,
-      cantidadMinima: dto.cantidadMinima,
-      cantidadMaxima: cantidadMaxima ?? null,
-      ubicacion: { id: dto.ubicacionId } as any,
+      cantidadActual,
+      cantidadMinima,
+      cantidadMaxima,
+      ubicacion: { id: dto.ubicacionId } as Inventario['ubicacion'],
       fechaCaducidad: dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null,
     });
 
     if (inventario.cantidadMinima < 0) inventario.cantidadMinima = 0;
     if (inventario.cantidadActual < 0) inventario.cantidadActual = 0;
-    if (
-      inventario.cantidadMaxima !== null &&
-      inventario.cantidadMaxima !== undefined &&
-      Number(inventario.cantidadMaxima) < Number(inventario.cantidadMinima)
-    ) {
-      (inventario as any).cantidadMaxima = null;
-    }
+
+    await this.assertInventarioGrainLibreParaCrear(dto);
 
     try {
       const savedInventario = await this.inventarioRepository.save(inventario);
@@ -114,10 +129,13 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Recupera una lista paginada de todos los registros de inventario.
+   * @param query Parámetros de filtrado, paginación y ordenación.
+   * @param userRole Rol del usuario solicitante.
+   * @returns Respuesta paginada.
    */
   async findAll(
-    query: PaginationQueryDto,
+    query: InventarioListQueryDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Inventario>> {
     const isAdmin =
@@ -125,21 +143,66 @@ export class InventarioService {
       userRole?.toUpperCase() === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
+    const rawOrder =
+      (query.order ?? query.sortOrder ?? 'ASC').toString().toUpperCase() ===
+      'DESC'
+        ? 'DESC'
+        : 'ASC';
     const sortBy = query.sortBy ?? 'createdAt';
-    const order = query.order ?? 'ASC';
 
-    const [data, total] = await this.inventarioRepository.findAndCount({
-      relations: [
-        'productoProveedor',
-        'productoProveedor.producto',
-        'productoProveedor.proveedor',
-        'ubicacion',
-      ],
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
-      withDeleted: isAdmin,
-    });
+    const allowedSort = new Set([
+      'nombre',
+      'cantidadActual',
+      'cantidadMinima',
+      'cantidadMaxima',
+      'fechaEntrada',
+      'fechaCaducidad',
+      'createdAt',
+      'updatedAt',
+    ]);
+    const safeSort = allowedSort.has(sortBy) ? sortBy : 'createdAt';
+
+    const qb = this.inventarioRepository
+      .createQueryBuilder('inv')
+      .innerJoinAndSelect('inv.productoProveedor', 'pp')
+      .innerJoinAndSelect('pp.producto', 'producto')
+      .innerJoinAndSelect('pp.proveedor', 'proveedor')
+      .leftJoinAndSelect('inv.ubicacion', 'ubicacion');
+
+    if (isAdmin) {
+      qb.withDeleted();
+    }
+
+    qb.andWhere('inv.cantidadActual > 0');
+
+    if (query.onlyLowStock === true) {
+      qb.andWhere('inv.cantidadActual < inv.cantidadMinima');
+    }
+
+    if (query.ubicacionIds && query.ubicacionIds.length > 0) {
+      qb.andWhere('ubicacion.id IN (:...ubicacionIds)', {
+        ubicacionIds: query.ubicacionIds,
+      });
+    }
+
+    const rawSearch = query.search ?? query.searchTerm;
+    const term = typeof rawSearch === 'string' ? rawSearch.trim() : '';
+    if (term.length > 0) {
+      qb.andWhere(
+        '(producto.nombre ILIKE :st OR producto.codigoBarras ILIKE :st OR ubicacion.nombre ILIKE :st OR proveedor.nombre ILIKE :st)',
+        { st: `%${term}%` }
+      );
+    }
+
+    if (safeSort === 'nombre') {
+      qb.orderBy('producto.nombre', rawOrder).addOrderBy('inv.id', 'ASC');
+    } else {
+      qb.orderBy(`inv.${safeSort}`, rawOrder).addOrderBy('inv.id', 'ASC');
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
@@ -151,7 +214,11 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Busca un registro de inventario por su UUID.
+   * @param id UUID del registro.
+   * @param userRole Rol del usuario.
+   * @returns El registro encontrado con sus relaciones de producto y ubicación.
+   * @throws NotFoundException Si el registro no existe.
    */
   async findOne(id: string, userRole?: string): Promise<Inventario> {
     const isAdmin =
@@ -175,15 +242,21 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza los datos de un registro de inventario y registra el movimiento de ajuste si la cantidad cambia.
+   * @param id UUID del registro a actualizar.
+   * @param dto Nuevos datos (cantidad, ubicación, fechas).
+   * @param userId ID del usuario que realiza la acción.
+   * @returns El registro de inventario actualizado.
    */
   async update(
     id: string,
     dto: UpdateInventarioDto,
-    userId: string
+    userId: string,
+    usuarioRol?: string
   ): Promise<Inventario> {
     const inventario = await this.findOne(id);
     const oldCantidad = inventario.cantidadActual;
+    const oldUbicacionId = inventario.ubicacionId ?? null;
 
     if (dto.productoProveedorId !== undefined) {
       const productoProveedor = await this.productoProveedorRepository.findOne({
@@ -211,8 +284,15 @@ export class InventarioService {
       inventario.cantidadMaxima = candidateMax;
     }
 
-    if (dto.ubicacionId !== undefined)
-      inventario.ubicacion = { id: dto.ubicacionId } as any;
+    if (dto.ubicacionId !== undefined) {
+      await this.validarCambioUbicacionAcl(
+        dto.ubicacionId,
+        oldUbicacionId,
+        userId,
+        usuarioRol
+      );
+      inventario.ubicacion = { id: dto.ubicacionId } as Inventario['ubicacion'];
+    }
     if (dto.fechaCaducidad !== undefined)
       inventario.fechaCaducidad = (
         dto.fechaCaducidad ? new Date(dto.fechaCaducidad) : null
@@ -276,7 +356,84 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta transferencias formales entre ubicaciones (cantidades parciales).
+   */
+  async ejecutarTransferenciaUbicaciones(
+    dto: CrearTransferenciaInventarioDto,
+    usuarioId: string | undefined,
+    usuarioRol: string | undefined
+  ): Promise<Transferencia> {
+    return this.transferenciaStock.ejecutarTransferenciaInmediata(
+      dto,
+      usuarioId,
+      usuarioRol
+    );
+  }
+
+  private async assertInventarioGrainLibreParaCrear(
+    dto: CreateInventarioItemDto
+  ): Promise<void> {
+    const qb = this.inventarioRepository
+      .createQueryBuilder('inv')
+      .where('inv.producto_proveedor_id = :pp', {
+        pp: dto.productoProveedorId,
+      });
+
+    if (dto.ubicacionId) {
+      qb.andWhere('inv.ubicacion_id = :u', { u: dto.ubicacionId });
+    } else {
+      qb.andWhere('inv.ubicacion_id IS NULL');
+    }
+
+    if (dto.fechaCaducidad) {
+      qb.andWhere('inv.fecha_caducidad = :fcd', {
+        fcd: new Date(dto.fechaCaducidad),
+      });
+    } else {
+      qb.andWhere('inv.fecha_caducidad IS NULL');
+    }
+
+    const dup = await qb.getOne();
+    if (dup) {
+      throw new ConflictException(
+        I18nHelper.getError('INVENTARIO_DUPLICATE_GRAIN')
+      );
+    }
+  }
+
+  private async validarCambioUbicacionAcl(
+    nuevaUbicacionId: string | undefined | null,
+    ubicacionActualId: string | null | undefined,
+    usuarioId: string,
+    usuarioRol?: string
+  ): Promise<void> {
+    if (
+      nuevaUbicacionId === ubicacionActualId ||
+      (!nuevaUbicacionId && !ubicacionActualId)
+    ) {
+      return;
+    }
+    const conjunto = [nuevaUbicacionId, ubicacionActualId].filter(
+      (v): v is string =>
+        typeof v === 'string' && v.trim().length > 0 && v !== 'null'
+    );
+    await this.accesoUbicacion.assertPuedeTransferirEnUbicaciones(
+      usuarioId,
+      usuarioRol,
+      conjunto
+    );
+  }
+
+  /**
+   * Elimina lógicamente un registro de inventario y registra la salida total del stock.
+   * @param id UUID del registro a eliminar.
+   * @param userId ID del usuario que realiza la acción.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async remove(id: string, userId: string): Promise<void> {
     const inventario = await this.findOne(id);
@@ -304,7 +461,12 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Identifica los registros de inventario cuya fecha de caducidad está próxima o vencida.
+   * @returns Lista de alertas de caducidad.
+   */
+  /**
+   * Expone "obtenerAlertasCaducidad" en smart-economat-backend (Nest).
+   * @undefined {Promise<AlertaCaducidadDTO[]>} Datos efectivos después de ejecutar la operación.
    */
   async obtenerAlertasCaducidad(): Promise<AlertaCaducidadDTO[]> {
     const productos = await this.inventarioRepository.findCaducidadProxima();
@@ -317,7 +479,12 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Identifica los registros de inventario cuyo stock actual es inferior al mínimo definido.
+   * @returns Lista de alertas de stock bajo.
+   */
+  /**
+   * Expone "obtenerAlertasStock" en smart-economat-backend (Nest).
+   * @undefined {Promise<AlertaStockDTO[]>} Datos efectivos después de ejecutar la operación.
    */
   async obtenerAlertasStock(): Promise<AlertaStockDTO[]> {
     const items = await this.inventarioRepository.findStockBajo();
@@ -333,7 +500,9 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta una consulta avanzada de stock consolidado o detallado por ubicación.
+   * @param dto Parámetros de la consulta (producto, categoría, ubicación).
+   * @returns Resultados de stock.
    */
   async queryStock(
     dto: InventoryQueryDto
@@ -342,7 +511,12 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Realiza un ajuste manual de stock dentro de una transacción con bloqueo pesimista.
+   * Garantiza la integridad del stock y genera un registro de auditoría detallado.
+   * @param dto Datos del ajuste (UUID inventario, cantidad a ajustar, motivo).
+   * @param userId ID del usuario responsable.
+   * @returns El registro de inventario tras el ajuste.
+   * @throws ConflictException Si el ajuste deja el stock en negativo o el registro está eliminado.
    */
   async ajustarManual(
     dto: CreateMovimientoManualDto,
@@ -358,7 +532,6 @@ export class InventarioService {
           .innerJoinAndSelect('inv.productoProveedor', 'pp')
           .innerJoinAndSelect('pp.producto', 'producto')
           .innerJoinAndSelect('pp.proveedor', 'proveedor')
-          .innerJoinAndSelect('inv.ubicacion', 'ubicacion')
           .where('inv.id = :inventarioId', { inventarioId: dto.inventarioId })
           .setLock('pessimistic_write')
           .getOne();
@@ -434,7 +607,9 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Valida que los parámetros del ajuste manual sean consistentes (ej: entrada no puede ser negativa).
+   * @param dto Datos del ajuste.
+   * @throws BadRequestException Si hay inconsistencias.
    */
   private validarConsistenciaAjusteManual(
     dto: CreateMovimientoManualDto
@@ -461,7 +636,9 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Mapea el tipo de ajuste manual al enumerado general de movimientos del sistema.
+   * @param tipo Tipo de movimiento manual.
+   * @returns Tipo de movimiento general.
    */
   private mapManualTipoToMovimiento(
     tipo: TipoMovimientoManual
@@ -481,7 +658,12 @@ export class InventarioService {
   }
 
   /**
-   * Documentación en español.
+   * Construye una descripción detallada para el registro de auditoría del ajuste manual.
+   * @param productoNombre Nombre del producto afectado.
+   * @param cantidadAnterior Stock antes del ajuste.
+   * @param cantidadActual Stock después del ajuste.
+   * @param dto Datos del ajuste (motivo, observaciones).
+   * @returns Cadena de texto descriptiva.
    */
   private buildManualAdjustmentDescription(
     productoNombre: string,

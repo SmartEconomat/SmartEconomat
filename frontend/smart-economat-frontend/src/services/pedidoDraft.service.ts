@@ -3,6 +3,7 @@ import { PurchaseBatch } from './pedido.types';
 
 const BASE_PATH = '/pedido/draft';
 
+/** Contrato de tipos público (PedidoDraftRecord). Contexto: smart-economat-frontend (SPA). */
 export interface PedidoDraftRecord {
   id: string;
   userId: string;
@@ -15,7 +16,15 @@ export interface PedidoDraftRecord {
 }
 
 /**
- * Documentación en español.
+ * Crea o actualiza el borrador de pedido del usuario actual.
+ * @param payload Estado completo del borrador del wizard.
+ * @param version Versión para control de concurrencia optimista.
+ */
+/**
+ * Expone "upsertPedidoDraft" en smart-economat-frontend (SPA).
+ * @undefined {Record<string, unknown>} payload - Entrada efectiva esperada por el contrato.
+ * @undefined {number | undefined} version - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PedidoDraftRecord>} Datos efectivos después de ejecutar la operación.
  */
 export async function upsertPedidoDraft(
   payload: Record<string, unknown>,
@@ -33,7 +42,11 @@ export async function upsertPedidoDraft(
 }
 
 /**
- * Documentación en español.
+ * Recupera el borrador de pedido más reciente del usuario actual.
+ */
+/**
+ * Expone "fetchLatestPedidoDraft" en smart-economat-frontend (SPA).
+ * @undefined {Promise<PedidoDraftRecord | null>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchLatestPedidoDraft(): Promise<PedidoDraftRecord | null> {
   const response = await baseFetch(BASE_PATH);
@@ -45,7 +58,11 @@ export async function fetchLatestPedidoDraft(): Promise<PedidoDraftRecord | null
 }
 
 /**
- * Documentación en español.
+ * Elimina el borrador activo del pedido.
+ */
+/**
+ * Elimina o marca entidades siguendo las políticas configuradas.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export async function deletePedidoDraft(): Promise<void> {
   const response = await baseFetch(BASE_PATH, {
@@ -57,7 +74,11 @@ export async function deletePedidoDraft(): Promise<void> {
 }
 
 /**
- * Documentación en español.
+ * Finaliza el borrador persistido y genera el lote de compra (PurchaseBatch) definitivo.
+ */
+/**
+ * Expone "finalizePedidoFromDraft" en smart-economat-frontend (SPA).
+ * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
  */
 export async function finalizePedidoFromDraft(): Promise<PurchaseBatch> {
   const response = await baseFetch(`${BASE_PATH}/finalize`, {

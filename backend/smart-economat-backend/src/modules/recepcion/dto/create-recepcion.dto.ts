@@ -11,11 +11,21 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+/** Clase pública (NotDraftConstraint). Paquete: smart-economat-backend (Nest). */
 @ValidatorConstraint({ name: 'notDraft', async: false })
 export class NotDraftConstraint implements ValidatorConstraintInterface {
+  /**
+   * Expone "validate" en smart-economat-backend (Nest).
+   * @undefined {any} value - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+   */
   validate(value: any) {
     return typeof value === 'string' ? value !== 'draft' : true;
   }
+  /**
+   * Expone "defaultMessage" en smart-economat-backend (Nest).
+   * @undefined {string} Datos efectivos después de ejecutar la operación.
+   */
   defaultMessage() {
     return `El valor 'draft' no es válido para este campo.`;
   }
@@ -32,6 +42,7 @@ import { TrimStringTransformer } from '../../../common/transformers/trim-string.
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 import { StringToBooleanTransformer } from '../../../common/transformers/string-to-boolean.transformer';
 
+/** Clase pública (ProductoNuevoDto). Paquete: smart-economat-backend (Nest). */
 export class ProductoNuevoDto {
   @ApiProperty({
     description: 'docs.INDICA_SI_ESTE_PRODUCTO_DEBE_CREARSE_EN',
@@ -81,6 +92,7 @@ export class ProductoNuevoDto {
   contenido: number;
 }
 
+/** Clase pública (RecepcionLineDto). Paquete: smart-economat-backend (Nest). */
 export class RecepcionLineDto {
   @ApiProperty({
     description: 'docs.ID_DE_LA_L_NEA_ORIGINAL_DEL_PEDIDO',
@@ -165,6 +177,7 @@ export class RecepcionLineDto {
   isWeighedWithScale?: boolean;
 }
 
+/** Clase pública (ProductoNuevoRecepcionDto). Paquete: smart-economat-backend (Nest). */
 export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   @ApiProperty({
     description: 'docs.CANTIDAD_REALMENTE_RECIBIDA_DEL_NUEVO_PR',
@@ -174,6 +187,15 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   @IsNumber()
   @Min(0)
   cantidadRecibida: number;
+
+  @ApiPropertyOptional({
+    description: 'docs.CANTIDAD_REPORTADA_EN_EL_ALBAR_N_PARA_EL_P',
+    example: 10,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cantidadAlbaran?: number;
 
   @ApiPropertyOptional({
     description: 'docs.OBSERVACIONES_DEL_NUEVO_PRODUCTO',
@@ -193,6 +215,7 @@ export class ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   isWeighedWithScale?: boolean;
 }
 
+/** Clase pública (PedidoRecepcionDto). Paquete: smart-economat-backend (Nest). */
 export class PedidoRecepcionDto {
   @ApiProperty({ description: 'docs.ID_DEL_PEDIDO_AL_QUE_PERTENECE_LA_RECEPC' })
   @IsString()
@@ -216,6 +239,7 @@ export class PedidoRecepcionDto {
   observaciones?: string;
 }
 
+/** Clase pública (CreateRecepcionDto). Paquete: smart-economat-backend (Nest). */
 export class CreateRecepcionDto {
   @ApiPropertyOptional({
     description: 'docs.IDS_DE_PEDIDOS_VINCULADOS_A_ESTA_RECEPCI',

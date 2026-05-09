@@ -7,15 +7,26 @@ import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/re
 import { ProductoPrecioActualizadoEvent } from '../../producto/events/producto-precio-actualizado.event';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 
+/** Clase pública (RecetaRecepcionListener). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class RecetaRecepcionListener {
   private readonly logger = new Logger(RecetaRecepcionListener.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RecetaService} recetaService - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly recetaService: RecetaService,
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Enruta o procesa una petición o evento de dominio.
+   * @undefined {RecepcionCompletadaEvent} event - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @OnEvent('recepcion.completada')
   async handleRecepcionCompletada(event: RecepcionCompletadaEvent) {
     this.logger.log(`Recalculando recetas tras recepción ${event.recepcionId}`);
@@ -77,6 +88,11 @@ export class RecetaRecepcionListener {
     }
   }
 
+  /**
+   * Enruta o procesa una petición o evento de dominio.
+   * @undefined {ProductoPrecioActualizadoEvent} event - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @OnEvent('producto.precio.actualizado')
   async handleProductoPrecioActualizado(event: ProductoPrecioActualizadoEvent) {
     this.logger.log(

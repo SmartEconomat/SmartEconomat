@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export const PERMISSIONS = {
   usuarios: {
@@ -70,6 +70,7 @@ export const PERMISSIONS = {
     editar: 'ubicaciones:editar',
     eliminar: 'ubicaciones:eliminar',
     restaurar: 'ubicaciones:restaurar',
+    gestionar_slots: 'ubicaciones:gestionar_slots',
   },
   inventario: {
     listar: 'inventario:listar',
@@ -78,6 +79,7 @@ export const PERMISSIONS = {
     editar: 'inventario:editar',
     eliminar: 'inventario:eliminar',
     ajustar_stock: 'inventario:ajustar_stock',
+    transferir: 'inventario:transferir',
   },
   recetas: {
     listar: 'recetas:listar',
@@ -131,7 +133,7 @@ export const PERMISSIONS = {
 } as const;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export type PermissionCode =
   (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]] extends infer V
@@ -141,12 +143,12 @@ export type PermissionCode =
     : never;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export type PermissionModule = keyof typeof PERMISSIONS;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export const ALL_PERMISSION_CODES: PermissionCode[] = Object.values(
   PERMISSIONS

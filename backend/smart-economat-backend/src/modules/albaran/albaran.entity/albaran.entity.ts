@@ -3,6 +3,7 @@ import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { AlbaranPedidoRecepcion } from '../albaran-pedido-recepcion.entity/albaran-pedido-recepcion.entity';
 
+/** Clase pública (Albaran). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'albaran' })
 @Index('idx_albaran_n_albaran', ['nAlbaran'])
 @Index('idx_albaran_fecha', ['fecha'])
@@ -20,7 +21,7 @@ export class Albaran extends BaseEntity {
   fecha?: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -31,7 +32,7 @@ export class Albaran extends BaseEntity {
   documentoUrl?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -42,7 +43,7 @@ export class Albaran extends BaseEntity {
   documentoNombre?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -53,7 +54,7 @@ export class Albaran extends BaseEntity {
   documentoMimeType?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'int', nullable: true, name: 'documento_tamano' })
   documentoTamano?: number;

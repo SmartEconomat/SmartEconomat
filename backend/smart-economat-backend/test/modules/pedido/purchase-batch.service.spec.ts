@@ -16,6 +16,7 @@ describe('PurchaseBatchService', () => {
   let service: PurchaseBatchService;
 
   const mockQueryRunner = {
+    isTransactionActive: false,
     connect: jest.fn(),
     startTransaction: jest.fn(),
     commitTransaction: jest.fn(),
@@ -30,6 +31,19 @@ describe('PurchaseBatchService', () => {
       findOne: jest.fn(),
     },
   };
+
+  mockQueryRunner.startTransaction.mockImplementation(() => {
+    mockQueryRunner.isTransactionActive = true;
+    return Promise.resolve();
+  });
+  mockQueryRunner.commitTransaction.mockImplementation(() => {
+    mockQueryRunner.isTransactionActive = false;
+    return Promise.resolve();
+  });
+  mockQueryRunner.rollbackTransaction.mockImplementation(() => {
+    mockQueryRunner.isTransactionActive = false;
+    return Promise.resolve();
+  });
 
   const mockDataSource = {
     createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
@@ -46,6 +60,7 @@ describe('PurchaseBatchService', () => {
 
   const mockMovimientoHelper = {
     trackPedidoCreation: jest.fn(),
+    trackAction: jest.fn(),
   };
 
   const mockProduccionService = {
@@ -53,6 +68,8 @@ describe('PurchaseBatchService', () => {
   };
 
   beforeEach(async () => {
+    mockQueryRunner.isTransactionActive = false;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PurchaseBatchService,
@@ -100,6 +117,16 @@ describe('PurchaseBatchService', () => {
       mockQueryRunner.manager.insert.mockResolvedValue(undefined);
       mockQueryRunner.manager.find.mockResolvedValue([mockPP1, mockPP2]);
 
+      mockQueryRunner.manager.findOne.mockImplementation(
+        (_entity: any, options: any) => {
+          const where = options?.where;
+          if (where?.id === 'prov-1' || where?.id === 'prov-2') {
+            return Promise.resolve({ id: where.id });
+          }
+          return Promise.resolve(null);
+        }
+      );
+
       mockDataSource.getRepository().findOne.mockResolvedValue(mockBatch);
 
       const result = await service.createBatchOrder(dto as any, userId);
@@ -115,6 +142,7 @@ describe('PurchaseBatchService', () => {
       expect(mockQueryRunner.manager.insert).toHaveBeenCalled();
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(result).toEqual(mockBatch);
+      expect(mockMovimientoHelper.trackPedidoCreation).toHaveBeenCalledTimes(2);
     });
 
     it('debería lanzar NotFoundException si un productoProveedor no existe', async () => {
@@ -154,10 +182,11 @@ describe('PurchaseBatchService', () => {
   });
 
   describe('consolidateExistingOrders', () => {
-    it('debería consolidar y dejar los pedidos por recepcionar automáticamente', async () => {
+    it('debería consolidar auto-aprobando pendientes y separando estado de consolidación', async () => {
       const dto = {
         pedidoUsuarioIds: ['pu-1', 'pu-2'],
         observaciones: 'Semana 12',
+        autoApprovePending: true,
       };
       const pedidosInternos = [
         {
@@ -214,6 +243,7 @@ describe('PurchaseBatchService', () => {
           id: 'pedido-1',
           batchId: 'batch-1',
           estado: EstadoPedido.POR_RECEPCIONAR,
+          modifiedBy: 'user-1',
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
@@ -222,6 +252,7 @@ describe('PurchaseBatchService', () => {
           id: 'pedido-2',
           batchId: 'batch-1',
           estado: EstadoPedido.POR_RECEPCIONAR,
+          modifiedBy: 'user-1',
         })
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
@@ -235,6 +266,96 @@ describe('PurchaseBatchService', () => {
         PedidoUsuario,
         expect.objectContaining({
           id: 'pu-2',
+          estado: EstadoPedidoUsuario.CONSOLIDADO,
+        })
+      );
+    });
+
+    it('debería rechazar consolidación de pendientes sin autoApprovePending', async () => {
+      const dto = {
+        pedidoUsuarioIds: ['pu-1'],
+        observaciones: 'Semana 12',
+      };
+
+      mockQueryRunner.manager.find.mockResolvedValue([
+        {
+          id: 'pu-1',
+          estado: EstadoPedidoUsuario.PENDIENTE,
+          pedidos: [
+            {
+              id: 'pedido-1',
+              estado: EstadoPedido.PENDIENTE_DE_APROBACION,
+              recepcionesPedido: [],
+            },
+          ],
+        },
+      ]);
+
+      await expect(
+        service.consolidateExistingOrders(dto as any, 'user-1')
+      ).rejects.toThrow(
+        'Hay pedidos pendientes. Reintenta con autoApprovePending=true para auto-aprobar y consolidar.'
+      );
+    });
+
+    it('debería permitir consolidar pedidos de usuario ya aprobados con pedidos internos POR_RECEPCIONAR (sin lote y sin recepciones)', async () => {
+      const dto = {
+        pedidoUsuarioIds: ['pu-1'],
+        observaciones: 'Semana 13',
+        autoApprovePending: false,
+      };
+
+      const pedidosUsuario = [
+        {
+          id: 'pu-1',
+          estado: EstadoPedidoUsuario.APROBADO,
+          pedidos: [
+            {
+              id: 'pedido-1',
+              estado: EstadoPedido.POR_RECEPCIONAR,
+              batchId: null,
+              recepcionesPedido: [],
+              pedidoProductos: [],
+            },
+          ],
+        },
+      ];
+
+      const createdBatch = {
+        id: 'batch-1',
+        estado: EstadoLote.PENDIENTE,
+        observaciones: dto.observaciones,
+      };
+
+      mockQueryRunner.manager.find.mockResolvedValue(pedidosUsuario);
+      mockQueryRunner.manager.create.mockReturnValue(createdBatch);
+      mockQueryRunner.manager.save.mockImplementation((_entity, value) =>
+        Promise.resolve(value)
+      );
+      jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(createdBatch as PurchaseBatch);
+      jest.spyOn(service, 'syncBatchStatus').mockResolvedValue();
+
+      const result = await service.consolidateExistingOrders(
+        dto as any,
+        'user-1'
+      );
+
+      expect(result).toEqual(createdBatch);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        Pedido,
+        expect.objectContaining({
+          id: 'pedido-1',
+          batchId: 'batch-1',
+          estado: EstadoPedido.POR_RECEPCIONAR,
+          modifiedBy: 'user-1',
+        })
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        PedidoUsuario,
+        expect.objectContaining({
+          id: 'pu-1',
           estado: EstadoPedidoUsuario.CONSOLIDADO,
         })
       );

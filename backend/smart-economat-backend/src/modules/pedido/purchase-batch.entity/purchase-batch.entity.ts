@@ -14,7 +14,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Pedido } from '../pedido.entity/pedido.entity';
 
 /**
- * Documentación en español.
+ * Representa purchase batch en el sistema.
  */
 @Entity({ name: 'purchase_batch' })
 @Index(['numeroGlobal'], { unique: true })
@@ -24,35 +24,35 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 @Index(['usuarioId'])
 export class PurchaseBatch extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'referencia', type: 'varchar', length: 32, unique: true })
   referencia!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   numeroLote?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   referenciaLote?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, {
     nullable: true,
@@ -62,19 +62,19 @@ export class PurchaseBatch extends BaseEntity {
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ default: false, name: 'is_aprobado' })
   isAprobado: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -85,7 +85,7 @@ export class PurchaseBatch extends BaseEntity {
   estado!: EstadoLote;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => Pedido, (pedido) => pedido.batch, {
     cascade: true,
@@ -95,7 +95,10 @@ export class PurchaseBatch extends BaseEntity {
   /* --- Lógica de Dominio --- */
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de calcular estado lote dentro del flujo de la aplicación.
+   *
+   * @param pedidos Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   static calcularEstadoLote(pedidos: Pedido[]): EstadoLote {
     if (!pedidos || pedidos.length === 0) {

@@ -4,12 +4,14 @@ import {
   UnidadIngrediente,
 } from '../modules/receta/enums/receta.enums';
 
+/** Alias público (SeedRecipeIngredientSlot) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type SeedRecipeIngredientSlot = {
   unidades: UnidadIngrediente[];
   cantidadBase: number;
   merma: number;
 };
 
+/** Alias público (SeedRecipeTemplate) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type SeedRecipeTemplate = {
   nombre: string;
   dificultad: DificultadReceta;
@@ -22,6 +24,7 @@ export type SeedRecipeTemplate = {
   ingredientes: SeedRecipeIngredientSlot[];
 };
 
+/** Constantes públicas (SEED_RECIPE_TEMPLATES) expuestas en smart-economat-backend (Nest). */
 export const SEED_RECIPE_TEMPLATES: readonly SeedRecipeTemplate[] = [
   {
     nombre: 'Tortilla espanola',
@@ -370,6 +373,11 @@ export const SEED_RECIPE_TEMPLATES: readonly SeedRecipeTemplate[] = [
   },
 ] as const;
 
+/**
+ * Expone "pickSeedRecipeTemplate" en smart-economat-backend (Nest).
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {SeedRecipeTemplate} Datos efectivos después de ejecutar la operación.
+ */
 export function pickSeedRecipeTemplate(iteration: number): SeedRecipeTemplate {
   return SEED_RECIPE_TEMPLATES[iteration % SEED_RECIPE_TEMPLATES.length];
 }

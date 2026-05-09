@@ -74,6 +74,8 @@ vi.mock('../../src/components/ui/DataTable', () => ({
     columns,
     data,
     renderActions,
+    onRowClick,
+    getRowAriaLabel,
   }: {
     columns: Array<{
       id: string;
@@ -82,13 +84,26 @@ vi.mock('../../src/components/ui/DataTable', () => ({
     }>;
     data: Array<Record<string, unknown>>;
     renderActions?: (row: Record<string, unknown>) => React.ReactNode;
+    onRowClick?: (row: Record<string, unknown>) => void;
+    getRowAriaLabel?: (row: Record<string, unknown>) => string;
   }) => (
     <div>
       {columns.map((column) => (
         <div key={String(column.id)}>{column.label}</div>
       ))}
       {data.map((row, rowIndex) => (
-        <div key={String(row.id ?? rowIndex)}>
+        <div
+          key={String(row.id ?? rowIndex)}
+          role={onRowClick ? 'button' : undefined}
+          tabIndex={onRowClick ? 0 : undefined}
+          aria-label={
+            onRowClick
+              ? (getRowAriaLabel?.(row) ??
+                `preparaciones-row-${String(row.id ?? rowIndex)}`)
+              : undefined
+          }
+          onClick={onRowClick ? () => onRowClick(row) : undefined}
+        >
           {columns.map((column) => (
             <div
               key={String(column.id)}
@@ -501,14 +516,15 @@ describe('Preparaciones page', () => {
       );
     });
 
-    const detailButton = screen
-      .getAllByRole('button')
-      .find(
-        (button) => button.getAttribute('id') === 'btn-ver-detalle-preparacion'
-      );
-    expect(detailButton).toBeDefined();
-    fireEvent.click(detailButton!);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'preparaciones.actions.ariaVerDetalle',
+      })
+    );
 
+    expect(
+      screen.queryByText('preparaciones.columns.racionesDisponibles')
+    ).not.toBeInTheDocument();
     expect(
       screen.getAllByText('preparaciones.columns.racionesPreparadas').length
     ).toBeGreaterThan(0);

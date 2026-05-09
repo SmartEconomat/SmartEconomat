@@ -70,7 +70,7 @@ interface BatchPedidoLineasViewerProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const BatchPedidoLineasViewer: React.FC<BatchPedidoLineasViewerProps> = ({
   batch,

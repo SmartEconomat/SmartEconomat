@@ -3,17 +3,20 @@ import * as os from 'os';
 import * as path from 'path';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const DEFAULT_PRIMARY_PATH = './uploads';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const DEFAULT_FALLBACK_PATH = './uploads_runtime';
 
 /**
- * Documentación en español.
+ * Determina si use directory.
+ *
+ * @param directory Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function canUseDirectory(directory: string): boolean {
   try {
@@ -33,7 +36,12 @@ function canUseDirectory(directory: string): boolean {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "resolveWritableLocalStoragePath" en smart-economat-backend (Nest).
+ * @undefined {string | undefined} configuredPath - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export function resolveWritableLocalStoragePath(
   configuredPath?: string

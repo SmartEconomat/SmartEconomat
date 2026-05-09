@@ -1,10 +1,7 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
-// ============================================================================
-// PG-MEM
-// ============================================================================
 export {
   initPgMem,
   getTestDataSource,
@@ -20,18 +17,12 @@ export {
   markAsSeeded,
 } from './pg-mem';
 
-// ============================================================================
-// SEEDERS
-// ============================================================================
 export {
   seedTestDatabase,
   restoreToSeedState,
   getSeededDataSource,
 } from './seed-test-database';
 
-// ============================================================================
-// APP
-// ============================================================================
 export {
   getTestApp,
   closeTestApp,
@@ -39,7 +30,4 @@ export {
   getTestServer,
 } from './test-app';
 
-// ============================================================================
-// BCRYPT MOCK
-// ============================================================================
 export { mockBcryptForTests } from './bcrypt-mock';

@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { UseInterceptors, Controller, Get, UseGuards } from '@nestjs/common';
@@ -17,7 +17,7 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para dashboard.
  */
 @ApiTags('Dashboard')
 @ApiBearerAuth()
@@ -25,12 +25,18 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @Controller('dashboard')
 export class DashboardController {
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param private readonly dashboardService Parámetro de entrada para la operación.
    */
   constructor(private readonly dashboardService: DashboardService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<DashboardStatsDto>} Datos efectivos después de ejecutar la operación.
    */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.dashboard.ver_estadisticas)

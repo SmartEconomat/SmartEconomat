@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IncidenciaLineaDto } from './incidencia-linea.dto';
 import { EstadoIncidencia } from '../enums/incidencia.enums';
 
+/** Clase pública (IncidenciaDto). Paquete: smart-economat-backend (Nest). */
 export class IncidenciaDto {
   @ApiProperty({ description: 'docs.ID_DE_LA_INCIDENCIA' })
   id!: string;

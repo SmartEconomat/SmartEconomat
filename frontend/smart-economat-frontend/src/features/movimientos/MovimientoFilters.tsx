@@ -4,46 +4,47 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { TipoMovimiento } from '../../services/movimiento.types';
 import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../../i18n/enumPresentation';
+import DateRangeFilter from '../../components/ui/DateRangeFilter';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface MovimientoFiltersState {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   types: TipoMovimiento[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   startDate: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   endDate: string | null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface MovimientoFiltersProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   filters: MovimientoFiltersState;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChange: (filters: MovimientoFiltersState) => void;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const MOVIMIENTO_TYPES = Object.values(TipoMovimiento);
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   filters,
@@ -52,7 +53,7 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   const { t } = useTranslation();
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const handleTypeChange = (
     _: React.SyntheticEvent,
@@ -60,15 +61,6 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
   ) => {
     onChange({ ...filters, types: newValue });
   };
-
-  /**
-   * Documentación en español.
-   */
-  const handleDateChange =
-    (field: 'startDate' | 'endDate') =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...filters, [field]: e.target.value || null });
-    };
 
   return (
     <Box
@@ -132,38 +124,14 @@ const MovimientoFilters: React.FC<MovimientoFiltersProps> = ({
         }}
       />
 
-      <TextField
-        id="start-date"
-        label={t('movimientos.filtros.desde')}
-        type="date"
-        size="small"
-        value={filters.startDate || ''}
-        onChange={handleDateChange('startDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
-      />
-
-      <TextField
-        id="end-date"
-        label={t('movimientos.filtros.hasta')}
-        type="date"
-        size="small"
-        value={filters.endDate || ''}
-        onChange={handleDateChange('endDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
+      <DateRangeFilter
+        startDate={filters.startDate}
+        endDate={filters.endDate}
+        onChange={(start, end) =>
+          onChange({ ...filters, startDate: start, endDate: end })
+        }
+        startLabel={t('movimientos.filtros.desde')}
+        endLabel={t('movimientos.filtros.hasta')}
       />
     </Box>
   );

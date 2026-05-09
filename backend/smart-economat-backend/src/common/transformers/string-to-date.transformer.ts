@@ -1,20 +1,23 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import { TransformFnParams } from 'class-transformer/types/interfaces';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type TransformValueParams = Pick<TransformFnParams, 'value'>;
 
 /**
- * Documentación en español.
+ * Representa string to date transformer en el sistema.
  */
 export class StringToDateTransformer {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de transform dentro del flujo de la aplicación.
+   *
+   * @param params Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   static transform(params: TransformValueParams): Date | null | undefined {
     const value = params.value;

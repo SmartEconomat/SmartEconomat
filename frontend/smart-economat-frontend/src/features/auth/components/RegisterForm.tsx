@@ -386,7 +386,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         />
 
         <Input
-          label="Confirmar Contraseña"
+          label={t('auth.confirmPassword')}
           name="confirmPassword"
           type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"

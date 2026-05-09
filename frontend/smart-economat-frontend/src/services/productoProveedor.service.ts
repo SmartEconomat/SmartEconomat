@@ -1,5 +1,6 @@
 import { baseFetch } from './api.service';
 
+/** Contrato de tipos público (ProductoProveedorOption). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoProveedorOption {
   id: string;
   productoNombre: string;
@@ -10,6 +11,7 @@ export interface ProductoProveedorOption {
   proveedorId?: string;
   marca?: string;
   codigoBarras?: string;
+  precioUnitario?: number;
   label: string;
 }
 
@@ -20,17 +22,33 @@ interface ApiResponse<T> {
 }
 
 /**
- * Documentación en español.
+ * Busca relaciones producto-proveedor por término de búsqueda.
+ * Utilizado en autocompletados de la UI.
  */
+/**
+ * Expone "searchProductoProveedor" en smart-economat-frontend (SPA).
+ * @undefined {string} q - Entrada efectiva esperada por el contrato.
+ * @undefined {number} limit - Entrada efectiva esperada por el contrato.
+ * @undefined {number} offset - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<ProductoProveedorOption[]>} Datos efectivos después de ejecutar la operación.
+ */
+const MAX_PRODUCTO_PROVEEDOR_SEARCH_LIMIT = 50;
+
 export async function searchProductoProveedor(
   q: string,
   limit: number = 20,
   offset: number = 0
 ): Promise<ProductoProveedorOption[]> {
+  const safeLimit = Math.min(
+    Math.max(1, Math.floor(Number(limit) || 20)),
+    MAX_PRODUCTO_PROVEEDOR_SEARCH_LIMIT
+  );
+  const safeOffset = Math.max(0, Math.floor(Number(offset) || 0));
+
   const params = new URLSearchParams();
   if (q.trim()) params.set('q', q.trim());
-  params.set('limit', String(limit));
-  params.set('offset', String(offset));
+  params.set('limit', String(safeLimit));
+  params.set('offset', String(safeOffset));
 
   const response = await baseFetch(
     `/producto-proveedor/search?${params.toString()}`
@@ -54,6 +72,7 @@ export async function searchProductoProveedor(
       proveedorId?: string;
       marca?: string;
       codigoBarras?: string;
+      precioUnitario?: number;
     }>
   >;
 

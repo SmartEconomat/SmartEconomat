@@ -10,6 +10,7 @@ import {
 import { Transform } from 'class-transformer';
 import { UserLanguage } from '../../usuario/enums/usuario.enums';
 
+/** Clase pública (CreateProfesorDto). Paquete: smart-economat-backend (Nest). */
 export class CreateProfesorDto {
   @IsString()
   @IsNotEmpty()

@@ -18,12 +18,47 @@ describe('RecetaService', () => {
 
   let service: RecetaService;
 
+  const mockCostQueryBuilders = (
+    products: Array<Record<string, unknown>>,
+    providerPrices: Array<Record<string, unknown>> = []
+  ) => {
+    const productoQb = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue(products),
+    };
+
+    const providerQb = {
+      where: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn().mockResolvedValue(providerPrices),
+    };
+
+    mockDataSource.getRepository.mockImplementation((entity: unknown) => {
+      const entityName =
+        typeof entity === 'function' && 'name' in entity
+          ? String(entity.name)
+          : '';
+
+      if (entityName === 'ProductoProveedor') {
+        return {
+          createQueryBuilder: jest.fn().mockReturnValue(providerQb),
+        };
+      }
+
+      return {
+        createQueryBuilder: jest.fn().mockReturnValue(productoQb),
+      };
+    });
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     service = new RecetaService(mockRecetaRepo as any, mockDataSource as any);
   });
 
-  it('calcularEscandallo calcula el coste total usando precios actuales medios', async () => {
+  it('calcularEscandallo calcula el coste total usando PMP cuando no hay precio por proveedor', async () => {
     mockRecetaRepo.findById.mockResolvedValue({
       id: 'rec-1',
       nombre: 'Tortilla',
@@ -37,21 +72,14 @@ describe('RecetaService', () => {
         },
       ],
     });
-    const qb = {
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
-        {
-          id: 'prod-1',
-          nombre: 'Huevo',
-          pmp: 2,
-          proveedores: [],
-        },
-      ]),
-    };
-    mockDataSource.getRepository.mockReturnValue({
-      createQueryBuilder: jest.fn().mockReturnValue(qb),
-    });
+    mockCostQueryBuilders([
+      {
+        id: 'prod-1',
+        nombre: 'Huevo',
+        pmp: 2,
+        proveedores: [],
+      },
+    ]);
 
     const result = await service.calcularEscandallo('rec-1');
 
@@ -72,6 +100,125 @@ describe('RecetaService', () => {
         },
       ],
     });
+  });
+
+  it('calcularEscandallo prioriza el precio del proveedor favorito cuando existe', async () => {
+    mockRecetaRepo.findById.mockResolvedValue({
+      id: 'rec-1b',
+      nombre: 'Prueba proveedor favorito',
+      rendimiento: 1,
+      ingredientes: [
+        {
+          producto: { id: 'prod-1b', nombre: 'Patata' },
+          cantidad: 2,
+          unidad: 'kg',
+          mermaAplicada: 0,
+          proveedorFavoritoId: 'prov-favorito',
+        },
+      ],
+    });
+
+    mockCostQueryBuilders(
+      [
+        {
+          id: 'prod-1b',
+          nombre: 'Patata',
+          pmp: 4,
+          mermaPorcentaje: 0,
+        },
+      ],
+      [
+        {
+          productoId: 'prod-1b',
+          proveedorId: 'prov-favorito',
+          precioUnitario: 0.5,
+        },
+        {
+          productoId: 'prod-1b',
+          proveedorId: 'prov-caro',
+          precioUnitario: 9,
+        },
+      ]
+    );
+
+    const result = await service.calcularEscandallo('rec-1b');
+
+    expect(result.costoTotal).toBe(1);
+    expect(result.desglosePorIngrediente[0].precioUnitario).toBe(0.5);
+  });
+
+  it('calcularEscandallo usa proveedor mas barato si no hay proveedor favorito valido', async () => {
+    mockRecetaRepo.findById.mockResolvedValue({
+      id: 'rec-1bb',
+      nombre: 'Prueba proveedor mas barato',
+      rendimiento: 1,
+      ingredientes: [
+        {
+          producto: { id: 'prod-1bb', nombre: 'Tomate' },
+          cantidad: 3,
+          unidad: 'kg',
+          mermaAplicada: 0,
+          proveedorFavoritoId: 'prov-inexistente',
+        },
+      ],
+    });
+
+    mockCostQueryBuilders(
+      [
+        {
+          id: 'prod-1bb',
+          nombre: 'Tomate',
+          pmp: 7,
+          mermaPorcentaje: 0,
+        },
+      ],
+      [
+        {
+          productoId: 'prod-1bb',
+          proveedorId: 'prov-1',
+          precioUnitario: 1.2,
+        },
+        {
+          productoId: 'prod-1bb',
+          proveedorId: 'prov-2',
+          precioUnitario: 0.9,
+        },
+      ]
+    );
+
+    const result = await service.calcularEscandallo('rec-1bb');
+
+    expect(result.costoTotal).toBeCloseTo(2.7, 6);
+    expect(result.desglosePorIngrediente[0].precioUnitario).toBe(0.9);
+  });
+
+  it('calcularEscandallo aplica merma base del producto cuando no hay merma de ingrediente', async () => {
+    mockRecetaRepo.findById.mockResolvedValue({
+      id: 'rec-1c',
+      nombre: 'Prueba merma producto',
+      rendimiento: 1,
+      ingredientes: [
+        {
+          producto: { id: 'prod-1c', nombre: 'Zanahoria' },
+          cantidad: 10,
+          unidad: 'kg',
+        },
+      ],
+    });
+
+    mockCostQueryBuilders([
+      {
+        id: 'prod-1c',
+        nombre: 'Zanahoria',
+        pmp: 5,
+        mermaPorcentaje: 20,
+      },
+    ]);
+
+    const result = await service.calcularEscandallo('rec-1c');
+
+    expect(result.desglosePorIngrediente[0].cantidadReal).toBeCloseTo(12.5, 4);
+    expect(result.costoTotal).toBeCloseTo(62.5, 4);
   });
 
   it('getDetalle agrega stock y alérgenos consolidados', async () => {

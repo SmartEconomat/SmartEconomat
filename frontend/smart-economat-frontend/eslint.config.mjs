@@ -8,7 +8,16 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['build/**', 'coverage/**', 'node_modules/**'],
+    ignores: [
+      'build/**',
+      'coverage/**',
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+      'logs/**',
+      'dist/**',
+      '.vite/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

@@ -18,14 +18,19 @@ import { UpsertRecepcionDraftDto } from '../dto/upsert-recepcion-draft.dto';
 import { RecepcionDraftRecord } from '../interfaces/recepcion-draft-record.interface';
 
 /**
- * Documentación en español.
+ * Servicio encargado de gestionar los borradores (drafts) de recepción de mercancía.
+ * Implementa una estrategia de persistencia dual: caché rápida en Redis y persistencia
+ * duradera en PostgreSQL como fallback y sincronización.
  */
 @Injectable()
 export class RecepcionDraftService implements OnModuleDestroy {
   private readonly logger = new Logger(RecepcionDraftService.name);
 
   /**
-   * Documentación en español.
+  /**
+   * Crea una instancia de RecepcionDraftService.
+   * @param recepcionDraftRepository Repositorio para persistencia en PostgreSQL.
+   * @param redisClient Cliente de Redis para acceso rápido.
    */
   constructor(
     @InjectRepository(RecepcionDraft)
@@ -35,7 +40,12 @@ export class RecepcionDraftService implements OnModuleDestroy {
   ) {}
 
   /**
-   * Documentación en español.
+  /**
+   * Cierra las conexiones activas de Redis al destruir el módulo.
+   */
+  /**
+   * Expone "onModuleDestroy" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async onModuleDestroy(): Promise<void> {
     try {
@@ -48,7 +58,13 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Crea o actualiza un borrador de recepción para un usuario.
+   * Gestiona el versionado para evitar sobrescrituras accidentales (concurrencia).
+   * 
+   * @param userId ID del usuario propietario del borrador.
+   * @param dto Datos del borrador (payload JSON).
+   * @returns El registro del borrador creado/actualizado.
    */
   async upsertDraft(
     userId: string,
@@ -110,7 +126,12 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Obtiene el borrador más reciente de un usuario, priorizando la caché de Redis.
+   * Si no está en caché, lo recupera de la base de datos y recalienta la caché.
+   * 
+   * @param userId ID del usuario.
+   * @returns El borrador encontrado o null si no existe o ha expirado.
    */
   async getLatestDraft(userId: string): Promise<RecepcionDraftRecord | null> {
     const fromCache = await this.getDraftFromCache(userId);
@@ -134,7 +155,14 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Elimina de forma lógica y física el borrador de un usuario en todos los niveles de persistencia.
+   * @param userId ID del usuario.
+   */
+  /**
+   * Expone "clearDraft" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async clearDraft(userId: string): Promise<void> {
     await Promise.allSettled([
@@ -144,21 +172,24 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Construye la clave única de Redis para el borrador del usuario.
    */
   private buildCacheKey(userId: string): string {
     return `${RECEPCION_DRAFT_CACHE_PREFIX}${userId}`;
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Verifica si la fecha de expiración de un borrador ha sido alcanzada.
    */
   private isExpired(expiresAt: string | null): boolean {
     return Boolean(expiresAt && new Date(expiresAt).getTime() <= Date.now());
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Recupera el borrador directamente desde Redis.
    */
   private async getDraftFromCache(
     userId: string
@@ -191,7 +222,8 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Guarda el borrador en la caché de Redis con un tiempo de vida (TTL) definido.
    */
   private async saveDraftToCache(draft: RecepcionDraftRecord): Promise<void> {
     await this.redisClient.set(
@@ -203,7 +235,8 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Elimina la clave del borrador en Redis.
    */
   private async deleteDraftFromCache(userId: string): Promise<void> {
     try {
@@ -217,7 +250,8 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Recupera el borrador persistido en la base de datos PostgreSQL.
    */
   private async getDraftFromDatabase(
     userId: string
@@ -243,7 +277,9 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Sincroniza el estado del borrador hacia la base de datos.
+   * Implementa una guarda de versión para no sobrescribir datos más recientes en la DB.
    */
   private async persistDraftToDatabase(
     draft: RecepcionDraftRecord
@@ -277,7 +313,8 @@ export class RecepcionDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+  /**
+   * Mapea una entidad RecepcionDraft a una interfaz de registro normalizada.
    */
   private mapEntityToRecord(
     entity: RecepcionDraft,

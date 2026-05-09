@@ -1,7 +1,10 @@
 import React, { ReactNode } from 'react';
 
 /**
- * Documentación en español.
+ * Formatea digits for sr para su presentación.
+ *
+ * @param text Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const formatDigitsForSR = (text: string): string => {
   if (!text) return '';
@@ -15,7 +18,10 @@ export const formatDigitsForSR = (text: string): string => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de extract a11y text dentro del flujo de la aplicación.
+ *
+ * @param node Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const extractA11yText = (node: ReactNode): string => {
   if (!node) return '';

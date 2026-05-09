@@ -5,7 +5,7 @@ import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
 /**
- * Documentación en español.
+ * DTO que define el contrato de datos de upload albaran.
  */
 export class UploadAlbaranDto {
   @ApiProperty({

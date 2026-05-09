@@ -1,6 +1,7 @@
 import { Recepcion } from '../../recepcion/recepcion.entity/recepcion.entity';
 import { ExportColumn } from './producto-export.mapper';
 
+/** Constantes públicas (RECEPCION_COLUMNS) expuestas en smart-economat-backend (Nest). */
 export const RECEPCION_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Fecha Recepción', key: 'fechaRecepcion', width: 17 },
@@ -11,6 +12,11 @@ export const RECEPCION_COLUMNS: ExportColumn[] = [
   { header: 'Fecha Creación', key: 'createdAt', width: 15 },
 ];
 
+/**
+ * Expone "mapRecepcionToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Recepcion} recepcion - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function mapRecepcionToExcelRow(
   recepcion: Recepcion
 ): Record<string, unknown> {

@@ -20,10 +20,6 @@ describe('ProfesorService', () => {
     save: jest.fn(),
   };
 
-  const mockUbicacionRepo = {
-    findOne: jest.fn(),
-  };
-
   const mockDataSource = {
     transaction: jest
       .fn()
@@ -54,7 +50,6 @@ describe('ProfesorService', () => {
     service = new ProfesorService(
       mockProfesorRepo as any,
       mockSlotRepo as any,
-      mockUbicacionRepo as any,
       mockDataSource as any
     );
   });

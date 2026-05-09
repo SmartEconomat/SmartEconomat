@@ -1,9 +1,11 @@
+/// <reference types="node" />
+
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './test/e2e',
   fullyParallel: false,
-  workers: 1,
+  workers: Number(process.env.PLAYWRIGHT_WORKERS ?? 1),
   retries: process.env.CI ? 2 : 0,
   reporter: [
     ['list'],

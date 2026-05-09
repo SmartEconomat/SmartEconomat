@@ -9,7 +9,12 @@ const isEditablePedidoStatus = (estado?: unknown): boolean =>
   estado === EstadoPedidoUsuario.PENDIENTE;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {Record<string, unknown> | null} row - Entrada efectiva esperada por el contrato.
+ * @undefined {DynamicField[]} Datos efectivos después de ejecutar la operación.
  */
 export const getPedidoSchema = (
   row: Record<string, unknown> | null

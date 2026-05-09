@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -39,25 +39,26 @@ import {
   NotFoundException,
 } from '@zxing/library';
 
+/** Contrato de tipos público (BarcodeScannerProps). Contexto: smart-economat-frontend (SPA). */
 export interface BarcodeScannerProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   open: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onClose: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onScan: (code: string) => void | Promise<void>;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   title?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   continuous?: boolean;
 }
@@ -198,7 +199,7 @@ const isExpectedVideoAbortError = (error: unknown): boolean => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de play beep dentro del flujo de la aplicación.
  */
 const playBeep = () => {
   try {

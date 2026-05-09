@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Patch,
-  Query,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -19,17 +18,29 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import type { Request } from 'express';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para preparacion.
  */
 @Controller('preparaciones')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 export class PreparacionController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {PreparacionService} preparacionService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly preparacionService: PreparacionService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePreparacionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Request<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/express-serve-static-core/index").ParamsDictionary, any, any, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/qs/index").ParsedQs, Record<string, any>> & { user?: { id?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
@@ -45,12 +56,18 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Request<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/express-serve-static-core/index").ParamsDictionary, any, any, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/qs/index").ParsedQs, Record<string, any>> & { user?: { rol?: { nombre?: string; }; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/common/dto/paginated-response.dto").PaginatedResponseDto<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @SortableFields(SORTABLE_FIELDS.preparaciones) query: PaginationQueryDto,
     @Req() req: Request & { user?: { rol?: { nombre?: string } } }
   ) {
     const userRole = req.user?.rol?.nombre;
@@ -58,7 +75,13 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Request<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/express-serve-static-core/index").ParamsDictionary, any, any, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/qs/index").ParsedQs, Record<string, any>> & { user?: { rol?: { nombre?: string; }; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -71,7 +94,12 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "iniciar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/iniciar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
@@ -80,7 +108,14 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "finalizar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Request<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/express-serve-static-core/index").ParamsDictionary, any, any, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/node_modules/@types/qs/index").ParsedQs, Record<string, any>> & { user?: { id?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} ubicacionDestinoId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/finalizar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
@@ -101,7 +136,12 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "cancelar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/preparacion/preparacion.entity/preparacion.entity").Preparacion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
@@ -110,7 +150,12 @@ export class PreparacionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)

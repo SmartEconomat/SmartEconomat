@@ -7,6 +7,7 @@ import { MermaController } from './controller/merma.controller';
 import { Merma } from './merma.entity/merma.entity';
 import { MermaService } from './service/merma.service';
 
+/** Clase pública (MermaModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

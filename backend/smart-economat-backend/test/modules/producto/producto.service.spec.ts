@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductoService } from '../../../src/modules/producto/service/producto.service';
 import { ProductoRepository } from '../../../src/modules/producto/repository/producto.repository';
 import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
-import { ProductoAlergeno } from '../../../src/modules/producto/producto-alergeno.entity/producto-alergeno.entity';
 import { Producto } from '../../../src/modules/producto/producto.entity/producto.entity';
+import { ProductoAlergeno } from '../../../src/modules/producto/producto-alergeno.entity/producto-alergeno.entity';
 import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -25,6 +25,7 @@ describe('ProductoService', () => {
     findOne: jest.fn(),
     delete: jest.fn(),
     existsByCodigoBarras: jest.fn(),
+    existsActiveByNombreNormalized: jest.fn().mockResolvedValue(false),
     createQueryBuilder: jest.fn(),
   };
 
@@ -205,13 +206,13 @@ describe('ProductoService', () => {
     expect(recalculateSpy).toHaveBeenCalledWith('prod-1', em);
   });
 
-  it('debe conservar el último PMP del producto si el stock total es 0', async () => {
+  it('debe fijar PMP global con la media de precios de referencia cuando no hay stock', async () => {
     const producto = {
       id: 'prod-1',
-      pmp: 4.5,
+      pmp: 0,
       proveedores: [
-        { id: 'pp-1', pmp: 3 },
-        { id: 'pp-2', pmp: 7 },
+        { id: 'pp-1', pmp: 0, precioUnitario: 3 },
+        { id: 'pp-2', pmp: 0, precioUnitario: 7 },
       ],
     };
 
@@ -232,8 +233,61 @@ describe('ProductoService', () => {
     expect(em.update).toHaveBeenCalledWith(
       Producto,
       { id: 'prod-1' },
-      { pmp: 4.5 }
+      { pmp: 5 }
     );
+  });
+
+  it('debe actualizar precio del proveedor sin recalcular PMP global desde ABM', async () => {
+    const manager = {
+      find: jest.fn().mockImplementation((entity: unknown) => {
+        if (entity === ProductoProveedor) {
+          return Promise.resolve([
+            {
+              id: 'pp-1',
+              productoId: 'prod-1',
+              proveedorId: 'prov-1',
+              precioUnitario: 2,
+              pmp: 2,
+              marca: 'Marca Original',
+              codigoBarras: 'ABC',
+              proveedor: { id: 'prov-1' },
+            },
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }),
+      update: jest.fn().mockResolvedValue(undefined),
+      softDelete: jest.fn().mockResolvedValue(undefined),
+    };
+
+    jest
+      .spyOn(service as any, 'registrarPrecioYResolverPrecioActual')
+      .mockResolvedValue(4.2);
+
+    const recalcularSpy = jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
+
+    await (service as any).syncProveedoresWithManager(manager, 'prod-1', [
+      {
+        proveedorId: 'prov-1',
+        precioUnitario: 4.2,
+        marcaEspecifica: 'Marca Nueva',
+        codigoBarras: 'ABC',
+      },
+    ]);
+
+    expect(manager.update).toHaveBeenCalledWith(
+      ProductoProveedor,
+      { id: 'pp-1' },
+      {
+        precioUnitario: 4.2,
+        marca: 'Marca Nueva',
+        codigoBarras: 'ABC',
+      }
+    );
+    expect(recalcularSpy).toHaveBeenCalledWith('prod-1', manager);
   });
   it('debe usar el precioUnitario como semilla si el PMP anterior es 0', async () => {
     const mockPP = {

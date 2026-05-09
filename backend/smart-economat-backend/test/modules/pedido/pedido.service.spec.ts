@@ -3,7 +3,6 @@ import { PedidoService } from '../../../src/modules/pedido/service/pedido.servic
 import { EstadoPedido } from '../../../src/modules/pedido/enums/estado-pedido.enum';
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
 import { PedidoProducto } from '../../../src/modules/pedido/pedido-producto.entity/pedido-producto.entity';
-import { ProductoProveedor } from '../../../src/modules/producto/producto-proveedor.entity/producto-proveedor.entity';
 import { PedidoStatusTrigger } from '../../../src/modules/pedido/enums/pedido-status-trigger.enum';
 
 describe('PedidoService', () => {
@@ -53,7 +52,48 @@ describe('PedidoService', () => {
   function createQueryRunner() {
     const manager = {
       query: jest.fn().mockResolvedValue([{ max: '1999' }]),
-      findOne: jest.fn(),
+      findOne: jest.fn().mockImplementation((_entity: any, options: any) => {
+        const where = options?.where;
+        if (where?.id === 'prov-1' || where?.id === 'prov-otro') {
+          return Promise.resolve({ id: where.id });
+        }
+        if (where?.id === 'pp-1') {
+          return Promise.resolve({
+            id: 'pp-1',
+            proveedorId: 'prov-1',
+            precioUnitario: 2.5,
+          });
+        }
+        if (where?.id === 'pp-1-otro') {
+          return Promise.resolve({
+            id: 'pp-1-otro',
+            proveedorId: 'prov-otro',
+            precioUnitario: 2.5,
+          });
+        }
+        if (where?.id === 'pp-1-null') {
+          return Promise.resolve({
+            id: 'pp-1-null',
+            proveedorId: 'prov-1',
+            precioUnitario: null,
+          });
+        }
+        if (where?.id === 'pp-2') {
+          return Promise.resolve({
+            id: 'pp-2',
+            proveedorId: 'prov-1',
+            precioUnitario: 1.2,
+          });
+        }
+        if (where?.id === 'pp-3') {
+          return Promise.resolve({
+            id: 'pp-3',
+            proveedorId: 'prov-1',
+            precioUnitario: 3.5,
+          });
+        }
+        return Promise.resolve(null);
+      }),
       create: jest
         .fn()
         .mockImplementation((_: unknown, payload: Partial<Pedido>) => ({
@@ -65,11 +105,21 @@ describe('PedidoService', () => {
     };
 
     const queryRunner = {
+      isTransactionActive: false,
       manager,
       connect: jest.fn().mockResolvedValue(undefined),
-      startTransaction: jest.fn().mockResolvedValue(undefined),
-      commitTransaction: jest.fn().mockResolvedValue(undefined),
-      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+      startTransaction: jest.fn().mockImplementation(() => {
+        queryRunner.isTransactionActive = true;
+        return Promise.resolve();
+      }),
+      commitTransaction: jest.fn().mockImplementation(() => {
+        queryRunner.isTransactionActive = false;
+        return Promise.resolve();
+      }),
+      rollbackTransaction: jest.fn().mockImplementation(() => {
+        queryRunner.isTransactionActive = false;
+        return Promise.resolve();
+      }),
       release: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -79,18 +129,6 @@ describe('PedidoService', () => {
 
   it('create calcula costeTotal, autogenera fechaEntrega y persiste líneas del pedido', async () => {
     const queryRunner = createQueryRunner();
-
-    queryRunner.manager.findOne
-      .mockResolvedValueOnce({
-        id: 'pp-1',
-        proveedorId: 'prov-1',
-        precioUnitario: 2.5,
-      } as ProductoProveedor)
-      .mockResolvedValueOnce({
-        id: 'pp-2',
-        proveedorId: 'prov-1',
-        precioUnitario: 1.2,
-      } as ProductoProveedor);
 
     queryRunner.manager.save
       .mockImplementationOnce((_entity: unknown, pedido: Partial<Pedido>) =>
@@ -136,7 +174,8 @@ describe('PedidoService', () => {
     expect(mockMovimientoHelper.trackPedidoCreation).toHaveBeenCalledWith(
       'user-1',
       'pedido-1',
-      'Creación de pedido #pedido-1'
+      expect.any(String),
+      expect.objectContaining({ id: 'pedido-1' })
     );
     expect(result).toEqual({
       id: 'pedido-1',
@@ -153,17 +192,12 @@ describe('PedidoService', () => {
 
   it('create rechaza líneas de producto proveedor de otro proveedor', async () => {
     const queryRunner = createQueryRunner();
-    queryRunner.manager.findOne.mockResolvedValue({
-      id: 'pp-1',
-      proveedorId: 'prov-otro',
-      precioUnitario: 2,
-    } as ProductoProveedor);
 
     await expect(
       service.create(
         {
           proveedorId: 'prov-1',
-          lineas: [{ productoProveedorId: 'pp-1', cantidad: 1 }],
+          lineas: [{ productoProveedorId: 'pp-1-otro', cantidad: 1 }],
         } as any,
         'user-1'
       )
@@ -174,17 +208,12 @@ describe('PedidoService', () => {
 
   it('create rechaza líneas sin precio vigente', async () => {
     const queryRunner = createQueryRunner();
-    queryRunner.manager.findOne.mockResolvedValue({
-      id: 'pp-1',
-      proveedorId: 'prov-1',
-      precioUnitario: null,
-    } as unknown as ProductoProveedor);
 
     await expect(
       service.create(
         {
           proveedorId: 'prov-1',
-          lineas: [{ productoProveedorId: 'pp-1', cantidad: 1 }],
+          lineas: [{ productoProveedorId: 'pp-1-null', cantidad: 1 }],
         } as any,
         'user-1'
       )
@@ -223,10 +252,6 @@ describe('PedidoService', () => {
         costeTotal: 14,
       });
 
-    queryRunner.manager.findOne.mockResolvedValue({
-      id: 'pp-3',
-      precioUnitario: 3.5,
-    } as ProductoProveedor);
     queryRunner.manager.save.mockImplementation(
       (_entity: unknown, entity: any) => Promise.resolve(entity)
     );

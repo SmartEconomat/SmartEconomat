@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   Box,
   Button,
   IconButton,
@@ -29,6 +30,10 @@ import {
   normalizeUnidadMedida,
   UnidadMedida,
 } from '../../services/producto.types';
+import {
+  parseLocalizedNumber,
+  normalizeNumericInput,
+} from '../../utils/numberUtils';
 
 interface PedidoLineasSelectorProps {
   value: Partial<PedidoProducto>[];
@@ -56,13 +61,56 @@ interface ProductOption {
   proveedores: FlatProductoProveedor[];
 }
 
-type ProductoProveedorSearchResult = ProductoProveedorOption & {
-  precioUnitario?: number;
-};
+const PRODUCT_SEARCH_DEBOUNCE_MS = 300;
 
 const buildProductKey = (productoId?: string, nombreProducto?: string) =>
   productoId ||
   `nombre:${(nombreProducto || 'desconocido').trim().toLowerCase()}`;
+
+const mapToFlatProductoProveedor = (
+  option: ProductoProveedorOption
+): FlatProductoProveedor => ({
+  id: option.id,
+  productoId:
+    option.productoId || buildProductKey(undefined, option.productoNombre),
+  nombreProducto: option.productoNombre || 'Desconocido',
+  unidad: normalizeUnidadMedida(option.unidad),
+  contenido: option.contenido,
+  nombreProveedor: option.proveedorNombre || 'Desconocido',
+  proveedorId: option.proveedorId || '',
+  precioUnitario: Number(option.precioUnitario ?? 0),
+  marca: option.marca,
+});
+
+// Cache a nivel de módulo: se comparte entre todas las instancias del componente
+// y evita cargar el catálogo de productos cada vez que se abre el modal.
+const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+let cachedDefaultProducts: FlatProductoProveedor[] | null = null;
+let cacheTimestamp = 0;
+let cacheLoadingPromise: Promise<FlatProductoProveedor[]> | null = null;
+
+const getDefaultProductsCached = async (): Promise<FlatProductoProveedor[]> => {
+  const now = Date.now();
+  if (cachedDefaultProducts && now - cacheTimestamp < CATALOG_CACHE_TTL_MS) {
+    return cachedDefaultProducts;
+  }
+  // Si ya hay una carga en progreso, reutilizarla
+  if (cacheLoadingPromise) {
+    return cacheLoadingPromise;
+  }
+  // El API valida `limit` máx. 50 (SearchProductoProveedorDto); 100 provoca 400 y catálogo vacío.
+  cacheLoadingPromise = searchProductoProveedor('', 50, 0)
+    .then((productoProveedores) => {
+      const flat = productoProveedores.map(mapToFlatProductoProveedor);
+      cachedDefaultProducts = flat;
+      cacheTimestamp = Date.now();
+      return flat;
+    })
+    .finally(() => {
+      cacheLoadingPromise = null;
+    });
+  return cacheLoadingPromise;
+};
 
 const createEmptyLine = () => ({
   productoId: '',
@@ -128,40 +176,86 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
   const [allFlatProducts, setAllFlatProducts] = useState<
     FlatProductoProveedor[]
   >([]);
+  const [defaultFlatProducts, setDefaultFlatProducts] = useState<
+    FlatProductoProveedor[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRequestIdRef = useRef(0);
   const [focusedQuantityKey, setFocusedQuantityKey] = useState<string | null>(
     null
   );
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadProducts = async () => {
       setIsLoading(true);
       try {
-        // Usar searchProductoProveedor sin filtro para obtener todos los productos-proveedores
-        const productoProveedores = await searchProductoProveedor('', 50, 0);
-        const flat: FlatProductoProveedor[] = productoProveedores.map((pp) => ({
-          id: pp.id,
-          productoId:
-            pp.productoId || buildProductKey(undefined, pp.productoNombre),
-          nombreProducto: pp.productoNombre || 'Desconocido',
-          unidad: normalizeUnidadMedida(pp.unidad),
-          contenido: pp.contenido,
-          nombreProveedor: pp.proveedorNombre || 'Desconocido',
-          proveedorId: pp.proveedorId || '',
-          precioUnitario: Number(
-            (pp as ProductoProveedorSearchResult).precioUnitario ?? 0
-          ),
-          marca: pp.marca,
-        }));
+        const flat = await getDefaultProductsCached();
+        if (!isMounted) {
+          return;
+        }
+        setDefaultFlatProducts(flat);
         setAllFlatProducts(flat);
       } catch (error) {
         console.error('Error loading products for order:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
-    loadProducts();
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  useEffect(() => {
+    const requestId = ++searchRequestIdRef.current;
+    const term = searchQuery.trim();
+
+    if (!term) {
+      setAllFlatProducts(defaultFlatProducts);
+      setIsSearchingProducts(false);
+      return;
+    }
+
+    setIsSearchingProducts(true);
+
+    const timeoutId = window.setTimeout(() => {
+      searchProductoProveedor(term, 50, 0)
+        .then((productoProveedores) => {
+          if (requestId !== searchRequestIdRef.current) {
+            return;
+          }
+
+          setAllFlatProducts(
+            productoProveedores.map(mapToFlatProductoProveedor)
+          );
+        })
+        .catch((error) => {
+          if (requestId !== searchRequestIdRef.current) {
+            return;
+          }
+
+          console.error('Error searching products for order:', error);
+        })
+        .finally(() => {
+          if (requestId === searchRequestIdRef.current) {
+            setIsSearchingProducts(false);
+          }
+        });
+    }, PRODUCT_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [defaultFlatProducts, searchQuery]);
 
   const handleAddLine = () => {
     const newLines = [...value, createEmptyLine()];
@@ -579,10 +673,6 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                   selectedUnit
                 );
 
-                const quantityStep =
-                  isPackageQuantity || isDiscreteUnit(selectedUnit) ? 1 : 'any';
-                const quantityMin =
-                  isPackageQuantity || isDiscreteUnit(selectedUnit) ? 1 : 0.001;
                 const quantityFocusMessage = isPackageQuantity
                   ? `Este producto se pide por paquetes de ${formatContenido(selectedContenido, selectedUnit)}.`
                   : selectedUnit
@@ -617,19 +707,27 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         <Autocomplete
                           fullWidth
                           options={productOptions}
+                          loading={isSearchingProducts}
                           getOptionKey={(option) => option.key}
                           getOptionLabel={(option) =>
                             option.proveedores.length > 1
                               ? `${option.nombreProducto} (${option.proveedores.length} proveedores)`
                               : option.nombreProducto
                           }
+                          filterOptions={(options) => options}
                           isOptionEqualToValue={(option, currentValue) =>
                             option.key === currentValue.key
                           }
                           value={selectedProduct || null}
-                          onChange={(_, newValue) =>
-                            handleProductChange(uniqueKey, newValue)
-                          }
+                          onChange={(_, newValue) => {
+                            handleProductChange(uniqueKey, newValue);
+                            setSearchQuery('');
+                          }}
+                          onInputChange={(_, newInputValue, reason) => {
+                            if (reason === 'input' || reason === 'clear') {
+                              setSearchQuery(newInputValue);
+                            }
+                          }}
                           disabled={disabled}
                           renderOption={(props, option) => {
                             return (
@@ -734,54 +832,79 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                             : getUnidadLabel(selectedUnit)}
                         </Typography>
                       ) : (
-                        <TextField
-                          type="number"
-                          disabled={disabled}
-                          value={line.cantidad || ''}
-                          onChange={(e) => {
-                            const rawValue = e.target.value;
+                        <Box>
+                          <TextField
+                            type="text"
+                            disabled={disabled}
+                            value={line.cantidad || ''}
+                            onChange={(e) => {
+                              const rawValue = e.target.value;
+                              if (rawValue === '') {
+                                handleUpdateLine(uniqueKey, 'cantidad', '');
+                                return;
+                              }
 
-                            if (rawValue === '') {
-                              handleUpdateLine(uniqueKey, 'cantidad', '');
-                              return;
+                              const normalized =
+                                normalizeNumericInput(rawValue);
+                              const parsedValueRaw =
+                                parseLocalizedNumber(normalized);
+
+                              if (parsedValueRaw === null) {
+                                handleUpdateLine(
+                                  uniqueKey,
+                                  'cantidad',
+                                  normalized
+                                );
+                                return;
+                              }
+
+                              const parsedValue =
+                                isPackageQuantity ||
+                                isDiscreteUnit(selectedUnit)
+                                  ? Math.trunc(parsedValueRaw)
+                                  : parsedValueRaw;
+
+                              handleUpdateLine(
+                                uniqueKey,
+                                'cantidad',
+                                parsedValue
+                              );
+                            }}
+                            variant="outlined"
+                            InputProps={{
+                              sx: { '& input': { pb: '4px' } },
+                            }}
+                            inputProps={{
+                              inputMode: 'decimal',
+                              pattern: '[0-9]*[.,]?[0-9]*',
+                            }}
+                            onFocus={() => setFocusedQuantityKey(uniqueKey)}
+                            onBlur={() =>
+                              setFocusedQuantityKey((current) =>
+                                current === uniqueKey ? null : current
+                              )
                             }
-
-                            const parsedValue =
-                              isPackageQuantity || isDiscreteUnit(selectedUnit)
-                                ? Math.trunc(Number(rawValue))
-                                : Number(rawValue);
-
-                            handleUpdateLine(
-                              uniqueKey,
-                              'cantidad',
-                              parsedValue
-                            );
-                          }}
-                          variant="outlined"
-                          InputProps={{
-                            sx: { '& input': { pb: '4px' } },
-                          }}
-                          inputProps={{
-                            min: quantityMin,
-                            step: quantityStep,
-                            inputMode:
-                              isPackageQuantity || isDiscreteUnit(selectedUnit)
-                                ? 'numeric'
-                                : 'decimal',
-                          }}
-                          helperText={
-                            focusedQuantityKey === uniqueKey
-                              ? quantityFocusMessage
-                              : undefined
-                          }
-                          onFocus={() => setFocusedQuantityKey(uniqueKey)}
-                          onBlur={() =>
-                            setFocusedQuantityKey((current) =>
-                              current === uniqueKey ? null : current
-                            )
-                          }
-                          size="small"
-                        />
+                            size="small"
+                            fullWidth
+                          />
+                          {focusedQuantityKey === uniqueKey &&
+                            quantityFocusMessage && (
+                              <Alert
+                                severity="info"
+                                icon={false}
+                                sx={{
+                                  mt: 0.5,
+                                  py: 0,
+                                  px: 1,
+                                  fontSize: '0.72rem',
+                                  borderRadius: 1,
+                                  '& .MuiAlert-message': { py: 0.4 },
+                                }}
+                              >
+                                {quantityFocusMessage}
+                              </Alert>
+                            )}
+                        </Box>
                       )}
                     </TableCell>
                     <TableCell>
@@ -791,16 +914,48 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         </Typography>
                       ) : (
                         <TextField
-                          type="number"
-                          value={line.precioUnitario || ''}
+                          type="text"
+                          value={line.precioUnitario ?? ''}
+                          onChange={(e) => {
+                            const rawValue = e.target.value;
+                            if (rawValue === '') {
+                              handleUpdateLine(uniqueKey, 'precioUnitario', '');
+                              return;
+                            }
+
+                            const normalized = normalizeNumericInput(rawValue);
+                            const parsedValue =
+                              parseLocalizedNumber(normalized);
+
+                            if (parsedValue === null) {
+                              handleUpdateLine(
+                                uniqueKey,
+                                'precioUnitario',
+                                normalized
+                              );
+                              return;
+                            }
+
+                            if (parsedValue < 0) {
+                              return;
+                            }
+
+                            handleUpdateLine(
+                              uniqueKey,
+                              'precioUnitario',
+                              parsedValue
+                            );
+                          }}
                           variant="outlined"
                           InputProps={{
-                            readOnly: true,
                             sx: {
                               '& input': { textAlign: 'right', pb: '4px' },
                             },
                           }}
-                          inputProps={{ step: '0.01' }}
+                          inputProps={{
+                            inputMode: 'decimal',
+                            pattern: '[0-9]*[.,]?[0-9]*',
+                          }}
                           size="small"
                         />
                       )}

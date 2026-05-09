@@ -5,30 +5,39 @@ import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../../i18n/enumPresentation';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export type RolType = 'Administrador' | 'Profesor' | 'Alumno' | string;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface RoleBadgeProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   rol: RolType;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   size?: 'small' | 'medium';
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   sx?: SxProps<Theme>;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "RoleBadge" en smart-economat-frontend (SPA).
+ * @undefined {RoleBadgeProps} {
+ *   rol,
+ *   size = 'small',
+ *   sx,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export const RoleBadge: React.FC<RoleBadgeProps> = ({
   rol,

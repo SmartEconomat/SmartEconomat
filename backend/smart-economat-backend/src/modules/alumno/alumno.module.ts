@@ -7,6 +7,7 @@ import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { Profesor } from '../profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../profesor/profesor.entity/alumno-slot.entity';
 
+/** Clase pública (AlumnoModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [TypeOrmModule.forFeature([Alumno, Usuario, Profesor, AlumnoSlot])],
   controllers: [AlumnoController],

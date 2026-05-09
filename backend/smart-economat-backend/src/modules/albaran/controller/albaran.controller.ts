@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   Controller,
@@ -41,9 +41,10 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para albaran.
  */
 @ApiTags('Albaranes')
 @ApiBearerAuth()
@@ -51,12 +52,19 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 @Controller('albaranes')
 export class AlbaranController {
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param private readonly albaranService Parámetro de entrada para la operación.
    */
   constructor(private readonly albaranService: AlbaranService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateAlbaranDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.albaranes.crear)
@@ -66,7 +74,13 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "uploadDocumento" en smart-economat-backend (Nest).
+   * @undefined {Express.Multer.File} file - Entrada efectiva esperada por el contrato.
+   * @undefined {UploadAlbaranDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; data: Albaran; }>} Datos efectivos después de ejecutar la operación.
    */
   @Post('upload-documento')
   @RequirePermissions(PERMISSIONS.albaranes.crear)
@@ -134,7 +148,13 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "serveDocumento" en smart-economat-backend (Nest).
+   * @undefined {string} filename - Entrada efectiva esperada por el contrato.
+   * @undefined {ExpressResponse<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   @Get('documento/:filename')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
@@ -151,18 +171,18 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Albaran>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   findAll(
-    @SortableFields([
-      'nAlbaran',
-      'concordancia',
-      'fecha',
-      'createdAt',
-      'updatedAt',
-    ])
+    @SortableFields(SORTABLE_FIELDS.albaranes)
     query: PaginationQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Albaran>> {
@@ -171,7 +191,13 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.albaranes.ver)
@@ -184,7 +210,13 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateAlbaranDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.albaranes.editar)
@@ -196,7 +228,12 @@ export class AlbaranController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.albaranes.eliminar)

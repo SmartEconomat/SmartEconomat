@@ -81,7 +81,9 @@ async function main() {
   const installers = await findInstallers(distDir);
 
   if (installers.length === 0) {
-    throw new Error("No se encontraron instaladores .exe en dist para verificar.");
+    throw new Error(
+      "No se encontraron instaladores .exe en dist para verificar.",
+    );
   }
 
   for (const installerPath of installers) {

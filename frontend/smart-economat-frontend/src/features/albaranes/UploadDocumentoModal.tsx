@@ -21,19 +21,19 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface UploadDocumentoModalProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isOpen: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onClose: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onUpload: (
     file: File,
@@ -42,27 +42,30 @@ interface UploadDocumentoModalProps {
     observaciones?: string
   ) => Promise<void>;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isLoading?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   defaultNumeroReferencia?: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/gif,application/pdf';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const MAX_SIZE_MB = 10;
 
 /**
- * Documentación en español.
+ * Formatea size para su presentación.
+ *
+ * @param bytes Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -71,7 +74,7 @@ const formatSize = (bytes: number): string => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
   isOpen,
@@ -103,7 +106,9 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
   }, [isOpen, defaultNumeroReferencia]);
 
   /**
-   * Documentación en español.
+   * Gestiona file change y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación.
    */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -121,7 +126,7 @@ const UploadDocumentoModal: React.FC<UploadDocumentoModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona submit y aplica la lógica correspondiente.
    */
   const handleSubmit = async () => {
     if (!selectedFile) {

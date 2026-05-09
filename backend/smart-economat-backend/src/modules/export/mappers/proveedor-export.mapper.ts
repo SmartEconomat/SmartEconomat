@@ -1,6 +1,7 @@
 import { Proveedor } from '../../proveedor/proveedor.entity/proveedor.entity';
 import { ExportColumn } from './producto-export.mapper';
 
+/** Constantes públicas (PROVEEDOR_COLUMNS) expuestas en smart-economat-backend (Nest). */
 export const PROVEEDOR_COLUMNS: ExportColumn[] = [
   { header: 'ID', key: 'id', width: 38 },
   { header: 'Nombre', key: 'nombre', width: 30 },
@@ -12,6 +13,11 @@ export const PROVEEDOR_COLUMNS: ExportColumn[] = [
   { header: 'Fecha Alta', key: 'createdAt', width: 15 },
 ];
 
+/**
+ * Expone "mapProveedorToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Proveedor} proveedor - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function mapProveedorToExcelRow(
   proveedor: Proveedor
 ): Record<string, unknown> {

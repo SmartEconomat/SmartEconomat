@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { SeedContext } from './seed-context';
 import { Receta } from '../modules/receta/receta.entity/receta.entity';
@@ -18,7 +18,10 @@ import {
 import type { DataSource, Repository } from 'typeorm';
 
 /**
- * Documentación en español.
+ * Mapea unidad producto al formato de dominio esperado.
+ *
+ * @param unidad Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function mapUnidadProducto(unidad: Producto['unidad']): UnidadIngrediente {
   switch (String(unidad).toUpperCase()) {
@@ -58,6 +61,11 @@ function buildCantidadIngrediente(
 
 const NUM_RECETAS = process.env.NODE_ENV === 'test' ? 2 : 10;
 
+/**
+ * Expone "runSeeder" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export const runSeeder = async (context: SeedContext) => {
   const dataSource = context.getDataSource() as DataSource;
   const recetaRepo: Repository<Receta> = dataSource.getRepository(Receta);

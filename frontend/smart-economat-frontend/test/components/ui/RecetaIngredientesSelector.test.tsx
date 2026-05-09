@@ -48,4 +48,37 @@ describe('RecetaIngredientesSelector', () => {
 
     expect(screen.getByPlaceholderText('Buscar producto...')).toBeTruthy();
   });
+
+  it('muestra una sola ayuda global de búsqueda aunque existan varias filas', async () => {
+    render(
+      <RecetaIngredientesSelector
+        value={[
+          {
+            productoId: '',
+            cantidad: 1,
+            unidad: UnidadIngrediente.GRAMO,
+          },
+          {
+            productoId: '',
+            cantidad: 2,
+            unidad: UnidadIngrediente.GRAMO,
+          },
+        ]}
+        onChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('table', { name: 'Ingredientes de la Receta' })
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getAllByText('Escribe al menos 2 letras para buscar productos.')
+    ).toHaveLength(1);
+    expect(screen.getAllByPlaceholderText('Buscar producto...')).toHaveLength(
+      2
+    );
+  });
 });

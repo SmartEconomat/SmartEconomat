@@ -31,6 +31,7 @@ const seedersInOrder = [
   'alertas.seeder',
 ];
 
+/** Constantes públicas (dataSource) expuestas en smart-economat-backend (Nest). */
 export const dataSource = {
   isInitialized: false,
   initialize: async () => {},

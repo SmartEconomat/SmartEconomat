@@ -30,9 +30,13 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PdfReportService } from '../service/pdf-report.service';
 import { RecepcionReportePdfDto } from '../dto/recepcion-reporte-pdf.dto';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { validateDateRange } from '../../../common/utils/date-range.util';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la gestión de recepciones de mercancía.
+ * Permite registrar la entrada física de productos vinculados a pedidos,
+ * generar reportes en PDF y gestionar incidencias de recepción.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recepciones')
@@ -50,7 +54,10 @@ export class RecepcionController {
     };
   }
   /**
-   * Documentación en español.
+   * Crea una instancia de RecepcionController.
+   * @param recepcionService Servicio base de recepciones.
+   * @param recepcionStockService Servicio especializado para el procesamiento de stock e incidencias.
+   * @param pdfReportService Servicio para la generación de reportes PDF.
    */
   constructor(
     private readonly recepcionService: RecepcionService,
@@ -59,7 +66,10 @@ export class RecepcionController {
   ) {}
 
   /**
-   * Documentación en español.
+   * Procesa una nueva recepción de mercancía, actualizando el stock y cerrando pedidos.
+   * @param dto Datos de la recepción (pedido, productos recibidos, estados).
+   * @param req Petición para obtener el usuario receptor.
+   * @returns Resultado del procesamiento de la recepción.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.recepciones.crear)
@@ -74,12 +84,15 @@ export class RecepcionController {
   }
 
   /**
-   * Documentación en español.
+   * Lista las recepciones con soporte para paginación y ordenación.
+   * @param query Parámetros de consulta.
+   * @param req Petición para contexto de usuario.
+   * @returns Lista paginada de recepciones.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   findAll(
-    @SortableFields(['fechaRecepcion', 'estado', 'createdAt', 'updatedAt'])
+    @SortableFields(SORTABLE_FIELDS.recepciones)
     query: PaginationQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Recepcion>> {
@@ -91,7 +104,15 @@ export class RecepcionController {
   }
 
   /**
-   * Documentación en español.
+   * Genera y descarga un reporte PDF de las recepciones filtradas.
+   * @param filters Filtros de fecha y proveedor para el reporte.
+   * @param res Respuesta Express para el streaming del PDF.
+   */
+  /**
+   * Expone "reportePdf" en smart-economat-backend (Nest).
+   * @undefined {RecepcionReportePdfDto} filters - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Get('reporte-pdf')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
@@ -99,6 +120,12 @@ export class RecepcionController {
     @Query() filters: RecepcionReportePdfDto,
     @Res() res: Response
   ): Promise<void> {
+    validateDateRange(
+      filters.startDate,
+      filters.endDate,
+      365,
+      'Reporte de Recepciones'
+    );
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
@@ -108,7 +135,10 @@ export class RecepcionController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle de una recepción por su ID.
+   * @param id UUID de la recepción.
+   * @param req Petición para contexto de usuario.
+   * @returns La recepción encontrada.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recepciones.ver)
@@ -123,7 +153,11 @@ export class RecepcionController {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza los datos de una recepción.
+   * @param id UUID de la recepción.
+   * @param dto Datos a actualizar.
+   * @param req Petición para auditoría.
+   * @returns La recepción actualizada.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recepciones.editar)
@@ -138,12 +172,22 @@ export class RecepcionController {
   }
 
   /**
-   * Documentación en español.
+   * Elimina una recepción (eliminación lógica).
+   * @param id UUID de la recepción.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recepciones.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
-    return this.recepcionService.remove(id);
+  remove(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: { user: { id: string } }
+  ): Promise<void> {
+    return this.recepcionService.remove(id, req.user.id);
   }
 }

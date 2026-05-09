@@ -42,9 +42,19 @@ function runTsReset(cwd) {
     typeormCliPath,
   ];
 
-  runCommand(process.execPath, [...baseArgs, 'schema:drop', '-d', typeormConfigPath]);
+  runCommand(process.execPath, [
+    ...baseArgs,
+    'schema:drop',
+    '-d',
+    typeormConfigPath,
+  ]);
 
-  runCommand(process.execPath, [...baseArgs, 'schema:sync', '-d', typeormConfigPath]);
+  runCommand(process.execPath, [
+    ...baseArgs,
+    'migration:run',
+    '-d',
+    typeormConfigPath,
+  ]);
 }
 
 async function runDistReset(cwd) {
@@ -55,9 +65,9 @@ async function runDistReset(cwd) {
 
   try {
     await appDataSource.dropDatabase();
-    await appDataSource.synchronize();
+    await appDataSource.runMigrations();
     console.log(
-      '[db-reset-runner] schema:drop + schema:sync ejecutados en dist'
+      '[db-reset-runner] dropDatabase + runMigrations ejecutados en dist'
     );
   } finally {
     if (appDataSource.isInitialized) {

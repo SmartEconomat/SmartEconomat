@@ -67,6 +67,10 @@ describe('PreparacionService', () => {
       cantidadAProducir: 6,
       estado: PreparacionEstado.EN_PROCESO,
       ubicacionDestinoId: 'ubicacion-1',
+      receta: {
+        raciones: 1,
+        rendimiento: 1,
+      },
     };
 
     jest.spyOn(service, 'findOne').mockResolvedValue(preparacion as any);
@@ -80,7 +84,7 @@ describe('PreparacionService', () => {
     expect(produccionService.ejecutarProduccion).toHaveBeenCalledWith(
       {
         recetaId: 'receta-9',
-        cantidadProducida: 6,
+        cantidadAProducir: 6,
         ubicacionDestinoId: 'ubicacion-1',
       },
       'user-1',

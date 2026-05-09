@@ -36,6 +36,13 @@ async function ensureRepositoryReady(): Promise<void> {
   }
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableProfesorAdminSlotResource(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -98,6 +105,13 @@ export async function ensureDeletableProfesorAdminSlotResource(
   }
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableProfesorSlotResource(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -213,6 +227,13 @@ export async function ensureDeletableProfesorSlotResource(
   );
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableProveedorResource(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -299,6 +320,94 @@ export async function ensureDeletableProveedorResource(
   }
 }
 
+/**
+ * Añade un proveedor en papelera para POST /proveedor/:id/restore.
+ * Crea y elimina un registro dedicado en cada llamada (evita carreras con
+ * concurrencia y el pool compartido de proveedores eliminables).
+ */
+export async function ensureSoftDeletedProveedorForRestore(
+  context: SeedContext,
+  coverage: EnumCoverage,
+  iteration: number
+): Promise<void> {
+  const createEndpoint: Endpoint = {
+    method: 'POST',
+    path: '/proveedor',
+    source: 'precreate-proveedor-restore',
+  };
+
+  const createBodyBase = buildBody(
+    context,
+    createEndpoint,
+    '/proveedor',
+    iteration,
+    coverage
+  );
+
+  const previousToken = context.getAccessToken();
+  context.setAccessToken(chooseTokenForPath(context, '/proveedor'));
+  const uniqueSeed =
+    Date.now() + iteration * 1_000_000 + Math.floor(Math.random() * 1_000_000);
+  const maxAttempts = 8;
+
+  try {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const variant = uniqueSeed + attempt;
+      const suffix = String(variant).padStart(8, '0');
+      const createBody: Record<string, unknown> = {
+        ...createBodyBase,
+        nombre: `Proveedor restore-prep seed ${suffix}`,
+        contacto: 'Responsable Restore Seed',
+        telefono: `+3494${String(1000000 + (variant % 9000000)).slice(-7)}`,
+        email: `proveedor.restoreprep.${suffix}@smarteconomat.local`,
+        direccion: `Plataforma restore seed ${suffix}, Valencia`,
+        nif: `RST${String(800000 + (variant % 900000)).padStart(6, '0')}`,
+      };
+
+      try {
+        const response = await context.requestJson<unknown>('/proveedor', {
+          method: 'POST',
+          body: createBody,
+          auth: true,
+        });
+
+        const proveedorId = extractResourceId(response);
+        if (!proveedorId) {
+          throw new Error(
+            '[seed-massive] Sin ID al preparar proveedor restore'
+          );
+        }
+
+        await context.requestJson<unknown>(`/proveedor/${proveedorId}`, {
+          method: 'DELETE',
+          auth: true,
+        });
+
+        pushStateValue(context, 'seedSoftDeletedProveedorIds', proveedorId);
+        return;
+      } catch (error) {
+        if (isConflictStatusError(error) && attempt < maxAttempts - 1) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new Error(
+      '[seed-massive] No se pudo preparar proveedor soft-deleted para restore'
+    );
+  } finally {
+    context.setAccessToken(previousToken);
+  }
+}
+
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletablePedidoResource(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -339,6 +448,11 @@ export async function ensureDeletablePedidoResource(
   pushStateValue(context, 'pedidoPendienteIds', savedPedido.id);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableInventarioResource(
   context: SeedContext
 ): Promise<void> {
@@ -395,6 +509,12 @@ export async function ensureDeletableInventarioResource(
   }
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableRecepcionResource(
   context: SeedContext,
   iteration: number
@@ -442,6 +562,13 @@ export async function ensureDeletableRecepcionResource(
   pushStateValue(context, 'recepcionIds', savedRecepcion.id);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} _coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableProductoResource(
   context: SeedContext,
   _coverage: EnumCoverage,
@@ -478,6 +605,12 @@ export async function ensureDeletableProductoResource(
   pushStateValue(context, 'productoIds', savedProducto.id);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDeletableProductoAlergenoResource(
   context: SeedContext,
   iteration: number

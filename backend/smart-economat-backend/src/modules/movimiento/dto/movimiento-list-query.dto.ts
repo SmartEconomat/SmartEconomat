@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsDateString, IsEnum, IsIn, IsOptional } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { firstNonEmptyString } from '../../../common/dto/transform-query.helpers';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 
 function normalizeTipos(value: unknown): TipoMovimiento[] | undefined {
@@ -14,8 +15,13 @@ function normalizeTipos(value: unknown): TipoMovimiento[] | undefined {
   return [value as TipoMovimiento];
 }
 
+/** Clase pública (MovimientoListQueryDto). Paquete: smart-economat-backend (Nest). */
 export class MovimientoListQueryDto extends PaginationQueryDto {
   @IsOptional()
+  @Transform(({ value }) => {
+    const raw = firstNonEmptyString(value);
+    return raw === undefined ? undefined : raw.toUpperCase();
+  })
   @IsIn(['ASC', 'DESC'])
   order?: 'ASC' | 'DESC' = 'DESC';
 
@@ -30,6 +36,10 @@ export class MovimientoListQueryDto extends PaginationQueryDto {
   type?: TipoMovimiento[];
 
   @IsOptional()
+  @Transform(
+    ({ value, obj }: { value: unknown; obj: { dateFrom?: unknown } }) =>
+      firstNonEmptyString(obj.dateFrom, value)
+  )
   @IsDateString(
     {},
     {
@@ -41,6 +51,9 @@ export class MovimientoListQueryDto extends PaginationQueryDto {
   startDate?: string;
 
   @IsOptional()
+  @Transform(({ value, obj }: { value: unknown; obj: { dateTo?: unknown } }) =>
+    firstNonEmptyString(obj.dateTo, value)
+  )
   @IsDateString(
     {},
     {

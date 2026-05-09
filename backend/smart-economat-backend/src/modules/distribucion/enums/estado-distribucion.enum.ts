@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (EstadoDistribucion) dentro de smart-economat-backend (Nest). */
 export enum EstadoDistribucion {
   BORRADOR = 'borrador',
   PREPARADA = 'preparada',
@@ -6,6 +7,7 @@ export enum EstadoDistribucion {
   CANCELADA = 'cancelada',
 }
 
+/** Catálogo de valores enumerados (EstadoDistribucionLinea) dentro de smart-economat-backend (Nest). */
 export enum EstadoDistribucionLinea {
   PENDIENTE = 'pendiente',
   PARCIAL = 'parcial',

@@ -13,6 +13,11 @@ function hasForceProductionFlag(): boolean {
   return process.argv.includes('--force-production');
 }
 
+/**
+ * Expone "assertDevelopmentSeedEnvironment" en smart-economat-backend (Nest).
+ * @undefined {string} origin - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function assertDevelopmentSeedEnvironment(origin: string): void {
   const nodeEnv = normalizeEnv(process.env.NODE_ENV);
   process.env.NODE_ENV = nodeEnv;

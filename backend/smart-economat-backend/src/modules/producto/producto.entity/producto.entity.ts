@@ -8,7 +8,7 @@ import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveed
 import { Merma } from '../../merma/merma.entity/merma.entity';
 
 /**
- * Documentación en español.
+ * Representa producto en el sistema.
  */
 @Entity({ name: 'producto' })
 @Index(['nombre'])
@@ -16,49 +16,49 @@ import { Merma } from '../../merma/merma.entity/merma.entity';
 @Check(`"fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"`)
 export class Producto extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'varchar', length: 100 })
   nombre!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'varchar', length: 100, nullable: true })
   marca?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'enum', enum: UnidadMedida, nullable: true })
   unidad?: UnidadMedida;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_caducidad' })
   fechaCaducidad?: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'varchar', length: 200, nullable: true, name: 'path_img' })
   pathImg?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'enum', enum: TipoProducto, nullable: true })
   tipo?: TipoProducto;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -70,7 +70,7 @@ export class Producto extends BaseEntity {
   codigoBarras?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
 
   @Column({
@@ -84,7 +84,20 @@ export class Producto extends BaseEntity {
   contenido!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    default: 0,
+    name: 'merma_porcentaje',
+    transformer: new ColumnNumericTransformer(),
+  })
+  mermaPorcentaje!: number;
+
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -97,7 +110,14 @@ export class Producto extends BaseEntity {
   pmp!: number;
 
   /**
-   * Documentación en español.
+   * Si es false, el producto no aparece en el catálogo operativo (`findAll` activos) pero no está soft-deleted.
+   * La pestaña «Eliminados» solo incluye filas con `deleted_at`; inactivos sin borrar no se listan ahí.
+   */
+  @Column({ type: 'boolean', name: 'activo', default: true })
+  activo!: boolean;
+
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => ProductoAlergeno, (pa) => pa.producto, {
     cascade: true,
@@ -105,13 +125,13 @@ export class Producto extends BaseEntity {
   alergenos?: Relation<ProductoAlergeno[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => ProductoProveedor, (pp) => pp.producto)
   proveedores!: Relation<ProductoProveedor[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => Merma, (merma) => merma.producto)
   mermas?: Relation<Merma[]>;

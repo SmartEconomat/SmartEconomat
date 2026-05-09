@@ -28,14 +28,24 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
+/** Clase pública (ProductoAlergenoController). Paquete: smart-economat-backend (Nest). */
 @ApiTags('Producto Alérgenos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('producto-alergenos')
 export class ProductoAlergenoController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {ProductoAlergenoService} productoAlergenoService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly productoAlergenoService: ProductoAlergenoService
   ) {}
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateProductoAlergenoDto} createDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductoAlergeno>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.CREATED)
@@ -59,6 +69,11 @@ export class ProductoAlergenoController {
     return this.productoAlergenoService.create(createDto);
   }
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {string | undefined} idProducto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductoAlergeno[]>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Listar asociaciones producto-alérgeno' })
@@ -78,6 +93,11 @@ export class ProductoAlergenoController {
     return this.productoAlergenoService.findAll(idProducto);
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} idProducto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductoAlergeno[]>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener los alérgenos de un producto' })
@@ -97,6 +117,12 @@ export class ProductoAlergenoController {
     return this.productoAlergenoService.findOne(idProducto);
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} idProducto - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateProductoAlergenoDto} updateDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProductoAlergeno[]>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.productos.editar)
   @ApiOperation({
@@ -119,6 +145,12 @@ export class ProductoAlergenoController {
     return this.productoAlergenoService.update(idProducto, updateDto);
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} idProducto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} alergeno - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete(':idProducto/:alergeno')
   @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.NO_CONTENT)

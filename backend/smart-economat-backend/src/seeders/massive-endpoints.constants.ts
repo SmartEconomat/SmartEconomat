@@ -1,10 +1,13 @@
+/** Alias público (MassiveEndpointMethod) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type MassiveEndpointMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
+/** Contrato de tipos público (MassiveEndpointDefinition). Contexto: smart-economat-backend (Nest). */
 export interface MassiveEndpointDefinition {
   method: MassiveEndpointMethod;
   path: string;
 }
 
+/** Constantes públicas (MASSIVE_ENDPOINT_DEFINITIONS) expuestas en smart-economat-backend (Nest). */
 export const MASSIVE_ENDPOINT_DEFINITIONS: readonly MassiveEndpointDefinition[] =
   [
     { method: 'POST', path: '/api/v1/admin/profesores' },
@@ -17,6 +20,7 @@ export const MASSIVE_ENDPOINT_DEFINITIONS: readonly MassiveEndpointDefinition[] 
     { method: 'POST', path: '/api/v1/inventario' },
     { method: 'PATCH', path: '/api/v1/inventario/:id' },
     { method: 'POST', path: '/api/v1/inventario/ajustes-manuales' },
+    { method: 'POST', path: '/api/v1/inventario/transferencias' },
     { method: 'POST', path: '/api/v1/merma' },
     { method: 'POST', path: '/api/v1/movimientos' },
     { method: 'PATCH', path: '/api/v1/movimientos/:id' },

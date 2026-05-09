@@ -14,7 +14,6 @@ import {
   DialogActions,
   MenuItem,
   Tooltip,
-  SelectChangeEvent,
   Stack,
   Tabs,
   Tab,
@@ -56,17 +55,15 @@ import { useToast } from '../store/toast.hooks';
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { isElevatedRole } from '../sherlock-auth/permissions';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
-import { profesorService } from '../services/profesor.service';
 import {
   searchProductoProveedor,
   type ProductoProveedorOption,
 } from '../services/productoProveedor.service';
 import { searchByBarcode } from '../services/openfoodfacts.service';
-
+import { normalizeNumericInput } from '../utils/numberUtils';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import AddIcon from '@mui/icons-material/Add';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -79,8 +76,17 @@ import BarcodeScanner from '../components/ui/BarcodeScanner';
 import InventarioFilters, {
   InventarioFiltersState,
 } from '../features/inventario/InventarioFilters';
+import {
+  inferidasPorLotesFirma,
+  mergeUbicacionesParaFiltros,
+  ubicacionesDesdeFirmaInferidasLotes,
+} from '../features/inventario/merge-ubicaciones-filtro';
+import MisUbicacionesPanel from '../features/inventario/MisUbicacionesPanel';
+import { usuarioService } from '../services/usuarioService';
+import type { User } from '../sherlock-auth/types';
 import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../i18n/enumPresentation';
+import { useDataTable } from '../hooks/useDataTable';
 
 const initialFilters: InventarioFiltersState = {
   categorias: [],
@@ -148,17 +154,17 @@ interface ProductoFormData extends Record<string, unknown> {
 
 const Inventario: React.FC = () => {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const theme = useTheme();
+  const toast = useToast();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [filters, setFilters] =
     useState<InventarioFiltersState>(initialFilters);
   const [data, setData] = useState<InventarioPorProducto[]>([]);
   const [rawItems, setRawItems] = useState<InventarioItem[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // Estado para el modal de detalle/auditoría
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailMode, setDetailMode] = useState<'view' | 'audit'>('view');
@@ -208,10 +214,22 @@ const Inventario: React.FC = () => {
   const [isCantidadDialogOpen, setIsCantidadDialogOpen] = useState(false);
   const [isAddingFromScanner, setIsAddingFromScanner] = useState(false);
 
-  const theme = useTheme();
-  const toast = useToast();
-  const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    onTotalItemsChange,
+  } = useDataTable({
+    sortBy: 'nombre',
+    order: 'asc',
+  });
   const hasDashboardFilter = searchParams.get('filter') === 'stockBajo';
 
   const clearDashboardFilter = () => {
@@ -227,71 +245,152 @@ const Inventario: React.FC = () => {
   const [assignedLocations, setAssignedLocations] = useState<
     { id: string; nombre: string }[]
   >([]);
-  const [isLocationsLoading, setIsLocationsLoading] = useState(false);
+  const [, setIsLocationsLoading] = useState(false);
+  const [hasLoadedAssignedLocations, setHasLoadedAssignedLocations] =
+    useState(false);
+  const assignedLocationIdsRef = React.useRef<Set<string>>(new Set());
+
+  const firmaInferidasPorLotes = useMemo(
+    () => inferidasPorLotesFirma(rawItems),
+    [rawItems]
+  );
+
+  const ubicacionesInferidas = useMemo(
+    () => ubicacionesDesdeFirmaInferidasLotes(firmaInferidasPorLotes),
+    [firmaInferidasPorLotes]
+  );
+
+  const ubicacionesParaFiltro = useMemo(
+    () =>
+      mergeUbicacionesParaFiltros(
+        ubicaciones,
+        assignedLocations,
+        ubicacionesInferidas
+      ),
+    [ubicaciones, assignedLocations, ubicacionesInferidas]
+  );
   const canAjustar = usePermission(PERMISSIONS.inventario.ajustar_stock);
+  const canTransferirInventario = usePermission(
+    PERMISSIONS.inventario.transferir
+  );
   const canCrear = usePermission(PERMISSIONS.inventario.crear);
   const canGestionarUbicaciones = usePermission(PERMISSIONS.ubicaciones.editar);
   const canCrearProducto = usePermission(PERMISSIONS.productos.crear);
 
   const loadUbicaciones = useCallback(async (): Promise<Ubicacion[]> => {
+    let ubicacionesList: Ubicacion[] = [];
     try {
-      const data = await UbicacionService.findAll();
-      const ubicacionesList = Array.isArray(data) ? data : [];
-      setUbicaciones(ubicacionesList);
-      if (ubicacionesList.length > 0) {
-        setUbicacionId((prev) => prev || ubicacionesList[0].id);
-      }
-      return ubicacionesList;
+      const data = await UbicacionService.findAll({ forceRefresh: true });
+      ubicacionesList = Array.isArray(data) ? data : [];
     } catch {
-      toast.error(t('inventario.errors.cargarUbicaciones'));
-      return [];
+      try {
+        const minimal = await usuarioService.fetchCatalogoUbicacionesPerfil();
+        ubicacionesList = minimal.map((m) => ({
+          id: m.id,
+          nombre: m.nombre,
+        }));
+      } catch {
+        toast.error(t('inventario.errors.cargarUbicaciones'));
+        ubicacionesList = [];
+      }
     }
+    setUbicaciones(ubicacionesList);
+    if (ubicacionesList.length > 0) {
+      setUbicacionId((prev) => prev || ubicacionesList[0].id);
+    }
+    return ubicacionesList;
   }, [toast, t]);
 
-  useEffect(() => {
-    void loadUbicaciones();
-  }, [loadUbicaciones]);
+  const loadAssignedLocations = useCallback(
+    async (knownUbicaciones: Ubicacion[] = [], userSnapshot?: User | null) => {
+      const effectiveUser = userSnapshot ?? user;
 
-  const loadAssignedLocations = useCallback(async () => {
-    if (!user) return;
-    setIsLocationsLoading(true);
-    try {
-      // Si es profesor o tiene slots asignados
-      const response = await profesorService.getSlots();
-      const profLocations =
-        response.status === 200 && response.data
-          ? (response.data
-              .map((slot) => ({
-                id: slot.ubicacionId,
-                nombre:
-                  slot.ubicacion?.nombre ||
-                  slot.aula ||
-                  t('inventario.ubicacionDesconocida'),
-              }))
-              .filter((loc) => !!loc.id) as { id: string; nombre: string }[])
-          : [];
-
-      // También incluimos la ubicación directa del perfil del usuario si existe
-      if (user.ubicacionId) {
-        const fullList = await UbicacionService.findAll();
-        const profileLoc = fullList.find((l) => l.id === user.ubicacionId);
-        if (profileLoc && !profLocations.some((l) => l.id === profileLoc.id)) {
-          profLocations.push({ id: profileLoc.id, nombre: profileLoc.nombre });
-        }
+      if (!effectiveUser) {
+        setAssignedLocations([]);
+        setHasLoadedAssignedLocations(true);
+        return;
       }
 
-      setAssignedLocations(profLocations);
-    } catch (err) {
-      console.error('Error al cargar ubicaciones asignadas:', err);
-    } finally {
-      setIsLocationsLoading(false);
-    }
-  }, [user, t]);
+      setHasLoadedAssignedLocations(false);
+
+      setIsLocationsLoading(true);
+
+      try {
+        const profLocations: { id: string; nombre: string }[] = [];
+
+        // Ubicaciones vinculadas al usuario (pivot + ubicación principal)
+        const directLocationIds = [
+          ...(effectiveUser.ubicacionId ? [effectiveUser.ubicacionId] : []),
+          ...((effectiveUser.ubicaciones || []).map(
+            (ubicacion) => ubicacion.id
+          ) || []),
+        ];
+        const uniqueDirectLocationIds = Array.from(new Set(directLocationIds));
+
+        if (uniqueDirectLocationIds.length > 0) {
+          let fullList = knownUbicaciones.length > 0 ? knownUbicaciones : [];
+
+          if (fullList.length === 0) {
+            try {
+              fullList = await UbicacionService.findAll({
+                forceRefresh: true,
+              });
+            } catch {
+              fullList = (
+                await usuarioService.fetchCatalogoUbicacionesPerfil()
+              ).map((m) => ({ id: m.id, nombre: m.nombre }));
+            }
+          }
+          for (const locationId of uniqueDirectLocationIds) {
+            const profileLoc = fullList.find((l) => l.id === locationId);
+            if (
+              profileLoc &&
+              !profLocations.some((location) => location.id === profileLoc.id)
+            ) {
+              profLocations.push({
+                id: profileLoc.id,
+                nombre: profileLoc.nombre,
+              });
+            }
+          }
+        }
+
+        setAssignedLocations(profLocations);
+      } catch (err) {
+        console.error('Error al cargar ubicaciones asignadas:', err);
+        setAssignedLocations([]);
+      } finally {
+        setIsLocationsLoading(false);
+        setHasLoadedAssignedLocations(true);
+      }
+    },
+    [user]
+  );
 
   useEffect(() => {
-    void loadUbicaciones();
-    void loadAssignedLocations();
+    let isMounted = true;
+
+    const bootstrapLocations = async () => {
+      const loadedUbicaciones = await loadUbicaciones();
+      if (!isMounted) {
+        return;
+      }
+
+      await loadAssignedLocations(loadedUbicaciones);
+    };
+
+    void bootstrapLocations();
+
+    return () => {
+      isMounted = false;
+    };
   }, [loadUbicaciones, loadAssignedLocations]);
+
+  useEffect(() => {
+    assignedLocationIdsRef.current = new Set(
+      assignedLocations.map((location) => location.id)
+    );
+  }, [assignedLocations]);
 
   // Eliminado el useEffect inicial redundante que ya maneja reloadInventario con tabIndex
 
@@ -349,27 +448,86 @@ const Inventario: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const items = await fetchInventario();
+      const tableUbicacionNombre = tableFilters.ubicacion
+        ? String(tableFilters.ubicacion)
+        : '';
+
+      const ubicacionNombresSeleccionados = new Set([
+        ...(filters.ubicaciones || []),
+        ...(tableUbicacionNombre ? [tableUbicacionNombre] : []),
+      ]);
+
+      let ubicacionIds: string[] | undefined;
+
+      if (ubicacionNombresSeleccionados.size > 0) {
+        const porNombre = ubicacionesParaFiltro
+          .filter((u) => ubicacionNombresSeleccionados.has(u.nombre))
+          .map((u) => u.id);
+
+        // Solo aplicamos el filtro si encontramos IDs. Si no hay ubicaciones en el sistema
+        // pero el filtro persiste (ej. por URL), no bloqueamos la carga total.
+        if (porNombre.length > 0) {
+          ubicacionIds = porNombre;
+        } else if (ubicacionesParaFiltro.length > 0) {
+          // Si hay ubicaciones en el sistema pero ninguna coincide con el filtro,
+          // entonces sí vaciamos (filtro explícito sin match).
+          setRawItems([]);
+          setData([]);
+          onTotalItemsChange(0);
+          return;
+        }
+        // Si no hay ubicaciones en el sistema (ubicacionesParaFiltro.length === 0),
+        // simplemente no asignamos ubicacionIds, lo que hará que el backend devuelva todo.
+      }
+
+      if (tabIndex === 0 && assignedLocations.length > 0) {
+        const permitidas = new Set(assignedLocations.map((l) => l.id));
+        if (ubicacionIds) {
+          ubicacionIds = ubicacionIds.filter((id) => permitidas.has(id));
+        } else {
+          ubicacionIds = Array.from(permitidas);
+        }
+        if (ubicacionIds.length === 0) {
+          setRawItems([]);
+          setData([]);
+          onTotalItemsChange(0);
+          return;
+        }
+      }
+
+      const items = await fetchInventario({
+        search:
+          typeof queryParams.searchTerm === 'string'
+            ? queryParams.searchTerm
+            : undefined,
+        ubicacionIds,
+        onlyLowStock: hasDashboardFilter,
+        forceRefresh: true,
+      });
+
       setRawItems(items);
-      const itemsToGroup =
-        tabIndex === 0
-          ? items.filter((item) => {
-              const uId = item.ubicacion?.id;
-              return uId
-                ? assignedLocations.some((loc) => loc.id === uId)
-                : false;
-            })
-          : items;
+
+      let filteredItems = items;
+      const catsToFilter = [
+        ...(filters.categorias || []),
+        ...(tableFilters.categoria ? [tableFilters.categoria] : []),
+      ];
+      if (catsToFilter.length > 0) {
+        filteredItems = filteredItems.filter((item) => {
+          const cat = item.productoProveedor?.producto?.tipo;
+          return cat && catsToFilter.includes(cat as CategoriaProducto);
+        });
+      }
+
+      let itemsToGroup = filteredItems;
+      if (tabIndex === 0 && assignedLocations.length === 0) {
+        itemsToGroup = [];
+      }
 
       const agregado = agregarInventarioPorProducto(itemsToGroup);
 
-      // Aplicar filtro de dashboard si está activo
-      const finalData = hasDashboardFilter
-        ? agregado.filter((p) => p.bajoStock)
-        : agregado;
-
-      setData(finalData);
-      setTotalItems(finalData.length);
+      setData(agregado);
+      onTotalItemsChange(agregado.length);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -379,11 +537,44 @@ const Inventario: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [tabIndex, assignedLocations, hasDashboardFilter, t]);
+  }, [
+    assignedLocations,
+    filters,
+    hasDashboardFilter,
+    onTotalItemsChange,
+    queryParams.searchTerm,
+    tabIndex,
+    tableFilters,
+    t,
+    ubicacionesParaFiltro,
+  ]);
+
+  const assignedLocationsScopeKey = useMemo(
+    () =>
+      tabIndex === 0
+        ? assignedLocations
+            .map((location) => location.id)
+            .sort()
+            .join('|')
+        : '',
+    [assignedLocations, tabIndex]
+  );
+
+  const canLoadInventario = tabIndex === 0 ? hasLoadedAssignedLocations : true;
 
   useEffect(() => {
+    if (!canLoadInventario) {
+      return;
+    }
+
     void reloadInventario();
-  }, [tabIndex, assignedLocations, canSeeGeneral, reloadInventario]);
+  }, [
+    assignedLocationsScopeKey,
+    canLoadInventario,
+    canSeeGeneral,
+    reloadInventario,
+    tabIndex,
+  ]);
 
   const productoCreateSchema = useMemo<DynamicField[]>(() => {
     const unidadOptions = Object.values(UnidadMedida).map((value) => ({
@@ -731,8 +922,8 @@ const Inventario: React.FC = () => {
       const code = rawCode.trim();
       if (!code) return;
 
-      setSearchTerm(code);
-      setPage(1);
+      onSearchChange(code);
+      onPageChange(null, 1);
 
       const existsInInventory = data.some(
         (item) => item.codigoBarras?.trim() === code
@@ -769,7 +960,16 @@ const Inventario: React.FC = () => {
 
       setBarcodePendienteCrearProducto(code);
     },
-    [canCrear, canCrearProducto, data, openCantidadDialogForProduct, toast, t]
+    [
+      canCrear,
+      canCrearProducto,
+      data,
+      onPageChange,
+      onSearchChange,
+      openCantidadDialogForProduct,
+      toast,
+      t,
+    ]
   );
 
   const handleConfirmCantidadScanner = async () => {
@@ -924,56 +1124,9 @@ const Inventario: React.FC = () => {
     cantMinNum >= 0 &&
     (cantMaxNum === undefined || (cantMaxNum >= 0 && cantMaxNum >= cantMinNum));
 
-  // normalize a string removing diacritics and lowercasing; used for search
-  const normalize = (s: string) =>
-    s
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-
-  const filteredData = useMemo(() => {
-    let result = data;
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const term = normalize(searchTerm.trim());
-      result = result.filter((p) => {
-        const nombre = normalize(p.nombre ?? '');
-        const codigo = normalize(p.codigoBarras ?? '');
-        const tipo = normalize(p.tipo ?? '');
-        const provs = (p.proveedores ?? []).map(normalize).join(' ');
-        const ubicaciones = (p.ubicaciones ?? []).map(normalize).join(' ');
-        return (
-          nombre.includes(term) ||
-          codigo.includes(term) ||
-          tipo.includes(term) ||
-          provs.includes(term) ||
-          ubicaciones.includes(term)
-        );
-      });
-    }
-
-    // Category filter
-    if (filters.categorias.length > 0) {
-      result = result.filter(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (p) => p.tipo && filters.categorias.includes(p.tipo as any)
-      );
-    }
-
-    // Location filter
-    if (filters.ubicaciones.length > 0) {
-      result = result.filter((p) =>
-        p.ubicaciones?.some((loc) => filters.ubicaciones.includes(loc))
-      );
-    }
-
-    return result;
-  }, [data, searchTerm, filters]);
-
   useEffect(() => {
-    setPage(1);
-  }, [searchTerm, filters]);
+    onPageChange(null, 1);
+  }, [filters, onPageChange, searchTerm]);
 
   const columns: Column<InventarioPorProducto>[] = [
     { id: 'nombre', label: t('inventario.columns.producto') },
@@ -1074,27 +1227,15 @@ const Inventario: React.FC = () => {
       align: 'right',
       render: (row) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title={t('inventario.actions.verDetalleLotes')}>
-            <IconButton
-              size="small"
-              color="primary"
-              id="btn-ver-detalle-stock"
-              onClick={() => {
-                setSelectedProductId(row.productoId);
-                setDetailMode('view');
-                setDetailModalOpen(true);
-              }}
-            >
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
           {canAjustar && (
             <Tooltip title={t('inventario.actions.auditarStock')}>
               <IconButton
                 size="small"
                 color="secondary"
-                id="btn-ajustar-stock"
-                onClick={() => {
+                data-testid={`inventario-auditar-stock-${row.productoId}`}
+                aria-label={t('inventario.actions.auditarStock')}
+                onClick={(event) => {
+                  event.stopPropagation();
                   setSelectedProductId(row.productoId);
                   setDetailMode('audit');
                   setDetailModalOpen(true);
@@ -1116,8 +1257,8 @@ const Inventario: React.FC = () => {
         title={t('inventario.titulo')}
         searchValue={searchTerm}
         onSearchChange={(v) => {
-          setSearchTerm(v);
-          setPage(1);
+          onSearchChange(v);
+          onPageChange(null, 1);
         }}
         searchPlaceholder={t('inventario.buscar')}
         searchId="search-inventario"
@@ -1151,9 +1292,9 @@ const Inventario: React.FC = () => {
               filters={filters}
               onChange={(newFilters) => {
                 setFilters(newFilters);
-                setPage(1);
+                onPageChange(null, 1);
               }}
-              ubicacionesDisponibles={ubicaciones}
+              ubicacionesDisponibles={ubicacionesParaFiltro}
             />
           </Box>
         }
@@ -1170,6 +1311,7 @@ const Inventario: React.FC = () => {
       />
 
       <Paper
+        data-testid="inventario-panel-principal"
         elevation={2}
         sx={{
           borderRadius: 3,
@@ -1190,7 +1332,7 @@ const Inventario: React.FC = () => {
             value={tabIndex}
             onChange={(_, v) => {
               setTabIndex(v);
-              setPage(1);
+              onPageChange(null, 1);
             }}
             variant="fullWidth"
             textColor="primary"
@@ -1211,7 +1353,16 @@ const Inventario: React.FC = () => {
         </Box>
 
         <Box sx={{ p: { xs: 2, sm: 4 } }}>
-          {error && (
+          {tabIndex === 0 && (
+            <MisUbicacionesPanel
+              onAssignmentsChanged={async (freshUser) => {
+                const list = await loadUbicaciones();
+                await loadAssignedLocations(list, freshUser);
+              }}
+            />
+          )}
+
+          {!isLoading && error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
@@ -1246,11 +1397,26 @@ const Inventario: React.FC = () => {
           )}
 
           <DataTable
-            id="inventario-table"
             columns={columns}
-            data={filteredData.slice((page - 1) * pageSize, page * pageSize)}
-            isLoading={isLoading || isLocationsLoading}
-            hideTopBar
+            data={data}
+            isLoading={isLoading}
+            actionsWidth={120}
+            onSort={onSort}
+            sortConfig={sortConfig}
+            filters={tableFilters}
+            onFilter={onFilter}
+            pagination={paginationProps}
+            onRowClick={(row) => {
+              setSelectedProductId(row.productoId);
+              setDetailMode('view');
+              setDetailModalOpen(true);
+            }}
+            getRowAriaLabel={(row) =>
+              t('inventario.aria.filaProducto', {
+                nombre: row.nombre,
+                marca: '—',
+              })
+            }
             emptyStateMessage={
               <Box sx={{ py: 4, textAlign: 'center' }}>
                 <InventoryOutlinedIcon
@@ -1286,17 +1452,6 @@ const Inventario: React.FC = () => {
                 </Typography>
               </Box>
             }
-            pagination={{
-              currentPage: page,
-              totalPages: Math.ceil(filteredData.length / pageSize) || 1,
-              onPageChange: (_, newPage) => setPage(newPage),
-              pageSize: pageSize,
-              pageSizeOptions: [5, 10, 25, 50],
-              onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              },
-            }}
           />
 
           <Dialog
@@ -1363,10 +1518,15 @@ const Inventario: React.FC = () => {
                 <Box display="flex" gap={2} flexWrap="wrap">
                   <TextField
                     label={t('inventario.modalCreate.cantidadActual')}
-                    type="number"
+                    type="text"
                     value={cantidadActual}
-                    onChange={(e) => setCantidadActual(e.target.value)}
-                    inputProps={{ min: 0, step: 'any' }}
+                    onChange={(e) =>
+                      setCantidadActual(normalizeNumericInput(e.target.value))
+                    }
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]*',
+                    }}
                     required
                     error={
                       cantidadActual !== '' &&
@@ -1382,10 +1542,15 @@ const Inventario: React.FC = () => {
                   />
                   <TextField
                     label={t('inventario.modalCreate.cantidadMinima')}
-                    type="number"
+                    type="text"
                     value={cantidadMinima}
-                    onChange={(e) => setCantidadMinima(e.target.value)}
-                    inputProps={{ min: 0, step: 'any' }}
+                    onChange={(e) =>
+                      setCantidadMinima(normalizeNumericInput(e.target.value))
+                    }
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]*',
+                    }}
                     required
                     error={
                       cantidadMinima !== '' &&
@@ -1404,10 +1569,15 @@ const Inventario: React.FC = () => {
                 <Box display="flex" gap={2} flexWrap="wrap">
                   <TextField
                     label={t('inventario.modalCreate.cantidadMaxima')}
-                    type="number"
+                    type="text"
                     value={cantidadMaxima}
-                    onChange={(e) => setCantidadMaxima(e.target.value)}
-                    inputProps={{ min: 0, step: 'any' }}
+                    onChange={(e) =>
+                      setCantidadMaxima(normalizeNumericInput(e.target.value))
+                    }
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]*',
+                    }}
                     error={
                       cantidadMaxima !== '' &&
                       cantMaxNum !== undefined &&
@@ -1432,8 +1602,10 @@ const Inventario: React.FC = () => {
                     value={ubicacionId}
                     onChange={(e) => setUbicacionId(e.target.value)}
                     fullWidth
-                    required
                   >
+                    <MenuItem value="">
+                      <em>{t('inventario.modalCreate.sinUbicacion')}</em>
+                    </MenuItem>
                     {ubicaciones.map((loc) => (
                       <MenuItem key={loc.id} value={loc.id}>
                         {loc.nombre}
@@ -1541,10 +1713,15 @@ const Inventario: React.FC = () => {
                 autoFocus
                 fullWidth
                 label={t('inventario.dialogs.cantidadAñadirLabel')}
-                type="number"
+                type="text"
                 value={cantidadEscaneo}
-                onChange={(e) => setCantidadEscaneo(e.target.value)}
-                inputProps={{ min: 0.01, step: 'any' }}
+                onChange={(e) =>
+                  setCantidadEscaneo(normalizeNumericInput(e.target.value))
+                }
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]*',
+                }}
                 error={cantidadEscaneo !== '' && !isCantidadEscaneoValida}
                 helperText={
                   cantidadEscaneo !== '' && !isCantidadEscaneoValida
@@ -1592,6 +1769,7 @@ const Inventario: React.FC = () => {
         items={rawItems}
         onClose={() => setDetailModalOpen(false)}
         onRefreshItem={reloadInventario}
+        canTransferStock={canTransferirInventario}
       />
     </Box>
   );

@@ -9,6 +9,7 @@ import { Producto } from '../producto/producto.entity/producto.entity';
 import { Proveedor } from '../proveedor/proveedor.entity/proveedor.entity';
 import { Incidencia } from '../incidencia/incidencia.entity/incidencia.entity';
 
+/** Clase pública (DashboardModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

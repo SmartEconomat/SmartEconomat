@@ -9,6 +9,7 @@ import { PedidoModule } from '../pedido/pedido.module';
 import { PedidoDraftController } from './controller/pedido-draft.controller';
 import { createInMemoryRedisClient } from '../../common/testing/in-memory-redis';
 
+/** Clase pública (PedidoDraftModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([PedidoDraft]),

@@ -18,12 +18,21 @@ import { AssignRoleToUserDto } from '../dto/assign-role-to-user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para roles.
  */
 @Injectable()
 export class RolesService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Rol>} rolRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {Repository<Usuario>} usuarioRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {Repository<Permiso>} permisoRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {Repository<UsuarioRol>} usuarioRolRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {AuthPermissionsService} authPermissionsService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Rol)
     private readonly rolRepo: Repository<Rol>,
@@ -37,7 +46,10 @@ export class RolesService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateRolDto): Promise<Rol> {
     const existente = await this.rolRepo.findOne({
@@ -82,6 +94,11 @@ export class RolesService {
     return this.findOne(savedRol.id);
   }
 
+  /**
+   * Expone "upsertSystemRole" en smart-economat-backend (Nest).
+   * @undefined {CreateRolDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Rol>} Datos efectivos después de ejecutar la operación.
+   */
   async upsertSystemRole(dto: CreateRolDto): Promise<Rol> {
     if (!dto.esSistema) {
       throw new BadRequestException(
@@ -127,12 +144,18 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   *
+   * @param query Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findAll(query: PaginationQueryDto): Promise<PaginatedResponseDto<Rol>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 10, 50);
-    const sortBy = query.sortBy ?? 'nombre';
+    const requestedSort = query.sortBy ?? 'nombre';
+    const sortBy = SORTABLE_FIELDS.roles.includes(requestedSort)
+      ? requestedSort
+      : 'nombre';
     const order = query.order ?? 'ASC';
 
     const [data, total] = await this.rolRepo.findAndCount({
@@ -152,7 +175,12 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all no pagination.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findAllNoPagination" en smart-economat-backend (Nest).
+   * @undefined {Promise<Rol[]>} Datos efectivos después de ejecutar la operación.
    */
   async findAllNoPagination(): Promise<Rol[]> {
     return this.rolRepo.find({
@@ -162,7 +190,10 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<Rol> {
     const rol = await this.rolRepo.findOne({
@@ -180,7 +211,11 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, dto: UpdateRolDto): Promise<Rol> {
     const rol = await this.findOne(id);
@@ -220,7 +255,10 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const rol = await this.findOne(id);
@@ -244,7 +282,14 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "assignPermissions" en smart-economat-backend (Nest).
+   * @undefined {string} rolId - Entrada efectiva esperada por el contrato.
+   * @undefined {AssignPermissionsDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} actorUserId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Rol>} Datos efectivos después de ejecutar la operación.
    */
   async assignPermissions(
     rolId: string,
@@ -285,7 +330,13 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "assignRoleToUser" en smart-economat-backend (Nest).
+   * @undefined {AssignRoleToUserDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} asignadoPor - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<UsuarioRol>} Datos efectivos después de ejecutar la operación.
    */
   async assignRoleToUser(
     dto: AssignRoleToUserDto,
@@ -326,7 +377,11 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina role from user.
+   *
+   * @param usuarioId Parámetro de entrada para la operación.
+   * @param rolId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async removeRoleFromUser(usuarioId: string, rolId: string): Promise<void> {
     const usuarioRol = await this.usuarioRolRepo.findOne({
@@ -345,7 +400,10 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene user roles.
+   *
+   * @param usuarioId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async getUserRoles(usuarioId: string): Promise<Rol[]> {
     const usuario = await this.usuarioRepo.findOne({
@@ -363,7 +421,10 @@ export class RolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de invalidate cache for role dentro del flujo de la aplicación.
+   *
+   * @param rolId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async invalidateCacheForRole(rolId: string): Promise<void> {
     const usuarioRoles = await this.usuarioRolRepo.find({

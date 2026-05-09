@@ -7,6 +7,14 @@ import {
   pickRequiredStateValue,
 } from './massive.state';
 
+/**
+ * Expone "resolvePermissionPath" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {HttpMethod} method - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function resolvePermissionPath(
   context: SeedContext,
   path: string,
@@ -62,6 +70,13 @@ export function resolvePermissionPath(
   return path.replace(':id', userId).replace(':permisoId', permisoId);
 }
 
+/**
+ * Expone "resolveAlergenoDeletePath" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function resolveAlergenoDeletePath(
   context: SeedContext,
   path: string,

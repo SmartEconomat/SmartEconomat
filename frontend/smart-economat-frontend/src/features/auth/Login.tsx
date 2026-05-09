@@ -24,22 +24,22 @@ const SLIDE_W = 58;
 const FORM_W = 100 - SLIDE_W; // 42
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PEEL_DURATION = 1000;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const EXIT_DURATION = 2000;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const REGISTER_MSG_MS = 2500;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type AuthPhase = 'idle' | 'login-exit' | 'register-exit' | 'register-return';
 
@@ -113,7 +113,11 @@ const PEEL_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 // ─────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "Login" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export default function Login() {
   const { t } = useTranslation();
@@ -127,18 +131,18 @@ export default function Login() {
   const hasToggled = useRef(false);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const pendingAuth = useRef<{ user: User } | null>(null);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const slideLeft = isLogin ? '0%' : `${FORM_W}%`;
   const formLeft = isLogin ? `${SLIDE_W}%` : '0%';
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const animated = hasToggled.current && phase === 'idle';
   const formAnim = animated
@@ -176,7 +180,9 @@ export default function Login() {
   // ─────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Gestiona login success y aplica la lógica correspondiente.
+   *
+   * @param user Parámetro de entrada para la operación.
    */
   const handleLoginSuccess = (user: User) => {
     pendingAuth.current = { user };
@@ -194,7 +200,7 @@ export default function Login() {
   // ─────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Gestiona register success y aplica la lógica correspondiente.
    */
   const handleRegisterSuccess = () => {
     setPhase('register-exit');
@@ -210,7 +216,7 @@ export default function Login() {
   };
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const showOverlay =
     phase === 'login-exit' ||

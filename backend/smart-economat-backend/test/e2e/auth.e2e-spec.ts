@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -25,7 +25,7 @@ describe('AuthController (e2e)', () => {
     };
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('Debe registrar un nuevo usuario (201) y no permitir duplicados (409)', async () => {
       await request(app.getHttpServer() as string)
@@ -40,7 +40,7 @@ describe('AuthController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('Debe fallar si el password es débil (400)', async () => {
       await request(app.getHttpServer() as string)
@@ -52,7 +52,7 @@ describe('AuthController (e2e)', () => {
 
   describe('POST /auth/login', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('Debe loguear correctamente (200)', async () => {
       await request(app.getHttpServer() as string)
@@ -69,7 +69,7 @@ describe('AuthController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('Debe fallar con password erróneo (400)', async () => {
       await request(app.getHttpServer() as string)
@@ -82,7 +82,7 @@ describe('AuthController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('Debe fallar con email inexistente (400)', async () => {
       await request(app.getHttpServer() as string)

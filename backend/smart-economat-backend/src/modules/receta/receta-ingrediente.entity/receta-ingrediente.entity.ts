@@ -9,24 +9,24 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
 /**
- * Documentación en español.
+ * Representa receta ingrediente en el sistema.
  */
 @Entity('receta_ingrediente')
 export class RecetaIngrediente extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'receta_id' })
   recetaId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_id' })
   productoId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -37,13 +37,13 @@ export class RecetaIngrediente extends BaseEntity {
   cantidad!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'enum', enum: UnidadIngrediente })
   unidad!: UnidadIngrediente;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -56,7 +56,7 @@ export class RecetaIngrediente extends BaseEntity {
   mermaAplicada!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Exclude()
   @ManyToOne(() => Receta, (receta) => receta.ingredientes, {
@@ -66,20 +66,20 @@ export class RecetaIngrediente extends BaseEntity {
   receta!: Relation<Receta>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Producto, { nullable: false })
   @JoinColumn({ name: 'producto_id' })
   producto!: Relation<Producto>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'proveedor_favorito_id', nullable: true })
   proveedorFavoritoId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Proveedor, { nullable: true })
   @JoinColumn({ name: 'proveedor_favorito_id' })

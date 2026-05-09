@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Check, Column, Entity, Index, OneToMany } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { DificultadReceta, UnidadIngrediente } from '../enums/receta.enums';
 import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
@@ -6,35 +6,43 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { ColumnNumericTransformer } from '../../../common/transformers/column-numeric.transformer';
 
 /**
- * Documentación en español.
+ * Representa receta en el sistema.
  */
 @Index(['dificultad', 'tiempoEstimadoMinutos'])
+@Check(
+  'CHK_receta_tiempo_estimado_minutos_min_10',
+  `"tiempo_estimado_minutos" >= 10`
+)
+@Check(
+  'CHK_receta_raciones_step_05',
+  `("raciones" * 2) = floor("raciones" * 2) AND "raciones" > 0`
+)
 @Entity('receta')
 export class Receta extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ length: 150 })
   nombre!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column('text')
   instrucciones!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'integer',
     name: 'tiempo_estimado_minutos',
-    default: 0,
+    default: 10,
   })
   tiempoEstimadoMinutos!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -44,13 +52,13 @@ export class Receta extends BaseEntity {
   dificultad!: DificultadReceta;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'path_img' })
   pathImg?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'varchar',
@@ -61,7 +69,7 @@ export class Receta extends BaseEntity {
   pathImgOptimized?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -74,7 +82,7 @@ export class Receta extends BaseEntity {
   rendimiento?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -85,7 +93,7 @@ export class Receta extends BaseEntity {
   unidadResultado?: UnidadIngrediente | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'integer',
@@ -95,7 +103,7 @@ export class Receta extends BaseEntity {
   diasCaducidad?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -108,7 +116,7 @@ export class Receta extends BaseEntity {
   costeUnitarioEstimado?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -122,7 +130,7 @@ export class Receta extends BaseEntity {
   raciones?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -135,7 +143,7 @@ export class Receta extends BaseEntity {
   tamanioRacion?: number | null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => RecetaIngrediente, (ri) => ri.receta)
   ingredientes!: Relation<RecetaIngrediente[]>;

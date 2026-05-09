@@ -6,7 +6,7 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 
 /**
- * Documentación en español.
+ * Representa pedido usuario linea en el sistema.
  */
 @Entity({ name: 'pedido_usuario_linea' })
 @Index(['pedidoUsuarioId'])
@@ -15,19 +15,19 @@ import { ProductoProveedor } from '../../producto/producto-proveedor.entity/prod
 @Check(`"precio_unitario" >= 0`)
 export class PedidoUsuarioLinea extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'pedido_usuario_id' })
   pedidoUsuarioId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'producto_proveedor_id' })
   productoProveedorId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.lineas, {
     onDelete: 'CASCADE',
@@ -37,7 +37,7 @@ export class PedidoUsuarioLinea extends BaseEntity {
   pedidoUsuario!: Relation<PedidoUsuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => ProductoProveedor, {
     onDelete: 'RESTRICT',
@@ -47,7 +47,7 @@ export class PedidoUsuarioLinea extends BaseEntity {
   productoProveedor!: Relation<ProductoProveedor>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -58,7 +58,7 @@ export class PedidoUsuarioLinea extends BaseEntity {
   cantidad!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -70,7 +70,7 @@ export class PedidoUsuarioLinea extends BaseEntity {
   precioUnitario!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true })
   observaciones?: string;

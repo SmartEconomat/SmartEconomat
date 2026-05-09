@@ -31,6 +31,8 @@ import { PurchaseBatchService } from './purchase-batch.service';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { PedidoUsuarioStateMachine } from '../state/pedido-usuario.state-machine';
+import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -40,10 +42,17 @@ type PendingAggregateLine = {
 };
 
 /**
- * Documentación en español.
+ * Servicio de dominio para pedido usuario.
  */
 @Injectable()
 export class PedidoUsuarioService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   * @undefined {MovimientoHelper} movimientoHelper - Entrada efectiva esperada por el contrato.
+   * @undefined {PurchaseBatchService} purchaseBatchService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
@@ -52,7 +61,13 @@ export class PedidoUsuarioService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
    */
   async create(
     dto: CreatePedidoUsuarioDto,
@@ -70,9 +85,20 @@ export class PedidoUsuarioService {
       );
 
       await queryRunner.commitTransaction();
-      return this.findOne(pedidoUsuario.id);
+      const created = await this.findOne(pedidoUsuario.id);
+      await this.movimientoHelper.trackAction({
+        userId,
+        entidad: 'PedidoUsuario',
+        entidadId: created.id,
+        accion: AccionMovimiento.CREATE,
+        descripcion: `Creación de pedido de usuario ${created.id}`,
+        after: created,
+      });
+      return created;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -90,7 +116,12 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PedidoUsuarioQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<PedidoUsuario>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PedidoUsuarioQueryDto
@@ -176,12 +207,36 @@ export class PedidoUsuarioService {
       );
     }
 
-    qb.orderBy(`pedidoUsuario.${sortField}`, order)
+    /**
+     * PostgreSQL: `DISTINCT` + `ORDER BY` distinto de las columnas DISTINCT falla.
+     * `DISTINCT ON (id)` con `ORDER BY id, …` evita el error al hidratar joins 1:N.
+     */
+    qb.distinctOn(['pedidoUsuario.id'])
+      .orderBy('pedidoUsuario.id', 'ASC')
+      .addOrderBy(`pedidoUsuario.${sortField}`, order)
       .skip((page - 1) * limit)
-      .take(limit)
-      .distinct(true);
+      .take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
+    /**
+     * `getManyAndCount()` con `distinctOn` genera SQL inválido en PostgreSQL
+     * (COUNT mezclado con DISTINCT ON). Contamos filas raíz en una consulta aparte.
+     */
+    const countQb = qb.clone();
+    countQb.expressionMap.orderBys = {};
+    countQb.expressionMap.selectDistinctOn = [];
+    countQb.expressionMap.selectDistinct = false;
+    countQb.expressionMap.skip = undefined;
+    countQb.expressionMap.take = undefined;
+    countQb.expressionMap.offset = undefined;
+    countQb.expressionMap.limit = undefined;
+    countQb.expressionMap.selects = [];
+    countQb.select('COUNT(DISTINCT "pedidoUsuario"."id")', 'cnt');
+
+    const [data, countRow] = await Promise.all([
+      qb.getMany(),
+      countQb.getRawOne<{ cnt: string }>(),
+    ]);
+    const total = Number(countRow?.cnt ?? 0);
     await this.annotateLinkedMovements(
       data.flatMap((item) => item.pedidos || [])
     );
@@ -196,7 +251,10 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<PedidoUsuario> {
     const pedidoUsuario = await this.dataSource
@@ -230,7 +288,14 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
    */
   async update(
     id: string,
@@ -252,6 +317,8 @@ export class PedidoUsuarioService {
           I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
         );
       }
+
+      const before = JSON.parse(JSON.stringify(existing)) as PedidoUsuario;
 
       this.assertEditable(existing);
 
@@ -314,9 +381,23 @@ export class PedidoUsuarioService {
       );
 
       await queryRunner.commitTransaction();
-      return this.findOne(existing.id);
+      const updated = await this.findOne(existing.id);
+      if (userId) {
+        await this.movimientoHelper.trackAction({
+          userId,
+          entidad: 'PedidoUsuario',
+          entidadId: existing.id,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Actualización de pedido de usuario ${existing.id}`,
+          before,
+          after: updated,
+        });
+      }
+      return updated;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -334,24 +415,47 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de accept dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async accept(id: string, userId: string): Promise<PedidoUsuario> {
+    const before = await this.findOne(id);
     await this.purchaseBatchService.approvePedidoUsuario(id, userId);
-    return this.findOne(id);
+    const after = await this.findOne(id);
+    await this.movimientoHelper.trackAction({
+      userId,
+      entidad: 'PedidoUsuario',
+      entidadId: id,
+      accion: AccionMovimiento.UPDATE,
+      descripcion: `Aprobación de pedido de usuario ${id}`,
+      before,
+      after,
+    });
+    return after;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "cancel" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CancelPedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
    */
   async cancel(
     id: string,
     dto: CancelPedidoUsuarioDto,
     userId?: string
   ): Promise<PedidoUsuario> {
+    const before = await this.findOne(id);
     const motivo = dto.motivoCancelacion || 'Cancelado por el usuario';
 
-    return this.changePendingAggregateStatus(
+    const after = await this.changePendingAggregateStatus(
       id,
       (pedido) => {
         pedido.estado = EstadoPedido.CANCELADO;
@@ -360,13 +464,32 @@ export class PedidoUsuarioService {
       false,
       userId
     );
+
+    if (userId) {
+      await this.movimientoHelper.trackAction({
+        userId,
+        entidad: 'PedidoUsuario',
+        entidadId: id,
+        accion: AccionMovimiento.UPDATE,
+        descripcion: `Cancelación de pedido de usuario ${id}`,
+        before,
+        after,
+      });
+    }
+
+    return after;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de restore dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param userId Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async restore(id: string, userId?: string): Promise<PedidoUsuario> {
-    return this.changePendingAggregateStatus(
+    const before = await this.findOne(id);
+    const after = await this.changePendingAggregateStatus(
       id,
       (pedido) => {
         if (pedido.estado !== EstadoPedido.CANCELADO) {
@@ -380,10 +503,28 @@ export class PedidoUsuarioService {
       true,
       userId
     );
+
+    if (userId) {
+      await this.movimientoHelper.trackAction({
+        userId,
+        entidad: 'PedidoUsuario',
+        entidadId: id,
+        accion: AccionMovimiento.UPDATE,
+        descripcion: `Restauración de pedido de usuario ${id}`,
+        before,
+        after,
+      });
+    }
+
+    return after;
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param user Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string, user: { id: string; rol?: string }): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -401,6 +542,8 @@ export class PedidoUsuarioService {
           I18nHelper.getError('PEDIDO_USUARIO_NOT_FOUND')
         );
       }
+
+      const before = JSON.parse(JSON.stringify(pedidoUsuario)) as PedidoUsuario;
 
       const isElevated = isSherlockElevatedRole(user.rol);
       if (!isElevated && pedidoUsuario.usuarioId !== user.id) {
@@ -422,8 +565,19 @@ export class PedidoUsuarioService {
 
       await queryRunner.manager.softRemove(PedidoUsuario, pedidoUsuario);
       await queryRunner.commitTransaction();
+
+      await this.movimientoHelper.trackAction({
+        userId: user.id,
+        entidad: 'PedidoUsuario',
+        entidadId: id,
+        accion: AccionMovimiento.DELETE,
+        descripcion: `Eliminación de pedido de usuario ${id}`,
+        before,
+      });
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -440,7 +594,14 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "syncPedidoUsuarioStatus" en smart-economat-backend (Nest).
+   * @undefined {string} pedidoUsuarioId - Entrada efectiva esperada por el contrato.
+   * @undefined {EntityManager | undefined} manager - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} actorId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async syncPedidoUsuarioStatus(
     pedidoUsuarioId: string,
@@ -460,21 +621,32 @@ export class PedidoUsuarioService {
       return;
     }
 
-    const nuevoEstado = await this.calculateAggregateStatus(
-      pedidoUsuario,
-      manager
-    );
+    const nuevoEstado = this.calculateAggregateStatus(pedidoUsuario);
     if (pedidoUsuario.estado !== nuevoEstado) {
-      pedidoUsuario.estado = nuevoEstado;
+      const beforeEstado = pedidoUsuario.estado;
+      PedidoUsuarioStateMachine.applyTransition(pedidoUsuario, nuevoEstado);
       if (actorId) {
         pedidoUsuario.modifiedBy = actorId;
       }
       await repo.save(pedidoUsuario);
+
+      if (actorId) {
+        await this.movimientoHelper.trackAction({
+          userId: actorId,
+          entidad: 'PedidoUsuario',
+          entidadId: pedidoUsuarioId,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Cambio de estado de pedido de usuario ${pedidoUsuarioId}: ${beforeEstado} -> ${nuevoEstado}`,
+          before: { estado: beforeEstado },
+          after: { estado: nuevoEstado },
+          manager,
+        });
+      }
     }
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async changePendingAggregateStatus(
     id: string,
@@ -532,7 +704,9 @@ export class PedidoUsuarioService {
       await queryRunner.commitTransaction();
       return this.findOne(pedidoUsuario.id);
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -550,7 +724,7 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async persistAggregate(
     manager: EntityManager,
@@ -579,7 +753,7 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async persistAggregateLinesAndPedidos(
     manager: EntityManager,
@@ -716,12 +890,11 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  private async calculateAggregateStatus(
-    pedidoUsuario: PedidoUsuario,
-    manager?: EntityManager
-  ): Promise<EstadoPedidoUsuario> {
+  private calculateAggregateStatus(
+    pedidoUsuario: PedidoUsuario
+  ): EstadoPedidoUsuario {
     const pedidos = pedidoUsuario.pedidos || [];
 
     if (pedidos.length === 0) {
@@ -732,18 +905,6 @@ export class PedidoUsuarioService {
       return EstadoPedidoUsuario.CANCELADO;
     }
 
-    const batchIds = Array.from(
-      new Set(
-        pedidos
-          .map((pedido) => pedido.batchId)
-          .filter((batchId): batchId is string => Boolean(batchId))
-      )
-    );
-
-    if (batchIds.length === 0) {
-      return EstadoPedidoUsuario.PENDIENTE;
-    }
-
     if (pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO) {
       return EstadoPedidoUsuario.CONSOLIDADO;
     }
@@ -752,30 +913,11 @@ export class PedidoUsuarioService {
       return EstadoPedidoUsuario.APROBADO;
     }
 
-    if (batchIds.length > 1) {
-      return EstadoPedidoUsuario.CONSOLIDADO;
-    }
-
-    const pedidoRepo = manager
-      ? manager.getRepository(Pedido)
-      : this.dataSource.getRepository(Pedido);
-    const pedidosDelLote = await pedidoRepo.find({
-      where: { batchId: batchIds[0] },
-      select: ['pedidoUsuarioId'],
-    });
-    const pedidoUsuarioIds = new Set(
-      pedidosDelLote
-        .map((pedido) => pedido.pedidoUsuarioId)
-        .filter((value): value is string => Boolean(value))
-    );
-
-    return pedidoUsuarioIds.size > 1
-      ? EstadoPedidoUsuario.CONSOLIDADO
-      : EstadoPedidoUsuario.APROBADO;
+    return EstadoPedidoUsuario.PENDIENTE;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async hasLinkedReferences(
     manager: EntityManager,
@@ -809,7 +951,9 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de assert editable dentro del flujo de la aplicación.
+   *
+   * @param pedidoUsuario Parámetro de entrada para la operación.
    */
   private assertEditable(pedidoUsuario: PedidoUsuario): void {
     if (pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE) {
@@ -829,7 +973,10 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de annotate linked movements dentro del flujo de la aplicación.
+   *
+   * @param pedidos Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async annotateLinkedMovements(pedidos: Pedido[]): Promise<void> {
     const lineIds = pedidos.flatMap((pedido) =>
@@ -851,10 +998,12 @@ export class PedidoUsuarioService {
       }),
     ]);
 
-    const referencedLineIds = new Set<string>([
-      ...recepciones.map((item) => item.pedidoProductoId),
-      ...incidencias.map((item) => item.pedidoProductoId),
-    ]);
+    const referencedLineIds = new Set<string>(
+      [
+        ...recepciones.map((item) => item.pedidoProductoId),
+        ...incidencias.map((item) => item.pedidoProductoId),
+      ].filter((id): id is string => typeof id === 'string' && id.length > 0)
+    );
 
     pedidos.forEach((pedido) => {
       (pedido.pedidoProductos || []).forEach((line) => {
@@ -864,7 +1013,7 @@ export class PedidoUsuarioService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private calculateFechaEntrega(baseDate = new Date()): Date {
     const hours = this.configService.get<number>(

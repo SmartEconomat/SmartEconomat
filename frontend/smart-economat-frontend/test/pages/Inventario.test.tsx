@@ -123,6 +123,7 @@ describe('Inventario page i18n smoke', () => {
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
       refreshUser: vi.fn().mockResolvedValue(null),
+      updateUser: vi.fn(),
       changeLanguage: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(authHooks.usePermission).mockReturnValue(true);

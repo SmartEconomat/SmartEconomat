@@ -13,6 +13,7 @@ import {
 } from '../dto/recepcion-reporte-pdf.dto';
 import { EstadoPedido } from '../../pedido/enums/estado-pedido.enum';
 
+/** Constantes públicas (IVA_RATE) expuestas en smart-economat-backend (Nest). */
 export const IVA_RATE = 0.1;
 
 const MARGIN = 40;
@@ -36,6 +37,7 @@ const C_WHITE = '#FFFFFF';
 const C_TEXT = '#222222';
 const C_GRAY = '#555555';
 
+/** Contrato de tipos público (LineaPedidoAgrupada). Contexto: smart-economat-backend (Nest). */
 export interface LineaPedidoAgrupada {
   producto: string;
   cantidad: number;
@@ -43,6 +45,7 @@ export interface LineaPedidoAgrupada {
   subtotal: number;
 }
 
+/** Contrato de tipos público (PedidoAgrupado). Contexto: smart-economat-backend (Nest). */
 export interface PedidoAgrupado {
   id: string;
   numeroGlobal?: string;
@@ -53,6 +56,7 @@ export interface PedidoAgrupado {
   subtotalPedido: number;
 }
 
+/** Contrato de tipos público (ProveedorGroup). Contexto: smart-economat-backend (Nest). */
 export interface ProveedorGroup {
   nombre: string;
   nif?: string;
@@ -62,12 +66,13 @@ export interface ProveedorGroup {
   total: number;
 }
 
+/** Contrato de tipos público (LineaIncidenciaAgrupada). Contexto: smart-economat-backend (Nest). */
 export interface LineaIncidenciaAgrupada {
   incidenciaId: string;
   pedidoId?: string;
   fechaIncidencia: Date;
   producto: string;
-  cantidadEsperada: number;
+  cantidadPedida: number;
   cantidadRecibida: number;
   diferencia: number;
   tipoDiferencia: string;
@@ -75,6 +80,7 @@ export interface LineaIncidenciaAgrupada {
   resuelta: boolean;
 }
 
+/** Contrato de tipos público (ProveedorIncidenciaGroup). Contexto: smart-economat-backend (Nest). */
 export interface ProveedorIncidenciaGroup {
   nombre: string;
   nif?: string;
@@ -82,7 +88,7 @@ export interface ProveedorIncidenciaGroup {
 }
 
 /**
- * Documentación en español.
+ * Servicio de dominio para pdf report.
  */
 @Injectable()
 export class PdfReportService {
@@ -95,11 +101,21 @@ export class PdfReportService {
     margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
   };
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource
   ) {}
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {RecepcionReportePdfDto} filters - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async generateReport(
     filters: RecepcionReportePdfDto,
     res: Response
@@ -118,6 +134,12 @@ export class PdfReportService {
     }
   }
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {RecepcionReportePdfDto} filters - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async generatePedidoReport(
     filters: RecepcionReportePdfDto,
     res: Response
@@ -189,6 +211,12 @@ export class PdfReportService {
     await this.buildPedidoPdf(groups, res, paginaPorProveedor);
   }
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {RecepcionReportePdfDto} filters - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async generateIncidenciasReport(
     filters: RecepcionReportePdfDto,
     res: Response
@@ -243,6 +271,11 @@ export class PdfReportService {
     await this.buildIncidenciasPdf(groups, res);
   }
 
+  /**
+   * Expone "groupPedidosByProveedor" en smart-economat-backend (Nest).
+   * @undefined {Pedido[]} pedidos - Entrada efectiva esperada por el contrato.
+   * @undefined {ProveedorGroup[]} Datos efectivos después de ejecutar la operación.
+   */
   groupPedidosByProveedor(pedidos: Pedido[]): ProveedorGroup[] {
     const map = new Map<string, ProveedorGroup>();
 
@@ -315,7 +348,7 @@ export class PdfReportService {
           fechaIncidencia: inc.createdAt,
           producto:
             linea.pedidoProducto?.productoProveedor?.producto?.nombre ?? '-',
-          cantidadEsperada: Number(linea.cantidadEsperada),
+          cantidadPedida: Number(linea.cantidadPedida),
           cantidadRecibida: Number(linea.cantidadRecibida),
           diferencia: Number(linea.diferencia),
           tipoDiferencia: linea.tipoDiferencia,
@@ -693,7 +726,7 @@ export class PdfReportService {
         const vals = [
           row.producto,
           row.pedidoId ? row.pedidoId.slice(0, 8) + '…' : '-',
-          fmt(row.cantidadEsperada),
+          fmt(row.cantidadPedida),
           fmt(row.cantidadRecibida),
           fmt(row.diferencia),
           row.tipoDiferencia,
@@ -745,6 +778,12 @@ export class PdfReportService {
     });
   }
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {string} recepcionId - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async generateSingleRecepcionReport(
     recepcionId: string,
     res: Response

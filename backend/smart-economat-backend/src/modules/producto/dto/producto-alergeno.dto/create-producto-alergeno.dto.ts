@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { Alergeno } from '../../enums/producto.enums';
 
+/** Clase pública (CreateProductoAlergenoDto). Paquete: smart-economat-backend (Nest). */
 export class CreateProductoAlergenoDto {
   @IsUUID('all', {
     message: i18nValidationMessage(

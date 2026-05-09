@@ -10,6 +10,7 @@ import {
 import { Type } from 'class-transformer';
 import { EstadoPedido } from '../../pedido/enums/estado-pedido.enum';
 
+/** Clase pública (ExportPedidoFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportPedidoFilterDto {
   @IsOptional()
   @IsEnum(EstadoPedido)

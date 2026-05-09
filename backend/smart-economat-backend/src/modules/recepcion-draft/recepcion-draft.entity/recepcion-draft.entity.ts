@@ -3,6 +3,7 @@ import type { Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 
+/** Clase pública (RecepcionDraft). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'recepcion_draft' })
 @Index(['usuarioId', 'updatedAt'])
 @Index(['expiresAt'])

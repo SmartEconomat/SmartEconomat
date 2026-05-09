@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 
 /**
- * Documentación en español.
+ * Servicio principal de la aplicación.
+ * Proporciona funcionalidades básicas y de salud del sistema.
  */
 @Injectable()
 export class AppService {
   /**
-   * Documentación en español.
+   * Obtiene un mensaje de saludo estándar.
+   * @returns El string "Hello World!".
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} Datos efectivos después de ejecutar la operación.
    */
   getHello(): string {
     return 'Hello World!';

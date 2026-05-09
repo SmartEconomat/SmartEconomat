@@ -6,7 +6,9 @@ import Recetas from '../../src/pages/Recetas';
 import * as recetaService from '../../src/services/receta.service';
 import * as authHooks from '../../src/store/auth.hooks';
 import * as pedidoService from '../../src/services/pedido.service';
+import * as produccionService from '../../src/services/produccion.service';
 import * as toastHooks from '../../src/store/toast.hooks';
+import { UbicacionService } from '../../src/services/ubicacion.service';
 import { DificultadReceta } from '../../src/services/receta.types';
 
 const toastSuccess = vi.hoisted(() => vi.fn());
@@ -49,7 +51,9 @@ vi.mock('../../src/services/api.service', () => ({
 }));
 vi.mock('../../src/services/produccion.service', () => ({
   ejecutarProduccion: vi.fn(),
-  validarStock: vi.fn().mockResolvedValue({ ingredients: [] }),
+  validarStock: vi
+    .fn()
+    .mockResolvedValue({ ingredients: [], itemsResumen: [] }),
 }));
 vi.mock('../../src/services/pedido.service', () => ({
   createPedido: vi.fn(),
@@ -198,5 +202,45 @@ describe('Recetas toolbar batch actions', () => {
     expect(toastSuccess).toHaveBeenCalledWith(
       'Pedido #42 generado correctamente desde 2 recetas.'
     );
+  });
+
+  it('enables batch preparation when locations load after opening the modal', async () => {
+    let resolveUbicaciones: (
+      value: Awaited<ReturnType<typeof UbicacionService.findAll>>
+    ) => void = () => undefined;
+    const ubicacionesPromise = new Promise<
+      Awaited<ReturnType<typeof UbicacionService.findAll>>
+    >((resolve) => {
+      resolveUbicaciones = resolve;
+    });
+
+    vi.mocked(UbicacionService.findAll).mockReturnValueOnce(ubicacionesPromise);
+    vi.mocked(produccionService.validarStock).mockResolvedValue({
+      ingredients: [],
+      itemsResumen: [],
+    });
+
+    render(<Recetas />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Arroz')).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /seleccionar recetas/i })[0]
+    );
+    fireEvent.click(screen.getByRole('button', { name: /preparar \(2\)/i }));
+
+    const startButton = await screen.findByRole('button', {
+      name: /iniciar .*lote/i,
+    });
+
+    expect(startButton).toBeDisabled();
+
+    resolveUbicaciones([{ id: 'ubi-1', nombre: 'Cocina' }]);
+
+    await waitFor(() => {
+      expect(startButton).toBeEnabled();
+    });
   });
 });

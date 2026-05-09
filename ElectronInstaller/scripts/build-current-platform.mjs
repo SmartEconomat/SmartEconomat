@@ -9,7 +9,9 @@ const targetByPlatform = {
 const targetFlag = targetByPlatform[process.platform];
 
 if (!targetFlag) {
-  console.error(`Plataforma no soportada para build automático: ${process.platform}`);
+  console.error(
+    `Plataforma no soportada para build automático: ${process.platform}`,
+  );
   process.exit(1);
 }
 
@@ -23,8 +25,8 @@ const result = spawnSync(
     "--config.compression=normal",
   ],
   {
-  stdio: "inherit",
-  shell: process.platform === "win32",
+    stdio: "inherit",
+    shell: process.platform === "win32",
   },
 );
 

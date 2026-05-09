@@ -8,6 +8,7 @@ import { RolesController } from './controller/roles.controller';
 import { PermisosModule } from '../permisos/permisos.module';
 import { UsuarioModule } from '../usuario/usuario.module';
 
+/** Clase pública (RolesModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([Rol, UsuarioRol, RolPermiso]),

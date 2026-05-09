@@ -2,7 +2,7 @@ import React from 'react';
 import { navigateToElement } from '../../utils/a11y-navigation';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const SkipLinks: React.FC = () => {
   const handleSkip =

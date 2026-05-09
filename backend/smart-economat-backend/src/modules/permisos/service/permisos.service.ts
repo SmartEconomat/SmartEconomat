@@ -12,19 +12,27 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { UpdatePermisoDto } from '../dto/update-permiso.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para permisos.
  */
 @Injectable()
 export class PermisosService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Permiso>} permisoRepo - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Permiso)
     private readonly permisoRepo: Repository<Permiso>
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreatePermisoDto): Promise<Permiso> {
     const existente = await this.permisoRepo.findOne({
@@ -42,7 +50,10 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Crea many.
+   *
+   * @param dtos Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async createMany(dtos: CreatePermisoDto[]): Promise<Permiso[]> {
     const permisos = dtos.map((dto) => this.permisoRepo.create(dto));
@@ -50,14 +61,22 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Permiso>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto
   ): Promise<PaginatedResponseDto<Permiso>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 10, 50);
-    const sortBy = query.sortBy ?? 'modulo';
+    const requestedSort = query.sortBy ?? 'modulo';
+    const sortBy = SORTABLE_FIELDS.permisos.includes(requestedSort)
+      ? requestedSort
+      : 'modulo';
     const order = query.order ?? 'ASC';
 
     const [data, total] = await this.permisoRepo.findAndCount({
@@ -76,7 +95,12 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all no pagination.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findAllNoPagination" en smart-economat-backend (Nest).
+   * @undefined {Promise<Permiso[]>} Datos efectivos después de ejecutar la operación.
    */
   async findAllNoPagination(): Promise<Permiso[]> {
     return this.permisoRepo.find({
@@ -86,7 +110,12 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Busca grouped by module.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findGroupedByModule" en smart-economat-backend (Nest).
+   * @undefined {Promise<Record<string, Permiso[]>>} Datos efectivos después de ejecutar la operación.
    */
   async findGroupedByModule(): Promise<Record<string, Permiso[]>> {
     const permisos = await this.permisoRepo.find({
@@ -107,7 +136,10 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<Permiso> {
     const permiso = await this.permisoRepo.findOne({ where: { id } });
@@ -122,14 +154,20 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Busca by codigo.
+   *
+   * @param codigo Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findByCodigo(codigo: string): Promise<Permiso | null> {
     return this.permisoRepo.findOne({ where: { codigo } });
   }
 
   /**
-   * Documentación en español.
+   * Busca by codigos.
+   *
+   * @param codigos Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findByCodigos(codigos: string[]): Promise<Permiso[]> {
     if (!codigos || codigos.length === 0) {
@@ -143,7 +181,11 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, dto: UpdatePermisoDto): Promise<Permiso> {
     const permiso = await this.findOne(id);
@@ -165,7 +207,10 @@ export class PermisosService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const rolesCount = await this.permisoRepo

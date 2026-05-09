@@ -8,87 +8,101 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { BaseQueryDto } from './base-query.dto';
+import { firstNonEmptyString } from './transform-query.helpers';
 
 /**
- * Documentación en español.
+ * DTO que define el contrato de datos de pagination query.
  */
-export class PaginationQueryDto {
-  /**
-   * Documentación en español.
-   */
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  /**
-   * Documentación en español.
-   */
+export class PaginationQueryDto extends BaseQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(50)
-  limit?: number = 20;
+  declare limit?: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
-  searchTerm?: string;
+  @Transform(({ value, obj }: { value: unknown; obj: { search?: unknown } }) =>
+    firstNonEmptyString(obj.search, value)
+  )
+  declare searchTerm?: string;
+
+  @IsOptional()
+  search?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   codigoBarras?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  @IsOptional()
-  @IsString()
-  sortBy?: string;
-
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @IsString()
   rol?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @IsString()
+  @Transform(({ value, obj }: { value: unknown; obj: { status?: unknown } }) =>
+    firstNonEmptyString(obj.status, value)
+  )
   estado?: string;
 
+  @IsOptional()
+  @IsString()
+  status?: string;
+
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @IsString()
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @IsDateString()
+  @Transform(
+    ({ value, obj }: { value: unknown; obj: { dateFrom?: unknown } }) =>
+      firstNonEmptyString(obj.dateFrom, value)
+  )
   fechaDesde?: string;
 
+  @IsOptional()
+  @IsDateString()
+  dateFrom?: string;
+
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @IsDateString()
+  @Transform(({ value, obj }: { value: unknown; obj: { dateTo?: unknown } }) =>
+    firstNonEmptyString(obj.dateTo, value)
+  )
   fechaHasta?: string;
 
+  @IsOptional()
+  @IsDateString()
+  dateTo?: string;
+
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
   @Type(() => Boolean)
@@ -96,9 +110,26 @@ export class PaginationQueryDto {
   sinLote?: boolean;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  includeDeleted?: boolean;
+
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Alias legacy para mantener compatibilidad temporal.
+   */
+  @IsOptional()
+  @Transform(
+    ({ value, obj }: { value: unknown; obj: { sortOrder?: unknown } }) => {
+      const raw = firstNonEmptyString(value, obj.sortOrder);
+      return raw === undefined ? undefined : raw.toUpperCase();
+    }
+  )
   @IsIn(['ASC', 'DESC'])
-  order?: 'ASC' | 'DESC' = 'ASC';
+  declare order?: 'ASC' | 'DESC';
 }

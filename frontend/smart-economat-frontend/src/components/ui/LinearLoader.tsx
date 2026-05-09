@@ -7,7 +7,7 @@ interface LinearLoaderProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const LinearLoader: React.FC<LinearLoaderProps> = ({ fixed = false }) => {
   const { t } = useTranslation();

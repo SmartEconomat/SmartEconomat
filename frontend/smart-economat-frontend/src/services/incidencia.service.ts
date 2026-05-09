@@ -1,5 +1,6 @@
 import {
   EstadoIncidencia,
+  EstadoLineaIncidencia,
   EstadoReclamacion,
   Incidencia,
   IncidenciaLinea,
@@ -8,16 +9,17 @@ import {
   TipoDiferencia,
 } from './incidencia.types';
 import { baseFetch, ApiResponse, PaginatedData } from './api.service';
+import { normalizeLimitParam, normalizePageParam } from './api.utils';
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de proveedor desde la API.
  */
 interface RawProveedor {
   nombre?: string | null;
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de producto desde la API.
  */
 interface RawProducto {
   id?: string;
@@ -26,7 +28,7 @@ interface RawProducto {
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de relación producto-proveedor desde la API.
  */
 interface RawProductoProveedor {
   producto?: RawProducto | null;
@@ -34,7 +36,7 @@ interface RawProductoProveedor {
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de pedido-producto desde la API.
  */
 interface RawPedidoProducto {
   id?: string;
@@ -42,23 +44,26 @@ interface RawPedidoProducto {
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de línea de incidencia desde la API.
  */
 interface RawIncidenciaLinea {
   id?: string;
   pedidoProductoId?: string;
   nombreProducto?: string;
-  cantidadEsperada?: number | string;
+  cantidadPedida?: number | string;
   cantidadRecibida?: number | string;
+  cantidadAjustada?: number | string;
   diferencia?: number | string;
   tipoDiferencia?: string;
+  estado?: string;
+  necesitaAjuste?: boolean;
   estadoReclamacion?: string;
   observaciones?: string;
   pedidoProducto?: RawPedidoProducto | null;
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de pedido desde la API.
  */
 interface RawPedido {
   id?: string;
@@ -67,7 +72,7 @@ interface RawPedido {
 }
 
 /**
- * Documentación en español.
+ * Interfaz para datos crudos de incidencia principal desde la API.
  */
 interface RawIncidencia {
   id?: string;
@@ -85,7 +90,7 @@ interface RawIncidencia {
 }
 
 /**
- * Documentación en español.
+ * Convierte un valor desconocido a un número finito de forma segura.
  */
 function toFiniteNumber(value: unknown, fallback = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -103,7 +108,7 @@ function toFiniteNumber(value: unknown, fallback = 0): number {
 }
 
 /**
- * Documentación en español.
+ * Normaliza una cadena de texto, devolviendo undefined si está vacía.
  */
 function toOptionalText(value: unknown): string | undefined {
   if (typeof value !== 'string') {
@@ -115,7 +120,7 @@ function toOptionalText(value: unknown): string | undefined {
 }
 
 /**
- * Documentación en español.
+ * Clasifica el tipo de discrepancia detectada en una línea.
  */
 function normalizeTipoDiferencia(value: unknown): TipoDiferencia {
   if (value === TipoDiferencia.EXCESO) return TipoDiferencia.EXCESO;
@@ -124,7 +129,7 @@ function normalizeTipoDiferencia(value: unknown): TipoDiferencia {
 }
 
 /**
- * Documentación en español.
+ * Clasifica el estado administrativo de una reclamación.
  */
 function normalizeEstadoReclamacion(value: unknown): EstadoReclamacion {
   if (value === EstadoReclamacion.RECLAMADO) {
@@ -143,7 +148,22 @@ function normalizeEstadoReclamacion(value: unknown): EstadoReclamacion {
 }
 
 /**
- * Documentación en español.
+ * Normaliza el estado de línea de incidencia devuelto por la API.
+ */
+function normalizeEstadoLineaIncidencia(value: unknown): EstadoLineaIncidencia {
+  if (value === EstadoLineaIncidencia.SIN_PROBLEMA) {
+    return EstadoLineaIncidencia.SIN_PROBLEMA;
+  }
+
+  if (value === EstadoLineaIncidencia.AJUSTADO) {
+    return EstadoLineaIncidencia.AJUSTADO;
+  }
+
+  return EstadoLineaIncidencia.PENDIENTE_AJUSTE;
+}
+
+/**
+ * Genera un texto descriptivo basado en el tipo de diferencia.
  */
 function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
   if (tipo === TipoDiferencia.EXCESO) {
@@ -158,7 +178,7 @@ function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
 }
 
 /**
- * Documentación en español.
+ * Normaliza y mapea el estado de una incidencia desde el backend.
  */
 function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
   if (typeof value !== 'string') {
@@ -197,8 +217,26 @@ function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
 }
 
 /**
- * Documentación en español.
+ * Infiere el estado lógico de una incidencia basado en sus líneas y resolución.
  */
+/**
+ * Convierte el estado final del modelo UI al literal esperado por `ResolverIncidenciaDto`.
+ */
+function mapEstadoFinalToApi(
+  estado?: EstadoIncidencia
+): 'resuelta' | 'cancelada' | 'invalida' | undefined {
+  switch (estado) {
+    case EstadoIncidencia.RESUELTA:
+      return 'resuelta';
+    case EstadoIncidencia.CANCELADA:
+      return 'cancelada';
+    case EstadoIncidencia.INVALIDA:
+      return 'invalida';
+    default:
+      return undefined;
+  }
+}
+
 function resolveEstadoIncidenciaFallback(
   lineas: IncidenciaLinea[],
   resuelta: boolean,
@@ -238,20 +276,20 @@ function resolveEstadoIncidenciaFallback(
 }
 
 /**
- * Documentación en español.
+ * Mapea una línea cruda de la API al modelo de dominio de la aplicación.
  */
 function mapLinea(
   rawLinea: RawIncidenciaLinea,
   incidenciaId: string,
   index: number
 ): IncidenciaLinea {
-  const cantidadEsperada = toFiniteNumber(rawLinea.cantidadEsperada, 0);
+  const cantidadPedida = toFiniteNumber(rawLinea.cantidadPedida, 0);
   const cantidadRecibida = toFiniteNumber(rawLinea.cantidadRecibida, 0);
   const diferenciaRaw = rawLinea.diferencia;
   const diferencia =
     diferenciaRaw !== undefined
-      ? toFiniteNumber(diferenciaRaw, cantidadRecibida - cantidadEsperada)
-      : cantidadRecibida - cantidadEsperada;
+      ? toFiniteNumber(diferenciaRaw, cantidadRecibida - cantidadPedida)
+      : cantidadRecibida - cantidadPedida;
   const tipoDiferencia =
     rawLinea.tipoDiferencia !== undefined
       ? normalizeTipoDiferencia(rawLinea.tipoDiferencia)
@@ -283,24 +321,32 @@ function mapLinea(
     toOptionalText(rawLinea.pedidoProducto?.id) ||
     '';
 
+  const cantidadAjustada = toFiniteNumber(rawLinea.cantidadAjustada, 0);
+
   return {
     id: toOptionalText(rawLinea.id) || `${incidenciaId}-linea-${index + 1}`,
     pedidoProductoId,
     productoId,
     nombreProducto,
     unidad,
-    cantidadEsperada,
+    cantidadPedida,
     cantidadRecibida,
-    cantidadPendiente: Math.max(cantidadEsperada - cantidadRecibida, 0),
+    cantidadAjustada,
+    cantidadPendiente: Math.max(cantidadPedida - cantidadRecibida, 0),
     diferencia,
     tipoDiferencia,
+    estado: normalizeEstadoLineaIncidencia(rawLinea.estado),
+    necesitaAjuste:
+      typeof rawLinea.necesitaAjuste === 'boolean'
+        ? rawLinea.necesitaAjuste
+        : Math.abs(diferencia) > 0.001,
     estadoReclamacion: normalizeEstadoReclamacion(rawLinea.estadoReclamacion),
     observaciones: toOptionalText(rawLinea.observaciones),
   };
 }
 
 /**
- * Documentación en español.
+ * Construye el motivo principal de la incidencia basado en el pedido o sus líneas.
  */
 function buildMotivoIncidencia(
   raw: RawIncidencia,
@@ -323,7 +369,7 @@ function buildMotivoIncidencia(
 }
 
 /**
- * Documentación en español.
+ * Transforma un objeto de incidencia crudo del backend al modelo tipado del frontend.
  */
 function mapIncidencia(raw: RawIncidencia): Incidencia {
   const incidenciaId = toOptionalText(raw.id) || 'incidencia-sin-id';
@@ -333,7 +379,7 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
   );
 
   const cantidadPedidaTotal = lineas.reduce(
-    (total, linea) => total + linea.cantidadEsperada,
+    (total, linea) => total + linea.cantidadPedida,
     0
   );
   const cantidadRecibidaTotal = lineas.reduce(
@@ -368,6 +414,7 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
     recepcionId: toOptionalText(raw.recepcionId) || '',
     pedidoId:
       toOptionalText(raw.pedidoId) || toOptionalText(raw.pedido?.id) || null,
+    proveedorId: toOptionalText(raw.pedido?.proveedor?.nombre) || '', // fallback id
     proveedorNombre,
     motivoIncidencia: buildMotivoIncidencia(raw, lineas),
     estado:
@@ -390,7 +437,7 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
 }
 
 /**
- * Documentación en español.
+ * Mapea un conjunto de datos paginados de incidencias.
  */
 function mapPaginatedIncidencias(
   payload: PaginatedData<RawIncidencia> | RawIncidencia[]
@@ -416,15 +463,20 @@ function mapPaginatedIncidencias(
 }
 
 /**
- * Documentación en español.
+ * Recupera la lista paginada de incidencias registradas.
+ */
+/**
+ * Expone "fetchIncidencias" en smart-economat-frontend (SPA).
+ * @undefined {IncidenciasQueryParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Incidencia>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchIncidencias(
   params: IncidenciasQueryParams = {}
 ): Promise<PaginatedData<Incidencia>> {
   const queryParams = new URLSearchParams();
 
-  if (params.page) queryParams.append('page', params.page.toString());
-  if (params.limit) queryParams.append('limit', params.limit.toString());
+  queryParams.append('page', normalizePageParam(params.page).toString());
+  queryParams.append('limit', normalizeLimitParam(params.limit).toString());
   if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
   if (params.resuelta !== undefined)
     queryParams.append('resuelta', params.resuelta.toString());
@@ -445,29 +497,48 @@ export async function fetchIncidencias(
 }
 
 /**
- * Documentación en español.
+ * Resuelve formalmente una incidencia, aplicando las correcciones de stock necesarias.
+ */
+/**
+ * Expone "resolveIncidencia" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {ResolveIncidenciaPayload} payload - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
  */
 export async function resolveIncidencia(
   id: string,
-  dto: ResolveIncidenciaPayload
+  payload: ResolveIncidenciaPayload
 ): Promise<Incidencia> {
+  const { estadoFinal, ...restPayload } = payload;
+  const estadoFinalApi = mapEstadoFinalToApi(estadoFinal);
+  const requestBody: Record<string, unknown> = { ...restPayload };
+  if (estadoFinalApi !== undefined) {
+    requestBody.estadoFinal = estadoFinalApi;
+  }
+
   const response = await baseFetch(`/incidencias/${id}/resolver`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dto),
+    body: JSON.stringify(requestBody),
   });
+
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(
       errorBody.message || `Error al resolver incidencia: ${response.status}`
     );
   }
+
   const body = (await response.json()) as ApiResponse<RawIncidencia>;
   return mapIncidencia(body.data);
 }
 
 /**
- * Documentación en español.
+ * Elimina un registro de incidencia.
+ */
+/**
+ * Expone "removeIncidencia" en smart-economat-frontend (SPA).
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export async function removeIncidencia(id: string): Promise<void> {
   const response = await baseFetch(`/incidencias/${id}`, {

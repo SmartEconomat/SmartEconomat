@@ -37,6 +37,7 @@ import {
   ensureDeletableProfesorSlotResource,
   ensureDeletableProveedorResource,
   ensureDeletableRecepcionResource,
+  ensureSoftDeletedProveedorForRestore,
 } from './massive.runtime.deletables';
 import {
   adminRouteActorByIteration,
@@ -266,6 +267,12 @@ async function fetchPaginatedEntities(
   return entities;
 }
 
+/**
+ * Expone "selectMermaCandidateFromStockResponse" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {{ productoId: string; maxCantidad: number; }} Datos efectivos después de ejecutar la operación.
+ */
 export function selectMermaCandidateFromStockResponse(
   response: unknown,
   iteration: number
@@ -907,6 +914,29 @@ async function ensureDeletableInventario(context: SeedContext): Promise<void> {
 
 const MIN_PORCIONES_FOR_CONSUMIR = 1;
 
+/**
+ * Sube el stock de los ingredientes de una receta para que `/produccion/ejecutar`
+ * no falle por falta de existencias tras otros pasos del seed (p. ej. stock a 0).
+ */
+async function bumpInventarioForRecetaIngredients(
+  recetaId: string
+): Promise<void> {
+  await ensureRepositoryReady();
+  await AppDataSource.query(
+    `UPDATE inventario AS i
+     SET cantidad_actual = GREATEST(i.cantidad_actual::numeric, 500)
+     FROM producto_proveedor AS pp
+     WHERE pp.id = i.producto_proveedor_id
+       AND i.deleted_at IS NULL
+       AND pp.deleted_at IS NULL
+       AND pp.producto_id IN (
+         SELECT ri.producto_id FROM receta_ingrediente ri
+         WHERE ri.receta_id = $1::uuid AND ri.deleted_at IS NULL
+       )`,
+    [recetaId]
+  );
+}
+
 async function ensureLoteWithSufficientPortions(
   context: SeedContext,
   iteration: number
@@ -956,26 +986,45 @@ async function ensureLoteWithSufficientPortions(
   context.setAccessToken(token);
 
   try {
-    const payload: Record<string, unknown> = {
-      recetaId,
-      cantidadProducida: 10,
-    };
-    if (ubicacionId) {
-      payload.ubicacionDestinoId = ubicacionId;
-    }
+    await bumpInventarioForRecetaIngredients(recetaId);
 
-    const response = await context.requestJson<any>('/produccion/ejecutar', {
-      method: 'POST',
-      body: payload,
-      auth: true,
-    });
+    const cantidadesIntento = [10, 5, 1];
+    let response: unknown;
+    for (let i = 0; i < cantidadesIntento.length; i++) {
+      const cantidadProducida = cantidadesIntento[i];
+      const payload: Record<string, unknown> = {
+        recetaId,
+        cantidadProducida,
+      };
+      if (ubicacionId) {
+        payload.ubicacionDestinoId = ubicacionId;
+      }
+      try {
+        response = await context.requestJson<any>('/produccion/ejecutar', {
+          method: 'POST',
+          body: payload,
+          auth: true,
+        });
+        break;
+      } catch (err) {
+        const msg = String(err instanceof Error ? err.message : err);
+        if (
+          msg.includes('Stock insuficiente') &&
+          i < cantidadesIntento.length - 1
+        ) {
+          continue;
+        }
+        throw err;
+      }
+    }
 
     collectStateFromResponse(context, '/produccion/ejecutar', response);
     const newLoteId = extractResourceId(response);
     if (newLoteId) {
       pushStateValue(context, 'seedCreatedProduccionLoteIds', newLoteId);
       pushStateValue(context, 'produccionLoteIds', newLoteId);
-      const porciones = Number(response?.porcionesRestantes ?? 10);
+      const respObj = response as { porcionesRestantes?: unknown };
+      const porciones = Number(respObj?.porcionesRestantes ?? 10);
       context.set('consumirMaxPorciones', porciones);
       context.set('seedConsumirTargetLoteId', newLoteId);
     }
@@ -1195,6 +1244,72 @@ async function ensurePendingPedidoUsuarioForUpdate(
   rememberPedidoUsuarioChildPedidos(context, pedidoUsuarioId, response);
 }
 
+/**
+ * Pone a 0 el stock de inventario de los ingredientes de las recetas sembradas,
+ * para que `from-missing-stock` pueda generar líneas (requerido > disponible).
+ */
+async function ensureInventarioBajoParaFaltantesDesdeRecetasSeed(
+  context: SeedContext
+): Promise<void> {
+  const merged = Array.from(
+    new Set(
+      [
+        ...getStateArray(context, 'seedCreatedRecetaIds'),
+        ...getStateArray(context, 'recetaIds'),
+      ].filter(
+        (id): id is string => typeof id === 'string' && id.trim().length > 0
+      )
+    )
+  );
+
+  let recetaIds = merged;
+  if (recetaIds.length === 0) {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    const rowsUnknown: unknown = await AppDataSource.query(
+      `SELECT id FROM receta WHERE deleted_at IS NULL ORDER BY created_at ASC LIMIT 8`
+    );
+    const parsed: string[] = [];
+    if (Array.isArray(rowsUnknown)) {
+      for (const row of rowsUnknown) {
+        if (typeof row === 'object' && row !== null && 'id' in row) {
+          const id = (row as { id: unknown }).id;
+          if (typeof id === 'string' && id.trim().length > 0) {
+            parsed.push(id);
+          }
+        }
+      }
+    }
+    recetaIds = parsed;
+  }
+
+  if (recetaIds.length === 0) {
+    return;
+  }
+
+  if (!AppDataSource.isInitialized) {
+    await AppDataSource.initialize();
+  }
+
+  await AppDataSource.query(
+    `UPDATE inventario AS i
+     SET cantidad_actual = 0
+     WHERE i.deleted_at IS NULL
+       AND EXISTS (
+         SELECT 1 FROM producto_proveedor pp
+         WHERE pp.id = i.producto_proveedor_id
+           AND pp.deleted_at IS NULL
+           AND pp.producto_id IN (
+             SELECT DISTINCT ri.producto_id
+             FROM receta_ingrediente ri
+             WHERE ri.receta_id = ANY($1::uuid[])
+           )
+       )`,
+    [recetaIds]
+  );
+}
+
 async function ensurePendingPedidoForUpdate(
   context: SeedContext,
   coverage: EnumCoverage,
@@ -1264,6 +1379,8 @@ async function ensurePendingPurchaseBatchForUpdate(
   if (hasCreatedPending || hasAnyPending) {
     return;
   }
+
+  await ensureInventarioBajoParaFaltantesDesdeRecetasSeed(context);
 
   const createEndpoint: Endpoint = {
     method: 'POST',
@@ -1984,6 +2101,12 @@ async function ensureDistribucionDisponibilidadBootstrap(
   collectStateFromResponse(context, '/recepciones', recepcionResponse);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureDistribucionDisponiblesPostRun(
   context: SeedContext,
   coverage: EnumCoverage
@@ -2194,7 +2317,7 @@ async function ensureIncidenciaStateSample(
     cursor
   );
 
-  if (targetEstado === 'nueva') {
+  if (targetEstado === 'abierta') {
     return incidenciaId;
   }
 
@@ -2205,19 +2328,21 @@ async function ensureIncidenciaStateSample(
   );
   const lineas = readIncidenciaLineas(incidenciaDetalle);
 
-  if (targetEstado === 'pendiente_validacion') {
+  if (targetEstado === 'en_proceso') {
     const ajustes = lineas
       .map((linea) => {
         const lineaId = toTrimmedSeedString(linea.id);
-        const cantidadEsperada = toSeedFiniteNumber(linea.cantidadEsperada);
+        const cantidadPedidaLinea =
+          toSeedFiniteNumber(linea.cantidadEsperada) ||
+          toSeedFiniteNumber(linea.cantidadPedida);
 
-        if (!lineaId || !Number.isFinite(cantidadEsperada)) {
+        if (!lineaId || !Number.isFinite(cantidadPedidaLinea)) {
           return null;
         }
 
         return {
           id: lineaId,
-          cantidadRecibida: Number(cantidadEsperada.toFixed(3)),
+          cantidadRecibida: Number(cantidadPedidaLinea.toFixed(3)),
         };
       })
       .filter(
@@ -2226,9 +2351,38 @@ async function ensureIncidenciaStateSample(
       );
 
     if (ajustes.length === 0) {
-      throw new Error(
-        `[seed-massive] Incidencia ${incidenciaId} sin líneas ajustables para estado pendiente_validacion`
+      const primeraLineaId = toTrimmedSeedString(lineas[0]?.id);
+      if (!primeraLineaId) {
+        throw new Error(
+          `[seed-massive] Incidencia ${incidenciaId} sin líneas para pasar a EN_PROCESO`
+        );
+      }
+
+      const responseReclamo = await context.requestJson<unknown>(
+        `/incidencias/${incidenciaId}/resolver`,
+        {
+          method: 'PATCH',
+          body: {
+            marcarComoResuelta: false,
+            lineas: [
+              {
+                id: primeraLineaId,
+                estadoReclamacion: 'RECLAMADO',
+              },
+            ],
+            observacionesResolucion:
+              'Seed cobertura en_proceso (reclamo línea)',
+          },
+          auth: true,
+          tokenOverride: token,
+        }
       );
+      collectStateFromResponse(
+        context,
+        `/incidencias/${incidenciaId}/resolver`,
+        responseReclamo
+      );
+      return incidenciaId;
     }
 
     const response = await context.requestJson<unknown>(
@@ -2238,7 +2392,8 @@ async function ensureIncidenciaStateSample(
         body: {
           marcarComoResuelta: false,
           lineas: ajustes,
-          observacionesResolucion: 'Seed cobertura estado pendiente_validacion',
+          observacionesResolucion:
+            'Seed cobertura en_proceso (ajuste cantidades)',
         },
         auth: true,
         tokenOverride: token,
@@ -2252,27 +2407,16 @@ async function ensureIncidenciaStateSample(
     return incidenciaId;
   }
 
-  if (targetEstado === 'en_ajuste') {
-    const primeraLineaId = toTrimmedSeedString(lineas[0]?.id);
-    if (!primeraLineaId) {
-      throw new Error(
-        `[seed-massive] Incidencia ${incidenciaId} sin línea válida para estado en_ajuste`
-      );
-    }
-
+  if (targetEstado === 'resuelta') {
     const response = await context.requestJson<unknown>(
       `/incidencias/${incidenciaId}/resolver`,
       {
         method: 'PATCH',
         body: {
-          marcarComoResuelta: false,
-          lineas: [
-            {
-              id: primeraLineaId,
-              estadoReclamacion: 'RECLAMADO',
-            },
-          ],
-          observacionesResolucion: 'Seed cobertura estado en_ajuste',
+          usuarioId,
+          marcarComoResuelta: true,
+          estadoFinal: 'resuelta',
+          observacionesResolucion: 'Seed cobertura estado resuelta',
         },
         auth: true,
         tokenOverride: token,
@@ -2286,35 +2430,16 @@ async function ensureIncidenciaStateSample(
     return incidenciaId;
   }
 
-  const estadoFinal =
-    targetEstado === 'cancelada'
-      ? 'cancelada'
-      : targetEstado === 'invalida'
-        ? 'invalida'
-        : 'resuelta';
-
-  const response = await context.requestJson<unknown>(
-    `/incidencias/${incidenciaId}/resolver`,
-    {
-      method: 'PATCH',
-      body: {
-        usuarioId,
-        marcarComoResuelta: true,
-        estadoFinal,
-        observacionesResolucion: `Seed cobertura estado ${estadoFinal}`,
-      },
-      auth: true,
-      tokenOverride: token,
-    }
+  throw new Error(
+    `[seed-massive] Estado de incidencia no soportado en post-run: ${targetEstado}`
   );
-  collectStateFromResponse(
-    context,
-    `/incidencias/${incidenciaId}/resolver`,
-    response
-  );
-  return incidenciaId;
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureIncidenciaEstadosPostRun(
   context: SeedContext
 ): Promise<void> {
@@ -2631,6 +2756,15 @@ async function ensureDistribucionOriginStockForConfirm(
   pushStateValue(context, 'seedDistribucionStockReadyIds', distribucionId);
 }
 
+/**
+ * Expone "executeAdminFocusEndpointRequest" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {string} resolvedPath - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<RequestResult>} Datos efectivos después de ejecutar la operación.
+ */
 export async function executeAdminFocusEndpointRequest(
   context: SeedContext,
   endpoint: Endpoint,
@@ -2715,7 +2849,8 @@ export async function executeAdminFocusEndpointRequest(
       resourceId: extractResourceId(response),
     };
   } catch (error) {
-    const statusCode = context.getLastResponseStatusCode();
+    const statusCode =
+      error instanceof HttpSeedRequestError ? error.status : undefined;
     const errorMessage = String(error instanceof Error ? error.message : error);
     return {
       ok: false,
@@ -2731,6 +2866,14 @@ export async function executeAdminFocusEndpointRequest(
   }
 }
 
+/**
+ * Expone "executeEndpointRequest" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<RequestResult>} Datos efectivos después de ejecutar la operación.
+ */
 export async function executeEndpointRequest(
   context: SeedContext,
   endpoint: Endpoint,
@@ -2811,6 +2954,13 @@ export async function executeEndpointRequest(
     await ensureDeletableProveedor(context, coverage, iteration);
   }
 
+  if (
+    endpoint.method === 'POST' &&
+    endpoint.path === '/proveedor/:id/restore'
+  ) {
+    await ensureSoftDeletedProveedorForRestore(context, coverage, iteration);
+  }
+
   if (endpoint.method === 'DELETE' && endpoint.path === '/productos/:id') {
     await ensureDeletableProducto(context, coverage, iteration);
   }
@@ -2832,6 +2982,14 @@ export async function executeEndpointRequest(
     endpoint.path === '/producto-alergenos/:idProducto/:alergeno'
   ) {
     await ensureDeletableProductoAlergenoResource(context, iteration);
+  }
+
+  if (
+    endpoint.method === 'POST' &&
+    (endpoint.path === '/pedido-usuarios/from-missing-stock' ||
+      endpoint.path === '/purchase-batches/from-missing-stock')
+  ) {
+    await ensureInventarioBajoParaFaltantesDesdeRecetasSeed(context);
   }
 
   if (endpoint.method === 'POST' && endpoint.path === '/productos') {
@@ -3309,9 +3467,7 @@ export async function executeEndpointRequest(
     };
   } catch (error) {
     const statusCode =
-      error instanceof HttpSeedRequestError
-        ? error.status
-        : context.getLastResponseStatusCode();
+      error instanceof HttpSeedRequestError ? error.status : undefined;
 
     return {
       ok: false,

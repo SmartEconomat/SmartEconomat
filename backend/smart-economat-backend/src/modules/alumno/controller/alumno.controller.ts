@@ -19,17 +19,24 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para alumno.
  */
 @Controller('alumnos')
 export class AlumnoController {
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param private readonly alumnoService Parámetro de entrada para la operación.
    */
   constructor(private readonly alumnoService: AlumnoService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Registra manejadores IPC, rutas Nest o integraciones equivalentes según contexto.
+   * @undefined {RegisterAlumnoDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; username: string; status: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus; message: string; }>} Datos efectivos después de ejecutar la operación.
    */
   @Post('register')
   @Public()
@@ -38,7 +45,12 @@ export class AlumnoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} codigoClase - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ codigoClase: string | undefined; aula: string; numeroClase: number; profesor: string; cialProfesor: string; }>} Datos efectivos después de ejecutar la operación.
    */
   @Get('slots/:codigoClase')
   @Public()
@@ -47,7 +59,11 @@ export class AlumnoController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene aulas.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<string[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('aulas')
   @Public()
@@ -56,7 +72,12 @@ export class AlumnoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} aula - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<number[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('aulas/:aula/clases')
   @Public()
@@ -65,7 +86,13 @@ export class AlumnoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} aula - Entrada efectiva esperada por el contrato.
+   * @undefined {string} clase - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ cial: string; nombre: string; codigoSlot: string | undefined; }[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('aulas/:aula/clases/:clase/profesores')
   @Public()
@@ -77,7 +104,14 @@ export class AlumnoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "changeProfesor" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {rolUsuario} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {ChangeProfesorDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; }>} Datos efectivos después de ejecutar la operación.
    */
   @Patch('change-profesor')
   @UseGuards(JwtAuthGuard, PermisosGuard)

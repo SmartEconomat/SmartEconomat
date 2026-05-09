@@ -42,71 +42,87 @@ import {
 } from '../../services/recepcion.types';
 
 /**
- * Documentación en español.
+ * Propiedades para el componente PasoEscaneo.
  */
 interface PasoEscaneoProps {
   /**
-   * Documentación en español.
+  /**
+   * Referencia al input de búsqueda para gestión de foco.
    */
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   /**
-   * Documentación en español.
+  /**
+   * Texto de búsqueda actual (EAN o nombre).
    */
   searchQuery: string;
   /**
-   * Documentación en español.
+  /**
+   * Función para actualizar el texto de búsqueda.
    */
   setSearchQuery: (query: string) => void;
   /**
-   * Documentación en español.
+  /**
+   * Callback para iniciar la búsqueda de un producto.
    */
   onSearch: (query?: string | unknown) => void;
   /**
-   * Documentación en español.
+  /**
+   * Indica si hay una búsqueda en curso.
    */
   searching: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Indica si el navegador soporta Web Serial API para la báscula.
    */
   isScaleSupported: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Indica si hay una báscula físicamente conectada y reconocida.
    */
   isScaleConnected: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Indica si la integración con báscula está habilitada por el usuario.
    */
   isScaleEnabled: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Función para alternar el uso de la báscula.
    */
   setIsScaleEnabled: (enabled: boolean) => void;
   /**
-   * Documentación en español.
+  /**
+   * Indica si la báscula está realizando una lectura.
    */
   isScaleBusy: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Callback para solicitar permisos de acceso al puerto serie.
    */
   onRequestScaleAccess: () => void;
   /**
-   * Documentación en español.
+  /**
+   * Estado actual del borrador de recepción.
    */
   draft: RecepcionDraft;
   /**
-   * Documentación en español.
+  /**
+   * Función para actualizar el borrador.
    */
   setDraft: React.Dispatch<React.SetStateAction<RecepcionDraft>>;
   /**
-   * Documentación en español.
+  /**
+   * ID del panel expandido.
    */
   expandedPanel: string | false;
   /**
-   * Documentación en español.
+  /**
+   * Función para cambiar el panel expandido.
    */
   setExpandedPanel: (panel: string | false) => void;
   /**
-   * Documentación en español.
+  /**
+   * Callback para actualizar una línea de producto.
    */
   onUpdateLinea: (
     pIdx: number | null,
@@ -115,38 +131,22 @@ interface PasoEscaneoProps {
     value: string | number | boolean | undefined
   ) => void;
   /**
-   * Documentación en español.
+  /**
+   * Determina si una unidad de medida es pesable.
    */
   isWeightUnit: (u: string | undefined) => boolean;
   /**
-   * Documentación en español.
+  /**
+   * Abre la interfaz de pesaje para una línea específica.
    */
   onOpenWeightScale: (pIdx: number | null, lIdx: number) => void;
 }
 
-/**
- * Documentación en español.
- */
-const handleNumberInputKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-  if (['e', 'E', '+', '-'].includes(e.key)) {
-    e.preventDefault();
-  }
-};
+import { normalizeNumericInput } from '../../utils/numberUtils';
 
 /**
- * Documentación en español.
- */
-const formatNumberInput = (value: string) => {
-  let val = value.replace(/-/g, ''); // Fix against pasting negative numbers
-  if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) {
-    val = val.replace(/^0+/, '');
-    if (val === '') val = '0';
-  }
-  return val;
-};
-
-/**
- * Documentación en español.
+ * Paso del wizard de recepción encargado del escaneo de productos y registro de cantidades.
+ * Soporta entrada manual, escaneo de cámara e integración directa con básculas industriales.
  */
 const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   searchInputRef,
@@ -172,7 +172,8 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
   const [scannerOpen, setScannerOpen] = React.useState(false);
 
   /**
-   * Documentación en español.
+   * Gestiona el resultado de un escaneo de código de barras.
+   * @param {string} code - Código detectado
    */
   const handleBarcodeScan = (code: string) => {
     setSearchQuery(code);
@@ -478,16 +479,15 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                       <TableCell align="right">{l.cantidadPedida}</TableCell>
                       <TableCell align="right">
                         <TextField
-                          type="number"
+                          type="text"
                           size="small"
                           value={l.cantidadAlbaran}
-                          onKeyDown={handleNumberInputKeyDown}
                           onChange={(e) =>
                             onUpdateLinea(
                               pIdx,
                               lIdx,
                               'cantidadAlbaran',
-                              formatNumberInput(e.target.value)
+                              normalizeNumericInput(e.target.value)
                             )
                           }
                           InputProps={{
@@ -545,14 +545,17 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                       </TableCell>
                       <TableCell align="right">
                         <TextField
-                          type="number"
+                          type="text"
                           size="small"
                           InputProps={{
                             readOnly:
                               isWeightUnit(l.unidad) &&
                               isScaleConnected &&
                               isScaleEnabled,
-                            inputProps: { min: 0 },
+                            inputProps: {
+                              inputMode: 'decimal',
+                              pattern: '[0-9]*[.,]?[0-9]*',
+                            },
                             endAdornment: (
                               <InputAdornment position="end">
                                 <IconButton
@@ -583,13 +586,12 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                               onOpenWeightScale(pIdx, lIdx);
                             }
                           }}
-                          onKeyDown={handleNumberInputKeyDown}
                           onChange={(e) =>
                             onUpdateLinea(
                               pIdx,
                               lIdx,
                               'cantidadRecibida',
-                              formatNumberInput(e.target.value)
+                              normalizeNumericInput(e.target.value)
                             )
                           }
                           sx={{
@@ -740,20 +742,22 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                     </TableCell>
                     <TableCell align="right">
                       <TextField
-                        type="number"
+                        type="text"
                         size="small"
                         value={l.cantidadAlbaran}
-                        onKeyDown={handleNumberInputKeyDown}
                         onChange={(e) =>
                           onUpdateLinea(
                             null,
                             lIdx,
                             'cantidadAlbaran',
-                            formatNumberInput(e.target.value)
+                            normalizeNumericInput(e.target.value)
                           )
                         }
                         InputProps={{
-                          inputProps: { min: 0 },
+                          inputProps: {
+                            inputMode: 'decimal',
+                            pattern: '[0-9]*[.,]?[0-9]*',
+                          },
                           startAdornment:
                             l.cantidadAlbaran !== '' &&
                             l.cantidadAlbaran != null ? (
@@ -788,14 +792,17 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                     </TableCell>
                     <TableCell align="right">
                       <TextField
-                        type="number"
+                        type="text"
                         size="small"
                         InputProps={{
                           readOnly:
                             isWeightUnit(l.unidad) &&
                             isScaleConnected &&
                             isScaleEnabled,
-                          inputProps: { min: 0 },
+                          inputProps: {
+                            inputMode: 'decimal',
+                            pattern: '[0-9]*[.,]?[0-9]*',
+                          },
                           endAdornment: (
                             <InputAdornment position="end">
                               <IconButton
@@ -826,13 +833,12 @@ const PasoEscaneo: React.FC<PasoEscaneoProps> = ({
                             onOpenWeightScale(null, lIdx);
                           }
                         }}
-                        onKeyDown={handleNumberInputKeyDown}
                         onChange={(e) =>
                           onUpdateLinea(
                             null,
                             lIdx,
                             'cantidadRecibida',
-                            formatNumberInput(e.target.value)
+                            normalizeNumericInput(e.target.value)
                           )
                         }
                         sx={{

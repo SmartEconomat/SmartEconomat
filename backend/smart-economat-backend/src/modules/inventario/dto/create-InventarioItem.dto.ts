@@ -10,6 +10,7 @@ import {
 import { Type, Transform } from 'class-transformer';
 import { StringToDateTransformer } from '../../../common/transformers/string-to-date.transformer';
 
+/** Clase pública (CreateInventarioItemDto). Paquete: smart-economat-backend (Nest). */
 export class CreateInventarioItemDto {
   @IsUUID('all', {
     message: i18nValidationMessage(
@@ -72,17 +73,13 @@ export class CreateInventarioItemDto {
   })
   cantidadMaxima?: number;
 
+  @IsOptional()
   @IsUUID('all', {
     message: i18nValidationMessage(
       'validation.EL_ID_DE_LA_UBICACI_N_DEBE_SER_UN_UUID_V'
     ),
   })
-  @IsNotEmpty({
-    message: i18nValidationMessage(
-      'validation.EL_ID_DE_LA_UBICACI_N_ES_OBLIGATORIO'
-    ),
-  })
-  ubicacionId: string;
+  ubicacionId?: string | null;
 
   @IsOptional()
   @Transform((params) => StringToDateTransformer.transform(params))

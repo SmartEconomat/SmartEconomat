@@ -1,5 +1,6 @@
 import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
+/** Clase pública (UpdateAdminUserRoleDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateAdminUserRoleDto {
   @IsUUID()
   @IsNotEmpty()

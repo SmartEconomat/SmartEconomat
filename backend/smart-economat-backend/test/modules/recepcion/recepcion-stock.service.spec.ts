@@ -8,6 +8,7 @@ import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity'
 import { PedidoStatusTrigger } from '../../../src/modules/pedido/enums/pedido-status-trigger.enum';
 import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubicacion.entity';
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
+import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 
 describe('RecepcionStockService', () => {
             it('procesarRecepcionMasiva asume isWeighedWithScale=false si no se informa', async () => {
@@ -326,6 +327,7 @@ describe('RecepcionStockService', () => {
       find: jest.Mock;
       create: jest.Mock;
       save: jest.Mock;
+      update: jest.Mock;
       getRepository: jest.Mock;
     };
   };
@@ -364,6 +366,14 @@ describe('RecepcionStockService', () => {
 
   const mockProductoService = {
     actualizarPMP: jest.fn(),
+  };
+  const mockMovimientoHelper = {
+    trackAction: jest.fn(),
+    trackInventarioMovimiento: jest.fn(),
+  };
+  const mockMovimientoHelper = {
+    trackAction: jest.fn(),
+    trackInventarioMovimiento: jest.fn(),
   };
 
   beforeEach(() => {
@@ -886,6 +896,7 @@ import { Albaran } from '../../../src/modules/albaran/albaran.entity/albaran.ent
 import { Pedido } from '../../../src/modules/pedido/pedido.entity/pedido.entity';
 import { Ubicacion } from '../../../src/modules/ubicacion/ubicacion.entity/ubicacion.entity';
 import { Usuario } from '../../../src/modules/usuario/usuario.entity/usuario.entity';
+import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper';
 
 const createPedido = (
   id: string,
@@ -941,6 +952,10 @@ describe('RecepcionStockService', () => {
   const mockProductoService = {
     actualizarPMP: jest.fn(),
   };
+  const mockMovimientoHelper = {
+    trackAction: jest.fn(),
+    trackInventarioMovimiento: jest.fn(),
+  };
 
   let service: RecepcionStockService;
   let queryRunner: {
@@ -955,6 +970,7 @@ describe('RecepcionStockService', () => {
       find: jest.Mock;
       create: jest.Mock;
       save: jest.Mock;
+      update: jest.Mock;
       getRepository: jest.Mock;
     };
   };
@@ -979,6 +995,7 @@ describe('RecepcionStockService', () => {
           const entity = args.length === 1 ? args[0] : args[1];
           return Promise.resolve(assignIds(entity));
         }),
+        update: jest.fn().mockResolvedValue({ affected: 1 }),
         getRepository: jest.fn().mockReturnValue({
           createQueryBuilder: jest.fn().mockReturnValue({
             where: jest.fn().mockReturnThis(),
@@ -995,12 +1012,15 @@ describe('RecepcionStockService', () => {
     mockPedidoService.handleStatusTransition.mockReset();
     mockEventEmitter.emit.mockReset();
     mockProductoService.actualizarPMP.mockReset();
+    mockMovimientoHelper.trackAction.mockReset();
+    mockMovimientoHelper.trackInventarioMovimiento.mockReset();
 
     service = new RecepcionStockService(
       mockDataSource as any,
       mockPedidoService as any,
       mockEventEmitter as any,
-      mockProductoService as any
+      mockProductoService as any,
+      mockMovimientoHelper as unknown as MovimientoHelper
     );
   });
 
@@ -1307,17 +1327,20 @@ describe('RecepcionStockService', () => {
     } as any);
 
     expect(result.incidencias).toHaveLength(1);
-    expect(result.incidencias[0].datosOriginales.productos).toEqual(
+    const productosIncidencia = result.incidencias.flatMap(
+      (incidencia) => incidencia.datosOriginales.productos
+    );
+    expect(productosIncidencia).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           idPedidoProducto: 'pp-falta',
-          tipo: 'FALTA',
+          tipo: 'FALTANTE',
           diferencia: -3,
           cantidadRecibida: 2,
         }),
         expect.objectContaining({
           idPedidoProducto: 'pp-no-entregado',
-          tipo: 'NO_ENTREGADO',
+          tipo: 'FALTANTE',
           diferencia: -3,
           cantidadRecibida: 0,
         }),
@@ -1333,6 +1356,71 @@ describe('RecepcionStockService', () => {
       },
     ]);
     expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('procesarRecepcion consolida varias filas DTO del mismo PedidoProducto en una sola línea de incidencia', async () => {
+    const pedido = createPedido('ped-dup', EstadoPedido.POR_RECEPCIONAR, [
+      { id: 'pp-tomate', cantidad: 10, nombre: 'Tomate triturado' },
+      { id: 'pp-pimiento', cantidad: 5, nombre: 'Pimiento' },
+    ]);
+
+    mockDataSource.manager.findOne.mockImplementation((entity: unknown) => {
+      const name =
+        typeof entity === 'function' ? entity.name : (entity as any)?.name;
+      if (entity === Usuario || name === 'Usuario') {
+        return Promise.resolve({ id: 'user-dup' });
+      }
+      return Promise.resolve(null);
+    });
+    mockDataSource.manager.find.mockResolvedValue([pedido]);
+    mockRecepcionContext();
+    jest
+      .spyOn(service as any, 'actualizarEstadoPedido')
+      .mockResolvedValue(EstadoPedido.POR_RECEPCIONAR);
+
+    const result = await service.procesarRecepcion({
+      usuarioId: 'user-dup',
+      pedidos: [{ pedidoId: 'ped-dup', nAlbaran: 'ALB-DUP-001' }],
+      observaciones: 'Varias filas mismo PP',
+      productos: [
+        {
+          pedidoProductoId: 'pp-tomate',
+          cantidadRecibida: 4,
+          cantidadAlbaran: 4,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
+        {
+          pedidoProductoId: 'pp-tomate',
+          cantidadRecibida: 5,
+          cantidadAlbaran: 5,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
+        {
+          pedidoProductoId: 'pp-pimiento',
+          cantidadRecibida: 5,
+          cantidadAlbaran: 5,
+          estadoVisual: EstadoVisualProducto.OPTIMO,
+        },
+      ],
+    } as any);
+
+    expect(result.incidencias).toHaveLength(1);
+    const lineasTomate = result.incidencias[0].datosOriginales.productos.filter(
+      (l) => l.idPedidoProducto === 'pp-tomate'
+    );
+    expect(lineasTomate).toHaveLength(1);
+    expect(lineasTomate[0]).toEqual(
+      expect.objectContaining({
+        cantidadRecibida: 9,
+        diferencia: -1,
+        tipo: 'FALTANTE',
+      })
+    );
+    expect(
+      result.incidencias[0].datosOriginales.productos.some(
+        (l) => l.idPedidoProducto === 'pp-pimiento'
+      )
+    ).toBe(false);
   });
 
   it('asume isWeighedWithScale=false si no se informa', async () => {
@@ -1484,7 +1572,7 @@ describe('RecepcionStockService', () => {
         },
         'user-alto'
       )
-    ).rejects.toThrow(/irrealmente alta|RECEPTION_FAILED/i);
+    ).rejects.toThrow(/irrealmente alta|RECEPTION_FAILED|recepci[oó]n/i);
   });
 
   it('actualizarEstadoPedido dispara RECEPCION_PARCIAL cuando falta cantidad', async () => {

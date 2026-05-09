@@ -6,6 +6,7 @@ const PROVEEDORES_MAX_LIMIT = 50;
 
 type ProviderSortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
 
+/** Contrato de tipos público (ProveedorPayloadFields). Contexto: smart-economat-frontend (SPA). */
 export interface ProveedorPayloadFields {
   nombre?: string;
   contacto?: string;
@@ -15,11 +16,13 @@ export interface ProveedorPayloadFields {
   nif?: string;
 }
 
+/** Alias público (CreateProveedorPayload) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type CreateProveedorPayload = Required<
   Pick<ProveedorPayloadFields, 'nombre'>
 > &
   Omit<ProveedorPayloadFields, 'nombre'>;
 
+/** Alias público (UpdateProveedorPayload) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type UpdateProveedorPayload = ProveedorPayloadFields;
 
 function normalizeProveedorField(value: unknown): string | undefined {
@@ -83,14 +86,25 @@ function normalizeProviderSortOrder(
 }
 
 /**
- * Documentación en español.
+ * Recupera una lista paginada de proveedores registrados.
+ */
+/**
+ * Expone "fetchProveedores" en smart-economat-frontend (SPA).
+ * @undefined {number} page - Entrada efectiva esperada por el contrato.
+ * @undefined {number} limit - Entrada efectiva esperada por el contrato.
+ * @undefined {string} search - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} sortBy - Entrada efectiva esperada por el contrato.
+ * @undefined {ProviderSortOrder | undefined} sortOrder - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean | undefined} includeDeleted - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Proveedor>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchProveedores(
   page: number = 1,
   limit: number = 10,
   search: string = '',
   sortBy?: string,
-  sortOrder?: ProviderSortOrder
+  sortOrder?: ProviderSortOrder,
+  includeDeleted?: boolean
 ): Promise<PaginatedData<Proveedor>> {
   const normalizedPage = normalizePageParam(page);
   const normalizedLimit = normalizeLimitParam(limit, 10, PROVEEDORES_MAX_LIMIT);
@@ -100,6 +114,7 @@ export async function fetchProveedores(
   });
   if (search) params.append('searchTerm', search);
   if (sortBy?.trim()) params.append('sortBy', sortBy.trim());
+  if (includeDeleted) params.append('includeDeleted', 'true');
 
   const normalizedOrder = normalizeProviderSortOrder(sortOrder);
   if (normalizedOrder) params.append('order', normalizedOrder);
@@ -115,7 +130,31 @@ export async function fetchProveedores(
 }
 
 /**
- * Documentación en español.
+ * Restaura un proveedor eliminado lógicamente.
+ * @param id UUID del proveedor.
+ * @returns El proveedor restaurado.
+ */
+export async function restoreProveedor(id: string): Promise<Proveedor> {
+  const response = await baseFetch(`/proveedor/${id}/restore`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message || `Error al restaurar proveedor: ${response.status}`
+    );
+  }
+  const body = (await response.json()) as ApiResponse<Proveedor>;
+  return body.data;
+}
+
+/**
+ * Crea un nuevo proveedor en el sistema.
+ */
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {CreateProveedorPayload} proveedor - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Proveedor>} Datos efectivos después de ejecutar la operación.
  */
 export async function createProveedor(
   proveedor: CreateProveedorPayload
@@ -137,7 +176,13 @@ export async function createProveedor(
 }
 
 /**
- * Documentación en español.
+ * Actualiza la información de contacto o fiscal de un proveedor.
+ */
+/**
+ * Persiste modificaciones válidas sobre entidades existentes.
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {ProveedorPayloadFields} proveedor - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Proveedor>} Datos efectivos después de ejecutar la operación.
  */
 export async function updateProveedor(
   id: string,
@@ -159,6 +204,10 @@ export async function updateProveedor(
   return body.data;
 }
 
+/**
+ * Expone "fetchProveedoresConPedidos" en smart-economat-frontend (SPA).
+ * @undefined {Promise<Proveedor[]>} Datos efectivos después de ejecutar la operación.
+ */
 export async function fetchProveedoresConPedidos(): Promise<Proveedor[]> {
   const response = await baseFetch('/proveedor/con-pedidos');
   if (!response.ok) {

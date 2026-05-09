@@ -10,7 +10,7 @@ interface AuthLogoProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AuthLogo: React.FC<AuthLogoProps> = ({ condensed = false }) => {
   const { currentThemeName } = useThemeContext();

@@ -5,6 +5,7 @@ import { expect, type Page } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Constantes exportadas (INSTALLER_BRIDGE_MOCK_PATH) compartidas por el instalador. */
 export const INSTALLER_BRIDGE_MOCK_PATH = path.join(
   __dirname,
   "..",
@@ -12,9 +13,7 @@ export const INSTALLER_BRIDGE_MOCK_PATH = path.join(
   "installer-bridge.mock.js",
 );
 
-/**
- * Documentación en español.
- */
+/** Recuentos de invocaciones al mock del bridge instalador durante E2E. */
 export type InstallerBridgeCallCounts = {
   runPreflight: number;
   startInstallation: number;
@@ -36,11 +35,21 @@ export type InstallerBridgeCallCounts = {
   runSupervisorRecovery: number;
 };
 
+/**
+ * Expone la operación "gotoInstallerWithMock" del instalador SmartEconomat.
+ * @param {Page} page - Entrada esperada por la función.
+ * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export async function gotoInstallerWithMock(page: Page): Promise<void> {
   await page.addInitScript({ path: INSTALLER_BRIDGE_MOCK_PATH });
   await page.goto("/");
 }
 
+/**
+ * Expone la operación "readBridgeCalls" del instalador SmartEconomat.
+ * @param {Page} page - Entrada esperada por la función.
+ * @returns {Promise<InstallerBridgeCallCounts | undefined>} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export async function readBridgeCalls(
   page: Page,
 ): Promise<InstallerBridgeCallCounts | undefined> {
@@ -52,7 +61,9 @@ export async function readBridgeCalls(
 }
 
 /**
- * Documentación en español.
+ * Expone la operación "navigateToConfigStep" del instalador SmartEconomat.
+ * @param {Page} page - Entrada esperada por la función.
+ * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
  */
 export async function navigateToConfigStep(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Iniciar instalación guiada" }).click();
@@ -78,7 +89,9 @@ export async function navigateToConfigStep(page: Page): Promise<void> {
 }
 
 /**
- * Documentación en español.
+ * Expone la operación "goToControlPanel" del instalador SmartEconomat.
+ * @param {Page} page - Entrada esperada por la función.
+ * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
  */
 export async function goToControlPanel(page: Page): Promise<void> {
   await expect(

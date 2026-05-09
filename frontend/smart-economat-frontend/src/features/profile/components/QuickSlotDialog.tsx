@@ -20,16 +20,15 @@ import {
   ProfesorInfo,
   AlumnoSlot,
 } from '../../../services/profesor.service';
-import type { Ubicacion } from '../../../services/ubicacion.types';
 import { useToast } from '../../../store/toast.hooks';
 import { useAuth } from '../../../store/auth.hooks';
+import { normalizeNumericInput } from '../../../utils/numberUtils';
 
 interface QuickSlotDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (newSlot: AlumnoSlot) => void;
   profesores: ProfesorInfo[];
-  ubicaciones: Ubicacion[];
 }
 
 const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
@@ -37,7 +36,6 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
   onClose,
   onSuccess,
   profesores,
-  ubicaciones,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -49,7 +47,6 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
     numeroClase: '1',
     capacidad: '30',
     profesorId: '',
-    ubicacionId: '',
   });
 
   // Intentar pre-seleccionar el profesor si el usuario actual es uno
@@ -84,7 +81,6 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
         numeroClase: Number(formData.numeroClase),
         capacidad: Number(formData.capacidad),
         profesorId: formData.profesorId,
-        ubicacionId: formData.ubicacionId || undefined,
       });
 
       if (res.success) {
@@ -96,7 +92,6 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
           numeroClase: '1',
           capacidad: '30',
           profesorId: '',
-          ubicacionId: '',
         });
       } else {
         toast.error(res.message || t('perfil.slot.errors.crear'));
@@ -132,9 +127,18 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
                 fullWidth
                 label={t('perfil.campoNumeroClase')}
                 name="numeroClase"
-                type="number"
+                type="text"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
                 value={formData.numeroClase}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    numeroClase: normalizeNumericInput(e.target.value),
+                  }));
+                }}
                 required
                 disabled={isSaving}
               />
@@ -144,9 +148,18 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
                 fullWidth
                 label={t('perfil.capacidadAlumnos')}
                 name="capacidad"
-                type="number"
+                type="text"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
                 value={formData.capacidad}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    capacidad: normalizeNumericInput(e.target.value),
+                  }));
+                }}
                 required
                 disabled={isSaving}
               />
@@ -172,35 +185,6 @@ const QuickSlotDialog: React.FC<QuickSlotDialogProps> = ({
                   {profesores.map((p) => (
                     <MenuItem key={p.id} value={p.id}>
                       {p.nombre || p.username || p.id}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth>
-                <InputLabel id="quick-slot-ubicacion-label">
-                  {t('perfil.ubicacionWarehouse')}
-                </InputLabel>
-                <Select
-                  labelId="quick-slot-ubicacion-label"
-                  label={t('perfil.ubicacionWarehouse')}
-                  name="ubicacionId"
-                  value={formData.ubicacionId}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      ubicacionId: e.target.value as string,
-                    }))
-                  }
-                  disabled={isSaving}
-                >
-                  <MenuItem value="">
-                    <em>{t('perfil.sinUbicacion')}</em>
-                  </MenuItem>
-                  {ubicaciones.map((u) => (
-                    <MenuItem key={u.id} value={u.id}>
-                      {u.nombre}
                     </MenuItem>
                   ))}
                 </Select>

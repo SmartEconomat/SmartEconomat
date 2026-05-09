@@ -10,7 +10,6 @@ import {
   Link,
   Button,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -53,11 +52,15 @@ import {
   formatLocalizedDate,
   formatLocalizedDateTime,
 } from '../utils/intlFormat';
+import { useDataTable } from '../hooks/useDataTable';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Formatea file size para su presentación.
+ *
+ * @param bytes Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 const formatFileSize = (bytes?: number): string => {
   if (!bytes) return '—';
@@ -79,7 +82,7 @@ interface ProductoAlbaranDetalle {
 // ─── Componente principal ────────────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AlbaranPage: React.FC = () => {
   const { t } = useTranslation();
@@ -88,7 +91,7 @@ const AlbaranPage: React.FC = () => {
   // ─── Esquema del formulario ────────────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const ALBARAN_FORM_FIELDS: DynamicField[] = [
     {
@@ -116,31 +119,40 @@ const AlbaranPage: React.FC = () => {
     },
   ];
 
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'fecha',
+    order: 'desc',
+  });
+
   // Paginación y datos
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [data, setData] = useState<Albaran[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Búsqueda y filtros
-  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<AlbaranFiltersState>({
     concordancia: null,
     startDate: null,
     endDate: null,
   });
 
-  // Modales
   const [itemToView, setItemToView] = useState<Albaran | null>(null);
   const [itemToEdit, setItemToEdit] = useState<Albaran | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Albaran | null>(null);
   const [itemToUpload, setItemToUpload] = useState<Albaran | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Estados de carga de operaciones
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -154,29 +166,29 @@ const AlbaranPage: React.FC = () => {
   // ─── Carga de datos ──────────────────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const params: AlbaranQueryParams = {
-        page,
-        limit: pageSize,
-        searchTerm: searchTerm || undefined,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        searchTerm: queryParams.searchTerm,
       };
       const result = await fetchAlbaranes(params);
       setData(result.data);
-      setTotalItems(result.total);
-      setTotalPages(result.totalPages);
+      syncPaginationFromResponse(result);
     } catch (err: unknown) {
+      syncPaginationFromResponse({ total: 0, data: [] });
       const message =
         err instanceof Error ? err.message : t('albaran.errors.cargar');
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchTerm, t]);
+  }, [queryParams, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
@@ -186,7 +198,7 @@ const AlbaranPage: React.FC = () => {
   // El backend no implementa estos filtros, se aplican sobre la página actual.
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const filteredData = useMemo(() => {
     let result = data;
@@ -212,7 +224,7 @@ const AlbaranPage: React.FC = () => {
   // ─── Handlers de CRUD ───────────────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Gestiona open create y aplica la lógica correspondiente.
    */
   const handleOpenCreate = () => {
     setItemToEdit(null);
@@ -220,7 +232,9 @@ const AlbaranPage: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona open edit y aplica la lógica correspondiente.
+   *
+   * @param albaran Parámetro de entrada para la operación.
    */
   const handleOpenEdit = (albaran: Albaran) => {
     setItemToEdit(albaran);
@@ -228,7 +242,9 @@ const AlbaranPage: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona open view y aplica la lógica correspondiente.
+   *
+   * @param albaran Parámetro de entrada para la operación.
    */
   const handleOpenView = async (albaran: Albaran) => {
     if (!canView) {
@@ -248,7 +264,9 @@ const AlbaranPage: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona form submit y aplica la lógica correspondiente.
+   *
+   * @param formData Parámetro de entrada para la operación.
    */
   const handleFormSubmit = async (formData: Record<string, unknown>) => {
     setIsSubmitting(true);
@@ -294,7 +312,7 @@ const AlbaranPage: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona delete y aplica la lógica correspondiente.
    */
   const handleDelete = async () => {
     if (!itemToDelete) return;
@@ -314,7 +332,7 @@ const AlbaranPage: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const handleUploadDocumento = async (
     file: File,
@@ -345,7 +363,7 @@ const AlbaranPage: React.FC = () => {
   // ─── Datos iniciales del formulario de edición ───────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const formInitialData = useMemo(() => {
     if (!itemToEdit) return {};
@@ -369,7 +387,7 @@ const AlbaranPage: React.FC = () => {
     const recepcionesPorId = new Map<string, AlbaranRecepcion>();
 
     for (const apr of itemToView.albaranPedidoRecepcion) {
-      const recepcion = apr.recepcionPedido?.recepcion;
+      const recepcion = apr.recepcion?.recepcion;
       if (recepcion?.id && !recepcionesPorId.has(recepcion.id)) {
         recepcionesPorId.set(recepcion.id, recepcion);
       }
@@ -405,7 +423,7 @@ const AlbaranPage: React.FC = () => {
   // ─── Columnas de la tabla ────────────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const columns: Column<Albaran>[] = useMemo(
     () => [
@@ -418,12 +436,14 @@ const AlbaranPage: React.FC = () => {
           </Typography>
         ),
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'fecha',
         label: t('albaran.columns.fecha'),
         render: (row) => (row.fecha ? formatLocalizedDate(row.fecha) : '—'),
         sortable: true,
+        sortType: 'date',
       },
       {
         id: 'concordancia',
@@ -488,7 +508,9 @@ const AlbaranPage: React.FC = () => {
   // ─── Acciones por fila ───────────────────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de render actions dentro del flujo de la aplicación.
+   *
+   * @param row Parámetro de entrada para la operación.
    */
   const renderActions = (row: Albaran) => (
     <Stack
@@ -497,27 +519,14 @@ const AlbaranPage: React.FC = () => {
       sx={{ minWidth: 160, justifyContent: 'flex-start' }}
     >
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title={t('albaran.actions.verDetalle')}>
-          <IconButton
-            color="primary"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              void handleOpenView(row);
-            }}
-            size="small"
-            id="btn-albaran-view"
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.documentoUrl && canCreate && (
           <Tooltip title={t('albaran.actions.subirDocumento')}>
             <IconButton
               color="info"
-              onClick={() => setItemToUpload(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setItemToUpload(row);
+              }}
               size="small"
               id="btn-albaran-upload"
             >
@@ -532,7 +541,10 @@ const AlbaranPage: React.FC = () => {
           <Tooltip title={t('albaran.actions.editar')}>
             <IconButton
               color="secondary"
-              onClick={() => handleOpenEdit(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenEdit(row);
+              }}
               size="small"
               id="btn-albaran-edit"
             >
@@ -547,7 +559,10 @@ const AlbaranPage: React.FC = () => {
           <Tooltip title={t('albaran.actions.eliminar')}>
             <IconButton
               color="error"
-              onClick={() => setItemToDelete(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setItemToDelete(row);
+              }}
               size="small"
               id="btn-albaran-delete"
             >
@@ -562,7 +577,7 @@ const AlbaranPage: React.FC = () => {
   // ─── Secciones del modal de detalle ─────────────────────────────────────
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const detailSections = useMemo(() => {
     if (!itemToView) return [];
@@ -674,10 +689,7 @@ const AlbaranPage: React.FC = () => {
         totalItems={totalItems}
         totalItemsLabel={t('albaran.totalItemsLabel')}
         searchValue={searchTerm}
-        onSearchChange={(v) => {
-          setSearchTerm(v);
-          setPage(1);
-        }}
+        onSearchChange={onSearchChange}
         searchPlaceholder={t('albaran.buscar')}
         primaryAction={
           canCreate
@@ -694,7 +706,7 @@ const AlbaranPage: React.FC = () => {
             filters={filters}
             onChange={(newFilters) => {
               setFilters(newFilters);
-              setPage(1);
+              onPageChange(null, 1);
             }}
           />
         }
@@ -702,7 +714,7 @@ const AlbaranPage: React.FC = () => {
       />
 
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {error && (
+        {!isLoading && error && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
@@ -714,6 +726,15 @@ const AlbaranPage: React.FC = () => {
           data={filteredData}
           isLoading={isLoading}
           renderActions={renderActions}
+          onRowClick={handleOpenView}
+          onSort={onSort}
+          sortConfig={sortConfig}
+          filters={tableFilters}
+          onFilter={onFilter}
+          pagination={paginationProps}
+          getRowAriaLabel={(row: Albaran) =>
+            t('albaran.actions.ariaVerDetalle', { id: row.id })
+          }
           emptyStateMessage={
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <AssignmentOutlinedIcon
@@ -733,16 +754,6 @@ const AlbaranPage: React.FC = () => {
               </Typography>
             </Box>
           }
-          pagination={{
-            currentPage: page,
-            totalPages: totalPages,
-            onPageChange: (_, p) => setPage(p),
-            pageSize: pageSize,
-            onPageSizeChange: (e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            },
-          }}
         />
       </Paper>
 

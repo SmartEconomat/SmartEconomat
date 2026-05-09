@@ -28,7 +28,12 @@ import {
 import { isPedidoUsuarioRow } from './pedidoOwnOrders';
 
 /**
- * Documentación en español.
+ * Construye pedido columns a partir de los parámetros recibidos.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone "buildPedidoColumns" en smart-economat-frontend (SPA).
+ * @undefined {Column<PedidoListItem>[]} Datos efectivos después de ejecutar la operación.
  */
 export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
   {
@@ -67,7 +72,12 @@ export const buildPedidoColumns = (): Column<PedidoListItem>[] => [
 ];
 
 /**
- * Documentación en español.
+ * Construye batch columns a partir de los parámetros recibidos.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone "buildBatchColumns" en smart-economat-frontend (SPA).
+ * @undefined {Column<PurchaseBatch>[]} Datos efectivos después de ejecutar la operación.
  */
 export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
   {
@@ -99,7 +109,14 @@ export const buildBatchColumns = (): Column<PurchaseBatch>[] => [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Renderiza un árbol React o valores serializados a salida estable.
+ * @undefined {PedidoListItem} row - Entrada efectiva esperada por el contrato.
+ * @undefined {PedidoPermissions} permissions - Entrada efectiva esperada por el contrato.
+ * @undefined {PedidoActionHandlers} handlers - Entrada efectiva esperada por el contrato.
+ * @undefined {React.ReactNode} Datos efectivos después de ejecutar la operación.
  */
 export const renderPedidoActions = (
   row: PedidoListItem,
@@ -179,7 +196,13 @@ export const renderPedidoActions = (
   );
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Renderiza un árbol React o valores serializados a salida estable.
+ * @undefined {PurchaseBatch} row - Entrada efectiva esperada por el contrato.
+ * @undefined {PurchaseBatchActionHandlers} handlers - Entrada efectiva esperada por el contrato.
+ * @undefined {React.ReactNode} Datos efectivos después de ejecutar la operación.
  */
 export const renderBatchActions = (
   row: PurchaseBatch,

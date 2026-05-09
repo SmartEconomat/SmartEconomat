@@ -14,6 +14,7 @@ import { CreatePedidoLineDto } from './create-pedido-line.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
+/** Clase pública (CreatePedidoDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePedidoDto {
   @ApiProperty({
     description: 'ID del proveedor',

@@ -36,7 +36,7 @@ import Input from '../components/ui/Input';
 import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Perfil: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -73,7 +73,7 @@ const Perfil: React.FC = () => {
   const isInitialized = useRef(false);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   useEffect(() => {
     const loadInitialData = async () => {
@@ -87,36 +87,33 @@ const Perfil: React.FC = () => {
           idioma: user.idioma || 'es',
         });
         isInitialized.current = true;
-        return;
-      }
+      } else {
+        setIsLoading(true);
+        try {
+          const updatedUser = await refreshUser();
 
-      setIsLoading(true);
-      try {
-        const updatedUser = await refreshUser();
+          if (updatedUser) {
+            setProfileData({
+              username: updatedUser.username || updatedUser.name,
+              email: updatedUser.email,
+              usernameAlias: updatedUser.username || '',
+              idioma: updatedUser.idioma || 'es',
+            });
+          }
+        } catch (err) {
+          console.error('Error loading profile data', err);
 
-        if (!updatedUser) {
-          return;
+          if (fallbackUser) {
+            setProfileData({
+              username: fallbackUser.username || fallbackUser.name,
+              email: fallbackUser.email,
+              usernameAlias: fallbackUser.username || '',
+              idioma: fallbackUser.idioma || 'es',
+            });
+          }
+        } finally {
+          setIsLoading(false);
         }
-
-        setProfileData({
-          username: updatedUser.username || updatedUser.name,
-          email: updatedUser.email,
-          usernameAlias: updatedUser.username || '',
-          idioma: updatedUser.idioma || 'es',
-        });
-      } catch (err) {
-        console.error('Error loading profile data', err);
-
-        if (fallbackUser) {
-          setProfileData({
-            username: fallbackUser.username || fallbackUser.name,
-            email: fallbackUser.email,
-            usernameAlias: fallbackUser.username || '',
-            idioma: fallbackUser.idioma || 'es',
-          });
-        }
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -127,7 +124,7 @@ const Perfil: React.FC = () => {
   }, [refreshUser, user]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const handleProfileChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
@@ -139,14 +136,16 @@ const Perfil: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona password change y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación.
    */
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   /**
-   * Documentación en español.
+   * Gestiona profile save y aplica la lógica correspondiente.
    */
   const handleProfileSave = async () => {
     setIsSaving(true);
@@ -198,9 +197,6 @@ const Perfil: React.FC = () => {
     }
   };
 
-  /**
-   * Documentación en español.
-   */
   const handleProfileCancel = () => {
     if (user) {
       setProfileData({
@@ -222,7 +218,7 @@ const Perfil: React.FC = () => {
   };
 
   /**
-   * Documentación en español.
+   * Gestiona submit email request y aplica la lógica correspondiente.
    */
   const handleSubmitEmailRequest = () => {
     const { newEmail, confirmNewEmail, justification } = emailRequest;

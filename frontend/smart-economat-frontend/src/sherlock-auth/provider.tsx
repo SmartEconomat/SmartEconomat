@@ -22,6 +22,13 @@ const isPublicAuthPath = (pathname: string) =>
   pathname === '/reset-password' ||
   pathname.startsWith('/reset-password/');
 
+/**
+ * Expone "AuthProvider" en smart-economat-frontend (SPA).
+ * @undefined {{ children: ReactNode; }} {
+ *   children,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -117,6 +124,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     [user]
   );
 
+  const updateUser = React.useCallback((data: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...data } : null));
+  }, []);
+
   const logout = React.useCallback(async () => {
     refreshPromiseRef.current = null;
     clearPersistedSessionArtifacts();
@@ -209,6 +220,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         login,
         logout,
         refreshUser,
+        updateUser,
         changeLanguage,
       }}
     >

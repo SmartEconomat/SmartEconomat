@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { SeedContext } from './seed-context';
 import { SeederI18nHelper } from '../common/helpers/seeder-i18n.helper';
@@ -7,6 +7,7 @@ import { Merma } from '../modules/merma/merma.entity/merma.entity';
 import { MotivoMerma } from '../modules/merma/enums/merma.enums';
 import { Producto } from '../modules/producto/producto.entity/producto.entity';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
+import type { DataSource } from 'typeorm';
 import {
   DETERMINISTIC_SHORT_NOTES,
   deterministicBool,
@@ -17,10 +18,17 @@ import {
 const NUM_MERMAS = process.env.NODE_ENV === 'test' ? 3 : 20;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de run seeder dentro del flujo de la aplicación.
+ *
+ * @param context Parámetro de entrada para la operación.
+ */
+/**
+ * Expone "runSeeder" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export const runSeeder = async (context: SeedContext) => {
-  const dataSource = context.getDataSource();
+  const dataSource = context.getDataSource() as DataSource;
   const mermaRepo = dataSource.getRepository(Merma);
   const productoRepo = dataSource.getRepository(Producto);
   const usuarioRepo = dataSource.getRepository(Usuario);

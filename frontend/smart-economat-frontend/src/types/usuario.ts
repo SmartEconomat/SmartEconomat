@@ -1,3 +1,4 @@
+/** Contrato de tipos público (Permiso). Contexto: smart-economat-frontend (SPA). */
 export interface Permiso {
   id: string;
   codigo: string;
@@ -7,6 +8,7 @@ export interface Permiso {
   accion: string;
 }
 
+/** Contrato de tipos público (Usuario). Contexto: smart-economat-frontend (SPA). */
 export interface Usuario {
   id: string | number;
   username: string;
@@ -21,8 +23,12 @@ export interface Usuario {
   permisosExcluidos?: Permiso[];
   slotId?: string | null;
   ubicacionId?: string | null;
+  ubicacionesIds?: string[];
+  ubicaciones?: Array<{ id: string; nombre: string }>;
+  preferences?: Record<string, unknown>;
 }
 
+/** Contrato de tipos público (RolOption). Contexto: smart-economat-frontend (SPA). */
 export interface RolOption {
   id: string;
   nombre: string;
@@ -31,11 +37,13 @@ export interface RolOption {
   permisos?: Permiso[];
 }
 
+/** Alias público (CrearUsuarioDTO) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type CrearUsuarioDTO = Omit<
   Usuario,
   'id' | 'fecha_registro' | 'permisosAdicionales' | 'permisosExcluidos'
 >;
 
+/** Contrato de tipos público (ActualizarUsuarioDTO). Contexto: smart-economat-frontend (SPA). */
 export interface ActualizarUsuarioDTO extends Partial<CrearUsuarioDTO> {
   roleId?: string;
   permisosAdicionalesIds?: string[];
@@ -44,6 +52,7 @@ export interface ActualizarUsuarioDTO extends Partial<CrearUsuarioDTO> {
   ubicacionId?: string | null;
 }
 
+/** Contrato de tipos público (ApiResponse). Contexto: smart-economat-frontend (SPA). */
 export interface ApiResponse<T> {
   success?: boolean;
   data: T;
@@ -51,6 +60,7 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+/** Contrato de tipos público (PaginatedResponse). Contexto: smart-economat-frontend (SPA). */
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   total: number;
   page: number;

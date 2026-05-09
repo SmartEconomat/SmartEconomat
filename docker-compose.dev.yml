@@ -41,8 +41,10 @@ services:
     environment:
       - HOME=/tmp
       - NODE_OPTIONS=--max-old-space-size=3072
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
+      # Linux + bind mount: inotify suele bastar y evita saturar CPU (polling cada 1s).
+      # macOS Docker Desktop: define CHOKIDAR_USEPOLLING=true en .env.dev si el watch falla.
+      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING:-false}
+      - CHOKIDAR_INTERVAL=${CHOKIDAR_INTERVAL:-2000}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     command: sh -c "sh scripts/ensure-deps.sh && npm run migration:run && npm run start:dev"
@@ -70,6 +72,8 @@ services:
     env_file: .env.dev
     environment:
       - HOME=/tmp
+      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING:-false}
+      - CHOKIDAR_INTERVAL=${CHOKIDAR_INTERVAL:-2000}
     command: sh -c "sh scripts/ensure-deps.sh && npm run dev -- --host"
     networks:
       - smarteconomat-dev-network

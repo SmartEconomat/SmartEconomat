@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
+import { SyncStatusEnum } from '../enums/sync-status.enum';
+import {
+  getSyncStatusLabel,
+  getSyncStatusTooltip,
+  getSyncStatusColor,
+} from '../utils/sync-status.utils';
 import {
   Stepper,
   Step,
@@ -16,8 +24,6 @@ import {
 } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import SaveIcon from '@mui/icons-material/Save';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
@@ -87,12 +93,7 @@ const isLineaDraftActiva = (linea: LineaDraft): boolean =>
     linea.estadoVisual !== EstadoVisualProducto.OPTIMO
   );
 
-const steps = [
-  'Selección de Pedidos',
-  'Escaneo y Conteo',
-  'Revisión y Ajuste',
-  'Resultado',
-];
+// Removed steps from here because it needs t()
 
 type SerialNavigator = Navigator & {
   serial: {
@@ -127,6 +128,7 @@ type RecepcionLocationState = {
 };
 
 const getScaleHeaderChipConfig = (
+  t: TFunction,
   isScaleSupported: boolean,
   isScaleConnected: boolean,
   isScaleEnabled: boolean,
@@ -136,7 +138,7 @@ const getScaleHeaderChipConfig = (
   if (!isScaleSupported) {
     return {
       icon: <WarningAmberIcon />,
-      label: 'Web Serial no disponible',
+      label: t('recepcion.bascula.notAvailable'),
       color: 'warning' as const,
     };
   }
@@ -173,6 +175,13 @@ const getScaleHeaderChipConfig = (
 };
 
 const Recepcion: React.FC = () => {
+  const { t } = useTranslation();
+  const steps = [
+    t('recepcion.pasos.seleccionPedidos'),
+    t('recepcion.pasos.escaneoConteo'),
+    t('recepcion.pasos.revisionAjuste'),
+    t('recepcion.pasos.resultado'),
+  ];
   const [activeStep, setActiveStep] = useState(0);
   const [resultado, setResultado] = useState<RecepcionResultado | null>(null);
 
@@ -199,7 +208,7 @@ const Recepcion: React.FC = () => {
   const [isScaleEnabled, setIsScaleEnabled] = useState(false);
   const [isScaleBusy, setIsScaleBusy] = useState(false);
   const [scaleStatusText, setScaleStatusText] = useState(
-    'Sin báscula autorizada'
+    t('recepcion.bascula.notAuthorized')
   );
   const scaleManuallyDisabledRef = useRef(false);
 
@@ -232,6 +241,7 @@ const Recepcion: React.FC = () => {
   });
   const draftRef = useRef(draft);
   const scaleHeaderChip = getScaleHeaderChipConfig(
+    t,
     isScaleSupported,
     isScaleConnected,
     isScaleEnabled,
@@ -239,6 +249,13 @@ const Recepcion: React.FC = () => {
     scaleStatusText
   );
   const isSearchingRef = useRef(false);
+
+  const setIsScaleStatusDisconnected = useCallback(() => {
+    setScaleStatusText(t('recepcion.bascula.disconnected'));
+    if (!scaleManuallyDisabledRef.current) {
+      setIsScaleEnabled(false);
+    }
+  }, [t]);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -266,7 +283,7 @@ const Recepcion: React.FC = () => {
     setIsScaleSupported(supported);
 
     if (!supported) {
-      setScaleStatusText('Web Serial no disponible');
+      setScaleStatusText(t('recepcion.bascula.notAvailable'));
       return;
     }
 
@@ -283,10 +300,10 @@ const Recepcion: React.FC = () => {
         if (ports.length > 0) {
           setIsScaleConnected(false);
           setIsScaleEnabled(false);
-          setScaleStatusText('Báscula guardada, lista para conectar');
+          setScaleStatusText(t('recepcion.bascula.authorizedReady'));
         } else {
           setIsScaleConnected(false);
-          setScaleStatusText('Sin báscula autorizada');
+          setScaleStatusText(t('recepcion.bascula.notAuthorized'));
         }
       } catch {
         if (!cancelled) {
@@ -303,7 +320,7 @@ const Recepcion: React.FC = () => {
     const handleConnect = () => {
       setIsScaleConnected(true);
       setIsScaleEnabled(true);
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.connected'));
     };
 
     const handleDisconnect = () => {
@@ -334,14 +351,7 @@ const Recepcion: React.FC = () => {
       serialService.stopContinuousRead();
       void serialService.disconnect();
     };
-  }, []);
-
-  const setIsScaleStatusDisconnected = () => {
-    setScaleStatusText('Báscula desconectada');
-    if (!scaleManuallyDisabledRef.current) {
-      setIsScaleEnabled(false);
-    }
-  };
+  }, [setIsScaleStatusDisconnected, t]);
 
   const handleScaleToggle = (enabled: boolean) => {
     scaleManuallyDisabledRef.current = !enabled;
@@ -352,21 +362,21 @@ const Recepcion: React.FC = () => {
       setIsWeighing(false);
       setCapturedWeight(null);
       setScaleStatusText(
-        isScaleConnected ? 'Báscula desactivada' : 'Báscula desconectada'
+        isScaleConnected
+          ? t('recepcion.bascula.deactivated')
+          : t('recepcion.bascula.disconnected')
       );
       return;
     }
 
     if (isScaleConnected) {
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.connected'));
     }
   };
 
   const requestScaleAccess = async () => {
     if (!isScaleSupported) {
-      setError(
-        'Este navegador no soporta Web Serial para conectar la báscula.'
-      );
+      setError(t('recepcion.bascula.requestAccessError'));
       return;
     }
 
@@ -377,19 +387,18 @@ const Recepcion: React.FC = () => {
       // Forzamos el diálogo nativo siempre que den a Vincular, según petición
       const selected = await serialService.requestPort();
       if (!selected) {
-        setScaleStatusText('Selección de puerto cancelada');
+        setScaleStatusText(t('recepcion.bascula.disconnected'));
         return;
       }
 
-      await serialService.connect();
       setIsScaleConnected(true);
       setIsScaleEnabled(true);
       scaleManuallyDisabledRef.current = false;
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.connected'));
     } catch {
       setIsScaleConnected(false);
-      setScaleStatusText('No se pudo conectar la báscula');
-      setError('No se pudo abrir el puerto serie de la báscula.');
+      setScaleStatusText(t('recepcion.bascula.connectError'));
+      setError(t('recepcion.bascula.openPortError'));
     } finally {
       setIsScaleBusy(false);
     }
@@ -399,19 +408,7 @@ const Recepcion: React.FC = () => {
   const [pedidosDisponibles, setPedidosDisponibles] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
 
-  useEffect(() => {
-    if (canCreate === false) {
-      navigate('/');
-    }
-  }, [canCreate, navigate]);
-
-  useEffect(() => {
-    void loadPedidos();
-  }, []);
-
-  // --- 2. Acciones del Backend ---
-
-  const loadPedidos = async () => {
+  const loadPedidos = useCallback(async () => {
     setLoadingPedidos(true);
     try {
       const estadosRecepcionables = [EstadoPedido.POR_RECEPCIONAR].join(',');
@@ -445,26 +442,43 @@ const Recepcion: React.FC = () => {
 
       setPedidosDisponibles(pedidos);
     } catch {
-      setError('Error al cargar pedidos compatibles.');
+      setError(t('recepcion.errors.compatibleOrders'));
     } finally {
       setLoadingPedidos(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    if (canCreate === false) {
+      navigate('/');
+    }
+  }, [canCreate, navigate]);
+
+  useEffect(() => {
+    void loadPedidos();
+  }, [loadPedidos]);
+
+  // --- 2. Acciones del Backend ---
 
   const mapPedidoToDraft = (pedido: Pedido): LineaDraft[] =>
     (pedido.pedidoProductos || []).map((pp: PedidoProducto) => ({
       pedidoProductoId: pp.id,
       idProducto: pp.productoProveedor?.producto?.id,
-      codigoBarras: pp.productoProveedor?.producto?.codigoBarras,
-      nombreProducto: pp.productoProveedor?.producto?.nombre || 'Producto',
+      codigoBarras:
+        pp.productoProveedor?.effectiveBarcode ||
+        pp.productoProveedor?.producto?.codigoBarras,
+      nombreProducto:
+        pp.productoProveedor?.producto?.nombre ||
+        t('recepcion.draft.productPlaceholder'),
       cantidadPedida: Number(pp.cantidad),
-      cantidadAlbaran: '',
+      cantidadAlbaran: Number(pp.cantidad),
       cantidadRecibida: 0,
       isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
       fechaCaducidad: '',
       observaciones: '',
       intervenida: false,
+      isAlbaranDirty: false,
       estado: calculateEstado(0, Number(pp.cantidad)),
       unidad: pp.productoProveedor?.producto?.unidad || UnidadMedida.UNIDAD,
     }));
@@ -473,7 +487,7 @@ const Recepcion: React.FC = () => {
   const createDraftPedido = (pedido: Pedido) => ({
     id: pedido.id,
     descripcion: `Pedido ${formatPedidoListNumber(pedido, 'pedido-proveedor')} - ${pedido.proveedor?.nombre}`,
-    proveedor: pedido.proveedor?.nombre || 'Desconocido',
+    proveedor: pedido.proveedor?.nombre || t('comun.desconocido'),
     lineas: mapPedidoToDraft(pedido),
   });
 
@@ -771,13 +785,14 @@ const Recepcion: React.FC = () => {
             nombreProducto: prod.nombre,
             unidad: prod.unidad || 'uds',
             cantidadPedida: 0,
-            cantidadAlbaran: '',
+            cantidadAlbaran: 0, // Spontaneous, default to 0
             cantidadRecibida: isWeightUnit(prod.unidad) ? 0 : 1,
             isWeighedWithScale: false,
             estadoVisual: EstadoVisualProducto.OPTIMO,
             fechaCaducidad: '',
             observaciones: '',
             intervenida: !isWeightUnit(prod.unidad),
+            isAlbaranDirty: false,
             estado: 'Nuevo',
           };
 
@@ -831,6 +846,9 @@ const Recepcion: React.FC = () => {
             newLinea.cantidadPedida
           );
         }
+        if (field === 'cantidadPedida' && !newLinea.isAlbaranDirty) {
+          newLinea.cantidadAlbaran = Number(finalValue);
+        }
 
         if (
           field === 'cantidadRecibida' ||
@@ -841,6 +859,10 @@ const Recepcion: React.FC = () => {
           field === 'isWeighedWithScale'
         ) {
           newLinea.intervenida = true;
+        }
+
+        if (field === 'cantidadAlbaran') {
+          newLinea.isAlbaranDirty = true;
         }
 
         // Si el usuario edita a mano (escribiendo), y no teníamos isWeighedWithScale = true, lo mantenemos en false.
@@ -868,6 +890,10 @@ const Recepcion: React.FC = () => {
           field === 'isWeighedWithScale'
         ) {
           newLinea.intervenida = true;
+        }
+
+        if (field === 'cantidadAlbaran') {
+          newLinea.isAlbaranDirty = true;
         }
 
         if (field === 'cantidadRecibida') {
@@ -899,14 +925,14 @@ const Recepcion: React.FC = () => {
 
     setIsWeighing(true);
     setCapturedWeight(null);
-    setScaleStatusText('Leyendo peso en tiempo real');
+    setScaleStatusText(t('recepcion.bascula.reading'));
 
     try {
       const connected = await serialService.ensureConnection();
       if (!connected) {
         setIsWeighing(false);
         setIsScaleConnected(false);
-        setScaleStatusText('Sin báscula autorizada');
+        setScaleStatusText(t('recepcion.bascula.notAuthorized'));
         setError('No hay una báscula autorizada disponible.');
         return;
       }
@@ -917,12 +943,12 @@ const Recepcion: React.FC = () => {
         (weight) => {
           setCapturedWeight(weight);
           setIsWeighing(false);
-          setScaleStatusText('Peso recibido desde báscula');
+          setScaleStatusText(t('recepcion.bascula.received'));
         },
         () => {
           setIsWeighing(false);
           setIsScaleConnected(false);
-          setScaleStatusText('Error de lectura en báscula');
+          setScaleStatusText(t('recepcion.bascula.readError'));
           setError('Se perdió la comunicación con la báscula.');
         }
       );
@@ -950,7 +976,7 @@ const Recepcion: React.FC = () => {
     setIsWeighing(false);
     setCapturedWeight(null);
     if (isScaleConnected && isScaleEnabled) {
-      setScaleStatusText('Báscula conectada');
+      setScaleStatusText(t('recepcion.bascula.connected'));
     }
   };
 
@@ -1035,6 +1061,8 @@ const Recepcion: React.FC = () => {
             : undefined,
           observaciones: l.observaciones,
           isWeighedWithScale: Boolean(l.isWeighedWithScale),
+          cantidadAlbaran:
+            l.cantidadAlbaran !== '' ? Number(l.cantidadAlbaran) : undefined,
         })),
       productosNuevos: draft.productosEspontaneos.map((p) => ({
         pendienteCreacion: true,
@@ -1049,6 +1077,8 @@ const Recepcion: React.FC = () => {
           CategoriaProducto.OTRO) as CategoriaProducto,
         contenido: p.productoNuevo?.contenido || 1,
         cantidadRecibida: Number(p.cantidadRecibida),
+        cantidadAlbaran:
+          p.cantidadAlbaran !== '' ? Number(p.cantidadAlbaran) : undefined,
         observaciones: p.observaciones,
         isWeighedWithScale: Boolean(p.isWeighedWithScale),
       })),
@@ -1280,7 +1310,7 @@ const Recepcion: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: 1300, margin: 'auto', p: 3 }}>
-      <Paper sx={{ p: 4, borderRadius: 2 }}>
+      <Paper sx={{ p: 4, borderRadius: 2 }} data-testid="recepcion-wizard-root">
         <Box
           sx={{
             display: 'flex',
@@ -1314,46 +1344,18 @@ const Recepcion: React.FC = () => {
                 />
               </Tooltip>
             )}
-            {syncStatus === 'saving' && (
-              <Tooltip title="Sincronizando borrador con el servidor">
+            {syncStatus && (
+              <Tooltip
+                title={getSyncStatusTooltip(
+                  t,
+                  syncStatus as SyncStatusEnum,
+                  syncError || undefined
+                )}
+              >
                 <Chip
-                  icon={<SaveIcon />}
-                  label="Guardando..."
+                  label={getSyncStatusLabel(t, syncStatus as SyncStatusEnum)}
                   size="small"
-                  color="warning"
-                  variant="outlined"
-                />
-              </Tooltip>
-            )}
-            {syncStatus === 'synced' && (
-              <Tooltip title="Borrador sincronizado de forma segura">
-                <Chip
-                  icon={<CheckCircleIcon />}
-                  label="Sincronizado"
-                  size="small"
-                  color="success"
-                  variant="outlined"
-                />
-              </Tooltip>
-            )}
-            {syncStatus === 'error' && (
-              <Tooltip title={syncError || 'Error al sincronizar el borrador'}>
-                <Chip
-                  icon={<ErrorOutlineIcon />}
-                  label="Error de sync"
-                  size="small"
-                  color="error"
-                  variant="outlined"
-                />
-              </Tooltip>
-            )}
-            {syncStatus === 'conflict' && (
-              <Tooltip title="El borrador cambió en otro dispositivo">
-                <Chip
-                  icon={<WarningAmberIcon />}
-                  label="Conflicto"
-                  size="small"
-                  color="warning"
+                  color={getSyncStatusColor(syncStatus as SyncStatusEnum)}
                   variant="outlined"
                 />
               </Tooltip>
@@ -1379,7 +1381,11 @@ const Recepcion: React.FC = () => {
           </Box>
         ) : (
           <>
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+            <Stepper
+              activeStep={activeStep}
+              sx={{ mb: 4 }}
+              data-testid="recepcion-wizard-stepper"
+            >
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -1387,17 +1393,18 @@ const Recepcion: React.FC = () => {
               ))}
             </Stepper>
 
-            {error && (
+            {!loadingPedidos && !isSubmitting && error && (
               <Alert
                 severity="error"
                 sx={{ mb: 3 }}
+                data-testid="recepcion-error-alert"
                 onClose={() => setError(null)}
               >
                 {error}
               </Alert>
             )}
 
-            {!error && syncError && (
+            {!error && isReady && syncError && (
               <Alert severity="warning" sx={{ mb: 3 }}>
                 {syncError}
               </Alert>
@@ -1423,6 +1430,7 @@ const Recepcion: React.FC = () => {
               variant="outlined"
               onClick={() => setIsDiscardDialogOpen(true)}
               color="secondary"
+              data-testid="recepcion-btn-discard"
             >
               Descartar
             </Button>
@@ -1432,12 +1440,14 @@ const Recepcion: React.FC = () => {
                 disabled={activeStep === 0 || isSubmitting}
                 onClick={handleBack}
                 sx={{ mr: 1 }}
+                data-testid="recepcion-btn-back"
               >
                 Atrás
               </Button>
               <Button
                 variant="contained"
                 onClick={handleNext}
+                data-testid="recepcion-btn-next"
                 disabled={
                   isSubmitting ||
                   (activeStep === 0 &&
@@ -1504,14 +1514,13 @@ const Recepcion: React.FC = () => {
         isOpen={isRecoveryDialogOpen && !!pendingRecoveryDraft}
         onClose={handleRecoverDraft}
         onConfirm={handleRecoverDraft}
-        title="Recuperar recepción pendiente"
+        title={t('recepcion.draftRecoveryTitle')}
         message={
           <>
-            Has dejado una recepción a medias. ¿Deseas recuperarla y continuar
-            donde lo dejaste?
+            {t('recepcion.draftRecoveryMessage')}
             <br />
             <br />
-            Última actualización:{' '}
+            {t('recepcion.lastUpdate')}{' '}
             <strong>
               {(() => {
                 const updatedAt =
@@ -1519,12 +1528,12 @@ const Recepcion: React.FC = () => {
                   draft.serverUpdatedAt ??
                   draft.modificadoEn;
                 if (!updatedAt) {
-                  return 'desconocida';
+                  return t('recepcion.unknownTime');
                 }
 
                 const parsed = new Date(updatedAt);
                 if (Number.isNaN(parsed.getTime())) {
-                  return 'desconocida';
+                  return t('recepcion.unknownTime');
                 }
 
                 return parsed.toLocaleString('es-ES');
@@ -1532,8 +1541,8 @@ const Recepcion: React.FC = () => {
             </strong>
           </>
         }
-        confirmText="Sí, recuperar"
-        cancelText="No, descartar"
+        confirmText={t('recepcion.yesRecover')}
+        cancelText={t('recepcion.noDiscard')}
         confirmColor="primary"
         onCancel={handleDiscardRecoveredDraft}
       />
@@ -1545,9 +1554,9 @@ const Recepcion: React.FC = () => {
           setIsDiscardDialogOpen(false);
           void resetWizard();
         }}
-        title="Descartar recepción"
-        message="¿Estás seguro de que quieres borrar el borrador de recepción actual? Perderás todo el progreso no validado."
-        confirmText="Sí, descartar"
+        title={t('recepcion.draftDiscardTitle')}
+        message={t('recepcion.draftDiscardMessage')}
+        confirmText={t('recepcion.yesDiscard')}
         cancelText="Cancelar"
       />
 
@@ -1571,10 +1580,9 @@ const Recepcion: React.FC = () => {
         open={isSubmitting}
       >
         <CircularProgress color="inherit" />
-        <Typography variant="h6">Procesando Recepción Masiva...</Typography>
+        <Typography variant="h6">{t('recepcion.wizard.processing')}</Typography>
         <Typography variant="body2">
-          Garantizando integridad transaccional (ACID). Por favor, no cierres el
-          navegador.
+          {t('recepcion.wizard.transactionalIntegrity')}
         </Typography>
       </Backdrop>
     </Box>

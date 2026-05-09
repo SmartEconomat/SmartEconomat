@@ -3,7 +3,12 @@ import { navigateToElement } from '../utils/a11y-navigation';
 import { useToast } from '../store/toast.hooks';
 
 /**
- * Documentación en español.
+ * Hook encargado de gestionar los atajos de teclado globales para mejorar la accesibilidad.
+ * Permite la navegación rápida entre secciones principales del sistema usando teclas de función (F1-F4).
+ */
+/**
+ * Expone "useKeyboardShortcuts" en smart-economat-frontend (SPA).
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
  */
 export const useKeyboardShortcuts = () => {
   const toast = useToast();

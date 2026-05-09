@@ -47,6 +47,11 @@ async function reserveNextPurchaseBatchNumeroWithSequence(
   }
 }
 
+/**
+ * Expone "reserveNextPurchaseBatchNumero" en smart-economat-backend (Nest).
+ * @undefined {Pick<EntityManager, "query">} manager - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
+ */
 export async function reserveNextPurchaseBatchNumero(
   manager: Pick<EntityManager, 'query'>
 ): Promise<string> {
@@ -68,6 +73,11 @@ export async function reserveNextPurchaseBatchNumero(
   return String(Math.max(currentMax + 1, PURCHASE_BATCH_SERIE_INICIAL));
 }
 
+/**
+ * Expone "formatPurchaseBatchReferencia" en smart-economat-backend (Nest).
+ * @undefined {string} numero - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export const formatPurchaseBatchReferencia = (numero: string): string => {
   const numeroTexto = String(numero).trim();
   return `LC-${numeroTexto.padStart(6, '0')}`;

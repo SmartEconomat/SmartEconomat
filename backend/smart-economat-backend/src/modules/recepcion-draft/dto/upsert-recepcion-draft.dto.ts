@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsObject, IsOptional, Min } from 'class-validator';
 
+/** Clase pública (UpsertRecepcionDraftDto). Paquete: smart-economat-backend (Nest). */
 export class UpsertRecepcionDraftDto {
   @ApiProperty({
     description: 'Payload serializable del formulario de recepción en curso.',

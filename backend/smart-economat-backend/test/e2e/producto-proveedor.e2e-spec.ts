@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('ProductoProveedorController (e2e)', () => {
   let app: INestApplication;
@@ -28,7 +28,7 @@ describe('ProductoProveedorController (e2e)', () => {
 
   describe('Precios e Historial', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /api/v1/producto-proveedor/:id/precio - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)
@@ -41,7 +41,7 @@ describe('ProductoProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /api/v1/producto-proveedor/:id/historial - Debe devolver 404 para ID inexistente', async () => {
       await request(app.getHttpServer() as string)

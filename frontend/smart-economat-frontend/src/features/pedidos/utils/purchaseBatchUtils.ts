@@ -6,8 +6,10 @@ import { EstadoLote, PurchaseBatch } from '../../../services/pedido.types';
 import { OverridableComponent } from '@mui/material/OverridableComponent';
 import { SvgIconTypeMap } from '@mui/material';
 
+/** Alias público (ActionType) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ActionType = 'tramitar' | 'recepcion' | 'distribucion' | 'none';
 
+/** Contrato de tipos público (NextActionMetadata). Contexto: smart-economat-frontend (SPA). */
 export interface NextActionMetadata {
   label: string;
   icon: OverridableComponent<SvgIconTypeMap<object, 'svg'>>;
@@ -25,7 +27,13 @@ export interface NextActionMetadata {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {PurchaseBatch} batch - Entrada efectiva esperada por el contrato.
+ * @undefined {{ hasPedidosDistribuibles?: boolean; isRecepcionCompleted?: boolean; }} options - Entrada efectiva esperada por el contrato.
+ * @undefined {NextActionMetadata} Datos efectivos después de ejecutar la operación.
  */
 export const getNextBatchAction = (
   batch: PurchaseBatch,

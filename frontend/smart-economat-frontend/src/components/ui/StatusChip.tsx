@@ -6,6 +6,7 @@ import { CategoriaProducto } from '../../services/producto.types';
 import { getCategoryIconFilled } from '../../features/productos/utils/getCategoryIconFilled';
 import { getEnumLabel } from '../../i18n/enumPresentation';
 
+/** Alias público (StatusType) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type StatusType =
   | 'success'
   | 'completed'
@@ -29,15 +30,15 @@ export type StatusType =
   | 'unknown';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface StatusChipProps extends Omit<ChipProps, 'color'> {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   status: StatusType | string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   label?: string;
 }
@@ -48,11 +49,13 @@ const CATEGORY_CHIP_MIN_WIDTH = 110;
 // Conjunto de valores de CategoriaProducto para detección rápida
 const CATEGORIA_VALUES = new Set<string>(Object.values(CategoriaProducto));
 
-const isCategoriaProducto = (status: string): status is CategoriaProducto =>
-  CATEGORIA_VALUES.has(status.toLowerCase());
+const isCategoriaProducto = (
+  status?: string | null
+): status is CategoriaProducto =>
+  typeof status === 'string' && CATEGORIA_VALUES.has(status.toLowerCase());
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const getStatusColor = (
   status: string
@@ -75,7 +78,6 @@ const getStatusColor = (
     case 'entrada':
     case 'entrada_compra':
     case 'entrada_distribucion':
-    case 'completado':
     case 'entregada':
       return 'success';
     case 'error':
@@ -103,7 +105,16 @@ const getStatusColor = (
     case 'active':
     case 'archived':
     case 'pedido':
+    case 'por_recepcionar':
+    case 'borrador':
       return 'info';
+    case 'recepcionado':
+    case 'completado':
+    case 'aprobado':
+    case 'consolidado':
+      return 'success';
+    case 'pendiente_de_aprobacion':
+      return 'warning';
     default:
       return 'default';
   }
@@ -121,7 +132,18 @@ const getTranslatedStatus = (status: string) => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "StatusChip" en smart-economat-frontend (SPA).
+ * @undefined {StatusChipProps} {
+ *   status,
+ *   label,
+ *   size = 'small',
+ *   variant = 'outlined',
+ *   ...rest
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export const StatusChip: React.FC<StatusChipProps> = ({
   status,
@@ -131,7 +153,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   ...rest
 }) => {
   const { t } = useTranslation();
-  const statusStr = status as string;
+  const statusStr =
+    typeof status === 'string'
+      ? status
+      : status === undefined
+        ? ''
+        : String(status);
   const isCategoria = isCategoriaProducto(statusStr);
 
   const resolvedColor = getStatusColor(statusStr);
@@ -139,26 +166,73 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   const getI18nLabel = (s: string): string => {
     if (!s) return '—';
     const normalized = s.toLowerCase();
+    if (s.includes('.')) {
+      const translated = t(s, {
+        defaultValue: getTranslatedStatus(s.split('.').pop() || s),
+      });
+      return translated === s
+        ? getTranslatedStatus(s.split('.').pop() || s)
+        : translated;
+    }
+
     if (isCategoria) {
       return getEnumLabel(t, 'productoCategoria', s);
+    }
+
+    // Estados de pedido (proveedor)
+    if (
+      [
+        'pendiente_de_aprobacion',
+        'por_recepcionar',
+        'recepcionado',
+        'incidencia',
+        'parcial',
+      ].includes(normalized)
+    ) {
+      return getEnumLabel(t, 'pedidoEstado', s);
+    }
+
+    // Estados de pedido usuario
+    if (
+      ['borrador', 'pendiente', 'aprobado', 'consolidado'].includes(normalized)
+    ) {
+      // 'cancelado' es compartido, verificamos el contexto por exclusión
+      return getEnumLabel(t, 'pedidoUsuarioEstado', s);
+    }
+
+    // Estados de lote de compra
+    if (['completado'].includes(normalized)) {
+      return getEnumLabel(t, 'loteEstado', s);
+    }
+
+    // 'cancelado' puede pertenecer a cualquier dominio: usar pedidoUsuarioEstado como fallback
+    if (normalized === 'cancelado') {
+      return getEnumLabel(t, 'pedidoUsuarioEstado', s);
     }
 
     if (
       normalized.includes('entrada') ||
       normalized.includes('salida') ||
       normalized === 'ajuste' ||
-      normalized === 'pedido'
+      normalized === 'pedido' ||
+      normalized === 'merma'
     ) {
       return getEnumLabel(t, 'movimientoTipo', s);
+    }
+
+    if (
+      ['rotura', 'deterioro', 'hurto', 'error_preparacion', 'otros'].includes(
+        normalized
+      )
+    ) {
+      return getEnumLabel(t, 'mermaMotivo', s);
     }
 
     if (['faltante', 'exceso', 'defectuoso'].includes(normalized)) {
       return getEnumLabel(t, 'tipoDiferencia', s);
     }
 
-    if (
-      ['pendiente', 'reclamado', 'abonado', 'reenviado'].includes(normalized)
-    ) {
+    if (['reclamado', 'abonado', 'reenviado'].includes(normalized)) {
       return getEnumLabel(t, 'estadoReclamacion', s);
     }
 

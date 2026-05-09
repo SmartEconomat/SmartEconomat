@@ -20,12 +20,23 @@ import { PedidoDraftResponseDto } from '../dto/pedido-draft-response.dto';
 import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario.entity';
 import { PedidoDraftRecord } from '../interfaces/pedido-draft-record.interface';
 
+/** Clase pública (PedidoDraftController). Paquete: smart-economat-backend (Nest). */
 @ApiTags('Pedido Draft')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido/draft')
 export class PedidoDraftController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {PedidoDraftService} pedidoDraftService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly pedidoDraftService: PedidoDraftService) {}
 
+  /**
+   * Expone "saveDraft" en smart-economat-backend (Nest).
+   * @undefined {UpsertPedidoDraftDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoDraftRecord>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.OK)
@@ -41,6 +52,11 @@ export class PedidoDraftController {
     return this.pedidoDraftService.upsertDraft(req.user.id, dto);
   }
 
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoDraftRecord | null>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @ApiOperation({
@@ -53,6 +69,11 @@ export class PedidoDraftController {
     return this.pedidoDraftService.getLatestDraft(req.user.id);
   }
 
+  /**
+   * Expone "clearDraft" en smart-economat-backend (Nest).
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete()
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -63,6 +84,11 @@ export class PedidoDraftController {
     await this.pedidoDraftService.clearDraft(req.user.id);
   }
 
+  /**
+   * Expone "finalizeOrder" en smart-economat-backend (Nest).
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
+   */
   @Post('finalize')
   @RequirePermissions(PERMISSIONS.pedidos.crear)
   @HttpCode(HttpStatus.CREATED)

@@ -38,6 +38,7 @@ const Distribucion = React.lazy(() => import('../../pages/Distribucion'));
 const Perfil = React.lazy(() => import('../../pages/Perfil'));
 const Administracion = React.lazy(() => import('../../pages/Administracion'));
 
+/** Contrato de tipos público (MenuItem). Contexto: smart-economat-frontend (SPA). */
 export interface MenuItem {
   path: string;
   title: string;
@@ -52,6 +53,7 @@ export interface MenuItem {
   anyPermissions?: string[];
 }
 
+/** Constantes públicas (menuItems) expuestas en smart-economat-frontend (SPA). */
 export const menuItems: MenuItem[] = [
   {
     path: '/',
@@ -210,6 +212,7 @@ export const menuItems: MenuItem[] = [
       PERMISSIONS.usuarios.listar,
       PERMISSIONS.profesor.gestionar_slots,
       PERMISSIONS.profesor.ver_alumnos,
+      PERMISSIONS.ubicaciones.listar,
     ],
   },
   {

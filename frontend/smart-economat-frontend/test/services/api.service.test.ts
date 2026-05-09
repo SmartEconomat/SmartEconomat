@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, baseFetch } from '../../src/services/api.service';
+import {
+  ApiError,
+  baseFetch,
+  buildQueryParams,
+  normalizeGlobalFilters,
+  unwrapPaginated,
+} from '../../src/services/api.service';
 
 describe('api.service baseFetch', () => {
   beforeEach(() => {
@@ -50,5 +56,78 @@ describe('api.service baseFetch', () => {
       '/api/v1/recetas?page=1&limit=20',
       expect.objectContaining({ credentials: 'include' })
     );
+  });
+});
+
+describe('api.service filtros globales', () => {
+  it('normaliza aliases legacy a llaves canonicas', () => {
+    const normalized = normalizeGlobalFilters({
+      searchTerm: '  leche  ',
+      estado: 'pendiente',
+      fechaDesde: '2026-01-01',
+      fechaHasta: '2026-01-31',
+      categoria: 'LACTEO',
+    });
+
+    expect(normalized).toMatchObject({
+      search: 'leche',
+      status: 'pendiente',
+      dateFrom: '2026-01-01',
+      dateTo: '2026-01-31',
+      categoria: 'LACTEO',
+    });
+  });
+
+  it('prioriza llaves canonicas si conviven con aliases', () => {
+    const normalized = normalizeGlobalFilters({
+      search: 'harina',
+      searchTerm: 'azucar',
+      status: 'activo',
+      estado: 'inactivo',
+    });
+
+    expect(normalized.search).toBe('harina');
+    expect(normalized.status).toBe('activo');
+  });
+
+  it('serializa filtros en query params usando alias backend legacy', () => {
+    const query = buildQueryParams({
+      page: 2,
+      limit: 500,
+      search: 'tomate',
+      status: 'abierto',
+      dateFrom: '2026-02-01',
+      dateTo: '2026-02-28',
+      categoria: 'VERDURA',
+      tags: ['fresco', 'local'],
+    });
+
+    expect(query.get('page')).toBe('2');
+    expect(query.get('limit')).toBe('50');
+    expect(query.get('searchTerm')).toBe('tomate');
+    expect(query.get('estado')).toBe('abierto');
+    expect(query.get('fechaDesde')).toBe('2026-02-01');
+    expect(query.get('fechaHasta')).toBe('2026-02-28');
+    expect(query.get('categoria')).toBe('VERDURA');
+    expect(query.get('tags')).toBe('fresco,local');
+  });
+});
+
+describe('unwrapPaginated', () => {
+  it('extrae metadatos cuando data es paginación', () => {
+    const parsed = unwrapPaginated<{ id: string }>({
+      data: [{ id: 'a' }],
+      total: 10,
+      page: 2,
+      limit: 50,
+      totalPages: 1,
+    });
+    expect(parsed?.data).toHaveLength(1);
+    expect(parsed?.totalPages).toBe(1);
+  });
+
+  it('devuelve null si no hay lista en data', () => {
+    expect(unwrapPaginated({ data: null })).toBeNull();
+    expect(unwrapPaginated(null)).toBeNull();
   });
 });

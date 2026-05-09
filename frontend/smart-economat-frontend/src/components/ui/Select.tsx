@@ -1,11 +1,13 @@
 import React from 'react';
 import { TextField, MenuItem, TextFieldProps } from '@mui/material';
 
+/** Contrato de tipos público (SelectOption). Contexto: smart-economat-frontend (SPA). */
 export interface SelectOption {
   value: string | number;
   label: string;
 }
 
+/** Alias público (SelectProps) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type SelectProps = TextFieldProps & {
   options?: SelectOption[];
   multiple?: boolean;

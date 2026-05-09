@@ -1,3 +1,4 @@
+/** Catálogo de valores enumerados (TipoMovimiento) dentro de smart-economat-frontend (SPA). */
 export enum TipoMovimiento {
   ENTRADA = 'entrada',
   SALIDA = 'salida',
@@ -9,6 +10,7 @@ export enum TipoMovimiento {
   SALIDA_ELABORACION = 'salida_elaboracion',
 }
 
+/** Contrato de tipos público (UsuarioBasico). Contexto: smart-economat-frontend (SPA). */
 export interface UsuarioBasico {
   id: string;
   nombre?: string | null;
@@ -16,6 +18,7 @@ export interface UsuarioBasico {
   email?: string | null;
 }
 
+/** Contrato de tipos público (Movimiento). Contexto: smart-economat-frontend (SPA). */
 export interface Movimiento {
   id: string;
   tipo: TipoMovimiento;
@@ -41,6 +44,7 @@ export interface Movimiento {
     };
   };
 }
+/** Contrato de tipos público (MovimientosQueryParams). Contexto: smart-economat-frontend (SPA). */
 export interface MovimientosQueryParams {
   page?: number;
   limit?: number;

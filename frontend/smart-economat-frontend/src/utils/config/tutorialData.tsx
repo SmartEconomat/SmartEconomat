@@ -30,7 +30,6 @@ import CallSplitIcon from '@mui/icons-material/CallSplit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -47,13 +46,14 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 
+/** Contrato de tipos público (TutorialStep). Contexto: smart-economat-frontend (SPA). */
 export interface TutorialStep {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   target?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   placement?:
     | 'top'
@@ -70,23 +70,24 @@ export interface TutorialStep {
     | 'right-end'
     | 'center';
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   disableFlip?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   icon: React.ReactNode;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   title: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   description: string;
 }
 
+/** Contrato de tipos público (TutorialConfigItem). Contexto: smart-economat-frontend (SPA). */
 export interface TutorialConfigItem {
   steps?: TutorialStep[];
   roles?: Record<string, TutorialStep[]>;
@@ -111,6 +112,11 @@ function tuHelp(t: TFunction): Pick<TutorialStep, 'title' | 'description'> {
   };
 }
 
+/**
+ * Expone "buildTutorialConfig" en smart-economat-frontend (SPA).
+ * @undefined {TFunction<"translation", undefined>} t - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, TutorialConfigItem>} Datos efectivos después de ejecutar la operación.
+ */
 export function buildTutorialConfig(
   t: TFunction
 ): Record<string, TutorialConfigItem> {
@@ -482,9 +488,9 @@ export function buildTutorialConfig(
           ...tu(t, 'preparaciones', 3),
         },
         {
-          target: '#btn-ver-detalle-preparacion',
-          placement: 'left',
-          icon: <VisibilityIcon sx={{ fontSize: 60, color: 'info.main' }} />,
+          target: '#preparaciones-table',
+          placement: 'top',
+          icon: <TouchAppIcon sx={{ fontSize: 60, color: 'info.main' }} />,
           ...tu(t, 'preparaciones', 4),
         },
         helpTutorialStep,
@@ -525,9 +531,9 @@ export function buildTutorialConfig(
           ...tu(t, 'albaranes', 3),
         },
         {
-          target: '#btn-albaran-view',
-          placement: 'left',
-          icon: <VisibilityIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+          target: '#albaranes-table',
+          placement: 'top',
+          icon: <TouchAppIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
           ...tu(t, 'albaranes', 4),
         },
         helpTutorialStep,
@@ -604,9 +610,9 @@ export function buildTutorialConfig(
           ...tu(t, 'movimientos', 2),
         },
         {
-          target: '#btn-ver-detalle-movimiento',
-          placement: 'left',
-          icon: <VisibilityIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
+          target: '#movimientos-table',
+          placement: 'top',
+          icon: <TouchAppIcon sx={{ fontSize: 60, color: 'primary.main' }} />,
           ...tu(t, 'movimientos', 3),
         },
         helpTutorialStep,

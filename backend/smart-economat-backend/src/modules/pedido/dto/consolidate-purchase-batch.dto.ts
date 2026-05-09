@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
+/** Clase pública (ConsolidatePurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class ConsolidatePurchaseBatchDto {
   @ApiProperty({
     description:

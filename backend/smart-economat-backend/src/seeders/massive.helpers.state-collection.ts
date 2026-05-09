@@ -13,10 +13,17 @@ import { pushStateValue, removeStateValue } from './massive.state';
 import { SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES } from '../common/constants/system-role-template.constants';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PROTECTED_PLANTILLA_NAMES = SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES;
 
+/**
+ * Expone "collectStateFromResponse" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} resolvedPath - Entrada efectiva esperada por el contrato.
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function collectStateFromResponse(
   context: SeedContext,
   resolvedPath: string,
@@ -392,6 +399,36 @@ export function collectStateFromResponse(
       pushStateValue(context, 'ubicacionIds', id);
     if (resolvedPath.startsWith('/inventario'))
       pushStateValue(context, 'inventarioIds', id);
+
+    if (
+      resolvedPath.startsWith('/inventario') &&
+      !resolvedPath.startsWith('/inventario/stock') &&
+      !resolvedPath.startsWith('/inventario/alertas') &&
+      resolvedPath !== '/inventario/transferencias' &&
+      resolvedPath !== '/inventario/ajustes-manuales' &&
+      typeof entity.id === 'string' &&
+      typeof entity.productoProveedorId === 'string'
+    ) {
+      const qtyRaw = entity.cantidadActual;
+      const qty =
+        typeof qtyRaw === 'number'
+          ? qtyRaw
+          : typeof qtyRaw === 'string'
+            ? Number.parseFloat(qtyRaw)
+            : Number.NaN;
+      if (Number.isFinite(qty) && qty >= 0.002) {
+        const ubRaw = entity.ubicacionId;
+        const ub =
+          typeof ubRaw === 'string' && ubRaw.trim().length > 0
+            ? ubRaw.trim()
+            : '';
+        pushStateValue(
+          context,
+          'inventarioTransferOrigenTriples',
+          `${entity.id}|${ub}|${qty}`
+        );
+      }
+    }
     if (
       resolvedPath.startsWith('/pedido-usuarios') &&
       isPedidoUsuarioEntity(entity)

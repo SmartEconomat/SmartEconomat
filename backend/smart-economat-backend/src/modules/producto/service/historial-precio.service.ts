@@ -12,10 +12,15 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { DataSource } from 'typeorm';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para historial precio.
  */
 @Injectable()
 export class HistorialPrecioService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {HistorialPrecioRepository} historialPrecioRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly historialPrecioRepository: HistorialPrecioRepository,
     private readonly dataSource: DataSource
@@ -55,6 +60,11 @@ export class HistorialPrecioService {
       .execute();
   }
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateHistorialPrecioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   async create(dto: CreateHistorialPrecioDto): Promise<HistorialPrecio> {
     return this.dataSource.transaction(async (manager) => {
       const productoProveedor = await manager.findOne(ProductoProveedor, {
@@ -82,10 +92,20 @@ export class HistorialPrecioService {
     });
   }
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {"ASC" | "DESC"} order - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio[]>} Datos efectivos después de ejecutar la operación.
+   */
   async findAll(order: 'ASC' | 'DESC' = 'DESC'): Promise<HistorialPrecio[]> {
     return this.historialPrecioRepository.findAllWithRelations(order);
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   async findOne(id: string): Promise<HistorialPrecio> {
     const historial =
       await this.historialPrecioRepository.findOneWithRelations(id);
@@ -99,6 +119,12 @@ export class HistorialPrecioService {
     return historial;
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateHistorialPrecioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   async update(
     id: string,
     dto: UpdateHistorialPrecioDto
@@ -162,6 +188,11 @@ export class HistorialPrecioService {
     });
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async remove(id: string): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       const historial = await manager.findOne(HistorialPrecio, {

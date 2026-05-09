@@ -1,9 +1,17 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de navigate to element dentro del flujo de la aplicación.
+ *
+ * @param targetId Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
+ */
+/**
+ * Expone "navigateToElement" en smart-economat-frontend (SPA).
+ * @undefined {string} targetId - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
  */
 export const navigateToElement = (targetId: string): boolean => {
   const element = document.getElementById(targetId);

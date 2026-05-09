@@ -16,6 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "docs:generate": "typedoc --options typedoc.json",
     "test": "jest --maxWorkers=50%",
     "test:watch": "jest --watch --maxWorkers=25%",
     "test:cov": "jest --coverage --maxWorkers=50%",
@@ -119,6 +120,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.28.19",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
   },
@@ -135,7 +137,6 @@
     ],
     "rootDir": ".",
     "testMatch": [
-      "<rootDir>/src/**/*.spec.ts",
       "<rootDir>/test/**/*.spec.ts"
     ],
     "transform": {

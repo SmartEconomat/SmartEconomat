@@ -2,6 +2,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { IsNumber, Min, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Clase pública (UpdatePrecioProductoDto). Paquete: smart-economat-backend (Nest). */
 export class UpdatePrecioProductoDto {
   @ApiProperty({
     description: 'docs.NUEVO_PRECIO_UNITARIO_DEL_PRODUCTO_DEL_P',

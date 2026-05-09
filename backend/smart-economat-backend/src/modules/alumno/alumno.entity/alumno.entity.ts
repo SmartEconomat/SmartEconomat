@@ -11,6 +11,7 @@ import { Usuario } from '../../usuario/usuario.entity/usuario.entity';
 import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 
+/** Clase pública (Alumno). Paquete: smart-economat-backend (Nest). */
 @Entity('alumno')
 @Index('idx_alumno_user', ['user'], { unique: true })
 export class Alumno extends BaseEntity {

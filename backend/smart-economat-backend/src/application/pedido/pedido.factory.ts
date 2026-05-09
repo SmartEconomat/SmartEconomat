@@ -4,12 +4,14 @@ import { Pedido } from '../../modules/pedido/pedido.entity/pedido.entity';
 import { EstadoPedido } from '../../modules/pedido/enums/estado-pedido.enum';
 import { PedidoProducto } from '../../modules/pedido/pedido-producto.entity/pedido-producto.entity';
 import { ProductoProveedor } from '../../modules/producto/producto-proveedor.entity/producto-proveedor.entity';
+import { Proveedor } from '../../modules/proveedor/proveedor.entity/proveedor.entity';
 import {
   NotFoundException,
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 
+/** Alias público (BuiltPedido) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type BuiltPedido = {
   pedido: Pedido;
   pedidoProductos: Partial<PedidoProducto>[];
@@ -17,7 +19,16 @@ export type BuiltPedido = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "buildPedidoAggregate" en smart-economat-backend (Nest).
+ * @undefined {EntityManager} manager - Entrada efectiva esperada por el contrato.
+ * @undefined {CreatePedidoDto} dto - Entrada efectiva esperada por el contrato.
+ * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+ * @undefined {string} initialStatus - Entrada efectiva esperada por el contrato.
+ * @undefined {() => Date} calculateFechaEntrega - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<BuiltPedido>} Datos efectivos después de ejecutar la operación.
  */
 export async function buildPedidoAggregate(
   manager: EntityManager,
@@ -31,6 +42,22 @@ export async function buildPedidoAggregate(
   if (!lineas || lineas.length === 0) {
     throw new BadRequestException(
       'El pedido debe contener al menos un producto.'
+    );
+  }
+
+  const mainProveedor = await manager.findOne(Proveedor, {
+    where: { id: proveedorId },
+  });
+
+  if (!mainProveedor) {
+    throw new NotFoundException(
+      `El proveedor con ID ${proveedorId} no existe.`
+    );
+  }
+
+  if (mainProveedor.deletedAt) {
+    throw new BadRequestException(
+      `El proveedor ${mainProveedor.nombre} está desactivado y no puede recibir nuevos pedidos.`
     );
   }
 
@@ -105,6 +132,12 @@ export async function buildPedidoAggregate(
     if (productoProveedor.proveedorId !== proveedorId) {
       throw new BadRequestException(
         `El producto proveedor con ID ${linea.productoProveedorId} no pertenece al proveedor del pedido.`
+      );
+    }
+
+    if (productoProveedor.proveedor?.deletedAt) {
+      throw new BadRequestException(
+        `El proveedor ${productoProveedor.proveedor.nombre} está desactivado y no puede recibir nuevos pedidos.`
       );
     }
 

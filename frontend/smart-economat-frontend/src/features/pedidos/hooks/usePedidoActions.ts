@@ -41,7 +41,17 @@ interface UsePedidoActionsParams {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "usePedidoActions" en smart-economat-frontend (SPA).
+ * @undefined {UsePedidoActionsParams} {
+ *   reload,
+ *   discardDraft,
+ *   onPedidoDeleted,
+ *   onBatchCreated,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {{ savePedido: (formData: PedidoFormValues) => Promise<void>; deletePedidoById: (id: string) => Promise<void>; approvePedidoById: (id: string) => Promise<void>; approvePurchaseBatchById: (id: string) => Promise<void>; cancelPedidoById: (id: string, motivoCancelacion: string) => Promise<void>; cancelPurchaseBatchById: (id: string, motivoCancelacion: string) => Promise<void>; fetchBatchDetail: (id: string, entityType: PedidoDetailEntityType) => Promise<PedidoBatchDetail>; consolidatePedidosByIds: (pedidoUsuarioIds: string[], observaciones?: string, options?: { autoApprovePending?: boolean }) => Promise<PurchaseBatch>; startRecepcionFromBatch: (batch: PurchaseBatch) => Promise<void>; isSaving: boolean; isDeleting: boolean; isAceptando: boolean; isCancelando: boolean; isFetchingBatch: boolean; isConsolidatingBatch: boolean; }} Datos efectivos después de ejecutar la operación.
  */
 export function usePedidoActions({
   reload,
@@ -318,12 +328,19 @@ export function usePedidoActions({
   );
 
   const consolidatePedidosByIds = useCallback(
-    async (pedidoUsuarioIds: string[], observaciones?: string) => {
+    async (
+      pedidoUsuarioIds: string[],
+      observaciones?: string,
+      options?: { autoApprovePending?: boolean }
+    ) => {
       setIsConsolidatingBatch(true);
       try {
         const batch = await consolidatePurchaseBatch({
           pedidoUsuarioIds,
           observaciones,
+          ...(options?.autoApprovePending === true
+            ? { autoApprovePending: true }
+            : {}),
         });
         toast.success(t('pedidos.toast.loteSemanalGenerado'));
         onBatchCreated?.(batch);

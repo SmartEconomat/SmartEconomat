@@ -23,7 +23,7 @@ import {
 import { getAuthErrorMessage } from '../../utils/authErrorMessages';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -45,14 +45,18 @@ const ResetPassword: React.FC = () => {
     formData.confirmPassword.length === 0;
 
   /**
-   * Documentación en español.
+   * Gestiona change y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación.
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   /**
-   * Documentación en español.
+   * Gestiona submit y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación.
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

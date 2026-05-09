@@ -34,7 +34,7 @@ const MOVIMIENTOS_REFERENCIA_MERMA: TipoMovimiento[] = [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface MermaCommand {
   productoId: string;
@@ -49,7 +49,7 @@ interface MermaCommand {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface MermaKpiResponse {
   ventana: {
@@ -75,14 +75,21 @@ export interface MermaKpiResponse {
 }
 
 /**
- * Documentación en español.
+ * Servicio encargado de la gestión de mermas y desperdicios.
+ * Administra el registro de pérdidas, el descuento automático de stock siguiendo FIFO,
+ * y la generación de indicadores de rendimiento (KPIs) para el control de mermas.
  */
 @Injectable()
 export class MermaService {
   private readonly logger = new Logger(MermaService.name);
 
   /**
-   * Documentación en español.
+   * Crea una instancia de MermaService.
+   * @param mermaRepository Repositorio para la entidad Merma.
+   * @param productoRepository Repositorio para la entidad Producto.
+   * @param produccionLoteRepository Repositorio para lotes de producción.
+   * @param recetaIngredienteRepository Repositorio para ingredientes de recetas.
+   * @param dataSource Fuente de datos para la gestión de transacciones.
    */
   constructor(
     @InjectRepository(Merma)
@@ -97,7 +104,10 @@ export class MermaService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Registra una merma manual, descontando el stock más antiguo (FIFO).
+   * @param dto Datos de la merma.
+   * @param userId ID del usuario que registra.
+   * @returns El registro de merma persistido.
    */
   async create(dto: CreateMermaDto, userId: string): Promise<Merma> {
     const merma = await this.registerMerma(
@@ -121,7 +131,11 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Registra una merma ocurrida específicamente durante un proceso de producción.
+   * Valida que el producto sea un ingrediente válido para la receta del lote.
+   * @param dto Datos de la merma en producción.
+   * @param userId ID del usuario.
+   * @returns El registro de merma persistido.
    */
   async createFromProduccion(
     dto: CreateMermaProduccionDto,
@@ -170,7 +184,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Recupera una lista paginada de mermas con sus relaciones de producto y usuario.
+   * @param query Parámetros de paginación.
+   * @returns Respuesta paginada.
    */
   async findAll(
     query: PaginationQueryDto
@@ -197,7 +213,10 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Busca una merma por su ID.
+   * @param id UUID de la merma.
+   * @returns La merma encontrada.
+   * @throws NotFoundException Si no existe.
    */
   async findOne(id: string): Promise<Merma> {
     const merma = await this.mermaRepository.findOne({
@@ -213,7 +232,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Calcula indicadores clave (KPIs) sobre las mermas registradas, comparándolas con el volumen de entradas.
+   * @param query Filtros de fecha y producto.
+   * @returns Objeto con métricas de cantidad perdida, referencia y porcentaje.
    */
   async getKpis(query: MermaKpiQueryDto): Promise<MermaKpiResponse> {
     const { startDate, endDate, productoId } = query;
@@ -332,7 +353,12 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene estadísticas agregadas de mermas para su representación visual.
+   * @returns Agregaciones por motivo y por producto.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<{ porMotivo: unknown[]; porProducto: unknown[]; }>} Datos efectivos después de ejecutar la operación.
    */
   async getStats(): Promise<{ porMotivo: unknown[]; porProducto: unknown[] }> {
     const porMotivo = await this.mermaRepository
@@ -362,7 +388,11 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Método interno para el registro transaccional de una merma.
+   * Gestiona la idempotencia, el consumo de inventario y la creación de movimientos de auditoría.
+   * @param command Datos del comando de merma.
+   * @param userId ID del usuario ejecutor.
+   * @returns La merma persistida.
    */
   private async registerMerma(
     command: MermaCommand,
@@ -450,7 +480,14 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Descuenta la cantidad especificada de los registros de inventario disponibles para un producto.
+   * Utiliza una estrategia FIFO (First In, First Out) basándose en fechas de caducidad y entrada.
+   * @param manager EntityManager para la transacción.
+   * @param productoId UUID del producto maestro.
+   * @param cantidad Cantidad total a descontar.
+   * @param productoNombre Nombre del producto para mensajes de error.
+   * @returns Lista de inventarios afectados y la cantidad descontada de cada uno.
+   * @throws BadRequestException Si no hay stock suficiente.
    */
   private async consumeInventoryByProduct(
     manager: EntityManager,
@@ -505,7 +542,12 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Crea los registros de movimiento (auditoría de stock) asociados a cada consumo de inventario por merma.
+   * @param manager EntityManager para la transacción.
+   * @param consumos Lista de consumos realizados.
+   * @param merma Registro de merma padre.
+   * @param productoNombre Nombre del producto.
+   * @param userId ID del usuario ejecutor.
    */
   private async createMermaMovements(
     manager: EntityManager,
@@ -531,7 +573,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Clasifica el tipo de merma técnica basándose en el motivo proporcionado.
+   * @param motivo Motivo de la merma.
+   * @returns Categoría de merma (ROTURA, CADUCIDAD, etc.).
    */
   private resolveTipoMerma(motivo: MotivoMerma): TipoMerma {
     switch (motivo) {
@@ -547,7 +591,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Busca una merma por su clave de idempotencia para evitar registros duplicados.
+   * @param key Clave de idempotencia proporcionada por el cliente.
+   * @returns La merma encontrada o null.
    */
   private async findByIdempotencyKey(key: string): Promise<Merma | null> {
     return this.mermaRepository.findOne({
@@ -557,7 +603,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Verifica si un error de base de datos corresponde a una violación de clave única.
+   * @param error Error capturado.
+   * @returns True si es una violación de unicidad.
    */
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
@@ -572,7 +620,11 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Valida y normaliza un rango de fechas para consultas de KPIs.
+   * @param startDate Fecha de inicio en formato string.
+   * @param endDate Fecha de fin en formato string.
+   * @returns Objeto con objetos Date válidos.
+   * @throws BadRequestException Si el formato es inválido o el rango inconsistente.
    */
   private resolveDateRange(
     startDate?: string,
@@ -606,7 +658,9 @@ export class MermaService {
   }
 
   /**
-   * Documentación en español.
+   * Registra una advertencia en el log de seguridad si se detecta una merma sospechosamente alta.
+   * @param merma Registro de merma.
+   * @param userId ID del usuario responsable.
    */
   private logHighValueMerma(merma: Merma, userId: string): void {
     if (merma.cantidad >= MERMA_UMBRAL_ALTO) {

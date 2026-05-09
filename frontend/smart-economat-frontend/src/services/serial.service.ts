@@ -1,3 +1,4 @@
+/** Clase pública (SerialService). Paquete: smart-economat-frontend (SPA). */
 export class SerialService {
   private port: SerialPort | null = null;
   private reader: ReadableStreamDefaultReader<string> | null = null;
@@ -9,15 +10,27 @@ export class SerialService {
 
   private readingLoopActive = false;
 
+  /**
+   * Expone "isSupported" en smart-economat-frontend (SPA).
+   * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+   */
   public isSupported(): boolean {
     return typeof navigator !== 'undefined' && 'serial' in navigator;
   }
 
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<SerialPort[]>} Datos efectivos después de ejecutar la operación.
+   */
   public async getAuthorizedPorts(): Promise<SerialPort[]> {
     if (!this.isSupported()) return [];
     return navigator.serial.getPorts();
   }
 
+  /**
+   * Expone "requestPort" en smart-economat-frontend (SPA).
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
+   */
   public async requestPort(): Promise<boolean> {
     if (!this.isSupported()) return false;
 
@@ -39,6 +52,10 @@ export class SerialService {
     }
   }
 
+  /**
+   * Expone "useAuthorizedPort" en smart-economat-frontend (SPA).
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
+   */
   public async useAuthorizedPort(): Promise<boolean> {
     const ports = await this.getAuthorizedPorts();
     if (ports.length === 0) return false;
@@ -47,10 +64,18 @@ export class SerialService {
     return true;
   }
 
+  /**
+   * Expone "isConnected" en smart-economat-frontend (SPA).
+   * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+   */
   public isConnected(): boolean {
     return Boolean(this.port?.readable && this.port?.writable);
   }
 
+  /**
+   * Garantiza la existencia, coherencia o validez del recurso indicado.
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
+   */
   public async ensureConnection(): Promise<boolean> {
     if (!this.port) {
       const hasPort = await this.useAuthorizedPort();
@@ -65,6 +90,10 @@ export class SerialService {
     }
   }
 
+  /**
+   * Expone "connect" en smart-economat-frontend (SPA).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async connect(): Promise<void> {
     if (!this.port) throw new Error('No hay un puerto serie seleccionado.');
 
@@ -147,6 +176,12 @@ export class SerialService {
     return Number.isNaN(weight) ? null : weight;
   }
 
+  /**
+   * Expone "restartContinuousRead" en smart-economat-frontend (SPA).
+   * @undefined {(weight: number) => void} onWeight - Entrada efectiva esperada por el contrato.
+   * @undefined {((error: Error) => void) | undefined} onError - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async restartContinuousRead(
     onWeight: (weight: number) => void,
     onError?: (error: Error) => void
@@ -156,6 +191,12 @@ export class SerialService {
     void this.startContinuousRead(onWeight, onError);
   }
 
+  /**
+   * Inicia un flujo, watcher o proceso de largo recorrido.
+   * @undefined {(weight: number) => void} onWeight - Entrada efectiva esperada por el contrato.
+   * @undefined {((error: Error) => void) | undefined} onError - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async startContinuousRead(
     onWeight: (weight: number) => void,
     onError?: (error: Error) => void
@@ -203,10 +244,18 @@ export class SerialService {
     }
   }
 
+  /**
+   * Detiene un flujo o libera procesos relacionados.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
+   */
   public stopContinuousRead(): void {
     this.readingLoopActive = false;
   }
 
+  /**
+   * Expone "disconnect" en smart-economat-frontend (SPA).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async disconnect(): Promise<void> {
     try {
       this.stopContinuousRead();
@@ -243,7 +292,13 @@ export class SerialService {
   }
 }
 
+/**
+ * Expone "delay" en smart-economat-frontend (SPA).
+ * @undefined {number} ms - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export const delay = (ms: number) =>
   new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+/** Constantes públicas (serialService) expuestas en smart-economat-frontend (SPA). */
 export const serialService = new SerialService();

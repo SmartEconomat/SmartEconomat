@@ -1,5 +1,6 @@
 import { LanguageEnum } from '../../../../common/enums/languages/language.enum';
 
+/** Constantes públicas (RecepcionMessages) expuestas en smart-economat-backend (Nest). */
 export const RecepcionMessages = {
   ERRORS: {
     NOT_FOUND: 'Recepción no encontrada',
@@ -20,11 +21,15 @@ export const RecepcionMessages = {
   },
 };
 
+/** Mensaje de recepción: cadena simple o objeto anidado (p. ej. SWAGGER). */
+export type RecepcionMessageValue =
+  (typeof RecepcionMessages)[keyof typeof RecepcionMessages];
+
 export function getRecepcionMessage<Key extends keyof typeof RecepcionMessages>(
   key: Key,
   lang: string = LanguageEnum.ES,
-  ...args: any[]
-): any {
+  ...args: unknown[]
+): RecepcionMessageValue {
   if (lang !== LanguageEnum.ES) {
     console.warn(`Language '${lang}' not supported, falling back to 'es'.`);
   }
@@ -32,8 +37,8 @@ export function getRecepcionMessage<Key extends keyof typeof RecepcionMessages>(
   const message = RecepcionMessages[key];
 
   if (typeof message === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return (message as (...args: any[]) => string)(...args);
+    const fn = message as (...fnArgs: unknown[]) => unknown;
+    return fn(...args) as RecepcionMessageValue;
   }
 
   return message;

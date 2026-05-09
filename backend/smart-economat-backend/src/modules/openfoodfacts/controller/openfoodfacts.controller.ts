@@ -23,16 +23,25 @@ import { OpenFoodFactsService } from '../service/openfoodfacts.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para open food facts.
  */
 @ApiTags('OpenFoodFacts')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('openfoodfacts')
 export class OpenFoodFactsController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {OpenFoodFactsService} openFoodFactsService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly openFoodFactsService: OpenFoodFactsService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "searchByBarcode" en smart-economat-backend (Nest).
+   * @undefined {string} codigoBarras - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<OffProductResponseDto | null>} Datos efectivos después de ejecutar la operación.
    */
   @Get('producto/:codigoBarras')
   @RequireAnyPermission(
@@ -71,7 +80,12 @@ export class OpenFoodFactsController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "searchByName" en smart-economat-backend (Nest).
+   * @undefined {string | undefined} nombre - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<OffProductResponseDto[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('buscar')
   @RequireAnyPermission(

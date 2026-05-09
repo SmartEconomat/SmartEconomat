@@ -1,15 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { newDb, IMemoryDb, IBackup } from 'pg-mem';
+import { newDb, IMemoryDb, IBackup, DataType } from 'pg-mem';
 import { DataSource } from 'typeorm';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 const g = global as any;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de generate uuid v7 dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 function generateUuidV7(): string {
   const timestamp = Date.now();
@@ -35,7 +36,7 @@ function generateUuidV7(): string {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de init pg mem dentro del flujo de la aplicación.
  */
 export function initPgMem(): { db: IMemoryDb; pg: any } {
   if (g.__PG_MEM_DB__) {
@@ -87,6 +88,34 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
     impure: true,
   });
 
+  db.public.registerFunction({
+    name: 'floor',
+    args: [DataType.float],
+    implementation: (value: number) => Math.floor(Number(value)),
+  });
+
+  /** pg-mem no expone TRIM(text/varchar) como PostgreSQL; lo usan queries TypeORM (p.ej. producto por nombre). */
+  db.public.registerFunction({
+    name: 'trim',
+    args: [DataType.text],
+    implementation: (value: string | null) =>
+      value == null ? null : String(value).trim(),
+  });
+
+  db.public.interceptQueries((sql) => {
+    if (
+      sql.includes('FROM "information_schema"."columns"') &&
+      sql.includes('"columns"."table_name"')
+    ) {
+      return [];
+    }
+    if (sql.toLowerCase().includes(' from pg_am')) {
+      return [];
+    }
+
+    return null;
+  });
+
   g.__PG_MEM_DB__ = db;
   g.__PG_MEM_PG__ = db.adapters.createPg();
 
@@ -94,7 +123,8 @@ export function initPgMem(): { db: IMemoryDb; pg: any } {
 }
 
 /**
- * Documentación en español.
+ * Obtiene test data source.
+ * @returns Valor resultante de la operación.
  */
 export async function getTestDataSource(): Promise<DataSource> {
   if (g.__TEST_DATASOURCE__) {
@@ -113,21 +143,25 @@ export async function getTestDataSource(): Promise<DataSource> {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de set test data source dentro del flujo de la aplicación.
+ *
+ * @param dataSource Parámetro de entrada para la operación.
  */
 export function setTestDataSource(dataSource: DataSource): void {
   g.__TEST_DATASOURCE__ = dataSource;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de peek test data source dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 export function peekTestDataSource(): DataSource | null {
   return g.__TEST_DATASOURCE__ || null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de take snapshot dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 export function takeSnapshot(): IBackup {
   if (!g.__PG_MEM_DB__) {
@@ -142,7 +176,9 @@ export function takeSnapshot(): IBackup {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de restore snapshot dentro del flujo de la aplicación.
+ *
+ * @param backup Parámetro de entrada para la operación.
  */
 export function restoreSnapshot(backup: IBackup): void {
   if (!backup) {
@@ -155,42 +191,48 @@ export function restoreSnapshot(backup: IBackup): void {
 }
 
 /**
- * Documentación en español.
+ * Obtiene seed snapshot.
+ * @returns Valor resultante de la operación.
  */
 export function getSeedSnapshot(): IBackup | null {
   return g.__SEED_SNAPSHOT__ || null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de set seed snapshot dentro del flujo de la aplicación.
+ *
+ * @param backup Parámetro de entrada para la operación.
  */
 export function setSeedSnapshot(backup: IBackup): void {
   g.__SEED_SNAPSHOT__ = backup;
 }
 
 /**
- * Documentación en español.
+ * Obtiene file snapshot.
+ * @returns Valor resultante de la operación.
  */
 export function getFileSnapshot(): IBackup | null {
   return g.__FILE_SNAPSHOT__ || null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de set file snapshot dentro del flujo de la aplicación.
+ *
+ * @param backup Parámetro de entrada para la operación.
  */
 export function setFileSnapshot(backup: IBackup): void {
   g.__FILE_SNAPSHOT__ = backup;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de clear file snapshot dentro del flujo de la aplicación.
  */
 export function clearFileSnapshot(): void {
   g.__FILE_SNAPSHOT__ = null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de cleanup pg mem dentro del flujo de la aplicación.
  */
 export function cleanupPgMem(): void {
   g.__PG_MEM_DB__ = null;
@@ -204,14 +246,15 @@ export function cleanupPgMem(): void {
 }
 
 /**
- * Documentación en español.
+ * Determina si seeded.
+ * @returns Valor resultante de la operación.
  */
 export function isSeeded(): boolean {
   return g.__SEEDED__ === true;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de mark as seeded dentro del flujo de la aplicación.
  */
 export function markAsSeeded(): void {
   g.__SEEDED__ = true;

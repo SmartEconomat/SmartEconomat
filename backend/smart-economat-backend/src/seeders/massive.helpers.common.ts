@@ -18,11 +18,21 @@ import {
   USER_STATUSES,
 } from './massive.config';
 
+/**
+ * Expone "normalizePath" en smart-economat-backend (Nest).
+ * @undefined {string} path - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function normalizePath(path: string): string {
   const withSlash = path.startsWith('/') ? path : `/${path}`;
   return withSlash.replace(/\/+/, '/').replace(/\/$/, '') || '/';
 }
 
+/**
+ * Expone "normalizeIdentityValue" en smart-economat-backend (Nest).
+ * @undefined {unknown} value - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function normalizeIdentityValue(value: unknown): string {
   if (typeof value !== 'string') {
     return '';
@@ -30,12 +40,22 @@ export function normalizeIdentityValue(value: unknown): string {
   return value.trim().toLowerCase();
 }
 
+/**
+ * Expone "pickByCursor" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {readonly T[]} values - Entrada efectiva esperada por el contrato.
+ * @undefined {T} Datos efectivos después de ejecutar la operación.
+ */
 export function pickByCursor<T>(context: SeedContext, values: readonly T[]): T {
   const cursor = context.getState<number>('seedEnumCursor') || 0;
   context.set('seedEnumCursor', cursor + 1);
   return values[cursor % values.length];
 }
 
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {EnumCoverage} Datos efectivos después de ejecutar la operación.
+ */
 export function createEnumCoverage(): EnumCoverage {
   return {
     userRoles: new Set<string>(),
@@ -56,6 +76,13 @@ export function createEnumCoverage(): EnumCoverage {
   };
 }
 
+/**
+ * Expone "markEnum" en smart-economat-backend (Nest).
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string} value - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function markEnum(
   coverage: EnumCoverage,
   key: keyof EnumCoverage,
@@ -64,6 +91,11 @@ export function markEnum(
   coverage[key].add(value);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
+ */
 export function ensureEnumCoverageComplete(coverage: EnumCoverage): string[] {
   const requirements: Array<{
     key: keyof EnumCoverage;
@@ -98,6 +130,11 @@ export function ensureEnumCoverageComplete(coverage: EnumCoverage): string[] {
   return missing;
 }
 
+/**
+ * Expone "isRecord" en smart-economat-backend (Nest).
+ * @undefined {unknown} value - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -118,6 +155,11 @@ function hasSoftDeleteMarker(value: unknown): boolean {
   return true;
 }
 
+/**
+ * Expone "isSoftDeletedEntity" en smart-economat-backend (Nest).
+ * @undefined {Record<string, unknown>} entity - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export function isSoftDeletedEntity(entity: Record<string, unknown>): boolean {
   return (
     hasSoftDeleteMarker(entity.deletedAt) ||
@@ -127,6 +169,11 @@ export function isSoftDeletedEntity(entity: Record<string, unknown>): boolean {
   );
 }
 
+/**
+ * Expone "extractActiveEntityIds" en smart-economat-backend (Nest).
+ * @undefined {Record<string, unknown>[]} entities - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
+ */
 export function extractActiveEntityIds(
   entities: Array<Record<string, unknown>>
 ): string[] {
@@ -142,6 +189,11 @@ export function extractActiveEntityIds(
   );
 }
 
+/**
+ * Expone "listFromResponse" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>[]} Datos efectivos después de ejecutar la operación.
+ */
 export function listFromResponse(
   response: unknown
 ): Array<Record<string, unknown>> {
@@ -186,6 +238,11 @@ export function listFromResponse(
   return [response];
 }
 
+/**
+ * Expone "toEntityArray" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>[]} Datos efectivos después de ejecutar la operación.
+ */
 export function toEntityArray(
   response: unknown
 ): Array<Record<string, unknown>> {
@@ -228,6 +285,11 @@ export function toEntityArray(
   return entities;
 }
 
+/**
+ * Expone "extractResourceId" en smart-economat-backend (Nest).
+ * @undefined {unknown} response - Entrada efectiva esperada por el contrato.
+ * @undefined {string | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function extractResourceId(response: unknown): string | undefined {
   for (const entity of toEntityArray(response)) {
     if (typeof entity.id === 'string') {
@@ -237,6 +299,11 @@ export function extractResourceId(response: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * Expone "extractFilename" en smart-economat-backend (Nest).
+ * @undefined {unknown} value - Entrada efectiva esperada por el contrato.
+ * @undefined {string | null} Datos efectivos después de ejecutar la operación.
+ */
 export function extractFilename(value: unknown): string | null {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return null;

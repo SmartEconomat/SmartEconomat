@@ -13,9 +13,9 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
-import { TipoResolucion } from '../enums/incidencia.enums';
-import { TipoDiferencia } from '../incidencia-linea.entity/incidencia-linea.entity';
+import { TipoResolucion, TipoDiferencia } from '../enums/incidencia.enums';
 
+/** Clase pública (CreateIncidenciaLineaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateIncidenciaLineaDto {
   @IsUUID('all', {
     message: i18nValidationMessage('validation.INVALID_UUID'),
@@ -25,7 +25,7 @@ export class CreateIncidenciaLineaDto {
   @Type(() => Number)
   @IsNumber({}, { message: i18nValidationMessage('validation.INVALID_NUMBER') })
   @Min(0, { message: i18nValidationMessage('validation.INVALID_MIN') })
-  cantidadEsperada!: number;
+  cantidadPedida!: number;
 
   @Type(() => Number)
   @IsNumber({}, { message: i18nValidationMessage('validation.INVALID_NUMBER') })
@@ -43,6 +43,7 @@ export class CreateIncidenciaLineaDto {
   observaciones?: string;
 }
 
+/** Clase pública (CreateIncidenciaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateIncidenciaDto {
   @IsUUID('all', {
     message: i18nValidationMessage(
@@ -51,9 +52,15 @@ export class CreateIncidenciaDto {
   })
   recepcionId: string;
 
-  @IsOptional()
-  @IsUUID('all')
-  pedidoId?: string;
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.INVALID_UUID'),
+  })
+  pedidoId: string;
+
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.INVALID_UUID'),
+  })
+  proveedorId: string;
 
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsNotEmpty({ message: i18nValidationMessage('validation.REQUIRED') })
@@ -74,6 +81,7 @@ export class CreateIncidenciaDto {
   motivo?: string;
 }
 
+/** Clase pública (CreateIncidenciaResuelaDto). Paquete: smart-economat-backend (Nest). */
 export class CreateIncidenciaResuelaDto {
   @IsUUID('all', {
     message: i18nValidationMessage(

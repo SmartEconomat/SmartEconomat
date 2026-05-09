@@ -11,7 +11,10 @@ import { getRolPrincipal } from '../../sherlock-auth/utils/access.utils';
 import type { Request } from 'express';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de cookie extractor dentro del flujo de la aplicación.
+ *
+ * @param req Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 const cookieExtractor = (req: Request): string | null => {
   let token = null;
@@ -22,10 +25,15 @@ const cookieExtractor = (req: Request): string | null => {
 };
 
 /**
- * Documentación en español.
+ * Representa jwt strategy en el sistema.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Usuario>} usuarioRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
@@ -42,7 +50,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   /**
-   * Documentación en español.
+   * Valida validate y aplica las reglas definidas.
+   *
+   * @param payload Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "validate" en smart-economat-backend (Nest).
+   * @undefined {JwtPayload} payload - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; username: string; rol: string; idioma: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserLanguage; }>} Datos efectivos después de ejecutar la operación.
    */
   async validate(payload: JwtPayload) {
     const user = await this.usuarioRepo.findOne({

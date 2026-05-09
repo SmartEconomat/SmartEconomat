@@ -4,6 +4,10 @@ import Redis from 'ioredis';
 import { HttpSeedRequestError, SeedContext } from './seed-context';
 import { DEFAULT_SEED_PASSWORD } from './massive.config';
 import {
+  parseSeedBootstrapOverwriteExistingAdminPassword,
+  resolveMassiveSeedFixedAdminCredentials,
+} from './bootstrap-admin-users.seed';
+import {
   ADMIN_PERMISSION_CODES,
   ADMIN_RESTRICTED_PERMISSION_CODES,
 } from '../common/constants/role-permission-sets.constants';
@@ -43,7 +47,8 @@ import {
 } from './deterministic.seed-data';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de flush permission cache dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 async function flushPermissionCache(): Promise<void> {
   const redisHost = process.env.REDIS_HOST || 'localhost';
@@ -88,22 +93,6 @@ async function flushPermissionCache(): Promise<void> {
     }
   }
 }
-
-const FIXED_SEED_SUPERADMIN = {
-  username: 'superadmin',
-  email: 'superadmin@smarteconomat.com',
-  password: DEFAULT_SEED_PASSWORD,
-  nombre: 'Super Administrador Seed',
-  role: rolUsuario.SUPER_ADMIN,
-};
-
-const FIXED_SEED_ADMIN = {
-  username: 'admin',
-  email: 'admin@smarteconomat.com',
-  password: DEFAULT_SEED_PASSWORD,
-  nombre: 'Administrador Seed',
-  role: rolUsuario.ADMIN,
-};
 
 const FIXED_SEED_PROFESOR = {
   username: 'profesor',
@@ -183,6 +172,7 @@ const SEED_PROFESOR_PERMISSION_CODES = [
   'inventario:listar',
   'inventario:ver',
   'inventario:ajustar_stock',
+  'inventario:transferir',
   'pedidos:crear',
   'pedidos:listar',
   'pedidos:ver',
@@ -291,9 +281,16 @@ async function upsertSeedUserViaRepository(params: {
     return userRepo.save(created);
   }
 
+  const adminLikeRole =
+    params.role === rolUsuario.ADMIN || params.role === rolUsuario.SUPER_ADMIN;
+  const shouldOverwritePassword =
+    !adminLikeRole || parseSeedBootstrapOverwriteExistingAdminPassword();
+
   existing.username = params.username;
   existing.email = params.email;
-  existing.password = hashedPassword;
+  if (shouldOverwritePassword) {
+    existing.password = hashedPassword;
+  }
   existing.rol = params.role;
   existing.nombre = params.nombre;
   existing.status = UserStatus.ACTIVE;
@@ -388,6 +385,60 @@ async function upsertAlumnoSlotViaRepository(params: {
   slot.codigoSlot = params.codigoSlot;
 
   return slotRepo.save(slot);
+}
+
+/**
+ * Asegura capacidad suficiente en los slots antes de `/alumnos/register`.
+ * Ejecuciones repetidas del seed pueden llenar el cupo técnico aunque el upsert siga marcando alta capacidad.
+ */
+async function bumpSeedActorSlotCapacities(params: {
+  profesorActors: readonly { classCode: string }[];
+  extraAlumnoCount: number;
+}): Promise<void> {
+  const { profesorActors, extraAlumnoCount } = params;
+  if (profesorActors.length === 0 || extraAlumnoCount <= 0) {
+    return;
+  }
+
+  await ensureRepositoryReady();
+  const slotRepo = AppDataSource.getRepository(AlumnoSlot);
+  const alumnoRepo = AppDataSource.getRepository(Alumno);
+  const perSlotWorstCase = Math.ceil(extraAlumnoCount / profesorActors.length);
+
+  const seen = new Set<string>();
+  for (const actor of profesorActors) {
+    const raw = actor.classCode?.trim();
+    if (!raw) {
+      continue;
+    }
+
+    const normalized = raw.toUpperCase();
+    if (seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+
+    const slot = await slotRepo.findOne({
+      where: { codigoSlot: normalized },
+    });
+    if (!slot) {
+      continue;
+    }
+
+    const ocupacion = await alumnoRepo.count({
+      where: { slot: { id: slot.id } },
+    });
+
+    const minNecesaria = ocupacion + perSlotWorstCase + 32;
+    const topeSeguro = 50_000;
+    if (slot.capacidad < minNecesaria) {
+      slot.capacidad = Math.min(
+        topeSeguro,
+        Math.max(slot.capacidad, minNecesaria)
+      );
+      await slotRepo.save(slot);
+    }
+  }
 }
 
 async function upsertSeedAlumnoViaRepository(params: {
@@ -807,6 +858,11 @@ async function ensureSeedRoleTemplates(context: SeedContext): Promise<void> {
   }
 }
 
+/**
+ * Expone "warmAdminState" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function warmAdminState(context: SeedContext): Promise<void> {
   for (const path of ['/admin/roles', '/admin/permissions']) {
     const response = await context.requestJson<unknown>(path, {
@@ -818,6 +874,11 @@ export async function warmAdminState(context: SeedContext): Promise<void> {
   await ensureSeedRoleIds(context);
 }
 
+/**
+ * Expone "warmCollections" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function warmCollections(context: SeedContext): Promise<void> {
   const requests: Array<{ path: string; method: HttpMethod }> = [
     { path: '/usuarios?limit=50&page=1', method: 'GET' },
@@ -858,6 +919,11 @@ export async function warmCollections(context: SeedContext): Promise<void> {
   }
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensurePasswordActor(context: SeedContext): Promise<void> {
   const actorUsername = 'seed_pwd_actor';
 
@@ -893,6 +959,11 @@ export async function ensurePasswordActor(context: SeedContext): Promise<void> {
   context.set('seedTokenPasswordActor', token);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureResetActor(context: SeedContext): Promise<void> {
   const actorUsername = 'seed_reset_actor';
   const actorEmail = `${actorUsername}@smarteconomat.local`;
@@ -935,13 +1006,19 @@ export async function ensureResetActor(context: SeedContext): Promise<void> {
   context.set('seedResetPasswordToken', rawToken);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureCanonicalSeedCredentials(
   context: SeedContext
 ): Promise<void> {
+  const fixedCred = resolveMassiveSeedFixedAdminCredentials();
   const fixedSuperAdminUser = await upsertSeedUserViaRepository(
-    FIXED_SEED_SUPERADMIN
+    fixedCred.superAdmin
   );
-  const fixedAdminUser = await upsertSeedUserViaRepository(FIXED_SEED_ADMIN);
+  const fixedAdminUser = await upsertSeedUserViaRepository(fixedCred.admin);
   const fixedProfesor =
     await upsertSeedProfesorViaRepository(FIXED_SEED_PROFESOR);
   const fixedProfesorSlot = await upsertAlumnoSlotViaRepository({
@@ -959,8 +1036,8 @@ export async function ensureCanonicalSeedCredentials(
 
   const superAdminToken = await context.loginWithCredentials(
     {
-      email: FIXED_SEED_SUPERADMIN.email,
-      password: FIXED_SEED_SUPERADMIN.password,
+      email: fixedCred.superAdmin.email,
+      password: fixedCred.superAdmin.password,
     },
     {
       setActiveToken: false,
@@ -970,8 +1047,8 @@ export async function ensureCanonicalSeedCredentials(
 
   const adminToken = await context.loginWithCredentials(
     {
-      email: FIXED_SEED_ADMIN.email,
-      password: FIXED_SEED_ADMIN.password,
+      email: fixedCred.admin.email,
+      password: fixedCred.admin.password,
     },
     {
       setActiveToken: false,
@@ -1008,8 +1085,8 @@ export async function ensureCanonicalSeedCredentials(
   context.set('seedTokenAdminRoutesSuper', superAdminToken);
   context.set('seedTokenAdminRoutesAdmin', adminToken);
   context.set('seedTokenAdminRoutesProfesor', profesorToken);
-  context.set('seedAdminLoginEmail', FIXED_SEED_SUPERADMIN.email);
-  context.set('seedAdminCurrentPassword', DEFAULT_SEED_PASSWORD);
+  context.set('seedAdminLoginEmail', fixedCred.superAdmin.email);
+  context.set('seedAdminCurrentPassword', fixedCred.superAdmin.password);
   context.set('seedFixedSuperAdminUserId', fixedSuperAdminUser.id);
   context.set('seedFixedAdminUserId', fixedAdminUser.id);
   context.set('seedFixedProfesorUserId', fixedProfesor.user.id);
@@ -1049,6 +1126,11 @@ function isHttpConflict(error: unknown): error is HttpSeedRequestError {
   return error instanceof HttpSeedRequestError && error.status === 409;
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureRoleActors(context: SeedContext): Promise<void> {
   await ensureSeedPermissions(context);
   await warmAdminState(context);
@@ -1061,13 +1143,14 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
     SEED_ALUMNO_PERMISSION_CODES
   );
 
+  const fixedCred = resolveMassiveSeedFixedAdminCredentials();
   const fixedSuperAdminUser = await upsertSeedUserViaRepository(
-    FIXED_SEED_SUPERADMIN
+    fixedCred.superAdmin
   );
   const superAdminToken = await context.loginWithCredentials(
     {
-      email: FIXED_SEED_SUPERADMIN.email,
-      password: FIXED_SEED_SUPERADMIN.password,
+      email: fixedCred.superAdmin.email,
+      password: fixedCred.superAdmin.password,
     },
     {
       setActiveToken: false,
@@ -1083,7 +1166,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   );
   pushStateValue(context, 'seedProtectedUserIds', fixedSuperAdminUser.id);
 
-  const fixedAdminUser = await upsertSeedUserViaRepository(FIXED_SEED_ADMIN);
+  const fixedAdminUser = await upsertSeedUserViaRepository(fixedCred.admin);
   await removeUserAdditionalPermissions(
     fixedAdminUser.id,
     ADMIN_RESTRICTED_PERMISSION_CODES
@@ -1098,8 +1181,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
 
   const adminToken = await context.loginWithCredentials(
     {
-      email: FIXED_SEED_ADMIN.email,
-      password: FIXED_SEED_ADMIN.password,
+      email: fixedCred.admin.email,
+      password: fixedCred.admin.password,
     },
     {
       setActiveToken: false,
@@ -1222,8 +1305,8 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   context.set('seedFixedAlumnoId', fixedAlumno.alumno.id);
   context.set('seedFixedAlumnoUserId', fixedAlumno.user.id);
   context.set('seedTokenAlumnoTransfer', transferAlumnoToken);
-  context.set('seedAdminLoginEmail', FIXED_SEED_SUPERADMIN.email);
-  context.set('seedAdminCurrentPassword', DEFAULT_SEED_PASSWORD);
+  context.set('seedAdminLoginEmail', fixedCred.superAdmin.email);
+  context.set('seedAdminCurrentPassword', fixedCred.superAdmin.password);
 
   const runTag =
     context.getState<string>('seedRunTag') ||
@@ -1253,7 +1336,7 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   const adminActors: AdminActor[] = [
     {
       userId: fixedAdminUser.id,
-      email: FIXED_SEED_ADMIN.email,
+      email: fixedCred.admin.email,
       token: adminToken,
     },
   ];
@@ -1575,6 +1658,11 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   ]);
   const alumnoTokens: string[] = [fixedAlumnoToken];
 
+  await bumpSeedActorSlotCapacities({
+    profesorActors,
+    extraAlumnoCount,
+  });
+
   for (let i = 0; i < extraAlumnoCount; i++) {
     const profesorActor = profesorActors[i % profesorActors.length];
     const username = `seed_alumno_${runTag}_${i}`;
@@ -1761,6 +1849,11 @@ export async function ensureRoleActors(context: SeedContext): Promise<void> {
   context.setAccessToken(superAdminToken);
 }
 
+/**
+ * Garantiza la existencia, coherencia o validez del recurso indicado.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function ensureAdminRouteActors(
   context: SeedContext
 ): Promise<void> {
@@ -1847,6 +1940,11 @@ export async function ensureAdminRouteActors(
   context.setAccessToken(superAdminToken);
 }
 
+/**
+ * Expone "adminRouteActorByIteration" en smart-economat-backend (Nest).
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {"superadmin" | "admin"} Datos efectivos después de ejecutar la operación.
+ */
 export function adminRouteActorByIteration(
   iteration: number
 ): 'superadmin' | 'admin' {
@@ -1855,6 +1953,11 @@ export function adminRouteActorByIteration(
   return 'admin';
 }
 
+/**
+ * Expone "expectedStatusForAdminRouteRequest" en smart-economat-backend (Nest).
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {number[]} Datos efectivos después de ejecutar la operación.
+ */
 export function expectedStatusForAdminRouteRequest(
   endpoint: Endpoint
 ): number[] {

@@ -14,6 +14,7 @@ import { getCategoryIconFilled } from '../productos/utils/getCategoryIconFilled'
 import { useBreakpoints } from '../../utils/useBreakpoints';
 import { useTranslation } from 'react-i18next';
 
+/** Estado de filtros de inventario (sin almacén: solo ubicación y categoría). */
 export interface InventarioFiltersState {
   categorias: CategoriaProducto[];
   ubicaciones: string[];
@@ -43,9 +44,6 @@ const CATEGORIA_OPTIONS: { value: CategoriaProducto; label: string }[] = [
   { value: CategoriaProducto.OTRO, label: 'Otro' },
 ];
 
-/**
- * Documentación en español.
- */
 const InventarioFilters: React.FC<InventarioFiltersProps> = ({
   filters,
   onChange,
@@ -159,63 +157,8 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
       />
 
       {/* Filtro de Ubicaciones */}
-      <Autocomplete
-        multiple
-        disableCloseOnSelect
-        size="small"
-        options={ubicacionesDisponibles}
-        value={selectedUbicaciones}
-        getOptionLabel={(opt) => opt.nombre}
-        isOptionEqualToValue={(opt, val) => opt.id === val.id}
-        onChange={(_, newValue) => {
-          onChange({
-            ...filters,
-            ubicaciones: newValue.map((v) => v.nombre),
-          });
-        }}
-        renderTags={(tagValue, getTagProps) =>
-          tagValue.map((option, index) => {
-            const { key, ...tagProps } = getTagProps({ index });
-            return (
-              <Chip
-                key={key}
-                {...tagProps}
-                size="small"
-                label={option.nombre}
-                sx={{ height: 24, borderRadius: 1 }}
-              />
-            );
-          })
-        }
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder={
-              selectedUbicaciones.length === 0
-                ? t('inventario.filtros.placeholderUbicacion')
-                : ''
-            }
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <>
-                  <InputAdornment position="start" sx={{ ml: 0.5 }}>
-                    <PlaceIcon
-                      sx={{
-                        fontSize: 18,
-                        color:
-                          selectedUbicaciones.length > 0
-                            ? 'primary.main'
-                            : 'action.active',
-                      }}
-                    />
-                  </InputAdornment>
-                  {params.InputProps.startAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
+      <Box
+        data-testid="filtro-inventario-ubicaciones"
         sx={{
           flex: '1 1 auto',
           minWidth: isMobileOrTablet ? 'unset' : 200,
@@ -224,7 +167,67 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
             transition: 'all 0.2s ease-in-out',
           },
         }}
-      />
+      >
+        <Autocomplete
+          multiple
+          disableCloseOnSelect
+          size="small"
+          options={ubicacionesDisponibles}
+          value={selectedUbicaciones}
+          getOptionLabel={(opt) => opt.nombre}
+          isOptionEqualToValue={(opt, val) => opt.id === val.id}
+          onChange={(_, newValue) => {
+            onChange({
+              ...filters,
+              ubicaciones: newValue.map((v) => v.nombre),
+            });
+          }}
+          renderTags={(tagValue, getTagProps) =>
+            tagValue.map((option, index) => {
+              const { key, ...tagProps } = getTagProps({ index });
+              return (
+                <Chip
+                  key={key}
+                  {...tagProps}
+                  size="small"
+                  label={option.nombre}
+                  sx={{ height: 24, borderRadius: 1 }}
+                />
+              );
+            })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder={
+                selectedUbicaciones.length === 0
+                  ? t('inventario.filtros.placeholderUbicacion')
+                  : ''
+              }
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    <InputAdornment position="start" sx={{ ml: 0.5 }}>
+                      <PlaceIcon
+                        sx={{
+                          fontSize: 18,
+                          color:
+                            selectedUbicaciones.length > 0
+                              ? 'primary.main'
+                              : 'action.active',
+                        }}
+                      />
+                    </InputAdornment>
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          sx={{ width: '100%' }}
+        />
+      </Box>
     </Box>
   );
 };

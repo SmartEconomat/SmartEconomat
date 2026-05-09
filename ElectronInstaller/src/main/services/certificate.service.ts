@@ -17,7 +17,14 @@ interface EnsureCertificateOptions {
   overwrite: boolean;
 }
 
+/** Servicio del proceso principal: CertificateService. */
 export class CertificateService {
+  /**
+   * Garantiza la existencia o validez del recurso indicado.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @param {EnsureCertificateOptions} options - Entrada esperada por la función.
+   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async ensureLocalCertificates(
     runtimePath: string,
     options: EnsureCertificateOptions,

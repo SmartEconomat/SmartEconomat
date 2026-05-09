@@ -1,6 +1,10 @@
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { UserStatus } from '../../../src/modules/usuario/enums/usuario.enums';
+import {
+  UserStatus,
+  rolUsuario,
+} from '../../../src/modules/usuario/enums/usuario.enums';
+import { CreateUsuarioDto } from '../../../src/modules/usuario/dto/create-usuario.dto';
 import { UsuarioService } from '../../../src/modules/usuario/service/usuario.service';
 
 describe('UsuarioService', () => {
@@ -27,16 +31,26 @@ describe('UsuarioService', () => {
   const mockAuthPermissionsService = {
     invalidateUserCache: jest.fn(),
   };
+  const mockMovimientoHelper = {
+    log: jest.fn(),
+  };
+
+  const mockUbicacionRepo = {
+    findOne: jest.fn(),
+  };
 
   let service: UsuarioService;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUbicacionRepo.findOne.mockResolvedValue({ id: 'ubicacion-valida' });
     service = new UsuarioService(
-      mockUsuarioRepo as any,
-      mockDataSource as any,
-      mockPermisoRepo as any,
-      mockAuthPermissionsService as any
+      mockUsuarioRepo as never,
+      mockDataSource as never,
+      mockPermisoRepo as never,
+      mockUbicacionRepo as never,
+      mockAuthPermissionsService as never,
+      mockMovimientoHelper as never
     );
   });
 
@@ -46,6 +60,21 @@ describe('UsuarioService', () => {
     await expect(service.findOne('missing-user')).rejects.toBeInstanceOf(
       NotFoundException
     );
+  });
+
+  it('create rechaza ubicacionId que no existe', async () => {
+    mockUbicacionRepo.findOne.mockResolvedValueOnce(null);
+
+    const dto: CreateUsuarioDto = {
+      username: 'user-ubic',
+      password: 'Aa123456!',
+      rol: rolUsuario.ALUMNO,
+      status: UserStatus.ACTIVE,
+      ubicacionId: '01900000-0000-7000-8000-000000000001',
+    };
+
+    await expect(service.create(dto)).rejects.toBeInstanceOf(NotFoundException);
+    expect(mockUsuarioRepo.createUsuario).not.toHaveBeenCalled();
   });
 
   it('changePassword rechaza la contraseña antigua incorrecta', async () => {

@@ -4,7 +4,7 @@ import { useAuth } from '../store/auth.hooks';
 import Spinner from '../components/ui/Spinner';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PublicRoute: React.FC = () => {
   const { isAuthenticated, isAuthResolved } = useAuth();

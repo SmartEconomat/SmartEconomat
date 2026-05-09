@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
@@ -20,6 +26,9 @@ import { mermaSchema } from '../utils/schemas';
 import { useToast } from '../store/toast.hooks';
 import { fetchProductosPaginated } from '../services/producto.service';
 import { useTranslation } from 'react-i18next';
+import { useDataTable } from '../hooks/useDataTable';
+
+const MERMA_PRODUCT_SEARCH_LIMIT = 20;
 
 const formatProductoMedidaLabel = (
   contenido?: number,
@@ -37,20 +46,32 @@ const MermasPage: React.FC = () => {
   const [mermas, setMermas] = useState<Merma[]>([]);
   const [stats, setStats] = useState<IMermaStats | null>(null);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [filters, setFilters] = useState({
-    motivo: '',
-    startDate: '',
-    endDate: '',
-  });
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    filters: tableFilters,
+    onSort,
+    onFilter,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'createdAt',
+    order: 'desc',
+    filters: {
+      motivo: '',
+      startDate: '',
+      endDate: '',
+    },
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSearchingProductos, setIsSearchingProductos] = useState(false);
   const [productosBusqueda, setProductosBusqueda] = useState<
     { value: string | number; label: string }[]
   >([]);
+  const productosSearchRequestIdRef = useRef(0);
 
   const toast = useToast();
 
@@ -58,13 +79,15 @@ const MermasPage: React.FC = () => {
     setIsLoading(true);
     try {
       const params: MermasQueryParams = {
-        page,
-        limit: pageSize,
-        motivo: filters.motivo ? (filters.motivo as MotivoMerma) : undefined,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
-        sortBy: 'createdAt',
-        order: 'DESC',
+        page: queryParams.page,
+        limit: queryParams.limit,
+        motivo: tableFilters.motivo
+          ? (tableFilters.motivo as MotivoMerma)
+          : undefined,
+        startDate: (tableFilters.startDate as string) || undefined,
+        endDate: (tableFilters.endDate as string) || undefined,
+        sortBy: queryParams.sortBy as string,
+        order: queryParams.order.toUpperCase() as 'ASC' | 'DESC',
       };
       const [mermasData, statsData] = await Promise.all([
         fetchMermas(params),
@@ -72,43 +95,66 @@ const MermasPage: React.FC = () => {
       ]);
       setMermas(mermasData.data);
       setTotal(mermasData.total);
+      syncPaginationFromResponse(mermasData);
       setStats(statsData);
     } catch (err: unknown) {
+      syncPaginationFromResponse({ total: 0, data: [] });
       const message =
         err instanceof Error ? err.message : t('mermas.toast.errorCargar');
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, filters, toast, t]);
+  }, [queryParams, tableFilters, syncPaginationFromResponse, toast, t]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Manejar búsqueda de productos
-  const handleProductSearch = useCallback(async (query: string) => {
-    if (!query) return;
-    setIsSearchingProductos(true);
-    try {
-      const response = await fetchProductosPaginated({
-        searchTerm: query,
-        limit: 20,
-      });
-      setProductosBusqueda(
-        response.data.map((p) => ({
-          value: p.id as string,
-          label: formatProductoMedidaLabel(p.contenido, p.unidad)
-            ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} por unidad`
-            : p.nombre,
-        }))
-      );
-    } catch (err) {
-      console.error('Error buscando productos:', err);
-    } finally {
-      setIsSearchingProductos(false);
-    }
-  }, []);
+  const fetchMermaProductOptions = useCallback(
+    async (query: string) => {
+      const normalizedQuery = query.trim();
+      const requestId = ++productosSearchRequestIdRef.current;
+
+      setIsSearchingProductos(true);
+      try {
+        const response = await fetchProductosPaginated({
+          page: 1,
+          limit: MERMA_PRODUCT_SEARCH_LIMIT,
+          searchTerm: normalizedQuery || undefined,
+          sortBy: 'nombre',
+          order: 'ASC',
+        });
+
+        if (requestId !== productosSearchRequestIdRef.current) {
+          return;
+        }
+
+        setProductosBusqueda(
+          response.data.map((p) => ({
+            value: p.id as string,
+            label: formatProductoMedidaLabel(p.contenido, p.unidad)
+              ? `${p.nombre} · ${formatProductoMedidaLabel(p.contenido, p.unidad)} ${t('comun.porUnidad')}`
+              : p.nombre,
+          }))
+        );
+      } catch (err) {
+        console.error('Error buscando productos:', err);
+      } finally {
+        if (requestId === productosSearchRequestIdRef.current) {
+          setIsSearchingProductos(false);
+        }
+      }
+    },
+    [t]
+  );
+
+  const handleProductSearch = useCallback(
+    (query: string) => {
+      void fetchMermaProductOptions(query);
+    },
+    [fetchMermaProductOptions]
+  );
 
   const dynamicSchema = useMemo(() => {
     return mermaSchema.map((field) => {
@@ -161,6 +207,7 @@ const MermasPage: React.FC = () => {
           onClick: () => {
             setProductosBusqueda([]); // Limpiar para forzar nueva búsqueda
             setIsModalOpen(true);
+            void fetchMermaProductOptions('');
           },
         }}
       />
@@ -180,14 +227,22 @@ const MermasPage: React.FC = () => {
           </Typography>
           <MermasTable
             data={mermas}
-            total={total}
-            page={page}
-            pageSize={pageSize}
             isLoading={isLoading}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            filters={filters}
-            onFiltersChange={setFilters}
+            pagination={paginationProps}
+            sortConfig={sortConfig}
+            onSort={onSort}
+            filters={{
+              motivo: (tableFilters.motivo as string) || '',
+              startDate: (tableFilters.startDate as string) || '',
+              endDate: (tableFilters.endDate as string) || '',
+            }}
+            onFiltersChange={(newFilters) => {
+              onFilter('motivo', newFilters.motivo);
+              onFilter('startDate', newFilters.startDate);
+              onFilter('endDate', newFilters.endDate);
+            }}
+            tableFilters={tableFilters}
+            onFilter={onFilter}
           />
         </Paper>
       </Box>

@@ -14,6 +14,7 @@ import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../../common/transformers/trim-string.transformer';
 import { UppercaseStringTransformer } from '../../../../common/transformers/uppercase-string.transformer';
 
+/** Clase pública (AddProveedorToProductoDto). Paquete: smart-economat-backend (Nest). */
 export class AddProveedorToProductoDto {
   @ApiProperty({
     description: 'Identificador UUID v7 del proveedor asociado al producto.',

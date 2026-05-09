@@ -22,17 +22,27 @@ import { CancelDistribucionDto } from '../dto/cancel-distribucion.dto';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para distribucion.
  */
 @ApiTags('Distribuciones')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('distribuciones')
 export class DistribucionController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DistribucionService} distribucionService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly distribucionService: DistribucionService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/common/dto/paginated-response.dto").PaginatedResponseDto<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/distribucion.entity/distribucion.entity").Distribucion>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.distribuciones.listar)
@@ -45,7 +55,12 @@ export class DistribucionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findDisponibles" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/dto/distribucion-disponible.dto").DistribucionDisponibleDto[]>} Datos efectivos después de ejecutar la operación.
    */
   @Get('disponibles')
   @RequirePermissions(PERMISSIONS.distribuciones.listar)
@@ -55,7 +70,13 @@ export class DistribucionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/distribucion.entity/distribucion.entity").Distribucion>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.distribuciones.ver)
@@ -68,7 +89,13 @@ export class DistribucionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateDistribucionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/distribucion.entity/distribucion.entity").Distribucion>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.distribuciones.crear)
@@ -78,7 +105,13 @@ export class DistribucionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "confirmar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/distribucion.entity/distribucion.entity").Distribucion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/confirmar')
   @RequirePermissions(PERMISSIONS.distribuciones.confirmar)
@@ -91,7 +124,14 @@ export class DistribucionController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "cancelar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CancelDistribucionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/distribucion/distribucion.entity/distribucion.entity").Distribucion>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.distribuciones.cancelar)

@@ -32,21 +32,30 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador para la gestión de productos maestros.
+ * Expone endpoints para creación, consulta, actualización y eliminación de productos,
+ * integrando lógica de proveedores, alérgenos y cálculo de PMP.
  */
 @ApiTags('Productos')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('productos')
 export class ProductoController {
   /**
-   * Documentación en español.
+   * Crea una instancia de ProductoController.
+   * @param productoService Servicio para la gestión lógica de productos.
    */
   constructor(private readonly productoService: ProductoService) {}
 
   /**
-   * Documentación en español.
+   * Genera un código de barras EAN-13 único que no exista en el catálogo actual.
+   * @returns Un objeto con el código EAN-13 generado.
+   */
+  /**
+   * Expone "generarEan13" en smart-economat-backend (Nest).
+   * @undefined {Promise<{ codigo_barras: string; }>} Datos efectivos después de ejecutar la operación.
    */
   @Get('generar-ean13')
   @RequirePermissions(PERMISSIONS.productos.generar_ean13)
@@ -61,7 +70,11 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Registra un nuevo producto maestro en el sistema.
+   * Permite asociar proveedores y alérgenos en la misma operación transaccional.
+   * @param createProductoDto DTO con la información del producto y sus relaciones iniciales.
+   * @param req Objeto de petición para extraer el ID del usuario creador.
+   * @returns El producto recién creado.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.productos.crear)
@@ -101,16 +114,16 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Lista los productos del sistema aplicando filtros, ordenación y paginación.
+   * @param query DTO de filtros y parámetros de paginación.
+   * @param req Objeto de petición para extraer el rol del usuario (filtra productos inactivos para alumnos).
+   * @returns Respuesta paginada con la lista de productos.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.productos.listar)
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   findAll(
-    @SortableFields(
-      ['nombre', 'codigoBarras', 'tipo', 'marca', 'createdAt', 'updatedAt'],
-      ProductFilterDto
-    )
+    @SortableFields(SORTABLE_FIELDS.productos, ProductFilterDto)
     query: ProductFilterDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Producto>> {
@@ -119,7 +132,10 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el detalle completo de un producto por su identificador único.
+   * @param id UUID del producto solicitado.
+   * @param req Objeto de petición para control de visibilidad por rol.
+   * @returns El producto con sus relaciones (proveedores, alérgenos).
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.productos.ver)
@@ -136,7 +152,11 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza la información de un producto existente.
+   * @param id UUID del producto a modificar.
+   * @param updateProductoDto DTO con los campos a actualizar.
+   * @param req Objeto de petición para auditoría del usuario modificador.
+   * @returns El producto actualizado.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.productos.editar)
@@ -151,6 +171,12 @@ export class ProductoController {
     return this.productoService.update(id, updateProductoDto, userId);
   }
 
+  /**
+   * Expone "restore" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Producto>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/restore')
   @RequirePermissions(PERMISSIONS.productos.eliminar)
   @ApiOperation({ summary: 'Restaurar un producto eliminado' })
@@ -162,6 +188,12 @@ export class ProductoController {
     const userId = req.user.id;
     return this.productoService.restore(id, userId);
   }
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: { id: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -176,7 +208,10 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Recupera el histórico de cambios de precio para un producto específico.
+   * @param id UUID del producto maestro.
+   * @param proveedorId Opcional: filtrar historial por un proveedor concreto.
+   * @returns Lista de registros de cambios de precio.
    */
   @Get(':id/historial-precios')
   @RequirePermissions(PERMISSIONS.productos.ver)
@@ -191,7 +226,10 @@ export class ProductoController {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el Precio Medio Ponderado (PMP) actual del producto.
+   * Devuelve tanto el valor global como el desglose por cada proveedor asociado.
+   * @param id UUID del producto.
+   * @returns Objeto con el PMP global y el detalle por proveedor.
    */
   @Get(':id/pmp')
   @RequirePermissions(PERMISSIONS.productos.ver)

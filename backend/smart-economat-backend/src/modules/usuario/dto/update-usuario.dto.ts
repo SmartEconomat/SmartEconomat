@@ -1,9 +1,12 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
+  ArrayUnique,
   IsEmail,
   IsEnum,
+  IsArray,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   ValidateIf,
 } from 'class-validator';
@@ -12,6 +15,7 @@ import { rolUsuario, UserStatus, UserLanguage } from '../enums/usuario.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
+/** Clase pública (UpdateUsuarioDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateUsuarioDto {
   @IsOptional()
   @IsString({
@@ -51,6 +55,21 @@ export class UpdateUsuarioDto {
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus;
+
+  @IsOptional()
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID('all', {
+    each: true,
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionesIds?: string[];
 
   @IsOptional()
   @Transform((params) => TrimStringTransformer.transform(params))

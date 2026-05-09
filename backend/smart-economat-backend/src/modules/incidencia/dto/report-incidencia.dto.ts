@@ -2,6 +2,7 @@ import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { TipoIncidencia } from '../enums/incidencia.enums';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
+/** Clase pública (ReportIncidenciaDto). Paquete: smart-economat-backend (Nest). */
 export class ReportIncidenciaDto {
   @IsNotEmpty({ message: i18nValidationMessage('validation.REQUIRED') })
   @IsUUID('all', { message: i18nValidationMessage('validation.INVALID_UUID') })

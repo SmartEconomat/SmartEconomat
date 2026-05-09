@@ -5,7 +5,6 @@ import {
   CardActions,
   CardContent,
   CardActionArea,
-  CardMedia,
   IconButton,
   Tooltip,
   Typography,
@@ -23,6 +22,7 @@ import StatusChip from '../../components/ui/StatusChip';
 import { getCategoryIcon } from './utils/getCategoryIcon';
 import { Allergen, EU_ALLERGENS } from '../../utils/constants';
 
+/** Contrato de tipos público (ProductCardProps). Contexto: smart-economat-frontend (SPA). */
 export interface ProductCardProps {
   producto: Producto;
   onEdit?: (producto: Producto) => void;
@@ -125,12 +125,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
         }}
       >
         {imageUrl ? (
-          <CardMedia
+          <Box
             component="img"
-            height="140"
-            image={imageUrl}
+            src={imageUrl}
             alt={producto.nombre}
-            sx={{ objectFit: 'cover' }}
+            loading="lazy"
+            decoding="async"
+            sx={{
+              height: 140,
+              width: '100%',
+              objectFit: 'cover',
+            }}
           />
         ) : (
           <Box

@@ -5,13 +5,20 @@ import {
   formatLocalizedDateTime,
 } from '../../../utils/intlFormat';
 
+/** Alias público (PedidoNumberContext) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type PedidoNumberContext =
   | 'auto'
   | 'pedido-proveedor'
   | 'pedido-visible';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "formatPedidoDate" en smart-economat-frontend (SPA).
+ * @undefined {string | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {"date" | "datetime"} format - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export const formatPedidoDate = (
   value?: string,
@@ -26,13 +33,19 @@ export const formatPedidoDate = (
 };
 
 /**
- * Documentación en español.
+ * Formatea currency para su presentación.
+ *
+ * @param value Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export const formatCurrency = (value?: number | string | null): string =>
   formatLocalizedCurrencyEUR(value);
 
 /**
- * Documentación en español.
+ * Formatea pedido id para su presentación.
+ *
+ * @param id Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export const formatPedidoId = (id?: string): string => {
   if (!id) return '—';
@@ -59,7 +72,13 @@ const resolvePedidoVisibleNumber = (pedido: {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "formatPedidoListNumber" en smart-economat-frontend (SPA).
+ * @undefined {Pick<PedidoListItem, "id" | "numeroGlobal"> & { entityType?: string; numeroPedidoProveedor?: string | number; numeroPedidoVisible?: string | number; pedidoUsuario?: { numeroGlobal?: string | number; }; batchId?: string; batch?: { id?: string; }; }} pedido - Entrada efectiva esperada por el contrato.
+ * @undefined {PedidoNumberContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export const formatPedidoListNumber = (
   pedido: Pick<PedidoListItem, 'id' | 'numeroGlobal'> & {
@@ -115,7 +134,10 @@ export const formatPedidoListNumber = (
 };
 
 /**
- * Documentación en español.
+ * Formatea batch number para su presentación.
+ *
+ * @param batch Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const formatBatchNumber = (batch: PurchaseBatch): string => {
   const numeroLote = batch.numeroLote || batch.numeroGlobal;
@@ -123,7 +145,10 @@ export const formatBatchNumber = (batch: PurchaseBatch): string => {
 };
 
 /**
- * Documentación en español.
+ * Formatea batch reference para su presentación.
+ *
+ * @param batch Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const formatBatchReference = (batch: PurchaseBatch): string => {
   if (batch.referenciaLote) {
@@ -143,21 +168,34 @@ export const formatBatchReference = (batch: PurchaseBatch): string => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {Pick<PedidoListItem, "usuario">} pedido - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export const getPedidoCreatorName = (
   pedido: Pick<PedidoListItem, 'usuario'>
 ): string => pedido.usuario?.nombre || pedido.usuario?.username || '—';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {Pick<PedidoListItem, "proveedor">} pedido - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
  */
 export const getPedidoProviderName = (
   pedido: Pick<PedidoListItem, 'proveedor'>
 ): string => pedido.proveedor?.nombre || '—';
 
 /**
- * Documentación en español.
+ * Obtiene batch providers summary.
+ *
+ * @param batch Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
   const uniqueProviders = Array.from(
@@ -170,14 +208,20 @@ export const getBatchProvidersSummary = (batch: PurchaseBatch): string => {
 };
 
 /**
- * Documentación en español.
+ * Obtiene batch pedidos count.
+ *
+ * @param batch Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const getBatchPedidosCount = (batch: PurchaseBatch): number => {
   return (batch.pedidos || []).length;
 };
 
 /**
- * Documentación en español.
+ * Obtiene batch total.
+ *
+ * @param batch Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export const getBatchTotal = (batch: PurchaseBatch): number =>
   batch.pedidos?.reduce(

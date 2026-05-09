@@ -6,11 +6,13 @@ import {
   CreateIncidenciaResuelaDto,
 } from './create-incidencia.dto';
 
+/** Clase pública (UpdateIncidenciaDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateIncidenciaDto extends PartialType(CreateIncidenciaDto) {
   @Transform((params) => TrimStringTransformer.transform(params))
   observacionesRecepcion?: string;
 }
 
+/** Clase pública (UpdateIncidenciaResuelaDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateIncidenciaResuelaDto extends PartialType(
   CreateIncidenciaResuelaDto
 ) {

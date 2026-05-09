@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { normalizeNumericInput } from '../utils/numberUtils';
 import CallSplitIcon from '@mui/icons-material/CallSplit';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
@@ -40,14 +41,12 @@ import type {
   DistribucionDisponible,
 } from '../services/distribucion.types';
 import { baseFetch, parseApiResponse } from '../services/api.service';
-import { profesorService } from '../services/profesor.service';
 import { UbicacionService } from '../services/ubicacion.service';
 import type { Ubicacion } from '../services/ubicacion.types';
 import { useAuth } from '../store/auth.hooks';
 import { useToast } from '../store/toast.hooks';
 import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
-import { SYSTEM_ROLES } from '../sherlock-auth/system-roles.constants';
 import { TipoMovimiento } from '../services/movimiento.types';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -64,22 +63,8 @@ type DraftLineState = {
 };
 
 type PerfilDistribucion = {
-  profesor?: {
-    slots?: Array<{
-      ubicacionId?: string;
-      ubicacion?: {
-        id?: string;
-      } | null;
-    }> | null;
-  } | null;
-  alumno?: {
-    slot?: {
-      ubicacionId?: string;
-      ubicacion?: {
-        id?: string;
-      } | null;
-    } | null;
-  } | null;
+  ubicacionId?: string | null;
+  ubicaciones?: Array<{ id: string; nombre?: string }> | null;
 };
 
 type DistribucionLocationState = {
@@ -94,22 +79,16 @@ const collectUbicacionIdsFromPerfil = (
     return [];
   }
 
-  const profesorUbicacionIds =
-    perfil.profesor?.slots
-      ?.map((slot) => slot.ubicacionId ?? slot.ubicacion?.id)
-      .filter((ubicacionId): ubicacionId is string => Boolean(ubicacionId)) ??
-    [];
-
-  const alumnoUbicacionId =
-    perfil.alumno?.slot?.ubicacionId ?? perfil.alumno?.slot?.ubicacion?.id;
-
-  return Array.from(
-    new Set(
-      alumnoUbicacionId
-        ? [...profesorUbicacionIds, alumnoUbicacionId]
-        : profesorUbicacionIds
-    )
-  );
+  const ids = new Set<string>();
+  if (perfil.ubicacionId) {
+    ids.add(perfil.ubicacionId);
+  }
+  for (const u of perfil.ubicaciones ?? []) {
+    if (u?.id) {
+      ids.add(u.id);
+    }
+  }
+  return Array.from(ids);
 };
 
 const DistribucionPage: React.FC = () => {
@@ -122,7 +101,6 @@ const DistribucionPage: React.FC = () => {
   const canCreate = usePermission(PERMISSIONS.distribuciones.crear);
   const canConfirm = usePermission(PERMISSIONS.distribuciones.confirmar);
   const canCancel = usePermission(PERMISSIONS.distribuciones.cancelar);
-  const userRole = user?.rol?.toUpperCase() || '';
 
   const [activeTab, setActiveTab] = useState<DistribucionTab>('disponibles');
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,38 +208,18 @@ const DistribucionPage: React.FC = () => {
       return;
     }
 
-    if (userRole === SYSTEM_ROLES.PROFESOR) {
-      const response = await profesorService.getSlots();
-      if (response.status < 200 || response.status >= 300) {
-        throw new Error(
-          response.message || t('distribucion.toast.errorDetalle')
-        );
-      }
-
-      const ubicacionIds = Array.from(
-        new Set(
-          response.data
-            .map((slot) => slot.ubicacionId)
-            .filter((ubicacionId): ubicacionId is string => !!ubicacionId)
-        )
-      );
-
-      setUserUbicacionIds(ubicacionIds);
-      return;
-    }
-
     setUserUbicacionIds([]);
-  }, [t, user?.id, userRole]);
+  }, [t, user?.id]);
 
   const loadUbicaciones = useCallback(async () => {
     const data = await UbicacionService.findAll();
     setUbicaciones(data);
 
-    const almacenPrincipal = data.find(
+    const ubicacionPrincipal = data.find(
       (ubicacion) => ubicacion.nombre === 'Almacén Principal'
     );
     setOriginId(
-      (current) => current || almacenPrincipal?.id || data[0]?.id || ''
+      (current) => current || ubicacionPrincipal?.id || data[0]?.id || ''
     );
   }, []);
 
@@ -646,12 +604,14 @@ const DistribucionPage: React.FC = () => {
         label: t('distribucion.columns.pedido'),
         render: (row) => `#${row.numeroGlobal}`,
         sortable: true,
+        sortType: 'number',
       },
       {
         id: 'usuario',
         label: t('distribucion.columns.usuario'),
         render: (row) => row.usuario?.nombre || row.usuario?.username || '—',
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'alumnoSlot',
@@ -664,6 +624,7 @@ const DistribucionPage: React.FC = () => {
               })
             : t('distribucion.empty.sinAula'),
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'lineas',
@@ -679,6 +640,7 @@ const DistribucionPage: React.FC = () => {
           });
         },
         sortable: true,
+        sortType: 'number',
       },
       {
         id: 'ubicacionDestinoSugerida',
@@ -687,12 +649,14 @@ const DistribucionPage: React.FC = () => {
           row.ubicacionDestinoSugerida?.nombre ||
           t('distribucion.columns.destino'),
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'estado',
         label: t('distribucion.columns.estadoPedido'),
         render: (row) => <StatusChip status={row.estado} />,
         sortable: true,
+        sortType: 'string',
       },
     ],
     [t]
@@ -753,36 +717,42 @@ const DistribucionPage: React.FC = () => {
         label: t('distribucion.columns.pedido'),
         render: (row) => `#${row.pedidoUsuario?.numeroGlobal || '—'}`,
         sortable: true,
+        sortType: 'number',
       },
       {
         id: 'estado',
         label: t('distribucion.columns.estado'),
         render: (row) => <StatusChip status={row.estado} />,
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'ubicacionOrigen',
         label: t('distribucion.columns.origen'),
         render: (row) => row.ubicacionOrigen?.nombre || '—',
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'ubicacionDestino',
         label: t('distribucion.columns.destino'),
         render: (row) => row.ubicacionDestino?.nombre || '—',
         sortable: true,
+        sortType: 'string',
       },
       {
         id: 'fechaPreparacion',
         label: t('distribucion.columns.fechaEntrega'),
         render: (row) => formatLocalizedDateTime(row.fechaPreparacion),
         sortable: true,
+        sortType: 'date',
       },
       {
         id: 'lineas',
         label: t('distribucion.columns.lineas'),
         render: (row) => `${row.lineas?.length || 0}`,
         sortable: true,
+        sortType: 'number',
       },
     ],
     [t]
@@ -1058,7 +1028,7 @@ const DistribucionPage: React.FC = () => {
         </Box>
 
         <Box id="distribucion-content-area" sx={{ p: { xs: 2, sm: 4 } }}>
-          {error && (
+          {!loading && error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
@@ -1171,13 +1141,17 @@ const DistribucionPage: React.FC = () => {
                   />
                   <TextField
                     label={t('distribucion.dialog.cantidadEntregar')}
-                    type="number"
+                    type="text"
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]*',
+                    }}
                     value={linea.cantidad}
                     onChange={(event) =>
                       handleDraftLineChange(
                         linea.pedidoUsuarioLineaId,
                         'cantidad',
-                        event.target.value
+                        normalizeNumericInput(event.target.value)
                       )
                     }
                     fullWidth

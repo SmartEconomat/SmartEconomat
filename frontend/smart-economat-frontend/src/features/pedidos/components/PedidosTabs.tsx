@@ -33,7 +33,7 @@ const tabOptions: Array<{
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidosTabs: React.FC<PedidosTabsProps> = ({ value, onChange }) => {
   const theme = useTheme();

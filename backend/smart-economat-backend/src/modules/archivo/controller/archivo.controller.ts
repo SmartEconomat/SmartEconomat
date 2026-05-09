@@ -34,18 +34,30 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
+const ARCHIVO_CONTENT_CACHE_CONTROL = 'public, max-age=2592000, immutable';
+
 /**
- * Documentación en español.
+ * Controlador REST para archivo.
  */
 @ApiTags('Archivos')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('archivos')
 export class ArchivoController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {ArchivoService} archivoService - Entrada efectiva esperada por el contrato.
+   */
   constructor(private readonly archivoService: ArchivoService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "uploadFile" en smart-economat-backend (Nest).
+   * @undefined {Express.Multer.File} file - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: Usuario; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<any>} Datos efectivos después de ejecutar la operación.
    */
   @Post('upload')
   @RequirePermissions(PERMISSIONS.archivos.subir)
@@ -80,7 +92,12 @@ export class ArchivoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {FileListFilterDto} filterDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ data: FileResponseDto[]; total: number; page: number; limit: number; totalPages: number; }>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.archivos.listar)
@@ -98,7 +115,12 @@ export class ArchivoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<FileResponseDto>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.archivos.ver)
@@ -112,18 +134,32 @@ export class ArchivoController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} filename - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   @Get('content/:filename')
   @Public()
   @ApiOperation({ summary: 'Servir el contenido de un archivo subido' })
   getFileContent(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = this.archivoService.getFileContent(filename);
+    res.setHeader('Cache-Control', ARCHIVO_CONTENT_CACHE_CONTROL);
     res.sendFile(filePath);
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user: Usuario; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.archivos.eliminar)
@@ -143,7 +179,10 @@ export class ArchivoController {
   }
 
   /**
-   * Documentación en español.
+   * Mapea to response dto al formato de dominio esperado.
+   *
+   * @param archivo Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private mapToResponseDto(archivo: any): FileResponseDto {
     const dto = new FileResponseDto();

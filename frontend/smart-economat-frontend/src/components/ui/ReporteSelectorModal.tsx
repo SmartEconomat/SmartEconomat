@@ -20,13 +20,16 @@ import {
   downloadReportePedidosPdf,
   downloadReporteIncidenciasPdf,
   downloadReporteIncidenciasExcel,
+  downloadReportePedidosExcel,
 } from '../../services/recepcion.service';
 import { fetchProveedoresConPedidos } from '../../services/proveedor.service';
 import { Proveedor } from '../../services/proveedor.types';
 import { useToast } from '../../store/toast.hooks';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
+/** Alias público (TipoReportePdf) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type TipoReportePdf = 'pedido' | 'incidencias';
+/** Alias público (ReporteFormato) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ReporteFormato = 'pdf' | 'excel';
 
 interface ReporteSelectorModalProps {
@@ -38,8 +41,8 @@ interface ReporteSelectorModalProps {
 
 const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
   pedido: {
-    pdf: 'Reporte de Pedidos (PDF)',
-    excel: 'Reporte de Pedidos (PDF)',
+    pdf: 'Reporte de Pedidos (PDF + Excel)',
+    excel: 'Reporte de Pedidos (PDF + Excel)',
   },
   incidencias: {
     pdf: 'Reporte de Incidencias (PDF)',
@@ -48,7 +51,7 @@ const TITLES: Record<TipoReportePdf, Record<ReporteFormato, string>> = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
   isOpen,
@@ -111,11 +114,18 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
     return Object.keys(errs).length === 0;
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (formato: 'pdf' | 'excel' = 'pdf') => {
     if (!validate()) return;
     setIsDownloading(true);
     try {
-      if (tipo === 'pedido') {
+      if (tipo === 'pedido' && formato === 'excel') {
+        await downloadReportePedidosExcel({
+          startDate,
+          endDate,
+          proveedorId: proveedorId || undefined,
+          incluirCancelados,
+        });
+      } else if (tipo === 'pedido') {
         await downloadReportePedidosPdf({
           startDate,
           endDate,
@@ -139,14 +149,16 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         });
       }
       toast.success(
-        isExcelMode ? t('reporte.excelGenerado') : t('reporte.reporteGenerado')
+        formato === 'excel' || isExcelMode
+          ? t('reporte.excelGenerado')
+          : t('reporte.reporteGenerado')
       );
       onClose();
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
-          : isExcelMode
+          : formato === 'excel' || isExcelMode
             ? t('reporte.errorExcel')
             : t('reporte.errorReporte');
       toast.error(message);
@@ -279,7 +291,13 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
         )}
 
         <Box
-          sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}
+          sx={{
+            display: 'flex',
+            gap: 1,
+            justifyContent: 'flex-end',
+            mt: 2,
+            flexWrap: 'wrap',
+          }}
         >
           <Button
             variant="outlined"
@@ -288,6 +306,25 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
           >
             {t('comun.cancelar')}
           </Button>
+          {tipo === 'pedido' && (
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={
+                isDownloading ? (
+                  <CircularProgress size={18} color="inherit" />
+                ) : (
+                  <FileDownloadOutlinedIcon />
+                )
+              }
+              onClick={() => void handleGenerate('excel')}
+              disabled={isDownloading}
+            >
+              {isDownloading
+                ? t('reporte.generando')
+                : t('reporte.generarExcel')}
+            </Button>
+          )}
           <Button
             variant={isExcelMode ? 'outlined' : 'contained'}
             color={isExcelMode ? 'success' : 'error'}
@@ -300,7 +337,7 @@ const ReporteSelectorModal: React.FC<ReporteSelectorModalProps> = ({
                 <PictureAsPdfIcon />
               )
             }
-            onClick={() => void handleGenerate()}
+            onClick={() => void handleGenerate(isExcelMode ? 'excel' : 'pdf')}
             disabled={isDownloading}
           >
             {isDownloading

@@ -3,39 +3,39 @@ import { Box, CircularProgress, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type SpinnerSize = 'sm' | 'md' | 'lg';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 type SpinnerColor = 'primary' | 'white' | 'gray' | 'inherit';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface SpinnerProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   size?: SpinnerSize;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   color?: SpinnerColor;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   overlay?: boolean | 'container' | 'screen';
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   className?: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const sizeMap: Record<SpinnerSize, number> = {
   sm: 24,
@@ -44,7 +44,7 @@ const sizeMap: Record<SpinnerSize, number> = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Spinner: React.FC<SpinnerProps> = ({
   size = 'md',

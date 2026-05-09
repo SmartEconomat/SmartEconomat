@@ -1,278 +1,282 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export enum TipoDiferencia {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   FALTANTE = 'FALTANTE',
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   EXCESO = 'EXCESO',
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   DEFECTUOSO = 'DEFECTUOSO',
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export enum EstadoReclamacion {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   PENDIENTE = 'PENDIENTE',
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   RECLAMADO = 'RECLAMADO',
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   ABONADO = 'ABONADO',
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   REENVIADO = 'REENVIADO',
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export enum EstadoIncidencia {
-  /**
-   * Documentación en español.
-   */
-  NUEVA = 'nueva',
-  /**
-   * Documentación en español.
-   */
-  EN_AJUSTE = 'en_ajuste',
-  /**
-   * Documentación en español.
-   */
-  PENDIENTE_VALIDACION = 'pendiente_validacion',
-  /**
-   * Documentación en español.
-   */
-  RESUELTA = 'resuelta',
-  /**
-   * Documentación en español.
-   */
-  CANCELADA = 'cancelada',
-  /**
-   * Documentación en español.
-   */
-  INVALIDA = 'invalida',
+  ABIERTA = 'ABIERTA',
+  EN_PROCESO = 'EN_PROCESO',
+  RESUELTA = 'RESUELTA',
+  NUEVA = 'NUEVA',
+  EN_AJUSTE = 'EN_AJUSTE',
+  PENDIENTE_VALIDACION = 'PENDIENTE_VALIDACION',
+  CANCELADA = 'CANCELADA',
+  INVALIDA = 'INVALIDA',
+}
+
+/** Catálogo de valores enumerados (EstadoLineaIncidencia) dentro de smart-economat-frontend (SPA). */
+export enum EstadoLineaIncidencia {
+  SIN_PROBLEMA = 'SIN_PROBLEMA',
+  PENDIENTE_AJUSTE = 'PENDIENTE_AJUSTE',
+  AJUSTADO = 'AJUSTADO',
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface IncidenciaLinea {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   id: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   pedidoProductoId: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   productoId?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   nombreProducto: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   unidad?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  cantidadEsperada: number;
+  cantidadPedida: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   cantidadRecibida: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  cantidadPendiente: number;
+  cantidadAjustada: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   diferencia: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   tipoDiferencia: TipoDiferencia;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  estado: EstadoLineaIncidencia;
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  necesitaAjuste: boolean;
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   estadoReclamacion: EstadoReclamacion;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  cantidadPendiente: number;
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   observaciones?: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface Incidencia {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   id: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   recepcionId: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  pedidoId: string | null;
+  pedidoId?: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  proveedorId: string;
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   proveedorNombre: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   motivoIncidencia: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   estado: EstadoIncidencia;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   observacionesRecepcion?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   observacionesResolucion?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   resuelta: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  fechaResolucion?: string;
+  fechaResolucion?: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   cantidadPedidaTotal: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   cantidadRecibidaTotal: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   cantidadPendienteTotal: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   lineas: IncidenciaLinea[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   createdAt: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface ResolveIncidenciaLineaAdjustment {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   id?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   pedidoProductoId?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  ajusteCantidad?: number;
+  cantidadAjustada?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   cantidadRecibida?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   estadoReclamacion?: EstadoReclamacion;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   observaciones?: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface ResolveIncidenciaPayload {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   usuarioId?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   observacionesResolucion?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   marcarComoResuelta?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
-  estadoFinal?:
-    | EstadoIncidencia.RESUELTA
-    | EstadoIncidencia.CANCELADA
-    | EstadoIncidencia.INVALIDA;
+  estadoFinal?: EstadoIncidencia;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   lineas?: ResolveIncidenciaLineaAdjustment[];
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface IncidenciasQueryParams {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   page?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   limit?: number;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   searchTerm?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   resuelta?: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   startDate?: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   endDate?: string;
 }

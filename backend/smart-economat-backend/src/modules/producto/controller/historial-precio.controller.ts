@@ -22,13 +22,23 @@ import { RequirePermissions } from '../../../common/decorators/require-permissio
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
+/** Clase pública (HistorialPrecioController). Paquete: smart-economat-backend (Nest). */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('historial-precio')
 export class HistorialPrecioController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {HistorialPrecioService} historialPrecioService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly historialPrecioService: HistorialPrecioService
   ) {}
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateHistorialPrecioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.CREATED)
@@ -36,6 +46,11 @@ export class HistorialPrecioController {
     return this.historialPrecioService.create(dto);
   }
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {"ASC" | "DESC"} order - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio[]>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.productos.ver)
   @HttpCode(HttpStatus.OK)
@@ -51,6 +66,11 @@ export class HistorialPrecioController {
     return this.historialPrecioService.findAll(order);
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.productos.ver)
   @HttpCode(HttpStatus.OK)
@@ -58,6 +78,12 @@ export class HistorialPrecioController {
     return this.historialPrecioService.findOne(id);
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateHistorialPrecioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<HistorialPrecio>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.productos.editar)
   @HttpCode(HttpStatus.OK)
@@ -68,6 +94,11 @@ export class HistorialPrecioController {
     return this.historialPrecioService.update(id, dto);
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.productos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)

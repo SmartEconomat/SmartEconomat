@@ -1,5 +1,9 @@
 import i18n from '../i18n';
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function getResolvedLocale(): string {
   return i18n.resolvedLanguage ?? i18n.language ?? 'es';
 }
@@ -18,6 +22,12 @@ const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
 };
 
+/**
+ * Expone "formatLocalizedDate" en smart-economat-frontend (SPA).
+ * @undefined {string | number | Date | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {Intl.DateTimeFormatOptions | undefined} options - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function formatLocalizedDate(
   value: Date | number | string | null | undefined,
   options?: Intl.DateTimeFormatOptions
@@ -35,6 +45,11 @@ export function formatLocalizedDate(
   });
 }
 
+/**
+ * Expone "formatLocalizedDateTime" en smart-economat-frontend (SPA).
+ * @undefined {string | number | Date | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function formatLocalizedDateTime(
   value: Date | number | string | null | undefined
 ): string {
@@ -54,6 +69,11 @@ export function formatLocalizedDateTime(
   });
 }
 
+/**
+ * Expone "formatLocalizedTime" en smart-economat-frontend (SPA).
+ * @undefined {string | number | Date | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function formatLocalizedTime(
   value: Date | number | string | null | undefined
 ): string {
@@ -70,6 +90,11 @@ export function formatLocalizedTime(
   });
 }
 
+/**
+ * Expone "formatLocalizedCurrencyEUR" en smart-economat-frontend (SPA).
+ * @undefined {string | number | null | undefined} value - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function formatLocalizedCurrencyEUR(
   value?: number | string | null
 ): string {
@@ -83,6 +108,13 @@ export function formatLocalizedCurrencyEUR(
   }).format(safe);
 }
 
+/**
+ * Expone "formatLocalizedDecimal" en smart-economat-frontend (SPA).
+ * @undefined {number} value - Entrada efectiva esperada por el contrato.
+ * @undefined {number} minFractionDigits - Entrada efectiva esperada por el contrato.
+ * @undefined {number} maxFractionDigits - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function formatLocalizedDecimal(
   value: number,
   minFractionDigits = 2,

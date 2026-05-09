@@ -14,29 +14,76 @@ import { ApiResponse } from '../interfaces/api-response.interface';
 import { APP_VERSION } from '../helpers/app-version.helper';
 import { I18nHelper } from '../helpers/i18n.helper';
 
+type PgDriverErrorShape = {
+  code?: string;
+  constraint?: string;
+  detail?: string;
+  table?: string;
+};
+
 /**
- * Documentación en español.
+ * Traduce violaciones 23505 conocidas a mensajes de negocio (evita el genérico DUPLICATE_ENTRY).
+ */
+function translateUniqueViolation(exception: QueryFailedError): string | null {
+  const msg = (exception.message || '').toLowerCase();
+  const driver = (
+    exception as QueryFailedError & { driverError?: PgDriverErrorShape }
+  ).driverError;
+  const detail = (driver?.detail || '').toLowerCase();
+  const constraint = (driver?.constraint || '').toLowerCase();
+  const haystack = `${msg} ${detail} ${constraint}`;
+
+  if (
+    haystack.includes('uq_producto_nombre_activo_ci') ||
+    haystack.includes('(lower(trim(both from nombre)))')
+  ) {
+    return I18nHelper.getError('PRODUCT_NAME_DUPLICATE');
+  }
+
+  if (
+    haystack.includes('(codigo_barras)=') ||
+    (haystack.includes('codigo_barras') && haystack.includes('already exists'))
+  ) {
+    return I18nHelper.getError('BARCODE_ALREADY_REGISTERED');
+  }
+
+  if (haystack.includes('uq_3a28eddb5ae19f969fcd368bc1b')) {
+    return I18nHelper.getError('DUPLICATE_SUPPLIER');
+  }
+
+  return null;
+}
+
+/**
+ * Mapeo de códigos de error de PostgreSQL a claves de traducción.
+ * Permite mostrar mensajes amigables al usuario para errores comunes de base de datos.
  */
 const PG_ERROR_KEYS: Record<string, string> = {
-  /**
-   * Documentación en español.
-   */
+  /** Error de violación de clave foránea (la entidad tiene relaciones activas). */
   '23503': 'errors.ENTITY_HAS_RELATIONS',
-  /**
-   * Documentación en español.
-   */
+  /** Error de duplicidad de registro (violación de restricción única). */
   '23505': 'errors.DUPLICATE_ENTRY',
 };
 
 /**
- * Documentación en español.
+ * Filtro global de excepciones de la aplicación.
+ * Captura todos los errores no manejados, los registra y devuelve una respuesta ApiResponse estandarizada.
+ * Incluye integración con Sentry para reporte de errores.
  */
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   /**
-   * Documentación en español.
+   * Método principal para capturar y procesar excepciones.
+   * @param exception La excepción lanzada.
+   * @param host Contexto de la petición (ArgumentsHost).
+   */
+  /**
+   * Expone "catch" en smart-economat-backend (Nest).
+   * @undefined {unknown} exception - Entrada efectiva esperada por el contrato.
+   * @undefined {ArgumentsHost} host - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   @SentryExceptionCaptured()
   catch(exception: unknown, host: ArgumentsHost) {
@@ -50,6 +97,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof QueryFailedError) {
       const pgCode = (exception as QueryFailedError & { code?: string }).code;
+
+      if (pgCode === '23505') {
+        const specific = translateUniqueViolation(
+          exception as QueryFailedError<Error>
+        );
+        if (specific) {
+          this.logger.warn(
+            `DB unique violation [${pgCode}] (mapped): ${exception.message}`
+          );
+          return this.sendResponse(
+            response,
+            HttpStatus.CONFLICT,
+            specific,
+            null,
+            requestId
+          );
+        }
+      }
+
       const errorKey = pgCode ? PG_ERROR_KEYS[pgCode] : undefined;
 
       if (errorKey) {
@@ -137,7 +203,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Documentación en español.
+   * Intenta traducir un valor si es una clave de i18n, de lo contrario devuelve el string original.
+   * Maneja diversos tipos de entrada y normaliza la salida a string.
+   * @param value El valor a procesar/traducir.
+   * @returns El string traducido o procesado.
    */
   private translateIfNeeded(value: unknown): string {
     if (value === null || value === undefined) return '';
@@ -193,7 +262,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
-   * Documentación en español.
+   * Envía la respuesta estandarizada al cliente.
+   * @param response Objeto de respuesta Express.
+   * @param status Código de estado HTTP.
+   * @param message Mensaje descriptivo para el usuario.
+   * @param error Detalles técnicos del error (opcional).
+   * @param requestId Identificador único de la petición.
    */
   private sendResponse(
     response: Response,

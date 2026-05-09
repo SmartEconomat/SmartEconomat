@@ -33,39 +33,40 @@ import {
   Incidencia,
   ResolveIncidenciaPayload,
 } from '../../services/incidencia.types';
+import { normalizeNumericInput } from '../../utils/numberUtils';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface ResolveIncidenciaModalProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isOpen: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onClose: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onResolve: (payload: ResolveIncidenciaPayload) => Promise<void>;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isLoading: boolean;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   incidencia?: Incidencia | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   defaultMarkResolved?: boolean;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface EditableLinea {
   id: string;
@@ -73,30 +74,39 @@ interface EditableLinea {
   productoId?: string;
   nombreProducto: string;
   unidad?: string;
-  cantidadEsperada: number;
+  cantidadPedida: number;
   cantidadRecibidaOriginal: number;
-  cantidadPendienteOriginal: number;
+  cantidadAjustadaOriginal: number;
   ajusteInput: string;
   observacionesOriginales?: string;
   observaciones: string;
 }
 
 /**
- * Documentación en español.
+ * Normaliza text para mantener consistencia.
+ *
+ * @param value Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 function normalizeText(value?: string): string {
   return value?.trim().toLowerCase() || '';
 }
 
 /**
- * Documentación en español.
+ * Formatea cantidad para su presentación.
+ *
+ * @param value Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function formatCantidad(value: number): string {
   return Number.isFinite(value) ? value.toFixed(3) : '0.000';
 }
 
 /**
- * Documentación en español.
+ * Parsea y valida ajuste input.
+ *
+ * @param value Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function parseAjusteInput(value: string): number {
   const normalized = value.replace(',', '.').trim();
@@ -116,22 +126,26 @@ function parseAjusteInput(value: string): number {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const CANTIDAD_EPSILON = 0.0005;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 function hasDiscrepancia(
-  cantidadEsperada: number,
-  cantidadRecibida: number
+  cantidadPedida: number,
+  cantidadRecibida: number,
+  cantidadAjustada: number = 0
 ): boolean {
-  return Math.abs(cantidadEsperada - cantidadRecibida) > CANTIDAD_EPSILON;
+  return (
+    Math.abs(cantidadPedida - (cantidadRecibida + cantidadAjustada)) >
+    CANTIDAD_EPSILON
+  );
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   isOpen,
@@ -144,11 +158,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   const { t } = useTranslation();
   const [observaciones, setObservaciones] = useState('');
   const [marcarComoResuelta, setMarcarComoResuelta] = useState(true);
-  const [estadoFinal, setEstadoFinal] = useState<
-    | EstadoIncidencia.RESUELTA
-    | EstadoIncidencia.CANCELADA
-    | EstadoIncidencia.INVALIDA
-  >(EstadoIncidencia.RESUELTA);
+  const [estadoFinal, setEstadoFinal] = useState<EstadoIncidencia>(
+    EstadoIncidencia.RESUELTA
+  );
   const [lineas, setLineas] = useState<EditableLinea[]>([]);
   const [busquedaProducto, setBusquedaProducto] = useState('');
   const [page, setPage] = useState(0);
@@ -172,10 +184,10 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
         productoId: linea.productoId,
         nombreProducto: linea.nombreProducto,
         unidad: linea.unidad,
-        cantidadEsperada: linea.cantidadEsperada,
+        cantidadPedida: linea.cantidadPedida,
         cantidadRecibidaOriginal: linea.cantidadRecibida,
-        cantidadPendienteOriginal: linea.cantidadPendiente,
-        ajusteInput: '0',
+        cantidadAjustadaOriginal: linea.cantidadAjustada,
+        ajusteInput: formatCantidad(linea.cantidadAjustada),
         observacionesOriginales: linea.observaciones,
         observaciones: linea.observaciones || '',
       }))
@@ -183,18 +195,20 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   }, [isOpen, incidencia, defaultMarkResolved]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const lineasOrdenadas = useMemo(
     () =>
       [...lineas].sort((a, b) => {
         const aEditable = hasDiscrepancia(
-          a.cantidadEsperada,
-          a.cantidadRecibidaOriginal
+          a.cantidadPedida,
+          a.cantidadRecibidaOriginal,
+          a.cantidadAjustadaOriginal
         );
         const bEditable = hasDiscrepancia(
-          b.cantidadEsperada,
-          b.cantidadRecibidaOriginal
+          b.cantidadPedida,
+          b.cantidadRecibidaOriginal,
+          b.cantidadAjustadaOriginal
         );
 
         if (aEditable !== bEditable) {
@@ -207,7 +221,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   );
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const lineasFiltradas = useMemo(() => {
     const term = normalizeText(busquedaProducto);
@@ -226,7 +240,7 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   }, [busquedaProducto]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const lineasPaginadas = useMemo(() => {
     const start = page * rowsPerPage;
@@ -234,11 +248,15 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   }, [lineasFiltradas, page, rowsPerPage]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const resumenLineas = useMemo(() => {
     const ajustables = lineas.filter((linea) =>
-      hasDiscrepancia(linea.cantidadEsperada, linea.cantidadRecibidaOriginal)
+      hasDiscrepancia(
+        linea.cantidadPedida,
+        linea.cantidadRecibidaOriginal,
+        linea.cantidadAjustadaOriginal
+      )
     ).length;
 
     return {
@@ -251,21 +269,15 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   const hasLineasAjustables = resumenLineas.ajustables > 0;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const hasLineUpdates = useMemo(
     () =>
       lineas.some((linea) => {
-        const esEditable = hasDiscrepancia(
-          linea.cantidadEsperada,
-          linea.cantidadRecibidaOriginal
-        );
-        if (!esEditable) {
-          return false;
-        }
-
+        const ajusteActual = parseAjusteInput(linea.ajusteInput);
         return (
-          Math.abs(parseAjusteInput(linea.ajusteInput)) > CANTIDAD_EPSILON ||
+          Math.abs(ajusteActual - linea.cantidadAjustadaOriginal) >
+            CANTIDAD_EPSILON ||
           (linea.observaciones || '').trim() !==
             (linea.observacionesOriginales || '').trim()
         );
@@ -277,34 +289,40 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   const hasLineas = lineas.length > 0;
 
   /**
-   * Documentación en español.
+   * Obtiene ajuste bounds.
+   *
+   * @param linea Parámetro de entrada para la operación.
    */
   const getAjusteBounds = (linea: EditableLinea) => {
-    const balanceOriginal =
-      linea.cantidadRecibidaOriginal - linea.cantidadEsperada;
+    const balanceSinAjuste =
+      linea.cantidadRecibidaOriginal - linea.cantidadPedida;
 
-    if (balanceOriginal > CANTIDAD_EPSILON) {
+    if (balanceSinAjuste > CANTIDAD_EPSILON) {
       return {
-        min: -balanceOriginal,
+        min: -balanceSinAjuste,
         max: 0,
       };
     }
 
-    if (balanceOriginal < -CANTIDAD_EPSILON) {
+    if (balanceSinAjuste < -CANTIDAD_EPSILON) {
       return {
         min: 0,
-        max: Math.abs(balanceOriginal),
+        max: Math.abs(balanceSinAjuste),
       };
     }
 
     return {
-      min: 0,
-      max: 0,
+      min: -1000,
+      max: 1000,
     };
   };
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de clamp ajuste dentro del flujo de la aplicación.
+   *
+   * @param linea Parámetro de entrada para la operación.
+   * @param ajuste Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   const clampAjuste = (linea: EditableLinea, ajuste: number): number => {
     const bounds = getAjusteBounds(linea);
@@ -312,7 +330,10 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Determina si intermedio ajuste.
+   *
+   * @param value Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   const isIntermedioAjuste = (value: string): boolean => {
     const normalized = value.replace(',', '.').trim();
@@ -326,7 +347,10 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona ajuste change y aplica la lógica correspondiente.
+   *
+   * @param lineaId Parámetro de entrada para la operación.
+   * @param value Parámetro de entrada para la operación.
    */
   const handleAjusteChange = (lineaId: string, value: string) => {
     setLineas((current) =>
@@ -357,7 +381,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona ajuste blur y aplica la lógica correspondiente.
+   *
+   * @param lineaId Parámetro de entrada para la operación.
    */
   const handleAjusteBlur = (lineaId: string) => {
     setLineas((current) =>
@@ -378,7 +404,10 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona observacion linea change y aplica la lógica correspondiente.
+   *
+   * @param lineaId Parámetro de entrada para la operación.
+   * @param value Parámetro de entrada para la operación.
    */
   const handleObservacionLineaChange = (lineaId: string, value: string) => {
     setLineas((current) =>
@@ -389,7 +418,9 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
   };
 
   /**
-   * Documentación en español.
+   * Gestiona submit y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación.
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,33 +428,21 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
 
     const lineasActualizadas = lineas
       .filter((linea) => {
-        const esEditable = hasDiscrepancia(
-          linea.cantidadEsperada,
-          linea.cantidadRecibidaOriginal
-        );
-        if (!esEditable) {
-          return false;
-        }
-
+        const ajusteActual = parseAjusteInput(linea.ajusteInput);
         return (
-          Math.abs(parseAjusteInput(linea.ajusteInput)) > CANTIDAD_EPSILON ||
+          Math.abs(ajusteActual - linea.cantidadAjustadaOriginal) >
+            CANTIDAD_EPSILON ||
           (linea.observaciones || '').trim() !==
             (linea.observacionesOriginales || '').trim()
         );
       })
       .map((linea) => {
-        const ajusteCantidad = clampAjuste(
-          linea,
-          parseAjusteInput(linea.ajusteInput)
-        );
+        const cantidadAjustada = parseAjusteInput(linea.ajusteInput);
 
         return {
           id: linea.id,
           pedidoProductoId: linea.pedidoProductoId,
-          ajusteCantidad:
-            Math.abs(ajusteCantidad) > CANTIDAD_EPSILON
-              ? ajusteCantidad
-              : undefined,
+          cantidadAjustada,
           observaciones: linea.observaciones.trim() || undefined,
         };
       });
@@ -509,23 +528,12 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                   label={t('incidencias.modal.estadoFinal')}
                   value={estadoFinal}
                   onChange={(event) =>
-                    setEstadoFinal(
-                      event.target.value as
-                        | EstadoIncidencia.RESUELTA
-                        | EstadoIncidencia.CANCELADA
-                        | EstadoIncidencia.INVALIDA
-                    )
+                    setEstadoFinal(event.target.value as EstadoIncidencia)
                   }
                   disabled={isLoading || !hasLineas}
                 >
                   <MenuItem value={EstadoIncidencia.RESUELTA}>
                     {t('incidencias.estados.resuelta')}
-                  </MenuItem>
-                  <MenuItem value={EstadoIncidencia.CANCELADA}>
-                    {t('incidencias.estados.cancelada')}
-                  </MenuItem>
-                  <MenuItem value={EstadoIncidencia.INVALIDA}>
-                    {t('incidencias.estados.invalida')}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -590,29 +598,22 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                   </TableHead>
                   <TableBody>
                     {lineasPaginadas.map((linea) => {
-                      const esEditable = hasDiscrepancia(
-                        linea.cantidadEsperada,
-                        linea.cantidadRecibidaOriginal
-                      );
-                      const balanceOriginal =
-                        linea.cantidadRecibidaOriginal - linea.cantidadEsperada;
-                      const ajusteCantidad = parseAjusteInput(
-                        linea.ajusteInput
-                      );
-                      const boundsAjuste = getAjusteBounds(linea);
-                      const ajusteAplicado = clampAjuste(linea, ajusteCantidad);
+                      const balanceSinAjuste =
+                        linea.cantidadRecibidaOriginal - linea.cantidadPedida;
+                      const ajusteActual = parseAjusteInput(linea.ajusteInput);
                       const recibidaTrasAjuste = Math.max(
                         0,
-                        linea.cantidadRecibidaOriginal + ajusteAplicado
+                        linea.cantidadRecibidaOriginal + ajusteActual
                       );
                       const balanceTrasAjuste =
-                        recibidaTrasAjuste - linea.cantidadEsperada;
+                        recibidaTrasAjuste - linea.cantidadPedida;
+                      const esEditable = true; // Siempre editable ahora para permitir ajustes libres si se desea
 
                       return (
                         <TableRow key={linea.id} hover>
                           <TableCell>{linea.nombreProducto}</TableCell>
                           <TableCell>
-                            {formatCantidad(linea.cantidadEsperada)}{' '}
+                            {formatCantidad(linea.cantidadPedida)}{' '}
                             {linea.unidad || 'ud'}
                           </TableCell>
                           <TableCell>
@@ -622,36 +623,28 @@ const ResolveIncidenciaModal: React.FC<ResolveIncidenciaModalProps> = ({
                           <TableCell sx={{ minWidth: 140 }}>
                             <TextField
                               label={`${t('incidencias.modal.ajusteLabel')} (${linea.unidad || 'ud'})`}
-                              type="number"
+                              type="text"
                               size="small"
                               value={linea.ajusteInput}
                               onChange={(event) =>
-                                handleAjusteChange(linea.id, event.target.value)
+                                handleAjusteChange(
+                                  linea.id,
+                                  normalizeNumericInput(
+                                    event.target.value,
+                                    true
+                                  )
+                                )
                               }
                               onBlur={() => handleAjusteBlur(linea.id)}
-                              disabled={isLoading || !esEditable}
+                              disabled={isLoading}
                               inputProps={{
-                                step: 0.001,
-                                min: boundsAjuste.min,
-                                max: boundsAjuste.max,
+                                inputMode: 'decimal',
+                                pattern: '[-+]?[0-9]*[.,]?[0-9]*',
                               }}
                               helperText={
-                                esEditable
-                                  ? balanceOriginal > CANTIDAD_EPSILON
-                                    ? t('incidencias.modal.rangoPermitidoMax', {
-                                        min: formatCantidad(boundsAjuste.min),
-                                      })
-                                    : balanceOriginal < -CANTIDAD_EPSILON
-                                      ? t(
-                                          'incidencias.modal.rangoPermitidoMin',
-                                          {
-                                            max: formatCantidad(
-                                              boundsAjuste.max
-                                            ),
-                                          }
-                                        )
-                                      : t('incidencias.modal.ajusteManual')
-                                  : t('incidencias.modal.noRequiereAjuste')
+                                Math.abs(balanceSinAjuste) < CANTIDAD_EPSILON
+                                  ? t('incidencias.modal.sinDiscrepancia')
+                                  : t('incidencias.modal.ajusteManual')
                               }
                             />
                           </TableCell>

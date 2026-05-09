@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('AppController (e2e)', () => {
   jest.setTimeout(30000);
@@ -19,7 +19,7 @@ describe('AppController (e2e)', () => {
   });
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   it('/ (GET)', () => {
     return request(app.getHttpServer() as string)

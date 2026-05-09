@@ -93,7 +93,8 @@ let openFoodFactsRateLimiter: Promise<void> = Promise.resolve();
 let openFoodFactsNextRequestAt = 0;
 
 /**
- * Documentación en español.
+ * Obtiene open food facts request delay ms.
+ * @returns Valor resultante de la operación.
  */
 function getOpenFoodFactsRequestDelayMs(): number {
   const rawValue =
@@ -105,7 +106,8 @@ function getOpenFoodFactsRequestDelayMs(): number {
 }
 
 /**
- * Documentación en español.
+ * Obtiene open food facts timeout ms.
+ * @returns Valor resultante de la operación.
  */
 function getOpenFoodFactsTimeoutMs(): number {
   const rawValue =
@@ -117,14 +119,18 @@ function getOpenFoodFactsTimeoutMs(): number {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de sleep dentro del flujo de la aplicación.
+ *
+ * @param ms Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de wait for open food facts slot dentro del flujo de la aplicación.
+ * @returns Valor resultante de la operación.
  */
 async function waitForOpenFoodFactsSlot(): Promise<void> {
   const pending = openFoodFactsRateLimiter.then(async () => {
@@ -141,7 +147,10 @@ async function waitForOpenFoodFactsSlot(): Promise<void> {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de to string array dentro del flujo de la aplicación.
+ *
+ * @param value Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
@@ -152,7 +161,10 @@ function toStringArray(value: unknown): string[] {
 }
 
 /**
- * Documentación en español.
+ * Normaliza offallergens para mantener consistencia.
+ *
+ * @param tags Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function normalizeOFFAllergens(tags: string[]): string[] {
   const result = new Set<string>();
@@ -168,7 +180,7 @@ function normalizeOFFAllergens(tags: string[]): string[] {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 function parseOFFProduct(
   product: OpenFoodFactsApiProduct | undefined
@@ -220,12 +232,12 @@ function parseOFFProduct(
 }
 
 /**
- * Documentación en español.
+ * Servicio de dominio para open food facts.
  */
 @Injectable()
 export class OpenFoodFactsService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async fetchOpenFoodFactsJson<T>(path: string): Promise<T | null> {
     await waitForOpenFoodFactsSlot();
@@ -244,7 +256,10 @@ export class OpenFoodFactsService {
   }
 
   /**
-   * Documentación en español.
+   * Busca by barcode.
+   *
+   * @param code Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async searchByBarcode(code: string): Promise<OffProductResponseDto | null> {
     const trimmedCode = code.trim();
@@ -269,7 +284,10 @@ export class OpenFoodFactsService {
   }
 
   /**
-   * Documentación en español.
+   * Busca by name.
+   *
+   * @param name Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async searchByName(name: string): Promise<OffProductResponseDto[]> {
     const trimmedName = name.trim();

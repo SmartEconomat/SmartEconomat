@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, ButtonProps } from '@mui/material';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const SecondaryActionButton: React.FC<ButtonProps> = (props) => {
   return (

@@ -1,13 +1,8 @@
-import {
-  IsUUID,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsDateString,
-  Min,
-} from 'class-validator';
+import { IsUUID, IsOptional, IsString, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsPortion } from '../../../common/decorators/is-portion.decorator';
 
+/** Clase pública (CreatePreparacionDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePreparacionDto {
   @ApiProperty({
     description:
@@ -18,11 +13,11 @@ export class CreatePreparacionDto {
   recetaId: string;
 
   @ApiProperty({
-    description: 'Cantidad total a producir al ejecutar la receta asociada.',
+    description:
+      'Porciones a producir (múltiplos de 0,5): escala objetivo como en una preparación. El backend deriva cantidad física y consumo de ingredientes.',
     example: 2.5,
   })
-  @IsNumber({ maxDecimalPlaces: 3 })
-  @Min(0.001)
+  @IsPortion()
   cantidadAProducir: number;
 
   @ApiPropertyOptional({

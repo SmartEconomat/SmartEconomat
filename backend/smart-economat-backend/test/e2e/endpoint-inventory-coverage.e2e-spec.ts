@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -561,7 +561,7 @@ describe('Endpoint inventory coverage (e2e)', () => {
           nombre: generateUniqueName('RecPrep'),
           instrucciones: 'x',
           dificultad: 'Fácil',
-          tiempoEstimadoMinutos: 5,
+          tiempoEstimadoMinutos: 10,
           ingredientes: [{ productoId: pid, cantidad: 1, unidad: 'kg' }],
         })
         .expect(201);
@@ -622,7 +622,7 @@ describe('Endpoint inventory coverage (e2e)', () => {
           nombre: generateUniqueName('RecPrepC'),
           instrucciones: 'x',
           dificultad: 'Fácil',
-          tiempoEstimadoMinutos: 5,
+          tiempoEstimadoMinutos: 10,
           ingredientes: [{ productoId: pid, cantidad: 1, unidad: 'kg' }],
         })
         .expect(201);
@@ -997,7 +997,7 @@ describe('Endpoint inventory coverage (e2e)', () => {
           nombre: generateUniqueName('RecetaSub'),
           instrucciones: 'z',
           dificultad: 'Fácil',
-          tiempoEstimadoMinutos: 5,
+          tiempoEstimadoMinutos: 10,
           ingredientes: [{ productoId: pid, cantidad: 1, unidad: 'kg' }],
         })
         .expect(201);

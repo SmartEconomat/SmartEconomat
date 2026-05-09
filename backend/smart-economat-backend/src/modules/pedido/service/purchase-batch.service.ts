@@ -36,6 +36,12 @@ import {
   formatPurchaseBatchReferencia,
   reserveNextPurchaseBatchNumero,
 } from '../utils/purchase-batch-numero.util';
+import { PedidoUsuarioStateMachine } from '../state/pedido-usuario.state-machine';
+import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
+import {
+  canApprove,
+  canConsolidateWeek,
+} from '../domain/order-consolidation.rules';
 
 type BatchCreationMode = 'approve' | 'consolidate';
 type PedidoSemanticShape = Pedido & {
@@ -45,10 +51,17 @@ type PedidoSemanticShape = Pedido & {
 };
 
 /**
- * Documentación en español.
+ * Servicio de dominio para purchase batch.
  */
 @Injectable()
 export class PurchaseBatchService {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   * @undefined {MovimientoHelper} movimientoHelper - Entrada efectiva esperada por el contrato.
+   * @undefined {ProduccionService} produccionService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
@@ -57,7 +70,13 @@ export class PurchaseBatchService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePurchaseBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
    */
   async createBatchOrder(
     dto: CreatePurchaseBatchDto,
@@ -158,10 +177,21 @@ export class PurchaseBatchService {
       }
 
       await queryRunner.commitTransaction();
+      const createdBatch = await this.findOne(savedBatch.id);
+      await this.movimientoHelper.trackAction({
+        userId,
+        entidad: 'PurchaseBatch',
+        entidadId: createdBatch.id,
+        accion: AccionMovimiento.CREATE,
+        descripcion: `Creación de lote de compra ${createdBatch.id}`,
+        after: createdBatch,
+      });
 
-      return this.findOne(savedBatch.id);
+      return createdBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -178,7 +208,13 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateMissingStockBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
    */
   async createBatchOrderFromMissingStock(
     dto: CreateMissingStockBatchDto,
@@ -191,7 +227,12 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "buildPedidoUsuarioDtoFromMissingStock" en smart-economat-backend (Nest).
+   * @undefined {CreateMissingStockBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<CreatePedidoUsuarioDto>} Datos efectivos después de ejecutar la operación.
    */
   async buildPedidoUsuarioDtoFromMissingStock(
     dto: CreateMissingStockBatchDto
@@ -255,7 +296,12 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {Promise<PurchaseBatch[]>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(): Promise<PurchaseBatch[]> {
     const batches = await this.dataSource.getRepository(PurchaseBatch).find({
@@ -272,7 +318,13 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "consolidateExistingOrders" en smart-economat-backend (Nest).
+   * @undefined {ConsolidatePurchaseBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
    */
   async consolidateExistingOrders(
     dto: ConsolidatePurchaseBatchDto,
@@ -284,30 +336,104 @@ export class PurchaseBatchService {
       uniquePedidoUsuarioIds,
       userId,
       dto.observaciones,
-      'consolidate'
+      'consolidate',
+      dto.autoApprovePending ?? false
     );
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "approvePedidoUsuario" en smart-economat-backend (Nest).
+   * @undefined {string} pedidoUsuarioId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async approvePedidoUsuario(
     pedidoUsuarioId: string,
     userId: string
-  ): Promise<PurchaseBatch> {
-    return this.createBatchFromPedidoUsuarioIds(
-      [pedidoUsuarioId],
-      userId,
-      undefined,
-      'approve'
-    );
+  ): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const pedidoUsuario = await queryRunner.manager.findOne(PedidoUsuario, {
+        where: { id: pedidoUsuarioId },
+        relations: ['pedidos', 'pedidos.recepcionesPedido'],
+      });
+
+      if (!pedidoUsuario) {
+        throw new NotFoundException('El pedido de usuario ya no existe.');
+      }
+
+      if (pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO) {
+        throw new BadRequestException(
+          'No se puede aprobar un pedido que ya está consolidado semanalmente.'
+        );
+      }
+
+      if (pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE) {
+        throw new BadRequestException(
+          'Solo se pueden aprobar pedidos de usuario en estado pendiente.'
+        );
+      }
+
+      const pedidos = pedidoUsuario.pedidos || [];
+      const invalidPedido = pedidos.find(
+        (pedido) =>
+          pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION ||
+          Boolean((pedido.recepcionesPedido || []).length)
+      );
+
+      if (invalidPedido) {
+        throw new BadRequestException(
+          'Solo se pueden aprobar pedidos internos pendientes de aprobación y sin recepciones.'
+        );
+      }
+
+      PedidoUsuarioStateMachine.applyTransition(
+        pedidoUsuario,
+        EstadoPedidoUsuario.APROBADO
+      );
+      pedidoUsuario.modifiedBy = userId;
+      await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+
+      await queryRunner.commitTransaction();
+    } catch (error: any) {
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+
+      throw new ConflictException(
+        `Error al aprobar el pedido de usuario: ${error.message}`
+      );
+    } finally {
+      await queryRunner.release();
+    }
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePurchaseBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
+   */
   async updateBatchOrder(
     id: string,
     dto: UpdatePurchaseBatchDto,
     userId?: string
   ): Promise<PurchaseBatch> {
+    const before = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -521,10 +647,25 @@ export class PurchaseBatchService {
 
       await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+      const updatedBatch = await this.findOne(batch.id);
 
-      return this.findOne(batch.id);
+      if (userId) {
+        await this.movimientoHelper.trackAction({
+          userId,
+          entidad: 'PurchaseBatch',
+          entidadId: batch.id,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Actualización de lote de compra ${batch.id}`,
+          before,
+          after: updatedBatch,
+        });
+      }
+
+      return updatedBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
 
       if (
         error instanceof NotFoundException ||
@@ -542,7 +683,14 @@ export class PurchaseBatchService {
     }
   }
 
+  /**
+   * Expone "acceptBatchOrder" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
+   */
   async acceptBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
+    const before = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -589,10 +737,25 @@ export class PurchaseBatchService {
 
       await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+      const approvedBatch = await this.findOne(batch.id);
 
-      return this.findOne(batch.id);
+      if (userId) {
+        await this.movimientoHelper.trackAction({
+          userId,
+          entidad: 'PurchaseBatch',
+          entidadId: batch.id,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Aprobación de lote de compra ${batch.id}`,
+          before,
+          after: approvedBatch,
+        });
+      }
+
+      return approvedBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
 
       if (
         error instanceof NotFoundException ||
@@ -610,11 +773,24 @@ export class PurchaseBatchService {
     }
   }
 
+  /**
+   * Expone "approveBatchOrder" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
+   */
   async approveBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
     return this.acceptBatchOrder(id, userId);
   }
 
+  /**
+   * Expone "restoreBatchOrder" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
+   */
   async restoreBatchOrder(id: string, userId?: string): Promise<PurchaseBatch> {
+    const before = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -687,10 +863,25 @@ export class PurchaseBatchService {
 
       await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+      const restoredBatch = await this.findOne(batch.id);
 
-      return this.findOne(batch.id);
+      if (userId) {
+        await this.movimientoHelper.trackAction({
+          userId,
+          entidad: 'PurchaseBatch',
+          entidadId: batch.id,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Restauración de lote de compra ${batch.id}`,
+          before,
+          after: restoredBatch,
+        });
+      }
+
+      return restoredBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
 
       if (
         error instanceof NotFoundException ||
@@ -708,11 +899,19 @@ export class PurchaseBatchService {
     }
   }
 
+  /**
+   * Expone "cancelBatchOrder" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CancelPurchaseBatchDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PurchaseBatch>} Datos efectivos después de ejecutar la operación.
+   */
   async cancelBatchOrder(
     id: string,
     dto: CancelPurchaseBatchDto,
     userId?: string
   ): Promise<PurchaseBatch> {
+    const before = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -791,10 +990,25 @@ export class PurchaseBatchService {
 
       await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+      const cancelledBatch = await this.findOne(batch.id);
 
-      return this.findOne(batch.id);
+      if (userId) {
+        await this.movimientoHelper.trackAction({
+          userId,
+          entidad: 'PurchaseBatch',
+          entidadId: batch.id,
+          accion: AccionMovimiento.UPDATE,
+          descripcion: `Cancelación de lote de compra ${batch.id}`,
+          before,
+          after: cancelledBatch,
+        });
+      }
+
+      return cancelledBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
 
       if (
         error instanceof NotFoundException ||
@@ -813,7 +1027,10 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<PurchaseBatch> {
     const batch = await this.dataSource.getRepository(PurchaseBatch).findOne({
@@ -840,7 +1057,14 @@ export class PurchaseBatchService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "syncBatchStatus" en smart-economat-backend (Nest).
+   * @undefined {string} batchId - Entrada efectiva esperada por el contrato.
+   * @undefined {EntityManager | undefined} manager - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} actorId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   async syncBatchStatus(
     batchId: string,
@@ -916,10 +1140,12 @@ export class PurchaseBatchService {
       }),
     ]);
 
-    const referencedLineIds = new Set<string>([
-      ...recepciones.map((item) => item.pedidoProductoId),
-      ...incidencias.map((item) => item.pedidoProductoId),
-    ]);
+    const referencedLineIds = new Set<string>(
+      [
+        ...recepciones.map((item) => item.pedidoProductoId),
+        ...incidencias.map((item) => item.pedidoProductoId),
+      ].filter((id): id is string => typeof id === 'string' && id.length > 0)
+    );
 
     pedidos.forEach((pedido) => {
       (pedido.pedidoProductos || []).forEach((line) => {
@@ -941,7 +1167,8 @@ export class PurchaseBatchService {
     pedidoUsuarioIds: string[],
     userId: string,
     observaciones: string | undefined,
-    mode: BatchCreationMode
+    mode: BatchCreationMode,
+    autoApprovePending: boolean
   ): Promise<PurchaseBatch> {
     if (pedidoUsuarioIds.length === 0) {
       throw new BadRequestException(
@@ -973,29 +1200,75 @@ export class PurchaseBatchService {
 
       const invalidPedidoUsuario = pedidosUsuario.find(
         (pedidoUsuario) =>
-          pedidoUsuario.estado !== EstadoPedidoUsuario.PENDIENTE
+          ![
+            EstadoPedidoUsuario.PENDIENTE,
+            EstadoPedidoUsuario.APROBADO,
+          ].includes(pedidoUsuario.estado)
       );
 
       if (invalidPedidoUsuario) {
         throw new BadRequestException(
-          'Solo se pueden aprobar o consolidar pedidos de usuario pendientes.'
+          'Solo se pueden aprobar o consolidar pedidos de usuario en estado pendiente o aprobado.'
         );
+      }
+
+      if (mode === 'consolidate') {
+        const alreadyConsolidated = pedidosUsuario.find(
+          (pedidoUsuario) =>
+            pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO
+        );
+        if (alreadyConsolidated) {
+          throw new BadRequestException(
+            'No se puede consolidar: uno o varios pedidos ya están consolidados semanalmente.'
+          );
+        }
+
+        const weekDecision = canConsolidateWeek(
+          { orders: pedidosUsuario },
+          { autoApprovePending }
+        );
+        if (!weekDecision.allowed) {
+          if (weekDecision.reason === 'order.pendingRequiresAutoApproval') {
+            throw new BadRequestException(
+              'Hay pedidos pendientes. Reintenta con autoApprovePending=true para auto-aprobar y consolidar.'
+            );
+          }
+
+          if (weekDecision.reason === 'order.hasRecepciones') {
+            throw new BadRequestException(
+              'No se puede consolidar un pedido de usuario que ya tenga recepciones registradas.'
+            );
+          }
+
+          throw new BadRequestException(
+            'No se pudo consolidar el grupo de pedidos seleccionado.'
+          );
+        }
       }
 
       const pedidos = pedidosUsuario.flatMap(
         (pedidoUsuario) => pedidoUsuario.pedidos || []
       );
 
+      const allowedEstadosInternos =
+        mode === 'approve'
+          ? new Set<EstadoPedido>([EstadoPedido.PENDIENTE_DE_APROBACION])
+          : new Set<EstadoPedido>([
+              EstadoPedido.PENDIENTE_DE_APROBACION,
+              EstadoPedido.POR_RECEPCIONAR,
+            ]);
+
       const invalidPedido = pedidos.find(
         (pedido) =>
-          pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION ||
-          Boolean(pedido.batchId) ||
+          !allowedEstadosInternos.has(pedido.estado) ||
           Boolean((pedido.recepcionesPedido || []).length)
       );
 
       if (invalidPedido) {
         throw new BadRequestException(
-          'Solo se pueden aprobar o consolidar pedidos internos pendientes y sin recepciones.'
+          mode === 'approve'
+            ? 'Solo se pueden aprobar pedidos internos pendientes de aprobación y sin recepciones.'
+            : 'Solo se pueden consolidar pedidos internos pendientes de aprobación o por recepcionar, y sin recepciones.'
         );
       }
 
@@ -1011,6 +1284,42 @@ export class PurchaseBatchService {
 
       const savedBatch = await queryRunner.manager.save(PurchaseBatch, batch);
 
+      for (const pedidoUsuario of pedidosUsuario) {
+        if (mode === 'consolidate') {
+          if (pedidoUsuario.estado === EstadoPedidoUsuario.PENDIENTE) {
+            if (!autoApprovePending) {
+              throw new BadRequestException(
+                'Hay pedidos pendientes. Reintenta con autoApprovePending=true para auto-aprobar y consolidar.'
+              );
+            }
+
+            const canAutoApprove = canApprove(pedidoUsuario);
+            if (!canAutoApprove) {
+              throw new BadRequestException(
+                'No se puede auto-aprobar uno de los pedidos pendientes antes de consolidar.'
+              );
+            }
+
+            PedidoUsuarioStateMachine.applyTransition(
+              pedidoUsuario,
+              EstadoPedidoUsuario.APROBADO
+            );
+          }
+
+          PedidoUsuarioStateMachine.applyTransition(
+            pedidoUsuario,
+            EstadoPedidoUsuario.CONSOLIDADO
+          );
+        } else {
+          PedidoUsuarioStateMachine.applyTransition(
+            pedidoUsuario,
+            EstadoPedidoUsuario.APROBADO
+          );
+        }
+        pedidoUsuario.modifiedBy = userId;
+        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
+      }
+
       for (const pedido of pedidos) {
         pedido.batchId = savedBatch.id;
         pedido.estado = EstadoPedido.POR_RECEPCIONAR;
@@ -1018,23 +1327,29 @@ export class PurchaseBatchService {
         await queryRunner.manager.save(Pedido, pedido);
       }
 
-      const nextPedidoUsuarioEstado =
-        mode === 'approve'
-          ? EstadoPedidoUsuario.APROBADO
-          : EstadoPedidoUsuario.CONSOLIDADO;
-
-      for (const pedidoUsuario of pedidosUsuario) {
-        pedidoUsuario.estado = nextPedidoUsuarioEstado;
-        pedidoUsuario.modifiedBy = userId;
-        await queryRunner.manager.save(PedidoUsuario, pedidoUsuario);
-      }
-
       await this.syncBatchStatus(savedBatch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
+      const createdBatch = await this.findOne(savedBatch.id);
+      await this.movimientoHelper.trackAction({
+        userId,
+        entidad: 'PurchaseBatch',
+        entidadId: createdBatch.id,
+        accion:
+          mode === 'approve'
+            ? AccionMovimiento.UPDATE
+            : AccionMovimiento.UPDATE,
+        descripcion:
+          mode === 'approve'
+            ? `Aprobación de pedido de usuario y creación de lote ${createdBatch.id}`
+            : `Consolidación de pedidos de usuario en lote ${createdBatch.id}`,
+        after: createdBatch,
+      });
 
-      return this.findOne(savedBatch.id);
+      return createdBatch;
     } catch (error: any) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||

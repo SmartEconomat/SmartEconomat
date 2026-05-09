@@ -3,6 +3,11 @@ import { Box, Button, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import DataTable from '../../../components/ui/DataTable';
+import {
+  DataTablePaginationProps,
+  SortConfig,
+  type FilterValue,
+} from '../../../hooks/useDataTable';
 import { PedidoListItem } from '../../../services/pedido.types';
 import {
   PedidoActionHandlers,
@@ -19,33 +24,33 @@ import PedidoCard from './PedidoCard';
 interface PedidosTableProps {
   data: PedidoListItem[];
   isLoading: boolean;
-  page: number;
-  pageSize: number;
-  totalPages: number;
   viewMode: PedidosViewMode;
   permissions: PedidoPermissions;
   handlers: PedidoActionHandlers;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
+  onSort: (key: string) => void;
+  sortConfig?: SortConfig;
+  filters: Record<string, FilterValue>;
+  onFilter: (columnId: string, value: FilterValue) => void;
+  pagination: DataTablePaginationProps;
   onCreateClick: () => void;
 }
 
 const columns = buildPedidoColumns();
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidosTable: React.FC<PedidosTableProps> = ({
   data,
   isLoading,
-  page,
-  pageSize,
-  totalPages,
   viewMode,
   permissions,
   handlers,
-  onPageChange,
-  onPageSizeChange,
+  onSort,
+  sortConfig,
+  filters,
+  onFilter,
+  pagination,
   onCreateClick,
 }) => {
   return (
@@ -56,6 +61,14 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
       hideTopBar
       viewMode={viewMode}
       defaultViewMode={viewMode}
+      onSort={onSort}
+      sortConfig={sortConfig}
+      filters={filters}
+      onFilter={onFilter}
+      pagination={{
+        ...pagination,
+        pageSizeOptions: pagination.pageSizeOptions ?? [5, 10, 15, 20, 50],
+      }}
       renderGridItem={(row) => (
         <PedidoCard
           pedido={row}
@@ -85,15 +98,6 @@ const PedidosTable: React.FC<PedidosTableProps> = ({
           )}
         </Box>
       }
-      pagination={{
-        currentPage: page,
-        totalPages,
-        onPageChange: (_, newPage) => onPageChange(newPage),
-        pageSize,
-        pageSizeOptions: [5, 10, 25, 50],
-        onPageSizeChange: (event) =>
-          onPageSizeChange(Number(event.target.value)),
-      }}
       onRowClick={handlers.onView}
       getRowAriaLabel={(row) =>
         `Ver detalle del pedido ${formatPedidoListNumber(row)}`

@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('IncidenciaController (e2e)', () => {
   jest.setTimeout(20000);
@@ -17,6 +17,7 @@ describe('IncidenciaController (e2e)', () => {
   let recepcionId: string;
   let pedidoId: string;
   let pedidoProductoId: string;
+  let proveedorId: string;
 
   beforeAll(async () => {
     app = await getTestApp();
@@ -51,6 +52,7 @@ describe('IncidenciaController (e2e)', () => {
     recepcionId = '';
     pedidoId = '';
     pedidoProductoId = '';
+    proveedorId = '';
 
     const provRes = await request(app.getHttpServer() as string)
       .post('/api/v1/proveedor')
@@ -59,7 +61,7 @@ describe('IncidenciaController (e2e)', () => {
         nombre: `Proveedor Incidencia E2E ${Date.now()}`,
       });
     expect(provRes.status).toBe(201);
-    const proveedorId = provRes.body.data?.id;
+    proveedorId = provRes.body.data?.id;
 
     const prodRes = await request(app.getHttpServer() as string)
       .post('/api/v1/productos')
@@ -145,11 +147,12 @@ describe('IncidenciaController (e2e)', () => {
         .send({
           recepcionId,
           pedidoId,
+          proveedorId,
           observacionesRecepcion: 'Incidencia Base E2E',
           lineas: [
             {
               pedidoProductoId,
-              cantidadEsperada: 10,
+              cantidadPedida: 10,
               cantidadRecibida: 8,
               tipoDiferencia: 'FALTANTE',
               observaciones: 'Faltan unidades en recepción base',
@@ -173,11 +176,12 @@ describe('IncidenciaController (e2e)', () => {
         .send({
           recepcionId,
           pedidoId,
+          proveedorId,
           observacionesRecepcion: 'Falta un bulto en la caja 2',
           lineas: [
             {
               pedidoProductoId,
-              cantidadEsperada: 10,
+              cantidadPedida: 10,
               cantidadRecibida: 8,
               tipoDiferencia: 'FALTANTE',
               observaciones: 'Faltan 2 unidades en la caja 2',
@@ -266,11 +270,12 @@ describe('IncidenciaController (e2e)', () => {
         .send({
           recepcionId,
           pedidoId,
+          proveedorId,
           observacionesRecepcion: 'Incidencia para borrar',
           lineas: [
             {
               pedidoProductoId,
-              cantidadEsperada: 10,
+              cantidadPedida: 10,
               cantidadRecibida: 9,
               tipoDiferencia: 'FALTANTE',
               observaciones: 'Línea de incidencia para borrar',

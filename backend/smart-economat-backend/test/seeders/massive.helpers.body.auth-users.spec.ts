@@ -1,4 +1,7 @@
-import { buildAdminUserRoleBody } from '../../src/seeders/massive.helpers.body.auth-users';
+import {
+  buildAdminUserRoleBody,
+  buildBodyAuthUsers,
+} from '../../src/seeders/massive.helpers.body.auth-users';
 import type { BuildBodyEnv } from '../../src/seeders/massive.helpers.body.shared';
 import type { SeedContext } from '../../src/seeders/seed-context';
 
@@ -38,7 +41,7 @@ describe('massive.helpers.body.auth-users', () => {
       recetaDificultad: '',
       recetaUnidad: '',
       incidenciaTipo: '',
-      incidenciaEstadoObjetivo: 'nueva',
+      incidenciaEstadoObjetivo: 'abierta',
       resolucionTipo: '',
       mermaMotivo: '',
       estadoVisual: '',
@@ -55,9 +58,9 @@ describe('massive.helpers.body.auth-users', () => {
       usuarioId: 'user-1',
       roleId: 'role-admin',
       permissionId: 'perm-a',
-      pickRequired: (key: string) => {
+      pickRequired: (key: string, offset = 0) => {
         const values = context.getState<string[]>(key) || [];
-        return values[0] || '';
+        return values[offset] ?? values[0] ?? '';
       },
       ...overrides,
     };
@@ -108,5 +111,26 @@ describe('massive.helpers.body.auth-users', () => {
       permisosAdicionalesIds: ['perm-a'],
       permisosExcluidosIds: [],
     });
+  });
+
+  it('buildBodyAuthUsers — PATCH perfil/mis-ubicaciones envía ubicacionesIds únicos y predicado incluido', () => {
+    const u1 = '01900000-0000-7000-8000-000000000001';
+    const u2 = '01900000-0000-7000-8000-000000000002';
+    const context = createContext({
+      ubicacionIds: [u1, u2, u1],
+    });
+
+    const body = buildBodyAuthUsers(
+      createEnv(context, {
+        resolvedPath: '/usuarios/perfil/mis-ubicaciones',
+        templatePath: '/usuarios/perfil/mis-ubicaciones',
+      })
+    );
+
+    expect(Array.isArray(body?.ubicacionesIds)).toBe(true);
+    const ids = body?.ubicacionesIds as string[];
+    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids.every((id) => [u1, u2].includes(id))).toBe(true);
+    expect(ids).toContain(body?.ubicacionPredeterminadaId);
   });
 });

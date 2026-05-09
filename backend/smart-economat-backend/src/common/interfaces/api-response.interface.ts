@@ -1,54 +1,32 @@
 /**
- * Documentación en español.
- */
-
-/**
- * Documentación en español.
+ * Interfaz genérica para las respuestas estandarizadas de la API.
+ * Garantiza una estructura consistente en todas las peticiones.
+ * @template T El tipo de datos que contiene la respuesta en el campo 'data'.
  */
 export interface ApiResponse<T> {
-  /**
-   * Documentación en español.
-   */
+  /** Indica si la operación se completó exitosamente. */
   success: boolean;
 
-  /**
-   * Documentación en español.
-   */
+  /** Mensaje descriptivo del resultado de la operación, útil para feedback al usuario. */
   message: string | null;
 
-  /**
-   * Documentación en español.
-   */
+  /** Carga útil de la respuesta con los datos solicitados. */
   data: T | null;
 
-  /**
-   * Documentación en español.
-   */
+  /** Detalles del error en caso de que la operación falle. */
   error?: unknown;
 
-  /**
-   * Documentación en español.
-   */
+  /** Metadatos de la respuesta para trazabilidad y auditoría. */
   meta: {
-    /**
-     * Documentación en español.
-     */
+    /** Nombre de la aplicación que genera la respuesta. */
     app: string;
-    /**
-     * Documentación en español.
-     */
+    /** Versión actual del backend. */
     version: string;
-    /**
-     * Documentación en español.
-     */
+    /** Marca de tiempo ISO de la respuesta. */
     timestamp: string;
-    /**
-     * Documentación en español.
-     */
+    /** Entorno de ejecución (development, production, etc.). */
     environment: string;
-    /**
-     * Documentación en español.
-     */
+    /** ID único de la petición para seguimiento en logs. */
     requestId: string;
   };
 }

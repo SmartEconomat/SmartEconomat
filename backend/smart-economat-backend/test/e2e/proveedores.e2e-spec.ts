@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('ProveedorController (e2e)', () => {
   let app: INestApplication;
@@ -38,7 +38,7 @@ describe('ProveedorController (e2e)', () => {
 
   describe('CRUD de Proveedores', () => {
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /proveedor - Debe crear un proveedor (201)', async () => {
       const res = await request(app.getHttpServer() as string)
@@ -55,7 +55,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /proveedor - Debe fallar si el nombre ya existe (400)', async () => {
       await request(app.getHttpServer() as string)
@@ -82,7 +82,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('POST /proveedor - Debe fallar si el NIF ya existe (400)', async () => {
       const nifFijo = 'B33333333';
@@ -101,7 +101,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('GET /proveedor - Debe listar proveedores (200)', () => {
       return request(app.getHttpServer() as string)
@@ -114,7 +114,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('PATCH /proveedor/:id - Debe actualizar proveedor (200)', () => {
       return request(app.getHttpServer() as string)
@@ -125,7 +125,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('DELETE /proveedor/:id - Debe eliminar proveedor (204)', () => {
       return request(app.getHttpServer() as string)
@@ -135,7 +135,7 @@ describe('ProveedorController (e2e)', () => {
     });
 
     /**
-     * Documentación en español.
+     * Ejecuta la lógica de operación dentro del flujo de la aplicación.
      */
     it('DELETE /proveedor/:id - Debe fallar si tiene pedidos (400)', async () => {
       const response = await request(app.getHttpServer() as string)

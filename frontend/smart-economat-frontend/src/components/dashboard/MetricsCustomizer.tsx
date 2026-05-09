@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import { useTranslation } from 'react-i18next';
 
+/** Contrato de tipos público (MetricDefinition). Contexto: smart-economat-frontend (SPA). */
 export interface MetricDefinition {
   id: string;
   label: string;
@@ -29,7 +30,7 @@ interface MetricsCustomizerProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const MetricsCustomizer: React.FC<MetricsCustomizerProps> = ({
   isOpen,

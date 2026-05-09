@@ -15,19 +15,19 @@ import { useToast } from '../../store/toast.hooks';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface QuickLocationDialogProps {
   open: boolean;
   onClose: () => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onSuccess: (newLocation: Ubicacion) => void;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   open,
@@ -40,7 +40,9 @@ const QuickLocationDialog: React.FC<QuickLocationDialogProps> = ({
   const { t } = useTranslation();
 
   /**
-   * Documentación en español.
+   * Gestiona save y aplica la lógica correspondiente.
+   *
+   * @param e Parámetro de entrada para la operación. Opcional.
    */
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

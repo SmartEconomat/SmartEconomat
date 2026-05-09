@@ -1,8 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
+/** Clase pública (BaselineSchema1775000000000). Paquete: smart-economat-backend (Nest). */
 export class BaselineSchema1775000000000 implements MigrationInterface {
   name = 'BaselineSchema1775000000000';
 
+  /**
+   * Expone "up" en smart-economat-backend (Nest).
+   * @undefined {QueryRunner} queryRunner - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async up(queryRunner: QueryRunner): Promise<void> {
     if (await this.shouldSkipBaseline(queryRunner)) {
       return;
@@ -54,7 +60,7 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `CREATE TYPE "public"."producto_tipo_enum" AS ENUM('verdura', 'fruta', 'carne', 'pescado', 'marisco', 'lacteo', 'huevo', 'cereal', 'legumbre', 'fruto_seco', 'condimento', 'aceite', 'azucar', 'bebida', 'elaborado', 'otro')`
     );
     await queryRunner.query(
-      `CREATE TABLE "producto" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(100) NOT NULL, "marca" character varying(100), "descripcion" text, "unidad" "public"."producto_unidad_enum", "fecha_caducidad" TIMESTAMP WITH TIME ZONE, "path_img" character varying(200), "tipo" "public"."producto_tipo_enum", "codigo_barras" character varying(130), "contenido" numeric(10,2) NOT NULL DEFAULT '0', "pmp" numeric(10,4) NOT NULL DEFAULT '0', CONSTRAINT "UQ_bd23c8bcd2ec20dbeff299d2413" UNIQUE ("codigo_barras"), CONSTRAINT "CHK_860dee46ca2ec02b72fa0083d8" CHECK ("fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"), CONSTRAINT "PK_5be023b11909fe103e24c740c7d" PRIMARY KEY ("id"))`
+      `CREATE TABLE "producto" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(100) NOT NULL, "marca" character varying(100), "descripcion" text, "unidad" "public"."producto_unidad_enum", "fecha_caducidad" TIMESTAMP WITH TIME ZONE, "path_img" character varying(200), "tipo" "public"."producto_tipo_enum", "codigo_barras" character varying(130), "contenido" numeric(10,2) NOT NULL DEFAULT '0', "merma_porcentaje" numeric(5,2) NOT NULL DEFAULT '0', "pmp" numeric(10,4) NOT NULL DEFAULT '0', CONSTRAINT "UQ_bd23c8bcd2ec20dbeff299d2413" UNIQUE ("codigo_barras"), CONSTRAINT "CHK_860dee46ca2ec02b72fa0083d8" CHECK ("fecha_caducidad" IS NULL OR "fecha_caducidad" > "created_at"), CONSTRAINT "PK_5be023b11909fe103e24c740c7d" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_bd23c8bcd2ec20dbeff299d241" ON "producto" ("codigo_barras") `
@@ -390,7 +396,7 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `CREATE INDEX "idx_permiso_codigo" ON "permiso" ("codigo") `
     );
     await queryRunner.query(
-      `CREATE TABLE "rol" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(100) NOT NULL, "descripcion" text, "es_sistema" boolean NOT NULL DEFAULT false, "activo" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_9792c580a992d554ee1621c5b45" UNIQUE ("nombre"), CONSTRAINT "PK_c93a22388638fac311781c7f2dd" PRIMARY KEY ("id"))`
+      `CREATE TABLE "rol" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(100) NOT NULL, "descripcion" text, "es_sistema" boolean NOT NULL DEFAULT false, "activo" boolean NOT NULL DEFAULT true, "plantilla_rol_id" uuid, CONSTRAINT "UQ_9792c580a992d554ee1621c5b45" UNIQUE ("nombre"), CONSTRAINT "PK_c93a22388638fac311781c7f2dd" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE INDEX "idx_rol_activo" ON "rol" ("activo") `
@@ -399,13 +405,16 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `CREATE INDEX "idx_rol_nombre" ON "rol" ("nombre") `
     );
     await queryRunner.query(
+      `CREATE INDEX "idx_rol_plantilla_rol_id" ON "rol" ("plantilla_rol_id") `
+    );
+    await queryRunner.query(
       `CREATE TYPE "public"."usuario_rol_enum" AS ENUM('SUPER_ADMIN', 'ADMIN', 'PROFESOR', 'ALUMNO')`
     );
     await queryRunner.query(
       `CREATE TYPE "public"."usuario_status_enum" AS ENUM('INACTIVE', 'ACTIVE', 'BLOCKED')`
     );
     await queryRunner.query(
-      `CREATE TABLE "usuario" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(150), "username" character varying(100) NOT NULL, "password" character varying(100) NOT NULL, "email" character varying(255), "rol" "public"."usuario_rol_enum" NOT NULL DEFAULT 'ALUMNO', "status" "public"."usuario_status_enum" NOT NULL DEFAULT 'INACTIVE', "resetPasswordOtp" character varying, "resetPasswordOtpExpires" TIMESTAMP WITH TIME ZONE, "must_change_password" boolean NOT NULL DEFAULT false, "activo" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_6ccff37176a6978449a99c82e10" UNIQUE ("username"), CONSTRAINT "UQ_2863682842e688ca198eb25c124" UNIQUE ("email"), CONSTRAINT "PK_a56c58e5cabaa04fb2c98d2d7e2" PRIMARY KEY ("id"))`
+      `CREATE TABLE "usuario" ("id" uuid NOT NULL DEFAULT uuid_generate_v7(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP WITH TIME ZONE, "deleted_by" uuid, "modified_by" uuid, "version" integer NOT NULL DEFAULT '1', "nombre" character varying(150), "username" character varying(100) NOT NULL, "password" character varying(100) NOT NULL, "email" character varying(255), "rol" "public"."usuario_rol_enum" NOT NULL DEFAULT 'ALUMNO', "status" "public"."usuario_status_enum" NOT NULL DEFAULT 'INACTIVE', "idioma" character varying(5) DEFAULT 'es', "resetPasswordOtp" character varying, "resetPasswordOtpExpires" TIMESTAMP WITH TIME ZONE, "must_change_password" boolean NOT NULL DEFAULT false, "activo" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_6ccff37176a6978449a99c82e10" UNIQUE ("username"), CONSTRAINT "UQ_2863682842e688ca198eb25c124" UNIQUE ("email"), CONSTRAINT "PK_a56c58e5cabaa04fb2c98d2d7e2" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE INDEX "idx_usuario_status" ON "usuario" ("status") `
@@ -749,6 +758,9 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
       `ALTER TABLE "plantilla_rol" ADD CONSTRAINT "FK_3d8eb792b10180dd7f4a28aa5e6" FOREIGN KEY ("plantilla_padre_id") REFERENCES "plantilla_rol"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
     );
     await queryRunner.query(
+      `ALTER TABLE "rol" ADD CONSTRAINT "FK_rol_plantilla_rol_id_plantilla_rol" FOREIGN KEY ("plantilla_rol_id") REFERENCES "plantilla_rol"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
       `ALTER TABLE "usuario_rol" ADD CONSTRAINT "FK_29e9a9079c7ba01c1b301cf5555" FOREIGN KEY ("usuario_id") REFERENCES "usuario"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
     );
     await queryRunner.query(
@@ -811,6 +823,148 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "usuario_permiso_excluido" ADD CONSTRAINT "FK_e9e538ec5acb79fcd2378368495" FOREIGN KEY ("permiso_id") REFERENCES "permiso"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
+
+    await queryRunner.query(
+      `ALTER TABLE "recepcion_producto" ADD COLUMN IF NOT EXISTS "cantidad_albaran" numeric(12,3)`
+    );
+
+    await queryRunner.query(
+      `UPDATE "receta" SET "tiempo_estimado_minutos" = 10 WHERE "tiempo_estimado_minutos" < 10`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "receta" ALTER COLUMN "tiempo_estimado_minutos" SET DEFAULT 10`
+    );
+
+    await queryRunner.query(`
+      UPDATE "receta"
+      SET "raciones" = ROUND("raciones" * 2) / 2
+      WHERE "raciones" IS NOT NULL
+    `);
+    await queryRunner.query(`
+      UPDATE "preparacion"
+      SET "cantidad_a_producir" = ROUND("cantidad_a_producir" * 2) / 2
+    `);
+    await queryRunner.query(`
+      UPDATE "produccion_lote"
+      SET "porciones_producidas" = ROUND("porciones_producidas" * 2) / 2,
+          "porciones_restantes" = ROUND("porciones_restantes" * 2) / 2
+    `);
+
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'CHK_receta_tiempo_estimado_minutos_min_10'
+        ) THEN
+          ALTER TABLE "receta"
+          ADD CONSTRAINT "CHK_receta_tiempo_estimado_minutos_min_10"
+          CHECK ("tiempo_estimado_minutos" >= 10);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'CHK_receta_raciones_step_05'
+        ) THEN
+          ALTER TABLE "receta"
+          ADD CONSTRAINT "CHK_receta_raciones_step_05"
+          CHECK (("raciones" * 2) = floor("raciones" * 2) AND "raciones" > 0);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'CHK_preparacion_cantidad_step_05'
+        ) THEN
+          ALTER TABLE "preparacion"
+          ADD CONSTRAINT "CHK_preparacion_cantidad_step_05"
+          CHECK (("cantidad_a_producir" * 2) = floor("cantidad_a_producir" * 2) AND "cantidad_a_producir" > 0);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'CHK_produccion_lote_producidas_step_05'
+        ) THEN
+          ALTER TABLE "produccion_lote"
+          ADD CONSTRAINT "CHK_produccion_lote_producidas_step_05"
+          CHECK (("porciones_producidas" * 2) = floor("porciones_producidas" * 2) AND "porciones_producidas" >= 0);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'CHK_produccion_lote_restantes_step_05'
+        ) THEN
+          ALTER TABLE "produccion_lote"
+          ADD CONSTRAINT "CHK_produccion_lote_restantes_step_05"
+          CHECK (("porciones_restantes" * 2) = floor("porciones_restantes" * 2) AND "porciones_restantes" >= 0);
+        END IF;
+      END
+      $$;
+    `);
+
+    await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS "almacen" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v7(),
+        "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+        "deleted_at" TIMESTAMP WITH TIME ZONE,
+        "deleted_by" uuid,
+        "modified_by" uuid,
+        "version" integer NOT NULL DEFAULT '1',
+        "nombre" character varying(150) NOT NULL UNIQUE,
+        "descripcion" character varying(255),
+        "activo" boolean NOT NULL DEFAULT true,
+        CONSTRAINT "PK_almacen_id" PRIMARY KEY ("id")
+      )
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_almacen_nombre" ON "almacen" ("nombre")`
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_almacen_activo" ON "almacen" ("activo")`
+    );
+
+    await queryRunner.query(
+      `ALTER TABLE "ubicacion" ADD COLUMN IF NOT EXISTS "almacen_id" uuid`
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_ubicacion_almacen_id" ON "ubicacion" ("almacen_id")`
+    );
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'FK_ubicacion_almacen_id_almacen'
+        ) THEN
+          ALTER TABLE "ubicacion"
+          ADD CONSTRAINT "FK_ubicacion_almacen_id_almacen"
+          FOREIGN KEY ("almacen_id") REFERENCES "almacen"("id")
+          ON DELETE SET NULL
+          ON UPDATE NO ACTION;
+        END IF;
+      END
+      $$;
+    `);
+
+    await queryRunner.query(
+      `ALTER TABLE "usuario" ADD COLUMN IF NOT EXISTS "almacen_id" uuid`
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_usuario_almacen_id" ON "usuario" ("almacen_id")`
+    );
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF to_regclass('public.almacen') IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'FK_usuario_almacen_id_almacen'
+          ) THEN
+          ALTER TABLE "usuario"
+          ADD CONSTRAINT "FK_usuario_almacen_id_almacen"
+          FOREIGN KEY ("almacen_id") REFERENCES "almacen"("id")
+          ON DELETE SET NULL ON UPDATE NO ACTION;
+        END IF;
+      END
+      $$;
+    `);
   }
 
   private async shouldSkipBaseline(queryRunner: QueryRunner): Promise<boolean> {
@@ -854,6 +1008,11 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     return false;
   }
 
+  /**
+   * Expone "down" en smart-economat-backend (Nest).
+   * @undefined {QueryRunner} queryRunner - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `ALTER TABLE "usuario_permiso_excluido" DROP CONSTRAINT "FK_e9e538ec5acb79fcd2378368495"`
@@ -920,6 +1079,9 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE "plantilla_rol" DROP CONSTRAINT "FK_3d8eb792b10180dd7f4a28aa5e6"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "rol" DROP CONSTRAINT "FK_rol_plantilla_rol_id_plantilla_rol"`
     );
     await queryRunner.query(
       `ALTER TABLE "profesor" DROP CONSTRAINT "FK_8f36295dbf50eacec160ff56ba0"`
@@ -1221,6 +1383,7 @@ export class BaselineSchema1775000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE "public"."usuario_status_enum"`);
     await queryRunner.query(`DROP TYPE "public"."usuario_rol_enum"`);
     await queryRunner.query(`DROP INDEX "public"."idx_rol_nombre"`);
+    await queryRunner.query(`DROP INDEX "public"."idx_rol_plantilla_rol_id"`);
     await queryRunner.query(`DROP INDEX "public"."idx_rol_activo"`);
     await queryRunner.query(`DROP TABLE "rol"`);
     await queryRunner.query(`DROP INDEX "public"."idx_permiso_codigo"`);

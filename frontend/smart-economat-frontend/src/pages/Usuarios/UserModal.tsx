@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UserStatusEnum } from '../../enums/user-status.enum';
 import {
+  mapUserStatusBackendToEnum,
+  toggleUserStatus,
+} from '../../utils/usuario-status.utils';
+import {
+  Autocomplete,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,6 +27,9 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  TextField,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
@@ -44,6 +54,21 @@ import QuickLocationDialog from '../../components/inventario/QuickLocationDialog
 import QuickSlotDialog from '../../features/profile/components/QuickSlotDialog';
 import { isElevatedRole } from '../../sherlock-auth/permissions';
 
+/** Evita que el valor seleccionado de un Select largo invada la columna vecina (flex + elipsis). */
+const selectContainedSx = {
+  width: '100%',
+  minWidth: 0,
+  maxWidth: '100%',
+  '& .MuiInputBase-root': { maxWidth: '100%' },
+  '& .MuiSelect-select': {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    display: 'block',
+  },
+} as const;
+
+/** Contrato de tipos público (UserModalProps). Contexto: smart-economat-frontend (SPA). */
 export interface UserModalProps {
   open: boolean;
   onClose: () => void;
@@ -68,6 +93,8 @@ const UserModal: React.FC<UserModalProps> = ({
   roleOptions,
 }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [formData, setFormData] = useState({
     username: '',
     nombre: '',
@@ -76,7 +103,7 @@ const UserModal: React.FC<UserModalProps> = ({
     estado: 'Inactivo',
     roleId: '',
     slotId: '',
-    ubicacionId: '',
+    ubicacionesIds: [] as string[],
   });
 
   const [allSlots, setAllSlots] = useState<AlumnoSlot[]>([]);
@@ -205,7 +232,9 @@ const UserModal: React.FC<UserModalProps> = ({
           estado: userToEdit.estado,
           roleId: userToEdit.roleId || '',
           slotId: userToEdit.slotId || '',
-          ubicacionId: userToEdit.ubicacionId || '',
+          ubicacionesIds:
+            userToEdit.ubicacionesIds ||
+            (userToEdit.ubicacionId ? [userToEdit.ubicacionId] : []),
         });
 
         const rolePerms =
@@ -230,7 +259,7 @@ const UserModal: React.FC<UserModalProps> = ({
           estado: 'Inactivo',
           roleId: defaultRole?.id || '',
           slotId: '',
-          ubicacionId: '',
+          ubicacionesIds: [],
         });
         setSelectedPermissions(defaultRole?.permisos?.map((p) => p.id) || []);
       }
@@ -246,11 +275,6 @@ const UserModal: React.FC<UserModalProps> = ({
         setOpenSlotDialog(true);
         return;
       }
-      if (field === 'ubicacionId' && nextValue === 'CREATE_NEW_LOC') {
-        setOpenLocDialog(true);
-        return;
-      }
-
       setFormData((prev) => {
         if (field === 'roleId') {
           const selectedRole = roleOptions.find(
@@ -279,7 +303,9 @@ const UserModal: React.FC<UserModalProps> = ({
   const isLastAdmin = () => {
     if (!userToEdit || !isAdminRole(userToEdit.rol)) return false;
     const adminCount = usuariosList.filter(
-      (u) => isAdminRole(u.rol) && u.estado === 'Activo'
+      (u) =>
+        isAdminRole(u.rol) &&
+        mapUserStatusBackendToEnum(u.estado) === UserStatusEnum.ACTIVE
     ).length;
     return adminCount <= 1;
   };
@@ -329,7 +355,8 @@ const UserModal: React.FC<UserModalProps> = ({
         permisosAdicionalesIds: adicionales,
         permisosExcluidosIds: excluidos,
         slotId: formData.slotId || null,
-        ubicacionId: formData.ubicacionId || null,
+        ubicacionesIds: formData.ubicacionesIds,
+        ubicacionId: formData.ubicacionesIds[0] || null,
       } as CrearUsuarioDTO | ActualizarUsuarioDTO);
     }
   };
@@ -353,7 +380,8 @@ const UserModal: React.FC<UserModalProps> = ({
   );
 
   const handleToggleStatus = () => {
-    const nextEstado = formData.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    const currentStatus = mapUserStatusBackendToEnum(formData.estado);
+    const nextEstado = toggleUserStatus(currentStatus);
     setFormData((prev) => ({ ...prev, estado: nextEstado }));
     if (errors.estado) {
       setErrors((prev) => ({ ...prev, estado: '' }));
@@ -363,7 +391,13 @@ const UserModal: React.FC<UserModalProps> = ({
   const isEditMode = !!userToEdit;
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      fullScreen={isMobile}
+    >
       <DialogTitle>
         {isEditMode || isLoadingContent
           ? t('usuarios.editarUsuario')
@@ -508,9 +542,17 @@ const UserModal: React.FC<UserModalProps> = ({
                   </Typography>
                   <Button
                     variant={
-                      formData.estado === 'Activo' ? 'contained' : 'outlined'
+                      mapUserStatusBackendToEnum(formData.estado) ===
+                      UserStatusEnum.ACTIVE
+                        ? 'contained'
+                        : 'outlined'
                     }
-                    color={formData.estado === 'Activo' ? 'success' : 'error'}
+                    color={
+                      mapUserStatusBackendToEnum(formData.estado) ===
+                      UserStatusEnum.ACTIVE
+                        ? 'success'
+                        : 'error'
+                    }
                     onClick={handleToggleStatus}
                     disabled={isSaving}
                     sx={{
@@ -520,7 +562,8 @@ const UserModal: React.FC<UserModalProps> = ({
                       fontWeight: 'bold',
                     }}
                   >
-                    {formData.estado === 'Activo'
+                    {mapUserStatusBackendToEnum(formData.estado) ===
+                    UserStatusEnum.ACTIVE
                       ? t('usuarios.estadoActiva')
                       : t('usuarios.estadoSuspendida')}
                   </Button>
@@ -545,16 +588,25 @@ const UserModal: React.FC<UserModalProps> = ({
             </Box>
 
             {/* Asignación de Aula y Ubicación */}
-            <Box display="flex" gap={2} flexWrap="wrap" sx={{ mt: 1 }}>
+            <Box
+              display="flex"
+              gap={2}
+              flexWrap="wrap"
+              sx={{ mt: 1, width: '100%', alignItems: 'flex-start' }}
+            >
               <Box
-                flex={1}
-                minWidth="240px"
-                display="flex"
-                alignItems="flex-start"
-                gap={1}
+                sx={{
+                  flex: '1 1 240px',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1,
+                }}
               >
-                <Box flex={1}>
+                <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                   <SelectField
+                    sx={selectContainedSx}
                     fullWidth
                     id="user-slot-select"
                     label={t('usuarios.campoAulaSlot')}
@@ -590,7 +642,7 @@ const UserModal: React.FC<UserModalProps> = ({
                 <Tooltip title={t('usuarios.crearNuevaAula')}>
                   <IconButton
                     color="primary"
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 1, flexShrink: 0 }}
                     onClick={() => setOpenSlotDialog(true)}
                   >
                     <AddCircleIcon />
@@ -599,45 +651,85 @@ const UserModal: React.FC<UserModalProps> = ({
               </Box>
 
               <Box
-                flex={1}
-                minWidth="240px"
-                display="flex"
-                alignItems="flex-start"
-                gap={1}
+                sx={{
+                  flex: '1 1 240px',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1,
+                }}
               >
-                <Box flex={1}>
-                  <SelectField
-                    fullWidth
-                    id="user-ubicacion-select"
-                    label={t('usuarios.campoUbicacionAlmacen')}
-                    value={formData.ubicacionId || ''}
-                    onChange={handleChange('ubicacionId')}
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Autocomplete
+                    multiple
+                    options={allUbicaciones}
                     disabled={isSaving}
-                    options={[
-                      { value: '', label: t('usuarios.sinUbicacion') },
-                      ...allUbicaciones.map((u) => ({
-                        value: u.id,
-                        label: u.nombre,
-                      })),
-                      {
-                        value: 'CREATE_NEW_LOC',
-                        label: (
-                          <Typography
-                            variant="button"
-                            color="primary"
-                            sx={{ fontWeight: 'bold' }}
-                          >
-                            {t('usuarios.crearNuevaUbicacion')}
-                          </Typography>
-                        ),
-                      },
-                    ]}
+                    value={allUbicaciones.filter((ubicacion) =>
+                      formData.ubicacionesIds.includes(ubicacion.id)
+                    )}
+                    onChange={(_, selected) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        ubicacionesIds: selected.map((item) => item.id),
+                      }));
+                    }}
+                    getOptionLabel={(option) => option.nombre}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip
+                          {...getTagProps({ index })}
+                          key={option.id}
+                          label={option.nombre}
+                          size="small"
+                          sx={{
+                            maxWidth: '100%',
+                            '& .MuiChip-label': {
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              display: 'block',
+                            },
+                          }}
+                        />
+                      ))
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        id="user-ubicacion-select"
+                        label={t('usuarios.campoUbicacionAlmacen')}
+                        placeholder={t('usuarios.sinUbicacion')}
+                        fullWidth
+                        sx={{
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          '& .MuiInputBase-root': {
+                            flexWrap: 'wrap',
+                            maxWidth: '100%',
+                          },
+                          '& .MuiAutocomplete-inputRoot': {
+                            overflow: 'hidden',
+                          },
+                        }}
+                      />
+                    )}
                   />
                 </Box>
                 <Tooltip title={t('usuarios.crearNuevaUbicacion')}>
                   <IconButton
                     color="primary"
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 1, flexShrink: 0 }}
                     onClick={() => setOpenLocDialog(true)}
                   >
                     <AddCircleIcon />
@@ -716,7 +808,6 @@ const UserModal: React.FC<UserModalProps> = ({
         open={openSlotDialog}
         onClose={() => setOpenSlotDialog(false)}
         profesores={allProfesores}
-        ubicaciones={allUbicaciones}
         onSuccess={(newSlot) => {
           setAllSlots((prev) => [...prev, newSlot]);
           setFormData((prev) => ({ ...prev, slotId: newSlot.id }));
@@ -727,7 +818,12 @@ const UserModal: React.FC<UserModalProps> = ({
         onClose={() => setOpenLocDialog(false)}
         onSuccess={(newLoc) => {
           setAllUbicaciones((prev) => [...prev, newLoc]);
-          setFormData((prev) => ({ ...prev, ubicacionId: newLoc.id }));
+          setFormData((prev) => ({
+            ...prev,
+            ubicacionesIds: Array.from(
+              new Set([...prev.ubicacionesIds, newLoc.id])
+            ),
+          }));
         }}
       />
     </Dialog>

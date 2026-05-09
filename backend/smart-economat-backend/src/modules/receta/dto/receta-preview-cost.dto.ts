@@ -9,6 +9,7 @@ import { Type, Transform } from 'class-transformer';
 import { AddIngredienteDto } from './add-ingrediente.dto';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
+/** Clase pública (RecetaPreviewCostDto). Paquete: smart-economat-backend (Nest). */
 export class RecetaPreviewCostDto {
   @IsArray()
   @ValidateNested({ each: true })

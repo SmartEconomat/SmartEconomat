@@ -1,6 +1,7 @@
 import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Clase pública (ExportUbicacionFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportUbicacionFilterDto {
   @IsOptional()
   @IsString()

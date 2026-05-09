@@ -17,7 +17,7 @@ import LinearLoader from '../components/ui/LinearLoader';
 const LoadingFallback = () => <LinearLoader fixed />;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AppRouter: React.FC = () => {
   return (

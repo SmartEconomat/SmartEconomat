@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
+/** Clase pública (ExportInventarioFilterDto). Paquete: smart-economat-backend (Nest). */
 export class ExportInventarioFilterDto {
   @IsOptional()
   @IsString()

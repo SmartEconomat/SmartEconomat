@@ -3,6 +3,7 @@ import { ExportColumn } from './producto-export.mapper';
 
 const IVA_RATE = 0.21;
 
+/** Constantes públicas (PEDIDO_COLUMNS) expuestas en smart-economat-backend (Nest). */
 export const PEDIDO_COLUMNS: ExportColumn[] = [
   { header: 'Nº Pedido', key: 'numeroPedido', width: 14 },
   { header: 'ID', key: 'id', width: 38 },
@@ -24,6 +25,11 @@ export const PEDIDO_COLUMNS: ExportColumn[] = [
   { header: 'Motivo Cancelación', key: 'motivoCancelacion', width: 30 },
 ];
 
+/**
+ * Expone "mapPedidoToExcelRow" en smart-economat-backend (Nest).
+ * @undefined {Pedido} pedido - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function mapPedidoToExcelRow(pedido: Pedido): Record<string, unknown> {
   const subtotal = Number(pedido.costeTotal ?? 0);
   const impuestos = subtotal * IVA_RATE;

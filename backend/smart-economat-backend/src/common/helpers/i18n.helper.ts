@@ -3,7 +3,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 /**
- * Documentación en español.
+ * Helper para internacionalización (i18n).
+ * Proporciona métodos para traducir textos y obtener nombres de entidades en diferentes idiomas.
  */
 export class I18nHelper {
   private static translations: Record<string, Record<string, unknown>> | null =
@@ -124,35 +125,55 @@ export class I18nHelper {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene un mensaje de error traducido.
+   * Busca la clave en translation.errors.
+   * @param key Clave del error.
+   * @param args Argumentos para interpolación.
+   * @returns Texto traducido.
    */
   static getError(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.errors.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene un mensaje de éxito traducido.
+   * Busca la clave en translation.success.
+   * @param key Clave del éxito.
+   * @param args Argumentos para interpolación.
+   * @returns Texto traducido.
    */
   static getSuccess(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.success.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene un mensaje de validación traducido.
+   * Busca la clave en translation.validation.
+   * @param key Clave de validación.
+   * @param args Argumentos para interpolación.
+   * @returns Texto traducido.
    */
   static getValidation(key: string, args?: Record<string, any>): string {
     return I18nHelper.translate(`translation.validation.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene el nombre de una entidad traducido.
+   * Busca la clave en translation.entities.
+   * @param key Clave de la entidad.
+   * @returns Nombre traducido.
    */
   static getEntity(key: string): string {
     return I18nHelper.translate(`translation.entities.${key}`);
   }
 
   /**
-   * Translates a key.
+   * Traduce una clave.
+   * Busca la clave en el contexto actual o en los archivos de traducción.
+   * Si no se encuentra, intenta humanizar la clave.
+   * @param key Clave a traducir.
+   * @param args Argumentos para interpolación.
+   * @returns Texto traducido.
    */
   static translate(key: string, args?: Record<string, any>): string {
     const direct = I18nHelper.translateKey(key, args);
@@ -171,7 +192,9 @@ export class I18nHelper {
   }
 
   /**
-   * Converts a key like 'USER_NOT_FOUND' to 'User Not Found'
+   * Convierte una clave como 'USER_NOT_FOUND' a 'User Not Found'
+   * @param key Clave a convertir.
+   * @returns Texto convertido.
    */
   private static humanize(key: string): string {
     const lastPart = key.split('.').pop() || key;

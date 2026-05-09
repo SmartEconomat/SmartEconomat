@@ -10,26 +10,30 @@ import {
 } from '../../../src/features/recetas/recetaForm.helpers';
 
 describe('recetaForm.helpers', () => {
+  const t = (key: string) => key;
+
   it('normaliza el payload de receta al contrato backend', async () => {
-    const payload = await buildRecetaPayload({
-      nombre: ' Paella de verduras ',
-      instrucciones: ' Cocer y mezclar. ',
-      tiempoPreparacion: '45 min',
-      dificultad: DificultadReceta.MEDIA,
-      rendimiento: '2,5',
-      unidadResultado: UnidadIngrediente.KILOGRAMO,
-      diasCaducidad: '3',
-      raciones: '4',
-      tamanioRacion: '0,5',
-      ingredientes: [
-        {
-          productoId: 'producto-1',
-          cantidad: '1.5',
-          unidad: UnidadIngrediente.KILOGRAMO,
-          mermaAplicada: '0',
-        },
-      ],
-    });
+    const payload = await buildRecetaPayload(
+      {
+        nombre: ' Paella de verduras ',
+        instrucciones: ' Cocer y mezclar. ',
+        tiempoEstimadoMinutos: 45,
+        dificultad: DificultadReceta.MEDIA,
+        rendimiento: '2,5',
+        unidadResultado: UnidadIngrediente.KILOGRAMO,
+        diasCaducidad: '3',
+        raciones: '5',
+        ingredientes: [
+          {
+            productoId: 'producto-1',
+            cantidad: '1.5',
+            unidad: UnidadIngrediente.KILOGRAMO,
+            mermaAplicada: '0',
+          },
+        ],
+      },
+      t
+    );
 
     expect(payload).toMatchObject({
       nombre: 'Paella de verduras',
@@ -39,7 +43,7 @@ describe('recetaForm.helpers', () => {
       rendimiento: 2.5,
       unidadResultado: UnidadIngrediente.KILOGRAMO,
       diasCaducidad: 3,
-      raciones: 4,
+      raciones: 5,
       tamanioRacion: 0.5,
       ingredientes: [
         {
@@ -54,37 +58,43 @@ describe('recetaForm.helpers', () => {
 
   it('rechaza recetas sin ingredientes validos', async () => {
     await expect(
-      buildRecetaPayload({
-        nombre: 'Crema',
-        instrucciones: 'Batir.',
-        tiempoPreparacion: '30 min',
-        dificultad: DificultadReceta.FACIL,
-        ingredientes: [
-          {
-            productoId: 'producto-1',
-            cantidad: '0',
-            unidad: UnidadIngrediente.GRAMO,
-          },
-        ],
-      })
-    ).rejects.toThrow(/al menos un ingrediente valido/i);
+      buildRecetaPayload(
+        {
+          nombre: 'Crema',
+          instrucciones: 'Batir.',
+          tiempoEstimadoMinutos: 30,
+          dificultad: DificultadReceta.FACIL,
+          ingredientes: [
+            {
+              productoId: 'producto-1',
+              cantidad: '0',
+              unidad: UnidadIngrediente.GRAMO,
+            },
+          ],
+        },
+        t
+      )
+    ).rejects.toThrow(/recipes.errors.ingredienteObligatorio/i);
   });
 
   it('rechaza recetas con ingredientes de producto no resoluble', async () => {
     await expect(
-      buildRecetaPayload({
-        nombre: 'Crema rota',
-        instrucciones: 'Batir.',
-        tiempoPreparacion: '30 min',
-        dificultad: DificultadReceta.FACIL,
-        ingredientes: [
-          {
-            cantidad: '1',
-            unidad: UnidadIngrediente.GRAMO,
-          },
-        ],
-      })
-    ).rejects.toThrow(/producto inactivo o no disponible/i);
+      buildRecetaPayload(
+        {
+          nombre: 'Crema rota',
+          instrucciones: 'Batir.',
+          tiempoEstimadoMinutos: 30,
+          dificultad: DificultadReceta.FACIL,
+          ingredientes: [
+            {
+              cantidad: '1',
+              unidad: UnidadIngrediente.GRAMO,
+            },
+          ],
+        },
+        t
+      )
+    ).rejects.toThrow(/recipes.errors.productoInvalido/i);
   });
 
   it('normaliza relaciones nulas al mapear una receta al formulario', () => {

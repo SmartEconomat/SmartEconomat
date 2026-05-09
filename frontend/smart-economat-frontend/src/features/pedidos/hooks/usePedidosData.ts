@@ -25,7 +25,19 @@ interface UsePedidosDataParams {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "usePedidosData" en smart-economat-frontend (SPA).
+ * @undefined {UsePedidosDataParams} {
+ *   page,
+ *   pageSize,
+ *   searchTerm,
+ *   tabIndex,
+ *   currentUserId,
+ *   misPedidosStatus,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {{ data: PedidoListItem[]; batches: PurchaseBatch[]; isLoading: boolean; error: string | null; totalPages: number; totalItems: number; reload: () => Promise<void>; setData: import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").SetStateAction<PedidoListItem[]>>; setBatches: import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").SetStateAction<PurchaseBatch[]>>; }} Datos efectivos después de ejecutar la operación.
  */
 export function usePedidosData({
   page,
@@ -44,6 +56,7 @@ export function usePedidosData({
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
+    // Limpiamos el error inmediatamente para cumplir con la regla de NO mostrar error durante carga
     setError(null);
 
     try {
@@ -76,11 +89,8 @@ export function usePedidosData({
           : misPedidosStatus === 'pendientes'
             ? EstadoPedidoUsuario.PENDIENTE
             : misPedidosStatus === 'activos'
-              ? [
-                  EstadoPedidoUsuario.APROBADO,
-                  EstadoPedidoUsuario.CONSOLIDADO,
-                ].join(',')
-              : EstadoPedidoUsuario.CANCELADO;
+              ? EstadoPedidoUsuario.APROBADO
+              : '';
 
       const pedidosResponse = await fetchPedidoUsuarios(
         effectivePage,
@@ -93,7 +103,10 @@ export function usePedidosData({
       setData(pedidosResponse.data.map(mapPedidoUsuarioToVisibleRow));
       setTotalItems(pedidosResponse.total);
       setTotalPages(tabIndex === 1 ? 1 : pedidosResponse.totalPages);
+      // Éxito: aseguramos que el error sea nulo
+      setError(null);
     } catch (err: unknown) {
+      // Solo establecemos el error si la carga falló definitivamente
       setError(
         err instanceof Error
           ? err.message

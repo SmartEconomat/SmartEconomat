@@ -14,12 +14,14 @@ import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
 import WaterIcon from '@mui/icons-material/Water';
 import React from 'react';
 
+/** Contrato de tipos público (Allergen). Contexto: smart-economat-frontend (SPA). */
 export interface Allergen {
   id: string;
   label: string;
   icon: React.ReactElement;
 }
 
+/** Constantes públicas (EU_ALLERGENS) expuestas en smart-economat-frontend (SPA). */
 export const EU_ALLERGENS: Allergen[] = [
   { id: 'GLUTEN', label: 'Gluten', icon: React.createElement(GrassIcon) },
   {

@@ -84,6 +84,7 @@
     "PRODUCTO_ALERGENO_ALREADY_EXISTS": "This allergen is already associated with that product",
     "PRODUCTO_ALERGENO_NOT_FOUND": "Product-allergen association not found",
     "PRODUCT_NOT_FOUND": "Product not found",
+    "PRODUCT_NAME_DUPLICATE": "An active product with that name already exists. Use a different name or edit the existing one.",
     "PRODUCT_IN_USE_BY_RECIPE": "Cannot delete the product because it is being used in one or more recipes",
     "PRODUCT_PROVIDER_NOT_FOUND": "Product-provider relationship not found",
     "PROFESOR_NOT_FOUND": "Professor not found",
@@ -101,6 +102,13 @@
     "SLOT_CAPACITY_REACHED": "The selected classroom/class has reached its maximum capacity",
     "SLOT_HAS_STUDENTS": "Cannot delete a slot that has students assigned",
     "STORAGE_TYPE_LOCAL_ONLY": "Only applicable for local storage",
+    "LOCATION_ACCESS_DENIED": "You are not authorised to operate on location ({id}).",
+    "LOCATION_ACCESS_DENIED_MISSING_USER": "Cannot validate location permissions without an authenticated user.",
+    "TRANSFER_BAD_QTY": "The quantity to transfer is not valid.",
+    "TRANSFER_INSUFFICIENT_STOCK": "Insufficient stock to transfer (available {tiene}, requested {solicitado}).",
+    "TRANSFER_SAME_NODE": "Transfer origin and destination cannot be the same location.",
+    "INVENTARIO_DUPLICATE_GRAIN_RACE": "Concurrent conflict creating inventory for the same lot grain.",
+    "INVENTARIO_DUPLICATE_GRAIN": "Inventory already exists for the same supplier–product, location and expiry grain.",
     "LOCATION_NOT_FOUND": "Location not found",
     "UNAUTHORIZED": "Unauthorized",
     "USERNAME_OR_EMAIL_IS_ALREADY_TAKEN": "Username or email is already taken",
@@ -114,10 +122,13 @@
     "USER_OR_EMAIL_ALREADY_REGISTERED": "User or email already registered",
     "USER_NOT_AUTHENTICATED": "User not authenticated",
     "LOCATION_NAME_ALREADY_EXISTS": "A location with this name already exists",
+    "LOCATION_HAS_STOCK": "Cannot delete a location while it still holds positive stock.",
+    "LOCATION_CODE_ALREADY_EXISTS": "A location with this code already exists.",
     "INVALID_FILE_PATH": "Invalid file path",
     "TIPO_DE_ARCHIVO_NO_SOPORTADO": "Unsupported file type. Only images (jpg, jpeg, png, gif) and PDF are allowed",
     "RECIPE_NO_RESULT_PRODUCT": "The recipe has no result product configured. Edit the recipe to assign one.",
     "RECIPE_NO_RENDIMIENTO": "The recipe has no yield (how much it produces) defined. Edit the recipe to specify it.",
+    "PRODUCCION_CANTIDAD_PAYLOAD_INVALIDA": "Send exactly one field: physical yield (cantidadProducida) or preparation portions to produce (cantidadAProducir, 0.5 steps).",
     "RECIPE_NO_INGREDIENTS": "The recipe has no ingredients. Add some before preparing it.",
     "ROLE_NOT_FOUND": "Role with ID \"{id}\" not found",
     "PERMISSION_NOT_FOUND": "Permission with ID \"{id}\" not found",
@@ -169,7 +180,13 @@
     "START_DATE_AFTER_END_DATE": "startDate must be less than or equal to endDate",
     "INVALID_ALUMNO_ID": "Invalid student ID",
     "CSRF_INVALID": "CSRF Token Invalid or Missing",
-    "BARCODE_INVALID": "Invalid barcode"
+    "BARCODE_INVALID": "Invalid barcode",
+    "EAN13_GENERATION_FAILED": "Failed to generate a unique EAN-13 code after multiple attempts",
+    "DUPLICATE_ALLERGENS": "Duplicate allergens not allowed in the same request",
+    "UNABLE_TO_RESOLVE_CURRENT_PRICE": "Unable to resolve current price from price history",
+    "DUPLICATE_SUPPLIER": "Cannot link the same supplier more than once to a product",
+    "PROVIDERS_WITH_PRICE_NOT_FOUND": "No suppliers with price found for this product.",
+    "PRODUCT_NAME_REQUIRED": "Product name is required"
   },
   "success": {
     "CREATED": "Successfully created",
@@ -196,7 +213,7 @@
     "NOMBRE_USUARIO_MAX_LENGTH": "Username cannot exceed 100 characters",
     "CONTRASEÑA_DEBE_SER_CADENA": "Password must be a string",
     "CONTRASEÑA_FUERTE_REQUERIDA": "Password must have at least 8 characters, one uppercase letter, one lowercase letter, one number and one symbol",
-    "INVALID_EMAIL": "Email address is not valid",
+    "INVALID_EMAIL": "Email is not valid",
     "CORREO_ELECTRONICO_MAX_LENGTH": "Email address cannot exceed 255 characters",
     "IDIOMA_INVALIDO": "The selected language is invalid (only 'es' or 'en' allowed)",
     "AULA_CLASE_DEBE_SER_CADENA": "Classroom must be a string",
@@ -204,6 +221,7 @@
     "ID_RECETA_INVALIDO": "Invalid recipe ID",
     "CANTIDAD_DEBE_SER_NUMERO": "Quantity must be a number",
     "CANTIDAD_DEBE_SER_POSITIVA": "Quantity must be positive",
+    "CANTIDAD_DEBE_SER_MULTIPLO_05": "The amount must be a multiple of 0.5 (e.g. 0.5, 1, 1.5, 2...)",
     "NUMERO_REFERENCIA_OBLIGATORIO": "Reference number is required",
     "RECEPCION_ID_UUID_INVALIDO": "The reception ID must be a valid UUID",
     "PRODUCTO_ID_UUIDV7_INVALIDO": "The productoId must be a valid UUID v7",
@@ -281,7 +299,6 @@
     "EL_TOKEN_DE_RECUPERACI_N_ES_REQUERIDO": "Recovery token is required",
     "EL_T_RMINO_DE_B_SQUEDA_DEBE_SER_UNA_CADE": "Search term must be a string",
     "EL_T_RMINO_DE_B_SQUEDA_NO_PUEDE_EXCEDER": "Search term cannot exceed 100 characters",
-    "INVALID_EMAIL": "Email is not valid",
     "INVALID_PASSWORD": "Password is not valid",
     "INVALID_UUID": "UUID is not valid",
     "LA_CANTIDAD_ACTUAL_DEBE_SER_UN_N_MERO": "Current quantity must be a number",
@@ -365,6 +382,27 @@
     "movimiento": {
       "descripcion": "Recipe preparation: {nombre}",
       "descripcion_creacion": "Order creation #{id}"
+    },
+    "pdf": {
+      "elaboracion": "ELABORACIÓN PASO A PASO",
+      "raciones": "RACIONES",
+      "rendimiento": "RENDIMIENTO",
+      "porciones": "porciones",
+      "tiempo": "TIEMPO",
+      "colMerma": "MERMA",
+      "colCant": "CANT.",
+      "ingredientes_one": "ingrediente",
+      "colAlerg": "ALÉRG.",
+      "colBReal": "B. REAL",
+      "sinInstrucciones": "No hay instrucciones detalladas para esta receta.",
+      "listaIngredientes": "LISTADO DE INGREDIENTES",
+      "ingredientes_other": "ingredientes",
+      "piePagina": "SmartEconomat Kitchen Suite · Impreso {fecha}",
+      "dificultad": "Dificultad",
+      "continuacion": "CONTINUACIÓN",
+      "colUd": "UD",
+      "titulo": "FICHA TÉCNICA DE RECETA",
+      "colProducto": "PRODUCTO"
     }
   },
   "docs": {
@@ -556,5 +594,26 @@
       "motivoPorDefecto": "Cancelled by user"
     }
   },
-  "exceptions": {}
+  "pdf": {
+    "receta": {
+      "dificultad": "Dificultad",
+      "porciones": "porciones",
+      "listado_ingredientes": "LISTADO DE INGREDIENTES",
+      "b_real": "B. REAL",
+      "sin_instrucciones": "No hay instrucciones detalladas para esta receta.",
+      "producto": "PRODUCTO",
+      "merma": "MERMA",
+      "ingredientes": "ingredientes",
+      "ud": "UD",
+      "elaboracion": "ELABORACIÓN PASO A PASO",
+      "rendimiento": "RENDIMIENTO",
+      "raciones": "RACIONES",
+      "alerg": "ALÉRG.",
+      "cant": "CANT.",
+      "tiempo": "TIEMPO",
+      "ficha_tecnica": "FICHA TÉCNICA DE RECETA",
+      "continuacion": "CONTINUACIÓN",
+      "footer": "SmartEconomat Kitchen Suite · Impreso"
+    }
+  }
 }

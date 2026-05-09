@@ -2,21 +2,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * Documentación en español.
+ * Representa seeder i18n helper en el sistema.
  */
 export class SeederI18nHelper {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static translations: Record<string, any> | null = null;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static readonly defaultLang = 'es';
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de load translations dentro del flujo de la aplicación.
    */
   private static loadTranslations(): void {
     if (this.translations) return;
@@ -62,7 +62,8 @@ export class SeederI18nHelper {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene lang.
+   * @returns Valor resultante de la operación.
    */
   private static getLang(): string {
     const lang = process.env.SEEDER_LANG || this.defaultLang;
@@ -70,7 +71,11 @@ export class SeederI18nHelper {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene message.
+   *
+   * @param path Parámetro de entrada para la operación.
+   * @param args Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   private static getMessage(path: string, args?: Record<string, any>): string {
     this.loadTranslations();
@@ -98,28 +103,43 @@ export class SeederI18nHelper {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene error.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @param args Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   static getError(key: string, args?: Record<string, any>): string {
     return this.getMessage(`errors.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene seeder success.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @param args Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   static getSeederSuccess(key: string, args?: Record<string, any>): string {
     return this.getMessage(`seeders.success.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene seeder message.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @param args Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   static getSeederMessage(key: string, args?: Record<string, any>): string {
     return this.getMessage(`seeders.${key}`, args);
   }
 
   /**
-   * Documentación en español.
+   * Obtiene entity.
+   *
+   * @param key Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   static getEntity(key: string): string {
     return this.getMessage(`entities.${key}`);

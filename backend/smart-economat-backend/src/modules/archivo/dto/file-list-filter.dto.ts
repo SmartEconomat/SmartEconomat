@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
+/** Clase pública (FileListFilterDto). Paquete: smart-economat-backend (Nest). */
 export class FileListFilterDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'docs.FILTRAR_POR_ID_DE_USUARIO' })
   @IsOptional()

@@ -13,6 +13,7 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource, EntityManager, In } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -28,12 +29,21 @@ import { Inventario } from '../../inventario/inventario.entity/inventario.entity
 import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta-ingrediente.entity';
 
 /**
- * Documentación en español.
+ * Servicio encargado de la lógica de negocio de los productos maestros.
+ * Gestiona el ciclo de vida del producto, incluyendo la relación con múltiples proveedores,
+ * el control de alérgenos, el cálculo automático de PMP (Precio Medio Ponderado)
+ * y la persistencia de cambios de precio históricos.
  */
 @Injectable()
 export class ProductoService {
   /**
-   * Documentación en español.
+   * Crea una instancia de ProductoService.
+   * @param productoRepository Repositorio personalizado para operaciones de base de datos de productos.
+   * @param productoProveedorRepository Repositorio para la relación N:M entre productos y proveedores.
+   * @param productoAlergenoRepository Repositorio para la asociación de alérgenos.
+   * @param archivoService Servicio para la gestión de archivos adjuntos (imágenes).
+   * @param movimientoHelper Ayudante para registrar trazas de auditoría.
+   * @param dataSource Fuente de datos para gestión de transacciones manuales.
    */
   constructor(
     private readonly productoRepository: ProductoRepository,
@@ -48,7 +58,13 @@ export class ProductoService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea un producto maestro junto con sus relaciones iniciales en una transacción atómica.
+   * Si no se proporciona código de barras, se genera uno automáticamente.
+   * @param createProductoDto Datos de creación del producto.
+   * @param userId ID del usuario que realiza la acción (para auditoría).
+   * @returns El producto persistido con sus relaciones cargadas.
+   * @throws ConflictException Si el código de barras ya existe.
+   * @throws BadRequestException Si el código de barras no es válido.
    */
   async create(
     createProductoDto: CreateProductoDto,
@@ -75,6 +91,17 @@ export class ProductoService {
       rest.codigoBarras = await this.generateUniqueEan13();
     }
 
+    if (
+      rest.nombre &&
+      (await this.productoRepository.existsActiveByNombreNormalized(
+        rest.nombre
+      ))
+    ) {
+      throw new ConflictException(
+        I18nHelper.getError('PRODUCT_NAME_DUPLICATE')
+      );
+    }
+
     return await this.dataSource.transaction(async (manager) => {
       await this.validateProveedorPayload(manager, proveedores, true);
 
@@ -97,9 +124,13 @@ export class ProductoService {
         await this.syncProveedoresWithManager(
           manager,
           savedProduct.id,
-          proveedores
+          proveedores,
+          savedProduct.codigoBarras,
+          savedProduct.marca
         );
       }
+
+      await this.recalcularPmpProducto(savedProduct.id, manager);
 
       await this.movimientoHelper.trackProductoCreation(
         userId,
@@ -115,15 +146,16 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Recupera una lista paginada de productos aplicando filtros dinámicos.
+   * @param query Filtros de búsqueda (nombre, EAN, categoría, marca, alérgenos).
+   * @param userRole Rol del usuario solicitante para aplicar reglas de visibilidad.
+   * @returns Objeto con datos paginados y metadatos de paginación.
    */
   async findAll(
     query: ProductFilterDto,
     userRole?: string
   ): Promise<PaginatedResponseDto<Producto>> {
-    const isAdmin =
-      userRole?.toUpperCase() === 'ADMIN' ||
-      userRole?.toUpperCase() === 'SUPER_ADMIN';
+    void userRole;
     const page = query.page ?? 1;
     const {
       skip,
@@ -135,16 +167,25 @@ export class ProductoService {
       'ASC',
     ];
 
-    const queryBuilder = this.productoRepository
-      .createQueryBuilder('producto')
+    const queryBuilder = this.productoRepository.createQueryBuilder('producto');
+
+    if (query.soloEliminados) {
+      queryBuilder.withDeleted();
+    }
+
+    queryBuilder
       .leftJoinAndSelect('producto.proveedores', 'proveedores')
       .leftJoinAndSelect('proveedores.proveedor', 'proveedor')
       .leftJoinAndSelect('producto.alergenos', 'alergenos');
 
     if (query.soloEliminados) {
-      queryBuilder.withDeleted().andWhere('producto.deleted_at IS NOT NULL');
-    } else if (isAdmin) {
-      queryBuilder.where('producto.deleted_at IS NULL');
+      queryBuilder.andWhere('producto.deleted_at IS NOT NULL');
+    } else {
+      queryBuilder
+        .andWhere('producto.deleted_at IS NULL')
+        .andWhere('producto.activo = :productoActivo', {
+          productoActivo: true,
+        });
     }
 
     if (query.codigoBarras) {
@@ -206,7 +247,11 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Busca un producto por su UUID.
+   * @param id Identificador único del producto.
+   * @param _userRole (Opcional) Rol del usuario para futuras restricciones de visibilidad.
+   * @returns El producto encontrado con proveedores y alérgenos.
+   * @throws NotFoundException Si el producto no existe.
    */
   async findOne(id: string, _userRole?: string): Promise<Producto> {
     void _userRole;
@@ -226,7 +271,12 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza los datos de un producto y sincroniza sus relaciones (alérgenos/proveedores).
+   * Gestiona la limpieza de imágenes antiguas si han sido reemplazadas.
+   * @param id UUID del producto a actualizar.
+   * @param updateProductoDto Datos a modificar.
+   * @param userId ID del usuario que realiza la acción.
+   * @returns El producto actualizado.
    */
   async update(
     id: string,
@@ -277,6 +327,20 @@ export class ProductoService {
           await this.validateProveedorPayload(manager, proveedores);
         }
 
+        if (
+          rest.nombre !== undefined &&
+          rest.nombre.trim().toLowerCase() !==
+            (producto.nombre ?? '').trim().toLowerCase() &&
+          (await this.productoRepository.existsActiveByNombreNormalized(
+            rest.nombre,
+            id
+          ))
+        ) {
+          throw new ConflictException(
+            I18nHelper.getError('PRODUCT_NAME_DUPLICATE')
+          );
+        }
+
         await manager.update(Producto, id, rest);
 
         Object.assign(producto, rest);
@@ -290,8 +354,16 @@ export class ProductoService {
         }
 
         if (proveedores !== undefined) {
-          await this.syncProveedoresWithManager(manager, id, proveedores);
+          await this.syncProveedoresWithManager(
+            manager,
+            id,
+            proveedores,
+            producto.codigoBarras,
+            producto.marca
+          );
         }
+
+        await this.recalcularPmpProducto(id, manager);
 
         await this.movimientoHelper.trackProductoUpdate(
           userId,
@@ -313,6 +385,12 @@ export class ProductoService {
     return updatedProduct;
   }
 
+  /**
+   * Restaura un producto que fue eliminado lógicamente.
+   * @param id UUID del producto.
+   * @param userId ID del usuario que restaura.
+   * @returns El producto restaurado.
+   */
   async restore(id: string, userId: string): Promise<Producto> {
     const producto = await this.productoRepository.findOne({
       where: { id },
@@ -325,6 +403,36 @@ export class ProductoService {
 
     if (!producto.deletedAt) {
       return producto;
+    }
+
+    const nameConflict = await this.productoRepository
+      .createQueryBuilder('p')
+      .where('p.id != :id', { id })
+      .andWhere('p.deletedAt IS NULL')
+      .andWhere('LOWER(TRIM(p.nombre)) = LOWER(TRIM(:nombre))', {
+        nombre: producto.nombre,
+      })
+      .getOne();
+
+    if (nameConflict) {
+      throw new ConflictException(
+        I18nHelper.getError('PRODUCT_NAME_DUPLICATE')
+      );
+    }
+
+    if (producto.codigoBarras) {
+      const barcodeConflict = await this.productoRepository
+        .createQueryBuilder('p')
+        .where('p.id != :id', { id })
+        .andWhere('p.deletedAt IS NULL')
+        .andWhere('p.codigoBarras = :cb', { cb: producto.codigoBarras })
+        .getOne();
+
+      if (barcodeConflict) {
+        throw new ConflictException(
+          I18nHelper.getError('BARCODE_ALREADY_REGISTERED')
+        );
+      }
     }
 
     producto.deletedAt = null;
@@ -341,6 +449,19 @@ export class ProductoService {
 
     return restoredProduct;
   }
+  /**
+   * Elimina lógicamente un producto del sistema.
+   * Valida que no esté siendo utilizado en ninguna receta activa.
+   * @param id UUID del producto.
+   * @param userId ID del usuario que elimina.
+   * @throws ConflictException Si el producto está en uso por una receta.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async remove(id: string, userId: string): Promise<void> {
     const producto = await this.findOne(id);
 
@@ -372,7 +493,13 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Genera un código EAN-13 aleatorio y verifica su unicidad en la base de datos.
+   * @returns Un código EAN-13 válido y único.
+   * @throws InternalServerErrorException Si falla tras múltiples reintentos.
+   */
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {Promise<string>} Datos efectivos después de ejecutar la operación.
    */
   async generateUniqueEan13(): Promise<string> {
     const MAX_RETRIES = 5;
@@ -384,12 +511,18 @@ export class ProductoService {
       }
     }
     throw new InternalServerErrorException(
-      'No se pudo generar un código EAN-13 único después de varios intentos'
+      I18nHelper.getError('EAN13_GENERATION_FAILED')
     );
   }
 
   /**
-   * Documentación en español.
+   * Actualiza el Precio Medio Ponderado (PMP) de una variante de producto-proveedor.
+   * Se dispara habitualmente tras una recepción de mercancía.
+   * @param productoProveedorId ID de la relación producto-proveedor.
+   * @param nuevaCantidad Cantidad recibida en la nueva entrada.
+   * @param nuevoPrecio Precio unitario de la nueva entrada.
+   * @param manager Manager de transacción (opcional).
+   * @returns El nuevo PMP calculado para esa variante.
    */
   async actualizarPMP(
     productoProveedorId: string,
@@ -416,17 +549,19 @@ export class ProductoService {
       (sum, inv) => sum + Number(inv.cantidadActual),
       0
     );
-    const stockAnteriorPP = Math.max(0, stockTotalPP - nuevaCantidad);
+    const cantidadNormalizada = Math.max(0, Number(nuevaCantidad) || 0);
+    const stockAnteriorPP = Math.max(0, stockTotalPP - cantidadNormalizada);
     let pmpAnteriorPP = Number(pp.pmp);
 
     if (pmpAnteriorPP <= 0) {
       pmpAnteriorPP = Number(pp.precioUnitario) || 0;
     }
 
-    const divisorPP = stockAnteriorPP + nuevaCantidad;
+    const divisorPP = stockAnteriorPP + cantidadNormalizada;
     const nuevoPmpPP =
       divisorPP > 0
-        ? (stockAnteriorPP * pmpAnteriorPP + nuevaCantidad * nuevoPrecio) /
+        ? (stockAnteriorPP * pmpAnteriorPP +
+            cantidadNormalizada * nuevoPrecio) /
           divisorPP
         : nuevoPrecio;
 
@@ -439,15 +574,18 @@ export class ProductoService {
     );
     pp.pmp = finalPmp;
 
-    if (pp.producto) {
-      await this.recalcularPmpProducto(pp.producto.id, em);
+    const productoId = pp.productoId || pp.producto?.id;
+    if (productoId) {
+      await this.recalcularPmpProducto(productoId, em);
     }
 
     return pp.pmp;
   }
 
   /**
-   * Documentación en español.
+   * Recalcula el PMP global de un producto basándose en el stock y PMP de todas sus variantes de proveedor.
+   * @param productoId UUID del producto maestro.
+   * @param em EntityManager para operaciones transaccionales.
    */
   private async recalcularPmpProducto(
     productoId: string,
@@ -483,28 +621,52 @@ export class ProductoService {
         (sum, inv) => sum + Number(inv.cantidadActual),
         0
       );
-      const pmpPP = Number(pp.pmp) || 0;
+      const pmpPP =
+        Number(pp.pmp) > 0 ? Number(pp.pmp) : Number(pp.precioUnitario) || 0;
       stockTotal += stockPP;
       sumaPonderada += stockPP * pmpPP;
     }
 
-    const pmpActualProducto = Number(producto.pmp) || 0;
-    producto.pmp =
-      stockTotal > 0
-        ? Number((sumaPonderada / stockTotal).toFixed(4))
-        : pmpActualProducto;
+    if (stockTotal <= 0) {
+      /** Sin stock físico el PMP ponderado no existe; usamos la media de precios de referencia por proveedor. */
+      const refs: number[] = [];
+      for (const pp of proveedores) {
+        const ref =
+          Number(pp.pmp) > 0
+            ? Number(pp.pmp)
+            : Number(pp.precioUnitario) > 0
+              ? Number(pp.precioUnitario)
+              : 0;
+        if (ref > 0) {
+          refs.push(ref);
+        }
+      }
+      if (refs.length === 0) {
+        return;
+      }
+      const fallbackPmp = Number(
+        (refs.reduce((a, b) => a + b, 0) / refs.length).toFixed(4)
+      );
+      await em.update(Producto, { id: productoId }, { pmp: fallbackPmp });
+      return;
+    }
+
+    const nuevoPmp = Number((sumaPonderada / stockTotal).toFixed(4));
 
     await em.update(
       Producto,
       { id: productoId },
       {
-        pmp: producto.pmp,
+        pmp: nuevoPmp,
       }
     );
   }
 
   /**
-   * Documentación en español.
+   * Recupera el histórico de variaciones de precio de un producto.
+   * @param productoId UUID del producto.
+   * @param proveedorId (Opcional) ID del proveedor para filtrar el historial.
+   * @returns Lista cronológica de cambios de precio.
    */
   async getHistorialPrecios(
     productoId: string,
@@ -527,7 +689,10 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Garantiza que la lista de alérgenos no contenga duplicados.
+   * @param alergenos Lista de alérgenos a validar.
+   * @returns Lista de alérgenos únicos o undefined si no se proporcionaron.
+   * @throws ConflictException Si se detectan alérgenos duplicados.
    */
   private ensureUniqueAlergenos(
     alergenos?: ProductoAlergeno['alergeno'][]
@@ -539,16 +704,17 @@ export class ProductoService {
     const uniqueAlergenos = [...new Set(alergenos)];
 
     if (uniqueAlergenos.length !== alergenos.length) {
-      throw new ConflictException(
-        'No se pueden repetir alérgenos en la misma solicitud'
-      );
+      throw new ConflictException(I18nHelper.getError('DUPLICATE_ALLERGENS'));
     }
 
     return uniqueAlergenos;
   }
 
   /**
-   * Documentación en español.
+   * Valida que el precio unitario sea estrictamente positivo.
+   * @param precioUnitario Valor del precio a validar.
+   * @param proveedorId ID del proveedor asociado (para el mensaje de error).
+   * @throws BadRequestException Si el precio es <= 0.
    */
   private validatePrecioMayorQueCero(
     precioUnitario: number,
@@ -562,7 +728,11 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Registra un nuevo precio en el historial y devuelve el precio vigente.
+   * @param manager EntityManager para la transacción.
+   * @param productoProveedorId ID de la relación producto-proveedor.
+   * @param precio Nuevo precio a registrar.
+   * @returns El precio confirmado del historial.
    */
   private async registrarPrecioYResolverPrecioActual(
     manager: EntityManager,
@@ -597,7 +767,10 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Valida la integridad del payload de proveedores (duplicados, existencia, precios).
+   * @param manager EntityManager para consultas.
+   * @param proveedores Lista de proveedores a validar.
+   * @param requirePrecioUnitario Si es obligatorio que cada proveedor tenga precio.
    */
   private async validateProveedorPayload(
     manager: EntityManager,
@@ -612,9 +785,7 @@ export class ProductoService {
     const uniqueProviderIds = new Set(providerIds);
 
     if (uniqueProviderIds.size !== providerIds.length) {
-      throw new ConflictException(
-        'No se puede vincular el mismo proveedor más de una vez al producto'
-      );
+      throw new ConflictException(I18nHelper.getError('DUPLICATE_SUPPLIER'));
     }
 
     for (const proveedor of proveedores) {
@@ -673,7 +844,10 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Reemplaza todos los alérgenos de un producto por una nueva lista.
+   * @param manager EntityManager para la transacción.
+   * @param productoId ID del producto.
+   * @param alergenos Nueva lista de alérgenos.
    */
   private async replaceAlergenosWithManager(
     manager: EntityManager,
@@ -702,12 +876,26 @@ export class ProductoService {
   }
 
   /**
-   * Documentación en español.
+   * Sincroniza la relación entre el producto y sus proveedores.
+   * Crea nuevas relaciones o actualiza las existentes (precios, marcas, EANs).
+   * @param manager EntityManager para la transacción.
+   * @param productoId ID del producto maestro.
+   * @param proveedores Lista de proveedores sincronizar.
+   */
+  /**
+   * Sincroniza la relación entre el producto y sus proveedores.
+   * Crea nuevas relaciones, actualiza las existentes y elimina las que ya no están en la lista.
+   * @param manager EntityManager para la transacción.
+   * @param productoId ID del producto maestro.
+   * @param proveedores Lista de proveedores a sincronizar.
+   * @param productoBarcode Código de barras maestro del producto (para detección de herencia).
    */
   private async syncProveedoresWithManager(
     manager: EntityManager,
     productoId: string,
-    proveedores: AddProveedorToProductoDto[]
+    proveedores: AddProveedorToProductoDto[],
+    productoBarcode?: string,
+    masterMarca?: string
   ) {
     const existing = await manager.find(ProductoProveedor, {
       where: { producto: { id: productoId } },
@@ -725,16 +913,15 @@ export class ProductoService {
     if (newProveedores.length > 0) {
       const newRelations = newProveedores.map((p) =>
         manager.create(ProductoProveedor, {
-          productoId,
-          proveedorId: p.proveedorId,
           producto: { id: productoId } as any,
           proveedor: { id: p.proveedorId } as any,
 
           precioUnitario: p.precioUnitario,
-          marca: p.marcaEspecifica,
-          codigoBarras: p.codigoBarras,
-          pmp: p.precioUnitario || 0,
-        })
+          marca: p.marcaEspecifica === masterMarca ? null : p.marcaEspecifica,
+          codigoBarras:
+            p.codigoBarras === productoBarcode ? null : p.codigoBarras,
+          pmp: 0,
+        } as any)
       );
 
       const savedNewRelations = await manager.save(
@@ -787,17 +974,20 @@ export class ProductoService {
               );
           }
 
-          toUpdate.marca = p.marcaEspecifica ?? toUpdate.marca;
-          toUpdate.codigoBarras = p.codigoBarras ?? toUpdate.codigoBarras;
+          const payloadUpdate: QueryDeepPartialEntity<ProductoProveedor> = {
+            precioUnitario: toUpdate.precioUnitario,
+            marca:
+              p.marcaEspecifica === masterMarca
+                ? null
+                : (p.marcaEspecifica ?? toUpdate.marca),
+            codigoBarras:
+              p.codigoBarras === productoBarcode ? null : p.codigoBarras,
+          };
 
           await manager.update(
             ProductoProveedor,
             { id: toUpdate.id },
-            {
-              precioUnitario: toUpdate.precioUnitario,
-              marca: toUpdate.marca,
-              codigoBarras: toUpdate.codigoBarras,
-            }
+            payloadUpdate
           );
         }
       }
@@ -816,5 +1006,7 @@ export class ProductoService {
         }
       }
     }
+
+    await this.recalcularPmpProducto(productoId, manager);
   }
 }

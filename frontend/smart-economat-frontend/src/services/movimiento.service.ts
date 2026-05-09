@@ -24,6 +24,7 @@ interface MovimientoPayloadFields {
   usuario?: string;
 }
 
+/** Alias público (CreateMovimientoPayload) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type CreateMovimientoPayload = Required<
   Pick<
     MovimientoPayloadFields,
@@ -35,6 +36,7 @@ export type CreateMovimientoPayload = Required<
     'tipo' | 'cantidad' | 'entidadTipo' | 'entidadId'
   >;
 
+/** Alias público (UpdateMovimientoPayload) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type UpdateMovimientoPayload = MovimientoPayloadFields;
 
 function sanitizeRequiredMovimientoField(
@@ -107,7 +109,12 @@ function sanitizeMovimientoPayload(
 }
 
 /**
- * Documentación en español.
+ * Obtiene una lista paginada de movimientos de inventario con filtros por fecha y tipo.
+ */
+/**
+ * Expone "fetchMovimientos" en smart-economat-frontend (SPA).
+ * @undefined {MovimientosQueryParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<PaginatedData<Movimiento>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchMovimientos(
   params: MovimientosQueryParams = {}
@@ -148,7 +155,12 @@ export async function fetchMovimientos(
 }
 
 /**
- * Documentación en español.
+ * Registra un nuevo movimiento de stock (entrada, salida, ajuste).
+ */
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {CreateMovimientoPayload} movimiento - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Movimiento>} Datos efectivos después de ejecutar la operación.
  */
 export async function createMovimiento(
   movimiento: CreateMovimientoPayload
@@ -170,7 +182,13 @@ export async function createMovimiento(
 }
 
 /**
- * Documentación en español.
+ * Actualiza la información o metadatos de un movimiento existente.
+ */
+/**
+ * Persiste modificaciones válidas sobre entidades existentes.
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {MovimientoPayloadFields} movimiento - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<Movimiento>} Datos efectivos después de ejecutar la operación.
  */
 export async function updateMovimiento(
   id: string,

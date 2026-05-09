@@ -23,6 +23,8 @@ import BatchPedidoLineasViewer from './BatchPedidoLineasViewer';
 import BarcodeScanner from './BarcodeScanner';
 import BarcodeIcon from './BarcodeIcon';
 import Autocomplete from './Autocomplete';
+import PortionInput from './PortionInput';
+import NumericInput from './NumericInput';
 import {
   InputAdornment,
   IconButton,
@@ -37,7 +39,6 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import AutoFixHighOutlinedIcon from '@mui/icons-material/AutoFixHighOutlined';
 import { resolveStoredFileUrl } from '../../services/api.service';
-import { parseLocalizedNumber } from '../../utils/numberUtils';
 import { PedidoUsuario, PurchaseBatch } from '../../services/pedido.types';
 import { useTranslation } from 'react-i18next';
 
@@ -72,6 +73,7 @@ const createStableSnapshot = (value: unknown): string => {
   return JSON.stringify(normalize(value));
 };
 
+/** Alias público (FieldType) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type FieldType =
   | 'text'
   | 'textarea'
@@ -87,10 +89,13 @@ export type FieldType =
   | 'recipeIngredients'
   | 'batchViewer'
   | 'barcode'
-  | 'autocomplete';
+  | 'autocomplete'
+  | 'portion';
 
+/** Alias público (FormDataRecord) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type FormDataRecord = Record<string, unknown>;
 
+/** Contrato de tipos público (DynamicField). Contexto: smart-economat-frontend (SPA). */
 export interface DynamicField {
   name: string;
   label: string;
@@ -109,8 +114,11 @@ export interface DynamicField {
   minLength?: number;
   onSearch?: (query: string) => void;
   loading?: boolean;
+  step?: number | string;
+  min?: number | string;
 }
 
+/** Contrato de tipos público (DynamicFormModalProps). Contexto: smart-economat-frontend (SPA). */
 export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
   fields?: DynamicField[];
   initialData?: FormDataRecord;
@@ -139,7 +147,7 @@ export interface DynamicFormModalProps extends Omit<ModalProps, 'children'> {
     | 'inherit';
 }
 
-const EMPTY_OBJECT = {};
+const EMPTY_OBJECT: FormDataRecord = {};
 
 const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   isOpen,
@@ -211,20 +219,28 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      const dataToSet: FormDataRecord = { ...initialData };
-      fields.forEach((field) => {
-        if (dataToSet[field.name] === undefined) {
-          dataToSet[field.name] =
-            field.defaultValue !== undefined
-              ? field.defaultValue
-              : field.type === 'boolean'
-                ? false
-                : '';
-        }
-      });
+      const isOpening = !wasOpenRef.current;
+      const previousInitialDataId = lastInitialDataRef.current['id'];
+      const currentInitialDataId = initialData['id'];
+      const initialDataIdChanged =
+        previousInitialDataId !== currentInitialDataId;
 
-      // Solo resetear si es una apertura nueva o initialData cambió realmente
-      if (!wasOpenRef.current || lastInitialDataRef.current !== initialData) {
+      // Solo resetear si:
+      // 1. El modal se acaba de abrir
+      // 2. Estamos editando una entidad diferente (cambio de ID)
+      if (isOpening || initialDataIdChanged) {
+        const dataToSet: FormDataRecord = { ...initialData };
+        fields.forEach((field) => {
+          if (dataToSet[field.name] === undefined) {
+            dataToSet[field.name] =
+              field.defaultValue !== undefined
+                ? field.defaultValue
+                : field.type === 'boolean'
+                  ? false
+                  : '';
+          }
+        });
+
         formDataRef.current = dataToSet;
         setFormData(dataToSet);
         initialSnapshotRef.current = createStableSnapshot(dataToSet);
@@ -235,7 +251,9 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       }
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen, initialData, fields, onValuesChange]);
+    // Eliminamos 'fields' y 'onValuesChange' de las dependencias para evitar re-renders accidentales
+    // 'initialData' se queda para detectar cambios de entidad (IDs)
+  }, [fields, initialData, isOpen, onValuesChange]);
 
   useEffect(() => {
     if (isOpen && valueUpdates && Object.keys(valueUpdates).length > 0) {
@@ -285,24 +303,6 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   ) => {
     const { name, value } = e.target;
     updateFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
-
-  const handleNumberChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    // Bloquear números negativos en tiempo real
-    if (value.startsWith('-')) return;
-
-    const parsedValue = parseLocalizedNumber(value);
-    if (parsedValue !== null && parsedValue < 0) return;
-
-    updateFormData((prev) => ({
-      ...prev,
-      [name]: value === '' ? '' : (parsedValue ?? value),
-    }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -417,8 +417,10 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       }
     };
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
+    // Evita que formularios anidados (renderizados en portal) disparen submits del padre.
+    e?.stopPropagation();
     if (!validateForm()) {
       return;
     }
@@ -437,6 +439,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
   const handleSecondarySubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (onSecondarySubmit) {
       await onSecondarySubmit(formDataRef.current);
     }
@@ -604,21 +607,42 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
 
       case 'number':
         return (
-          <Input
+          <NumericInput
             key={name}
             name={name}
             label={label}
-            type="number"
-            value={value ?? ''}
-            onChange={handleNumberChange}
+            value={value as string | number}
+            onChange={(parsed, raw) => {
+              const isEditingDecimal = raw.endsWith('.') || raw.endsWith(',');
+              updateFormData((prev) => ({
+                ...prev,
+                [name]: isEditingDecimal ? raw : (parsed ?? ''),
+              }));
+              setErrors((prev) => ({ ...prev, [name]: '' }));
+            }}
             required={required}
             disabled={disabled}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
+          />
+        );
+
+      case 'portion':
+        return (
+          <PortionInput
+            key={name}
+            name={name}
+            label={label}
+            value={value ?? ''}
+            onChange={handleTextChange}
+            required={required}
+            disabled={disabled}
+            error={Boolean(errors[name])}
+            helperText={errors[name]}
+            inputProps={{
+              step: field.step ?? '0.5',
+              min: field.min ?? '0.5',
             }}
-            inputProps={{ step: 'any', inputMode: 'decimal', min: 0 }}
           />
         );
 
@@ -981,12 +1005,12 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
         <Grid
           container
           spacing={3}
-          sx={{ mt: 0, alignItems: { md: 'center' } }}
+          sx={{ mt: 0, alignItems: { md: 'flex-start' } }}
         >
           {/* Image Sidebar Layout - Left on MD+ */}
           {mainImageField && (
             <Grid
-              size={{ xs: 12, md: 3, lg: 3 }}
+              size={{ xs: 12, md: 2, lg: 2 }}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1020,7 +1044,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                       onDrop={handleDrop(name)}
                       sx={{
                         width: '100%',
-                        height: { md: 190 },
+                        height: { md: 120 },
                         border: '2px dashed',
                         borderColor: isDragOver ? 'primary.main' : 'divider',
                         borderRadius: 2,
@@ -1108,7 +1132,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
           )}
 
           {/* Right Side - Grid for Fields */}
-          <Grid size={mainImageField ? { xs: 12, md: 9, lg: 9 } : { xs: 12 }}>
+          <Grid size={mainImageField ? { xs: 12, md: 10, lg: 10 } : { xs: 12 }}>
             <Box
               display="grid"
               gridTemplateColumns="repeat(12, 1fr)"

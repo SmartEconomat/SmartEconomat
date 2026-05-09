@@ -39,7 +39,10 @@ function run(command, args, options = {}) {
 }
 
 async function resolveSigntoolPath() {
-  if (process.env.SIGNTOOL_PATH && process.env.SIGNTOOL_PATH.trim().length > 0) {
+  if (
+    process.env.SIGNTOOL_PATH &&
+    process.env.SIGNTOOL_PATH.trim().length > 0
+  ) {
     return process.env.SIGNTOOL_PATH.trim();
   }
 

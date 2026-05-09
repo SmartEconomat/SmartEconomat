@@ -43,7 +43,22 @@ function extractRemoteDraft(error: ApiError): RecepcionDraftEnvelope | null {
 }
 
 /**
- * Documentación en español.
+ * Hook avanzado para la gestión de borradores de recepción con sincronización automática en backend.
+ * Incluye gestión de conflictos de versión, recuperación de estados previos (auto-resume)
+ * y persistencia optimista durante la navegación.
+ *
+ * @param {UseRecepcionDraftOptions} options - Configuración del hook (paso activo, debounce, etc.)
+ */
+/**
+ * Expone "useRecepcionDraft" en smart-economat-frontend (SPA).
+ * @undefined {UseRecepcionDraftOptions} {
+ *   activeStep,
+ *   autoResume = false,
+ *   debounceMs = 2000,
+ *   defaultDraft,
+ *   setActiveStep,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {{ applyPendingRecoveryDraft: () => void; clearDraft: () => Promise<void>; conflict: ConflictPayload | null; draft: RecepcionDraft; isReady: boolean; keepLocalDraft: () => Promise<void>; pendingRecoveryDraft: RecepcionDraftEnvelope | null; setDraft: import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").Dispatch<import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/index").SetStateAction<RecepcionDraft>>; syncDraft: (overrideDraft?: RecepcionDraft) => Promise<RecepcionDraftEnvelope | null>; syncError: string | null; syncStatus: SyncStatus; useRemoteDraft: () => void; }} Datos efectivos después de ejecutar la operación.
  */
 export function useRecepcionDraft({
   activeStep,

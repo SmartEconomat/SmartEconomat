@@ -1,9 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
-module.exports = async (): Promise<void> => {
-  // Nota: Los workers ya limpiaron sus propios recursos
-  // Este teardown se ejecuta en el proceso principal de Jest
-  // y no tiene acceso a la memoria de los workers
-};
+module.exports = async (): Promise<void> => {};

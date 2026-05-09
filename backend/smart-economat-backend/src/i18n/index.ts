@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';

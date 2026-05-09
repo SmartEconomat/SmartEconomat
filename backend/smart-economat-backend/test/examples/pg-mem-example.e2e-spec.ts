@@ -5,7 +5,7 @@ import { Usuario } from '../../src/modules/usuario/usuario.entity/usuario.entity
 import { rolUsuario } from '../../src/modules/usuario/enums/usuario.enums';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('Ejemplo pg-mem (e2e)', () => {
   let app: INestApplication;
@@ -21,7 +21,7 @@ describe('Ejemplo pg-mem (e2e)', () => {
   });
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   it('Test 1 - Debe insertar un usuario temporal', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);
@@ -51,7 +51,7 @@ describe('Ejemplo pg-mem (e2e)', () => {
   });
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   it('Test 2 - Debe verificar que el estado se reseteó automáticamente (snapshot restore)', async () => {
     const usuarioRepo = dataSource.getRepository(Usuario);

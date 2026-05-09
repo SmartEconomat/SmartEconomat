@@ -5,7 +5,7 @@ import 'wicg-inert';
 import i18n from './i18n';
 
 // Force Spanish for tests to match expectations
-i18n.changeLanguage('es');
+void i18n.changeLanguage('es');
 
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();

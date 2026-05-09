@@ -1,5 +1,6 @@
 import os from "node:os";
 
+/** Contrato tipado público (OSDetails). */
 export interface OSDetails {
   platform: NodeJS.Platform;
   architecture: string;
@@ -9,7 +10,12 @@ export interface OSDetails {
   cpus: number;
 }
 
+/** Servicio del proceso principal: OSDetectorService. */
 export class OSDetectorService {
+  /**
+   * Expone la operación "detect" del instalador SmartEconomat.
+   * @returns {OSDetails} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   detect(): OSDetails {
     const totalMemoryGb = Number((os.totalmem() / 1024 ** 3).toFixed(2));
 

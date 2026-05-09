@@ -23,12 +23,18 @@ import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario
 import { PedidoUsuarioService } from '../../pedido/service/pedido-usuario.service';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para pedido draft.
  */
 @Injectable()
 export class PedidoDraftService implements OnModuleDestroy {
   private readonly logger = new Logger(PedidoDraftService.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<PedidoDraft>} pedidoDraftRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {Redis} redisClient - Entrada efectiva esperada por el contrato.
+   * @undefined {PedidoUsuarioService} pedidoUsuarioService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(PedidoDraft)
     private readonly pedidoDraftRepository: Repository<PedidoDraft>,
@@ -38,6 +44,10 @@ export class PedidoDraftService implements OnModuleDestroy {
     private readonly pedidoUsuarioService: PedidoUsuarioService
   ) {}
 
+  /**
+   * Expone "onModuleDestroy" en smart-economat-backend (Nest).
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async onModuleDestroy(): Promise<void> {
     try {
       if (this.redisClient.status !== 'end') {
@@ -49,7 +59,13 @@ export class PedidoDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "upsertDraft" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {UpsertPedidoDraftDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoDraftRecord>} Datos efectivos después de ejecutar la operación.
    */
   async upsertDraft(
     userId: string,
@@ -109,7 +125,10 @@ export class PedidoDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene latest draft.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async getLatestDraft(userId: string): Promise<PedidoDraftRecord | null> {
     const fromCache = await this.getDraftFromCache(userId);
@@ -133,7 +152,10 @@ export class PedidoDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de clear draft dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async clearDraft(userId: string): Promise<void> {
     await Promise.allSettled([
@@ -143,7 +165,10 @@ export class PedidoDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de finalize order dentro del flujo de la aplicación.
+   *
+   * @param userId Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async finalizeOrder(userId: string): Promise<PedidoUsuario> {
     const draft = await this.getLatestDraft(userId);
@@ -169,7 +194,13 @@ export class PedidoDraftService implements OnModuleDestroy {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "saveAndFinalize" en smart-economat-backend (Nest).
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {CreatePedidoUsuarioDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PedidoUsuario>} Datos efectivos después de ejecutar la operación.
    */
   async saveAndFinalize(
     userId: string,

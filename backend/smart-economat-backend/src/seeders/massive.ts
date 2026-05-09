@@ -244,6 +244,21 @@ function isIgnorableMissingAlbaran(result: RequestResult): boolean {
   return result.statusCode === 404;
 }
 
+/** Si la recepción elegida no tiene discrepancias, el negocio devuelve 400; no es fatal para el seed. */
+function isIgnorableIncidenciaReportarSinDiscrepancias(
+  key: string,
+  result: RequestResult
+): boolean {
+  if (key !== 'POST /incidencias/reportar' || result.statusCode !== 400) {
+    return false;
+  }
+  const e = (result.error || '').toLowerCase();
+  return (
+    e.includes('no se detectaron discrepancias') ||
+    e.includes('discrepancias que justifiquen')
+  );
+}
+
 /**
  * Profesor-scoped endpoints may fail with 403/404 due to in-memory permission caché timing.
  * Descripción en español del bloque.
@@ -272,7 +287,8 @@ function isTransientNetworkError(result: RequestResult): boolean {
     err.includes('fetch failed') ||
     err.includes('econnreset') ||
     err.includes('socket') ||
-    err.includes('other side closed')
+    err.includes('other side closed') ||
+    err.includes('aborted')
   );
 }
 
@@ -550,6 +566,11 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     return 1;
   }
 
+  // Mismo actor de sesión muta el pivot usuario↔ubicación; en paralelo hay carreras → 409/23505.
+  if (key === 'PATCH /usuarios/perfil/mis-ubicaciones') {
+    return 1;
+  }
+
   if (
     key === 'POST /productos' ||
     key === 'PATCH /productos/:id' ||
@@ -574,6 +595,11 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     return 1;
   }
 
+  /** Misma línea/origen puede overlap en iteraciones paralelas → carreras y 409/500 durante save. */
+  if (key === 'POST /inventario/transferencias') {
+    return 1;
+  }
+
   if (
     key.startsWith('POST /preparaciones') ||
     key.startsWith('PATCH /preparaciones')
@@ -592,11 +618,13 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
   }
 
   if (
+    key === 'DELETE /pedido-usuarios/:id' ||
     key.startsWith('POST /pedido-') ||
     key.startsWith('PATCH /pedido-') ||
     key.startsWith('POST /pedido/') ||
     key.startsWith('POST /pedidos') ||
     key.startsWith('PATCH /pedidos') ||
+    key === 'DELETE /pedidos/:id' ||
     key.startsWith('POST /purchase-batches') ||
     key.startsWith('PATCH /purchase-batches') ||
     key.startsWith('POST /recepcion') ||
@@ -767,6 +795,11 @@ async function runMassiveSeeder(): Promise<void> {
         key,
         endpointBatchConcurrency
       );
+
+      console.log(
+        `[seed-massive] Iniciando ${key} (objetivo=${target}, batch≤${endpointBatchLimit})`
+      );
+
       successByEndpoint.set(key, 0);
       attemptsByEndpoint.set(key, 0);
 
@@ -852,6 +885,14 @@ async function runMassiveSeeder(): Promise<void> {
             const warnMsg = `[seed-massive] ${key} intento ${attempts}: ${result.statusCode} (caché permisos profesor), ignorando`;
             console.warn(warnMsg);
             continue;
+          } else if (
+            isIgnorableIncidenciaReportarSinDiscrepancias(key, result)
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: sin discrepancias en recepción, ignorando y continuando`;
+            console.warn(warnMsg);
+            continue;
           } else if (isTransientNetworkError(result)) {
             // fetch failed / ECONNRESET — retryable, not fatal
             const warnMsg = `[seed-massive] ${key} intento ${attempts}: error de red transitorio (${result.error}), reintentando`;
@@ -897,6 +938,9 @@ async function runMassiveSeeder(): Promise<void> {
       );
     }
 
+    console.log(
+      '[seed-massive] Post-run: comprobacion de distribuciones disponibles...'
+    );
     await ensureDistribucionDisponiblesPostRun(context, coverage);
     trace('distribucion_disponibles_post_run_ok');
 

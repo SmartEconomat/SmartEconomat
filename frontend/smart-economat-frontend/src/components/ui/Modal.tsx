@@ -9,13 +9,16 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
+/** Alias público (ModalSize) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+/** Alias público (ModalCloseReason) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ModalCloseReason =
   | 'backdropClick'
   | 'escapeKeyDown'
   | 'closeButton'
   | 'cancelAction';
 
+/** Contrato de tipos público (ModalProps). Contexto: smart-economat-frontend (SPA). */
 export interface ModalProps {
   isOpen: boolean;
   onClose: (reason?: ModalCloseReason) => void;
@@ -25,7 +28,7 @@ export interface ModalProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const sizeToPaperMaxWidth: Record<ModalSize, string> = {
   sm: '400px',
@@ -36,7 +39,7 @@ const sizeToPaperMaxWidth: Record<ModalSize, string> = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Modal = ({
   isOpen,

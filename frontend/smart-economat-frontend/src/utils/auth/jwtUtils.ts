@@ -15,6 +15,11 @@ const decodeBase64Url = (value: string): string | null => {
   }
 };
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {string | null} token - Entrada efectiva esperada por el contrato.
+ * @undefined {JwtPayload | null} Datos efectivos después de ejecutar la operación.
+ */
 export const getJwtPayload = (token: string | null): JwtPayload | null => {
   if (!token) {
     return null;
@@ -37,6 +42,11 @@ export const getJwtPayload = (token: string | null): JwtPayload | null => {
   }
 };
 
+/**
+ * Expone "isJwtUsable" en smart-economat-frontend (SPA).
+ * @undefined {string | null} token - Entrada efectiva esperada por el contrato.
+ * @undefined {boolean} Datos efectivos después de ejecutar la operación.
+ */
 export const isJwtUsable = (token: string | null): boolean => {
   const payload = getJwtPayload(token);
   if (!payload) {

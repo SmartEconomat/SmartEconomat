@@ -9,11 +9,12 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { firstNonEmptyString } from '../../../common/dto/transform-query.helpers';
 import { TipoMovimiento } from '../enums/movimiento.enums';
 
 /**
- * Documentación en español.
+ * DTO que define el contrato de datos de movimiento history.
  */
 export class MovimientoHistoryDto {
   @IsUUID('all', {
@@ -70,6 +71,19 @@ export class MovimientoHistoryDto {
   })
   sortBy?: 'createdAt' | 'cantidad';
 
+  @IsOptional()
+  @IsEnum(['ASC', 'DESC'], {
+    message: i18nValidationMessage('validation.EL_ORDEN_DEBE_SER_ASC_O_DESC'),
+  })
+  @Transform(
+    ({ value, obj }: { value: unknown; obj: { sortOrder?: unknown } }) =>
+      firstNonEmptyString(value, obj.sortOrder)
+  )
+  order?: 'ASC' | 'DESC';
+
+  /**
+   * Alias legacy para mantener compatibilidad temporal.
+   */
   @IsOptional()
   @IsEnum(['ASC', 'DESC'], {
     message: i18nValidationMessage('validation.EL_ORDEN_DEBE_SER_ASC_O_DESC'),

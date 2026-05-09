@@ -2,41 +2,42 @@ import React from 'react';
 import { Box, Autocomplete, TextField } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { useTranslation } from 'react-i18next';
+import DateRangeFilter from '../../components/ui/DateRangeFilter';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface AlbaranFiltersState {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   concordancia: boolean | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   startDate: string | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   endDate: string | null;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface AlbaranFiltersProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   filters: AlbaranFiltersState;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChange: (filters: AlbaranFiltersState) => void;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
   filters,
@@ -50,7 +51,7 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
   ];
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const handleConcordanciaChange = (
     _: unknown,
@@ -58,15 +59,6 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
   ) => {
     onChange({ ...filters, concordancia: newValue ? newValue.value : null });
   };
-
-  /**
-   * Documentación en español.
-   */
-  const handleDateChange =
-    (field: 'startDate' | 'endDate') =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange({ ...filters, [field]: e.target.value || null });
-    };
 
   return (
     <Box
@@ -118,38 +110,14 @@ const AlbaranFilters: React.FC<AlbaranFiltersProps> = ({
         }}
       />
 
-      <TextField
-        id="start-date"
-        label={t('albaran.filters.desde')}
-        type="date"
-        size="small"
-        value={filters.startDate || ''}
-        onChange={handleDateChange('startDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
-      />
-
-      <TextField
-        id="end-date"
-        label={t('albaran.filters.hasta')}
-        type="date"
-        size="small"
-        value={filters.endDate || ''}
-        onChange={handleDateChange('endDate')}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          width: { xs: '100%', sm: 160 },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-          },
-        }}
+      <DateRangeFilter
+        startDate={filters.startDate}
+        endDate={filters.endDate}
+        onChange={(start, end) =>
+          onChange({ ...filters, startDate: start, endDate: end })
+        }
+        startLabel={t('albaran.filters.desde')}
+        endLabel={t('albaran.filters.hasta')}
       />
     </Box>
   );

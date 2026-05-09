@@ -12,7 +12,12 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { CategoriaProducto, UnidadMedida } from '../../services/producto.types';
+import {
+  normalizeNumericInput,
+  parseLocalizedNumber,
+} from '../../utils/numberUtils';
 
+/** Contrato de tipos público (ModalProductData). Contexto: smart-economat-frontend (SPA). */
 export interface ModalProductData {
   nombre: string;
   marca: string;
@@ -31,7 +36,8 @@ interface NewProductModalProps {
 }
 
 /**
- * Documentación en español.
+ * Modal para la creación rápida de productos desconocidos detectados durante el escaneo de recepción.
+ * Permite definir los atributos básicos del producto para su incorporación inmediata al catálogo.
  */
 const NewProductModal: React.FC<NewProductModalProps> = ({
   open,
@@ -130,15 +136,23 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           </Box>
           <TextField
             label={t('recepcion.nuevoProducto.contenido')}
-            type="number"
-            InputProps={{ inputProps: { min: 0 } }}
+            type="text"
+            inputProps={{
+              inputMode: 'decimal',
+              pattern: '[0-9]*[.,]?[0-9]*',
+            }}
             value={modalData.contenido}
-            onChange={(e) =>
-              setModalData({
-                ...modalData,
-                contenido: Math.max(0, Number(e.target.value) || 0),
-              })
-            }
+            onChange={(e) => {
+              const normalized = normalizeNumericInput(e.target.value);
+              const parsed = parseLocalizedNumber(normalized);
+              const nextContenido =
+                normalized === ''
+                  ? 0
+                  : parsed !== null
+                    ? parsed
+                    : modalData.contenido;
+              setModalData({ ...modalData, contenido: nextContenido });
+            }}
             fullWidth
           />
         </Box>

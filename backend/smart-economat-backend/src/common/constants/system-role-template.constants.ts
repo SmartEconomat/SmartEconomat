@@ -1,5 +1,6 @@
 import { rolUsuario } from '../../modules/usuario/enums/usuario.enums';
 
+/** Constantes públicas (SYSTEM_ROLE_TEMPLATE_NAMES) expuestas en smart-economat-backend (Nest). */
 export const SYSTEM_ROLE_TEMPLATE_NAMES = [
   rolUsuario.SUPER_ADMIN,
   rolUsuario.ADMIN,
@@ -7,6 +8,7 @@ export const SYSTEM_ROLE_TEMPLATE_NAMES = [
   rolUsuario.ALUMNO,
 ] as const;
 
+/** Constantes públicas (SYSTEM_ROLE_TEMPLATE_ALIASES) expuestas en smart-economat-backend (Nest). */
 export const SYSTEM_ROLE_TEMPLATE_ALIASES: Record<
   rolUsuario,
   readonly string[]
@@ -23,12 +25,14 @@ export const SYSTEM_ROLE_TEMPLATE_ALIASES: Record<
   [rolUsuario.ALUMNO]: [rolUsuario.ALUMNO, 'PLANTILLA ROL ALUMNO'],
 };
 
+/** Constantes públicas (SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES) expuestas en smart-economat-backend (Nest). */
 export const SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES = new Set(
   Object.values(SYSTEM_ROLE_TEMPLATE_ALIASES)
     .flat()
     .map((name) => name.trim().toUpperCase())
 );
 
+/** Constantes públicas (SYSTEM_ROLE_TEMPLATE_PERMISSION_LOCKED_NAMES) expuestas en smart-economat-backend (Nest). */
 export const SYSTEM_ROLE_TEMPLATE_PERMISSION_LOCKED_NAMES = new Set(
   [
     ...SYSTEM_ROLE_TEMPLATE_ALIASES[rolUsuario.SUPER_ADMIN],
@@ -36,6 +40,11 @@ export const SYSTEM_ROLE_TEMPLATE_PERMISSION_LOCKED_NAMES = new Set(
   ].map((name) => name.trim().toUpperCase())
 );
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {rolUsuario} role - Entrada efectiva esperada por el contrato.
+ * @undefined {readonly string[]} Datos efectivos después de ejecutar la operación.
+ */
 export function getSystemRoleTemplateAliases(
   role: rolUsuario
 ): readonly string[] {

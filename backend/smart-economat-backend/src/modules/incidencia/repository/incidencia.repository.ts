@@ -5,7 +5,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 function normalizeDateBoundary(
   value: string,
@@ -20,17 +20,28 @@ function normalizeDateBoundary(
     : `${value}T23:59:59.999Z`;
 }
 
+/** Clase pública (IncidenciaRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 /**
- * Documentación en español.
+ * Repositorio para operaciones de persistencia de incidencia.
  */
 export class IncidenciaRepository extends Repository<Incidencia> {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(private dataSource: DataSource) {
     super(Incidencia, dataSource.createEntityManager());
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOneWithRelations" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia | null>} Datos efectivos después de ejecutar la operación.
    */
   findOneWithRelations(
     id: string,
@@ -58,7 +69,12 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   }
 
   /**
-   * Documentación en español.
+   * Busca all with relations.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findAllWithRelations" en smart-economat-backend (Nest).
+   * @undefined {Promise<Incidencia[]>} Datos efectivos después de ejecutar la operación.
    */
   findAllWithRelations(): Promise<Incidencia[]> {
     return this.find({
@@ -78,7 +94,13 @@ export class IncidenciaRepository extends Repository<Incidencia> {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAllPaginated" en smart-economat-backend (Nest).
+   * @undefined {IncidenciaQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Incidencia>>} Datos efectivos después de ejecutar la operación.
    */
   async findAllPaginated(
     query: IncidenciaQueryDto,
@@ -110,6 +132,10 @@ export class IncidenciaRepository extends Repository<Incidencia> {
         'proveedorProductoProveedor'
       );
 
+    queryBuilder
+      .andWhere('incidencia.fechaResolucion IS NULL')
+      .andWhere('lineas.id IS NOT NULL');
+
     if (isAdmin) {
       queryBuilder.withDeleted();
     }
@@ -125,14 +151,6 @@ export class IncidenciaRepository extends Repository<Incidencia> {
         )`,
         { searchTerm }
       );
-    }
-
-    if (typeof query.resuelta === 'boolean') {
-      if (query.resuelta) {
-        queryBuilder.andWhere('incidencia.fechaResolucion IS NOT NULL');
-      } else {
-        queryBuilder.andWhere('incidencia.fechaResolucion IS NULL');
-      }
     }
 
     if (query.startDate) {

@@ -43,6 +43,7 @@ import {
 import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import { usePedidoDraft } from '../hooks/usePedidoDraft';
+import { useDataTable } from '../hooks/useDataTable';
 import ReporteSelectorModal from '../components/ui/ReporteSelectorModal';
 
 // Nuevos componentes y hooks del refactor
@@ -76,12 +77,15 @@ interface PedidoActionTarget {
   id: string;
   targetType: PedidoDetailEntityType;
   proveedorNombre?: string;
+  proveedorCount?: number;
   fechaPedido?: string;
   numeroGlobal?: string | number;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de sanitize pedido observation dentro del flujo de la aplicación.
+ *
+ * @param observaciones Parámetro de entrada para la operación. Opcional.
  */
 const sanitizePedidoObservation = (observaciones?: string) => {
   if (!observaciones) return '';
@@ -106,7 +110,7 @@ const isEditablePedidoForm = (itemToEdit: PedidoFormValues | null): boolean => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const Pedidos: React.FC = () => {
   const { t } = useTranslation();
@@ -122,12 +126,19 @@ const Pedidos: React.FC = () => {
     nextParams.delete('ownStatus');
     setSearchParams(nextParams, { replace: true });
   };
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const { user } = useAuth();
+  const toast = useToast();
+
   const [itemToDelete, setItemToDelete] = useState<Pedido | null>(null);
   const [itemToAceptar, setItemToAceptar] = useState<PedidoActionTarget | null>(
     null
   );
+  const [itemToConsolidate, setItemToConsolidate] = useState<{
+    pedidoUsuarioIds: string[];
+    weekLabel: string;
+    pendingCount: number;
+    confirmStep: 1 | 2;
+  } | null>(null);
   const [itemToCancelar, setItemToCancelar] =
     useState<PedidoActionTarget | null>(null);
   const [itemToEdit, setItemToEdit] = useState<PedidoFormValues | null>(null);
@@ -144,8 +155,21 @@ const Pedidos: React.FC = () => {
   const [isDraftCloseConfirmOpen, setIsDraftCloseConfirmOpen] = useState(false);
   const hasPromptedRef = useRef(false);
   const latestValsRef = useRef<Record<string, unknown>>({});
-  const { user } = useAuth();
-  const toast = useToast();
+
+  const {
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'fechaPedido',
+    order: 'desc',
+  });
 
   const {
     draft,
@@ -166,7 +190,6 @@ const Pedidos: React.FC = () => {
 
   const {
     searchTerm,
-    setSearchTerm,
     viewMode,
     setViewMode,
     tabIndex,
@@ -178,23 +201,15 @@ const Pedidos: React.FC = () => {
     isOwnOrdersTab,
   } = usePedidosFilters();
 
-  const {
-    data,
-    batches,
-    isLoading,
-    error,
-    totalPages,
-    totalItems,
-    reload,
-    setData,
-  } = usePedidosData({
-    page,
-    pageSize,
-    searchTerm,
-    tabIndex,
-    currentUserId: user?.id,
-    misPedidosStatus,
-  });
+  const { data, batches, isLoading, error, totalItems, reload, setData } =
+    usePedidosData({
+      page: Number(queryParams.page || 1),
+      pageSize: Number(queryParams.limit || 10),
+      searchTerm: String(queryParams.searchTerm || ''),
+      tabIndex,
+      currentUserId: user?.id,
+      misPedidosStatus,
+    });
 
   const ownOrdersData = useMemo(() => {
     if (!isOwnOrdersTab) return data;
@@ -215,13 +230,39 @@ const Pedidos: React.FC = () => {
   const ownOrdersTotalItems = isOwnOrdersTab
     ? ownOrdersData.length
     : totalItems;
-  const ownOrdersTotalPages = totalPages;
   const visibleTotalItems = isBatchTab
     ? batches.length
     : isOwnOrdersTab
       ? ownOrdersTotalItems
       : totalItems;
   const isItemToEditEditable = isEditablePedidoForm(itemToEdit);
+
+  useEffect(() => {
+    if (isBatchTab) {
+      syncPaginationFromResponse({
+        data: batches,
+        total: batches.length,
+        page: 1,
+        limit: batches.length || 1,
+      });
+      return;
+    }
+
+    syncPaginationFromResponse({
+      data,
+      total: totalItems,
+      page: Number(queryParams.page) || 1,
+      limit: Number(queryParams.limit) || 10,
+    });
+  }, [
+    batches,
+    data,
+    isBatchTab,
+    queryParams.limit,
+    queryParams.page,
+    syncPaginationFromResponse,
+    totalItems,
+  ]);
 
   const handleExportExcel = useCallback(async () => {
     const query = new URLSearchParams();
@@ -504,6 +545,7 @@ const Pedidos: React.FC = () => {
           targetType: detail.entityType,
           proveedorNombre:
             providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
+          proveedorCount: providerNames.length,
           fechaPedido: detail.data.createdAt,
           numeroGlobal:
             detail.data.numeroLote || detail.data.numeroGlobal || undefined,
@@ -515,6 +557,7 @@ const Pedidos: React.FC = () => {
         targetType: detail.entityType,
         proveedorNombre:
           providerNames.length > 0 ? providerNames.join(', ') : 'Pedido',
+        proveedorCount: providerNames.length,
         fechaPedido: detail.data.fechaPedido,
         numeroGlobal: detail.data.numeroGlobal,
       };
@@ -522,15 +565,49 @@ const Pedidos: React.FC = () => {
     []
   );
 
-  const handleConsolidateWeek = useCallback(
+  const handleConsolidateWeekRequest = useCallback(
     async (pedidoUsuarioIds: string[], weekLabel: string) => {
-      await consolidatePedidosByIds(
-        pedidoUsuarioIds,
-        `Lote semanal generado desde ${weekLabel}`
-      );
+      const pendingCount = data.filter(
+        (p) =>
+          pedidoUsuarioIds.includes(p.id) &&
+          String(p.estado) === EstadoPedidoUsuario.PENDIENTE
+      ).length;
+
+      if (pendingCount > 0) {
+        setItemToConsolidate({
+          pedidoUsuarioIds,
+          weekLabel,
+          pendingCount,
+          confirmStep: 1,
+        });
+      } else {
+        await consolidatePedidosByIds(
+          pedidoUsuarioIds,
+          `Lote semanal generado desde ${weekLabel}`
+        );
+      }
     },
-    [consolidatePedidosByIds]
+    [consolidatePedidosByIds, data]
   );
+
+  const handleConsolidateConfirm = useCallback(async () => {
+    if (!itemToConsolidate) return;
+    if (
+      itemToConsolidate.pendingCount > 0 &&
+      itemToConsolidate.confirmStep === 1
+    ) {
+      setItemToConsolidate((prev) =>
+        prev ? { ...prev, confirmStep: 2 } : null
+      );
+      return;
+    }
+    await consolidatePedidosByIds(
+      itemToConsolidate.pedidoUsuarioIds,
+      `Lote semanal generado desde ${itemToConsolidate.weekLabel}`,
+      { autoApprovePending: itemToConsolidate.pendingCount > 0 }
+    );
+    setItemToConsolidate(null);
+  }, [consolidatePedidosByIds, itemToConsolidate]);
 
   const handlers = useMemo(
     () => ({
@@ -559,6 +636,7 @@ const Pedidos: React.FC = () => {
           id: pedido.id,
           targetType: 'pedido_usuario',
           proveedorNombre: pedido.proveedor?.nombre,
+          proveedorCount: pedido.proveedor ? 1 : 0,
           fechaPedido: pedido.fechaPedido,
           numeroGlobal: pedido.numeroGlobal,
         });
@@ -572,6 +650,7 @@ const Pedidos: React.FC = () => {
           id: pedido.id,
           targetType: 'pedido_usuario',
           proveedorNombre: pedido.proveedor?.nombre,
+          proveedorCount: pedido.proveedor ? 1 : 0,
           fechaPedido: pedido.fechaPedido,
         });
       },
@@ -598,8 +677,7 @@ const Pedidos: React.FC = () => {
         searchTerm={searchTerm}
         viewMode={viewMode}
         onSearchChange={(value) => {
-          setSearchTerm(value);
-          setPage(1);
+          onSearchChange(value);
         }}
         onViewModeChange={setViewMode}
         onCreateClick={handleCreateClick}
@@ -648,7 +726,7 @@ const Pedidos: React.FC = () => {
             value={tabIndex}
             onChange={(_, newValue: PedidosTabValue) => {
               setTabIndex(newValue);
-              setPage(1);
+              onPageChange(null, 1);
             }}
             variant="fullWidth"
             textColor="primary"
@@ -679,7 +757,7 @@ const Pedidos: React.FC = () => {
             />
           )}
 
-          {error && (
+          {!isLoading && error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
@@ -718,7 +796,7 @@ const Pedidos: React.FC = () => {
               value={misPedidosStatus}
               onChange={(value) => {
                 setMisPedidosStatus(value);
-                setPage(1);
+                onPageChange(null, 1);
               }}
             />
           )}
@@ -743,23 +821,20 @@ const Pedidos: React.FC = () => {
               handlers={handlers}
               totalItems={totalItems}
               isConsolidating={isConsolidatingBatch}
-              onConsolidateWeek={handleConsolidateWeek}
+              onConsolidateWeek={handleConsolidateWeekRequest}
             />
           ) : (
             <PedidosTable
               data={ownOrdersData}
               isLoading={isLoading}
-              page={isOwnOrdersTab ? 1 : page}
-              pageSize={pageSize}
-              totalPages={ownOrdersTotalPages}
               viewMode={viewMode}
               permissions={permissions}
               handlers={handlers}
-              onPageChange={setPage}
-              onPageSizeChange={(nextPageSize: number) => {
-                setPageSize(nextPageSize);
-                setPage(1);
-              }}
+              onSort={onSort}
+              sortConfig={sortConfig}
+              filters={tableFilters}
+              onFilter={onFilter as (columnId: string, value: unknown) => void}
+              pagination={paginationProps}
               onCreateClick={handleCreateClick}
             />
           )}
@@ -804,7 +879,7 @@ const Pedidos: React.FC = () => {
                         ? `#${itemToAceptar.numeroGlobal} `
                         : '',
                       id: formatPedidoId(itemToAceptar?.id),
-                      proveedor: itemToAceptar?.proveedorNombre,
+                      count: itemToAceptar?.proveedorCount ?? 1,
                     })}
                   </>
                 )}
@@ -814,6 +889,38 @@ const Pedidos: React.FC = () => {
             cancelText={t('comun.cancelar')}
             isLoading={isAceptando}
             confirmColor="success"
+          />
+
+          <ConfirmDialog
+            isOpen={!!itemToConsolidate}
+            onClose={() => !isConsolidatingBatch && setItemToConsolidate(null)}
+            onConfirm={() => void handleConsolidateConfirm()}
+            title={
+              itemToConsolidate?.confirmStep === 2
+                ? t('pedidos.confirm.consolidarPaso2Titulo')
+                : t('pedidos.confirm.consolidarPaso1Titulo')
+            }
+            message={
+              itemToConsolidate?.confirmStep === 2
+                ? itemToConsolidate.pendingCount === 1
+                  ? t('pedidos.confirm.consolidarPaso2MensajeUnico')
+                  : t('pedidos.confirm.consolidarPaso2MensajeMultiple', {
+                      count: itemToConsolidate.pendingCount,
+                    })
+                : itemToConsolidate?.pendingCount === 1
+                  ? t('pedidos.confirm.consolidarPaso1MensajeUnico')
+                  : t('pedidos.confirm.consolidarPaso1MensajeMultiple', {
+                      count: itemToConsolidate?.pendingCount ?? 0,
+                    })
+            }
+            confirmText={
+              itemToConsolidate?.confirmStep === 2
+                ? t('pedidos.confirm.consolidarPaso2Confirmar')
+                : t('pedidos.confirm.consolidarPaso1Continuar')
+            }
+            cancelText={t('comun.cancelar')}
+            isLoading={isConsolidatingBatch}
+            confirmColor="primary"
           />
 
           <DynamicFormModal

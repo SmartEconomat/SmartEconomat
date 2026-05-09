@@ -7,6 +7,11 @@ import { I18nService } from 'nestjs-i18n';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Jimp, JimpMime } from 'jimp';
+import {
+  normalizeI18nLang,
+  safeTranslate,
+  translateEnumValue,
+} from '../../../common/helpers/i18n-translation-resolver.helper';
 
 const MARGIN = 28;
 const FONT_TITLE = 20;
@@ -32,6 +37,7 @@ const COLORS = {
   ERROR: '#e74c3c',
 };
 
+/** Contrato de tipos público (CompleteRecetaData). Contexto: smart-economat-backend (Nest). */
 export interface CompleteRecetaData {
   receta: {
     nombre?: string;
@@ -64,6 +70,7 @@ export interface CompleteRecetaData {
   printDate: string;
 }
 
+/** Contrato de tipos público (RecetaPdfOptions). Contexto: smart-economat-backend (Nest). */
 export interface RecetaPdfOptions {
   includeImage?: boolean;
 }
@@ -91,28 +98,43 @@ const ALERGENOS_FILES: Record<string, { filename: string; label: string }> = {
 const ALERGENOS_ASSETS_DIR = path.join(process.cwd(), 'src/assets/alergenos');
 
 /**
- * Documentación en español.
+ * Servicio de dominio para receta pdf.
  */
 @Injectable()
 export class RecetaPdfService {
   private static webpDecoderInitPromise?: Promise<void>;
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RecetaService} recetaService - Entrada efectiva esperada por el contrato.
+   * @undefined {ConfigService<Record<string | symbol, unknown>, false>} configService - Entrada efectiva esperada por el contrato.
+   * @undefined {I18nService<Record<string, unknown>>} i18n - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly recetaService: RecetaService,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService
   ) {}
 
+  /**
+   * Genera artefactos sintéticos a partir del estado conocido.
+   * @undefined {string[]} ids - Entrada efectiva esperada por el contrato.
+   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {RecetaPdfOptions} options - Entrada efectiva esperada por el contrato.
+   * @undefined {string} lang - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+   */
   async generatePdf(
     ids: string[],
     res: Response,
     options: RecetaPdfOptions = {},
     lang: string = 'es'
   ): Promise<void> {
+    const normalizedLang = normalizeI18nLang(lang);
     try {
       const recipesData: CompleteRecetaData[] = [];
       for (const id of ids) {
-        recipesData.push(await this.getCompleteRecetaData(id, lang));
+        recipesData.push(await this.getCompleteRecetaData(id, normalizedLang));
       }
 
       if (recipesData.length === 0) return;
@@ -134,7 +156,7 @@ export class RecetaPdfService {
 
       for (let i = 0; i < recipesData.length; i++) {
         doc.addPage();
-        await this.renderRecipe(doc, recipesData[i], options, lang);
+        await this.renderRecipe(doc, recipesData[i], options, normalizedLang);
       }
 
       doc.end();
@@ -170,6 +192,8 @@ export class RecetaPdfService {
     lang: string = 'es'
   ): Promise<void> {
     const { receta, alergenosConsolidados, escandallo } = data;
+    const tPdf = (key: string, fallback?: string): string =>
+      safeTranslate(this.i18n, key, lang, fallback);
 
     const includeImage = options.includeImage !== false;
     const hasImage =
@@ -213,7 +237,7 @@ export class RecetaPdfService {
       .font('Helvetica-Bold')
       .fontSize(8)
       .text(
-        this.i18n.t('pdf.receta.ficha_tecnica', { lang }),
+        tPdf('pdf.receta.ficha_tecnica', 'Ficha tecnica de receta'),
         headerTextX,
         cursorY,
         {
@@ -238,10 +262,10 @@ export class RecetaPdfService {
 
     const subtitleParts = [
       receta.dificultad
-        ? `${this.i18n.t('pdf.receta.dificultad', { lang })}: ${receta.dificultad}`
+        ? `${tPdf('pdf.receta.dificultad', 'Dificultad')}: ${translateEnumValue(this.i18n, 'recetaDificultad', receta.dificultad, lang)}`
         : null,
       receta.ingredientes?.length
-        ? `${receta.ingredientes.length} ${this.i18n.t('pdf.receta.ingredientes', { lang })}`
+        ? `${receta.ingredientes.length} ${tPdf('pdf.receta.ingredientes', 'ingredientes')}`
         : null,
     ].filter(Boolean);
 
@@ -326,7 +350,7 @@ export class RecetaPdfService {
 
     this.drawInfoBox(
       doc,
-      this.i18n.t('pdf.receta.rendimiento', { lang }),
+      tPdf('pdf.receta.rendimiento', 'Rendimiento'),
       `${receta.rendimiento || '—'} ${receta.unidadResultado || ''}`.trim(),
       MARGIN,
       statY,
@@ -334,15 +358,15 @@ export class RecetaPdfService {
     );
     this.drawInfoBox(
       doc,
-      this.i18n.t('pdf.receta.raciones', { lang }),
-      `${receta.raciones || '—'} ${this.i18n.t('pdf.receta.porciones', { lang })}`,
+      tPdf('pdf.receta.raciones', 'Raciones'),
+      `${receta.raciones || '—'} ${tPdf('pdf.receta.porciones', 'porciones')}`,
       MARGIN + statWidth + statGap,
       statY,
       statWidth
     );
     this.drawInfoBox(
       doc,
-      this.i18n.t('pdf.receta.tiempo', { lang }),
+      tPdf('pdf.receta.tiempo', 'Tiempo'),
       receta.tiempoEstimadoMinutos
         ? `${receta.tiempoEstimadoMinutos} min`
         : '—',
@@ -363,7 +387,7 @@ export class RecetaPdfService {
     let currentY = allergensY + 74 + SECTION_GAP;
     currentY = this.drawSectionTitle(
       doc,
-      this.i18n.t('pdf.receta.listado_ingredientes', { lang }),
+      tPdf('pdf.receta.listado_ingredientes', 'Listado de ingredientes'),
       MARGIN,
       currentY,
       contentWidth
@@ -371,32 +395,32 @@ export class RecetaPdfService {
 
     const tableCols = [
       {
-        label: this.i18n.t('pdf.receta.producto', { lang }),
+        label: tPdf('pdf.receta.producto', 'Producto'),
         width: 0.4,
         align: 'left',
       },
       {
-        label: this.i18n.t('pdf.receta.cant', { lang }),
+        label: tPdf('pdf.receta.cant', 'Cant.'),
         width: 0.12,
         align: 'right',
       },
       {
-        label: this.i18n.t('pdf.receta.ud', { lang }),
+        label: tPdf('pdf.receta.ud', 'Ud'),
         width: 0.1,
         align: 'center',
       },
       {
-        label: this.i18n.t('pdf.receta.merma', { lang }),
+        label: tPdf('pdf.receta.merma', 'Merma'),
         width: 0.1,
         align: 'right',
       },
       {
-        label: this.i18n.t('pdf.receta.b_real', { lang }),
+        label: tPdf('pdf.receta.b_real', 'B. Real'),
         width: 0.13,
         align: 'right',
       },
       {
-        label: this.i18n.t('pdf.receta.alerg', { lang }),
+        label: tPdf('pdf.receta.alerg', 'Alerg.'),
         width: 0.15,
         align: 'right',
       },
@@ -429,7 +453,9 @@ export class RecetaPdfService {
       const productText = ing.producto?.nombre || '—';
       const alersText =
         (ing.producto?.alergenos || [])
-          .map((pa) => (pa.alergeno || '').replace(/_/g, ' '))
+          .map((pa) =>
+            translateEnumValue(this.i18n, 'alergeno', pa.alergeno, lang)
+          )
           .join(', ') || '—';
 
       const h1 = doc.heightOfString(productText, {
@@ -444,11 +470,11 @@ export class RecetaPdfService {
         doc.addPage();
         currentY = this.drawSectionTitle(
           doc,
-          this.i18n.t('pdf.receta.listado_ingredientes', { lang }),
+          tPdf('pdf.receta.listado_ingredientes', 'Listado de ingredientes'),
           MARGIN,
           MARGIN,
           contentWidth,
-          this.i18n.t('pdf.receta.continuacion', { lang })
+          tPdf('pdf.receta.continuacion', 'Continuacion')
         );
         currentY = this.drawTableHeader(
           doc,
@@ -527,7 +553,7 @@ export class RecetaPdfService {
 
     currentY = this.drawSectionTitle(
       doc,
-      this.i18n.t('pdf.receta.elaboracion', { lang }),
+      tPdf('pdf.receta.elaboracion', 'Elaboracion paso a paso'),
       MARGIN,
       currentY,
       contentWidth
@@ -558,11 +584,11 @@ export class RecetaPdfService {
           doc.addPage();
           currentY = this.drawSectionTitle(
             doc,
-            this.i18n.t('pdf.receta.elaboracion', { lang }),
+            tPdf('pdf.receta.elaboracion', 'Elaboracion paso a paso'),
             MARGIN,
             MARGIN,
             contentWidth,
-            this.i18n.t('pdf.receta.continuacion', { lang })
+            tPdf('pdf.receta.continuacion', 'Continuacion')
           );
           currentY -= 1;
         }
@@ -596,7 +622,10 @@ export class RecetaPdfService {
         .fontSize(FONT_BODY + 0.4)
         .fillColor(COLORS.GRAY)
         .text(
-          this.i18n.t('pdf.receta.sin_instrucciones', { lang }),
+          tPdf(
+            'pdf.receta.sin_instrucciones',
+            'No hay instrucciones detalladas para esta receta.'
+          ),
           MARGIN,
           currentY + 2,
           {
@@ -625,7 +654,7 @@ export class RecetaPdfService {
       .fillColor(COLORS.GRAY)
       .font('Helvetica')
       .text(
-        `${this.i18n.t('pdf.receta.footer', { lang })} ${data.printDate}`,
+        `${tPdf('pdf.receta.footer', 'SmartEconomat Kitchen Suite · Impreso')} ${data.printDate}`,
         MARGIN,
         footY + 5,
         {
@@ -660,9 +689,10 @@ export class RecetaPdfService {
       const decodedImage = await decodeWebp(imageBuffer);
       const image = await Jimp.read(Buffer.from(decodedImage.data));
 
-      const buffer = (await (image as any).getBufferAsync(
-        JimpMime.png
-      )) as Buffer;
+      const jimpPngCompatible = image as unknown as {
+        getBufferAsync(mime: string): Promise<Buffer>;
+      };
+      const buffer = await jimpPngCompatible.getBufferAsync(JimpMime.png);
       return buffer;
     } catch {
       return null;
@@ -745,8 +775,16 @@ export class RecetaPdfService {
   }
 
   private async loadEsmModule<T>(specifier: string): Promise<T> {
-    const module = await import(specifier);
-    return module.default || module;
+    const imported: unknown = await import(specifier);
+
+    const asNs = imported as { default?: T };
+    const resolved = (
+      typeof asNs.default !== 'undefined' && asNs.default !== null
+        ? asNs.default
+        : imported
+    ) as T;
+
+    return resolved;
   }
 
   private drawPanel(

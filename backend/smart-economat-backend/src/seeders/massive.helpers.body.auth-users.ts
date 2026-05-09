@@ -17,6 +17,11 @@ function parseAdminRoleTargetUserId(resolvedPath: string): string {
   return match?.[1] || '';
 }
 
+/**
+ * Expone "buildAdminUserRoleBody" en smart-economat-backend (Nest).
+ * @undefined {BuildBodyEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown>} Datos efectivos después de ejecutar la operación.
+ */
 export function buildAdminUserRoleBody(
   env: BuildBodyEnv
 ): Record<string, unknown> {
@@ -75,6 +80,11 @@ export function buildAdminUserRoleBody(
   };
 }
 
+/**
+ * Expone "buildBodyAuthUsers" en smart-economat-backend (Nest).
+ * @undefined {BuildBodyEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {Record<string, unknown> | undefined} Datos efectivos después de ejecutar la operación.
+ */
 export function buildBodyAuthUsers(
   env: BuildBodyEnv
 ): Record<string, unknown> | undefined {
@@ -415,6 +425,28 @@ export function buildBodyAuthUsers(
         iteration,
         'perfil-nombre'
       ),
+    };
+  }
+
+  /**
+   * Debe preceder al branch genérico `startsWith('/usuarios')`: sin esto el seed
+   * enviaría username/email y class-validator respondería 400 (ubicacionesIds).
+   */
+  if (resolvedPath === '/usuarios/perfil/mis-ubicaciones') {
+    const allIds = Array.from(
+      new Set(getStateArray(context, 'ubicacionIds').filter(Boolean))
+    );
+    const pool = allIds.length > 0 ? allIds : [pickRequired('ubicacionIds', 0)];
+    const size = Math.max(
+      1,
+      Math.min(pool.length, 1 + (iteration % Math.max(pool.length, 1)))
+    );
+    const selected = pool.slice(0, size);
+    const idx = iteration % Math.max(selected.length, 1);
+    const ubicacionPredeterminadaId = selected[idx] ?? selected[0];
+    return {
+      ubicacionesIds: selected,
+      ubicacionPredeterminadaId,
     };
   }
 

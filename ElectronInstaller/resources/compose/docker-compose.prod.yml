@@ -103,7 +103,7 @@ services:
       - DOMAIN=${DOMAIN:-smarteconomat.app}
       - DB_SYNC=${DB_SYNC:-false}
       - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-false}
-      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-}
+      - SEED_DEFAULT_ADMIN_TEMP_PASSWORD=${SEED_DEFAULT_ADMIN_TEMP_PASSWORD:-SmartEconomat2026!}
     depends_on:
       db:
         condition: service_healthy

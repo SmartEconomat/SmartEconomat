@@ -1,5 +1,6 @@
 import { IsNumber, IsObject } from 'class-validator';
 
+/** Clase pública (DashboardStatsDto). Paquete: smart-economat-backend (Nest). */
 export class DashboardStatsDto {
   @IsNumber()
   totalProductos: number;

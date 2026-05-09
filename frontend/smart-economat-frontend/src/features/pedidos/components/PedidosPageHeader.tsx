@@ -22,7 +22,7 @@ interface PedidosPageHeaderProps {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const PedidosPageHeader: React.FC<PedidosPageHeaderProps> = ({
   canCreate,

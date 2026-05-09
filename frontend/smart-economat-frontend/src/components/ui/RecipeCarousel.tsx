@@ -6,41 +6,41 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface CarouselItem {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   id: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   title: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   description: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   image: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   time: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   difficulty: string;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   category: string;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const ITEMS: CarouselItem[] = [
   {
@@ -76,7 +76,7 @@ const ITEMS: CarouselItem[] = [
 ];
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const RecipeCarousel: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -90,9 +90,11 @@ const RecipeCarousel: React.FC = () => {
   };
 
   useEffect(() => {
-    const timer = setInterval(nextSlide, 5000);
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev === ITEMS.length - 1 ? 0 : prev + 1));
+    }, 5000);
     return () => clearInterval(timer);
-  }, [activeIndex]);
+  }, []);
 
   return (
     <Box

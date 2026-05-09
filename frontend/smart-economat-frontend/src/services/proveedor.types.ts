@@ -1,59 +1,33 @@
-/**
- * Documentación en español.
- */
+/** Relación producto-proveedor resumida dentro del contexto de un proveedor. */
 export interface ProductoDelProveedor {
-  /**
-   * Documentación en español.
-   */
+  /** UUID de la relación producto-proveedor. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Marca específica de este proveedor para el producto. */
   marca?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Código de barras del proveedor para este producto. */
   codigoBarras?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Precio unitario acordado. */
   precioUnitario: number;
 }
 
-/**
- * Documentación en español.
- */
+/** Proveedor de mercancía registrado en el sistema. */
 export interface Proveedor {
-  /**
-   * Documentación en español.
-   */
+  /** UUID del proveedor. */
   id: string;
-  /**
-   * Documentación en español.
-   */
+  /** Nombre fiscal o comercial del proveedor. */
   nombre: string;
-  /**
-   * Documentación en español.
-   */
+  /** Persona de contacto. */
   contacto?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Teléfono de contacto. */
   telefono?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Correo electrónico de contacto. */
   email?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Dirección postal. */
   direccion?: string;
-  /**
-   * Documentación en español.
-   */
+  /** NIF/CIF del proveedor. */
   nif?: string;
-  /**
-   * Documentación en español.
-   */
+  /** Productos catalogados de este proveedor. */
   productos?: ProductoDelProveedor[];
+  deletedAt?: string | null;
+  deletedBy?: string | null;
 }

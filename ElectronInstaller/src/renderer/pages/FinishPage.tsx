@@ -8,6 +8,15 @@ interface FinishPageProps {
   onRestart: () => void;
 }
 
+/**
+ * Expone la operación "FinishPage" del instalador SmartEconomat.
+ * @returns {FinishPageProps} {
+ *   snapshot,
+ *   onOpenPanel,
+ *   onRestart,
+ * } - Entrada esperada por la función.
+ * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
+ */
 export function FinishPage({
   snapshot,
   onOpenPanel,

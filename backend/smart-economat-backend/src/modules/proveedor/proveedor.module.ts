@@ -5,6 +5,7 @@ import { ProveedorRepository } from './repository/proveedor.repository';
 import { ProveedorController } from './controller/proveedor.controller';
 import { ProveedorService } from './service/proveedor.service';
 
+/** Clase pública (ProveedorModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [TypeOrmModule.forFeature([Proveedor])],
   controllers: [ProveedorController],

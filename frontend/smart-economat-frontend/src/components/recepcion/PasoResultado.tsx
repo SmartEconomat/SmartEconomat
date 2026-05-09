@@ -18,51 +18,59 @@ import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 
 /**
- * Documentación en español.
+ * Propiedades para el componente PasoResultado.
  */
 interface PasoResultadoProps {
   /**
-   * Documentación en español.
+  /**
+   * Objeto con los resultados de la recepción procesada, incluyendo IDs de movimientos e inventarios.
    */
   resultado: RecepcionResultado | null;
   /**
-   * Documentación en español.
+  /**
+   * Función para reiniciar el asistente de recepción y volver al primer paso.
    */
   onResetWizard: () => void;
 }
 
 /**
- * Documentación en español.
+ * Propiedades para las tarjetas de estadísticas del resultado.
  */
 interface StatCardProps {
   /**
-   * Documentación en español.
+  /**
+   * Título descriptivo de la estadística.
    */
   title: string;
   /**
-   * Documentación en español.
+  /**
+   * Valor numérico o texto a mostrar prominentemente.
    */
   value: number | string;
   /**
-   * Documentación en español.
+  /**
+   * Texto secundario opcional para dar contexto (ej: "disponibles").
    */
   subtitle?: string;
   /**
-   * Documentación en español.
+  /**
+   * Icono representativo de la categoría.
    */
   icon: React.ReactNode;
   /**
-   * Documentación en español.
+  /**
+   * Color temático para el icono y efectos de hover.
    */
   color: string;
   /**
-   * Documentación en español.
+  /**
+   * Callback ejecutado al hacer clic en la tarjeta, generalmente para abrir un detalle.
    */
   onClick: () => void;
 }
 
 /**
- * Documentación en español.
+ * Componente interno para mostrar una métrica individual del resultado de recepción.
  */
 const StatCard = ({
   title,
@@ -130,7 +138,8 @@ const StatCard = ({
 );
 
 /**
- * Documentación en español.
+ * Componente final del wizard de recepción que muestra un resumen de las acciones realizadas,
+ * estadísticas de stock generado y permite descargar el reporte en PDF.
  */
 const PasoResultado: React.FC<PasoResultadoProps> = ({
   resultado,
@@ -144,7 +153,8 @@ const PasoResultado: React.FC<PasoResultadoProps> = ({
   const [downloading, setDownloading] = React.useState(false);
 
   /**
-   * Documentación en español.
+  /**
+   * Gestiona la descarga del comprobante de recepción en formato PDF.
    */
   const handleDownloadPdf = async () => {
     if (!resultado?.id) return;

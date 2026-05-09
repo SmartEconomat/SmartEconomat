@@ -23,6 +23,7 @@ const buildAuthContext = (
   login: vi.fn(),
   logout: vi.fn(),
   refreshUser: vi.fn(),
+  updateUser: vi.fn(),
   changeLanguage: vi.fn(),
   ...overrides,
 });

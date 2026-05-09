@@ -11,8 +11,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
-import { EstadoReclamacion } from '../incidencia-linea.entity/incidencia-linea.entity';
+import { EstadoReclamacion } from '../enums/incidencia.enums';
 
+/** Catálogo de valores enumerados (EstadoFinalIncidenciaDto) dentro de smart-economat-backend (Nest). */
 export enum EstadoFinalIncidenciaDto {
   RESUELTA = 'resuelta',
   CANCELADA = 'cancelada',
@@ -52,6 +53,7 @@ function toOptionalBoolean(value: unknown): unknown {
   return value;
 }
 
+/** Clase pública (ResolverIncidenciaLineaDto). Paquete: smart-economat-backend (Nest). */
 export class ResolverIncidenciaLineaDto {
   @IsOptional()
   @IsUUID('all', {
@@ -86,7 +88,7 @@ export class ResolverIncidenciaLineaDto {
       message: i18nValidationMessage('validation.MUST_BE_NUMBER'),
     }
   )
-  ajusteCantidad?: number;
+  cantidadAjustada?: number;
 
   @IsOptional()
   @IsEnum(EstadoReclamacion, {
@@ -100,6 +102,7 @@ export class ResolverIncidenciaLineaDto {
   observaciones?: string;
 }
 
+/** Clase pública (ResolverIncidenciaDto). Paquete: smart-economat-backend (Nest). */
 export class ResolverIncidenciaDto {
   @IsOptional()
   @IsUUID('all', {

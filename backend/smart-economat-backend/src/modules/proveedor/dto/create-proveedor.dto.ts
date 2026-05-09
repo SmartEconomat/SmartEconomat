@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
+/** Clase pública (CreateProveedorDto). Paquete: smart-economat-backend (Nest). */
 export class CreateProveedorDto {
   @Transform((params) => TrimStringTransformer.transform(params))
   @IsString()

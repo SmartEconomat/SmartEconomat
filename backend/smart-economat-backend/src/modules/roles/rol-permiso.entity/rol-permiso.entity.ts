@@ -10,6 +10,7 @@ import {
 import { Rol } from '../rol.entity/rol.entity';
 import { Permiso } from '../../permisos/permiso.entity/permiso.entity';
 
+/** Clase pública (RolPermiso). Paquete: smart-economat-backend (Nest). */
 @Entity({ name: 'rol_permiso' })
 @Index('idx_rol_permiso_rol', ['rolId'])
 @Index('idx_rol_permiso_permiso', ['permisoId'])
@@ -21,26 +22,26 @@ export class RolPermiso {
   permisoId!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @CreateDateColumn({ type: 'timestamptz', name: 'asignado_en' })
   asignadoEn!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'uuid', nullable: true, name: 'asignado_por' })
   asignadoPor?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Rol, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'rol_id' })
   rol!: Rol;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Permiso, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'permiso_id' })

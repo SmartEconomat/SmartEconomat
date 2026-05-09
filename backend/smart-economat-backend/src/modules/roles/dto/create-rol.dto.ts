@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (CreateRolDto). Paquete: smart-economat-backend (Nest). */
 export class CreateRolDto {
   @ApiProperty({
     description: 'docs.NOMBRE_NICO_DEL_ROL',

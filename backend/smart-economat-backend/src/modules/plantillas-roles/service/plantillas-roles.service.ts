@@ -19,12 +19,12 @@ import {
 } from '../../../common/constants/system-role-template.constants';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para plantillas roles.
  */
 @Injectable()
 export class PlantillasRolesService {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(PlantillaRol)
@@ -37,7 +37,10 @@ export class PlantillasRolesService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreatePlantillaDto): Promise<PlantillaRol> {
     const nombre = dto.nombre.trim();
@@ -65,7 +68,12 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {Promise<PlantillaRol[]>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(): Promise<PlantillaRol[]> {
     return this.plantillaRepo.find({
@@ -75,7 +83,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<PlantillaRol> {
     const plantilla = await this.plantillaRepo.findOne({
@@ -93,7 +104,11 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, dto: UpdatePlantillaDto): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
@@ -146,7 +161,13 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string[]} permisoIds - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PlantillaRol>} Datos efectivos después de ejecutar la operación.
    */
   async updatePermisos(
     id: string,
@@ -168,7 +189,11 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de duplicate template dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param nombre Parámetro de entrada para la operación. Opcional.
+   * @returns Valor resultante de la operación.
    */
   async duplicateTemplate(id: string, nombre?: string): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
@@ -194,7 +219,11 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de set template activo dentro del flujo de la aplicación.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param activo Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async setTemplateActivo(id: string, activo: boolean): Promise<PlantillaRol> {
     const plantilla = await this.findOne(id);
@@ -211,19 +240,19 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static readonly PROTECTED_TEMPLATE_NAMES =
     SYSTEM_ROLE_TEMPLATE_PROTECTED_NAMES;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static readonly IMMUTABLE_PERMISSION_TEMPLATE_NAMES =
     SYSTEM_ROLE_TEMPLATE_PERMISSION_LOCKED_NAMES;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private assertTemplatePermissionMutationAllowed(
     plantilla: PlantillaRol
@@ -240,7 +269,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const plantilla = await this.findOne(id);
@@ -277,7 +309,14 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {string} plantillaId - Entrada efectiva esperada por el contrato.
+   * @undefined {string} nombreRol - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} descripcionRol - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Rol>} Datos efectivos después de ejecutar la operación.
    */
   async createRolFromPlantilla(
     plantillaId: string,
@@ -310,7 +349,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene permisos efectivos.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async getPermisosEfectivos(id: string): Promise<{
     permisosDirectos: Permiso[];
@@ -343,7 +385,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async getPermisosWithInheritance(
     plantillaId: string,
@@ -372,7 +414,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Resuelve permisos a partir del contexto disponible.
+   *
+   * @param permisoIds Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async resolvePermisos(permisoIds: string[]): Promise<Permiso[]> {
     if (permisoIds.length === 0) {
@@ -394,7 +439,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async assertNombreDisponible(
     nombre: string,
@@ -413,7 +458,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async assertParentChain(
     currentTemplateId: string | undefined,
@@ -455,7 +500,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async collectTemplateAndDescendantsIds(
     rootTemplateId: string
@@ -485,7 +530,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de sync roles for template ids dentro del flujo de la aplicación.
+   *
+   * @param templateIds Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async syncRolesForTemplateIds(templateIds: string[]): Promise<void> {
     let updatedRolesCount = 0;
@@ -500,7 +548,7 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async syncLinkedRolesFromTemplate(
     templateId: string
@@ -531,7 +579,10 @@ export class PlantillasRolesService {
   }
 
   /**
-   * Documentación en español.
+   * Construye duplicate name a partir de los parámetros recibidos.
+   *
+   * @param baseName Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private async buildDuplicateName(baseName: string): Promise<string> {
     let sequence = 1;

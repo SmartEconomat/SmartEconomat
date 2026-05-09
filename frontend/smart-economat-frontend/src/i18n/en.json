@@ -12,6 +12,16 @@
     "INVENTARIO_DELETED_CANNOT_ADJUST": "Cannot adjust a deleted inventory item",
     "INVENTARIO_ADJUSTMENT_WOULD_BE_NEGATIVE": "The adjustment would leave the quantity negative"
   },
+  "dateRange": {
+    "invalidFormat": "Invalid date format",
+    "startAfterEnd": "Start date cannot be after end date",
+    "exceeded": "The maximum allowed range is 1 year ({{maxDays}} days). Please adjust the dates to continue."
+  },
+  "confirmDialog": {
+    "title": "Confirmation",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
   "auth": {
     "login": {
       "title": "Login",
@@ -154,7 +164,14 @@
       "errorConexion": "Connection error with the server.",
       "errorValidarCodigo": "Could not validate the class code.",
       "strongPasswordHint": "Password must be at least 8 characters and include uppercase, lowercase, number and symbol."
-    }
+    },
+    "usernameOrEmail": "Username or Email",
+    "password": "Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "email": "Email",
+    "rememberMe": "Remember Me",
+    "resetPasswordMessage": "Your administrator has reset your password. For security, you must choose a new one before continuing."
   },
   "toast": {
     "success": "Operation completed successfully!",
@@ -177,16 +194,21 @@
       "alertasStock": "Stock Alerts",
       "proveedores": "Suppliers",
       "notificaciones": "Notifications",
-      "productosEsteMes": "+{{count}} added this month",
+      "productosEsteMes_one": "+{{count}} added this month",
+      "productosEsteMes_other": "+{{count}} added this month",
       "sinNuevosProductos": "No new products this month",
-      "pedidosHoy": "{{count}} received today",
+      "pedidosHoy_one": "{{count}} received today",
+      "pedidosHoy_other": "{{count}} received today",
       "sinRecepcionesHoy": "No receptions today",
-      "pedidosConIncidencias": "{{count}} order(s) with incidents",
+      "pedidosConIncidencias_one": "{{count}} order with incidents",
+      "pedidosConIncidencias_other": "{{count}} orders with incidents",
       "sinIncidencias": "No incidents",
-      "itemsBajoMinimo": "{{count}} item(s) below minimum",
+      "itemsBajoMinimo_one": "{{count}} item below minimum",
+      "itemsBajoMinimo_other": "{{count}} items below minimum",
       "stockCorrecto": "Stock correct",
       "catalogoActualizado": "Catalog updated",
-      "accionesPendientes": "{{count}} pending action(s)",
+      "accionesPendientes_one": "{{count}} pending action",
+      "accionesPendientes_other": "{{count}} pending actions",
       "sinNotificaciones": "No notifications"
     },
     "summary": {
@@ -282,17 +304,10 @@
       "navegacionPrincipal": "Main navigation"
     }
   },
-  "receta": {
+  "recipes": {
     "form": {
       "nombre": "Recipe Name",
       "tiempoPreparacion": "Preparation Time",
-      "tiempo": {
-        "10min": "10 min",
-        "20min": "20 min",
-        "30min": "30 min",
-        "45min": "45 min",
-        "60min": "60 min"
-      },
       "dificultad": "Difficulty",
       "dificultadFacil": "Easy",
       "dificultadMedia": "Medium",
@@ -311,32 +326,11 @@
       "confirmarEdicion": "Are you sure you want to save the changes to this recipe?",
       "confirmarCreacion": "Are you sure you want to add this new recipe to the system?"
     },
-    "cocinar": {
-      "configuracionLote": "Batch Configuration",
-      "ubicacionDestino": "Destination location",
-      "fechaCaducidadManual": "Expiration date (manual)"
-    },
-    "ingredientes": {
-      "titulo": "Recipe Ingredients",
-      "anadir": "Add Ingredient",
-      "alergenos": "Allergens in this recipe:",
-      "proveedorFav": "Fav. supplier",
-      "vacio": "No ingredients added to the recipe",
-      "sinProveedor": "No supplier available",
-      "masBarato": "Automatically select the cheapest",
-      "masBaratoLabel": "Cheapest"
-    },
-    "alergenos": {
-      "sinAlergenos": "No allergens have been detected in the ingredients of this recipe.",
-      "contiene": "Contains {{nombre}}",
-      "sin": "{{nombre}} free"
-    }
-  },
-  "recetas": {
     "ingredientes": {
       "titulo": "Recipe Ingredients",
       "anadir": "Add Ingredient",
       "empty": "No ingredients registered.",
+      "vacio": "No ingredients registered.",
       "producto": "Product",
       "cantidad": "Quantity",
       "unidad": "Unit",
@@ -380,36 +374,36 @@
       "pedidoGeneradoDesdeRecetas_other": "Order #{{numero}} generated successfully from {{count}} recipes.",
       "errorPedidoDesdeRecetas": "Error generating the order from recipes."
     },
-    "prepararAhora": "Prepare now",
-    "preparar": "Prepare",
-    "crearPedido": "Create order",
-    "exportarPdf": "Export PDF",
-    "verDetalles": "View details",
-    "gestionTitulo": "Recipes Management",
-    "eliminarReceta": "Delete recipe",
-    "sinGluten": "Gluten Free",
-    "sinLacteos": "Dairy Free",
-    "incluirImagenReceta": "Include recipe image",
-    "buscarMinLetras": "Type at least 2 characters to search for products.",
-    "editarReceta": "Edit recipe",
-    "exportPdf": {
-      "titulo": "Export recipes to PDF",
-      "resumen_one": "You are about to export 1 recipe.",
-      "resumen_other": "You are about to export {{count}} recipes.",
-      "imagenAyuda": "If the image is missing, the PDF will still be generated without it.",
-      "exportando": "Exporting...",
-      "botonExportar": "Export PDF"
+    "errors": {
+      "cargaDesconocida": "Unknown error while loading recipes.",
+      "errorEnReceta": "Error in this recipe",
+      "nombreObligatorio": "Recipe name is required.",
+      "instruccionesObligatorias": "Recipe instructions are required.",
+      "dificultadObligatoria": "Recipe difficulty is required.",
+      "ingredienteObligatorio": "You must add at least one ingredient.",
+      "errorSubirImagen": "There was an error uploading the recipe image.",
+      "unidadInvalida": "Recipe result unit is invalid.",
+      "productoInvalido": "Invalid product in the ingredients list.",
+      "unidadIngredienteInvalida": "Ingredient {{index}} unit is invalid.",
+      "mermaInvalida": "Ingredient {{index}} waste must be a number greater than or equal to 0.",
+      "mayorQueCero": "{{label}} must be greater than 0.",
+      "enteroMayorQueCero": "{{label}} must be an integer greater than or equal to 1.",
+      "tiempoInvalido": "Preparation time must be an integer greater than or equal to 10 minutes."
     },
     "preparacionLote": {
       "tituloMultiples": "Batch production ({{count}} recipes)",
       "tituloUna": "Prepare recipe: {{nombre}}",
-      "subtitulo": "Set quantities and validate stock before starting.",
+      "subtitulo": "Set target quantities (decimals allowed), review the server forecast, and validate stock before starting.",
       "seccionRecetas": "Recipes to process",
       "colReceta": "Recipe",
       "colCantidad": "Quantity",
       "colRaciones": "Servings",
+      "colPorcionesPreparacion": "Target quantity",
+      "colPrevisionServidor": "Forecast (server)",
       "colUnidadAbrev": "Unit",
       "rendimientoBase": "Base yield: {{rendimiento}} {{unidad}}",
+      "racionesReferencia": "Reference servings (recipe): {{n}}",
+      "equivProduccion": "{{cantidad}} {{unidad}} · scale ×{{factor}}",
       "verificacionStock": "Stock check",
       "validandoStock": "Ensuring stock...",
       "insufTitulo": "INSUFFICIENT INGREDIENTS",
@@ -421,26 +415,17 @@
       "iniciarPreparacion": "Start preparation",
       "crearPedidoFaltantes": "Create shortage order"
     },
-    "errors": {
-      "cargaDesconocida": "Unknown error while loading recipes.",
-      "errorEnReceta": "Error in this recipe"
-    },
-    "tiempoMinutos": "{{count}} min",
-    "franjaMinutos": "{{count}} min",
-    "imageAlt": "Image of {{nombre}}",
-    "altImagenDefecto": "Recipe",
-    "listado": {
-      "ingredientesCount_one": "{{count}} ingredient",
-      "ingredientesCount_other": "{{count}} ingredients"
-    },
-    "columns": {
-      "nombre": "Name",
-      "dificultad": "Difficulty",
-      "tiempo": "Time",
-      "ingredientes": "Ingredients"
+    "exportPdf": {
+      "titulo": "Export recipes to PDF",
+      "resumen_one": "You are about to export 1 recipe.",
+      "resumen_other": "You are about to export {{count}} recipes.",
+      "imagenAyuda": "If the image is missing, the PDF will still be generated without it.",
+      "exportando": "Exporting...",
+      "botonExportar": "Export PDF"
     },
     "toolbar": {
       "buscarPlaceholder": "Search by name, instructions, ingredients...",
+      "filtroTiempo": "Time",
       "totalItemsLabel": "recipes",
       "nuevaReceta": "New recipe",
       "prepararConCount": "Prepare ({{count}})",
@@ -448,8 +433,17 @@
       "exportarPdfConCount": "Export PDF ({{count}})",
       "exportarPdf": "Export PDF",
       "exportarExcel": "Export Excel",
+      "exportExcelFilename": "recipes.xlsx",
       "crearPedidoConCount": "Create order ({{count}})",
       "crearPedido": "Create order"
+    },
+    "filters": {
+      "tiempo": {
+        "all": "All times",
+        "rapidas": "Quick (10-29 min)",
+        "medias": "Medium (30-59 min)",
+        "largas": "Long (60+ min)"
+      }
     },
     "empty": {
       "sinCoincidencias": "No recipes match your search",
@@ -458,9 +452,6 @@
       "hintInicial": "Create the first pantry recipe to get started.",
       "anadirReceta": "Add recipe"
     },
-    "rowAria": "Edit recipe {{nombre}}",
-    "confirmEliminarMsj": "Are you sure you want to delete the recipe {{nombre}}? This cannot be undone.",
-    "confirmSiEliminar": "Yes, delete",
     "detalle": {
       "ingredientesCount_one": "{{count}} ingredient",
       "ingredientesCount_other": "{{count}} ingredients",
@@ -482,8 +473,52 @@
       "seccionIngredientes": "Ingredients",
       "alergenosDetectados": "Detected allergens"
     },
+    "columns": {
+      "nombre": "Name",
+      "dificultad": "Difficulty",
+      "tiempo": "Time",
+      "ingredientes": "Ingredients"
+    },
+    "alergenos": {
+      "sinAlergenos": "No allergens have been detected in the ingredients of this recipe.",
+      "contiene": "Contains {{nombre}}",
+      "sin": "{{nombre}} free",
+      "sinGluten": "Gluten Free",
+      "sinLacteos": "Dairy Free"
+    },
+    "cocinar": {
+      "configuracionLote": "Batch Configuration",
+      "ubicacionDestino": "Destination location",
+      "fechaCaducidadManual": "Expiration date (manual)"
+    },
+    "prepararAhora": "Prepare now",
+    "preparar": "Prepare",
+    "crearPedido": "Create order",
+    "exportarPdf": "Export PDF",
+    "verDetalles": "View details",
+    "gestionTitulo": "Recipes Management",
+    "eliminarReceta": "Delete recipe",
+    "incluirImagenReceta": "Include recipe image",
+    "editarReceta": "Edit recipe",
+    "tiempoMinutos": "{{count}} min",
+    "tiempoMinutos60Plus": "{{count}}+ min",
+    "franjaRapida": "Quick (10-29 min)",
+    "franjaMedia": "Medium (30-59 min)",
+    "franjaLarga": "Long (60+ min)",
+    "imageAlt": "Image of {{nombre}}",
+    "altImagenDefecto": "Recipe",
+    "rowAria": "Edit recipe {{nombre}}",
+    "confirmEliminarMsj": "Are you sure you want to delete the recipe {{nombre}}? This cannot be undone.",
+    "confirmSiEliminar": "Yes, delete",
     "observacionesPedidoAutoStock": "Automatic order for missing stock for: {{lista}}",
-    "observacionesPedidoDesdeRecetas": "Order generated from recipes: {{lista}}"
+    "observacionesPedidoDesdeRecetas": "Order generated from recipes: {{lista}}",
+    "ingrediente": "Ingredient",
+    "labels": {
+      "rendimiento": "Yield",
+      "diasCaducidad": "Expiration days",
+      "raciones": "Servings",
+      "tamanioRacion": "Serving size"
+    }
   },
   "usuarios": {
     "columns": {
@@ -501,10 +536,14 @@
       "estadoActivo": "Active status filter: {{estado}}."
     },
     "actions": {
+      "verDetalle": "View detail",
       "activar": "Activate",
       "suspender": "Suspend",
       "refrescar": "Refresh",
       "nuevoUsuario": "New User"
+    },
+    "aria": {
+      "filaUsuario": "View user details {{nombre}}"
     },
     "confirm": {
       "eliminarPregunta": "Are you sure you want to delete",
@@ -717,12 +756,9 @@
     "totalItemsLabel": "incidents",
     "buscar": "Search by supplier or observations...",
     "estados": {
-      "nueva": "New",
-      "enAjuste": "In adjustment",
-      "pendienteValidacion": "Pending validation",
-      "resuelta": "Resolved",
-      "cancelada": "Cancelled",
-      "invalida": "Invalid"
+      "abierta": "Open",
+      "enProceso": "In process",
+      "resuelta": "Resolved"
     },
     "tabs": {
       "abiertas": "Open",
@@ -861,6 +897,7 @@
       "alumnos": "Students",
       "gestionUsuarios": "User Management",
       "plantillasRoles": "Role Templates",
+      "ubicaciones": "Locations",
       "ariaLabel": "admin tabs"
     },
     "actions": {
@@ -1047,7 +1084,13 @@
       "error": "Sync error",
       "errorTooltip": "Error syncing the draft",
       "conflicto": "Conflict",
-      "conflictoTooltip": "Draft changed on another device"
+      "conflictoTooltip": "Draft changed on another device",
+      "saving": "Saving...",
+      "synced": "Synced",
+      "conflict": "Conflict",
+      "savingTooltip": "Syncing draft with server",
+      "syncedTooltip": "Draft safely synced",
+      "conflictTooltip": "Draft changed on another device"
     },
     "recovery": {
       "titulo": "Recover pending reception",
@@ -1080,21 +1123,23 @@
       "sinBasculaDisponible": "No authorised scale is available.",
       "perdidaComunicacion": "Communication with the scale was lost.",
       "noSePudoIniciarLectura": "Could not start reading the scale."
-    }
+    },
+    "draftRecoveryTitle": "Recover pending reception",
+    "draftRecoveryMessage": "You left a reception halfway. Do you want to recover it and continue where you left off?",
+    "draftDiscardTitle": "Discard reception",
+    "draftDiscardMessage": "Are you sure you want to delete the current reception draft? You will lose all unvalidated progress.",
+    "lastUpdate": "Last update:",
+    "unknownTime": "unknown",
+    "yesRecover": "Yes, recover",
+    "noDiscard": "No, discard",
+    "yesDiscard": "Yes, discard"
   },
   "merma": {
     "form": {
       "producto": "Product",
-      "cantidad": "How much was lost? (according to the product unit)",
-      "motivo": "Reason for loss",
-      "motivoOpciones": {
-        "roturaEnvase": "Container breakage",
-        "deterioroCaducidad": "Deterioration / Expiration",
-        "hurto": "Theft / Loss",
-        "errorPreparacion": "Preparation error",
-        "otros": "Other reasons"
-      },
-      "observaciones": "Observations / Notes"
+      "cantidad": "Quantity",
+      "motivo": "Reason for waste",
+      "observaciones": "Additional notes"
     },
     "tabla": {
       "fecha": "Date",
@@ -1104,24 +1149,29 @@
       "registradoPor": "Recorded by",
       "verNotas": "View notes",
       "notas": "Notes",
-      "sinNotas": "No notes"
+      "sinNotas": "No notes",
+      "ariaVerNotas": "View notes for waste of {{producto}}"
+    },
+    "stats": {
+      "totalPerdidas": "Total losses",
+      "totalRegistros": "Total records",
+      "distribucionPorMotivo": "Distribution by reason",
+      "sinDatos": "No waste data for this period"
     },
     "filtros": {
       "motivo": "Reason",
       "todosMotivos": "All reasons",
       "desde": "From",
       "hasta": "To"
-    },
-    "motivos": {
-      "rotura": "Breakage",
-      "deterioro": "Deterioration",
-      "hurto": "Theft",
-      "errorPreparacion": "Preparation error",
-      "otros": "Other"
     }
   },
   "usuario": {
-    "perfilDescripcion": "This is the user profile configuration page."
+    "perfilDescripcion": "This is the user profile configuration page.",
+    "status": {
+      "activo": "Active",
+      "inactivo": "Inactive",
+      "bloqueado": "Blocked"
+    }
   },
   "perfil": {
     "titulo": "User Profile",
@@ -1258,11 +1308,19 @@
     "confirmar": "Confirm",
     "si": "Yes",
     "no": "No",
+    "desde": "From",
+    "hasta": "To",
+    "limiteRango_one": "Max range: {{count}} {{unit}}",
+    "limiteRango_other": "Max range: {{count}} {{unit}}s",
+    "anio": "year",
+    "hoy": "Today",
     "cargando": "Loading...",
     "sinDatos": "No data available.",
     "porPagina": "Per page:",
     "ocultarFiltros": "Hide filters",
     "mostrarFiltros": "Show filters",
+    "total": "Total",
+    "elementos": "units",
     "totalDe": "Total of",
     "escanearCamara": "Scan with camera",
     "escanearCodigo": "Scan barcode",
@@ -1358,7 +1416,9 @@
         "descripcion_other": "There are {{count}} products expiring in the next {{days}} days.",
         "accion": "View inventory"
       }
-    }
+    },
+    "actualizarNotificaciones": "Refresh notifications",
+    "cerrarPanel": "Close notifications panel"
   },
   "configuracion": {
     "titulo": "Settings",
@@ -1395,7 +1455,9 @@
     "ayuda": "Help",
     "verGuiaAyuda": "View help guide for this page",
     "verGuia": "View help guide",
-    "cerrar": "Close"
+    "cerrar": "Close",
+    "omitirTour": "Skip tour",
+    "iniciarTutorial": "Start tutorial"
   },
   "aprendizaje": {
     "activar": "Enable learning mode (Show detailed descriptions)",
@@ -1590,6 +1652,21 @@
       "ariaLabel": "inventory tabs",
       "general": "General inventory"
     },
+    "misUbicacionesConfig": {
+      "titulo": "Your work locations",
+      "descripcion": "Pick one or more campus locations to scope your inventory. Locations can be shared; here you only choose which ones you work with.",
+      "selectorLabel": "Locations linked to your account",
+      "selectorPlaceholder": "Search and select…",
+      "predeterminadaLabel": "Default location",
+      "unaSolaPredeterminada": "The single selected location will be used as the default.",
+      "guardar": "Save locations",
+      "guardando": "Saving…",
+      "exito": "Locations updated.",
+      "error": "Could not save locations.",
+      "errorCargarCatalogo": "Could not load the location catalog.",
+      "sinCatalogo": "There are no locations in the system yet. An administrator must create them (Manage locations from the toolbar or locations admin).",
+      "ayudaAdministracion": "If a location is missing, ask an administrator to create it. If you have permission, use “Manage locations” in the toolbar."
+    },
     "columns": {
       "producto": "Product",
       "tipo": "Type",
@@ -1695,7 +1772,7 @@
       "noStockLocations": "No stock in {{locations}}",
       "noStock": "No stock in inventory",
       "tryOtherTerms": "Try other terms or clear filters.",
-      "contactAdmin": "Contact your teacher or admin to assign you a slot.",
+      "contactAdmin": "Link locations above. If the list is empty, that location must exist in the system first.",
       "registraRecepciones": "Register receptions or create inventory entries to see stock."
     },
     "detalle": {
@@ -1716,18 +1793,73 @@
       "cerrarAuditoria": "Close Audit",
       "registrarMerma": "Record Wastage",
       "confirmarMerma": "This action will permanently deduct stock from inventory. Are you sure?",
+      "errors": {
+        "interpretarAjuste": "Could not interpret the stock adjustment."
+      },
+      "placeholderAjuste": "+2 / -1",
+      "helperAjuste": "Adjustment in packaging units (+/-)",
+      "auditManualReason": "Manual audit adjustment from inventory detail",
+      "auditTitle": "Audit stock (+/− adjustments)",
+      "detailTitle": "Batch details",
+      "auditReadOnlyHint": "Read-only stock per batch. Enter adjustments (+/−) per row and save.",
+      "noBatches": "No inventory batches found for this product.",
+      "auditSummary": "Adjustment summary",
+      "currentStock": "Current stock",
+      "pendingAdjustment": "Pending adjustment",
+      "projectedStock": "Projected stock",
+      "productConstruction": "{{contenido}} {{unidad}} per packaging unit",
+      "errorRequireValue": "Enter an adjustment quantity.",
+      "errorInvalidNumber": "Invalid quantity.",
+      "errorZeroAdjustment": "Adjustment cannot be zero.",
+      "errorNegativeStock": "Resulting stock cannot be negative.",
+      "adjustmentHelperText": "Quantity to add or subtract from this batch",
+      "columns": {
+        "batchId": "Batch",
+        "supplier": "Supplier",
+        "location": "Location",
+        "expiry": "Expiry",
+        "currentStockUnits": "Current stock",
+        "adjustment": "Adjustment",
+        "resultingStock": "Resulting stock",
+        "transfer": "Stock transfer",
+        "action": "Save",
+        "currentQty": "Quantity"
+      },
+      "reportWaste": "Record wastage",
+      "registerWaste": "Record wastage",
+      "closeAudit": "Close",
+      "close": "Close",
+      "wasteWarning": "Wastage will permanently deduct stock. Continue?",
+      "saveAdjustmentAria": "Save stock adjustment for batch",
+      "transfer": {
+        "destino": "Destination",
+        "cantidad": "Quantity to move",
+        "placeholderDestino": "Select destination location…",
+        "sinDestinos": "There is no other destination available.",
+        "runAria": "Run stock transfer",
+        "toast": {
+          "ok": "Stock transfer completed."
+        },
+        "errors": {
+          "sinDestino": "Select a destination.",
+          "mismoNodo": "Source and destination cannot be the same.",
+          "cantidadInvalida": "Enter a valid quantity (greater than zero, not exceeding available stock).",
+          "generico": "Stock transfer failed.",
+          "cargarUbicaciones": "Could not load locations for transfer."
+        }
+      },
       "toast": {
         "ajusteAplicado": "Stock adjustment applied successfully.",
         "errorAjuste": "Error applying stock adjustment.",
         "loteNoExiste": "The selected batch no longer exists. Inventory was reloaded to continue with active batches.",
         "mermaRegistrada": "Wastage recorded successfully",
-        "errorMerma": "Error recording wastage"
-      },
-      "errors": {
-        "interpretarAjuste": "Could not interpret the stock adjustment."
-      },
-      "placeholderAjuste": "+2 / -1",
-      "helperAjuste": "Adjustment in packaging units (+/-)"
+        "errorMerma": "Error recording wastage",
+        "adjustSuccessful": "Adjustment saved successfully.",
+        "errorParseAdjustment": "Could not parse the adjustment value.",
+        "batchNotFound": "Batch not found; inventory refreshed.",
+        "wasteSuccess": "Wastage recorded successfully.",
+        "wasteError": "Error recording wastage."
+      }
     },
     "ubicaciones": {
       "titulo": "Manage Locations",
@@ -1830,6 +1962,7 @@
       "numeroMayorIgualCero": "Must be a number >= 0",
       "maxMenorMin": "Cannot be less than minimum",
       "ubicacion": "Warehouse location",
+      "sinUbicacion": "No location",
       "fechaCaducidad": "Expiration date (optional)"
     }
   },
@@ -2053,6 +2186,9 @@
     "empty": {
       "noPreparaciones": "No preparations recorded",
       "ejecutaReceta": "Run a recipe to see its history here.",
+      "noProducciones": "No productions recorded",
+      "noDisponibles": "No preparations available right now.",
+      "noHistorial": "No consumed preparations yet.",
       "titulo": "No preparations registered",
       "descripcion": "Run a recipe to view its history here."
     },
@@ -2073,6 +2209,9 @@
     },
     "merma": {
       "titulo": "Report production waste",
+      "descripcion": "Record the actual waste of an ingredient used in this preparation without altering historical batch states.",
+      "lote": "Batch: {{id}}",
+      "receta": "Recipe: {{nombre}}",
       "motivo": "Reason",
       "observaciones": "Notes",
       "registrar": "Register waste",
@@ -2082,6 +2221,10 @@
       "helperConUnidad": "Record waste in {{unidad}}. Example: {{ejemplo}} {{unidadCorta}}.",
       "seleccionaIngrediente": "Select ingredient first to see waste unit.",
       "ingrediente": "Ingredient",
+      "cargandoIngredientes": "Loading recipe ingredients...",
+      "sinIngredientes": "No valid ingredients found to report waste for this batch.",
+      "registraEn": "Will be recorded in {{unidad}}.",
+      "ejemplo": "Example: {{valor}}",
       "errorResolverReceta": "Could not resolve batch recipe to load ingredients.",
       "errorCargarIngredientes": "Could not load ingredient details to report waste.",
       "seleccionaLote": "Select a valid production batch.",
@@ -2373,11 +2516,20 @@
       "eliminarConfirm": "Yes, delete",
       "aprobarTitulo": "Approve Order",
       "aprobarCompra": "Are you sure you want to process purchase {{numero}}({{id}})? The purchase will advance to its next operational state.",
-      "aprobarPedido": "Are you sure you want to approve order {{numero}}({{id}}) to supplier {{proveedor}}? It will move to «In Progress» and be considered processed.",
+      "aprobarPedido_one": "Are you sure you want to approve order {{numero}}({{id}})?\nIt will be sent to the supplier and move to status \"In process\".",
+      "aprobarPedido_other": "Are you sure you want to approve order {{numero}}({{id}})?\nIt will be sent to {{count}} suppliers and move to status \"In process\".",
       "aprobarConfirm": "Yes, Approve",
       "guardarCompra": "Are you sure you want to save the changes to this purchase?",
       "guardarPedido": "Are you sure you want to save the changes to this order?",
-      "registrarNuevo": "Are you sure you want to register this new order?"
+      "registrarNuevo": "Are you sure you want to register this new order?",
+      "consolidarPaso1Titulo": "Pending orders in this week",
+      "consolidarPaso1MensajeUnico": "There is 1 order still pending. To consolidate the week, the system will auto-approve it before generating the batch. Press «Continue» for the final confirmation.",
+      "consolidarPaso1MensajeMultiple": "There are {{count}} orders still pending. To consolidate the week, the system will auto-approve them before generating the batch. Press «Continue» for the final confirmation.",
+      "consolidarPaso1Continuar": "Continue",
+      "consolidarPaso2Titulo": "Final confirmation",
+      "consolidarPaso2MensajeUnico": "Do you confirm that you want to auto-approve this pending order and consolidate the week into a purchase batch? This formally accepts those requests.",
+      "consolidarPaso2MensajeMultiple": "Do you confirm that you want to auto-approve these {{count}} pending orders and consolidate the week into a purchase batch? This formally accepts those requests.",
+      "consolidarPaso2Confirmar": "Approve and consolidate"
     },
     "recovery": {
       "titulo": "Recover Pending Order",
@@ -2443,6 +2595,17 @@
     "buscarPlaceholder": "Search by supplier, status, user...",
     "nuevoPedido": "New Order",
     "continuarPedido": "Continue Order",
+    "card": {
+      "orderPrefix": "Order #",
+      "estimatedCost": "Estimated cost"
+    },
+    "draft": {
+      "recover": "Recover",
+      "discard": "Discard",
+      "pending": "You have a pending order draft.",
+      "lastUpdate": "Last update:",
+      "noDate": "No date"
+    },
     "toast": {
       "compraActualizada": "Purchase updated successfully.",
       "pedidoActualizado": "Order updated successfully.",
@@ -2480,6 +2643,23 @@
       "createdAt": "Created:",
       "estimatedInvestment": "Estimated investment"
     },
+    "batchDetail": {
+      "downloadError": "Could not download the PDF.",
+      "printError": "Could not open the PDF print view.",
+      "orderTitle": "Order details",
+      "purchaseTitle": "Purchase details",
+      "orderPrefix": "Order #",
+      "batchPrefix": "Batch #",
+      "downloading": "Downloading...",
+      "downloadPdf": "Download PDF",
+      "preparing": "Preparing print...",
+      "printPdf": "Print PDF",
+      "approvePedido": "Approve order",
+      "cancelPedido": "Cancel order",
+      "editPedido": "Edit order",
+      "editCompra": "Edit purchase",
+      "recepcion": "Receive"
+    },
     "weeklyBoard": {
       "infoMessage": "Weekly view of orders grouped by user.",
       "emptyMessage": "No orders to show for this week.",
@@ -2489,10 +2669,25 @@
       "unknownUser": "Unknown user",
       "selectUserOrders": "Select user orders",
       "selectOrder": "Select order {{id}}",
+      "selectionDisabled": {
+        "alreadyConsolidated": "Cannot consolidate: this order is already weekly consolidated.",
+        "hasRecepciones": "Cannot consolidate: the order has received items.",
+        "cancelled": "Cannot consolidate: the order is cancelled.",
+        "invalidState": "Cannot consolidate: the order is not in a consolidatable state."
+      },
       "usersAndOrders": "{{users}} user(s), {{orders}} order(s)",
       "totalEstimated": "Estimated total: {{amount}}",
       "consolidate": "Consolidate week",
       "ordersCount": "{{count}} order(s)"
+    },
+    "purchasesWeeklyBoard": {
+      "infoMessage": "Weekly view of purchases grouped by creation week.",
+      "emptyMessage": "No purchases to show for this week.",
+      "invalidWeek": "Invalid week",
+      "weekLabel": "Week {{start}} - {{end}}",
+      "batchesCount": "{{count}} batch(es)",
+      "weeklyInvestment": "Weekly investment: {{amount}}",
+      "openDetail": "Open batch detail {{id}}"
     },
     "drawer": {
       "title": "Order details"
@@ -2668,12 +2863,9 @@
       "CANCELADO": "Cancelled"
     },
     "incidenciaEstado": {
-      "NUEVA": "New",
-      "EN_AJUSTE": "In adjustment",
-      "PENDIENTE_VALIDACION": "Pending validation",
-      "RESUELTA": "Resolved",
-      "CANCELADA": "Cancelled",
-      "INVALIDA": "Invalid"
+      "ABIERTA": "Open",
+      "EN_PROCESO": "In process",
+      "RESUELTA": "Resolved"
     },
     "tipoDiferencia": {
       "FALTANTE": "Missing",
@@ -2694,14 +2886,15 @@
       "ENTRADA_COMPRA": "Purchase entry",
       "SALIDA_DISTRIBUCION": "Distribution exit",
       "ENTRADA_DISTRIBUCION": "Distribution entry",
-      "SALIDA_ELABORACION": "Production exit"
+      "SALIDA_ELABORACION": "Production exit",
+      "MERMA": "Waste"
     },
     "mermaMotivo": {
-      "ROTURA": "Breakage",
-      "DETERIORO": "Deterioration",
-      "HURTO": "Theft",
-      "ERROR_PREPARACION": "Preparation error",
-      "OTROS": "Other"
+      "ROTURA": "Container breakage / accident",
+      "DETERIORO": "Deterioration / Expiration",
+      "HURTO": "Theft / Unjustified loss",
+      "ERROR_PREPARACION": "Preparation error / Kitchen",
+      "OTROS": "Other reasons (specify in notes)"
     },
     "rolUsuario": {
       "ADMIN": "Administrator",
@@ -2717,9 +2910,9 @@
       "CANCELADA": "Cancelled"
     },
     "recetaDificultad": {
-      "FÁCIL": "Easy",
+      "FACIL": "Easy",
       "MEDIA": "Medium",
-      "DIFÍCIL": "Hard"
+      "DIFICIL": "Hard"
     },
     "recetaTiempo": {
       "10_MIN": "10 min",
@@ -2736,6 +2929,22 @@
       "PIEZA": "piece",
       "CDA": "tbsp",
       "CDTA": "tsp"
+    },
+    "alergeno": {
+      "GLUTEN": "Gluten",
+      "CRUSTACEOS": "Crustaceans",
+      "HUEVOS": "Eggs",
+      "PESCADO": "Fish",
+      "CACAHUETES": "Peanuts",
+      "SOJA": "Soy",
+      "LACTEOS": "Dairy",
+      "FRUTOS_CON_CASCARA": "Nuts",
+      "APIO": "Celery",
+      "MOSTAZA": "Mustard",
+      "SESAMO": "Sesame",
+      "SULFITO": "Sulphites",
+      "ALTRAMUCES": "Lupin",
+      "MOLUSCOS": "Molluscs"
     },
     "productoCategoria": {
       "VERDURA": "Vegetable",
@@ -2788,6 +2997,13 @@
       "medium": "Priority",
       "high": "High",
       "urgent": "Urgent"
+    }
+  },
+  "notificacion": {
+    "prioridad": {
+      "urgente": "Urgent",
+      "pendiente": "Pending",
+      "info": "Info"
     }
   }
 }

@@ -138,13 +138,32 @@ const DesktopDrawer = styled(MuiDrawer, {
   whiteSpace: 'nowrap',
   boxSizing: 'border-box',
   zIndex: theme.zIndex.drawer, // 1200
+  '& .MuiDrawer-paper': {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+  },
   ...(open && {
     ...openedMixin(theme),
-    '& .MuiDrawer-paper': openedMixin(theme),
+    '& .MuiDrawer-paper': {
+      ...openedMixin(theme),
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
+    },
   }),
   ...(!open && {
     ...closedMixin(theme),
-    '& .MuiDrawer-paper': closedMixin(theme),
+    '& .MuiDrawer-paper': {
+      ...closedMixin(theme),
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
+    },
   }),
 }));
 
@@ -389,6 +408,10 @@ const SidebarContent = React.memo(
 
 SidebarContent.displayName = 'SidebarContent';
 
+/**
+ * Expone "MainLayout" en smart-economat-frontend (SPA).
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export default function MainLayout() {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -483,7 +506,10 @@ export default function MainLayout() {
     });
 
   /**
-   * Documentación en español.
+   * Renderiza el contenido del sidebar (navegación, logos, opciones) basándose en el estado de expansión.
+   *
+   * @param {boolean} isExpanded - Indica si el sidebar está en modo completo o minimizado.
+   * @returns {JSX.Element} El contenido del menú lateral renderizado.
    */
   const renderSidebarContent = (isExpanded: boolean) => (
     <SidebarContent
@@ -498,7 +524,14 @@ export default function MainLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+      }}
+    >
       <CssBaseline />
       {/* <SkipLinks id="skip-links" /> - Comentado temporalmente por depuración de clics */}
       <InteractiveTour />
@@ -634,6 +667,10 @@ export default function MainLayout() {
             id: 'sidebar-nav',
             tabIndex: -1,
             sx: {
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
               outline: 'none',
               boxShadow: 'none',
               border: 'none',
@@ -668,7 +705,13 @@ export default function MainLayout() {
           PaperProps={{
             id: 'sidebar-nav',
             tabIndex: -1,
-            sx: { outline: 'none' },
+            sx: {
+              outline: 'none',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+            },
           }}
           sx={{ outline: 'none' }}
         >
@@ -684,12 +727,18 @@ export default function MainLayout() {
         tabIndex={-1}
         sx={{
           flexGrow: 1,
+          height: '100vh',
+          overflowY: 'auto',
           p: { xs: 2.5, sm: 3 },
           outline: 'none', // Evitar borde al recibir foco por salto
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <DrawerHeader />
-        <Outlet />
+        <Box sx={{ flexGrow: 1, width: '100%' }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

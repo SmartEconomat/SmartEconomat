@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
  */
 import {
   BadRequestException,
@@ -35,12 +35,12 @@ import { DataSource } from 'typeorm';
 import { permiteComputarComoRecibido } from '../../recepcion/utils/recepcion-producto-state.util';
 
 /**
- * Documentación en español.
+ * Servicio de dominio para distribucion.
  */
 @Injectable()
 export class DistribucionService {
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   constructor(
     @InjectRepository(Distribucion)
@@ -63,7 +63,13 @@ export class DistribucionService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Distribucion>>} Datos efectivos despu?s de ejecutar la operaci?n.
    */
   async findAll(
     query: PaginationQueryDto,
@@ -80,7 +86,6 @@ export class DistribucionService {
       .leftJoinAndSelect('distribucion.ubicacionOrigen', 'ubicacionOrigen')
       .leftJoinAndSelect('distribucion.ubicacionDestino', 'ubicacionDestino')
       .leftJoinAndSelect('distribucion.alumnoSlot', 'alumnoSlot')
-      .leftJoinAndSelect('alumnoSlot.ubicacion', 'slotUbicacion')
       .leftJoinAndSelect('distribucion.lineas', 'lineas')
       .leftJoinAndSelect('lineas.productoProveedor', 'productoProveedor')
       .leftJoinAndSelect('productoProveedor.producto', 'producto')
@@ -118,7 +123,11 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Par?metro de entrada para la operaci?n.
+   * @param userRole Par?metro de entrada para la operaci?n. Opcional.
+   * @returns Valor resultante de la operaci?n.
    */
   async findOne(id: string, userRole?: string): Promise<Distribucion> {
     const isAdmin = isSherlockElevatedRole(userRole);
@@ -130,11 +139,9 @@ export class DistribucionService {
         'pedidoUsuario.usuario',
         'pedidoUsuario.usuario.alumno',
         'pedidoUsuario.usuario.alumno.slot',
-        'pedidoUsuario.usuario.alumno.slot.ubicacion',
         'ubicacionOrigen',
         'ubicacionDestino',
         'alumnoSlot',
-        'alumnoSlot.ubicacion',
         'lineas',
         'lineas.pedidoUsuarioLinea',
         'lineas.pedidoUsuarioLinea.productoProveedor',
@@ -154,7 +161,12 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
+   */
+  /**
+   * Expone "findDisponibles" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<DistribucionDisponibleDto[]>} Datos efectivos despu?s de ejecutar la operaci?n.
    */
   async findDisponibles(
     query: PaginationQueryDto
@@ -167,10 +179,11 @@ export class DistribucionService {
       .leftJoinAndSelect('pedidoUsuario.usuario', 'usuario')
       .leftJoinAndSelect('usuario.alumno', 'alumno')
       .leftJoinAndSelect('alumno.slot', 'slot')
-      .leftJoinAndSelect('slot.ubicacion', 'slotUbicacion')
       .leftJoinAndSelect('usuario.profesor', 'profesor')
       .leftJoinAndSelect('profesor.slots', 'profesorSlot')
-      .leftJoinAndSelect('profesorSlot.ubicacion', 'profesorSlotUbicacion')
+      .leftJoinAndSelect('usuario.ubicacion', 'usuarioUbicacionPrincipal')
+      .leftJoinAndSelect('usuario.usuarioUbicaciones', 'uuPivotDistrib')
+      .leftJoinAndSelect('uuPivotDistrib.ubicacion', 'usuarioUbicacionPivot')
       .leftJoinAndSelect(
         'pedidoUsuario.ubicacionEntregaSugerida',
         'ubicacionSugerida'
@@ -190,10 +203,21 @@ export class DistribucionService {
     }
 
     const pedidosUsuario = await qb.getMany();
+    const allLineIds = pedidosUsuario.flatMap((pedidoUsuario) =>
+      (pedidoUsuario.lineas ?? []).map((linea) => linea.id)
+    );
+    const aggregate = await this.calculatePendingByPedidoUsuarioLinea(
+      this.dataSource.manager,
+      allLineIds
+    );
+
     const disponibles: DistribucionDisponibleDto[] = [];
 
     for (const pedidoUsuario of pedidosUsuario) {
-      const disponible = await this.buildDistribucionDisponible(pedidoUsuario);
+      const disponible = this.mapPedidoUsuarioToDistribucionDisponible(
+        pedidoUsuario,
+        aggregate
+      );
       if (disponible.lineas.length > 0) {
         disponibles.push(disponible);
       }
@@ -203,7 +227,13 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateDistribucionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Distribucion>} Datos efectivos despu?s de ejecutar la operaci?n.
    */
   async create(
     dto: CreateDistribucionDto,
@@ -227,7 +257,6 @@ export class DistribucionService {
           'usuario',
           'usuario.alumno',
           'usuario.alumno.slot',
-          'usuario.alumno.slot.ubicacion',
           'lineas',
           'lineas.productoProveedor',
           'lineas.productoProveedor.producto',
@@ -246,7 +275,7 @@ export class DistribucionService {
         dto,
         pedidoUsuario
       );
-      const destino = await this.resolveDestino(manager, dto, targetSlot);
+      const destino = await this.resolveDestino(manager, dto);
 
       if (origen.id === destino.id) {
         throw new BadRequestException(
@@ -319,7 +348,6 @@ export class DistribucionService {
           'ubicacionOrigen',
           'ubicacionDestino',
           'alumnoSlot',
-          'alumnoSlot.ubicacion',
           'lineas',
           'lineas.productoProveedor',
           'lineas.productoProveedor.producto',
@@ -329,7 +357,11 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de confirmar dentro del flujo de la aplicaci?n.
+   *
+   * @param id Par?metro de entrada para la operaci?n.
+   * @param userId Par?metro de entrada para la operaci?n.
+   * @returns Valor resultante de la operaci?n.
    */
   async confirmar(id: string, userId: string): Promise<Distribucion> {
     return this.dataSource.transaction(async (manager) => {
@@ -378,7 +410,6 @@ export class DistribucionService {
           'ubicacionOrigen',
           'ubicacionDestino',
           'alumnoSlot',
-          'alumnoSlot.ubicacion',
           'lineas',
           'lineas.productoProveedor',
           'lineas.productoProveedor.producto',
@@ -388,7 +419,14 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
+   */
+  /**
+   * Expone "cancelar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CancelDistribucionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Distribucion>} Datos efectivos despu?s de ejecutar la operaci?n.
    */
   async cancelar(
     id: string,
@@ -432,7 +470,7 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async resolveOrigen(
     manager: EntityManager,
@@ -457,6 +495,7 @@ export class DistribucionService {
     if (!defaultUbicacion) {
       defaultUbicacion = manager.create(Ubicacion, {
         nombre: 'Almacén Principal',
+        codigo: 'ALMACEN_PRINCIPAL',
         descripcion: 'Ubicación por defecto del economato',
       });
       defaultUbicacion = await manager.save(defaultUbicacion);
@@ -466,7 +505,7 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async resolveTargetSlot(
     manager: EntityManager,
@@ -481,7 +520,6 @@ export class DistribucionService {
 
     const requestedSlot = await manager.findOne(AlumnoSlot, {
       where: { id: targetSlotId },
-      relations: ['ubicacion'],
     });
 
     if (requestedSlot) {
@@ -495,7 +533,6 @@ export class DistribucionService {
     ) {
       const fallbackSlot = await manager.findOne(AlumnoSlot, {
         where: { id: fallbackSlotId },
-        relations: ['ubicacion'],
       });
 
       if (fallbackSlot) {
@@ -507,16 +544,13 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async resolveDestino(
     manager: EntityManager,
-    dto: CreateDistribucionDto,
-    targetSlot: AlumnoSlot | null
+    dto: CreateDistribucionDto
   ): Promise<Ubicacion> {
-    const requestedDestinoId = dto.ubicacionDestinoId;
-    const slotDestinoId = targetSlot?.ubicacionId;
-    const destinoId = requestedDestinoId ?? slotDestinoId;
+    const destinoId = dto.ubicacionDestinoId;
 
     if (!destinoId) {
       throw new BadRequestException(
@@ -532,23 +566,13 @@ export class DistribucionService {
       return requestedDestino;
     }
 
-    if (requestedDestinoId && slotDestinoId && slotDestinoId !== destinoId) {
-      const slotDestino = await manager.findOne(Ubicacion, {
-        where: { id: slotDestinoId },
-      });
-
-      if (slotDestino) {
-        return slotDestino;
-      }
-    }
-
     throw new NotFoundException(
       I18nHelper.getError('DISTRIBUCION_DEST_NOT_FOUND')
     );
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async calculatePendingByPedidoUsuarioLinea(
     manager: EntityManager,
@@ -599,7 +623,7 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async getRecepcionadoPorPedidoUsuarioLinea(
     manager: EntityManager,
@@ -637,7 +661,7 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async getDistribuidoPorPedidoUsuarioLinea(
     manager: EntityManager,
@@ -681,19 +705,23 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Mapea un pedido de usuario a DTO de disponibles usando agregados precalculados
+   * (una sola pasada por `findDisponibles` en lugar de 2 consultas por pedido).
    */
-  private async buildDistribucionDisponible(
-    pedidoUsuario: PedidoUsuario
-  ): Promise<DistribucionDisponibleDto> {
+  private mapPedidoUsuarioToDistribucionDisponible(
+    pedidoUsuario: PedidoUsuario,
+    aggregate: Map<
+      string,
+      {
+        cantidadRecepcionada: number;
+        cantidadDistribuida: number;
+        cantidadPendiente: number;
+      }
+    >
+  ): DistribucionDisponibleDto {
     const targetSlot = this.resolvePedidoUsuarioSlot(pedidoUsuario);
     const ubicacionesUsuario =
       this.resolvePedidoUsuarioUbicaciones(pedidoUsuario);
-    const lineIds = (pedidoUsuario.lineas || []).map((linea) => linea.id);
-    const aggregate = await this.calculatePendingByPedidoUsuarioLinea(
-      this.dataSource.manager,
-      lineIds
-    );
 
     const lineas: DistribucionDisponibleLineaDto[] = (
       pedidoUsuario.lineas || []
@@ -717,19 +745,12 @@ export class DistribucionService {
       })
       .filter((linea) => linea.cantidadPendiente > 0);
 
-    let sugerida = pedidoUsuario.ubicacionEntregaSugerida
+    const sugerida = pedidoUsuario.ubicacionEntregaSugerida
       ? {
           id: pedidoUsuario.ubicacionEntregaSugerida.id,
           nombre: pedidoUsuario.ubicacionEntregaSugerida.nombre,
         }
       : null;
-
-    if (!sugerida && targetSlot?.ubicacion) {
-      sugerida = {
-        id: targetSlot.ubicacion.id,
-        nombre: targetSlot.ubicacion.nombre,
-      };
-    }
 
     return {
       pedidoUsuarioId: pedidoUsuario.id,
@@ -747,8 +768,6 @@ export class DistribucionService {
             id: targetSlot.id,
             aula: targetSlot.aula,
             numeroClase: targetSlot.numeroClase,
-            ubicacionId: targetSlot.ubicacion?.id,
-            ubicacionNombre: targetSlot.ubicacion?.nombre,
           }
         : null,
       ubicacionDestinoSugerida: sugerida,
@@ -757,44 +776,39 @@ export class DistribucionService {
     };
   }
 
-  /**
-   * Documentación en español.
-   */
   private resolvePedidoUsuarioUbicaciones(
     pedidoUsuario: PedidoUsuario
   ): Array<{ id: string; nombre: string }> {
-    const alumnoSlot = pedidoUsuario.usuario?.alumno?.slot;
-
-    if (alumnoSlot?.ubicacion) {
-      return [
-        {
-          id: alumnoSlot.ubicacion.id,
-          nombre: alumnoSlot.ubicacion.nombre,
-        },
-      ];
+    const usuario = pedidoUsuario.usuario;
+    if (!usuario) {
+      return [];
     }
 
-    const profesorSlots = pedidoUsuario.usuario?.profesor?.slots ?? [];
+    const fromMany = (usuario.ubicaciones ?? [])
+      .filter((ub): ub is NonNullable<typeof ub> =>
+        Boolean(ub?.id && ub?.nombre)
+      )
+      .map((ub) => ({ id: ub.id, nombre: ub.nombre }));
+
+    const fromSingle =
+      usuario.ubicacion?.id && usuario.ubicacion?.nombre
+        ? [
+            {
+              id: usuario.ubicacion.id,
+              nombre: usuario.ubicacion.nombre,
+            },
+          ]
+        : [];
 
     return Array.from(
-      new Map(
-        profesorSlots
-          .filter((slot) => slot.ubicacion?.id && slot.ubicacion?.nombre)
-          .map((slot) => [
-            slot.ubicacion!.id,
-            {
-              id: slot.ubicacion!.id,
-              nombre: slot.ubicacion!.nombre,
-            },
-          ])
-      ).values()
+      new Map([...fromSingle, ...fromMany].map((row) => [row.id, row])).values()
     ).sort((left, right) =>
       left.nombre.localeCompare(right.nombre, 'es', { sensitivity: 'base' })
     );
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private resolvePedidoUsuarioSlot(
     pedidoUsuario: PedidoUsuario
@@ -825,7 +839,7 @@ export class DistribucionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la l?gica de operaci?n dentro del flujo de la aplicaci?n.
    */
   private async transferirLinea(
     manager: EntityManager,
@@ -929,7 +943,7 @@ export class DistribucionService {
           productoProveedor: inventarioOrigen.productoProveedor,
           entidad: 'Distribucion',
           entidadId: distribucion.id,
-          descripcion: `Distribución a ${distribucion.ubicacionDestino.nombre}: salida de ${productoNombre}`,
+          descripcion: `Distribuci?n a ${distribucion.ubicacionDestino.nombre}: salida de ${productoNombre}`,
           usuario: { id: userId } as any,
           modifiedBy: userId,
         })
@@ -943,7 +957,7 @@ export class DistribucionService {
           productoProveedor: inventarioOrigen.productoProveedor,
           entidad: 'Distribucion',
           entidadId: distribucion.id,
-          descripcion: `Distribución desde ${distribucion.ubicacionOrigen.nombre}: entrada de ${productoNombre}`,
+          descripcion: `Distribuci?n desde ${distribucion.ubicacionOrigen.nombre}: entrada de ${productoNombre}`,
           usuario: { id: userId } as any,
           modifiedBy: userId,
         })

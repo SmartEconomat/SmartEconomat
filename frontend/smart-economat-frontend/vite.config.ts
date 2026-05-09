@@ -1,4 +1,5 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vitest/config';
+import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { configDefaults } from 'vitest/config';
 
@@ -68,66 +69,103 @@ function createSyntheticSourceMapPlugin(): Plugin {
   };
 }
 
+/**
+ * Estrategia de manualChunks para Rollup/Vite.
+ *
+ * Objetivo: reducir el número total de chunks agrupando código de app
+ * por dominio funcional y consolidando vendors por familia de librería.
+ *
+ * Grupos de vendor:
+ *   react-vendor     → react + react-dom + scheduler (núcleo React, muy cacheado)
+ *   router-vendor    → react-router-dom (cambia poco, cache largo)
+ *   mui-core-vendor  → @mui/material + sistema base (grande pero estable)
+ *   mui-icons-vendor → @mui/icons-material (grande, estable, separado para cache)
+ *   emotion-vendor   → @emotion/* + stylis (motor CSS-in-JS de MUI)
+ *   date-vendor      → dayjs + @mui/x-date-pickers (feature opcional)
+ *   i18n-vendor      → i18next + react-i18next + detectores
+ *   sentry-vendor    → @sentry/* + @sentry-internal/* (monitoring y paquetes internos del mismo runtime)
+ *   zxing-vendor     → @zxing/* (barcode scanner, feature opcional)
+ *   vendor           → resto de node_modules (redux, wicg-inert, etc.)
+ *
+ * Código en `src/`: sin `manualChunks` (valor `undefined`). Partir por ruta cuando
+ * hay imports cruzados (UI ↔ servicios ↔ features) fuerza “Circular chunk” en Rollup.
+ * Se puede volver al split por dominio tras desacoplar capas (p. ej. dependency-cruiser).
+ */
 function getManualChunk(id: string): string | undefined {
-  if (!id.includes('node_modules')) {
-    return undefined;
-  }
-
-  if (
-    id.includes('/node_modules/react/') ||
-    id.includes('/node_modules/react-dom/') ||
-    id.includes('/node_modules/scheduler/')
-  ) {
-    return 'react-vendor';
-  }
-
-  if (
-    id.includes('/node_modules/react-router/') ||
-    id.includes('/node_modules/react-router-dom/')
-  ) {
-    return 'router-vendor';
-  }
-
-  if (
-    id.includes('/node_modules/@emotion/') ||
-    id.includes('/node_modules/stylis/') ||
-    id.includes('/node_modules/hoist-non-react-statics/')
-  ) {
-    return 'emotion-vendor';
-  }
-
-  if (id.includes('/node_modules/@mui/icons-material/')) {
-    return 'mui-icons-vendor';
-  }
-
-  if (
-    id.includes('/node_modules/@mui/material/') ||
-    id.includes('/node_modules/@mui/system/') ||
-    id.includes('/node_modules/@mui/utils/') ||
-    id.includes('/node_modules/@mui/private-theming/') ||
-    id.includes('/node_modules/@mui/styled-engine/') ||
-    id.includes('/node_modules/@mui/styled-engine-sc/') ||
-    id.includes('/node_modules/@mui/base/') ||
-    id.includes('/node_modules/@popperjs/')
-  ) {
-    return 'mui-core-vendor';
-  }
-
-  if (id.includes('/node_modules/react-transition-group/')) {
-    return 'vendor';
-  }
-
-  if (
-    id.includes('/node_modules/dayjs/') ||
-    id.includes('/node_modules/@mui/x-date-pickers/')
-  ) {
-    return 'date-vendor';
-  }
-
+  // ── Vendors ─────────────────────────────────────────────────────────────
   if (id.includes('/node_modules/')) {
+    if (
+      id.includes('/node_modules/react/') ||
+      id.includes('/node_modules/react-dom/') ||
+      id.includes('/node_modules/scheduler/')
+    ) {
+      return 'react-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/react-router/') ||
+      id.includes('/node_modules/react-router-dom/')
+    ) {
+      return 'router-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/@emotion/') ||
+      id.includes('/node_modules/stylis/') ||
+      id.includes('/node_modules/hoist-non-react-statics/')
+    ) {
+      return 'emotion-vendor';
+    }
+
+    if (id.includes('/node_modules/@mui/icons-material/')) {
+      return 'mui-icons-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/@mui/material/') ||
+      id.includes('/node_modules/@mui/system/') ||
+      id.includes('/node_modules/@mui/utils/') ||
+      id.includes('/node_modules/@mui/private-theming/') ||
+      id.includes('/node_modules/@mui/styled-engine/') ||
+      id.includes('/node_modules/@mui/base/') ||
+      id.includes('/node_modules/@popperjs/') ||
+      id.includes('/node_modules/react-transition-group/')
+    ) {
+      return 'mui-core-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/dayjs/') ||
+      id.includes('/node_modules/@mui/x-date-pickers/')
+    ) {
+      return 'date-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/i18next') ||
+      id.includes('/node_modules/react-i18next') ||
+      id.includes('/node_modules/i18next-browser-languagedetector')
+    ) {
+      return 'i18n-vendor';
+    }
+
+    if (
+      id.includes('/node_modules/@sentry/') ||
+      id.includes('/node_modules/@sentry-internal/')
+    ) {
+      return 'sentry-vendor';
+    }
+
+    // Barcode scanner: grande y de carga diferida, chunk propio para mejor caché
+    if (id.includes('/node_modules/@zxing/')) {
+      return 'zxing-vendor';
+    }
+
+    // Resto de node_modules (web-vitals, wicg-inert, @nestjs/common, etc.)
     return 'vendor';
   }
 
+  // Código aplicación: dejar que Rollup asigne chunks (evita particiones cíclicas).
   return undefined;
 }
 
@@ -140,14 +178,53 @@ export default defineConfig(() => {
     optimizeDeps: {
       // Forzar re-optimización con: VITE_FORCE_OPTIMIZE=true docker compose up
       force: process.env.VITE_FORCE_OPTIMIZE === 'true',
+      // Pre-bundlear de forma EAGER todas las dependencias runtime importantes.
+      // Si una dep aparece "lazy" (solo importada por una ruta diferida), Vite
+      // dispara una re-optimización en caliente que renombra los chunks
+      // intermedios de esbuild ("chunk-XXXXXXX.js"). Mientras la optimización
+      // termina, el navegador puede solicitar chunks viejos por su nombre
+      // anterior y aparece el error:
+      //   The file does not exist at "/tmp/.vite-smarteconomat/deps/chunk-...js?v=..."
+      // Listar aquí todo lo que el bundle final necesita evita esa carrera.
+      // Importante: NO usar wildcards de subpath en MUI (rompe el resolver
+      // contra "./esm"). Ver .github/memories/2026-05-03-vite-mui-esm-specifier.md.
+      include: [
+        '@emotion/react',
+        '@emotion/styled',
+        '@mui/material',
+        '@mui/icons-material',
+        '@mui/x-date-pickers',
+        '@mui/x-date-pickers/AdapterDayjs',
+        '@reduxjs/toolkit',
+        'react-redux',
+        'react-router-dom',
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-dev-runtime',
+        'react/jsx-runtime',
+        'dayjs',
+        'i18next',
+        'react-i18next',
+        'i18next-browser-languagedetector',
+        '@sentry/react',
+        '@zxing/browser',
+        '@zxing/library',
+      ],
     },
     build: {
       outDir: 'build',
       sourcemap: false,
       reportCompressedSize: false,
+      // Aumentar el warning limit ya que algunos vendor chunks son inevitablemente grandes
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
           manualChunks: getManualChunk,
+          // Tamaño mínimo de chunk: evita micro-fragmentación de módulos compartidos
+          // que Rollup generaría por defecto al detectar imports dinámicos.
+          // 20 KB es un balance entre granularidad y número de requests HTTP.
+          experimentalMinChunkSize: 20_000,
         },
       },
     },
@@ -184,11 +261,18 @@ export default defineConfig(() => {
     },
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: 'jsdom' as const,
       setupFiles: ['./src/setupTests.ts'],
+      /** Todos los tests unitarios/integration Vitest deben vivir en `test/`. Playwright permanece en `test/e2e`. */
+      include: ['test/**/*.{test,spec}.{ts,tsx}'],
       exclude: [...configDefaults.exclude, 'test/e2e/**'],
+      // Node 22 + pool=forks ha provocado IPC "Channel closed" / cuelgues con tinypool.
+      // Threads evita child_process y suele ser estable en CI y local.
+      pool: 'threads',
+      maxWorkers: 1,
+      fileParallelism: false,
       coverage: {
-        provider: 'v8',
+        provider: 'v8' as const,
         reporter: ['text', 'html'],
         reportsDirectory: './coverage',
       },

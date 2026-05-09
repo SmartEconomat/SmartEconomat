@@ -9,7 +9,7 @@ import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 // ─────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface SlideData {
   title: string;
@@ -21,7 +21,7 @@ interface SlideData {
 // ─────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface AuthSlideProps {
   isLogin: boolean;
@@ -32,14 +32,14 @@ interface AuthSlideProps {
 // ─────────────────────────────────────────────
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const LOGIN_SLIDES: SlideData[] = [
     {
@@ -57,7 +57,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   ];
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const REGISTER_SLIDES: SlideData[] = [
     {
@@ -78,12 +78,12 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
 
   const [activeSlide, setActiveSlide] = useState(0);
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const [slideKey, setSlideKey] = useState(0);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const goToSlide = useCallback((index: number) => {
     setActiveSlide(index);
@@ -91,7 +91,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   }, []);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   useEffect(() => {
     setActiveSlide(0);
@@ -99,7 +99,7 @@ const AuthSlide: React.FC<AuthSlideProps> = ({ isLogin }) => {
   }, [isLogin]);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   useEffect(() => {
     const timer = setInterval(() => {

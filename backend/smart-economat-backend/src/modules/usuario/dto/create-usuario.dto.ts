@@ -1,12 +1,15 @@
 import { i18nValidationMessage } from 'nestjs-i18n';
 import {
+  ArrayUnique,
   IsEmail,
   IsEnum,
+  IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsStrongPassword,
   MaxLength,
+  IsUUID,
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -14,6 +17,7 @@ import { rolUsuario, UserStatus, UserLanguage } from '../enums/usuario.enums';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { LowercaseStringTransformer } from '../../../common/transformers/lowercase-string.transformer';
 
+/** Clase pública (CreateUsuarioDto). Paquete: smart-economat-backend (Nest). */
 export class CreateUsuarioDto {
   @IsOptional()
   @IsString({
@@ -80,6 +84,22 @@ export class CreateUsuarioDto {
     message: i18nValidationMessage('validation.EL_ESTADO_NO_ES_V_LIDO'),
   })
   status!: UserStatus;
+
+  @IsOptional()
+  @IsUUID('all', {
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID('all', {
+    each: true,
+    message: i18nValidationMessage('validation.UBICACION_ID_UUIDV7_INVALIDO'),
+  })
+  ubicacionesIds?: string[];
+
   @IsOptional()
   @IsEnum(UserLanguage, {
     message: i18nValidationMessage('validation.IDIOMA_INVALIDO'),

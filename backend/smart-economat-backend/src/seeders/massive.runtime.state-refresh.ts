@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import AppDataSource from '../config/typeorm.config';
 import { EstadoLote } from '../modules/pedido/enums/estado-lote.enum';
 import { Usuario } from '../modules/usuario/usuario.entity/usuario.entity';
@@ -42,13 +43,19 @@ function removePairsContainingId(
 
 function buildResetPasswordSeedUpdate(
   resetPasswordOtp: string
-): Partial<Usuario> {
+): QueryDeepPartialEntity<Usuario> {
   return {
     resetPasswordOtp,
     resetPasswordOtpExpires: new Date(seedDateIso(3650)),
   };
 }
 
+/**
+ * Expone "refreshStateAfterOperation" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {RequestResult} result - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function refreshStateAfterOperation(
   context: SeedContext,
   result: RequestResult
@@ -446,6 +453,23 @@ export async function refreshStateAfterOperation(
         'seedCreatedDeletableProveedorIds',
         deletedProveedorId
       );
+      pushStateValue(
+        context,
+        'seedSoftDeletedProveedorIds',
+        deletedProveedorId
+      );
+    }
+  }
+
+  if (
+    result.endpoint.method === 'POST' &&
+    /^\/proveedor\/[^/]+\/restore$/.test(path)
+  ) {
+    const restoredId = path.split('/')[2] || '';
+    if (restoredId) {
+      removeStateValue(context, 'seedSoftDeletedProveedorIds', restoredId);
+      pushStateValue(context, 'proveedorIds', restoredId);
+      pushStateValue(context, 'seedCreatedProveedorIds', restoredId);
     }
   }
 

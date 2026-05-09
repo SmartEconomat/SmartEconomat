@@ -15,6 +15,7 @@ import { I18nHelper } from '../../common/helpers/i18n.helper';
 import { ArchivoModule } from '../archivo/archivo.module';
 import { resolveWritableLocalStoragePath } from '../../common/utils/local-storage-path.util';
 
+/** Clase pública (AlbaranModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([Albaran, AlbaranPedidoRecepcion]),

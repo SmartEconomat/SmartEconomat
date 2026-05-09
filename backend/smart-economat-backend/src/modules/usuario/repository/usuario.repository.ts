@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, FindOptionsWhere, ILike, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+  ILike,
+  Repository,
+} from 'typeorm';
 import { Usuario } from '../usuario.entity/usuario.entity';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
@@ -11,12 +17,21 @@ import { Profesor } from '../../profesor/profesor.entity/profesor.entity';
 import { Alumno } from '../../alumno/alumno.entity/alumno.entity';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 import { SYSTEM_ROLES } from '../../../common/constants/system-roles.constants';
+import { UsuarioUbicacion } from '../usuario-ubicacion.entity/usuario-ubicacion.entity';
+import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
 
+/** Clase pública (UsuarioRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 /**
- * Documentación en español.
+ * Repositorio para operaciones de persistencia de usuario.
  */
 export class UsuarioRepository {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Repository<Usuario>} repo - Entrada efectiva esperada por el contrato.
+   * @undefined {Repository<Rol>} rolRepo - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     @InjectRepository(Usuario)
     public readonly repo: Repository<Usuario>,
@@ -27,7 +42,41 @@ export class UsuarioRepository {
   ) {}
 
   /**
-   * Documentación en español.
+   * Persiste el pivot usuario↔ubicaciones (acceso granular, no ownership).
+   * `undefined` = no tocar; `[]` = borrar vínculos declarados.
+   */
+  async syncUsuarioUbicaciones(
+    usuarioId: string,
+    ubicacionesList: Ubicacion[] | undefined,
+    ubicacionOperativaId: string | null | undefined,
+    manager?: EntityManager
+  ): Promise<void> {
+    if (ubicacionesList === undefined) return;
+    const m = manager ?? this.dataSource.manager;
+    await m.delete(UsuarioUbicacion, { usuarioId });
+    if (ubicacionesList.length === 0) {
+      return;
+    }
+
+    const repo = m.getRepository(UsuarioUbicacion);
+    const rows = ubicacionesList.map((ub) =>
+      repo.create({
+        usuarioId,
+        ubicacionId: ub.id,
+        puedeConsultar: true,
+        puedeTransferir: true,
+        esUbicacionPredeterminada: ubicacionOperativaId
+          ? ub.id === ubicacionOperativaId
+          : false,
+      })
+    );
+    await repo.save(rows);
+  }
+
+  /**
+   * Resuelve roles for user role a partir del contexto disponible.
+   *
+   * @param role Parámetro de entrada para la operación. Opcional.
    */
   private async resolveRolesForUserRole(role?: Usuario['rol']) {
     if (!role) return undefined;
@@ -37,22 +86,39 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Crea usuario.
+   *
+   * @param data Parámetro de entrada para la operación.
    */
-  async createUsuario(data: Partial<Usuario>) {
-    if (data.status !== undefined && data.activo === undefined) {
-      data.activo = data.status === UserStatus.ACTIVE;
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {Partial<Usuario>} data - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Usuario>} Datos efectivos después de ejecutar la operación.
+   */
+  async createUsuario(data: Partial<Usuario> & { ubicaciones?: Ubicacion[] }) {
+    const { ubicaciones: pivotUbicaciones, ...rest } = data;
+
+    if (rest.status !== undefined && rest.activo === undefined) {
+      rest.activo = rest.status === UserStatus.ACTIVE;
     }
 
-    if (data.rol !== undefined && data.roles === undefined) {
-      data.roles = await this.resolveRolesForUserRole(data.rol);
+    if (rest.rol !== undefined && rest.roles === undefined) {
+      rest.roles = await this.resolveRolesForUserRole(rest.rol);
     }
 
-    return this.repo.save(this.repo.create(data));
+    const saved = await this.repo.save(this.repo.create(rest));
+
+    await this.syncUsuarioUbicaciones(
+      saved.id,
+      pivotUbicaciones,
+      saved.ubicacionId ?? null
+    );
+
+    return (await this.findById(saved.id)) ?? saved;
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private resolveStatusFilter(
     estado?: string
@@ -79,7 +145,16 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Busca all.
+   *
+   * @param query Parámetro de entrada para la operación.
+   * @param userRole Parámetro de entrada para la operación. Opcional.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Usuario>>} Datos efectivos después de ejecutar la operación.
    */
   findAll(query: PaginationQueryDto, userRole?: string) {
     const page = query.page ?? 1;
@@ -140,6 +215,9 @@ export class UsuarioRepository {
     return this.repo
       .findAndCount({
         relations: [
+          'ubicacion',
+          'usuarioUbicaciones',
+          'usuarioUbicaciones.ubicacion',
           'roles',
           'alumno',
           'alumno.slot',
@@ -161,21 +239,29 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Busca by id.
+   *
+   * @param id Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "findById" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Usuario | null>} Datos efectivos después de ejecutar la operación.
    */
   findById(id: string) {
     return this.repo.findOne({
       where: { id },
       relations: [
+        'ubicacion',
+        'usuarioUbicaciones',
+        'usuarioUbicaciones.ubicacion',
         'roles',
         'profesor',
         'profesor.slots',
-        'profesor.slots.ubicacion',
         'permisosAdicionales',
         'permisosExcluidos',
         'alumno',
         'alumno.slot',
-        'alumno.slot.ubicacion',
         'alumno.profesor',
         'alumno.profesor.user',
       ],
@@ -183,7 +269,11 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Busca all minimal.
+   */
+  /**
+   * Expone "findAllMinimal" en smart-economat-backend (Nest).
+   * @undefined {Promise<Usuario[]>} Datos efectivos después de ejecutar la operación.
    */
   findAllMinimal() {
     return this.repo
@@ -201,7 +291,14 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Busca by id with password.
+   *
+   * @param id Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "findByIdWithPassword" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Usuario | null>} Datos efectivos después de ejecutar la operación.
    */
   findByIdWithPassword(id: string) {
     return this.repo
@@ -212,41 +309,69 @@ export class UsuarioRepository {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza usuario.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param data Parámetro de entrada para la operación.
    */
-  async updateUsuario(id: string, data: Partial<Usuario>) {
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Partial<Usuario>} data - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Usuario | null>} Datos efectivos después de ejecutar la operación.
+   */
+  async updateUsuario(
+    id: string,
+    data: Partial<Usuario> & { ubicaciones?: Ubicacion[] }
+  ) {
+    const { ubicaciones: pivotUbicaciones, ...rest } = data;
     const usuario = await this.findById(id);
     if (!usuario) return null;
 
-    if (data.status !== undefined && data.activo === undefined) {
-      data.activo = data.status === UserStatus.ACTIVE;
+    if (rest.status !== undefined && rest.activo === undefined) {
+      rest.activo = rest.status === UserStatus.ACTIVE;
     }
 
-    if (data.activo !== undefined && data.status === undefined) {
-      data.status = data.activo ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+    if (rest.activo !== undefined && rest.status === undefined) {
+      rest.status = rest.activo ? UserStatus.ACTIVE : UserStatus.INACTIVE;
     }
 
-    if (data.status !== undefined && data.activo !== undefined) {
+    if (rest.status !== undefined && rest.activo !== undefined) {
       if (
-        (data.status === UserStatus.ACTIVE && !data.activo) ||
-        (data.status !== UserStatus.ACTIVE && data.activo)
+        (rest.status === UserStatus.ACTIVE && !rest.activo) ||
+        (rest.status !== UserStatus.ACTIVE && rest.activo)
       ) {
-        data.activo = data.status === UserStatus.ACTIVE;
+        rest.activo = rest.status === UserStatus.ACTIVE;
       }
     }
 
-    if (data.rol !== undefined && data.roles === undefined) {
-      data.roles = await this.resolveRolesForUserRole(data.rol);
+    if (rest.rol !== undefined && rest.roles === undefined) {
+      rest.roles = await this.resolveRolesForUserRole(rest.rol);
     }
 
-    Object.assign(usuario, data);
+    Object.assign(usuario, rest);
     await this.repo.save(usuario);
+
+    if (pivotUbicaciones !== undefined) {
+      await this.syncUsuarioUbicaciones(
+        id,
+        pivotUbicaciones,
+        usuario.ubicacionId ?? null
+      );
+    }
 
     return this.findById(id);
   }
 
   /**
-   * Documentación en español.
+   * Elimina usuario.
+   *
+   * @param id Parámetro de entrada para la operación.
+   */
+  /**
+   * Elimina o marca entidades siguendo las políticas configuradas.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ id: string; deleted: boolean; } | null>} Datos efectivos después de ejecutar la operación.
    */
   async deleteUsuario(id: string) {
     const usuario = await this.findById(id);

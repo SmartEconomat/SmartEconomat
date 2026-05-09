@@ -16,7 +16,7 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 
 /**
- * Documentación en español.
+ * Representa recepcion producto en el sistema.
  */
 @Entity({ name: 'recepcion_producto' })
 @Index(['recepcionId'])
@@ -27,14 +27,14 @@ export class RecepcionProducto extends BaseEntity {
   @Column({ name: 'recepcion_id' })
   recepcionId!: string;
 
-  @Column({ name: 'pedido_producto_id' })
-  pedidoProductoId!: string;
+  @Column({ name: 'pedido_producto_id', nullable: true })
+  pedidoProductoId?: string;
 
   @Column({ name: 'incidencia_id', nullable: true })
   incidenciaId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Recepcion, (recepcion) => recepcion.recepcionProductos, {
     onDelete: 'CASCADE',
@@ -44,14 +44,14 @@ export class RecepcionProducto extends BaseEntity {
   recepcion!: Relation<Recepcion>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => PedidoProducto, {
     onDelete: 'RESTRICT',
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({ name: 'pedido_producto_id' })
-  pedidoProducto!: Relation<PedidoProducto>;
+  pedidoProducto?: Relation<PedidoProducto>;
 
   @OneToOne(() => Incidencia, {
     onDelete: 'SET NULL',
@@ -61,7 +61,7 @@ export class RecepcionProducto extends BaseEntity {
   incidencia?: Relation<Incidencia>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -89,6 +89,20 @@ export class RecepcionProducto extends BaseEntity {
     default: () => 'CURRENT_TIMESTAMP',
   })
   fechaRecepcion!: Date;
+
+  /**
+   * Cantidad reportada en el albarán del proveedor.
+   * Documentación en español.
+   */
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    name: 'cantidad_albaran',
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  cantidadAlbaran?: number;
 
   @Column({ name: 'is_weighed_with_scale', type: 'boolean', default: false })
   isWeighedWithScale!: boolean;

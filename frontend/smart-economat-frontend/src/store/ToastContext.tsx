@@ -2,6 +2,13 @@ import React, { useState, useCallback, ReactNode } from 'react';
 import { Toast, ToastOptions } from './toast.types';
 import { ToastContext } from './toast.context';
 
+/**
+ * Expone "ToastProvider" en smart-economat-frontend (SPA).
+ * @undefined {{ children: ReactNode; }} {
+ *   children,
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
+ */
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {

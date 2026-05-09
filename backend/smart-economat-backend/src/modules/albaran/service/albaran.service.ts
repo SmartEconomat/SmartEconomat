@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   Injectable,
@@ -42,14 +42,14 @@ const ALBARAN_DETAIL_RELATIONS = [
 ] as const;
 
 /**
- * Documentación en español.
+ * Servicio de dominio para albaran.
  */
 @Injectable()
 export class AlbaranService {
   private readonly logger = new Logger(AlbaranService.name);
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(Albaran)
@@ -60,7 +60,10 @@ export class AlbaranService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Crea create.
+   *
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async create(dto: CreateAlbaranDto): Promise<Albaran> {
     const albaran = this.albaranRepository.create(dto);
@@ -68,7 +71,12 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {{ numeroReferencia?: string; fecha?: Date; manager?: EntityManager; }} params - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   async createOrGetAlbaran(params: {
     numeroReferencia?: string;
@@ -103,7 +111,7 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async generateAutomaticNumber(
     repo: Repository<Albaran>
@@ -133,7 +141,10 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de derive concordancia from links dentro del flujo de la aplicación.
+   *
+   * @param albaran Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   private deriveConcordanciaFromLinks(albaran: Albaran): boolean | undefined {
     const recepciones = (albaran.albaranPedidoRecepcion ?? [])
@@ -152,7 +163,7 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private async syncLoadedAlbaranConcordancia(
     repo: Repository<Albaran>,
@@ -174,7 +185,13 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "syncConcordanciaFromRecepciones" en smart-economat-backend (Nest).
+   * @undefined {string} albaranId - Entrada efectiva esperada por el contrato.
+   * @undefined {EntityManager | undefined} manager - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   async syncConcordanciaFromRecepciones(
     albaranId: string,
@@ -197,7 +214,13 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Albaran>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto,
@@ -235,7 +258,14 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} _userRole - Entrada efectiva esperada por el contrato.
+   * @undefined {boolean} includeProductos - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   async findOne(
     id: string,
@@ -264,7 +294,11 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Actualiza update.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @param dto Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async update(id: string, dto: UpdateAlbaranDto): Promise<Albaran> {
     const albaran = await this.findOne(id);
@@ -273,7 +307,10 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina remove.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async remove(id: string): Promise<void> {
     const albaran = await this.findOne(id);
@@ -281,7 +318,13 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "uploadDocumento" en smart-economat-backend (Nest).
+   * @undefined {Express.Multer.File} file - Entrada efectiva esperada por el contrato.
+   * @undefined {UploadAlbaranDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
   async uploadDocumento(
     file: Express.Multer.File,
@@ -420,7 +463,10 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Obtiene documento path.
+   *
+   * @param filename Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   getDocumentoPath(filename: string): string {
     const uploadDir = this.configService.get<string>(
@@ -444,7 +490,9 @@ export class AlbaranService {
   }
 
   /**
-   * Documentación en español.
+   * Elimina file quietly.
+   *
+   * @param filePath Parámetro de entrada para la operación.
    */
   private deleteFileQuietly(filePath: string): void {
     try {

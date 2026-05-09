@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 import { CreateUbicacionDto } from './create-ubicacion.dto';
 
+/** Clase pública (UpdateUbicacionDto). Paquete: smart-economat-backend (Nest). */
 export class UpdateUbicacionDto extends PartialType(CreateUbicacionDto) {
   @Transform((params) => TrimStringTransformer.transform(params))
   nombre?: string;

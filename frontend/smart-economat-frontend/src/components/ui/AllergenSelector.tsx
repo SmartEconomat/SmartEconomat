@@ -4,25 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { EU_ALLERGENS } from '../../utils/constants';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export interface AllergenSelectorProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   value: string[];
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   onChange: (newValue: string[]) => void;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   disabled?: boolean;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const AllergenSelector: React.FC<AllergenSelectorProps> = ({
   value = [],

@@ -3,11 +3,13 @@ import type { CommandResult, DockerRuntimeStatus } from "@shared/contracts";
 import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
 import { ProcessRunnerService } from "./process-runner.service";
 
+/** Contrato tipado público (DockerReadinessProbeOptions). */
 export interface DockerReadinessProbeOptions {
   timeoutMs?: number;
   source?: DockerRuntimeStatus["source"];
 }
 
+/** Contrato tipado público (DockerWaitOptions). */
 export interface DockerWaitOptions {
   maxWaitMs: number;
   initialDelayMs?: number;
@@ -56,9 +58,19 @@ function isDaemonUnavailable(result: CommandResult): boolean {
   );
 }
 
+/** Servicio del proceso principal: DockerReadinessService. */
 export class DockerReadinessService {
+  /**
+   * Construye la instancia del servicio.
+   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
+   */
   constructor(private readonly processRunner = new ProcessRunnerService()) {}
 
+  /**
+   * Comprueba disponibilidad o conectividad del componente.
+   * @param {DockerReadinessProbeOptions} options - Entrada esperada por la función.
+   * @returns {Promise<DockerRuntimeStatus>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async probe(
     options: DockerReadinessProbeOptions = {},
   ): Promise<DockerRuntimeStatus> {
@@ -143,6 +155,11 @@ export class DockerReadinessService {
     );
   }
 
+  /**
+   * Inicia el flujo o proceso solicitado.
+   * @param {DockerRuntimeStatus} source - Entrada esperada por la función.
+   * @returns {Promise<DockerRuntimeStatus>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async startDockerDesktop(
     source: DockerRuntimeStatus["source"] = "boot-guardian",
   ): Promise<DockerRuntimeStatus> {
@@ -189,6 +206,11 @@ export class DockerReadinessService {
         );
   }
 
+  /**
+   * Espera hasta que se cumplan las condiciones indicadas.
+   * @param {DockerWaitOptions} options - Entrada esperada por la función.
+   * @returns {Promise<DockerRuntimeStatus>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async waitUntilReady(
     options: DockerWaitOptions,
   ): Promise<DockerRuntimeStatus> {

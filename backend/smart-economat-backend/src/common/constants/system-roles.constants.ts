@@ -1,5 +1,6 @@
 /**
- * Documentación en español.
+ * Roles definidos por defecto en el sistema.
+ * Estos roles tienen comportamientos y permisos base preconfigurados.
  */
 export const SYSTEM_ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
@@ -8,10 +9,11 @@ export const SYSTEM_ROLES = {
   ALUMNO: 'ALUMNO',
 } as const;
 
+/** Alias público (SystemRoleName) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type SystemRoleName = (typeof SYSTEM_ROLES)[keyof typeof SYSTEM_ROLES];
 
 /**
- * Documentación en español.
+ * Roles con privilegios elevados que pueden gestionar otros usuarios y configuraciones globales.
  */
 export const ELEVATED_ROLES: readonly SystemRoleName[] = [
   SYSTEM_ROLES.SUPER_ADMIN,
@@ -19,7 +21,8 @@ export const ELEVATED_ROLES: readonly SystemRoleName[] = [
 ] as const;
 
 /**
- * Documentación en español.
+ * Nivel de jerarquía/prioridad de los roles.
+ * Útil para validaciones donde un rol solo puede actuar sobre roles de menor prioridad.
  */
 export const ROLE_PRIORITY: Record<string, number> = {
   [SYSTEM_ROLES.ALUMNO]: 0,

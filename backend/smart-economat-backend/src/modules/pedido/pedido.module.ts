@@ -20,6 +20,7 @@ import { RecepcionModule } from '../recepcion/recepcion.module';
 import { PedidoUsuarioController } from './controller/pedido-usuario.controller';
 import { PedidoUsuarioService } from './service/pedido-usuario.service';
 
+/** Clase pública (PedidoModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

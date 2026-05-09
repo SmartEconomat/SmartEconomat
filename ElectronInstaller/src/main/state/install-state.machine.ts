@@ -39,6 +39,7 @@ const transitions: Record<InstallerStep, InstallerStep[]> = {
   FAILED: ["PREFLIGHT", "IDLE"],
 };
 
+/** Servicio del proceso principal: InstallStateMachine. */
 export class InstallStateMachine {
   private currentState: InstallerStep = "IDLE";
 
@@ -50,6 +51,13 @@ export class InstallStateMachine {
     progressPercent: progressByState.IDLE,
   };
 
+  /**
+   * Expone la operación "transition" del instalador SmartEconomat.
+   * @param {InstallerStep} nextState - Entrada esperada por la función.
+   * @param {string} message - Entrada esperada por la función.
+   * @param {string | undefined} errorCode - Entrada esperada por la función.
+   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   transition(
     nextState: InstallerStep,
     message: string,
@@ -76,6 +84,13 @@ export class InstallStateMachine {
     return this.lastSnapshot;
   }
 
+  /**
+   * Expone la operación "forceState" del instalador SmartEconomat.
+   * @param {InstallerStep} nextState - Entrada esperada por la función.
+   * @param {string} message - Entrada esperada por la función.
+   * @param {string | undefined} errorCode - Entrada esperada por la función.
+   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   forceState(
     nextState: InstallerStep,
     message: string,
@@ -93,6 +108,10 @@ export class InstallStateMachine {
     return this.lastSnapshot;
   }
 
+  /**
+   * Obtiene el estado o valor solicitado.
+   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   getSnapshot(): InstallerStateSnapshot {
     return this.lastSnapshot;
   }

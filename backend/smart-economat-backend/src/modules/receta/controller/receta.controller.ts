@@ -17,6 +17,7 @@ import {
 import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
 import * as express from 'express';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { normalizeI18nLang } from '../../../common/helpers/i18n-translation-resolver.helper';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { RecetaService } from '../service/receta.service';
@@ -30,23 +31,24 @@ import { RecetaCostResponseDto } from '../dto/receta-cost-response.dto';
 import { RecetaPreviewCostDto } from '../dto/receta-preview-cost.dto';
 import { Receta } from '../receta.entity/receta.entity';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { RecetaListQueryDto } from '../dto/receta-list-query.dto';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para receta.
  */
 @ApiTags('docs.TAG_RECETAS')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('recetas')
 export class RecetaController {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     private readonly recetaService: RecetaService,
@@ -54,7 +56,12 @@ export class RecetaController {
   ) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateRecetaDto} createRecetaDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.recetas.crear)
@@ -64,7 +71,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "duplicate" en smart-economat-backend (Nest).
+   * @undefined {DuplicateRecetaDto} duplicateRecetaDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Post('duplicate')
   @RequirePermissions(PERMISSIONS.recetas.duplicar)
@@ -74,23 +86,19 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {RecetaListQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Receta>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.recetas.listar)
   findAll(
-    @SortableFields([
-      'nombre',
-      'tiempoEstimadoMinutos',
-      'tiempo',
-      'tiempoPreparacion',
-      'dificultad',
-      'rendimiento',
-      'costeUnitarioEstimado',
-      'createdAt',
-      'updatedAt',
-    ])
-    query: PaginationQueryDto,
+    @SortableFields(SORTABLE_FIELDS.recetas, RecetaListQueryDto)
+    query: RecetaListQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Receta>> {
     const userRole = req.user?.rol;
@@ -98,7 +106,13 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -111,7 +125,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<DetalleRecetaDto>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id/detalle')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -122,7 +141,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "calcularEscandallo" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecetaCostResponseDto>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id/escandallo')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -137,7 +161,13 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "cocinar" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {CocinarRecetaDto} cocinarRecetaDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/cocinar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
@@ -150,7 +180,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "calculatePreviewCost" en smart-economat-backend (Nest).
+   * @undefined {RecetaPreviewCostDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<RecetaCostResponseDto>} Datos efectivos después de ejecutar la operación.
    */
   @Post('calculate-preview')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -165,7 +200,16 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "exportMultiplePdf" en smart-economat-backend (Nest).
+   * @undefined {string | string[]} ids - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} includeImage - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} lang - Entrada efectiva esperada por el contrato.
+   * @undefined {express.Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { idioma?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Get('export/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -187,7 +231,7 @@ export class RecetaController {
       );
     }
 
-    const userLang = lang || req.user?.idioma || 'es';
+    const userLang = normalizeI18nLang(lang || req.user?.idioma || 'es');
 
     await this.recetaPdfService.generatePdf(
       idArray,
@@ -200,7 +244,16 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "exportSinglePdf" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} includeImage - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} lang - Entrada efectiva esperada por el contrato.
+   * @undefined {express.Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { idioma?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id/pdf')
   @RequirePermissions(PERMISSIONS.recetas.ver)
@@ -212,7 +265,7 @@ export class RecetaController {
     @Res() res: express.Response,
     @Req() req: { user?: { idioma?: string } }
   ): Promise<void> {
-    const userLang = lang || req.user?.idioma || 'es';
+    const userLang = normalizeI18nLang(lang || req.user?.idioma || 'es');
 
     await this.recetaPdfService.generatePdf(
       [id],
@@ -225,7 +278,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "recalcularCostes" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/recalcular-costes')
   @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
@@ -240,7 +298,13 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateRecetaDto} updateRecetaDto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.recetas.editar)
@@ -252,7 +316,12 @@ export class RecetaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)

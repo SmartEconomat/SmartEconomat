@@ -65,6 +65,7 @@ describe('ProductoService - Alta compleja', () => {
 
   const mockProductoRepository = {
     existsByCodigoBarras: jest.fn(),
+    existsActiveByNombreNormalized: jest.fn().mockResolvedValue(false),
     createQueryBuilder: jest.fn(),
     findOne: jest.fn(),
     delete: jest.fn(),
@@ -665,11 +666,18 @@ describe('ProductoService - Alta compleja', () => {
       proveedores: [],
     } as Producto;
 
+    let productoFindOneCalls = 0;
     const manager = createManagerMock({
-      findOne: jest
-        .fn()
-        .mockResolvedValueOnce(existingProduct)
-        .mockResolvedValueOnce(updatedProduct),
+      findOne: jest.fn((entity: unknown) => {
+        if (entity === Producto) {
+          productoFindOneCalls += 1;
+          if (productoFindOneCalls <= 2) {
+            return Promise.resolve(existingProduct);
+          }
+          return Promise.resolve(updatedProduct);
+        }
+        return Promise.resolve(null);
+      }),
       find: jest.fn().mockResolvedValue([
         {
           id: 'pp-1',
@@ -723,6 +731,7 @@ describe('ProductoService - Alta compleja', () => {
     const manager = createManagerMock({
       findOne: jest
         .fn()
+        .mockResolvedValueOnce(existingProduct)
         .mockResolvedValueOnce(existingProduct)
         .mockResolvedValueOnce({
           ...existingProduct,

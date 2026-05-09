@@ -21,6 +21,7 @@ import { markEnum } from './massive.helpers.common';
 import { pickRequiredStateValue, pickStateValue } from './massive.state';
 import { buildSeedSuffix } from './deterministic.seed-data';
 
+/** Alias público (BuildBodyEnv) para simplificar payloads o props en smart-economat-backend (Nest). */
 export type BuildBodyEnv = {
   context: SeedContext;
   endpoint: Endpoint;
@@ -63,6 +64,15 @@ export type BuildBodyEnv = {
   pickRequired: (key: string, offset?: number) => string;
 };
 
+/**
+ * Crea recursos nuevos en base a las reglas de negocio.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {Endpoint} endpoint - Entrada efectiva esperada por el contrato.
+ * @undefined {string} resolvedPath - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {EnumCoverage} coverage - Entrada efectiva esperada por el contrato.
+ * @undefined {BuildBodyEnv} Datos efectivos después de ejecutar la operación.
+ */
 export function createBuildBodyEnv(
   context: SeedContext,
   endpoint: Endpoint,

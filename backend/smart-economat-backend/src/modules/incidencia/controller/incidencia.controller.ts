@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import {
   Body,
@@ -31,9 +31,11 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { validateDateRange } from '../../../common/utils/date-range.util';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Documentación en español.
+ * Controlador REST para incidencia.
  */
 @ApiTags('incidencias')
 @UseGuards(JwtAuthGuard, PermisosGuard)
@@ -52,12 +54,19 @@ export class IncidenciaController {
     };
   }
   /**
-   * Documentación en español.
+   * Inicializa la instancia con los colaboradores necesarios para el flujo.
+   *
+   * @param private readonly incidenciaService Parámetro de entrada para la operación.
    */
   constructor(private readonly incidenciaService: IncidenciaService) {}
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreateIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   @Post()
   @RequirePermissions(PERMISSIONS.incidencias.crear)
@@ -69,18 +78,22 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {IncidenciaQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<Incidencia>>} Datos efectivos después de ejecutar la operación.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   findAll(
-    @SortableFields(
-      ['recepcionId', 'pedidoId', 'fechaResolucion', 'createdAt', 'updatedAt'],
-      IncidenciaQueryDto
-    )
+    @SortableFields(SORTABLE_FIELDS.incidencias, IncidenciaQueryDto)
     query: IncidenciaQueryDto,
     @Req() req: { user?: { rol?: string } }
   ): Promise<PaginatedResponseDto<Incidencia>> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Incidencias');
     const userRole = req.user?.rol;
     return this.incidenciaService.findAll(query, userRole).then((result) => ({
       ...result,
@@ -91,7 +104,13 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.incidencias.ver)
@@ -106,7 +125,13 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdateIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.incidencias.editar)
@@ -120,7 +145,12 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.incidencias.eliminar)
@@ -130,7 +160,14 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "resolver" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {ResolverIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} usuarioId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   @Patch(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
@@ -145,25 +182,40 @@ export class IncidenciaController {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "reportar" en smart-economat-backend (Nest).
+   * @undefined {ReportIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia[]>} Datos efectivos después de ejecutar la operación.
    */
   @Post('reportar')
   @RequirePermissions(PERMISSIONS.incidencias.crear)
   @ApiOperation({
-    summary: 'Reporta una nueva incidencia vinculada a una recepción',
+    summary:
+      'Reporta nuevas incidencias vinculadas a una recepción (agrupadas por pedido y proveedor)',
   })
   @ApiResponse({
     status: 201,
-    description: 'Incidencia reportada correctamente',
+    description: 'Incidencias reportadas correctamente',
   })
-  reportar(@Body() dto: ReportIncidenciaDto): Promise<Incidencia> {
+  reportar(@Body() dto: ReportIncidenciaDto): Promise<Incidencia[]> {
     return this.incidenciaService
       .reportarIncidencia(dto)
-      .then((incidencia) => this.withIncidenciaLabels(incidencia));
+      .then((incidencias) =>
+        incidencias.map((inc) => this.withIncidenciaLabels(inc))
+      );
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "resolverTransaccional" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {ResolveIncidenciaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} usuarioId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<Incidencia>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)

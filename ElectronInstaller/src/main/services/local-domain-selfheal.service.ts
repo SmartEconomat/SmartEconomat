@@ -35,16 +35,25 @@ const LOCAL_DOMAIN = "smarteconomat.app";
 const LOOPBACK_IPV4 = "127.0.0.1";
 const LOOPBACK_IPV6 = "::1";
 
+/** Servicio del proceso principal: LocalDomainSelfHealService. */
 export class LocalDomainSelfHealService {
   private readonly processRunner = new ProcessRunnerService();
   private readonly certificateService = new CertificateService();
   private readonly firewallFacade = new FirewallFacadeService();
   private readonly onLog: (message: string) => void;
 
+  /**
+   * Construye la instancia del servicio.
+   * @param {SelfHealOptions} options - Entrada esperada por la función.
+   */
   constructor(options: SelfHealOptions) {
     this.onLog = options.onLog;
   }
 
+  /**
+   * Expone la operación "run" del instalador SmartEconomat.
+   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async run(): Promise<void> {
     const runtimePath = await this.resolveRuntimePath();
     if (!runtimePath) {

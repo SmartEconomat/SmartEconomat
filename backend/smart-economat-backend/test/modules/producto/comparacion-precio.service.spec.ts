@@ -101,7 +101,7 @@ describe('ProductoProveedorService - updateMerma y compararProveedores', () => {
       expect(result.proveedores[0].esOptimo).toBe(true);
       expect(result.proveedores[0].ahorroAbsoluto).toBe(0);
       expect(result.proveedores[0].ahorroAbsolutoPct).toBe(0);
-      expect(result.proveedores[0].costeEfectivoUnitario).toBe(10.5);
+      expect(result.proveedores[0].costeEfectivoUnitario).toBe(10.5263);
     });
 
     it('ordena por coste efectivo y calcula ahorro correctamente', async () => {
@@ -131,14 +131,14 @@ describe('ProductoProveedorService - updateMerma y compararProveedores', () => {
 
       expect(result.proveedores[0].proveedorNombre).toBe('ProvB');
       expect(result.proveedores[0].esOptimo).toBe(true);
-      expect(result.proveedores[0].costeEfectivoUnitario).toBe(10.71);
+      expect(result.proveedores[0].costeEfectivoUnitario).toBe(10.7143);
 
       expect(result.proveedores[1].proveedorNombre).toBe('ProvA');
       expect(result.proveedores[1].esOptimo).toBe(false);
-      expect(result.proveedores[1].costeEfectivoUnitario).toBe(11);
+      expect(result.proveedores[1].costeEfectivoUnitario).toBe(11.1111);
 
-      expect(result.proveedores[0].ahorroAbsoluto).toBe(0.29);
-      expect(result.proveedores[0].ahorroAbsolutoPct).toBeCloseTo(2.64, 1);
+      expect(result.proveedores[0].ahorroAbsoluto).toBe(0.3968);
+      expect(result.proveedores[0].ahorroAbsolutoPct).toBeCloseTo(3.57, 1);
 
       expect(result.proveedores[1].ahorroAbsoluto).toBe(0);
       expect(result.proveedores[1].ahorroAbsolutoPct).toBe(0);

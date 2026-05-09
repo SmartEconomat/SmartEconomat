@@ -18,7 +18,7 @@ import { Pedido } from '../pedido.entity/pedido.entity';
 import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuario-linea.entity';
 
 /**
- * Documentación en español.
+ * Representa pedido usuario en el sistema.
  */
 @Entity({ name: 'pedido_usuario' })
 @Index(['usuarioId'])
@@ -28,20 +28,20 @@ import { PedidoUsuarioLinea } from '../pedido-usuario-linea.entity/pedido-usuari
 @Check(`"coste_total" >= 0`)
 export class PedidoUsuario extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   @Generated('increment')
   numeroGlobal!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -51,19 +51,19 @@ export class PedidoUsuario extends BaseEntity {
   fechaPedido!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -76,7 +76,7 @@ export class PedidoUsuario extends BaseEntity {
   costeTotal!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -87,13 +87,13 @@ export class PedidoUsuario extends BaseEntity {
   estado!: EstadoPedidoUsuario;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'ubicacion_entrega_sugerida_id', nullable: true })
   ubicacionEntregaSugeridaId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, {
     nullable: true,
@@ -103,7 +103,7 @@ export class PedidoUsuario extends BaseEntity {
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Ubicacion, {
     nullable: true,
@@ -113,7 +113,7 @@ export class PedidoUsuario extends BaseEntity {
   ubicacionEntregaSugerida?: Relation<Ubicacion>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => PedidoUsuarioLinea, (linea) => linea.pedidoUsuario, {
     cascade: true,
@@ -121,7 +121,7 @@ export class PedidoUsuario extends BaseEntity {
   lineas!: Relation<PedidoUsuarioLinea[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => Pedido, (pedido) => pedido.pedidoUsuario)
   pedidos!: Relation<Pedido[]>;

@@ -22,6 +22,7 @@ import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto
 import { ValidarProduccionDto } from '../dto/validar-produccion.dto';
 import { In } from 'typeorm';
 import { Receta } from '../receta.entity/receta.entity';
+import { RecetaIngrediente } from '../receta-ingrediente.entity/receta-ingrediente.entity';
 import {
   ConsumirProduccionDto,
   TipoConsumoProduccion,
@@ -31,19 +32,81 @@ const CONSUMPTION_FLOAT_TOLERANCE = 0.000001;
 const CONSUMPTION_PORTION_STEP = 0.5;
 
 /**
- * Documentación en español.
+ * Servicio de dominio para produccion.
  */
 @Injectable()
 export class ProduccionService {
   private readonly logger = new Logger(ProduccionService.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {RecetaRepository} recetaRepository - Entrada efectiva esperada por el contrato.
+   * @undefined {DataSource} dataSource - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly recetaRepository: RecetaRepository,
     private readonly dataSource: DataSource
   ) {}
 
   /**
-   * Documentación en español.
+   * Traduce el coeficiente `cantidadAProducir` (escala de cocina, decimal permitido en este flujo)
+   * en cantidad física de producto terminado. El factor de ingredientes se obtiene frente a `receta.rendimiento`.
+   */
+  resolverCantidadFisicaDesdePorcionesPreparacion(
+    receta: Receta,
+    cantidadAProducir: number
+  ): number {
+    if (!(cantidadAProducir > 0)) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRODUCCION_CANTIDAD_PAYLOAD_INVALIDA')
+      );
+    }
+
+    if (receta.tamanioRacion && Number(receta.tamanioRacion) > 0) {
+      return cantidadAProducir * Number(receta.tamanioRacion);
+    }
+
+    const racionesReceta =
+      receta.raciones && Number(receta.raciones) > 0
+        ? Number(receta.raciones)
+        : 1;
+    const rendimientoBase =
+      receta.rendimiento && Number(receta.rendimiento) > 0
+        ? Number(receta.rendimiento)
+        : racionesReceta;
+
+    return (cantidadAProducir / racionesReceta) * rendimientoBase;
+  }
+
+  /**
+   * Factor de escalado respecto a la receta base: cantidad física objetivo / rendimiento nominal.
+   */
+  resolverFactorEscaladoProduccion(
+    receta: Receta,
+    cantidadFisicaProducida: number
+  ): number {
+    if (!receta.rendimiento || receta.rendimiento <= 0) {
+      throw new BadRequestException(
+        I18nHelper.getError('RECIPE_NO_RENDIMIENTO')
+      );
+    }
+    if (!(cantidadFisicaProducida > 0)) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRODUCCION_CANTIDAD_PAYLOAD_INVALIDA')
+      );
+    }
+    return cantidadFisicaProducida / Number(receta.rendimiento);
+  }
+
+  /**
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "ejecutarProduccion" en smart-economat-backend (Nest).
+   * @undefined {EjecutarProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
+   * @undefined {string | undefined} preparacionId - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
    */
   async ejecutarProduccion(
     dto: EjecutarProduccionDto,
@@ -56,6 +119,23 @@ export class ProduccionService {
       throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
     }
 
+    const fisicaExplicita =
+      dto.cantidadProducida != null && Number(dto.cantidadProducida) > 0;
+    const desdePorciones = dto.cantidadAProducir != null;
+
+    if (fisicaExplicita === desdePorciones) {
+      throw new BadRequestException(
+        I18nHelper.getError('PRODUCCION_CANTIDAD_PAYLOAD_INVALIDA')
+      );
+    }
+
+    const cantidadFisica = desdePorciones
+      ? this.resolverCantidadFisicaDesdePorcionesPreparacion(
+          receta,
+          dto.cantidadAProducir!
+        )
+      : Number(dto.cantidadProducida);
+
     if (!receta.rendimiento || receta.rendimiento <= 0) {
       throw new BadRequestException(
         I18nHelper.getError('RECIPE_NO_RENDIMIENTO')
@@ -67,6 +147,11 @@ export class ProduccionService {
         I18nHelper.getError('RECIPE_NO_INGREDIENTS')
       );
     }
+
+    const multiplicadorPre = this.resolverFactorEscaladoProduccion(
+      receta,
+      cantidadFisica
+    );
 
     return this.dataSource.transaction(async (manager) => {
       const productoElaborado =
@@ -88,7 +173,7 @@ export class ProduccionService {
         );
       }
 
-      const multiplicador = dto.cantidadProducida / receta.rendimiento!;
+      const multiplicador = multiplicadorPre;
 
       const productoIds = receta.ingredientes.map((i) => i.producto.id);
 
@@ -118,14 +203,10 @@ export class ProduccionService {
       const consumos: ConsumoEntry[] = [];
 
       for (const ing of receta.ingredientes) {
-        const cantidadNeta = ing.cantidad * multiplicador;
-        const merma = Number(ing.mermaAplicada ?? 0);
-        const cantidadBruta =
-          merma > 0 && merma < 100
-            ? cantidadNeta / (1 - merma / 100)
-            : cantidadNeta;
-
-        const cantidadRequerida = cantidadBruta;
+        const cantidadRequerida = this.calculateIngredientRequiredQuantity(
+          ing,
+          multiplicador
+        );
 
         const invsProducto = inventarios.filter(
           (inv) => inv.productoProveedor.producto.id === ing.producto.id
@@ -204,9 +285,8 @@ export class ProduccionService {
 
       let porcionesProducidas: number;
       if (receta.tamanioRacion && Number(receta.tamanioRacion) > 0) {
-        porcionesProducidas = Number(
-          (dto.cantidadProducida / Number(receta.tamanioRacion)).toFixed(3)
-        );
+        const porcionesExactas = cantidadFisica / Number(receta.tamanioRacion);
+        porcionesProducidas = Math.round(porcionesExactas * 2) / 2;
       } else {
         const racionesReceta = receta.raciones || 1;
         const rendimientoBase =
@@ -214,18 +294,16 @@ export class ProduccionService {
             ? Number(receta.rendimiento)
             : racionesReceta;
 
-        porcionesProducidas = Number(
-          ((dto.cantidadProducida / rendimientoBase) * racionesReceta).toFixed(
-            3
-          )
-        );
+        const porcionesExactas =
+          (cantidadFisica / rendimientoBase) * racionesReceta;
+        porcionesProducidas = Math.round(porcionesExactas * 2) / 2;
       }
 
       const lote = manager.create(ProduccionLote, {
         receta: { id: receta.id } as any,
         usuario: { id: userId } as any,
         preparacionId: preparacionId,
-        cantidadProducida: dto.cantidadProducida,
+        cantidadProducida: cantidadFisica,
         fechaProduccion: new Date(),
         fechaCaducidad,
         costeTotalReal,
@@ -264,7 +342,7 @@ export class ProduccionService {
 
       const inventarioResultado = manager.create(Inventario, {
         productoProveedor: productoProveedorResultado,
-        cantidadActual: dto.cantidadProducida,
+        cantidadActual: cantidadFisica,
         cantidadMinima: 0,
         cantidadMaxima: null,
         ubicacion: { id: destinoId } as any,
@@ -275,7 +353,7 @@ export class ProduccionService {
 
       const movResultado = manager.create(Movimiento, {
         tipo: TipoMovimiento.PRODUCCION_RESULTADO,
-        cantidad: dto.cantidadProducida,
+        cantidad: cantidadFisica,
         inventario: inventarioResultado,
         productoProveedor: productoProveedorResultado,
         entidad: 'ProduccionLote',
@@ -312,7 +390,7 @@ export class ProduccionService {
         }
       }
 
-      const nuevoCosteUnitario = costeTotalReal / dto.cantidadProducida;
+      const nuevoCosteUnitario = costeTotalReal / cantidadFisica;
       await manager.update(Receta, receta.id, {
         costeUnitarioEstimado: nuevoCosteUnitario,
       });
@@ -327,7 +405,12 @@ export class ProduccionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<PaginatedResponseDto<ProduccionLote>>} Datos efectivos después de ejecutar la operación.
    */
   async findAll(
     query: PaginationQueryDto
@@ -421,7 +504,13 @@ export class ProduccionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "consumirPorciones" en smart-economat-backend (Nest).
+   * @undefined {string} loteId - Entrada efectiva esperada por el contrato.
+   * @undefined {ConsumirProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
    */
   async consumirPorciones(
     loteId: string,
@@ -466,7 +555,7 @@ export class ProduccionService {
         );
       }
 
-      const nuevasRestantes = Number((actuales - porciones).toFixed(3));
+      const nuevasRestantes = Math.round((actuales - porciones) * 2) / 2;
       lote.porcionesRestantes = nuevasRestantes;
 
       if (nuevasRestantes <= 0) {
@@ -538,7 +627,10 @@ export class ProduccionService {
   }
 
   /**
-   * Documentación en español.
+   * Busca one.
+   *
+   * @param id Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   async findOne(id: string): Promise<ProduccionLote> {
     const lote = await this.dataSource.getRepository(ProduccionLote).findOne({
@@ -555,17 +647,55 @@ export class ProduccionService {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de validar multiple dentro del flujo de la aplicación.
+   *
+   * @param dto Parámetro de entrada para la operación.
    */
-  async validarMultiple(dto: ValidarProduccionDto) {
+  /**
+   * Expone "validarMultiple" en smart-economat-backend (Nest).
+   * @undefined {ValidarProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ ingredients: { productoId: any; nombre: string; requerido: number; disponible: number; unidad: string; isEnough: boolean; cheapestProveedorId: string; cheapestProveedorNombre: string; cheapestProductoProveedorId: string; cheapestPrecio: number | undefined; isFavorite: boolean; }[]; }>} Datos efectivos después de ejecutar la operación.
+   */
+  async validarMultiple(dto: ValidarProduccionDto): Promise<{
+    ingredients: {
+      productoId: string;
+      nombre: string;
+      requerido: number;
+      disponible: number;
+      unidad: string;
+      isEnough: boolean;
+      cheapestProveedorId?: string;
+      cheapestProveedorNombre?: string;
+      cheapestProductoProveedorId?: string;
+      cheapestPrecio?: number;
+      isFavorite: boolean;
+    }[];
+    itemsResumen: {
+      recetaId: string;
+      cantidadAProducir: number;
+      rendimientoBase: number;
+      racionesReceta: number;
+      cantidadFisicaObjetivo: number;
+      factorEscalado: number;
+    }[];
+  }> {
     const recipeIds = dto.items.map((it) => it.recetaId);
-    if (recipeIds.length === 0) return { ingredients: [] };
+    const itemsResumen: {
+      recetaId: string;
+      cantidadAProducir: number;
+      rendimientoBase: number;
+      racionesReceta: number;
+      cantidadFisicaObjetivo: number;
+      factorEscalado: number;
+    }[] = [];
+
+    if (recipeIds.length === 0) return { ingredients: [], itemsResumen };
 
     const recetas = await this.recetaRepository.findByIds(recipeIds);
     const agregation: Record<
       string,
       {
-        product: any;
+        product: RecetaIngrediente['producto'];
         required: number;
         unit: string;
         name: string;
@@ -577,11 +707,51 @@ export class ProduccionService {
       const receta = recetas.find((r) => r.id === item.recetaId);
       if (!receta) continue;
 
-      const multiplicador = item.cantidad / (receta.rendimiento || 1);
+      if (!receta.rendimiento || receta.rendimiento <= 0) {
+        throw new BadRequestException(
+          I18nHelper.getError('RECIPE_NO_RENDIMIENTO')
+        );
+      }
+
+      if (!receta.ingredientes || receta.ingredientes.length === 0) {
+        throw new BadRequestException(
+          I18nHelper.getError('RECIPE_NO_INGREDIENTS')
+        );
+      }
+
+      const cantidadFisicaObjetivo =
+        this.resolverCantidadFisicaDesdePorcionesPreparacion(
+          receta,
+          item.cantidadAProducir
+        );
+
+      const multiplicador = this.resolverFactorEscaladoProduccion(
+        receta,
+        cantidadFisicaObjetivo
+      );
+
+      const racionesReceta =
+        receta.raciones && Number(receta.raciones) > 0
+          ? Number(receta.raciones)
+          : 1;
+
+      itemsResumen.push({
+        recetaId: item.recetaId,
+        cantidadAProducir: item.cantidadAProducir,
+        rendimientoBase: Number(Number(receta.rendimiento).toFixed(6)),
+        racionesReceta,
+        cantidadFisicaObjetivo: Number(
+          Number(cantidadFisicaObjetivo).toFixed(3)
+        ),
+        factorEscalado: Number(multiplicador.toFixed(6)),
+      });
 
       for (const ing of receta.ingredientes) {
         const prodId = ing.producto.id;
-        const qty = Number((ing.cantidad * multiplicador).toFixed(3));
+        const qty = this.calculateIngredientRequiredQuantity(
+          ing,
+          multiplicador
+        );
 
         if (!agregation[prodId]) {
           agregation[prodId] = {
@@ -593,7 +763,8 @@ export class ProduccionService {
           };
         }
 
-        agregation[prodId].required += qty;
+        agregation[prodId].required +=
+          qty * this.conversionFactor(ing.unidad, agregation[prodId].unit);
       }
     }
 
@@ -650,10 +821,22 @@ export class ProduccionService {
       };
     });
 
-    return { ingredients: results };
+    return { ingredients: results, itemsResumen };
   }
 
-  private conversionFactor(fromUnit: any, toUnit: any): number {
+  private calculateIngredientRequiredQuantity(
+    ing: RecetaIngrediente,
+    multiplicador: number
+  ): number {
+    const cantidadNeta = Number(ing.cantidad) * multiplicador;
+    const merma = Number(ing.mermaAplicada ?? 0);
+
+    return merma > 0 && merma < 100
+      ? cantidadNeta / (1 - merma / 100)
+      : cantidadNeta;
+  }
+
+  private conversionFactor(fromUnit: unknown, toUnit: unknown): number {
     const from = String(fromUnit).toLowerCase();
     const to = String(toUnit).toLowerCase();
     if (from === to) return 1;

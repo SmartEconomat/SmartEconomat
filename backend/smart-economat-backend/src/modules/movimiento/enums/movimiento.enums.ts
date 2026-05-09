@@ -1,75 +1,49 @@
 /**
- * Documentación en español.
+ * Tipos de movimientos de stock (dirección y origen).
  */
 export enum TipoMovimiento {
-  /**
-   * Documentación en español.
-   */
   ENTRADA = 'entrada',
-  /**
-   * Documentación en español.
-   */
   SALIDA = 'salida',
-  /**
-   * Documentación en español.
-   */
+  TRANSFERENCIA = 'transferencia',
   AJUSTE = 'ajuste',
-  /**
-   * Documentación en español.
-   */
   PEDIDO = 'pedido',
-  /**
-   * Documentación en español.
-   */
   ENTRADA_COMPRA = 'entrada_compra',
-  /**
-   * Documentación en español.
-   */
   SALIDA_DISTRIBUCION = 'salida_distribucion',
-  /**
-   * Documentación en español.
-   */
   ENTRADA_DISTRIBUCION = 'entrada_distribucion',
-  /**
-   * Documentación en español.
-   */
   SALIDA_ELABORACION = 'salida_elaboracion',
-  /**
-   * Documentación en español.
-   */
   PRODUCCION_CONSUMO = 'produccion_consumo',
-  /**
-   * Documentación en español.
-   */
   PRODUCCION_RESULTADO = 'produccion_resultado',
-  /**
-   * Documentación en español.
-   */
   SALIDA_AJUSTE = 'salida_ajuste',
-  /**
-   * Documentación en español.
-   */
   MERMA = 'merma',
+  AUDITORIA = 'auditoria',
 }
 
 /**
- * Documentación en español.
+ * Tipos de movimientos que pueden realizarse manualmente.
  */
 export enum TipoMovimientoManual {
-  /**
-   * Documentación en español.
-   */
   ENTRADA = TipoMovimiento.ENTRADA,
-  /**
-   * Documentación en español.
-   */
   AJUSTE = TipoMovimiento.AJUSTE,
-  /**
-   * Documentación en español.
-   */
   SALIDA_AJUSTE = TipoMovimiento.SALIDA_AJUSTE,
 }
 
+/**
+ * Acciones de auditoría para el historial de movimientos.
+ */
+export enum AccionMovimiento {
+  CREATE = 'CREAR',
+  UPDATE = 'ACTUALIZAR',
+  DELETE = 'ELIMINAR',
+  CONFIG_CHANGE = 'CONFIG_CHANGE',
+  RESOLVEINCIDENCIA = 'RESOLVEINCIDENCIA',
+  AUDIT = 'AUDIT',
+  OTRO = 'OTRO',
+}
+
+/** Constantes públicas (TIPOS_DISPONIBLES) expuestas en smart-economat-backend (Nest). */
 export const TIPOS_DISPONIBLES: string[] = Object.values(TipoMovimiento);
+/** Constantes públicas (TIPOS_MOVIMIENTO_MANUAL) expuestas en smart-economat-backend (Nest). */
 export const TIPOS_MOVIMIENTO_MANUAL: string[] =
   Object.values(TipoMovimientoManual);
+/** Constantes públicas (ACCIONES_DISPONIBLES) expuestas en smart-economat-backend (Nest). */
+export const ACCIONES_DISPONIBLES: string[] = Object.values(AccionMovimiento);

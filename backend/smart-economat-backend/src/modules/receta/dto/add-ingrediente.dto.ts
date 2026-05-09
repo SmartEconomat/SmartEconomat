@@ -11,6 +11,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UnidadIngrediente } from '../enums/receta.enums';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 
+/** Clase pública (AddIngredienteDto). Paquete: smart-economat-backend (Nest). */
 export class AddIngredienteDto {
   @IsUUID('all')
   productoId!: string;

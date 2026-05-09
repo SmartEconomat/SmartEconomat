@@ -28,41 +28,71 @@ type PlantillasRolesCrudContract = {
   setTemplateActivo: (id: string, activo: boolean) => Promise<unknown>;
 };
 
+/** Clase pública (PlantillasRolesController). Paquete: smart-economat-backend (Nest). */
 @Controller('plantillas-roles')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Roles(rolUsuario.ADMIN)
 /**
- * Documentación en español.
+ * Controlador REST para plantillas roles.
  */
 export class PlantillasRolesController {
+  /**
+   * Construye la instancia configurada.
+   * @undefined {PlantillasRolesService} plantillasRolesService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly plantillasRolesService: PlantillasRolesService
   ) {}
 
+  /**
+   * Expone "findAll" en smart-economat-backend (Nest).
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity").PlantillaRol[]>} Datos efectivos después de ejecutar la operación.
+   */
   @Get()
   @RequirePermissions(PERMISSIONS.roles.listar)
   findAll() {
     return this.plantillasRolesService.findAll();
   }
 
+  /**
+   * Expone "findOne" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity").PlantillaRol>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.roles.listar)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.plantillasRolesService.findOne(id);
   }
 
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ permisosDirectos: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]; permisosHeredados: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]; permisosEfectivos: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]; }>} Datos efectivos después de ejecutar la operación.
+   */
   @Get(':id/permisos-efectivos')
   @RequirePermissions(PERMISSIONS.roles.listar)
   getPermisosEfectivos(@Param('id', ParseUUIDPipe) id: string) {
     return this.plantillasRolesService.getPermisosEfectivos(id);
   }
 
+  /**
+   * Crea recursos nuevos en base a las reglas de negocio.
+   * @undefined {CreatePlantillaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity").PlantillaRol>} Datos efectivos después de ejecutar la operación.
+   */
   @Post()
   @RequirePermissions(PERMISSIONS.roles.crear)
   create(@Body() dto: CreatePlantillaDto) {
     return this.plantillasRolesService.create(dto);
   }
 
+  /**
+   * Expone "duplicate" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {DuplicatePlantillaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<unknown>} Datos efectivos después de ejecutar la operación.
+   */
   @Post(':id/duplicar')
   @RequirePermissions(PERMISSIONS.roles.crear)
   duplicate(
@@ -74,6 +104,12 @@ export class PlantillasRolesController {
     return service.duplicateTemplate(id, dto.nombre);
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePlantillaDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity").PlantillaRol>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.roles.editar)
   update(
@@ -83,6 +119,12 @@ export class PlantillasRolesController {
     return this.plantillasRolesService.update(id, dto);
   }
 
+  /**
+   * Persiste modificaciones válidas sobre entidades existentes.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePlantillaPermisosDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/plantillas-roles/plantilla-rol.entity/plantilla-rol.entity").PlantillaRol>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/permisos')
   @RequirePermissions(PERMISSIONS.roles.editar)
   updatePermisos(
@@ -92,6 +134,12 @@ export class PlantillasRolesController {
     return this.plantillasRolesService.updatePermisos(id, dto.permisoIds);
   }
 
+  /**
+   * Establece referencias mutables internas del componente/servicio.
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {UpdatePlantillaActivoDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<unknown>} Datos efectivos después de ejecutar la operación.
+   */
   @Patch(':id/activo')
   @RequirePermissions(PERMISSIONS.roles.editar)
   setActivo(
@@ -103,6 +151,11 @@ export class PlantillasRolesController {
     return service.setTemplateActivo(id, dto.activo);
   }
 
+  /**
+   * Expone "remove" en smart-economat-backend (Nest).
+   * @undefined {string} id - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<{ message: string; }>} Datos efectivos después de ejecutar la operación.
+   */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.roles.eliminar)
   async remove(@Param('id', ParseUUIDPipe) id: string) {

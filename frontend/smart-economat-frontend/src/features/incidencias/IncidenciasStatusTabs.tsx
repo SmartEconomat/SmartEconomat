@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
+/** Alias público (IncidenciasResolucionTab) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type IncidenciasResolucionTab = 'por_resolver' | 'resueltas';
 
 interface IncidenciasStatusTabsProps {

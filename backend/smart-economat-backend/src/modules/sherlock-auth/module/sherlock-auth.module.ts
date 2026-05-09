@@ -19,7 +19,7 @@ import { Rol } from '../../roles/rol.entity/rol.entity';
 import { PlantillaRol } from '../../plantillas-roles/plantilla-rol.entity/plantilla-rol.entity';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 @Global()
 @Module({

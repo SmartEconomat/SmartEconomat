@@ -11,6 +11,7 @@ import { AlumnoSlot } from '../profesor/profesor.entity/alumno-slot.entity';
 import { Inventario } from '../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../movimiento/movimiento.entity/movimiento.entity';
 
+/** Clase pública (DistribucionModule). Paquete: smart-economat-backend (Nest). */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

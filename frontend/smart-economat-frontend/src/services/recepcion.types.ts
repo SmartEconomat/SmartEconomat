@@ -1,22 +1,26 @@
 import { ProductoNuevoDto } from './producto.types';
 
+/** Catálogo de valores enumerados (EstadoRecepcion) dentro de smart-economat-frontend (SPA). */
 export enum EstadoRecepcion {
   COMPLETADA = 'COMPLETADA',
   CON_INCIDENCIAS = 'CON_INCIDENCIAS',
 }
 
+/** Catálogo de valores enumerados (EstadoVisualProducto) dentro de smart-economat-frontend (SPA). */
 export enum EstadoVisualProducto {
   OPTIMO = 'OPTIMO',
   ROTO = 'ROTO',
   DEFECTUOSO = 'DEFECTUOSO',
 }
 
+/** Alias público (PasoWizard) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type PasoWizard =
   | 'SELECCION_PEDIDOS'
   | 'ESCANEO_LOTE'
   | 'REVISION_FINAL'
   | 'RESULTADO';
 
+/** Contrato de tipos público (RecepcionLineDto). Contexto: smart-economat-frontend (SPA). */
 export interface RecepcionLineDto {
   pedidoProductoId: string;
   cantidadRecibida: number;
@@ -27,6 +31,7 @@ export interface RecepcionLineDto {
   isWeighedWithScale?: boolean;
 }
 
+/** Contrato de tipos público (ProductoNuevoRecepcionDto). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   cantidadRecibida: number;
   cantidadAlbaran?: number;
@@ -34,12 +39,14 @@ export interface ProductoNuevoRecepcionDto extends ProductoNuevoDto {
   isWeighedWithScale?: boolean;
 }
 
+/** Contrato de tipos público (PedidoRecepcionDto). Contexto: smart-economat-frontend (SPA). */
 export interface PedidoRecepcionDto {
   pedidoId: string;
   nAlbaran?: string;
   observaciones?: string;
 }
 
+/** Contrato de tipos público (CreateRecepcionDto). Contexto: smart-economat-frontend (SPA). */
 export interface CreateRecepcionDto {
   pedidos?: PedidoRecepcionDto[];
   pedidoIds?: string[];
@@ -55,6 +62,7 @@ export interface CreateRecepcionDto {
 // Tipos para el Wizard del Frontend (Draft)
 // ==========================================
 
+/** Contrato de tipos público (LineaDraft). Contexto: smart-economat-frontend (SPA). */
 export interface LineaDraft {
   pedidoProductoId: string | null; // null si es producto espontáneo
   idProducto?: string;
@@ -100,8 +108,13 @@ export interface LineaDraft {
     | 'Exceso'
     | 'No entregado'
     | 'Nuevo';
+  /**
+   * Indica si el usuario ha modificado manualmente la cantidad del albarán.
+   */
+  isAlbaranDirty?: boolean;
 }
 
+/** Contrato de tipos público (PedidoDraft). Contexto: smart-economat-frontend (SPA). */
 export interface PedidoDraft {
   id: string;
   descripcion: string;
@@ -111,6 +124,7 @@ export interface PedidoDraft {
   observaciones?: string;
 }
 
+/** Contrato de tipos público (RecepcionDraft). Contexto: smart-economat-frontend (SPA). */
 export interface RecepcionDraft {
   // ── Meta ───────────────────────────────────────────
   version: number;
@@ -135,6 +149,7 @@ export interface RecepcionDraft {
   enviando: boolean;
 }
 
+/** Contrato de tipos público (RecepcionDraftEnvelope). Contexto: smart-economat-frontend (SPA). */
 export interface RecepcionDraftEnvelope {
   id?: string;
   version: number;
@@ -149,6 +164,7 @@ export interface RecepcionDraftEnvelope {
 // Tipos del Resultado Enriquecido
 // ==========================================
 
+/** Contrato de tipos público (IncidenciaGeneradaDto). Contexto: smart-economat-frontend (SPA). */
 export interface IncidenciaGeneradaDto {
   id: string;
   estado: string;
@@ -164,18 +180,21 @@ export interface IncidenciaGeneradaDto {
   };
 }
 
+/** Contrato de tipos público (PedidoActualizadoDto). Contexto: smart-economat-frontend (SPA). */
 export interface PedidoActualizadoDto {
   id: string;
   estadoAnterior: string;
   estadoNuevo: string;
 }
 
+/** Contrato de tipos público (ProductoCreadoDto). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoCreadoDto {
   id: string;
   nombre: string;
   codigoBarras: string;
 }
 
+/** Contrato de tipos público (RecepcionResultado). Contexto: smart-economat-frontend (SPA). */
 export interface RecepcionResultado {
   id: string;
   fechaRecepcion: string;

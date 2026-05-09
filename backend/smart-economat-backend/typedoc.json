@@ -1,0 +1,21 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/main.ts", "src/modules"],
+  "entryPointStrategy": "expand",
+  "out": "docs/technical",
+  "name": "SmartEconomat API - Documentación Técnica",
+  "includeVersion": true,
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "exclude": [
+    "**/*.spec.ts",
+    "**/node_modules/**",
+    "**/test/**",
+    "**/migrations/**"
+  ],
+  "plugin": [],
+  "theme": "default",
+  "readme": "README.md"
+}

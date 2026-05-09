@@ -12,39 +12,27 @@ import {
 import { MermaStats, MotivoMerma } from '../../services/merma.types';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import { useTranslation } from 'react-i18next';
+import { getEnumLabel } from '../../i18n/enumPresentation';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface MermaStatsProps {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   stats: MermaStats | null;
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   isLoading?: boolean;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
   const { t } = useTranslation();
-
-  /**
-   * Documentación en español.
-   */
-  const MOTIVO_LABELS: Record<string, string> = {
-    [MotivoMerma.ROTURA]: t('merma.form.motivoOpciones.roturaEnvase'),
-    [MotivoMerma.DETERIORO]: t('merma.form.motivoOpciones.deterioroCaducidad'),
-    [MotivoMerma.HURTO]: t('merma.form.motivoOpciones.hurto'),
-    [MotivoMerma.ERROR_PREPARACION]: t(
-      'merma.form.motivoOpciones.errorPreparacion'
-    ),
-    [MotivoMerma.OTROS]: t('merma.form.motivoOpciones.otros'),
-  };
 
   if (isLoading) return <LinearProgress />;
   if (!stats) return null;
@@ -142,7 +130,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
             <Box key={m.motivo}>
               <Box display="flex" justifyContent="space-between" mb={1}>
                 <Typography variant="body2" fontWeight={500}>
-                  {MOTIVO_LABELS[m.motivo] || m.motivo}
+                  {getEnumLabel(t, 'mermaMotivo', m.motivo)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {Number(m.totalCantidad).toFixed(2)} (

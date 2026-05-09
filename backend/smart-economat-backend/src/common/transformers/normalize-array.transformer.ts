@@ -1,13 +1,16 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 /**
- * Documentación en español.
+ * Representa normalize array transformer en el sistema.
  */
 export class NormalizeArrayTransformer {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de transform dentro del flujo de la aplicación.
+   *
+   * @param params Parámetro de entrada para la operación.
+   * @returns Valor resultante de la operación.
    */
   static transform(params: { value: any }): any {
     const value = params.value;

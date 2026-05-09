@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Campos técnicos base que suelen ser ignorados o eliminados en payloads de creación/actualización.
  */
 const BASE_ENTITY_FIELDS = [
   'id',
@@ -11,7 +11,10 @@ const BASE_ENTITY_FIELDS = [
 ];
 
 /**
- * Documentación en español.
+ * Limpia un objeto eliminando los campos técnicos automáticos de la base de datos (id, createdAt, etc.).
+ * Útil antes de enviar datos a un endpoint de creación o actualización.
+ * @param data Objeto original con todos los campos.
+ * @returns Una copia del objeto sin los campos técnicos.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cleanPayload<T extends Record<string, any>>(
@@ -25,7 +28,9 @@ export function cleanPayload<T extends Record<string, any>>(
 }
 
 /**
- * Documentación en español.
+ * Normaliza un valor a string limpio (trim) o devuelve undefined si está vacío o es nulo.
+ * @param value El valor a normalizar.
+ * @returns El string limpio o undefined.
  */
 export function toOptionalTrimmedString(value: unknown): string | undefined {
   if (value == null) {
@@ -37,7 +42,9 @@ export function toOptionalTrimmedString(value: unknown): string | undefined {
 }
 
 /**
- * Documentación en español.
+ * Intenta convertir un valor a número finito o devuelve undefined si no es posible.
+ * @param value El valor a convertir.
+ * @returns El número convertido o undefined.
  */
 export function toFiniteNumberOrUndefined(value: unknown): number | undefined {
   if (value == null) {
@@ -53,7 +60,10 @@ export function toFiniteNumberOrUndefined(value: unknown): number | undefined {
 }
 
 /**
- * Documentación en español.
+ * Normaliza el parámetro de página asegurando que sea un entero positivo (mínimo 1).
+ * @param page Valor de la página recibido.
+ * @param fallback Valor por defecto si la entrada no es válida.
+ * @returns Número de página normalizado.
  */
 export function normalizePageParam(
   page: number | undefined,
@@ -67,7 +77,11 @@ export function normalizePageParam(
 }
 
 /**
- * Documentación en español.
+ * Normaliza el parámetro de límite (registros por página) asegurando un rango válido.
+ * @param limit Valor del límite recibido.
+ * @param fallback Valor por defecto.
+ * @param max Valor máximo permitido para evitar sobrecarga del servidor.
+ * @returns Límite normalizado.
  */
 export function normalizeLimitParam(
   limit: number | undefined,

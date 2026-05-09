@@ -8,6 +8,7 @@ import {
   openPdfInNewTab,
 } from './api.service';
 
+/** Contrato de tipos público (ReportePedidosPdfParams). Contexto: smart-economat-frontend (SPA). */
 export interface ReportePedidosPdfParams {
   startDate: string;
   endDate: string;
@@ -16,6 +17,7 @@ export interface ReportePedidosPdfParams {
   paginaPorProveedor?: boolean;
 }
 
+/** Contrato de tipos público (ReporteIncidenciasPdfParams). Contexto: smart-economat-frontend (SPA). */
 export interface ReporteIncidenciasPdfParams {
   startDate: string;
   endDate: string;
@@ -23,6 +25,7 @@ export interface ReporteIncidenciasPdfParams {
   soloNoResueltas?: boolean;
 }
 
+/** Contrato de tipos público (ReporteIncidenciasExcelParams). Contexto: smart-economat-frontend (SPA). */
 export interface ReporteIncidenciasExcelParams {
   startDate: string;
   endDate: string;
@@ -36,6 +39,11 @@ const toLocalStartOfDayIso = (date: string): string =>
 const toLocalEndOfDayIso = (date: string): string =>
   dayjs(date).endOf('day').toISOString();
 
+/**
+ * Expone "downloadReportePedidosPdf" en smart-economat-frontend (SPA).
+ * @undefined {ReportePedidosPdfParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function downloadReportePedidosPdf(
   params: ReportePedidosPdfParams
 ): Promise<void> {
@@ -48,6 +56,36 @@ export async function downloadReportePedidosPdf(
   await openPdfInNewTab(`/recepciones/reporte-pdf?${query.toString()}`);
 }
 
+/** Contrato de tipos público (ReportePedidosExcelParams). Contexto: smart-economat-frontend (SPA). */
+export interface ReportePedidosExcelParams {
+  startDate: string;
+  endDate: string;
+  proveedorId?: string;
+  incluirCancelados?: boolean;
+}
+
+/**
+ * Expone "downloadReportePedidosExcel" en smart-economat-frontend (SPA).
+ * @undefined {ReportePedidosExcelParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
+export async function downloadReportePedidosExcel(
+  params: ReportePedidosExcelParams
+): Promise<void> {
+  const query = new URLSearchParams();
+  query.set('fechaDesde', toLocalStartOfDayIso(params.startDate));
+  query.set('fechaHasta', toLocalEndOfDayIso(params.endDate));
+  await downloadFile(
+    `/export/pedidos/xlsx?${query.toString()}`,
+    'pedidos.xlsx'
+  );
+}
+
+/**
+ * Expone "downloadReporteIncidenciasPdf" en smart-economat-frontend (SPA).
+ * @undefined {ReporteIncidenciasPdfParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function downloadReporteIncidenciasPdf(
   params: ReporteIncidenciasPdfParams
 ): Promise<void> {
@@ -62,6 +100,11 @@ export async function downloadReporteIncidenciasPdf(
   await openPdfInNewTab(`/export/incidencias/pdf?${query.toString()}`);
 }
 
+/**
+ * Expone "downloadReporteIncidenciasExcel" en smart-economat-frontend (SPA).
+ * @undefined {ReporteIncidenciasExcelParams} params - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function downloadReporteIncidenciasExcel(
   params: ReporteIncidenciasExcelParams
 ): Promise<void> {
@@ -80,7 +123,11 @@ export async function downloadReporteIncidenciasExcel(
 }
 
 /**
- * Documentación en español.
+ * Recupera el histórico de las últimas 50 recepciones registradas.
+ */
+/**
+ * Expone "fetchRecepciones" en smart-economat-frontend (SPA).
+ * @undefined {Promise<unknown[]>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchRecepciones(): Promise<unknown[]> {
   const response = await baseFetch('/recepciones?limit=50');
@@ -94,7 +141,9 @@ export async function fetchRecepciones(): Promise<unknown[]> {
 }
 
 /**
- * Documentación en español.
+ * Registra una nueva recepción de mercancía en el sistema, procesando stock e incidencias.
+ * @param payload Datos del borrador finalizado y consolidado.
+ * @returns Resumen de las acciones realizadas (stock creado, mermas, etc.).
  */
 export async function createRecepcion(
   payload: CreateRecepcionDto
@@ -125,7 +174,12 @@ export async function createRecepcion(
 }
 
 /**
- * Documentación en español.
+ * Elimina un registro de recepción por su ID.
+ */
+/**
+ * Elimina o marca entidades siguendo las políticas configuradas.
+ * @undefined {string} id - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export async function deleteRecepcion(id: string): Promise<void> {
   const response = await baseFetch(`/recepciones/${id}`, {

@@ -1,6 +1,7 @@
 import { IsUUID, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (AssignRoleToUserDto). Paquete: smart-economat-backend (Nest). */
 export class AssignRoleToUserDto {
   @ApiProperty({
     description: 'docs.ID_DEL_USUARIO_AL_QUE_SE_ASIGNAR_EL_ROL',

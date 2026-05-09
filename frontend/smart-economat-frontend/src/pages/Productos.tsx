@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -32,7 +32,6 @@ import {
 import { formatDigitsForSR } from '../utils/a11y-format';
 import { formatLocalizedNumber } from '../utils/numberUtils';
 import { formatLocalizedDate } from '../utils/intlFormat';
-import type { SelectChangeEvent } from '@mui/material/Select';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
@@ -63,6 +62,7 @@ import {
   updateProducto,
   restoreProducto,
   fetchHistorialPrecios,
+  invalidateProductosCache,
 } from '../services/producto.service';
 import { deleteResource, resolveStoredFileUrl } from '../services/api.service';
 import { DownloadService } from '../services/download.service';
@@ -101,9 +101,10 @@ import { searchByBarcode } from '../services/openfoodfacts.service';
 import LinearLoader from '../components/ui/LinearLoader';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDataTable } from '../hooks/useDataTable';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 interface ProductoFormValues {
   [key: string]: unknown;
@@ -138,14 +139,9 @@ const resolveProveedorId = (proveedor: ProductoProveedor): string | undefined =>
 
 const Productos: React.FC = () => {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const toast = useToast();
+  const { isExpanded: sidebarExpanded } = useSidebar();
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<string | undefined>('nombre');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<ProductFiltersState>(initialFilters);
   const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [data, setData] = useState<Producto[]>([]);
@@ -159,6 +155,7 @@ const Productos: React.FC = () => {
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { screenWidth } = useBreakpoints();
   const theme = useTheme();
   const [isSearchScannerOpen, setIsSearchScannerOpen] = useState(false);
   const [priceHistory, setPriceHistory] = useState<HistorialPrecio[]>([]);
@@ -166,9 +163,23 @@ const Productos: React.FC = () => {
   const [historyProviderFilter, setHistoryProviderFilter] =
     useState<string>('all');
   const historySectionRef = useRef<HTMLDivElement | null>(null);
-  const toast = useToast();
-  const { isExpanded: sidebarExpanded } = useSidebar();
-  const { screenWidth } = useBreakpoints();
+
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onPageChange,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'nombre',
+    order: 'asc',
+  });
 
   // Estado con retraso para la aparición de columnas y evitar parpadeos/solapamientos durante la animación del sidebar
   const [isSidebarActuallyExpanded, setIsSidebarActuallyExpanded] =
@@ -221,21 +232,25 @@ const Productos: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    fetchProductos(
-      page,
-      pageSize,
-      searchTerm,
-      filters.categorias,
-      sortBy,
-      sortOrder,
-      activeTab === 'deleted'
-    )
+    fetchProductos({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      searchTerm: queryParams.searchTerm,
+      // Combinar filtros de chips con filtros de tabla
+      categorias: [
+        ...(filters.categorias || []),
+        ...(tableFilters.tipo ? [tableFilters.tipo] : []),
+      ],
+      sortBy: queryParams.sortBy,
+      order: queryParams.order,
+      soloEliminados: activeTab === 'deleted',
+    })
       .then((productosData) => {
         setData(productosData.data);
-        setTotalPages(productosData.totalPages);
-        setTotalItems(productosData.total);
+        syncPaginationFromResponse(productosData);
       })
       .catch((err: unknown) => {
+        syncPaginationFromResponse({ total: 0, data: [] });
         const message =
           err instanceof Error
             ? err.message
@@ -244,13 +259,11 @@ const Productos: React.FC = () => {
       })
       .finally(() => setIsLoading(false));
   }, [
-    page,
-    pageSize,
-    searchTerm,
+    queryParams,
     filters.categorias,
-    sortBy,
-    sortOrder,
+    tableFilters.tipo,
     activeTab,
+    syncPaginationFromResponse,
     t,
   ]);
 
@@ -258,15 +271,12 @@ const Productos: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, filters.categorias, filters.alergenos, activeTab]);
-
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
     setIsDeleting(true);
     try {
       await deleteResource(`/productos/${productToDelete.id}`);
+      invalidateProductosCache();
       setData((prev) => prev.filter((p) => p.id !== productToDelete.id));
       toast.success(
         t('productos.toast.eliminadoNombre', {
@@ -335,7 +345,11 @@ const Productos: React.FC = () => {
       await loadData();
     } catch (error) {
       console.error('Error restaurando producto:', error);
-      toast.error(t('productos.toast.errorRestaurar'));
+      const message =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : t('productos.toast.errorRestaurar');
+      toast.error(message);
     }
   };
 
@@ -345,6 +359,7 @@ const Productos: React.FC = () => {
         id: 'nombre',
         label: t('productos.columns.nombre'),
         sortable: true,
+        sortType: 'string',
         minWidth: 280,
         render: (row) => (
           <Stack direction="row" spacing={1} alignItems="center">
@@ -371,6 +386,7 @@ const Productos: React.FC = () => {
         render: (row) => row.marca ?? '—',
         hideOnMobile: true,
         sortable: true,
+        sortType: 'string',
         minWidth: 140,
         width: 160,
       },
@@ -381,6 +397,7 @@ const Productos: React.FC = () => {
           row.tipo ? <StatusChip status={row.tipo} variant="outlined" /> : '—',
         hideOnMobile: true,
         sortable: true,
+        sortType: 'string',
         width: 140,
       },
       {
@@ -406,6 +423,7 @@ const Productos: React.FC = () => {
         ),
         responsiveDisplay: { xs: 'none', lg: 'table-cell' },
         sortable: true,
+        sortType: 'string',
         width: 160,
       },
       {
@@ -414,6 +432,7 @@ const Productos: React.FC = () => {
         render: (row) => formatLocalizedDate(row.createdAt),
         hideOnMobile: true,
         sortable: true,
+        sortType: 'date',
         width: 120,
       },
     ];
@@ -427,12 +446,6 @@ const Productos: React.FC = () => {
 
     return allColumns;
   }, [isSidebarActuallyExpanded, screenWidth, t]);
-
-  const handleSort = (key: string | keyof Producto) => {
-    const isAsc = sortBy === key && sortOrder === 'asc';
-    setSortOrder(isAsc ? 'desc' : 'asc');
-    setSortBy(key as string);
-  };
 
   const buildEditData = (row: Producto): ProductoFormValues => {
     const editData: ProductoFormValues = {
@@ -480,8 +493,7 @@ const Productos: React.FC = () => {
     const code = rawCode.trim();
     if (!code) return;
 
-    setSearchTerm(code);
-    setPage(1);
+    onSearchChange(code);
 
     try {
       const existingProduct = await getProductoByBarcode(code);
@@ -611,10 +623,7 @@ const Productos: React.FC = () => {
       <PageToolbar
         title={t('productos.titulo')}
         searchValue={searchTerm}
-        onSearchChange={(v) => {
-          setSearchTerm(v);
-          setPage(1);
-        }}
+        onSearchChange={onSearchChange}
         searchPlaceholder={t('productos.searchPlaceholder')}
         searchId="search-productos"
         autoFocusSearch={true}
@@ -667,11 +676,11 @@ const Productos: React.FC = () => {
               filters={filters}
               onChange={(newFilters) => {
                 setFilters(newFilters);
-                setPage(1);
+                onPageChange(null, 1);
               }}
               onClear={() => {
                 setFilters(initialFilters);
-                setPage(1);
+                onPageChange(null, 1);
               }}
               inline
             />
@@ -732,7 +741,7 @@ const Productos: React.FC = () => {
         </Box>
 
         <Box sx={{ p: { xs: 2, sm: 4 } }}>
-          {error && (
+          {!isLoading && error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
@@ -745,10 +754,13 @@ const Productos: React.FC = () => {
             hideTopBar={true}
             viewMode={viewMode}
             defaultViewMode={viewMode}
-            onSort={handleSort}
-            sortConfig={{ key: sortBy || '', direction: sortOrder }}
+            onSort={onSort}
+            sortConfig={sortConfig}
+            filters={tableFilters}
+            onFilter={onFilter}
+            pagination={paginationProps}
             actionsWidth={120}
-            getRowAriaLabel={(row) =>
+            getRowAriaLabel={(row: Producto) =>
               t('productos.aria.filaProducto', {
                 nombre: row.nombre,
                 marca: row.marca ?? t('productos.marcaGenerica'),
@@ -828,17 +840,6 @@ const Productos: React.FC = () => {
                 )}
               </Box>
             }
-            pagination={{
-              currentPage: page,
-              totalPages: totalPages,
-              onPageChange: (_, newPage) => setPage(newPage),
-              pageSize: pageSize,
-              pageSizeOptions: [4, 8, 12, 24],
-              onPageSizeChange: (e: SelectChangeEvent<number>) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              },
-            }}
             renderGridItem={(producto) => (
               <ProductCard
                 producto={producto}

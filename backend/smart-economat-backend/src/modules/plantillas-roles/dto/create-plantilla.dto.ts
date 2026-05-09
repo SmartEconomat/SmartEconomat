@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (CreatePlantillaDto). Paquete: smart-economat-backend (Nest). */
 export class CreatePlantillaDto {
   @ApiProperty({
     description: 'docs.NOMBRE_NICO_DE_LA_PLANTILLA',

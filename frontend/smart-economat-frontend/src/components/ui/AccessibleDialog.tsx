@@ -10,7 +10,7 @@ import MuiDialog, {
 } from '@mui/material/Dialog';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
@@ -23,12 +23,15 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 let openDialogCount = 0;
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de set element inert dentro del flujo de la aplicación.
+ *
+ * @param element Parámetro de entrada para la operación.
+ * @param shouldBeInert Parámetro de entrada para la operación.
  */
 function setElementInert(element: HTMLElement, shouldBeInert: boolean): void {
   const target = element as HTMLElement & { inert?: boolean };
@@ -46,7 +49,10 @@ function setElementInert(element: HTMLElement, shouldBeInert: boolean): void {
 }
 
 /**
- * Documentación en español.
+ * Determina si element inert.
+ *
+ * @param element Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function isElementInert(element: HTMLElement): boolean {
   const target = element as HTMLElement & { inert?: boolean };
@@ -54,7 +60,7 @@ function isElementInert(element: HTMLElement): boolean {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de sync application inert state dentro del flujo de la aplicación.
  */
 function syncApplicationInertState(): void {
   const appRoot = document.getElementById('root');
@@ -74,7 +80,7 @@ function syncApplicationInertState(): void {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de sync dialog stack inert state dentro del flujo de la aplicación.
  */
 function syncDialogStackInertState(): void {
   const dialogPapers = Array.from(
@@ -96,7 +102,9 @@ function syncDialogStackInertState(): void {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de restore focus dentro del flujo de la aplicación.
+ *
+ * @param element Parámetro de entrada para la operación.
  */
 function restoreFocus(element: HTMLElement | null): void {
   if (!element || !element.isConnected) {
@@ -117,7 +125,10 @@ function restoreFocus(element: HTMLElement | null): void {
 }
 
 /**
- * Documentación en español.
+ * Obtiene initial focus target.
+ *
+ * @param dialogPaper Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 function getInitialFocusTarget(dialogPaper: HTMLElement): HTMLElement {
   const preferred = dialogPaper.querySelector<HTMLElement>(
@@ -139,7 +150,17 @@ function getInitialFocusTarget(dialogPaper: HTMLElement): HTMLElement {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "AccessibleDialog" en smart-economat-frontend (SPA).
+ * @undefined {MuiDialogProps} {
+ *   open,
+ *   PaperProps,
+ *   disableRestoreFocus,
+ *   ...restProps
+ * } - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@types/react/jsx-runtime").JSX.Element} Datos efectivos después de ejecutar la operación.
  */
 export default function AccessibleDialog({
   open,

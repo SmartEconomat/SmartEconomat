@@ -1,5 +1,5 @@
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Injectable, Logger } from '@nestjs/common';
@@ -14,7 +14,7 @@ import { Incidencia } from '../../incidencia/incidencia.entity/incidencia.entity
 import { DashboardStatsDto } from '../dto/dashboard-stats.dto';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 const DASHBOARD_PENDING_ORDER_STATES = [
   EstadoPedido.PENDIENTE_DE_APROBACION,
@@ -24,18 +24,18 @@ const DASHBOARD_PENDING_ORDER_STATES = [
 ] as const;
 
 /**
- * Documentación en español.
+ * Servicio de dominio para dashboard.
  */
 @Injectable()
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   private static readonly MOVIMIENTOS_RECIENTES_LIMITE = 7;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   constructor(
     @InjectRepository(Inventario)
@@ -53,7 +53,12 @@ export class DashboardService {
   ) {}
 
   /**
-   * Documentación en español.
+   * Obtiene stats.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Obtiene valores o vistas materializadas.
+   * @undefined {Promise<DashboardStatsDto>} Datos efectivos después de ejecutar la operación.
    */
   async getStats(): Promise<DashboardStatsDto> {
     this.logger.log(I18nHelper.translate('logs.FETCHING_DASHBOARD_STATISTICS'));

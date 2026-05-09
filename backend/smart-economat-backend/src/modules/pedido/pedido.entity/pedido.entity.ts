@@ -22,7 +22,7 @@ import { PurchaseBatch } from '../purchase-batch.entity/purchase-batch.entity';
 import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 
 /**
- * Documentación en español.
+ * Representa pedido en el sistema.
  */
 @Entity({ name: 'pedido' })
 @Index(['numeroGlobal'], { unique: true })
@@ -36,37 +36,37 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'numero_global', type: 'bigint', unique: true })
   numeroGlobal!: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'usuario_id', nullable: true })
   usuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'proveedor_id', nullable: true })
   proveedorId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'batch_id', nullable: true })
   batchId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ name: 'pedido_usuario_id', nullable: true })
   pedidoUsuarioId?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Usuario, (usuario) => usuario.pedidos, {
     nullable: true,
@@ -76,7 +76,7 @@ export class Pedido extends BaseEntity {
   usuario?: Relation<Usuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => Proveedor, (proveedor) => proveedor.pedidos, {
     nullable: true,
@@ -86,7 +86,7 @@ export class Pedido extends BaseEntity {
   proveedor?: Relation<Proveedor>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => PurchaseBatch, (batch) => batch.pedidos, {
     nullable: true,
@@ -96,7 +96,7 @@ export class Pedido extends BaseEntity {
   batch?: Relation<PurchaseBatch>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @ManyToOne(() => PedidoUsuario, (pedidoUsuario) => pedidoUsuario.pedidos, {
     nullable: true,
@@ -106,7 +106,7 @@ export class Pedido extends BaseEntity {
   pedidoUsuario?: Relation<PedidoUsuario>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'timestamptz',
@@ -116,19 +116,19 @@ export class Pedido extends BaseEntity {
   fechaPedido!: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'timestamptz', nullable: true, name: 'fecha_entrega' })
   fechaEntrega?: Date;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true, name: 'observaciones' })
   observaciones?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'numeric',
@@ -141,7 +141,7 @@ export class Pedido extends BaseEntity {
   costeTotal!: number;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({
     type: 'enum',
@@ -152,7 +152,7 @@ export class Pedido extends BaseEntity {
   estado!: EstadoPedido;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => PedidoProducto, (pp) => pp.pedido, {
     cascade: true,
@@ -160,19 +160,19 @@ export class Pedido extends BaseEntity {
   pedidoProductos!: Relation<PedidoProducto[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @OneToMany(() => RecepcionPedido, (rp) => rp.pedido)
   recepcionesPedido!: Relation<RecepcionPedido[]>;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true, name: 'motivo_cancelacion' })
   motivoCancelacion?: string;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   @Column({ type: 'text', nullable: true, name: 'motivo_incidencia' })
   motivoIncidencia?: string;
@@ -180,7 +180,12 @@ export class Pedido extends BaseEntity {
   /* --- Métodos de Dominio --- */
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de calcular total dentro del flujo de la aplicación.
+   * @returns Valor resultante de la operación.
+   */
+  /**
+   * Expone "calcularTotal" en smart-economat-backend (Nest).
+   * @undefined {number} Datos efectivos después de ejecutar la operación.
    */
   calcularTotal(): number {
     if (!this.pedidoProductos || this.pedidoProductos.length === 0) {
@@ -192,14 +197,25 @@ export class Pedido extends BaseEntity {
   }
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de marcar como recepcionado dentro del flujo de la aplicación.
+   */
+  /**
+   * Expone "marcarComoRecepcionado" en smart-economat-backend (Nest).
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   marcarComoRecepcionado(): void {
     this.estado = EstadoPedido.RECEPCIONADO;
   }
 
   /**
-   * Documentación en español.
+   * Determina si cancelar.
+   *
+   * @param motivo Parámetro de entrada para la operación.
+   */
+  /**
+   * Expone "cancelar" en smart-economat-backend (Nest).
+   * @undefined {string} motivo - Entrada efectiva esperada por el contrato.
+   * @undefined {void} Datos efectivos después de ejecutar la operación.
    */
   cancelar(motivo: string): void {
     this.estado = EstadoPedido.CANCELADO;

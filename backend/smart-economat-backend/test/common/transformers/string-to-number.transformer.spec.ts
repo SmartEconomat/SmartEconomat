@@ -1,7 +1,7 @@
 import { StringToNumberTransformer } from '../../../src/common/transformers/string-to-number.transformer';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('StringToNumberTransformer', () => {
   describe('transform()', () => {

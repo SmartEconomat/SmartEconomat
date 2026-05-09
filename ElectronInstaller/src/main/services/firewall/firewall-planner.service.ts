@@ -8,7 +8,13 @@ function buildRuleName(port: number): string {
   return `SmartEconomat Local Port (${port})`;
 }
 
+/** Servicio del proceso principal: FirewallPlannerService. */
 export class FirewallPlannerService {
+  /**
+   * Expone la operación "buildPlan" del instalador SmartEconomat.
+   * @param {FirewallDetectionResult} detection - Entrada esperada por la función.
+   * @returns {FirewallPlan} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   buildPlan(detection: FirewallDetectionResult): FirewallPlan {
     if (!detection.isWindows) {
       return {

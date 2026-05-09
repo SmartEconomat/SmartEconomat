@@ -1,9 +1,22 @@
 import { SeedContext } from './seed-context';
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} Datos efectivos después de ejecutar la operación.
+ */
 export function getStateArray(context: SeedContext, key: string): string[] {
   return context.getState<string[]>(key) || [];
 }
 
+/**
+ * Establece referencias mutables internas del componente/servicio.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string[]} values - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function setStateArray(
   context: SeedContext,
   key: string,
@@ -12,6 +25,13 @@ export function setStateArray(
   context.set(key, values);
 }
 
+/**
+ * Expone "pushStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {unknown} value - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function pushStateValue(
   context: SeedContext,
   key: string,
@@ -28,6 +48,13 @@ export function pushStateValue(
   }
 }
 
+/**
+ * Expone "removeStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string} value - Entrada efectiva esperada por el contrato.
+ * @undefined {void} Datos efectivos después de ejecutar la operación.
+ */
 export function removeStateValue(
   context: SeedContext,
   key: string,
@@ -45,6 +72,13 @@ export function removeStateValue(
   );
 }
 
+/**
+ * Expone "consumeStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string} fallback - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function consumeStateValue(
   context: SeedContext,
   key: string,
@@ -63,6 +97,12 @@ export function consumeStateValue(
   return fallback;
 }
 
+/**
+ * Expone "consumeRequiredStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function consumeRequiredStateValue(
   context: SeedContext,
   key: string
@@ -76,6 +116,15 @@ export function consumeRequiredStateValue(
   return value;
 }
 
+/**
+ * Expone "pickStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} fallback - Entrada efectiva esperada por el contrato.
+ * @undefined {number} offset - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function pickStateValue(
   context: SeedContext,
   key: string,
@@ -92,6 +141,14 @@ export function pickStateValue(
   return values[idx] || fallback;
 }
 
+/**
+ * Expone "pickRequiredStateValue" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {number} offset - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function pickRequiredStateValue(
   context: SeedContext,
   key: string,
@@ -107,6 +164,12 @@ export function pickRequiredStateValue(
   return value;
 }
 
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} key - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function getRequiredStateString(
   context: SeedContext,
   key: string

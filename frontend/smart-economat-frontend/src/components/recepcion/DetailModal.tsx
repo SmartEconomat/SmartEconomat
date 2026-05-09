@@ -20,7 +20,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 /**
- * Documentación en español.
+ * Tipos de detalle que puede mostrar el modal: movimientos, inventarios o nuevos productos.
  */
 export type DetailType =
   | 'movimientos'
@@ -29,29 +29,34 @@ export type DetailType =
   | null;
 
 /**
- * Documentación en español.
+ * Propiedades para el componente DetailModal.
  */
 interface DetailModalProps {
   /**
-   * Documentación en español.
+  /**
+   * Indica si el modal está visible.
    */
   open: boolean;
   /**
-   * Documentación en español.
+  /**
+   * Categoría de información a mostrar.
    */
   type: DetailType;
   /**
-   * Documentación en español.
+  /**
+   * Datos del resultado de la recepción procesada.
    */
   resultado: RecepcionResultado | null;
   /**
-   * Documentación en español.
+  /**
+   * Función para cerrar el modal.
    */
   onClose: () => void;
 }
 
 /**
- * Documentación en español.
+ * Modal dinámico que muestra listas detalladas de los efectos de una recepción
+ * (stock creado, movimientos de almacén, etc.) permitiendo la navegación a dichas secciones.
  */
 const DetailModal: React.FC<DetailModalProps> = ({
   open,

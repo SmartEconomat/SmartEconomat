@@ -1,6 +1,10 @@
 import { ApiResponse, baseFetch, parseApiResponse } from './api.service';
 import { RecepcionDraft, RecepcionDraftEnvelope } from './recepcion.types';
 
+/**
+ * Expone "fetchRecepcionDraft" en smart-economat-frontend (SPA).
+ * @undefined {Promise<RecepcionDraftEnvelope | null>} Datos efectivos después de ejecutar la operación.
+ */
 export async function fetchRecepcionDraft(): Promise<RecepcionDraftEnvelope | null> {
   const response = await baseFetch('/recepcion/draft');
   const body = await parseApiResponse<RecepcionDraftEnvelope | null>(
@@ -11,6 +15,11 @@ export async function fetchRecepcionDraft(): Promise<RecepcionDraftEnvelope | nu
   return body.data;
 }
 
+/**
+ * Expone "saveRecepcionDraft" en smart-economat-frontend (SPA).
+ * @undefined {RecepcionDraft} draft - Entrada efectiva esperada por el contrato.
+ * @undefined {Promise<RecepcionDraftEnvelope>} Datos efectivos después de ejecutar la operación.
+ */
 export async function saveRecepcionDraft(
   draft: RecepcionDraft
 ): Promise<RecepcionDraftEnvelope> {
@@ -31,6 +40,10 @@ export async function saveRecepcionDraft(
   return body.data;
 }
 
+/**
+ * Elimina o marca entidades siguendo las políticas configuradas.
+ * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
+ */
 export async function deleteRecepcionDraft(): Promise<void> {
   const response = await baseFetch('/recepcion/draft', {
     method: 'DELETE',

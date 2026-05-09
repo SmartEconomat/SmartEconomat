@@ -3,9 +3,16 @@ import path from "node:path";
 
 import type { InstallJournalEntry } from "@shared/contracts";
 
+/** Servicio del proceso principal: JournalService. */
 export class JournalService {
   private readonly fileName = "installation-journal.json";
 
+  /**
+   * Expone la operación "append" del instalador SmartEconomat.
+   * @param {string} runtimePath - Entrada esperada por la función.
+   * @param {InstallJournalEntry} entry - Entrada esperada por la función.
+   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   */
   async append(runtimePath: string, entry: InstallJournalEntry): Promise<void> {
     await fs.mkdir(runtimePath, { recursive: true });
     const journalPath = path.join(runtimePath, this.fileName);

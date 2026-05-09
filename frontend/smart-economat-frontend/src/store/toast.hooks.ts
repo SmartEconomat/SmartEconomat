@@ -5,7 +5,11 @@ import { ToastOptions } from './toast.types';
 import i18n from '../i18n';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de use toast dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "useToast" en smart-economat-frontend (SPA).
+ * @undefined {{ success: (key: string, dur?: number, options?: ToastOptions) => void; error: (key: string, dur?: number, options?: ToastOptions) => void; info: (key: string, dur?: number, options?: ToastOptions) => void; warning: (key: string, dur?: number, options?: ToastOptions) => void; }} Datos efectivos después de ejecutar la operación.
  */
 export const useToast = () => {
   const context = useContext(ToastContext);
@@ -16,7 +20,7 @@ export const useToast = () => {
   const { addToast } = context;
 
   /**
-   * Documentación en español.
+   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
    */
   const showToast = React.useCallback(
     (
@@ -51,7 +55,11 @@ export const useToast = () => {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de use toast list dentro del flujo de la aplicación.
+ */
+/**
+ * Expone "useToastList" en smart-economat-frontend (SPA).
+ * @undefined {{ toasts: import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/src/store/toast.types").Toast[]; removeToast: (id: string) => void; }} Datos efectivos después de ejecutar la operación.
  */
 export const useToastList = () => {
   const context = useContext(ToastContext);

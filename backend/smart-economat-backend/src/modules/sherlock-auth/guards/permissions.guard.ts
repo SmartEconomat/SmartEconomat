@@ -16,16 +16,27 @@ import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { AuthPermissionsService } from '../../auth/service/auth-permissions.service';
 import { isSherlockElevatedRole } from '../utils/access.utils';
 
+/** Clase pública (SherlockPermissionsGuard). Paquete: smart-economat-backend (Nest). */
 @Injectable()
 export class SherlockPermissionsGuard implements CanActivate {
   private readonly logger = new Logger(SherlockPermissionsGuard.name);
 
+  /**
+   * Construye la instancia configurada.
+   * @undefined {Reflector} reflector - Entrada efectiva esperada por el contrato.
+   * @undefined {AuthPermissionsService} authPermissionsService - Entrada efectiva esperada por el contrato.
+   */
   constructor(
     private readonly reflector: Reflector,
     @Inject(AuthPermissionsService)
     private readonly authPermissionsService: AuthPermissionsService
   ) {}
 
+  /**
+   * Expone "canActivate" en smart-economat-backend (Nest).
+   * @undefined {ExecutionContext} context - Entrada efectiva esperada por el contrato.
+   * @undefined {Promise<boolean>} Datos efectivos después de ejecutar la operación.
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),

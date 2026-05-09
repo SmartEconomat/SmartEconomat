@@ -8,7 +8,7 @@ import {
 import * as path from 'path';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 import * as fs from 'fs';
@@ -19,10 +19,19 @@ let i18nPath = process.env.I18N_PATH;
 if (!i18nPath) {
   const pathInDist = path.join(__dirname, '../i18n/');
   const pathInSrc = path.join(process.cwd(), 'src/i18n/');
+  const distExists = fs.existsSync(pathInDist);
+  const srcExists = fs.existsSync(pathInSrc);
 
-  if (fs.existsSync(pathInDist)) {
+  /**
+   * En desarrollo, `nest start --watch` puede vaciar dist (deleteOutDir) y tardar un ciclo en
+   * volver a copiar assets → si priorizamos dist/i18n, la primera resolución i18n falla tras un rebuild.
+   * Con código montado desde el host, `src/i18n` es estable.
+   */
+  if (!isProduction && srcExists) {
+    i18nPath = pathInSrc;
+  } else if (distExists) {
     i18nPath = pathInDist;
-  } else if (fs.existsSync(pathInSrc)) {
+  } else if (srcExists) {
     i18nPath = pathInSrc;
   } else {
     i18nPath = isProduction ? pathInDist : pathInSrc;
@@ -32,7 +41,7 @@ if (!i18nPath) {
 console.log(`[i18n] Cargando traducciones desde: ${i18nPath}`);
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 @Module({
   imports: [

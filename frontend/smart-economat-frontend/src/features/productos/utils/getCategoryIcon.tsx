@@ -15,7 +15,13 @@ const defaultIconProps = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ */
+/**
+ * Obtiene valores o vistas materializadas.
+ * @undefined {CategoriaProducto | undefined} tipo - Entrada efectiva esperada por el contrato.
+ * @undefined {import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@mui/material/esm/SvgIcon/SvgIcon").SvgIconOwnProps & import("/home/psych/projects/SmartEconomat/frontend/smart-economat-frontend/node_modules/@mui/material/esm/OverridableComponent/index").CommonProps & Omit<React.SVGProps<SVGSVGElement>, "className" | "style" | "classes" | "children" | "color" | "fontSize" | "htmlColor" | "inheritViewBox" | "shapeRendering" | "sx" | "titleAccess" | "viewBox">} iconProps - Entrada efectiva esperada por el contrato.
+ * @undefined {React.ReactElement<unknown, string | React.JSXElementConstructor<any>>} Datos efectivos después de ejecutar la operación.
  */
 export function getCategoryIcon(
   tipo: CategoriaProducto | undefined,

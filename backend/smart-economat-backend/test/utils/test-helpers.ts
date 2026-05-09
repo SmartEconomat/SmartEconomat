@@ -3,7 +3,7 @@ import request from 'supertest';
 import { getTestApp } from '../setup/test-app';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 
 export interface LoginCredentials {
@@ -28,7 +28,7 @@ export const DEFAULT_CREDENTIALS = {
 };
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export async function loginAndGetToken(
   app: INestApplication,
@@ -48,7 +48,7 @@ export async function loginAndGetToken(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export async function loginAndGetTokens(
   app: INestApplication,
@@ -66,7 +66,7 @@ export async function loginAndGetTokens(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export async function createAuthenticatedClient(
   app: INestApplication,
@@ -99,7 +99,7 @@ export async function createAuthenticatedClient(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de setup test dentro del flujo de la aplicación.
  */
 export async function setupTest() {
   const app = await getTestApp();
@@ -109,7 +109,7 @@ export async function setupTest() {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de setup test with tokens dentro del flujo de la aplicación.
  */
 export async function setupTestWithTokens() {
   const app = await getTestApp();
@@ -122,21 +122,27 @@ export async function setupTestWithTokens() {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de generate unique name dentro del flujo de la aplicación.
+ *
+ * @param prefix Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export function generateUniqueName(prefix: string = 'Test'): string {
   return `${prefix} ${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de generate unique email dentro del flujo de la aplicación.
+ *
+ * @param prefix Parámetro de entrada para la operación. Opcional.
+ * @returns Valor resultante de la operación.
  */
 export function generateUniqueEmail(prefix: string = 'test'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`;
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export function expectStandardResponse(
   response: any,
@@ -148,7 +154,7 @@ export function expectStandardResponse(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export function expectErrorResponse(
   response: any,
@@ -160,7 +166,9 @@ export function expectErrorResponse(
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de expect paginated response dentro del flujo de la aplicación.
+ *
+ * @param response Parámetro de entrada para la operación.
  */
 export function expectPaginatedResponse(response: any) {
   expect(response.status).toBe(200);
@@ -173,14 +181,17 @@ export function expectPaginatedResponse(response: any) {
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de wait dentro del flujo de la aplicación.
+ *
+ * @param ms Parámetro de entrada para la operación.
+ * @returns Valor resultante de la operación.
  */
 export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 export async function safeDelete(
   app: INestApplication,

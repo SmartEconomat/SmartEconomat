@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Clase pública (OffProductResponseDto). Paquete: smart-economat-backend (Nest). */
 export class OffProductResponseDto {
   @ApiProperty({ description: 'Nombre principal del producto' })
   name!: string;

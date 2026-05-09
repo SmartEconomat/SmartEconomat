@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 /**
- * Documentación en español.
+ * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
 describe('SherlockAuthMigration rol.plantilla_rol_id', () => {
   it('up() empieza con ADD COLUMN IF NOT EXISTS plantilla_rol_id en rol', () => {

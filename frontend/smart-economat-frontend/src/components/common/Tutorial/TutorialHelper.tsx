@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
   IconButton,
@@ -22,6 +23,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
   mode = 'icon',
   isOpen = true,
 }: TutorialHelperProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const theme = useTheme();
   const { isLearningMode } = useThemeContext();
@@ -91,7 +93,7 @@ const TutorialHelper: React.FC<TutorialHelperProps> = ({
         id="help-tutorial-button"
         color="inherit"
         onClick={handleStartTour}
-        aria-label="Iniciar tutorial"
+        aria-label={t('tutorial.iniciarTutorial')}
         sx={{ ml: 1 }}
       >
         <HelpOutlineIcon />

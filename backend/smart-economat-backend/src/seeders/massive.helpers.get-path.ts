@@ -2,6 +2,13 @@ import { SeedContext } from './seed-context';
 import { getStateArray, pickRequiredStateValue } from './massive.state';
 import { supportsPagination } from './massive.helpers.routing.tokens';
 
+/**
+ * Expone "buildGetPath" en smart-economat-backend (Nest).
+ * @undefined {SeedContext} context - Entrada efectiva esperada por el contrato.
+ * @undefined {string} resolvedPath - Entrada efectiva esperada por el contrato.
+ * @undefined {number} iteration - Entrada efectiva esperada por el contrato.
+ * @undefined {string} Datos efectivos después de ejecutar la operación.
+ */
 export function buildGetPath(
   context: SeedContext,
   resolvedPath: string,

@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNumber, IsPositive } from 'class-validator';
+import { IsEnum, IsNumber, IsPositive, ValidateIf } from 'class-validator';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
+import { IsPortion } from '../../../common/decorators/is-portion.decorator';
 
+/** Catálogo de valores enumerados (TipoConsumoProduccion) dentro de smart-economat-backend (Nest). */
 export enum TipoConsumoProduccion {
   RACIONES = 'raciones',
   CANTIDAD = 'cantidad',
 }
 
+/** Clase pública (ConsumirProduccionDto). Paquete: smart-economat-backend (Nest). */
 export class ConsumirProduccionDto {
   @ApiProperty({
     enum: TipoConsumoProduccion,
@@ -25,5 +28,9 @@ export class ConsumirProduccionDto {
   @Transform((params) => StringToNumberTransformer.transform(params))
   @IsNumber()
   @IsPositive()
+  @ValidateIf(
+    (o: ConsumirProduccionDto) => o.tipo === TipoConsumoProduccion.RACIONES
+  )
+  @IsPortion()
   valor!: number;
 }

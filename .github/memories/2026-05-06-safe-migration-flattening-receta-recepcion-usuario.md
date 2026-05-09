@@ -1,0 +1,24 @@
+# Safe migration flattening (2026-05-06)
+
+- Se consolidaron y eliminaron estas migraciones:
+  - 1775000001000-CreateAlmacenTableAndUbicacionAlmacenFk.ts
+  - 1775300000000-NormalizeRecetaTiempoPreparacion.ts
+  - 1775400000000-NormalizeRacionesMultiplo05.ts
+  - 1775500000000-AddCantidadAlbaranToRecepcionProducto.ts
+  - 1775600000000-AddAlmacenIdToUsuario.ts
+- El efecto se absorbio en `src/migrations/1775000000000-BaselineSchema.ts` con SQL idempotente.
+- Efectos absorbidos:
+  - `almacen`: creación de tabla + índices `idx_almacen_nombre` y `idx_almacen_activo`.
+  - `ubicacion`: columna `almacen_id`, índice `idx_ubicacion_almacen_id` y FK `FK_ubicacion_almacen_id_almacen`.
+  - `receta`: default 10 para `tiempo_estimado_minutos`, check min 10 y normalizacion/check de paso 0.5 en `raciones`.
+  - `preparacion`: normalizacion/check de paso 0.5 en `cantidad_a_producir`.
+  - `produccion_lote`: normalizacion/check de paso 0.5 en `porciones_producidas` y `porciones_restantes`.
+  - `recepcion_producto`: columna `cantidad_albaran`.
+  - `usuario`: columna `almacen_id`, indice `idx_usuario_almacen_id`, FK condicional a `almacen`.
+- Se alinearon entidades para `schema:sync`:
+  - Checks en entidades de receta/preparacion/produccion_lote.
+  - Indice `idx_usuario_almacen_id` en entidad usuario.
+  - Índices `idx_almacen_nombre`/`idx_almacen_activo` en entidad almacen.
+  - Índice `idx_ubicacion_almacen_id` en entidad ubicacion.
+- Nota operativa:
+  - En entornos antiguos con esas 5 filas ya registradas en tabla `migrations`, `migration:revert` de esas entradas no es posible al no existir archivos; `migration:run` futuro permanece estable.

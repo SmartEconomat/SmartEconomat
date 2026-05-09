@@ -18,7 +18,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import HistoryIcon from '@mui/icons-material/History';
@@ -49,9 +48,11 @@ import {
   formatLocalizedDate,
   formatLocalizedDateTime,
 } from '../utils/intlFormat';
+import { useDataTable } from '../hooks/useDataTable';
 import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../i18n/enumPresentation';
 import i18n from '../i18n';
+import PortionInput from '../components/ui/PortionInput';
 
 const formatAmount = (value?: number): string =>
   formatLocalizedNumber(value ?? 0, 3);
@@ -75,7 +76,7 @@ const normalizeRationStep = (value?: number): number => {
     ? Math.max(0, numericValue)
     : 0;
 
-  return Math.floor(safeValue / RATION_STEP) * RATION_STEP;
+  return Math.round(safeValue * 2) / 2;
 };
 
 const formatRations = (value?: number): string =>
@@ -201,12 +202,10 @@ type MermaIngredienteOption = {
 
 const Preparaciones: React.FC = () => {
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [data, setData] = useState<ProduccionLote[]>([]);
+  const toast = useToast();
+
   const [activeTab, setActiveTab] = useState(0);
+  const [data, setData] = useState<ProduccionLote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemToView, setItemToView] = useState<ProduccionLote | null>(null);
@@ -228,25 +227,44 @@ const Preparaciones: React.FC = () => {
   const [mermaLoadError, setMermaLoadError] = useState<string | null>(null);
   const [isLoadingMermaDetalle, setIsLoadingMermaDetalle] = useState(false);
   const [isSubmittingMerma, setIsSubmittingMerma] = useState(false);
-  const toast = useToast();
+
+  const {
+    searchTerm,
+    filters: tableFilters,
+    onSort,
+    onFilter,
+    onSearchChange,
+    queryParams,
+    sortConfig,
+    paginationProps,
+    totalItems,
+    syncPaginationFromResponse,
+  } = useDataTable({
+    sortBy: 'createdAt',
+    order: 'desc',
+  });
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const estado = activeTab === 0 ? 'sin_consumo' : 'consumido';
-      const response = await fetchProducciones(page, pageSize, estado);
+      const response = await fetchProducciones(
+        queryParams.page,
+        queryParams.limit,
+        estado
+      );
       setData(response.data);
-      setTotalPages(response.totalPages);
-      setTotalItems(response.total);
+      syncPaginationFromResponse(response);
     } catch (err: unknown) {
+      syncPaginationFromResponse({ total: 0, data: [] });
       setError(
         err instanceof Error ? err.message : t('preparaciones.errors.cargar')
       );
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, activeTab, t]);
+  }, [queryParams, activeTab, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
@@ -558,12 +576,17 @@ const Preparaciones: React.FC = () => {
       label: t('preparaciones.columns.fechaCreacion'),
       render: (row) =>
         formatLocalizedDateTime(row.createdAt || row.fechaProduccion),
+      sortable: true,
+      sortType: 'date',
       hideOnMobile: true,
     },
     {
       id: 'receta',
       label: t('preparaciones.columns.receta'),
       render: (row) => row.receta?.nombre ?? '—',
+      sortable: true,
+      sortType: 'string',
+      sortKey: 'recetaId',
     },
     {
       id: 'cantidadProducida',
@@ -581,6 +604,9 @@ const Preparaciones: React.FC = () => {
       id: 'usuario',
       label: t('preparaciones.columns.cocinero'),
       render: (row) => row.usuario?.nombre ?? '—',
+      sortable: true,
+      sortType: 'string',
+      sortKey: 'usuarioId',
       hideOnMobile: true,
     },
     ...(activeTab === 1
@@ -628,20 +654,6 @@ const Preparaciones: React.FC = () => {
 
   const renderActions = (row: ProduccionLote) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      <Tooltip title={t('preparaciones.actions.verDetalles')}>
-        <IconButton
-          color="primary"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            setItemToView(row);
-          }}
-          size="small"
-          aria-label={t('preparaciones.actions.verDetalles')}
-          id="btn-ver-detalle-preparacion"
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
       {activeTab === 0 && row.estado === 'disponible' && (
         <Tooltip title={t('preparaciones.actions.consumir')}>
           <IconButton
@@ -758,6 +770,9 @@ const Preparaciones: React.FC = () => {
         title={t('preparaciones.titulo')}
         totalItems={totalItems}
         totalItemsLabel={t('preparaciones.totalItemsLabel')}
+        searchValue={searchTerm}
+        onSearchChange={onSearchChange}
+        searchPlaceholder={t('preparaciones.searchPlaceholder')}
       />
 
       <Paper
@@ -798,7 +813,7 @@ const Preparaciones: React.FC = () => {
         </Box>
 
         <Box sx={{ p: { xs: 2, sm: 4 } }}>
-          {error && (
+          {!isLoading && error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
@@ -810,30 +825,33 @@ const Preparaciones: React.FC = () => {
             data={data}
             isLoading={isLoading}
             hideTopBar
+            onSort={onSort}
+            sortConfig={sortConfig}
+            filters={tableFilters}
+            onFilter={onFilter}
+            pagination={paginationProps}
             emptyStateMessage={
               <Box sx={{ py: 4, textAlign: 'center' }}>
-                <RestaurantIcon
+                <ReportProblemIcon
                   sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
                 />
-                <Typography variant="h6" color="text.secondary">
-                  {t('preparaciones.empty.titulo')}
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {t('preparaciones.empty.noProducciones')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {t('preparaciones.empty.descripcion')}
+                  {activeTab === 0
+                    ? t('preparaciones.empty.noDisponibles')
+                    : t('preparaciones.empty.noHistorial')}
                 </Typography>
               </Box>
             }
-            pagination={{
-              currentPage: page,
-              totalPages: totalPages,
-              onPageChange: (_, newPage) => setPage(newPage),
-              pageSize: pageSize,
-              onPageSizeChange: (e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              },
-            }}
             renderActions={renderActions}
+            onRowClick={setItemToView}
+            getRowAriaLabel={(row: ProduccionLote) =>
+              t('preparaciones.actions.ariaVerDetalle', {
+                receta: row.receta?.nombre ?? '—',
+              })
+            }
           />
 
           <DetailModal
@@ -938,29 +956,42 @@ const Preparaciones: React.FC = () => {
                   {t('preparaciones.consume.porCantidad')}
                 </ToggleButton>
               </ToggleButtonGroup>
-              <TextField
-                fullWidth
-                type="text"
-                label={
-                  consumeMode === 'raciones'
-                    ? t('preparaciones.consume.cantidadRaciones')
-                    : t('preparaciones.consume.cantidadConsumir', {
-                        unidad:
-                          consumingItem?.receta?.unidadResultado ||
-                          t('comun.unidad'),
-                      })
-                }
-                value={consumeMode === 'raciones' ? portionsInput : amountInput}
-                onChange={(e) => {
-                  handleConsumptionInputChange(consumeMode, e.target.value);
-                }}
-                error={isCurrentValueInvalid}
-                helperText={
-                  consumeMode === 'raciones'
-                    ? t('preparaciones.consume.maxRaciones', {
-                        count: formatRations(availablePortions),
-                      })
-                    : isAmountModeWithoutEquivalence
+              {consumeMode === 'raciones' ? (
+                <PortionInput
+                  fullWidth
+                  label={t('preparaciones.consume.cantidadRaciones')}
+                  value={portionsInput}
+                  onChange={(
+                    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                  ) => {
+                    handleConsumptionInputChange('raciones', e.target.value);
+                  }}
+                  error={isCurrentValueInvalid}
+                  helperText={t('preparaciones.consume.maxRaciones', {
+                    count: formatRations(availablePortions),
+                  })}
+                  margin="dense"
+                  inputProps={{
+                    min: 0.5,
+                    step: 0.5,
+                  }}
+                />
+              ) : (
+                <TextField
+                  fullWidth
+                  type="text"
+                  label={t('preparaciones.consume.cantidadConsumir', {
+                    unidad:
+                      consumingItem?.receta?.unidadResultado ||
+                      t('comun.unidad'),
+                  })}
+                  value={amountInput}
+                  onChange={(e) => {
+                    handleConsumptionInputChange('cantidad', e.target.value);
+                  }}
+                  error={isCurrentValueInvalid}
+                  helperText={
+                    isAmountModeWithoutEquivalence
                       ? t('preparaciones.consume.sinEquivalencia')
                       : isAmountMultipleInvalid && amountConsumptionStep
                         ? t('preparaciones.consume.multiploHelper', {
@@ -974,10 +1005,11 @@ const Preparaciones: React.FC = () => {
                             unidad:
                               consumingItem?.receta?.unidadResultado || '',
                           })
-                }
-                inputProps={{ inputMode: 'decimal' }}
-                margin="dense"
-              />
+                  }
+                  inputProps={{ inputMode: 'decimal' }}
+                  margin="dense"
+                />
+              )}
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setConsumingId(null)}>
@@ -1003,8 +1035,7 @@ const Preparaciones: React.FC = () => {
             <DialogTitle>{t('preparaciones.merma.titulo')}</DialogTitle>
             <DialogContent>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                Registra la merma real de un ingrediente usado en esta
-                preparación sin alterar estados históricos del lote.
+                {t('preparaciones.merma.descripcion')}
               </Typography>
 
               {mermaLote && (
@@ -1017,17 +1048,19 @@ const Preparaciones: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    Lote: {mermaLote.id}
+                    {t('preparaciones.merma.lote', { id: mermaLote.id })}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Receta: {mermaLote.receta?.nombre || '—'}
+                    {t('preparaciones.merma.receta', {
+                      nombre: mermaLote.receta?.nombre || '—',
+                    })}
                   </Typography>
                 </Box>
               )}
 
               {isLoadingMermaDetalle ? (
                 <Typography variant="body2" color="text.secondary">
-                  Cargando ingredientes de la receta...
+                  {t('preparaciones.merma.cargandoIngredientes')}
                 </Typography>
               ) : mermaLoadError ? (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -1035,18 +1068,17 @@ const Preparaciones: React.FC = () => {
                 </Alert>
               ) : mermaIngredientes.length === 0 ? (
                 <Alert severity="warning" sx={{ mb: 2 }}>
-                  No se encontraron ingredientes válidos para reportar merma en
-                  este lote.
+                  {t('preparaciones.merma.sinIngredientes')}
                 </Alert>
               ) : (
                 <>
                   <FormControl fullWidth margin="dense">
                     <InputLabel id="merma-ingrediente-label">
-                      Ingrediente
+                      {t('recipes.ingrediente')}
                     </InputLabel>
                     <Select
                       labelId="merma-ingrediente-label"
-                      label="Ingrediente"
+                      label={t('recipes.ingrediente')}
                       value={mermaProductoId}
                       onChange={(event) =>
                         setMermaProductoId(String(event.target.value))
@@ -1070,7 +1102,9 @@ const Preparaciones: React.FC = () => {
                       color="text.secondary"
                       sx={{ display: 'block', mt: 0.5, mb: 1 }}
                     >
-                      Se registrará en {selectedMermaUnitInfo.fullLabel}.
+                      {t('preparaciones.merma.registraEn', {
+                        unidad: selectedMermaUnitInfo.fullLabel,
+                      })}
                       {selectedMermaUnitInfo.note
                         ? ` ${selectedMermaUnitInfo.note}`
                         : ''}
@@ -1082,7 +1116,9 @@ const Preparaciones: React.FC = () => {
                     margin="dense"
                     label={mermaCantidadLabel}
                     value={mermaCantidadInput}
-                    placeholder={`Ejemplo: ${selectedMermaUnitInfo.example}`}
+                    placeholder={t('preparaciones.merma.ejemplo', {
+                      valor: selectedMermaUnitInfo.example,
+                    })}
                     inputProps={{ inputMode: 'decimal' }}
                     onChange={(event) => {
                       const sanitized = sanitizeLocalizedDecimalInput(
@@ -1106,25 +1142,11 @@ const Preparaciones: React.FC = () => {
                         setMermaMotivo(event.target.value as MotivoMerma)
                       }
                     >
-                      <MenuItem value={MotivoMerma.ERROR_PREPARACION}>
-                        {getEnumLabel(
-                          t,
-                          'mermaMotivo',
-                          MotivoMerma.ERROR_PREPARACION
-                        )}
-                      </MenuItem>
-                      <MenuItem value={MotivoMerma.ROTURA}>
-                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.ROTURA)}
-                      </MenuItem>
-                      <MenuItem value={MotivoMerma.DETERIORO}>
-                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.DETERIORO)}
-                      </MenuItem>
-                      <MenuItem value={MotivoMerma.HURTO}>
-                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.HURTO)}
-                      </MenuItem>
-                      <MenuItem value={MotivoMerma.OTROS}>
-                        {getEnumLabel(t, 'mermaMotivo', MotivoMerma.OTROS)}
-                      </MenuItem>
+                      {Object.values(MotivoMerma).map((motivo) => (
+                        <MenuItem key={motivo} value={motivo}>
+                          {getEnumLabel(t, 'mermaMotivo', motivo)}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 
