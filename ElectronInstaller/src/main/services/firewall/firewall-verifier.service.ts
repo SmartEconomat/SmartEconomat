@@ -12,12 +12,7 @@ import type {
   FirewallVerificationResult,
 } from "./firewall.types";
 
-/** Servicio del proceso principal: FirewallVerifierService. */
 export class FirewallVerifierService {
-  /**
-   * Construye la instancia del servicio.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   */
   constructor(private readonly processRunner = new ProcessRunnerService()) {}
 
   // #region agent log
@@ -102,11 +97,6 @@ export class FirewallVerifierService {
   }
   // #endregion
 
-  /**
-   * Expone la operación "verify" del instalador SmartEconomat.
-   * @param {FirewallEnsureContext} context - Entrada esperada por la función.
-   * @returns {Promise<FirewallVerificationResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async verify(
     context: FirewallEnsureContext,
   ): Promise<FirewallVerificationResult> {

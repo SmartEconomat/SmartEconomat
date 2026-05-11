@@ -80,21 +80,7 @@ const exportVisibleLogsSchema = z.object({
   suggestedFileName: z.string().max(160).optional(),
 });
 
-/** Servicio del proceso principal: RuntimeIPC. */
 export class RuntimeIPC {
-  /**
-   * Construye la instancia del servicio.
-   * @param {BrowserWindow} window - Entrada esperada por la función.
-   * @param {DebugLogService} debugLogService - Entrada esperada por la función.
-   * @param {DockerOrchestratorService} dockerService - Entrada esperada por la función.
-   * @param {EnvRendererService} envRendererService - Entrada esperada por la función.
-   * @param {BackupRestoreService} backupService - Entrada esperada por la función.
-   * @param {DiagnosticsService} diagnosticsService - Entrada esperada por la función.
-   * @param {CertificateService} certificateService - Entrada esperada por la función.
-   * @param {DockerAutostartService} dockerAutostartService - Entrada esperada por la función.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
-   */
   constructor(
     private window: BrowserWindow,
     private readonly debugLogService: DebugLogService,
@@ -110,28 +96,14 @@ export class RuntimeIPC {
 
   private bootGuardian: ExternalSupervisorService | null = null;
 
-  /**
-   * Establece la referencia o configuración interna.
-   * @param {ExternalSupervisorService | null} guardian - Entrada esperada por la función.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   setBootGuardian(guardian: ExternalSupervisorService | null): void {
     this.bootGuardian = guardian;
   }
 
-  /**
-   * Establece la referencia o configuración interna.
-   * @param {BrowserWindow} window - Entrada esperada por la función.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   setWindow(window: BrowserWindow): void {
     this.window = window;
   }
 
-  /**
-   * Registra manejadores y canaliza IPC o integración con el proceso principal.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   register(): void {
     registerIpcHandleWithDebug(
       this.debugLogService,
@@ -628,12 +600,6 @@ function invalidPayload(message: string): OperationResult {
   };
 }
 
-/**
- * Registra manejadores y canaliza IPC o integración con el proceso principal.
- * @param {BrowserWindow} window - Entrada esperada por la función.
- * @param {DebugLogService} debugLogService - Entrada esperada por la función.
- * @returns {RuntimeIPC} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function registerRuntimeIpc(
   window: BrowserWindow,
   debugLogService: DebugLogService,

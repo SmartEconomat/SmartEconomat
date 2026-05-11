@@ -15,11 +15,6 @@ import { assertDangerConfirmation } from "@main/security/command-allowlist";
 import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
-/**
- * Interpreta y normaliza datos de texto o estructuras intermedias.
- * @param {string} rawOutput - Entrada esperada por la función.
- * @returns {BackupMetadata | null} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function parseBackupMetadata(rawOutput: string): BackupMetadata | null {
   try {
     return JSON.parse(rawOutput) as BackupMetadata;
@@ -28,23 +23,12 @@ export function parseBackupMetadata(rawOutput: string): BackupMetadata | null {
   }
 }
 
-/** Servicio del proceso principal: BackupRestoreService. */
 export class BackupRestoreService {
-  /**
-   * Construye la instancia del servicio.
-   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   */
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
   ) {}
 
-  /**
-   * Expone la operación "backupNow" del instalador SmartEconomat.
-   * @param {BackupPayload} payload - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<BackupMetadata>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async backupNow(
     payload: BackupPayload,
   ): Promise<OperationResult<BackupMetadata>> {
@@ -120,11 +104,6 @@ export class BackupRestoreService {
     }
   }
 
-  /**
-   * Expone la operación "restoreFrom" del instalador SmartEconomat.
-   * @param {RestorePayload} payload - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async restoreFrom(payload: RestorePayload): Promise<OperationResult> {
     assertDangerConfirmation(payload.confirmationPhrase);
 
@@ -138,11 +117,6 @@ export class BackupRestoreService {
       : { ok: false, message: result.stderr, errorCode: "RESTORE_FAILED" };
   }
 
-  /**
-   * Expone la operación "healthCheck" del instalador SmartEconomat.
-   * @param {RuntimePaths} payload - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<string>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async healthCheck(payload: RuntimePaths): Promise<OperationResult<string>> {
     const result = await this.runOpsScript(
       "health-check",
@@ -155,11 +129,6 @@ export class BackupRestoreService {
       : { ok: false, message: result.stderr, errorCode: "HEALTHCHECK_FAILED" };
   }
 
-  /**
-   * Expone la operación "configureScheduledBackup" del instalador SmartEconomat.
-   * @param {Pick<InstallerConfigPayload, "runtimePath" | "instanceName" | "backupFrequency" | "backupScheduleTime" | "backupDefaultDirectory">} config - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async configureScheduledBackup(
     config: Pick<
       InstallerConfigPayload,

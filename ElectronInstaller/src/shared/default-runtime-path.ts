@@ -1,11 +1,9 @@
 /**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-/**
- * Obtiene el estado o valor solicitado.
- * @param {NodeJS.Platform} platform - Entrada esperada por la función.
- * @param {string} homeDir - Entrada esperada por la función.
- * @returns {string} Resultado efectivo tras la llamada (puede incluir Promesas).
+ * Ruta por defecto del runtime del instalador.
+ * Debe coincidir con la lógica de resolución en `boot-guardian.service.ts`.
+ *
+ * @param platform — `process.platform` en main/preload/renderer (Electron).
+ * @param homeDir — directorio home del usuario (p. ej. `app.getPath("home")` o `HOME`).
  */
 export function getDefaultRuntimePath(
   platform: NodeJS.Platform,

@@ -5,18 +5,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 
-const schemaPath = path.join(
-  projectRoot,
-  "resources",
-  "templates",
-  "env.schema.json",
-);
-const templatePath = path.join(
-  projectRoot,
-  "resources",
-  "templates",
-  "env.template.prod",
-);
+const schemaPath = path.join(projectRoot, "resources", "templates", "env.schema.json");
+const templatePath = path.join(projectRoot, "resources", "templates", "env.template.prod");
 
 function extractTemplateKeys(template) {
   const matches = [...template.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)];
@@ -33,9 +23,7 @@ async function main() {
   const requiredKeys = Array.isArray(schema.required) ? schema.required : [];
   const templateKeys = extractTemplateKeys(templateRaw);
 
-  const missingInTemplate = requiredKeys.filter(
-    (key) => !templateKeys.has(key),
-  );
+  const missingInTemplate = requiredKeys.filter((key) => !templateKeys.has(key));
   const unknownTemplateKeys = [...templateKeys].filter(
     (key) => !(schema.properties && key in schema.properties),
   );

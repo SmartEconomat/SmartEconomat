@@ -6,8 +6,7 @@ import process from "node:process";
 import { rcedit } from "rcedit";
 
 const BUILD_TIMEOUT_MS =
-  Number(process.env.BUILD_STAGE_TIMEOUT_MS ?? 20 * 60 * 1000) ||
-  20 * 60 * 1000;
+  Number(process.env.BUILD_STAGE_TIMEOUT_MS ?? 20 * 60 * 1000) || 20 * 60 * 1000;
 const BUILD_LOCK_PATH = path.resolve(".cache", "build-lock.json");
 
 async function processExists(pid) {
@@ -175,18 +174,16 @@ async function assertFinalInstallerExists(distDir) {
       (name) =>
         name.startsWith("SmartEconomat-") &&
         name.endsWith("-win-x64.exe") &&
-        !name.toLowerCase().endsWith(".__uninstaller.exe"),
+        !name.toLowerCase().endsWith(".__uninstaller.exe")
     );
 
     if (!installerFile) {
-      throw new Error(
-        "No se encontró instalador con patrón SmartEconomat-*-win-x64.exe",
-      );
+      throw new Error("No se encontró instalador con patrón SmartEconomat-*-win-x64.exe");
     }
 
     const installerPath = path.join(distDir, installerFile);
     const stats = await fs.stat(installerPath);
-
+    
     if (!stats.isFile() || stats.size <= 0) {
       throw new Error("installer vacío");
     }
@@ -194,7 +191,7 @@ async function assertFinalInstallerExists(distDir) {
     return installerPath;
   } catch (err) {
     throw new Error(
-      `No se generó el instalador final SmartEconomat-*-win-x64.exe: ${err instanceof Error ? err.message : String(err)}`,
+      `No se generó el instalador final SmartEconomat-*-win-x64.exe: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 }
@@ -202,7 +199,7 @@ async function assertFinalInstallerExists(distDir) {
 function hasSigningMaterial() {
   return Boolean(
     (process.env.WIN_CSC_PFX_PATH && process.env.WIN_CSC_PFX_PATH.trim()) ||
-    (process.env.WIN_CSC_THUMBPRINT && process.env.WIN_CSC_THUMBPRINT.trim()),
+      (process.env.WIN_CSC_THUMBPRINT && process.env.WIN_CSC_THUMBPRINT.trim()),
   );
 }
 
@@ -228,16 +225,9 @@ async function main() {
   // Asegurar que no hay procesos bloqueando artefactos de build antes de empaquetar
   try {
     const { execSync } = await import("node:child_process");
-    console.log(
-      "[BUILD] Asegurando que no hay instancias de la app o herramientas de build activas...",
-    );
+    console.log("[BUILD] Asegurando que no hay instancias de la app o herramientas de build activas...");
     // Matamos la app y herramientas de build que suelen dejar handles abiertos
-    const processesToKill = [
-      "SmartEconomat.exe",
-      "app-builder.exe",
-      "rcedit.exe",
-      "electron.exe",
-    ];
+    const processesToKill = ["SmartEconomat.exe", "app-builder.exe", "rcedit.exe", "electron.exe"];
     for (const proc of processesToKill) {
       try {
         execSync(`taskkill /IM ${proc} /F /T`, { stdio: "ignore" });
@@ -246,32 +236,21 @@ async function main() {
       }
     }
     // Pequeño delay tras el kill para que el SO libere los handles
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
   } catch {
     // Ignorar errores generales de kill
   }
 
-  console.log(
-    `[BUILD] Preparando directorios de salida: ${distDir} y ${builderDirOutput}`,
-  );
+  console.log(`[BUILD] Preparando directorios de salida: ${distDir} y ${builderDirOutput}`);
   await fs.mkdir(distDir, { recursive: true });
-  await fs
-    .rm(builderDirOutput, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 250,
-    })
-    .catch(() => {});
+  await fs.rm(builderDirOutput, { recursive: true, force: true, maxRetries: 5, retryDelay: 250 }).catch(() => {});
   await fs.mkdir(builderDirOutput, { recursive: true });
 
   await runStage("ensure-win-icons", stageMetrics, async () => {
     await runNode("./scripts/ensure-win-icons.mjs");
   });
   await runStage("electron-vite-build", stageMetrics, async () => {
-    await runNode("./node_modules/electron-vite/bin/electron-vite.js", [
-      "build",
-    ]);
+    await runNode("./node_modules/electron-vite/bin/electron-vite.js", ["build"]);
   });
 
   // 1) Genera el app folder (win-unpacked) sin depender de winCodeSign.
@@ -302,9 +281,7 @@ async function main() {
       } catch (err) {
         if (attempt === maxBuilderAttempts) throw err;
         const backoff = attempt * 3000;
-        console.warn(
-          `[BUILD] Intento ${attempt} de electron-builder falló: ${err.message}. Reintentando en ${backoff}ms...`,
-        );
+        console.warn(`[BUILD] Intento ${attempt} de electron-builder falló: ${err.message}. Reintentando en ${backoff}ms...`);
 
         try {
           const { execSync } = await import("node:child_process");
@@ -312,16 +289,9 @@ async function main() {
           execSync("taskkill /IM SmartEconomat.exe /F /T", { stdio: "ignore" });
         } catch {}
 
-        await fs
-          .rm(builderDirOutput, {
-            recursive: true,
-            force: true,
-            maxRetries: 3,
-            retryDelay: 250,
-          })
-          .catch(() => {});
+        await fs.rm(builderDirOutput, { recursive: true, force: true, maxRetries: 3, retryDelay: 250 }).catch(() => {});
         await fs.mkdir(builderDirOutput, { recursive: true });
-        await new Promise((resolve) => setTimeout(resolve, backoff));
+        await new Promise(resolve => setTimeout(resolve, backoff));
       }
     }
   });
@@ -336,17 +306,13 @@ async function main() {
         icon: iconPath,
       });
       rceditSuccess = true;
-      console.log(
-        `[RCEDIT] Icono aplicado correctamente en el intento ${attempt}.`,
-      );
+      console.log(`[RCEDIT] Icono aplicado correctamente en el intento ${attempt}.`);
       break;
     } catch (err) {
       if (attempt === 5) throw err;
       const delayMs = attempt * 1000;
-      console.warn(
-        `[RCEDIT] Intento ${attempt} falló (archivo bloqueado?). Reintentando en ${delayMs}ms...`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      console.warn(`[RCEDIT] Intento ${attempt} falló (archivo bloqueado?). Reintentando en ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
 
@@ -362,9 +328,7 @@ async function main() {
 
   // 4) Elimina instaladores previos para evitar que NSIS falle con "Can't open output file"
   //    (ocurre cuando Windows Explorer u otro proceso bloquea el .exe anterior)
-  console.log(
-    "[BUILD] Eliminando instaladores previos para liberar el archivo de salida...",
-  );
+  console.log("[BUILD] Eliminando instaladores previos para liberar el archivo de salida...");
   try {
     const existingEntries = await fs.readdir(distDir);
     const oldInstallers = existingEntries.filter(
@@ -382,7 +346,7 @@ async function main() {
     // dist no existe aún, ignorar
   }
   // Pequeño delay para asegurar que Windows libera los handles de fichero
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   // 5) Empaqueta NSIS reutilizando el EXE ya parcheado.
   await runStage("electron-builder-nsis", stageMetrics, async () => {
@@ -426,9 +390,7 @@ async function main() {
     console.warn(`[SAC] Artefacto no firmado: ${finalInstallerPath}`);
   }
 
-  await fs
-    .rm(builderDirOutput, { recursive: true, force: true })
-    .catch(() => {});
+  await fs.rm(builderDirOutput, { recursive: true, force: true }).catch(() => {});
   await removeBuildResidue(distDir);
   await removeNsisUninstallers(distDir);
 
@@ -439,17 +401,9 @@ async function main() {
     totalElapsedSeconds: Number((elapsedMs / 1000).toFixed(2)),
     stageMetrics,
   };
-  const reportPath = path.join(
-    ".cache",
-    "build-metrics",
-    "build-win-fast-last.json",
-  );
+  const reportPath = path.join(".cache", "build-metrics", "build-win-fast-last.json");
   await fs.mkdir(path.dirname(reportPath), { recursive: true });
-  await fs.writeFile(
-    reportPath,
-    `${JSON.stringify(metricsPayload, null, 2)}\n`,
-    "utf8",
-  );
+  await fs.writeFile(reportPath, `${JSON.stringify(metricsPayload, null, 2)}\n`, "utf8");
   console.log(`[TIMING] Reporte guardado en: ${reportPath}`);
 }
 

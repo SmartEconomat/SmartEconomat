@@ -9,50 +9,126 @@ import type {
   PreflightReport,
 } from "@shared/contracts";
 
+import {
+  resolveWindowsDockerCliPath,
+  resolveWindowsDockerDesktopExePath,
+} from "./docker-desktop-windows-resolve";
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
 
-/**
- * Expone la operación "evaluateDockerChecks" del instalador SmartEconomat.
- * @param {CommandResult} dockerVersion - Entrada esperada por la función.
- * @param {CommandResult} composeVersion - Entrada esperada por la función.
- * @returns {PreflightCheck[]} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function evaluateDockerChecks(
   dockerVersion: CommandResult,
   composeVersion: CommandResult,
 ): PreflightCheck[] {
+  const dockerFailure = normalizeDockerFailure(dockerVersion);
+  const composeFailure = normalizeDockerFailure(composeVersion);
+  const dockerTimedOut = isDockerTimeoutFailure(dockerVersion);
+  const composeTimedOut = isDockerTimeoutFailure(composeVersion);
+  const dockerDesktopPipeFailure = isDockerDesktopPipeFailure(dockerVersion);
+  const composeDesktopPipeFailure = isDockerDesktopPipeFailure(composeVersion);
+
   const dockerCheck: PreflightCheck = {
     id: "docker-engine",
     label: "Docker Engine",
-    status: dockerVersion.ok ? "OK" : "BLOCKER",
-    detail: dockerVersion.ok ? dockerVersion.stdout : dockerVersion.stderr,
-    recommendation: dockerVersion.ok
-      ? undefined
-      : "Instalar/iniciar Docker Desktop o Docker Engine.",
+    status: dockerVersion.ok
+      ? "OK"
+      : dockerTimedOut || dockerDesktopPipeFailure
+        ? "WARN"
+        : "BLOCKER",
+    detail: dockerVersion.ok ? dockerVersion.stdout : dockerFailure.detail,
+    recommendation: dockerVersion.ok ? undefined : dockerFailure.recommendation,
   };
 
   const composeCheck: PreflightCheck = {
     id: "docker-compose",
     label: "Docker Compose",
-    status: composeVersion.ok ? "OK" : "BLOCKER",
-    detail: composeVersion.ok ? composeVersion.stdout : composeVersion.stderr,
+    status: composeVersion.ok
+      ? "OK"
+      : composeTimedOut || composeDesktopPipeFailure
+        ? "WARN"
+        : "BLOCKER",
+    detail: composeVersion.ok ? composeVersion.stdout : composeFailure.detail,
     recommendation: composeVersion.ok
       ? undefined
-      : "Habilitar plugin docker compose en el host.",
+      : composeFailure.recommendation,
   };
 
   return [dockerCheck, composeCheck];
 }
 
-/**
- * Expone la operación "downgradeWindowsDockerDesktopChecks" del instalador SmartEconomat.
- * @param {PreflightCheck[]} checks - Entrada esperada por la función.
- * @param {CommandResult} dockerVersion - Entrada esperada por la función.
- * @param {CommandResult} composeVersion - Entrada esperada por la función.
- * @param {NodeJS.Platform} platform - Entrada esperada por la función.
- * @returns {PreflightCheck[]} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
+function normalizeDockerFailure(result: CommandResult): {
+  detail: string;
+  recommendation: string;
+} {
+  const fallbackDetail =
+    result.stderr || result.message || "Docker no responde.";
+  const raw =
+    `${result.stderr}\n${result.stdout}\n${result.message}`.toLowerCase();
+
+  if (raw.includes("command timed out") || raw.includes("timed out")) {
+    return {
+      detail:
+        "La comprobación de Docker excedió el tiempo de espera. El motor puede estar arrancando o bajo carga.",
+      recommendation:
+        "Espera a que Docker Desktop/Engine termine de iniciar y vuelve a ejecutar preflight. Si persiste, revisa diagnóstico de Docker.",
+    };
+  }
+
+  if (
+    raw.includes("dockerdesktoplinuxengine") ||
+    raw.includes("open //./pipe/dockerdesktoplinuxengine") ||
+    raw.includes("failed to connect to the docker api at npipe")
+  ) {
+    return {
+      detail:
+        "El contexto Docker actual apunta a dockerDesktopLinuxEngine y ese pipe no responde. En modo headless esto puede ser un contexto incorrecto, no un fallo real de Engine.",
+      recommendation:
+        "Cambia a un contexto operativo (`docker context ls` / `docker context use default`) o verifica el daemon activo y repite preflight.",
+    };
+  }
+
+  if (
+    raw.includes("cannot connect to the docker daemon") ||
+    raw.includes("error during connect")
+  ) {
+    return {
+      detail:
+        "No se pudo conectar con Docker daemon. Docker Desktop/Engine parece no operativo.",
+      recommendation:
+        "Arranca Docker Desktop (o el servicio docker en Linux) y vuelve a ejecutar preflight.",
+    };
+  }
+
+  if (raw.includes("command not found") || raw.includes("enoent")) {
+    return {
+      detail: "Docker CLI no está disponible en PATH.",
+      recommendation:
+        "Instala Docker Desktop/Engine y verifica que el comando `docker` esté disponible en terminal.",
+    };
+  }
+
+  return {
+    detail: fallbackDetail,
+    recommendation:
+      "Revisa Docker Desktop/Engine y vuelve a ejecutar preflight.",
+  };
+}
+
+function isDockerTimeoutFailure(result: CommandResult): boolean {
+  const raw =
+    `${result.message}\n${result.stderr}\n${result.stdout}`.toLowerCase();
+  return raw.includes("command timed out") || raw.includes("timed out");
+}
+
+function isDockerDesktopPipeFailure(result: CommandResult): boolean {
+  const raw =
+    `${result.message}\n${result.stderr}\n${result.stdout}`.toLowerCase();
+  return (
+    raw.includes("dockerdesktoplinuxengine") ||
+    raw.includes("open //./pipe/dockerdesktoplinuxengine")
+  );
+}
+
 export function downgradeWindowsDockerDesktopChecks(
   checks: PreflightCheck[],
   dockerVersion: CommandResult,
@@ -90,6 +166,30 @@ export function downgradeWindowsDockerDesktopChecks(
   });
 }
 
+export function downgradeDockerContextPipeChecks(
+  checks: PreflightCheck[],
+): PreflightCheck[] {
+  return checks.map((check) => {
+    const raw = `${check.detail}\n${check.recommendation ?? ""}`.toLowerCase();
+    const isDockerContextPipeWarning =
+      (check.id === "docker-engine" || check.id === "docker-compose") &&
+      raw.includes("dockerdesktoplinuxengine");
+
+    if (!isDockerContextPipeWarning) {
+      return check;
+    }
+
+    return {
+      ...check,
+      status: "WARN",
+      repairable: true,
+      repairAction: "auto-repair",
+      repairHint:
+        "Intentará arrancar com.docker.service, Docker Desktop y el engine Linux de WSL automáticamente.",
+    };
+  });
+}
+
 interface PortInspectionResult {
   status: PreflightCheck["status"];
   detail: string;
@@ -98,23 +198,12 @@ interface PortInspectionResult {
   ownerProcessName?: string;
 }
 
-/** Servicio del proceso principal: PreflightService. */
 export class PreflightService {
-  /**
-   * Construye la instancia del servicio.
-   * @param {OSDetectorService} osDetector - Entrada esperada por la función.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   */
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
   ) {}
 
-  /**
-   * Expone la operación "run" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async run(runtimePath: string): Promise<OperationResult<PreflightReport>> {
     const checks: PreflightCheck[] = [];
 
@@ -139,27 +228,22 @@ export class PreflightService {
     };
   }
 
-  /**
-   * Expone la operación "runAutoRepair" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async runAutoRepair(
     runtimePath: string,
+    onProgress?: (line: string) => void,
   ): Promise<OperationResult<PreflightReport>> {
+    onProgress?.("Iniciando autorreparación de preflight...");
+
     if (process.platform === "win32") {
-      await this.repairWindowsDependencies(runtimePath);
+      await this.repairWindowsDependencies(runtimePath, onProgress);
     }
 
+    onProgress?.("Liberando puertos conocidos (80/443) si están ocupados...");
     await this.releaseKnownBusyPorts();
+    onProgress?.("Reejecutando preflight para validar el estado final...");
     return this.run(runtimePath);
   }
 
-  /**
-   * Expone la operación "releaseBusyPort" del instalador SmartEconomat.
-   * @param {PortRepairPayload} payload - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<PreflightReport>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async releaseBusyPort(
     payload: PortRepairPayload,
   ): Promise<OperationResult<PreflightReport>> {
@@ -256,12 +340,19 @@ export class PreflightService {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Permiso denegado";
+      const isAccessDenied =
+        message.includes("EACCES") ||
+        message.toLowerCase().includes("permission denied");
+      const recommendation =
+        isAccessDenied && runtimePath.startsWith("/tmp/")
+          ? "Esa ruta bajo /tmp no es escribible (a menudo por permisos o porque se creó con otro usuario/sudo). Elige una carpeta bajo tu usuario (por defecto ~/.smarteconomat-runtime) o corrige permisos/chown del directorio."
+          : "Seleccionar una carpeta con permisos de escritura.";
       return {
         id: "system-write",
         label: "Permisos de escritura",
         status: "BLOCKER",
         detail: message,
-        recommendation: "Seleccionar una carpeta con permisos de escritura.",
+        recommendation,
       };
     }
   }
@@ -269,6 +360,10 @@ export class PreflightService {
   private async dockerChecks(runtimePath: string): Promise<PreflightCheck[]> {
     const checks: PreflightCheck[] = [];
     const dockerDesktopChecks: PreflightCheck[] = [];
+    const dockerCommand =
+      process.platform === "win32"
+        ? ((await resolveWindowsDockerCliPath(this.processRunner)) ?? "docker")
+        : "docker";
 
     if (process.platform === "win32") {
       dockerDesktopChecks.push(await this.checkWsl2());
@@ -277,13 +372,13 @@ export class PreflightService {
     }
 
     const dockerVersion = await this.processRunner.run({
-      command: "docker",
+      command: dockerCommand,
       args: ["version", "--format", "{{.Server.Version}}"],
       timeoutMs: 15_000,
     });
 
     const composeVersion = await this.processRunner.run({
-      command: "docker",
+      command: dockerCommand,
       args: ["compose", "version"],
       timeoutMs: 15_000,
     });
@@ -296,14 +391,14 @@ export class PreflightService {
       dockerEngineCheck.repairable = process.platform === "win32";
       dockerEngineCheck.repairAction = "auto-repair";
       dockerEngineCheck.repairHint =
-        "Intentará instalar/iniciar Docker Desktop y revalidar automáticamente.";
+        "Intentará corregir contexto Docker y revalidar daemon automáticamente.";
     }
 
     if (!composeVersion.ok && dockerComposeCheck) {
       dockerComposeCheck.repairable = process.platform === "win32";
       dockerComposeCheck.repairAction = "auto-repair";
       dockerComposeCheck.repairHint =
-        "Intentará habilitar Docker Compose v2 tras iniciar Docker Desktop.";
+        "Intentará revalidar Docker Compose tras corregir contexto/daemon.";
     }
 
     checks.push(
@@ -325,7 +420,7 @@ export class PreflightService {
       });
     }
 
-    return [...checks, ...dockerChecks];
+    return downgradeDockerContextPipeChecks([...checks, ...dockerChecks]);
   }
 
   private async portChecks(): Promise<PreflightCheck[]> {
@@ -376,10 +471,10 @@ export class PreflightService {
     const command = [
       `$conn = Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1`,
       "if ($null -eq $conn) { Write-Output 'FREE'; exit 0 }",
-      "$pid = $conn.OwningProcess",
-      "$name = (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName",
+      "$ownerPid = $conn.OwningProcess",
+      "$name = (Get-Process -Id $ownerPid -ErrorAction SilentlyContinue).ProcessName",
       "if ([string]::IsNullOrWhiteSpace($name)) { $name = 'desconocido' }",
-      "Write-Output ('BUSY|' + $pid + '|' + $name)",
+      "Write-Output ('BUSY|' + $ownerPid + '|' + $name)",
     ].join("; ");
 
     const result = await this.processRunner.run({
@@ -608,11 +703,27 @@ export class PreflightService {
     ];
   }
 
-  private async repairWindowsDependencies(runtimePath: string): Promise<void> {
+  private async repairWindowsDependencies(
+    runtimePath: string,
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    onProgress?.("Comprobando winget...");
     await this.ensureWingetAvailable();
+    onProgress?.("Comprobando/instalando WSL2...");
     await this.ensureWsl2Installed();
-    await this.ensureDockerDesktopInstalled();
-    await this.ensureDockerDesktopRunning();
+    onProgress?.("Ajustando runtime WSL (update + default version 2)...");
+    await this.ensureWslUpdatedAndDefaultVersion(onProgress);
+    onProgress?.("Comprobando/instalando Docker Desktop...");
+    await this.ensureDockerDesktopInstalled(onProgress);
+    onProgress?.("Asegurando Docker CLI en PATH de Windows...");
+    await this.ensureDockerCliAvailableInPath(onProgress);
+    onProgress?.(
+      "Asegurando que Docker Desktop y com.docker.service estén activos...",
+    );
+    await this.ensureDockerDesktopRunning(onProgress);
+    onProgress?.("Esperando disponibilidad del engine Linux de Docker...");
+    await this.ensureDockerLinuxEngineReady(onProgress);
+    onProgress?.("Aplicando exclusiones de Defender (si procede)...");
     await this.tryEnableDefenderExclusions(runtimePath);
   }
 
@@ -641,69 +752,305 @@ export class PreflightService {
     });
   }
 
-  private async ensureDockerDesktopInstalled(): Promise<void> {
-    const check = await this.checkDockerDesktopInstalled();
-    if (check.status === "OK") {
-      return;
+  private async ensureWslUpdatedAndDefaultVersion(
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    const update = await this.processRunner.run({
+      command: "wsl",
+      args: ["--update"],
+      timeoutMs: 180_000,
+    });
+
+    if (!update.ok) {
+      onProgress?.(
+        "WSL update no pudo ejecutarse en modo normal. Intentando elevación (UAC)...",
+      );
+      await this.runElevatedWslCommand(["--update"], 240_000);
+    } else {
+      onProgress?.("WSL actualizado correctamente.");
     }
 
+    const setDefaultVersion = await this.processRunner.run({
+      command: "wsl",
+      args: ["--set-default-version", "2"],
+      timeoutMs: 30_000,
+    });
+
+    if (!setDefaultVersion.ok) {
+      onProgress?.(
+        "No se pudo fijar WSL default version 2 en modo normal. Intentando elevación (UAC)...",
+      );
+      await this.runElevatedWslCommand(["--set-default-version", "2"], 60_000);
+    } else {
+      onProgress?.("WSL default version configurada en 2.");
+    }
+  }
+
+  private async runElevatedWslCommand(
+    wslArgs: string[],
+    timeoutMs: number,
+  ): Promise<void> {
+    const encodedArgs = wslArgs
+      .map((arg) => `'${arg.replace(/'/g, "''")}'`)
+      .join(", ");
+    const elevateScript = [
+      `$p = Start-Process -FilePath 'wsl.exe' -ArgumentList @(${encodedArgs}) -Verb RunAs -WindowStyle Hidden -PassThru -Wait`,
+      "if ($null -eq $p) { exit 1 }",
+      "exit $p.ExitCode",
+    ].join("; ");
+
     await this.processRunner.run({
-      command: "winget",
-      args: [
-        "install",
-        "-e",
-        "--id",
-        "Docker.DockerDesktop",
-        "--accept-package-agreements",
-        "--accept-source-agreements",
-        "--silent",
-      ],
-      timeoutMs: 240_000,
+      command: "powershell",
+      args: ["-NoProfile", "-Command", elevateScript],
+      timeoutMs,
     });
   }
 
-  private async ensureDockerDesktopRunning(): Promise<void> {
-    const running = await this.checkDockerDesktopRunning();
-    if (running.status === "OK") {
+  private async ensureDockerDesktopInstalled(
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    const check = await this.checkDockerDesktopInstalled();
+    if (check.status === "OK") {
+      onProgress?.("Docker Desktop ya está instalado.");
       return;
     }
 
-    const candidatePaths = [
-      "C:/Program Files/Docker/Docker/Docker Desktop.exe",
-      "C:/Program Files/Docker/Docker/Docker Desktop",
-    ];
+    // Si Docker CLI ya responde, no forzamos instalación de Docker Desktop:
+    // puede ser un entorno headless válido o una instalación no estándar.
+    const dockerCommand =
+      (await resolveWindowsDockerCliPath(this.processRunner)) ?? "docker";
+    const dockerProbe = await this.processRunner.run({
+      command: dockerCommand,
+      args: ["version", "--format", "{{.Server.Version}}"],
+      timeoutMs: 15_000,
+    });
+    if (dockerProbe.ok) {
+      onProgress?.(
+        "Docker CLI ya está operativo; se omite instalación de Docker Desktop.",
+      );
+      return;
+    }
+
+    onProgress?.(
+      "Docker Desktop no detectado y Docker CLI no operativo. Instalando con winget (puede tardar varios minutos)...",
+    );
+
+    const heartbeat = setInterval(() => {
+      onProgress?.(
+        "Instalando Docker Desktop... esperando a que winget finalice (proceso en curso).",
+      );
+    }, 15_000);
+
+    try {
+      await this.processRunner.run({
+        command: "winget",
+        args: [
+          "install",
+          "-e",
+          "--id",
+          "Docker.DockerDesktop",
+          "--accept-package-agreements",
+          "--accept-source-agreements",
+          "--disable-interactivity",
+          "--silent",
+        ],
+        timeoutMs: 420_000,
+      });
+    } finally {
+      clearInterval(heartbeat);
+    }
+    onProgress?.("Finalizó la instalación de Docker Desktop (winget).");
+  }
+
+  private async ensureDockerCliAvailableInPath(
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    const dockerCommand = await resolveWindowsDockerCliPath(this.processRunner);
+    if (!dockerCommand) {
+      onProgress?.(
+        "No se encontró docker.exe en rutas conocidas; se seguirá con reparación de Docker Desktop.",
+      );
+      return;
+    }
+
+    const dockerBin = path.dirname(dockerCommand);
+    const currentPath = process.env.Path ?? process.env.PATH ?? "";
+    if (!currentPath.toLowerCase().includes(dockerBin.toLowerCase())) {
+      process.env.Path = `${dockerBin};${currentPath}`;
+      process.env.PATH = process.env.Path;
+      onProgress?.(`PATH de esta ejecución actualizado con ${dockerBin}.`);
+    }
+
+    const escapedDockerBin = dockerBin.replace(/'/g, "''");
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-Command",
+        [
+          `$dockerBin='${escapedDockerBin}'`,
+          "$current=[Environment]::GetEnvironmentVariable('Path','User')",
+          "if ([string]::IsNullOrWhiteSpace($current)) { $current = '' }",
+          "if ($current.ToLowerInvariant().Contains($dockerBin.ToLowerInvariant())) { Write-Output 'USER_PATH_ALREADY_OK'; exit 0 }",
+          "$next = ($current.TrimEnd(';') + ';' + $dockerBin).TrimStart(';')",
+          "[Environment]::SetEnvironmentVariable('Path', $next, 'User')",
+          "Write-Output 'USER_PATH_UPDATED'",
+        ].join("; "),
+      ],
+      timeoutMs: 15_000,
+    });
+
+    if (result.ok && result.stdout.includes("USER_PATH_UPDATED")) {
+      onProgress?.(
+        "PATH de usuario actualizado. Las terminales nuevas ya reconocerán docker.",
+      );
+      return;
+    }
+
+    if (result.ok) {
+      onProgress?.("PATH de usuario ya contenía Docker CLI.");
+      return;
+    }
+
+    onProgress?.(
+      `No se pudo actualizar PATH de usuario automáticamente: ${result.stderr || result.message}`,
+    );
+  }
+
+  private async ensureDockerDesktopRunning(
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    await this.ensureWindowsDockerServiceRunning();
+    await this.ensureDockerCliAvailableInPath(onProgress);
+
+    const running = await this.checkDockerDesktopRunning();
+    if (running.status === "OK") {
+      onProgress?.("Docker Desktop ya estaba en ejecución.");
+      return;
+    }
+
+    const resolved = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+    const candidatePaths =
+      resolved !== null
+        ? [resolved]
+        : [
+            "C:/Program Files/Docker/Docker/Docker Desktop.exe",
+            "C:/Program Files/Docker/Docker/Docker Desktop",
+          ];
 
     for (const executablePath of candidatePaths) {
+      const escaped = executablePath.replace(/'/g, "''");
       const start = await this.processRunner.run({
         command: "powershell",
         args: [
           "-NoProfile",
           "-Command",
-          `if (Test-Path '${executablePath}') { Start-Process -FilePath '${executablePath}'; exit 0 } else { exit 1 }`,
+          `if (Test-Path -LiteralPath '${escaped}') { Start-Process -FilePath '${escaped}'; exit 0 } else { exit 1 }`,
         ],
         timeoutMs: 15_000,
       });
-
       if (start.ok) {
+        onProgress?.(
+          "Docker Desktop lanzado. Esperando que responda el daemon...",
+        );
         break;
       }
     }
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const dockerVersion = await this.processRunner.run({
-        command: "docker",
+        command:
+          (await resolveWindowsDockerCliPath(this.processRunner)) ?? "docker",
         args: ["version", "--format", "{{.Server.Version}}"],
         timeoutMs: 10_000,
       });
 
       if (dockerVersion.ok) {
+        onProgress?.("Docker daemon responde correctamente.");
         return;
       }
+      onProgress?.(
+        `Docker daemon aún no responde (intento ${attempt + 1}/10). Esperando arranque...`,
+      );
 
       await new Promise((resolve) => {
         setTimeout(resolve, 3_000);
       });
     }
+
+    onProgress?.(
+      "Docker daemon sigue sin responder tras los reintentos iniciales.",
+    );
+  }
+
+  private async ensureWindowsDockerServiceRunning(): Promise<void> {
+    const normalResult = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-Command",
+        [
+          "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue",
+          "if ($null -eq $service) { exit 2 }",
+          "sc.exe config com.docker.service start= auto | Out-Null",
+          "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
+          "Set-Service -Name 'com.docker.service' -StartupType Automatic -ErrorAction Stop",
+          "$service = Get-Service -Name 'com.docker.service'",
+          "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' -ErrorAction Stop }",
+          "$service = Get-Service -Name 'com.docker.service'",
+          "if ($service.Status -eq 'Running') { exit 0 }",
+          "exit 1",
+        ].join("; "),
+      ],
+      timeoutMs: 20_000,
+    });
+
+    if (normalResult.ok) {
+      return;
+    }
+
+    const detail = `${normalResult.stderr}\n${normalResult.stdout}\n${normalResult.message}`;
+    if (
+      !/acceso denegado|access is denied|requires elevation|elevaci/i.test(
+        detail,
+      )
+    ) {
+      return;
+    }
+
+    await this.tryElevatedWindowsDockerServiceRepair();
+  }
+
+  private async tryElevatedWindowsDockerServiceRepair(): Promise<void> {
+    const script = [
+      "$ErrorActionPreference = 'Stop'",
+      "sc.exe config com.docker.service start= auto | Out-Null",
+      "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
+      "Set-Service -Name 'com.docker.service' -StartupType Automatic",
+      "$service = Get-Service -Name 'com.docker.service'",
+      "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' }",
+    ].join("; ");
+    const encodedScript = Buffer.from(script, "utf16le").toString("base64");
+    const elevateCommand = [
+      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','${encodedScript}')`,
+      "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList $argumentList",
+      "if ($null -eq $process) { exit 1 }",
+      "exit $process.ExitCode",
+    ].join("; ");
+
+    await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        elevateCommand,
+      ],
+      timeoutMs: 90_000,
+    });
   }
 
   private async releaseKnownBusyPorts(): Promise<void> {
@@ -795,44 +1142,43 @@ export class PreflightService {
   }
 
   private async checkDockerDesktopInstalled(): Promise<PreflightCheck> {
-    const command = [
-      "$paths = @(",
-      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe',",
-      "  'C:\\Program Files\\Docker\\Docker\\Docker Desktop'",
-      ")",
-      "$exists = $false",
-      "foreach ($path in $paths) { if (Test-Path $path) { $exists = $true; break } }",
-      "if ($exists) { Write-Output 'INSTALLED' } else { Write-Output 'MISSING' }",
-    ].join("; ");
-
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: ["-NoProfile", "-Command", command],
-      timeoutMs: 10_000,
-    });
-    const installed = result.ok && result.stdout.trim() === "INSTALLED";
+    const exePath = await resolveWindowsDockerDesktopExePath(
+      this.processRunner,
+    );
+    const installed = exePath !== null;
+    const normalized = (exePath ?? "").replace(/\\/g, "/").toLowerCase();
+    const looksLikeSystemProgramFiles =
+      normalized.includes("/program files/") ||
+      normalized.includes("/archivos de programa/");
+    const detail = installed
+      ? looksLikeSystemProgramFiles
+        ? "Docker Desktop está instalado."
+        : "Docker Desktop está instalado (ubicación por usuario o registro; instalación válida en Windows)."
+      : "No se detectó el ejecutable de Docker Desktop (Program Files, perfil local ni registro de desinstalación).";
 
     return {
       id: "docker-desktop-installed",
       label: "Docker Desktop instalado",
-      status: installed ? "OK" : "BLOCKER",
-      detail: installed
-        ? "Docker Desktop está instalado."
-        : "No se encontró Docker Desktop en Program Files.",
+      status: installed ? "OK" : "WARN",
+      detail,
       recommendation: installed
         ? undefined
-        : "Instalar Docker Desktop para habilitar Docker Engine y Compose.",
-      repairable: !installed,
-      repairAction: !installed ? "auto-repair" : undefined,
-      repairHint: !installed
-        ? "Intentará instalar Docker Desktop con winget."
-        : undefined,
+        : "Docker Desktop no está instalado. En modo Docker Engine/WSL2 headless no bloquea instalación si `docker` y `compose` funcionan.",
+      repairable: false,
+      repairAction: undefined,
+      repairHint: undefined,
     };
   }
 
   private async checkDockerDesktopRunning(): Promise<PreflightCheck> {
-    const command =
-      "if (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }";
+    const command = [
+      "$names = @('Docker Desktop','com.docker.backend')",
+      "$running = $false",
+      "foreach ($n in $names) {",
+      "  if (Get-Process -Name $n -ErrorAction SilentlyContinue) { $running = $true; break }",
+      "}",
+      "if ($running) { Write-Output 'RUNNING' } else { Write-Output 'STOPPED' }",
+    ].join(" ");
 
     const result = await this.processRunner.run({
       command: "powershell",
@@ -844,18 +1190,79 @@ export class PreflightService {
     return {
       id: "docker-desktop-running",
       label: "Docker Desktop en ejecución",
-      status: running ? "OK" : "BLOCKER",
+      status: running ? "OK" : "WARN",
       detail: running
         ? "Docker Desktop está en ejecución."
-        : "Docker Desktop no está iniciado.",
+        : "Docker Desktop no está iniciado. Se puede reparar automáticamente iniciando com.docker.service, Docker Desktop y el engine Linux de WSL.",
       recommendation: running
         ? undefined
-        : "Iniciar Docker Desktop y esperar a que Engine esté operativo.",
+        : "Pulsa Solucionar automáticamente para iniciar Docker Desktop/WSL antes de desplegar.",
       repairable: !running,
       repairAction: !running ? "auto-repair" : undefined,
       repairHint: !running
-        ? "Intentará iniciar Docker Desktop automáticamente."
+        ? "Intentará iniciar Docker Desktop y esperar a que responda el daemon."
         : undefined,
     };
+  }
+
+  private async ensureDockerLinuxEngineReady(
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    const dockerCommand =
+      (await resolveWindowsDockerCliPath(this.processRunner)) ?? "docker";
+    const initialProbe = await this.processRunner.run({
+      command: dockerCommand,
+      args: [
+        "--context",
+        "desktop-linux",
+        "info",
+        "--format",
+        "{{.ServerVersion}}",
+      ],
+      timeoutMs: 15_000,
+    });
+    if (initialProbe.ok) {
+      onProgress?.("El engine Linux de Docker ya estaba disponible.");
+      return;
+    }
+
+    onProgress?.("Cambiando Docker al engine Linux (WSL)...");
+    const dockerCliPath = "C:/Program Files/Docker/Docker/DockerCli.exe";
+    await this.processRunner.run({
+      command: dockerCliPath,
+      args: ["-SwitchLinuxEngine"],
+      timeoutMs: 45_000,
+    });
+
+    const deadline = Date.now() + 120_000;
+    let attempt = 0;
+    while (Date.now() < deadline) {
+      attempt += 1;
+      const probe = await this.processRunner.run({
+        command: dockerCommand,
+        args: [
+          "--context",
+          "desktop-linux",
+          "info",
+          "--format",
+          "{{.ServerVersion}}",
+        ],
+        timeoutMs: 15_000,
+      });
+      if (probe.ok) {
+        onProgress?.("Engine Linux de Docker listo y respondiendo.");
+        return;
+      }
+      onProgress?.(
+        `Esperando engine Linux de Docker (intento ${attempt}). WSL aún está iniciando...`,
+      );
+      await new Promise((resolve) => {
+        setTimeout(resolve, 3_000);
+      });
+    }
+
+    onProgress?.(
+      "No se confirmó disponibilidad del engine Linux dentro del tiempo esperado.",
+    );
   }
 }

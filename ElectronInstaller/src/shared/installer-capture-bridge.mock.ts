@@ -1,5 +1,6 @@
 /**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ * Mock de `window.smartEconomat` para capturas E2E (preload capture) y referencia
+ * alineada con `test/e2e/fixtures/installer-bridge.mock.js` (Playwright web).
  */
 import type {
   BackupMetadata,
@@ -16,7 +17,6 @@ import type {
   TailLogsPayload,
 } from "./contracts";
 
-/** Alias de tipo público (InstallerBridgeCallCounts). */
 export type InstallerBridgeCallCounts = {
   runPreflight: number;
   startInstallation: number;
@@ -47,10 +47,6 @@ type RuntimeLogListener = (event: {
   timestamp: string;
 }) => void;
 
-/**
- * Expone la operación "createInstallerCaptureBridgeMock" del instalador SmartEconomat.
- * @returns {Record<string, unknown>} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function createInstallerCaptureBridgeMock(): Record<string, unknown> {
   const installerProgressListeners: InstallerProgressListener[] = [];
   const runtimeLogListeners: RuntimeLogListener[] = [];

@@ -32,19 +32,12 @@ const result = spawnSync(
 );
 
 if (result.error) {
-  console.error(
-    "[validate-local-domain] No se pudo ejecutar PowerShell:",
-    result.error.message,
-  );
+  console.error("[validate-local-domain] No se pudo ejecutar PowerShell:", result.error.message);
   process.exit(1);
 }
 
 if (result.status !== 0) {
-  console.error(
-    result.stderr ||
-      result.stdout ||
-      "[validate-local-domain] Error desconocido",
-  );
+  console.error(result.stderr || result.stdout || "[validate-local-domain] Error desconocido");
   process.exit(result.status ?? 1);
 }
 

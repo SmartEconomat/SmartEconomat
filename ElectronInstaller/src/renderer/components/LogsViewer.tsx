@@ -54,16 +54,6 @@ function serviceAccent(service: string): string {
   return "#fbbf24";
 }
 
-/**
- * Expone la operación "LogsViewer" del instalador SmartEconomat.
- * @returns {LogsViewerProps} {
- *   logs,
- *   busy,
- *   onClearLogs,
- *   onExportLogs,
- * } - Entrada esperada por la función.
- * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function LogsViewer({
   logs,
   busy,
@@ -71,14 +61,33 @@ export function LogsViewer({
   onExportLogs,
 }: LogsViewerProps) {
   const streamRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
+  const lastLogCountRef = useRef(0);
   const hasLogs = logs.length > 0;
 
-  useEffect(() => {
-    if (!streamRef.current) {
+  const syncAutoScrollPreference = (): void => {
+    const container = streamRef.current;
+    if (!container) {
       return;
     }
 
-    streamRef.current.scrollTop = streamRef.current.scrollHeight;
+    const distanceToBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    shouldAutoScrollRef.current = distanceToBottom <= 24;
+  };
+
+  useEffect(() => {
+    const container = streamRef.current;
+    if (!container) {
+      return;
+    }
+
+    const hasNewLogs = logs.length > lastLogCountRef.current;
+    lastLogCountRef.current = logs.length;
+
+    if (hasNewLogs && shouldAutoScrollRef.current) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [logs]);
 
   return (
@@ -167,6 +176,7 @@ export function LogsViewer({
 
       <Box
         ref={streamRef}
+        onScroll={syncAutoScrollPreference}
         sx={{
           height: 380,
           overflow: "auto",

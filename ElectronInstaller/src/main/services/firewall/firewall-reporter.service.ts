@@ -3,22 +3,11 @@ import type {
   FirewallVerificationResult,
 } from "./firewall.types";
 
-/** Servicio del proceso principal: FirewallReporterService. */
 export class FirewallReporterService {
-  /**
-   * Expone la operación "report" del instalador SmartEconomat.
-   * @param {FirewallEnsureSummary} summary - Entrada esperada por la función.
-   * @returns {FirewallEnsureSummary} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   report(summary: FirewallEnsureSummary): FirewallEnsureSummary {
     return summary;
   }
 
-  /**
-   * Expone la operación "buildUserMessage" del instalador SmartEconomat.
-   * @param {FirewallVerificationResult} verification - Entrada esperada por la función.
-   * @returns {{ canContinue: boolean; warningCode?: string; message: string; }} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   buildUserMessage(verification: FirewallVerificationResult): {
     canContinue: boolean;
     warningCode?: string;

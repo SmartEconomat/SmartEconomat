@@ -3,27 +3,25 @@ import path from "node:path";
 import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
 import { ProcessRunnerService } from "./process-runner.service";
 
-/** Contrato tipado público (DockerAutostartStatus). */
 export interface DockerAutostartStatus {
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Docker Desktop está configurado para iniciar con el sistema operativo
    */
   autoStartEnabled: boolean;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Docker Desktop está instalado en el sistema
    */
   dockerDesktopInstalled: boolean;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Ruta al ejecutable de Docker Desktop (si se encontró)
    */
   dockerDesktopPath: string | null;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Mensaje descriptivo del estado
    */
   message: string;
 }
 
-/** Contrato tipado público (DockerAutostartConfigResult). */
 export interface DockerAutostartConfigResult {
   ok: boolean;
   message: string;
@@ -31,15 +29,13 @@ export interface DockerAutostartConfigResult {
 }
 
 /**
- * Servicio de dominio para docker autostart.
+ * Servicio multiplataforma para gestionar el inicio automático de Docker Desktop.
+ * Soporta Windows (Registro + Tarea programada + settings.json),
+ * macOS (launchctl) y Linux (systemd).
  */
 export class DockerAutostartService {
   private readonly processRunner = new ProcessRunnerService();
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {Promise<DockerAutostartStatus>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async getAutostartStatus(): Promise<DockerAutostartStatus> {
     const platform = process.platform;
 
@@ -63,10 +59,6 @@ export class DockerAutostartService {
     };
   }
 
-  /**
-   * Expone la operación "enableAutostart" del instalador SmartEconomat.
-   * @returns {Promise<DockerAutostartConfigResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async enableAutostart(): Promise<DockerAutostartConfigResult> {
     const platform = process.platform;
 
@@ -89,10 +81,6 @@ export class DockerAutostartService {
     };
   }
 
-  /**
-   * Expone la operación "disableAutostart" del instalador SmartEconomat.
-   * @returns {Promise<DockerAutostartConfigResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async disableAutostart(): Promise<DockerAutostartConfigResult> {
     const platform = process.platform;
 

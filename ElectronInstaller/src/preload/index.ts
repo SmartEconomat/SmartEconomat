@@ -1,10 +1,13 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+import { createInstallerCaptureBridgeMock } from "@shared/installer-capture-bridge.mock";
 import type {
   BackupMetadata,
   BackupPayload,
   DebugLogEntry,
   ExportVisibleLogsPayload,
+  HealthUpdateEvent,
+  InstallerBootState,
   InstallerFilePickerPayload,
   InstallerConfigPayload,
   InstallerProgressEvent,
@@ -16,9 +19,13 @@ import type {
   RestorePayload,
   RuntimePaths,
   ServiceHealth,
+  SupervisorSnapshot,
   TailLogsPayload,
+  UninstallPayload,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
+
+declare const __INSTALLER_CAPTURE_BRIDGE_MOCK__: boolean;
 
 function formatUnknown(input: unknown): string {
   if (typeof input === "string") {
@@ -186,114 +193,156 @@ function onChannelEvent<T>(
   };
 }
 
-contextBridge.exposeInMainWorld("smartEconomat", {
-  runPreflight: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult<PreflightReport>>(
-      IPCChannels.installer.runPreflight,
-      payload,
-    ),
-  runPreflightAutoRepair: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult<PreflightReport>>(
-      IPCChannels.installer.runAutoRepair,
-      payload,
-    ),
-  releaseBusyPort: (payload: PortRepairPayload) =>
-    invokeWithTracing<PortRepairPayload, OperationResult<PreflightReport>>(
-      IPCChannels.installer.releaseBusyPort,
-      payload,
-    ),
-  startInstallation: (payload: InstallerConfigPayload) =>
-    invokeWithTracing<
-      InstallerConfigPayload,
-      OperationResult<InstallerStateSnapshot>
-    >(IPCChannels.installer.startInstall, payload),
-  pickInstallerFile: (payload: InstallerFilePickerPayload) =>
-    invokeWithTracing<InstallerFilePickerPayload, OperationResult<string>>(
-      IPCChannels.installer.pickFile,
-      payload,
-    ),
-  getInstallerState: () =>
-    invokeWithTracing<undefined, OperationResult<InstallerStateSnapshot>>(
-      IPCChannels.installer.getState,
-    ),
-  onInstallerProgress: (callback: (event: InstallerProgressEvent) => void) =>
-    onChannelEvent(IPCChannels.installer.progressEvent, callback),
+if (__INSTALLER_CAPTURE_BRIDGE_MOCK__) {
+  contextBridge.exposeInMainWorld(
+    "smartEconomat",
+    createInstallerCaptureBridgeMock() as never,
+  );
+} else {
+  contextBridge.exposeInMainWorld("smartEconomat", {
+    runPreflight: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult<PreflightReport>>(
+        IPCChannels.installer.runPreflight,
+        payload,
+      ),
+    runPreflightAutoRepair: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult<PreflightReport>>(
+        IPCChannels.installer.runAutoRepair,
+        payload,
+      ),
+    releaseBusyPort: (payload: PortRepairPayload) =>
+      invokeWithTracing<PortRepairPayload, OperationResult<PreflightReport>>(
+        IPCChannels.installer.releaseBusyPort,
+        payload,
+      ),
+    startInstallation: (payload: InstallerConfigPayload) =>
+      invokeWithTracing<
+        InstallerConfigPayload,
+        OperationResult<InstallerStateSnapshot>
+      >(IPCChannels.installer.startInstall, payload),
+    pickInstallerFile: (payload: InstallerFilePickerPayload) =>
+      invokeWithTracing<InstallerFilePickerPayload, OperationResult<string>>(
+        IPCChannels.installer.pickFile,
+        payload,
+      ),
+    testSmtp: (config: Partial<InstallerConfigPayload>) =>
+      invokeWithTracing<
+        Partial<InstallerConfigPayload>,
+        OperationResult<boolean>
+      >(IPCChannels.installer.testSmtp, config),
+    getInstallerState: () =>
+      invokeWithTracing<undefined, OperationResult<InstallerStateSnapshot>>(
+        IPCChannels.installer.getState,
+      ),
+    getInstallerBootState: () =>
+      invokeWithTracing<undefined, OperationResult<InstallerBootState>>(
+        IPCChannels.installer.getBootState,
+      ),
+    onInstallerProgress: (callback: (event: InstallerProgressEvent) => void) =>
+      onChannelEvent(IPCChannels.installer.progressEvent, callback),
 
-  startStack: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult>(
-      IPCChannels.runtime.startStack,
-      payload,
-    ),
-  stopStack: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult>(
-      IPCChannels.runtime.stopStack,
-      payload,
-    ),
-  restartStack: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult>(
-      IPCChannels.runtime.restartStack,
-      payload,
-    ),
-  getHealth: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult<ServiceHealth[]>>(
-      IPCChannels.runtime.getHealth,
-      payload,
-    ),
-  tailLogs: (payload: TailLogsPayload) =>
-    invokeWithTracing<TailLogsPayload, OperationResult>(
-      IPCChannels.runtime.tailLogs,
-      payload,
-    ),
-  stopLogStream: () =>
-    invokeWithTracing<undefined, OperationResult>(
-      IPCChannels.runtime.stopLogStream,
-    ),
-  exportVisibleLogs: (payload: ExportVisibleLogsPayload) =>
-    invokeWithTracing<ExportVisibleLogsPayload, OperationResult<string>>(
-      IPCChannels.runtime.exportVisibleLogs,
-      payload,
-    ),
-  onRuntimeLog: (
-    callback: (event: {
-      service: string;
-      line: string;
-      timestamp: string;
-    }) => void,
-  ) => onChannelEvent(IPCChannels.runtime.streamLogEvent, callback),
-  pruneSafe: (payload: PrunePayload) =>
-    invokeWithTracing<PrunePayload, OperationResult>(
-      IPCChannels.runtime.pruneSafe,
-      payload,
-    ),
-  backupNow: (payload: BackupPayload) =>
-    invokeWithTracing<BackupPayload, OperationResult<BackupMetadata>>(
-      IPCChannels.runtime.backupNow,
-      payload,
-    ),
-  restoreFrom: (payload: RestorePayload) =>
-    invokeWithTracing<RestorePayload, OperationResult>(
-      IPCChannels.runtime.restoreFrom,
-      payload,
-    ),
-  diagnostics: (payload: RuntimePaths) =>
-    invokeWithTracing<RuntimePaths, OperationResult<string>>(
-      IPCChannels.runtime.diagnostics,
-      payload,
-    ),
+    startStack: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult>(
+        IPCChannels.runtime.startStack,
+        payload,
+      ),
+    stopStack: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult>(
+        IPCChannels.runtime.stopStack,
+        payload,
+      ),
+    restartStack: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult>(
+        IPCChannels.runtime.restartStack,
+        payload,
+      ),
+    getHealth: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult<ServiceHealth[]>>(
+        IPCChannels.runtime.getHealth,
+        payload,
+      ),
+    tailLogs: (payload: TailLogsPayload) =>
+      invokeWithTracing<TailLogsPayload, OperationResult>(
+        IPCChannels.runtime.tailLogs,
+        payload,
+      ),
+    stopLogStream: () =>
+      invokeWithTracing<undefined, OperationResult>(
+        IPCChannels.runtime.stopLogStream,
+      ),
+    exportVisibleLogs: (payload: ExportVisibleLogsPayload) =>
+      invokeWithTracing<ExportVisibleLogsPayload, OperationResult<string>>(
+        IPCChannels.runtime.exportVisibleLogs,
+        payload,
+      ),
+    onRuntimeLog: (
+      callback: (event: {
+        service: string;
+        line: string;
+        timestamp: string;
+      }) => void,
+    ) => onChannelEvent(IPCChannels.runtime.streamLogEvent, callback),
+    pruneSafe: (payload: PrunePayload) =>
+      invokeWithTracing<PrunePayload, OperationResult>(
+        IPCChannels.runtime.pruneSafe,
+        payload,
+      ),
+    uninstall: (payload: UninstallPayload) =>
+      invokeWithTracing<UninstallPayload, OperationResult>(
+        IPCChannels.runtime.uninstall,
+        payload,
+      ),
+    backupNow: (payload: BackupPayload) =>
+      invokeWithTracing<BackupPayload, OperationResult<BackupMetadata>>(
+        IPCChannels.runtime.backupNow,
+        payload,
+      ),
+    restoreFrom: (payload: RestorePayload) =>
+      invokeWithTracing<RestorePayload, OperationResult>(
+        IPCChannels.runtime.restoreFrom,
+        payload,
+      ),
+    diagnostics: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult<string>>(
+        IPCChannels.runtime.diagnostics,
+        payload,
+      ),
 
-  onDebugLog: (callback: (event: DebugLogEntry) => void) =>
-    onChannelEvent(IPCChannels.debug.streamEvent, callback),
-  getDebugLogs: () =>
-    invokeWithTracing<undefined, OperationResult<DebugLogEntry[]>>(
-      IPCChannels.debug.getLogs,
-    ),
-  clearDebugLogs: () =>
-    invokeWithTracing<undefined, OperationResult>(IPCChannels.debug.clearLogs),
-  isDebugModeEnabled: () =>
-    invokeWithTracing<undefined, OperationResult<boolean>>(
-      IPCChannels.debug.isEnabled,
-    ),
-  sendDebugLog: (entry: DebugLogEntry) => {
-    sendRendererDebugLog(entry);
-  },
-});
+    getWatchdogStatus: () =>
+      invokeWithTracing<undefined, OperationResult<HealthUpdateEvent>>(
+        IPCChannels.runtime.getWatchdogStatus,
+      ),
+    getSupervisorSnapshot: () =>
+      invokeWithTracing<undefined, OperationResult<SupervisorSnapshot>>(
+        IPCChannels.runtime.getSupervisorSnapshot,
+      ),
+    restartDockerDesktop: () =>
+      invokeWithTracing<undefined, OperationResult>(
+        IPCChannels.runtime.restartDockerDesktop,
+      ),
+    runSupervisorRecovery: () =>
+      invokeWithTracing<undefined, OperationResult>(
+        IPCChannels.runtime.runSupervisorRecovery,
+      ),
+    onHealthUpdate: (callback: (event: HealthUpdateEvent) => void) =>
+      onChannelEvent(IPCChannels.runtime.healthUpdate, callback),
+
+    onDebugLog: (callback: (event: DebugLogEntry) => void) =>
+      onChannelEvent(IPCChannels.debug.streamEvent, callback),
+    getDebugLogs: () =>
+      invokeWithTracing<undefined, OperationResult<DebugLogEntry[]>>(
+        IPCChannels.debug.getLogs,
+      ),
+    clearDebugLogs: () =>
+      invokeWithTracing<undefined, OperationResult>(
+        IPCChannels.debug.clearLogs,
+      ),
+    isDebugModeEnabled: () =>
+      invokeWithTracing<undefined, OperationResult<boolean>>(
+        IPCChannels.debug.isEnabled,
+      ),
+    sendDebugLog: (entry: DebugLogEntry) => {
+      sendRendererDebugLog(entry);
+    },
+  });
+}

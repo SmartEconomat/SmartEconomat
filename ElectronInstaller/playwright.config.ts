@@ -5,9 +5,9 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 4,
+  workers: 1,
   reporter: [
-    ['html', { outputFolder: 'e2e-report' }],
+    ['html', { outputFolder: 'e2e-report', open: 'never' }],
     ['json', { outputFile: 'e2e-report/results.json' }],
     ['list'],
   ],
@@ -16,9 +16,16 @@ export default defineConfig({
     timeout: 10000,
   },
   use: {
+    baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+  },
+  webServer: {
+    command: 'npx vite preview --outDir out/renderer --host 127.0.0.1 --port 4173 --strictPort',
+    url: 'http://127.0.0.1:4173',
+    reuseExistingServer: true,
+    timeout: 120000,
   },
   projects: [
     {

@@ -27,31 +27,35 @@ import { ProcessRunnerService } from "./process-runner.service";
 import { SupervisorLogService } from "./supervisor-log.service";
 import { computeBackoffInterval, shouldRunRecovery } from "./supervisor-policy";
 
-/** Contrato tipado público (BootGuardianOptions). */
 export interface BootGuardianOptions {
   onLog: (message: string) => void;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Intervalo base en ms para verificar salud de contenedores.
+   * Se usa como base para el backoff exponencial. Por defecto 30 000 (30 s).
    */
   baseHealthCheckIntervalMs?: number;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Intervalo máximo en ms para el backoff exponencial. Por defecto 1 800 000 (30 min).
    */
   maxHealthCheckIntervalMs?: number;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Máximo de reintentos por nivel de recuperación antes de escalar.
+   * Por defecto 3.
    */
   maxRetriesPerLevel?: number;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Habilitar configuración automática de Docker Desktop para iniciar con el SO.
+   * Por defecto true.
    */
   enableDockerAutostart?: boolean;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Tiempo máximo de espera para que Docker Desktop arranque (ms).
+   * Por defecto 120 000 (2 minutos).
    */
   dockerStartupTimeoutMs?: number;
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Delay en ms después de un resume del SO antes de verificar salud.
+   * Por defecto 20 000 (20 s).
    */
   postResumeDelayMs?: number;
   onSnapshot?: (snapshot: SupervisorSnapshot) => void;
@@ -59,7 +63,15 @@ export interface BootGuardianOptions {
 }
 
 /**
- * Servicio de dominio para boot guardian.
+ * Servicio que garantiza la alta disponibilidad del stack Docker.
+ *
+ * Mejoras sobre la versión anterior:
+ * - Recuperación graduada en 3 niveles (restart service → stack up → full recreate).
+ * - Backoff exponencial: el watchdog NUNCA se detiene permanentemente.
+ * - Soporte multi-OS para arrancar Docker Desktop (Windows, macOS, Linux).
+ * - Persistencia de estado en disco (sobrevive a reinicios de Electron).
+ * - Health broadcast al renderer via IPC push.
+ * - Preparado para eventos de power (sleep/resume) inyectados desde index.ts.
  */
 export class BootGuardianService {
   private readonly dockerOrchestrator = new DockerOrchestratorService();
@@ -107,10 +119,6 @@ export class BootGuardianService {
   private incidentsResolved = 0;
   private lastIncidentAt: string | null = null;
 
-  /**
-   * Construye la instancia del servicio.
-   * @param {BootGuardianOptions} options - Entrada esperada por la función.
-   */
   constructor(options: BootGuardianOptions) {
     this.onLog = options.onLog;
     this.baseIntervalMs = options.baseHealthCheckIntervalMs ?? 30_000;
@@ -124,26 +132,14 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de set main window dentro del flujo de la aplicación.
-   *
-   * @param window Parámetro de entrada para la operación.
-   */
-  /**
-   * Establece la referencia o configuración interna.
-   * @param {BrowserWindow | null} window - Entrada esperada por la función.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Permite al proceso principal inyectar la ventana para health push.
    */
   setMainWindow(window: BrowserWindow | null): void {
     this.mainWindow = window;
   }
 
   /**
-   * Obtiene status.
-   * @returns Valor resultante de la operación.
-   */
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {HealthUpdateEvent} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Retorna el estado actual del watchdog para consultas on-demand.
    */
   getStatus(): HealthUpdateEvent {
     return {
@@ -161,10 +157,6 @@ export class BootGuardianService {
     };
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {SupervisorSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   getSupervisorSnapshot(): SupervisorSnapshot {
     const now = Date.now();
     const hasErrors = this.supervisorChecks.some(
@@ -204,12 +196,13 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de bootstrap dentro del flujo de la aplicación.
-   * @returns Valor resultante de la operación.
-   */
-  /**
-   * Expone la operación "bootstrap" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Ejecuta la secuencia completa de arranque automático:
+   * 1. Carga estado persistido previo.
+   * 2. Verifica y configura Docker Desktop para inicio automático.
+   * 3. Resuelve la ruta runtime de la instalación.
+   * 4. Espera a que Docker Desktop esté operativo.
+   * 5. Levanta el stack si no está corriendo.
+   * 6. Inicia el watchdog periódico con backoff exponencial.
    */
   async bootstrap(): Promise<void> {
     if (this.running) {
@@ -269,11 +262,7 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de stop dentro del flujo de la aplicación.
-   */
-  /**
-   * Detiene el flujo o proceso en curso.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Detiene el watchdog y libera recursos.
    */
   stop(): void {
     if (this.watchdogTimer) {
@@ -287,12 +276,8 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de on system resume dentro del flujo de la aplicación.
-   * @returns Valor resultante de la operación.
-   */
-  /**
-   * Expone la operación "onSystemResume" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Llamado desde index.ts cuando el SO se reanuda tras sleep/hibernate.
+   * Espera un delay prudencial y luego fuerza un ciclo de health check.
    */
   async onSystemResume(): Promise<void> {
     if (!this.running || !this.runtimePath) {
@@ -311,11 +296,7 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de on system suspend dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone la operación "onSystemSuspend" del instalador SmartEconomat.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Llamado desde index.ts cuando el SO entra en suspensión.
    */
   onSystemSuspend(): void {
     this.log(
@@ -323,10 +304,6 @@ export class BootGuardianService {
     );
   }
 
-  /**
-   * Expone la operación "restartDockerDesktopNow" del instalador SmartEconomat.
-   * @returns {Promise<boolean>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async restartDockerDesktopNow(): Promise<boolean> {
     const ready = await this.ensureDockerDesktopRunning();
     if (ready && this.runtimePath) {
@@ -336,10 +313,6 @@ export class BootGuardianService {
     return ready;
   }
 
-  /**
-   * Expone la operación "runRecoveryNow" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async runRecoveryNow(): Promise<void> {
     if (!this.runtimePath) {
       return;
@@ -397,8 +370,8 @@ export class BootGuardianService {
   }
 
   /**
-   * Garantiza docker desktop running antes de continuar el flujo.
-   * @returns Valor resultante de la operación.
+   * Verifica si Docker Engine responde. Si no, intenta arrancarlo según la
+   * plataforma (Windows, macOS, Linux) y espera hasta que esté disponible.
    */
   private async ensureDockerDesktopRunning(): Promise<boolean> {
     const initialProbe = await this.dockerReadiness.probe({
@@ -465,10 +438,13 @@ export class BootGuardianService {
   // ── Graduated Recovery ────────────────────────────────────────
 
   /**
-   * Garantiza stack healthy antes de continuar el flujo.
-   *
-   * @param runtimePath Parámetro de entrada para la operación.
-   * @returns Valor resultante de la operación.
+   * Verifica salud y aplica recuperación graduada:
+   * - Nivel 1: reinicio de servicio puntual.
+   * - Nivel 2: docker compose up -d.
+   * - Nivel 3: recreate completo.
+   * - Nivel 4: prune + recreate.
+   * - Nivel 5: reinicio Docker Desktop.
+   * - Nivel 6: escalado a intervención guiada.
    */
   private async ensureStackHealthy(runtimePath: string): Promise<void> {
     const healthResult = await this.dockerOrchestrator.getHealth(runtimePath);
@@ -654,7 +630,7 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+   * Nivel 1: Reinicia solo los servicios individuales que están unhealthy.
    */
   private async performRecoveryLevel1(
     runtimePath: string,
@@ -700,10 +676,7 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de perform recovery level2 dentro del flujo de la aplicación.
-   *
-   * @param runtimePath Parámetro de entrada para la operación.
-   * @returns Valor resultante de la operación.
+   * Nivel 2: docker compose up -d (sin --build ni --force-recreate).
    */
   private async performRecoveryLevel2(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 2: compose up -d");
@@ -732,10 +705,7 @@ export class BootGuardianService {
   }
 
   /**
-   * Ejecuta la lógica de perform recovery level3 dentro del flujo de la aplicación.
-   *
-   * @param runtimePath Parámetro de entrada para la operación.
-   * @returns Valor resultante de la operación.
+   * Nivel 3: Full startStack (down + up --build --force-recreate).
    */
   private async performRecoveryLevel3(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 3: compose down && up -d --build");
@@ -833,8 +803,9 @@ export class BootGuardianService {
   }
 
   /**
-   * Calcula current interval según las reglas de negocio.
-   * @returns Valor resultante de la operación.
+   * Calcula el intervalo actual con backoff exponencial.
+   * Fórmula: min(baseInterval × 2^failures, maxInterval)
+   * Reset a baseInterval cuando todos los servicios están healthy.
    */
   private computeCurrentInterval(): number {
     if (this.consecutiveFailures === 0) {

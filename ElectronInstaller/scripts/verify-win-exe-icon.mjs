@@ -19,8 +19,8 @@ const psScript = [
   `$icoPath = '${icoPath.replace(/'/g, "''")}'`,
   `$bmpExePath = '${bmpExePath.replace(/'/g, "''")}'`,
   `$bmpSrcPath = '${bmpSrcPath.replace(/'/g, "''")}'`,
-  'if (-not (Test-Path -LiteralPath $exePath)) { throw "SmartEconomat.exe no encontrado para verificacion de icono" }',
-  'if (-not (Test-Path -LiteralPath $icoPath)) { throw "icon.ico no encontrado para verificacion" }',
+  "if (-not (Test-Path -LiteralPath $exePath)) { throw \"SmartEconomat.exe no encontrado para verificacion de icono\" }",
+  "if (-not (Test-Path -LiteralPath $icoPath)) { throw \"icon.ico no encontrado para verificacion\" }",
   "$exeIcon = [System.Drawing.Icon]::ExtractAssociatedIcon($exePath)",
   "$bmpExe = New-Object System.Drawing.Bitmap 256,256",
   "$g1=[System.Drawing.Graphics]::FromImage($bmpExe)",
@@ -37,10 +37,10 @@ const psScript = [
   "$bmpSrc.Save($bmpSrcPath,[System.Drawing.Imaging.ImageFormat]::Bmp)",
   "$h1=(Get-FileHash $bmpExePath -Algorithm SHA256).Hash",
   "$h2=(Get-FileHash $bmpSrcPath -Algorithm SHA256).Hash",
-  'Write-Output "EXE_BMP_HASH=$h1"',
-  'Write-Output "SRC_BMP_HASH=$h2"',
-  'if ($h1 -ne $h2) { Write-Error "ICON_MISMATCH"; exit 2 }',
-  'Write-Output "ICON_MATCH"',
+  "Write-Output \"EXE_BMP_HASH=$h1\"",
+  "Write-Output \"SRC_BMP_HASH=$h2\"",
+  "if ($h1 -ne $h2) { Write-Error \"ICON_MISMATCH\"; exit 2 }",
+  "Write-Output \"ICON_MATCH\"",
 ].join("; ");
 
 await import("node:fs/promises").then((fs) =>

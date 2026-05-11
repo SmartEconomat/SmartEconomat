@@ -7,13 +7,6 @@ function shouldTraceChannel(channel: string): boolean {
   return !channel.startsWith("debug:");
 }
 
-/**
- * Registra manejadores y canaliza IPC o integración con el proceso principal.
- * @param {DebugLogService} debugLogService - Entrada esperada por la función.
- * @param {string} channel - Entrada esperada por la función.
- * @param {(event: IpcMainInvokeEvent, payload: TPayload) => Promise<TResult> | TResult} handler - Entrada esperada por la función.
- * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function registerIpcHandleWithDebug<TPayload, TResult>(
   debugLogService: DebugLogService,
   channel: string,

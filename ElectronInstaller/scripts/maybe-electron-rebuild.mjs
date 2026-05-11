@@ -32,9 +32,7 @@ function run(command, args, cwd) {
         resolve();
         return;
       }
-      reject(
-        new Error(`${command} ${args.join(" ")} failed with ${code ?? -1}`),
-      );
+      reject(new Error(`${command} ${args.join(" ")} failed with ${code ?? -1}`));
     });
   });
 }
@@ -63,10 +61,7 @@ async function hashLockAndDeps() {
     nativeDependencies: NATIVE_DEPENDENCIES,
     nodeVersion: process.versions.node,
   };
-  return crypto
-    .createHash("sha256")
-    .update(JSON.stringify(payload))
-    .digest("hex");
+  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 async function readCache() {
@@ -94,9 +89,7 @@ async function main() {
   const shouldRebuild = force || previous?.fingerprint !== currentFingerprint;
 
   if (!shouldRebuild) {
-    console.log(
-      "[NATIVE] Cache hit: se omite npm rebuild para módulos nativos.",
-    );
+    console.log("[NATIVE] Cache hit: se omite npm rebuild para módulos nativos.");
     return;
   }
 

@@ -1,12 +1,10 @@
 import { createTheme, Theme } from "@mui/material/styles";
 
-/** Alias de tipo público (ThemeName). */
 export type ThemeName =
   | "light"
   | "dark"
   | "highContrastLight"
   | "highContrastDark";
-/** Alias de tipo público (FontSize). */
 export type FontSize = "small" | "medium" | "large";
 
 const getFontSize = (size: FontSize) => {
@@ -128,12 +126,6 @@ const a11yComponentDefaults = {
   },
 };
 
-/**
- * Obtiene el estado o valor solicitado.
- * @param {ThemeName} themeName - Entrada esperada por la función.
- * @param {FontSize} fontSize - Entrada esperada por la función.
- * @returns {Theme} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export const getTheme = (themeName: ThemeName, fontSize: FontSize) => {
   const typography = getTypography(fontSize) as Record<string, unknown>;
   let palette;

@@ -15,11 +15,6 @@ interface ServiceStatusCardProps {
   service: ServiceHealth;
 }
 
-/**
- * Expone la operación "ServiceStatusCard" del instalador SmartEconomat.
- * @param {ServiceStatusCardProps} { service } - Entrada esperada por la función.
- * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function ServiceStatusCard({ service }: ServiceStatusCardProps) {
   const presentation = getStatusPresentation(service.status);
   const metadata = getServiceMetadata(service.service);
@@ -219,10 +214,6 @@ function getStatusPresentation(status: ServiceHealth["status"]): {
   };
 }
 
-/**
- * Expone la operación "ServiceStatusCardSkeleton" del instalador SmartEconomat.
- * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function ServiceStatusCardSkeleton() {
   return (
     <Paper

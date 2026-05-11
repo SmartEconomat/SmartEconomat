@@ -2,44 +2,49 @@ import type { InstallerStateSnapshot, InstallerStep } from "@shared/contracts";
 
 const stageLabels: Record<InstallerStep, string> = {
   IDLE: "Listo para iniciar",
-  PREFLIGHT: "Validando requisitos del sistema",
-  CONFIG_VALIDATION: "Validando configuración",
-  ENV_RENDER: "Generando entorno",
-  TLS_SETUP: "Configurando certificados",
-  DOCKER_DEPLOY: "Instalando dependencias y desplegando servicios",
-  INITIALIZE_APP: "Inicializando aplicación",
-  VERIFY: "Verificando estado final",
+  PREFLIGHT: "Validando WSL2, Docker y sistema",
+  CONFIG_VALIDATION: "Validando configuración de instalación",
+  PRE_INSTALL_BACKUP: "Realizando backup de seguridad pre-instalación",
+  ENV_RENDER: "Generando .env.prod y secretos",
+  TLS_SETUP: "Configurando certificados TLS locales",
+  DOCKER_DEPLOY: "Descomprimiendo recursos y levantando servicios",
+  INITIALIZE_APP: "Iniciando backend y bootstrap de app",
+  VERIFY: "Verificando salud y accesibilidad final",
   DONE: "Instalación finalizada",
+  DONE_WITH_WARNINGS: "Instalación finalizada con advertencias",
   FAILED: "Error durante la instalación",
 };
 
 const progressByState: Record<InstallerStep, number> = {
   IDLE: 0,
   PREFLIGHT: 10,
-  CONFIG_VALIDATION: 20,
-  ENV_RENDER: 35,
-  TLS_SETUP: 50,
-  DOCKER_DEPLOY: 75,
+  CONFIG_VALIDATION: 18,
+  PRE_INSTALL_BACKUP: 28,
+  ENV_RENDER: 38,
+  TLS_SETUP: 48,
+  DOCKER_DEPLOY: 72,
   INITIALIZE_APP: 88,
   VERIFY: 96,
   DONE: 100,
+  DONE_WITH_WARNINGS: 100,
   FAILED: 100,
 };
 
 const transitions: Record<InstallerStep, InstallerStep[]> = {
   IDLE: ["PREFLIGHT", "FAILED"],
   PREFLIGHT: ["CONFIG_VALIDATION", "FAILED"],
-  CONFIG_VALIDATION: ["ENV_RENDER", "FAILED"],
+  CONFIG_VALIDATION: ["PRE_INSTALL_BACKUP", "ENV_RENDER", "FAILED"],
+  PRE_INSTALL_BACKUP: ["ENV_RENDER", "FAILED"],
   ENV_RENDER: ["TLS_SETUP", "FAILED"],
   TLS_SETUP: ["DOCKER_DEPLOY", "FAILED"],
   DOCKER_DEPLOY: ["INITIALIZE_APP", "FAILED"],
   INITIALIZE_APP: ["VERIFY", "FAILED"],
-  VERIFY: ["DONE", "FAILED"],
+  VERIFY: ["DONE", "DONE_WITH_WARNINGS", "FAILED"],
   DONE: ["IDLE"],
+  DONE_WITH_WARNINGS: ["IDLE"],
   FAILED: ["PREFLIGHT", "IDLE"],
 };
 
-/** Servicio del proceso principal: InstallStateMachine. */
 export class InstallStateMachine {
   private currentState: InstallerStep = "IDLE";
 
@@ -51,13 +56,6 @@ export class InstallStateMachine {
     progressPercent: progressByState.IDLE,
   };
 
-  /**
-   * Expone la operación "transition" del instalador SmartEconomat.
-   * @param {InstallerStep} nextState - Entrada esperada por la función.
-   * @param {string} message - Entrada esperada por la función.
-   * @param {string | undefined} errorCode - Entrada esperada por la función.
-   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   transition(
     nextState: InstallerStep,
     message: string,
@@ -84,13 +82,6 @@ export class InstallStateMachine {
     return this.lastSnapshot;
   }
 
-  /**
-   * Expone la operación "forceState" del instalador SmartEconomat.
-   * @param {InstallerStep} nextState - Entrada esperada por la función.
-   * @param {string} message - Entrada esperada por la función.
-   * @param {string | undefined} errorCode - Entrada esperada por la función.
-   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   forceState(
     nextState: InstallerStep,
     message: string,
@@ -108,10 +99,6 @@ export class InstallStateMachine {
     return this.lastSnapshot;
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {InstallerStateSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   getSnapshot(): InstallerStateSnapshot {
     return this.lastSnapshot;
   }

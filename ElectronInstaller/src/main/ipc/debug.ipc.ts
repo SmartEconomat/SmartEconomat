@@ -41,11 +41,6 @@ function parseRendererLog(payload: unknown): DebugLogEntry | null {
   };
 }
 
-/**
- * Registra manejadores y canaliza IPC o integración con el proceso principal.
- * @param {DebugLogService} debugLogService - Entrada esperada por la función.
- * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function registerDebugIpc(debugLogService: DebugLogService): void {
   ipcMain.on(IPCChannels.debug.rendererLog, (_event, payload: unknown) => {
     if (!debugLogService.isEnabled()) {

@@ -1,4 +1,3 @@
-/** Constantes exportadas (IPCChannels) compartidas por el instalador. */
 export const IPCChannels = {
   installer: {
     runPreflight: "installer:run-preflight",
@@ -6,7 +5,9 @@ export const IPCChannels = {
     releaseBusyPort: "installer:release-busy-port",
     startInstall: "installer:start-install",
     getState: "installer:get-state",
+    getBootState: "installer:get-boot-state",
     pickFile: "installer:pick-file",
+    testSmtp: "installer:test-smtp",
     progressEvent: "installer:progress-event",
   },
   runtime: {
@@ -19,9 +20,18 @@ export const IPCChannels = {
     stopLogStream: "runtime:stop-log-stream",
     exportVisibleLogs: "runtime:export-visible-logs",
     pruneSafe: "runtime:prune-safe",
+    uninstall: "runtime:uninstall",
     backupNow: "runtime:backup-now",
     restoreFrom: "runtime:restore-from",
     diagnostics: "runtime:diagnostics",
+    reinstallCertificate: "runtime:reinstall-certificate",
+    getDockerAutostartStatus: "runtime:get-docker-autostart-status",
+    setDockerAutostart: "runtime:set-docker-autostart",
+    healthUpdate: "runtime:health-update",
+    getWatchdogStatus: "runtime:get-watchdog-status",
+    getSupervisorSnapshot: "runtime:get-supervisor-snapshot",
+    restartDockerDesktop: "runtime:restart-docker-desktop",
+    runSupervisorRecovery: "runtime:run-supervisor-recovery",
   },
   debug: {
     rendererLog: "debug:renderer-log",

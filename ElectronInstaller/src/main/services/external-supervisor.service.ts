@@ -33,7 +33,6 @@ const EXPECTED_SERVICES: ServiceHealth["service"][] = [
 const AUTOMATIC_RECOVERY_COOLDOWN_MS = 60_000;
 const ELEVATED_DOCKER_SERVICE_REPAIR_COOLDOWN_MS = 10 * 60_000;
 
-/** Servicio del proceso principal: ExternalSupervisorService. */
 export class ExternalSupervisorService {
   private readonly processRunner = new ProcessRunnerService();
   private readonly dockerOrchestrator = new DockerOrchestratorService();
@@ -64,29 +63,16 @@ export class ExternalSupervisorService {
     recentIncidents: [],
   };
 
-  /**
-   * Construye la instancia del servicio.
-   * @param {ExternalSupervisorOptions} options - Entrada esperada por la función.
-   */
   constructor(options: ExternalSupervisorOptions) {
     this.onLog = options.onLog;
     this.onTrayStateChange = options.onTrayStateChange;
     this.intervalMs = options.intervalMs ?? 15_000;
   }
 
-  /**
-   * Establece la referencia o configuración interna.
-   * @param {BrowserWindow | null} window - Entrada esperada por la función.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   setMainWindow(window: BrowserWindow | null): void {
     this.mainWindow = window;
   }
 
-  /**
-   * Expone la operación "bootstrap" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async bootstrap(): Promise<void> {
     await this.refreshSnapshot();
     this.pushHealthUpdate();
@@ -98,10 +84,6 @@ export class ExternalSupervisorService {
     );
   }
 
-  /**
-   * Detiene el flujo o proceso en curso.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   stop(): void {
     if (this.timer) {
       clearInterval(this.timer);
@@ -109,26 +91,14 @@ export class ExternalSupervisorService {
     }
   }
 
-  /**
-   * Expone la operación "onSystemResume" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async onSystemResume(): Promise<void> {
     await this.refreshAndPush();
   }
 
-  /**
-   * Expone la operación "onSystemSuspend" del instalador SmartEconomat.
-   * @returns {void} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   onSystemSuspend(): void {
     this.onLog("[SUPERVISOR] Sistema en suspensión.");
   }
 
-  /**
-   * Expone la operación "restartDockerDesktopNow" del instalador SmartEconomat.
-   * @returns {Promise<boolean>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async restartDockerDesktopNow(): Promise<boolean> {
     const result = await this.runPowerShell(
       "Start-Service -Name com.docker.service -ErrorAction SilentlyContinue; exit 0",
@@ -137,10 +107,6 @@ export class ExternalSupervisorService {
     return result.ok;
   }
 
-  /**
-   * Expone la operación "runRecoveryNow" del instalador SmartEconomat.
-   * @returns {Promise<boolean>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async runRecoveryNow(): Promise<boolean> {
     return this.recoverStack(
       "manual",
@@ -266,18 +232,10 @@ export class ExternalSupervisorService {
     }
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {SupervisorSnapshot} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   getSupervisorSnapshot(): SupervisorSnapshot {
     return this.lastSnapshot;
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {HealthUpdateEvent} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   getStatus(): HealthUpdateEvent {
     return {
       health: this.lastHealth,

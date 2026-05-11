@@ -14,24 +14,12 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-/** Servicio del proceso principal: FirewallExecutorService. */
 export class FirewallExecutorService {
-  /**
-   * Construye la instancia del servicio.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
-   */
   constructor(
     private readonly processRunner = new ProcessRunnerService(),
     private readonly pathResolver = new PathResolverService(),
   ) {}
 
-  /**
-   * Expone la operación "execute" del instalador SmartEconomat.
-   * @param {FirewallPlan} plan - Entrada esperada por la función.
-   * @param {FirewallEnsureContext} context - Entrada esperada por la función.
-   * @returns {Promise<FirewallExecutionResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async execute(
     plan: FirewallPlan,
     context: FirewallEnsureContext,

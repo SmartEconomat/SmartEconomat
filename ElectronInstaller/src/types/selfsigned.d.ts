@@ -8,8 +8,16 @@ declare module "selfsigned" {
     name: string;
     altNames?: Array<{ type: 2; value: string } | { type: 7; ip: string }>;
     cA?: boolean;
-    keyUsage?: boolean[];
-    extendedKeyUsage?: boolean[];
+    keyCertSign?: boolean;
+    digitalSignature?: boolean;
+    nonRepudiation?: boolean;
+    keyEncipherment?: boolean;
+    dataEncipherment?: boolean;
+    serverAuth?: boolean;
+    clientAuth?: boolean;
+    codeSigning?: boolean;
+    emailProtection?: boolean;
+    timeStamping?: boolean;
   }
 
   export interface SelfSignedOptions {

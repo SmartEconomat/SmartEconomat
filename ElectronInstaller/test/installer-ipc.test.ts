@@ -39,7 +39,7 @@ const basePayload: InstallerConfigPayload = {
   adminPassword: "SmartEconomat2026!",
   adminEmail: "admin@smarteconomat.app",
   superAdminUsername: "superadmin",
-  superAdminPassword: "SmartEconomat2026!",
+  superAdminPassword: "SmartEconomat2026!!",
   superAdminEmail: "superadmin@smarteconomat.app",
   verifyExistingAdminSession: false,
   repairAdminCredentialsOnFailure: false,

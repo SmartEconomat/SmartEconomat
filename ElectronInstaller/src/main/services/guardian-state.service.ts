@@ -7,7 +7,6 @@ import type { DockerRuntimeState, WatchdogState } from "@shared/contracts";
 
 export type { WatchdogState };
 
-/** Contrato tipado público (GuardianPersistedState). */
 export interface GuardianPersistedState {
   schemaVersion: number;
   consecutiveFailures: number;
@@ -35,13 +34,14 @@ const DEFAULT_STATE: GuardianPersistedState = {
 };
 
 /**
- * Servicio de dominio para guardian state.
+ * Servicio de persistencia para el estado del BootGuardian.
+ * Almacena el estado en un archivo JSON en %APPDATA%/SmartEconomatInstaller/
+ * para que sobreviva a reinicios de la app Electron.
  */
 export class GuardianStateService {
   private readonly stateFilePath: string;
   private state: GuardianPersistedState = { ...DEFAULT_STATE };
 
-  /** Construye la instancia del servicio. */
   constructor() {
     this.stateFilePath = path.join(
       app.getPath("appData"),
@@ -50,10 +50,6 @@ export class GuardianStateService {
     );
   }
 
-  /**
-   * Expone la operación "load" del instalador SmartEconomat.
-   * @returns {Promise<GuardianPersistedState>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async load(): Promise<GuardianPersistedState> {
     try {
       const raw = await fs.readFile(this.stateFilePath, "utf8");
@@ -65,19 +61,10 @@ export class GuardianStateService {
     return this.state;
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @returns {GuardianPersistedState} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   get(): GuardianPersistedState {
     return { ...this.state };
   }
 
-  /**
-   * Expone la operación "update" del instalador SmartEconomat.
-   * @param {Partial<GuardianPersistedState>} patch - Entrada esperada por la función.
-   * @returns {Promise<GuardianPersistedState>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async update(
     patch: Partial<GuardianPersistedState>,
   ): Promise<GuardianPersistedState> {
@@ -86,10 +73,6 @@ export class GuardianStateService {
     return this.state;
   }
 
-  /**
-   * Expone la operación "reset" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async reset(): Promise<void> {
     this.state = { ...DEFAULT_STATE };
     await this.persist();

@@ -70,7 +70,6 @@ function decodeChunk(chunk: Buffer): string {
   return chunk.toString("utf8");
 }
 
-/** Contrato tipado público (ProcessRunOptions). */
 export interface ProcessRunOptions {
   command: string;
   args: string[];
@@ -107,13 +106,7 @@ function flushCarryLine(carry: string, onLine: (line: string) => void): void {
   }
 }
 
-/** Servicio del proceso principal: ProcessRunnerService. */
 export class ProcessRunnerService {
-  /**
-   * Expone la operación "run" del instalador SmartEconomat.
-   * @param {ProcessRunOptions} options - Entrada esperada por la función.
-   * @returns {Promise<CommandResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async run(options: ProcessRunOptions): Promise<CommandResult> {
     const timeoutMs = options.timeoutMs ?? 30_000;
 

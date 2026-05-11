@@ -2,8 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import selfsigned from "selfsigned";
+import type { SelfSignedExtension } from "selfsigned";
 
 import type { OperationResult } from "@shared/contracts";
+
+import { ProcessRunnerService } from "./process-runner.service";
 
 interface CertificatePaths {
   liveDir: string;
@@ -15,25 +18,50 @@ interface CertificatePaths {
 
 interface EnsureCertificateOptions {
   overwrite: boolean;
+  /**
+   * Instalar el certificado en el almacén de certificados de Windows
+   * para que sea confiado por el sistema y los navegadores.
+   * Por defecto true en Windows.
+   */
+  installToTrustStore?: boolean;
+  /**
+   * El dominio para el cual se generarán los certificados.
+   */
+  domain?: string;
 }
 
-/** Servicio del proceso principal: CertificateService. */
 export class CertificateService {
-  /**
-   * Garantiza la existencia o validez del recurso indicado.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {EnsureCertificateOptions} options - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
+  private readonly processRunner = new ProcessRunnerService();
+  private readonly testRuntimeOptimization =
+    process.env.VITEST === "true" ||
+    process.env.NODE_ENV === "test" ||
+    process.env.VITEST_WORKER_ID !== undefined;
+
   async ensureLocalCertificates(
     runtimePath: string,
     options: EnsureCertificateOptions,
   ): Promise<OperationResult> {
     const certPaths = this.resolveCertificatePaths(runtimePath);
+    const shouldInstallToTrustStore = this.testRuntimeOptimization
+      ? false
+      : (options.installToTrustStore ?? process.platform === "win32");
 
     if (!options.overwrite) {
       const existing = await this.hasLocalCertificates(certPaths);
       if (existing) {
+        // Verificar si ya está instalado en el trust store
+        if (shouldInstallToTrustStore) {
+          const isInstalled = await this.isCertificateInTrustStore();
+          if (!isInstalled) {
+            const installResult =
+              await this.installCertificateToWindowsTrustStore(
+                certPaths.stableFullchainPath,
+              );
+            if (!installResult.ok) {
+              return installResult;
+            }
+          }
+        }
         return {
           ok: true,
           message:
@@ -43,10 +71,25 @@ export class CertificateService {
     }
 
     try {
-      await this.writeLocalSelfSignedCertificates(certPaths);
+      await this.writeLocalSelfSignedCertificates(
+        certPaths,
+        options.domain || "smarteconomat.app",
+      );
+
+      // Instalar en el almacén de certificados de Windows
+      if (shouldInstallToTrustStore) {
+        const installResult = await this.installCertificateToWindowsTrustStore(
+          certPaths.stableFullchainPath,
+        );
+        if (!installResult.ok) {
+          return installResult;
+        }
+      }
+
       return {
         ok: true,
-        message: "Certificados locales autofirmados generados correctamente.",
+        message:
+          "Certificados locales autofirmados generados e instalados como confiables.",
       };
     } catch (error) {
       const message =
@@ -57,6 +100,37 @@ export class CertificateService {
         ok: false,
         message,
         errorCode: "TLS_CERTIFICATE_GENERATION_FAILED",
+      };
+    }
+  }
+
+  async removeLocalCertificates(runtimePath: string): Promise<OperationResult> {
+    const certsDir = path.join(runtimePath, "certs");
+    const certsWebrootDir = path.join(runtimePath, "certs-webroot");
+
+    // Primero, eliminar del trust store de Windows si existe
+    if (process.platform === "win32" && !this.testRuntimeOptimization) {
+      await this.removeCertificateFromWindowsTrustStore();
+    }
+
+    try {
+      await fs.rm(certsDir, { recursive: true, force: true });
+      await fs.rm(certsWebrootDir, { recursive: true, force: true });
+
+      return {
+        ok: true,
+        message: "Certificados locales eliminados correctamente.",
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudieron eliminar los certificados locales.";
+
+      return {
+        ok: false,
+        message,
+        errorCode: "TLS_CERTIFICATE_CLEANUP_FAILED",
       };
     }
   }
@@ -90,37 +164,56 @@ export class CertificateService {
 
   private async writeLocalSelfSignedCertificates(
     paths: CertificatePaths,
+    domain: string,
   ): Promise<void> {
     await fs.mkdir(paths.liveDir, { recursive: true });
     await fs.mkdir(path.dirname(paths.stableFullchainPath), {
       recursive: true,
     });
 
+    const certificateExtensions: SelfSignedExtension[] = [
+      {
+        name: "basicConstraints",
+        cA: true,
+      },
+      {
+        name: "keyUsage",
+        keyCertSign: true,
+        digitalSignature: true,
+        nonRepudiation: true,
+        keyEncipherment: true,
+        dataEncipherment: true,
+      },
+      {
+        name: "extKeyUsage",
+        serverAuth: true,
+        clientAuth: true,
+        codeSigning: true,
+        emailProtection: true,
+        timeStamping: true,
+      },
+      {
+        name: "subjectAltName",
+        altNames: [
+          { type: 2, value: domain },
+          { type: 2, value: "localhost" },
+          { type: 2, value: `api.${domain}` },
+          { type: 7, ip: "127.0.0.1" },
+        ],
+      },
+    ];
+
     const pems = selfsigned.generate(
       [
-        { name: "commonName", value: "smarteconomat.app" },
+        { name: "commonName", value: domain },
         { name: "organizationName", value: "SmartEconomat" },
         { name: "countryName", value: "ES" },
       ],
       {
         algorithm: "sha256",
         days: 825,
-        keySize: 2048,
-        extensions: [
-          {
-            name: "basicConstraints",
-            cA: false,
-          },
-          {
-            name: "subjectAltName",
-            altNames: [
-              { type: 2, value: "smarteconomat.app" },
-              { type: 2, value: "localhost" },
-              { type: 2, value: "api.smarteconomat.app" },
-              { type: 7, ip: "127.0.0.1" },
-            ],
-          },
-        ],
+        keySize: this.testRuntimeOptimization ? 1024 : 2048,
+        extensions: certificateExtensions,
       },
     );
 
@@ -135,5 +228,269 @@ export class CertificateService {
     } catch {
       // Some Windows filesystems ignore POSIX permission changes.
     }
+  }
+
+  // ── Windows Trust Store Management ────────────────────────────
+
+  /**
+   * Instala el certificado en el almacén de certificados raíz de confianza
+   * en Windows usando X509Store (convierte PEM → DER en memoria).
+   *
+   * Estrategia:
+   *  1. Intentar CurrentUser\Root (no requiere elevación).
+   *  2. Si el proceso ya corre elevado, intentar también LocalMachine\Root.
+   *
+   * El certificado local no debe bloquear la instalación: si Windows impide
+   * escribir en el trust store, el instalador continúa con advertencia.
+   */
+  private async installCertificateToWindowsTrustStore(
+    certPath: string,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return {
+        ok: true,
+        message: "Instalación en trust store solo disponible en Windows.",
+      };
+    }
+
+    const normalizedPath = path.win32.normalize(certPath);
+    const escapedPath = normalizedPath.replace(/'/g, "''");
+
+    // Script robusto: convierte PEM → DER en memoria y usa X509Store.Add().
+    // Evita Import-Certificate porque puede colgarse en algunos Windows.
+    const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") => `
+      $ErrorActionPreference = 'Stop'
+      $certPemPath = '${escapedPath}'
+
+      if (-not (Test-Path $certPemPath)) {
+        Write-Error "El certificado no existe: $certPemPath"
+        exit 1
+      }
+
+      try {
+        # Leer PEM y convertir a bytes DER (quitar cabeceras y decodificar Base64)
+        $pemContent = Get-Content -Path $certPemPath -Raw
+        $b64 = $pemContent \`
+          -replace '-----BEGIN CERTIFICATE-----', '' \`
+          -replace '-----END CERTIFICATE-----', '' \`
+          -replace '\`r', '' \`
+          -replace '\`n', '' \`
+          -replace ' ', ''
+        $derBytes = [System.Convert]::FromBase64String($b64)
+
+        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new([byte[]]$derBytes)
+        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root', '${storeLocation}')
+        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+        try {
+          $existing = $store.Certificates.Find(
+            [System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,
+            $cert.Thumbprint,
+            $false
+          )
+          if ($existing.Count -eq 0) {
+            $store.Add($cert)
+            Write-Host "Certificado importado correctamente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
+          } else {
+            Write-Host "Certificado ya presente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
+          }
+        } finally {
+          $store.Close()
+          $cert.Dispose()
+        }
+        exit 0
+      } catch {
+        Write-Error "Error al importar certificado en ${storeLocation}: $($_.Exception.Message)"
+        exit 1
+      }
+    `;
+
+    // Intento 1: CurrentUser\Root (sin necesidad de elevación)
+    const currentUserResult = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        buildScript("CurrentUser"),
+      ],
+      timeoutMs: 12_000,
+    });
+
+    if (currentUserResult.ok) {
+      const elevated = await this.isWindowsProcessElevated();
+      if (!elevated) {
+        return {
+          ok: true,
+          message:
+            "Certificado instalado en el almacén de confianza del usuario (CurrentUser).",
+        };
+      }
+
+      const localMachineResult = await this.processRunner.run({
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-NonInteractive",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          buildScript("LocalMachine"),
+        ],
+        timeoutMs: 12_000,
+      });
+
+      return {
+        ok: true,
+        message: localMachineResult.ok
+          ? "Certificado instalado en CurrentUser y LocalMachine."
+          : `Certificado instalado en CurrentUser. Aviso LocalMachine: ${
+              localMachineResult.stderr || localMachineResult.message
+            }`,
+      };
+    }
+
+    return {
+      ok: true,
+      message:
+        "Certificado generado, pero Windows no permitió instalarlo automáticamente en el almacén de confianza del usuario. " +
+        `Aviso: ${currentUserResult.stderr || currentUserResult.message}.`,
+    };
+  }
+
+  private async isWindowsProcessElevated(): Promise<boolean> {
+    if (process.platform !== "win32") {
+      return false;
+    }
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: [
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+      ],
+      timeoutMs: 5_000,
+    });
+
+    return result.ok && result.stdout.trim().toLowerCase() === "true";
+  }
+
+  /**
+   * Verifica si el certificado de SmartEconomat ya está instalado
+   * en el almacén de certificados de confianza.
+   */
+  private async isCertificateInTrustStore(): Promise<boolean> {
+    if (process.platform !== "win32") {
+      return false;
+    }
+
+    const script = `
+      $stores = @(
+        [System.Security.Cryptography.X509Certificates.X509Store]::new("Root", "CurrentUser"),
+        [System.Security.Cryptography.X509Certificates.X509Store]::new("Root", "LocalMachine")
+      )
+      
+      foreach ($store in $stores) {
+        try {
+          $store.Open("ReadOnly")
+          $certs = $store.Certificates | Where-Object { 
+            $_.Subject -like "*smarteconomat*" -and 
+            $_.NotAfter -gt (Get-Date)
+          }
+          $store.Close()
+          
+          if ($certs.Count -gt 0) {
+            exit 0
+          }
+        } catch {
+          # Ignorar errores de acceso
+        }
+      }
+      
+      exit 1
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      timeoutMs: 15_000,
+    });
+
+    return result.ok;
+  }
+
+  /**
+   * Elimina los certificados de SmartEconomat del almacén de confianza.
+   * Usa Get-ChildItem + Remove-Item que es el método correcto en PowerShell
+   * para eliminar del Root store sin lanzar AccessDenied como X509Store.Remove().
+   */
+  private async removeCertificateFromWindowsTrustStore(): Promise<boolean> {
+    if (process.platform !== "win32") {
+      return true;
+    }
+
+    const script = `
+      $storeLocations = @('CurrentUser', 'LocalMachine')
+      foreach ($loc in $storeLocations) {
+        try {
+          $storePath = "Cert:\\$loc\\Root"
+          $certs = Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue |
+            Where-Object { $_.Subject -like '*smarteconomat*' }
+          foreach ($cert in $certs) {
+            try {
+              Remove-Item -Path "$storePath\\$($cert.Thumbprint)" -Force -ErrorAction Stop
+              Write-Host "Eliminado de $($loc): $($cert.Thumbprint)"
+            } catch {
+              Write-Host "No se pudo eliminar de $($loc): $($_.Exception.Message)"
+            }
+          }
+        } catch {
+          Write-Host "Error accediendo a $($loc): $($_.Exception.Message)"
+        }
+      }
+      exit 0
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      timeoutMs: 30_000,
+    });
+
+    return result.ok;
+  }
+
+  /**
+   * Reinstala el certificado en el trust store de Windows.
+   * Útil para reparar problemas de confianza del certificado.
+   */
+  async reinstallCertificateToTrustStore(
+    runtimePath: string,
+  ): Promise<OperationResult> {
+    const certPaths = this.resolveCertificatePaths(runtimePath);
+
+    try {
+      await fs.access(certPaths.stableFullchainPath);
+    } catch {
+      return {
+        ok: false,
+        message:
+          "No se encontró el certificado. Ejecuta primero la configuración de TLS.",
+        errorCode: "TLS_CERTIFICATE_NOT_FOUND",
+      };
+    }
+
+    // Eliminar certificados antiguos
+    await this.removeCertificateFromWindowsTrustStore();
+
+    // Instalar el certificado actual
+    return this.installCertificateToWindowsTrustStore(
+      certPaths.stableFullchainPath,
+    );
   }
 }

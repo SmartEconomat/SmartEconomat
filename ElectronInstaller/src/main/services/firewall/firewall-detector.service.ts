@@ -6,19 +6,9 @@ import type {
   FirewallPortRuleSnapshot,
 } from "./firewall.types";
 
-/** Servicio del proceso principal: FirewallDetectorService. */
 export class FirewallDetectorService {
-  /**
-   * Construye la instancia del servicio.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   */
   constructor(private readonly processRunner = new ProcessRunnerService()) {}
 
-  /**
-   * Expone la operación "detect" del instalador SmartEconomat.
-   * @param {FirewallEnsureContext} context - Entrada esperada por la función.
-   * @returns {Promise<FirewallDetectionResult>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async detect(
     context: FirewallEnsureContext,
   ): Promise<FirewallDetectionResult> {

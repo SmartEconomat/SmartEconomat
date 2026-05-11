@@ -48,11 +48,6 @@ function stripAnsi(input: string): string {
   return input.replace(ANSI_ESCAPE_REGEX, "");
 }
 
-/**
- * Expone la operación "isDockerDesktopLinuxPipeError" del instalador SmartEconomat.
- * @param {string} rawOutput - Entrada esperada por la función.
- * @returns {boolean} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function isDockerDesktopLinuxPipeError(rawOutput: string): boolean {
   const normalized = rawOutput.toLowerCase();
   return (
@@ -61,11 +56,6 @@ export function isDockerDesktopLinuxPipeError(rawOutput: string): boolean {
   );
 }
 
-/**
- * Interpreta y normaliza datos de texto o estructuras intermedias.
- * @param {string} rawOutput - Entrada esperada por la función.
- * @returns {string[]} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function parseDockerContextNames(rawOutput: string): string[] {
   return rawOutput
     .split(/\r?\n/)
@@ -166,11 +156,6 @@ function describeServiceDetail(
   return "Estado aún no disponible. Ejecuta una nueva verificación de salud.";
 }
 
-/**
- * Interpreta y normaliza datos de texto o estructuras intermedias.
- * @param {string} rawOutput - Entrada esperada por la función.
- * @returns {ServiceHealth[]} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function parseComposeHealthOutput(rawOutput: string): ServiceHealth[] {
   const entries = parseComposeEntries(rawOutput);
   const mappedByService = new Map<ServiceHealth["service"], ServiceHealth>();
@@ -202,7 +187,6 @@ function normalizeService(value: string): ServiceHealth["service"] {
   return "db";
 }
 
-/** Servicio del proceso principal: DockerOrchestratorService. */
 export class DockerOrchestratorService {
   private logProcess: ReturnType<typeof spawn> | null = null;
   private dockerCommand: string | null = null;
@@ -214,12 +198,6 @@ export class DockerOrchestratorService {
   private readonly dockerStartupWaitMs: number;
   private readonly dockerStartupPollMs: number;
 
-  /**
-   * Construye la instancia del servicio.
-   * @param {PathResolverService} pathResolver - Entrada esperada por la función.
-   * @param {ProcessRunnerService} processRunner - Entrada esperada por la función.
-   * @param {DockerOrchestratorOptions} options - Entrada esperada por la función.
-   */
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
@@ -229,12 +207,6 @@ export class DockerOrchestratorService {
     this.dockerStartupPollMs = options.dockerStartupPollMs ?? 3_000;
   }
 
-  /**
-   * Inicia el flujo o proceso solicitado.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {((event: RuntimeLogEvent) => void) | undefined} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async startStack(
     runtimePath: string,
     onLogLine?: (event: RuntimeLogEvent) => void,
@@ -269,13 +241,8 @@ export class DockerOrchestratorService {
   }
 
   /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone la operación "softStartStack" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {((event: RuntimeLogEvent) => void) | undefined} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Levanta el stack de forma ligera: `up -d` sin --build ni --force-recreate.
+   * Útil para la recuperación graduada Nivel 2 del Boot Guardian.
    */
   async softStartStack(
     runtimePath: string,
@@ -299,21 +266,11 @@ export class DockerOrchestratorService {
     );
   }
 
-  /**
-   * Detiene el flujo o proceso en curso.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async stopStack(runtimePath: string): Promise<OperationResult> {
     const result = await this.runCompose(runtimePath, ["down"], 120_000);
     return this.commandResult(result, "Stack detenido", "DOCKER_STOP_FAILED");
   }
 
-  /**
-   * Expone la operación "restartStack" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async restartStack(runtimePath: string): Promise<OperationResult> {
     const envCheck = await this.ensureRuntimeEnvFile(runtimePath);
     if (!envCheck.ok) {
@@ -328,12 +285,6 @@ export class DockerOrchestratorService {
     );
   }
 
-  /**
-   * Expone la operación "restartService" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {"frontend" | "backend" | "db" | "redis"} service - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async restartService(
     runtimePath: string,
     service: ServiceHealth["service"],
@@ -353,13 +304,6 @@ export class DockerOrchestratorService {
     );
   }
 
-  /**
-   * Expone la operación "provisionLetsEncrypt" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {string} host - Entrada esperada por la función.
-   * @param {((event: RuntimeLogEvent) => void) | undefined} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async provisionLetsEncrypt(
     runtimePath: string,
     host: string,
@@ -487,12 +431,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Expone la operación "configureLetsEncryptRenewal" del instalador SmartEconomat.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {string} host - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async configureLetsEncryptRenewal(
     runtimePath: string,
     host: string,
@@ -617,11 +555,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<ServiceHealth[]>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async getHealth(
     runtimePath: string,
   ): Promise<OperationResult<ServiceHealth[]>> {
@@ -655,13 +588,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Obtiene el estado o valor solicitado.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {"frontend" | "backend" | "db" | "redis"} service - Entrada esperada por la función.
-   * @param {number} lines - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<string>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async getServiceLogs(
     runtimePath: string,
     service: ServiceHealth["service"],
@@ -695,12 +621,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Repara inconsistencias conocidas del entorno.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {((event: RuntimeLogEvent) => void) | undefined} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async repairPostgresCredentials(
     runtimePath: string,
     onLogLine?: (event: RuntimeLogEvent) => void,
@@ -742,18 +662,6 @@ export class DockerOrchestratorService {
     );
   }
 
-  /**
-   * Repara inconsistencias conocidas del entorno.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {string} adminUsername - Entrada esperada por la función.
-   * @param {string} adminPassword - Entrada esperada por la función.
-   * @param {string | undefined} adminEmail - Entrada esperada por la función.
-   * @param {string} superAdminUsername - Entrada esperada por la función.
-   * @param {string} superAdminPassword - Entrada esperada por la función.
-   * @param {string | undefined} superAdminEmail - Entrada esperada por la función.
-   * @param {((event: RuntimeLogEvent) => void) | undefined} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async repairApplicationAdminCredentials(
     runtimePath: string,
     adminUsername: string,
@@ -850,12 +758,6 @@ export class DockerOrchestratorService {
     );
   }
 
-  /**
-   * Sigue la salida de logs en tiempo (near) real.
-   * @param {TailLogsPayload} payload - Entrada esperada por la función.
-   * @param {(event: RuntimeLogEvent) => void} onLogLine - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async tailLogs(
     payload: TailLogsPayload,
     onLogLine: (event: RuntimeLogEvent) => void,
@@ -918,10 +820,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Detiene el flujo o proceso en curso.
-   * @returns {OperationResult<undefined>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   stopLogStream(): OperationResult {
     if (this.logProcess) {
       this.logProcess.kill("SIGTERM");
@@ -934,12 +832,6 @@ export class DockerOrchestratorService {
     };
   }
 
-  /**
-   * Ejecuta limpieza controlada de recursos Docker.
-   * @param {string} runtimePath - Entrada esperada por la función.
-   * @param {"safe" | "aggressive"} level - Entrada esperada por la función.
-   * @returns {Promise<OperationResult<undefined>>} Resultado efectivo tras la llamada (puede incluir Promesas).
-   */
   async pruneSafe(
     runtimePath: string,
     level: "safe" | "aggressive",

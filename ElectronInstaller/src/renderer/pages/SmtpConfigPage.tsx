@@ -64,17 +64,6 @@ function FieldLabel({ label, tooltip }: FieldLabelProps) {
   );
 }
 
-/**
- * Expone la operación "SmtpConfigPage" del instalador SmartEconomat.
- * @returns {SmtpConfigPageProps} {
- *   config,
- *   busy,
- *   onChange,
- *   onBack,
- *   onContinue,
- * } - Entrada esperada por la función.
- * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function SmtpConfigPage({
   config,
   busy,

@@ -1,14 +1,16 @@
-/** Categorías de capturas automatizadas del instalador. */
+/**
+ * Matriz de capturas obligatorias para documentación visual y gate de CI.
+ * Cada `relativePath` es relativo a `ElectronInstaller/screenshots/`.
+ * El mock usado es [installer-bridge.mock.js](fixtures/installer-bridge.mock.js) (mismo que E2E web).
+ */
 export type ScreenshotCategory = "wizard" | "admin" | "debug";
 
-/** Contrato tipado público (ScreenshotMatrixEntry). */
 export interface ScreenshotMatrixEntry {
   readonly relativePath: string;
   readonly category: ScreenshotCategory;
   readonly description: string;
 }
 
-/** Constantes exportadas (SCREENSHOT_CAPTURE_MATRIX) compartidas por el instalador. */
 export const SCREENSHOT_CAPTURE_MATRIX: readonly ScreenshotMatrixEntry[] = [
   {
     relativePath: "wizard/01-welcome-light.png",

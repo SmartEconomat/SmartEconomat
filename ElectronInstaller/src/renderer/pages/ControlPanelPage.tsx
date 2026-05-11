@@ -297,28 +297,6 @@ function ActionCard({
   );
 }
 
-/**
- * Expone la operación "ControlPanelPage" del instalador SmartEconomat.
- * @returns {ControlPanelPageProps} {
- *   busy,
- *   health,
- *   watchdogStatus,
- *   supervisorSnapshot,
- *   onStart,
- *   onStop,
- *   onRestart,
- *   onRefresh,
- *   onRestartDockerDesktop,
- *   onRunSupervisorRecovery,
- *   onStartLogs,
- *   onStopLogs,
- *   onDiagnostics,
- *   onOpenDanger,
- *   onOpenUninstall,
- *   children,
- * } - Entrada esperada por la función.
- * @returns {import("/home/psych/projects/SmartEconomat/ElectronInstaller/node_modules/@types/react/jsx-runtime").JSX.Element} Resultado efectivo tras la llamada (puede incluir Promesas).
- */
 export function ControlPanelPage({
   busy,
   health,

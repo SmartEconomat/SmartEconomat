@@ -1,15 +1,12 @@
 import { ProcessRunnerService } from "./process-runner.service";
 
-/** Servicio del proceso principal: HostsService. */
 export class HostsService {
   private readonly processRunner = new ProcessRunnerService();
 
   /**
-   * Garantiza host entry antes de continuar el flujo.
-   *
-   * @param host Parámetro de entrada para la operación.
-   * @param ip Parámetro de entrada para la operación. Opcional.
-   * @returns Valor resultante de la operación.
+   * Garantiza que una entrada exista en el archivo hosts de Windows.
+   * Si el host ya existe apuntando a otra IP, la actualiza.
+   * Si no existe, la añade.
    */
   async ensureHostEntry(host: string, ip: string = "127.0.0.1"): Promise<void> {
     if (process.platform !== "win32") {
@@ -68,12 +65,7 @@ export class HostsService {
   }
 
   /**
-   * Elimina smart economat entries.
-   * @returns Valor resultante de la operación.
-   */
-  /**
-   * Expone la operación "removeSmartEconomatEntries" del instalador SmartEconomat.
-   * @returns {Promise<void>} Resultado efectivo tras la llamada (puede incluir Promesas).
+   * Elimina las entradas automáticas creadas por SmartEconomat.
    */
   async removeSmartEconomatEntries(): Promise<void> {
     if (process.platform !== "win32") {
