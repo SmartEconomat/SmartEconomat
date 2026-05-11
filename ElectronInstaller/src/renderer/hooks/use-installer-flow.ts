@@ -75,7 +75,7 @@ type SmartEconomatBridge = Window["smartEconomat"];
 const BRIDGE_UNAVAILABLE_ERROR =
   "No se pudo conectar con el bridge de Electron. Reinicia el instalador.";
 const BACKUP_DEFAULT_DIR_STORAGE_KEY = "installer.backupDefaultDirectory";
-const INSTALL_TIMEOUT_MS = 12 * 60 * 1000;
+const INSTALL_TIMEOUT_MS = 60 * 60 * 1000; // Aumentado a 60 minutos para conexiones lentas durante docker pull
 
 function normalizeHealthForComparison(health: ServiceHealth[]): string {
   return JSON.stringify(

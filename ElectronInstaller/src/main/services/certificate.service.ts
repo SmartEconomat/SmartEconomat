@@ -17,6 +17,14 @@ interface CertificatePaths {
   stableCrtPath: string;
 }
 
+interface ReinstallCertificateToTrustStoreOptions {
+  /**
+   * Solo para acción explícita del usuario: abre certmgr y el asistente de importación.
+   * Las rutas automáticas (preflight, self-heal) deben dejarlo en false.
+   */
+  openManualTrustUi?: boolean;
+}
+
 interface EnsureCertificateOptions {
   overwrite: boolean;
   /**
@@ -507,13 +515,15 @@ export class CertificateService {
   }
 
   /**
-   * Reinstala el certificado en el trust store de Windows.
-   * Útil para reparar problemas de confianza del certificado.
+   * Reinstala el certificado en el trust store de Windows (quita huellas antiguas e importa el .crt actual).
+   * Por defecto es silencioso; `openManualTrustUi: true` abre certmgr y el asistente (IPC explícito del usuario).
    */
   async reinstallCertificateToTrustStore(
     runtimePath: string,
+    options?: ReinstallCertificateToTrustStoreOptions,
   ): Promise<OperationResult> {
     const certPaths = this.resolveCertificatePaths(runtimePath);
+    const openManualTrustUi = options?.openManualTrustUi === true;
 
     try {
       await fs.access(certPaths.stableCrtPath);
@@ -526,27 +536,23 @@ export class CertificateService {
       };
     }
 
-    // Eliminar certificados antiguos
     await this.removeCertificateFromWindowsTrustStore();
 
-    // Instalar el certificado actual de forma silenciosa
     const installResult = await this.installCertificateToWindowsTrustStore(
       certPaths.stableCrtPath,
     );
 
-    // Independientemente del resultado silencioso, abrimos la interfaz de Windows
-    // para cumplir con el requisito de "abrir si o si la configuración".
-    try {
-      // 1. Abrimos el gestor de certificados
-      await this.openCertificateManager();
-      // 2. Abrimos el archivo del certificado directamente para lanzar el asistente de importación
-      const { spawn } = await import("node:child_process");
-      spawn("cmd", ["/c", "start", "", certPaths.stableCrtPath], {
-        shell: true,
-        detached: true,
-      });
-    } catch (e) {
-      console.error("No se pudo abrir la interfaz de certificados:", e);
+    if (openManualTrustUi) {
+      try {
+        await this.openCertificateManager();
+        const { spawn } = await import("node:child_process");
+        spawn("cmd", ["/c", "start", "", certPaths.stableCrtPath], {
+          shell: true,
+          detached: true,
+        });
+      } catch (e) {
+        console.error("No se pudo abrir la interfaz de certificados:", e);
+      }
     }
 
     return installResult;

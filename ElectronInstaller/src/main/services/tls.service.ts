@@ -36,7 +36,7 @@ export class TLSService {
     }
 
     return this.certificateService.ensureLocalCertificates(runtimePath, {
-      overwrite: true,
+      overwrite: false,
       domain: config.localHost,
       installToTrustStore: process.platform === "win32",
     });

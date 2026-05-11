@@ -176,17 +176,6 @@ export class LocalDomainSelfHealService {
       return;
     }
 
-    if (process.platform === "win32") {
-      const reinstallResult =
-        await this.certificateService.reinstallCertificateToTrustStore(
-          runtimePath,
-        );
-      if (!reinstallResult.ok) {
-        this.onLog(`[SELF-HEAL] Aviso certificado: ${reinstallResult.message}`);
-        return;
-      }
-    }
-
     if (process.platform === "darwin") {
       const certPath = path.join(runtimePath, "certs", "fullchain.pem");
       const trustResult = await this.trustCertificateOnMac(certPath);

@@ -1,6 +1,6 @@
 {
   "name": "smarteconomat-installer",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Instalador de SmartEconomat vía Docker",
   "main": "out/main/index.js",
   "type": "module",
@@ -19,9 +19,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "build:app": "electron-vite build",
-    "build:win": "npm run build:app && electron-builder --win && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
-    "build:win:fast": "npm run build:app && electron-builder --win --config.compression=store && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
-    "build:win:compact": "npm run build:app && electron-builder --win --config.compression=maximum && find dist -maxdepth 1 -type f -name '*.__uninstaller.exe' -delete",
+    "build:win": "node ./scripts/ensure-win-icons.mjs && npm run build:app && electron-builder --win && node ./scripts/remove-nsis-uninstaller-artifact.mjs",
+    "build:win:fast": "node ./scripts/build-win-fast-local.mjs",
+    "build:win:compact": "node ./scripts/ensure-win-icons.mjs && npm run build:app && electron-builder --win --config.compression=maximum && node ./scripts/remove-nsis-uninstaller-artifact.mjs",
     "build:win:linux": "node ./scripts/build-windows-from-linux.mjs",
     "build:mac": "node ./scripts/build-mac-safe.mjs",
     "build:linux": "npm run build:app && electron-builder --linux",
@@ -52,6 +52,7 @@
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.59.1",
     "@types/node": "^22.18.12",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.3.0",
@@ -63,8 +64,12 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.5.0",
+    "nodemailer": "^8.0.7",
     "playwright-core": "^1.59.1",
+    "png-to-ico": "^2.1.8",
     "prettier": "^3.6.2",
+    "rcedit": "^4.0.1",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^6.1.0",
@@ -105,7 +110,7 @@
       "target": [
         "nsis"
       ],
-      "signAndEditExecutable": true,
+      "signAndEditExecutable": false,
       "signtoolOptions": {
         "signingHashAlgorithms": [
           "sha256"
@@ -128,7 +133,10 @@
       "createStartMenuShortcut": true,
       "shortcutName": "SmartEconomat",
       "installerIcon": "resources/icons/win/icon.ico",
-      "uninstallerIcon": "resources/icons/win/icon.ico",
+      "installerHeader": "resources/icons/nsis/installerHeader.bmp",
+      "installerSidebar": "resources/icons/nsis/installerSidebar.bmp",
+      "uninstallerIcon": "resources/icons/nsis/uninstaller.ico",
+      "uninstallerSidebar": "resources/icons/nsis/uninstallerSidebar.bmp",
       "runAfterFinish": false,
       "include": "resources/nsis/installer-hooks.nsh"
     },

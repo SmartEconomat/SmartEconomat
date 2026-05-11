@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { rcedit } from "rcedit";
+import rcedit from "rcedit";
 
 const BUILD_TIMEOUT_MS =
   Number(process.env.BUILD_STAGE_TIMEOUT_MS ?? 20 * 60 * 1000) || 20 * 60 * 1000;
@@ -204,6 +204,18 @@ function hasSigningMaterial() {
 }
 
 async function main() {
+  if (process.platform !== "win32") {
+    console.error(
+      "[BUILD] build-win-fast-local.mjs solo se ejecuta en Windows (usa taskkill, rcedit y flujo NSIS local).",
+    );
+    process.exit(1);
+  }
+
+  // Evita que herramientas hijas intenten auto-descubrir certificados y disparen winCodeSign innecesario.
+  if (!process.env.CSC_IDENTITY_AUTO_DISCOVERY?.trim()) {
+    process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false";
+  }
+
   await acquireBuildLock();
   const buildStartedAt = Date.now();
   const stageMetrics = [];

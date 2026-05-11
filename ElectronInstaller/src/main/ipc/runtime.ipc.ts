@@ -273,6 +273,7 @@ export class RuntimeIPC {
         }
         return this.certificateService.reinstallCertificateToTrustStore(
           parsed.data.runtimePath,
+          { openManualTrustUi: true },
         );
       },
     );

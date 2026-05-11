@@ -2,16 +2,27 @@
 # ============================================================================
 # Dockerfile.prod — Backend SmartEconomat (MODO INSTALADOR — SLIM)
 # ============================================================================
-# IMPORTANTE: Este Dockerfile asume que backend/dist/ ha sido pre-compilado
-# en la máquina del DESARROLLADOR antes de empaquetar el instalador.
-# En el cliente solo instala dependencias de runtime (sin compilar TypeScript).
-#
-# Pasos en el desarrollador (ejecutados por scripts/pre-build-project.mjs):
-#   cd backend/smart-economat-backend
-#   npm ci --prefer-offline
-#   npm run build
-#   npm ci --omit=dev
+# Compila Nest en la etapa builder; la imagen final solo instala dependencias
+# de runtime. No hace falta ejecutar `npm run build` en el host antes de
+# `docker compose build` (evita el error "/dist: not found" del contexto).
 # ============================================================================
+FROM node:22.2.0-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-factor 2 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set maxsockets 1 \
+    && npm config set prefer-offline true \
+    && npm config set progress false \
+    && npm ci --no-audit --no-fund
+
+COPY . ./
+RUN npm run build
+
 FROM node:22.2.0-alpine AS production
 
 ARG BUILD_DATE=unknown
@@ -20,12 +31,10 @@ ARG VERSION=1.0.0
 
 WORKDIR /app
 
-# Copiar artefactos ya compilados (dist/)
-COPY dist/ ./dist/
-COPY package.json ./
-COPY package-lock.json ./
+COPY --from=builder /app/dist ./dist/
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
 
-# Instalar solo dependencias de runtime del backend (sin build)
 RUN npm config set fetch-retries 5 \
     && npm config set fetch-retry-factor 2 \
     && npm config set fetch-retry-mintimeout 20000 \
@@ -35,26 +44,22 @@ RUN npm config set fetch-retries 5 \
     && npm config set progress false \
     && npm ci --omit=dev --no-audit --no-fund
 
-# Copiar archivos i18n necesarios en runtime (en el origen están en src/, en
-# el build los copiamos al lado del dist/ durante el pre-build del desarrollador)
-COPY src/i18n ./dist/i18n
-COPY src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
+COPY --from=builder /app/src/i18n ./dist/i18n
+COPY --from=builder /app/src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
 
-# Copiar scripts de arranque requeridos por el ENTRYPOINT
-COPY scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
-COPY scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
-COPY scripts/ensure-entity-columns-from-metadata.js ./scripts/ensure-entity-columns-from-metadata.js
-COPY scripts/db-reset-runner.js ./scripts/db-reset-runner.js
-COPY scripts/seed-runner.js ./scripts/seed-runner.js
-COPY scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js
+COPY --from=builder /app/scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
+COPY --from=builder /app/scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
+COPY --from=builder /app/scripts/ensure-entity-columns-from-metadata.js ./scripts/ensure-entity-columns-from-metadata.js
+COPY --from=builder /app/scripts/db-reset-runner.js ./scripts/db-reset-runner.js
+COPY --from=builder /app/scripts/seed-runner.js ./scripts/seed-runner.js
+COPY --from=builder /app/scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js
 
-# Usuario no-root para seguridad
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
     && mkdir -p /app/uploads \
     && chown -R appuser:appgroup /app/uploads
 
 LABEL org.opencontainers.image.title="SmartEconomat Backend"
-LABEL org.opencontainers.image.description="NestJS backend runtime image (pre-compiled)"
+LABEL org.opencontainers.image.description="NestJS backend runtime image"
 LABEL org.opencontainers.image.version="$VERSION"
 LABEL org.opencontainers.image.revision="$VCS_REF"
 LABEL org.opencontainers.image.created="$BUILD_DATE"
@@ -63,10 +68,8 @@ USER appuser
 
 EXPOSE 3000
 
-# start_period ampliado: da tiempo a las migraciones antes de que el healthcheck falle
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=60s \
     CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/api/v1 || exit 1
 
-# Exec form para correcto manejo de señales (PID 1)
 ENTRYPOINT ["node", "scripts/prod-bootstrap-runner.js"]
 CMD ["--", "node", "dist/main.js"]

@@ -244,13 +244,6 @@ export class PreflightService {
     onProgress?.("Liberando puertos conocidos (80/443) si están ocupados...");
     await this.releaseKnownBusyPorts();
 
-    if (process.platform === "win32") {
-      onProgress?.("Asegurando confianza del certificado TLS...");
-      await this.certificateService.reinstallCertificateToTrustStore(
-        runtimePath,
-      );
-    }
-
     onProgress?.("Reejecutando preflight para validar el estado final...");
     return this.run(runtimePath);
   }
@@ -676,11 +669,10 @@ export class PreflightService {
           : "El certificado autofirmado no está en el almacén de confianza (marcará HTTPS como no seguro).",
         recommendation: isTrusted
           ? undefined
-          : "Haz clic en 'Reparar' para abrir el asistente de confianza de Windows.",
-        repairable: !isTrusted,
-        repairAction: "auto-repair",
-        repairHint:
-          "Abrirá el asistente de Windows para confiar en el certificado.",
+          : "Este aviso es informativo. El instalador se encargará de confiar el certificado en el siguiente paso.",
+        repairable: false,
+        repairAction: undefined,
+        repairHint: undefined,
       },
     ];
   }
