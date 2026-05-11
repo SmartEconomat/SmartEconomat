@@ -14,6 +14,7 @@ interface CertificatePaths {
   privkeyPath: string;
   stableFullchainPath: string;
   stablePrivkeyPath: string;
+  stableCrtPath: string;
 }
 
 interface EnsureCertificateOptions {
@@ -55,7 +56,7 @@ export class CertificateService {
           if (!isInstalled) {
             const installResult =
               await this.installCertificateToWindowsTrustStore(
-                certPaths.stableFullchainPath,
+                certPaths.stableCrtPath,
               );
             if (!installResult.ok) {
               return installResult;
@@ -79,7 +80,7 @@ export class CertificateService {
       // Instalar en el almacén de certificados de Windows
       if (shouldInstallToTrustStore) {
         const installResult = await this.installCertificateToWindowsTrustStore(
-          certPaths.stableFullchainPath,
+          certPaths.stableCrtPath,
         );
         if (!installResult.ok) {
           return installResult;
@@ -145,6 +146,7 @@ export class CertificateService {
       privkeyPath: path.join(liveDir, "privkey.pem"),
       stableFullchainPath: path.join(certsDir, "fullchain.pem"),
       stablePrivkeyPath: path.join(certsDir, "privkey.pem"),
+      stableCrtPath: path.join(certsDir, "smarteconomat.crt"),
     };
   }
 
@@ -220,6 +222,7 @@ export class CertificateService {
     await fs.writeFile(paths.fullchainPath, pems.cert, { encoding: "utf8" });
     await fs.writeFile(paths.privkeyPath, pems.private, { encoding: "utf8" });
     await fs.copyFile(paths.fullchainPath, paths.stableFullchainPath);
+    await fs.copyFile(paths.fullchainPath, paths.stableCrtPath);
     await fs.copyFile(paths.privkeyPath, paths.stablePrivkeyPath);
 
     try {
@@ -351,11 +354,49 @@ export class CertificateService {
       };
     }
 
+    // Si el intento silencioso falla, abrimos el diálogo de seguridad de Windows (certutil)
+    // que "saltará" una advertencia oficial preguntando al usuario si desea confiar.
+    return this.openCertificateManualInstallUI(certPath);
+  }
+
+  /**
+   * Abre la interfaz de Windows para que el usuario confíe manualmente en el certificado.
+   * Usa certutil -addstore -user Root, que lanza un diálogo de seguridad crítico de Windows.
+   */
+  async openCertificateManualInstallUI(
+    certPath: string,
+  ): Promise<OperationResult> {
+    if (process.platform !== "win32") {
+      return { ok: true, message: "No aplica fuera de Windows." };
+    }
+
+    const normalizedPath = path.win32.normalize(certPath);
+
+    // Intentamos certutil que es el que lanza el pop-up de seguridad de "Desea instalar..."
+    const result = await this.processRunner.run({
+      command: "certutil",
+      args: ["-addstore", "-user", "Root", normalizedPath],
+      timeoutMs: 60_000, // Esperamos a que el usuario interactúe
+    });
+
+    if (result.ok) {
+      return {
+        ok: true,
+        message: "El usuario ha aceptado instalar el certificado manualmente.",
+      };
+    }
+
+    // Como último recurso, abrimos el archivo para que el usuario vea el asistente de importación
+    await this.processRunner.run({
+      command: "powershell",
+      args: ["-Command", `Start-Process '${normalizedPath}'`],
+    });
+
     return {
-      ok: true,
+      ok: false,
       message:
-        "Certificado generado, pero Windows no permitió instalarlo automáticamente en el almacén de confianza del usuario. " +
-        `Aviso: ${currentUserResult.stderr || currentUserResult.message}.`,
+        "No se pudo instalar automáticamente. Se ha abierto el certificado: haz clic en 'Instalar certificado' -> 'Usuario actual' -> 'Colocar todos los certificados en el siguiente almacén' -> 'Entidades de certificación de raíz de confianza'.",
+      errorCode: "TLS_CERTIFICATE_MANUAL_INSTALL_REQUIRED",
     };
   }
 
@@ -475,7 +516,7 @@ export class CertificateService {
     const certPaths = this.resolveCertificatePaths(runtimePath);
 
     try {
-      await fs.access(certPaths.stableFullchainPath);
+      await fs.access(certPaths.stableCrtPath);
     } catch {
       return {
         ok: false,
@@ -488,9 +529,36 @@ export class CertificateService {
     // Eliminar certificados antiguos
     await this.removeCertificateFromWindowsTrustStore();
 
-    // Instalar el certificado actual
-    return this.installCertificateToWindowsTrustStore(
-      certPaths.stableFullchainPath,
+    // Instalar el certificado actual de forma silenciosa
+    const installResult = await this.installCertificateToWindowsTrustStore(
+      certPaths.stableCrtPath,
     );
+
+    // Independientemente del resultado silencioso, abrimos la interfaz de Windows
+    // para cumplir con el requisito de "abrir si o si la configuración".
+    try {
+      // 1. Abrimos el gestor de certificados
+      await this.openCertificateManager();
+      // 2. Abrimos el archivo del certificado directamente para lanzar el asistente de importación
+      const { spawn } = await import("node:child_process");
+      spawn("cmd", ["/c", "start", "", certPaths.stableCrtPath], {
+        shell: true,
+        detached: true,
+      });
+    } catch (e) {
+      console.error("No se pudo abrir la interfaz de certificados:", e);
+    }
+
+    return installResult;
+  }
+
+  /**
+   * Abre el Administrador de Certificados de Windows (certmgr.msc).
+   */
+  async openCertificateManager(): Promise<boolean> {
+    if (process.platform !== "win32") return false;
+    const { spawn } = await import("node:child_process");
+    spawn("certmgr.msc", [], { shell: true, detached: true });
+    return true;
   }
 }

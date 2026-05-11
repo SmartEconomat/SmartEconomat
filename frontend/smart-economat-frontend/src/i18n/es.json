@@ -1062,19 +1062,29 @@
       "confirmarPeso": "Confirmar Peso",
       "webSerialNoDisponible": "Web Serial no disponible",
       "sinBasculaAutorizada": "Sin báscula autorizada",
+      "notAuthorized": "Sin báscula autorizada",
       "guardadaListaParaConectar": "Báscula guardada, lista para conectar",
       "conectada": "Báscula conectada",
+      "connected": "Báscula conectada",
       "desconectada": "Báscula desconectada",
+      "disconnected": "Báscula desconectada",
       "desactivada": "Báscula desactivada",
+      "deactivated": "Báscula desactivada",
       "seleccionCancelada": "Selección de puerto cancelada",
       "noSePudoConectar": "No se pudo conectar la báscula",
+      "connectError": "No se pudo conectar la báscula",
       "leyendoPeso": "Leyendo peso en tiempo real",
+      "reading": "Leyendo peso en tiempo real",
       "pesoRecibido": "Peso recibido desde báscula",
+      "received": "Peso recibido desde báscula",
       "errorLectura": "Error de lectura en báscula",
+      "readError": "Error de lectura en báscula",
       "noSePudoLeer": "No se pudo leer la báscula",
       "estadoTooltip": "Estado de báscula: {{estado}}",
       "vincular": "Vincular",
-      "cambiarPuerto": "Cambiar puerto"
+      "cambiarPuerto": "Cambiar puerto",
+      "requestAccessError": "Este navegador no soporta Web Serial para conectar la báscula.",
+      "openPortError": "No se pudo abrir el puerto serie de la báscula."
     },
     "sync": {
       "guardando": "Guardando...",
@@ -1109,6 +1119,14 @@
     "procesando": {
       "titulo": "Procesando Recepción Masiva...",
       "descripcion": "Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador."
+    },
+    "wizard": {
+      "processing": "Procesando...",
+      "transactionalIntegrity": "Garantizando integridad transaccional (ACID). Por favor, no cierres el navegador.",
+      "SELECCION_PEDIDOS": "Selección de Pedidos",
+      "ESCANEO_LOTE": "Escaneo y Conteo",
+      "REVISION_FINAL": "Revisión y Ajuste",
+      "RESULTADO": "Resultado"
     },
     "errors": {
       "webSerialNoSoportado": "Este navegador no soporta Web Serial para conectar la báscula.",

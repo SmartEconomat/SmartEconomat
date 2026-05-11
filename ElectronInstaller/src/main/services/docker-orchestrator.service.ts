@@ -21,6 +21,12 @@ import {
   resolveWindowsDockerCliPath,
   resolveWindowsDockerDesktopExePath,
 } from "./docker-desktop-windows-resolve";
+import {
+  formatChildProcessSpawnError,
+  mergeWindowsEssentialPathEntries,
+  prependKnownDockerCliBinsOnPath,
+  prependPathDirectory,
+} from "./windows-spawn-support";
 
 interface ComposeLocation {
   composeFile: string;
@@ -777,47 +783,103 @@ export class DockerOrchestratorService {
       "--follow",
     ];
 
-    const logProcess = spawn(await this.getDockerCommand(), composeArgs, {
-      cwd: this.pathResolver.getProjectRoot(),
-      shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    this.logProcess = logProcess;
+    const dockerExecutable = await this.getDockerCommand();
+    const childEnv = this.getDockerEnvironment();
 
-    logProcess.stdout.on("data", (chunk: Buffer) => {
-      chunk
-        .toString("utf8")
-        .split("\n")
-        .map((line) => stripAnsi(line))
-        .filter((line) => line.trim().length > 0)
-        .forEach((line) => {
-          onLogLine({
-            service: payload.service,
-            line,
-            timestamp: new Date().toISOString(),
-          });
+    return await new Promise<OperationResult>((resolve) => {
+      let settled = false;
+      const finish = (result: OperationResult): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(result);
+      };
+
+      let logProcess: ReturnType<typeof spawn>;
+      try {
+        logProcess = spawn(dockerExecutable, composeArgs, {
+          cwd: this.pathResolver.getProjectRoot(),
+          env: childEnv,
+          shell: false,
+          windowsHide: true,
+          stdio: ["ignore", "pipe", "pipe"],
         });
-    });
-
-    logProcess.stderr.on("data", (chunk: Buffer) => {
-      chunk
-        .toString("utf8")
-        .split("\n")
-        .map((line) => stripAnsi(line))
-        .filter((line) => line.trim().length > 0)
-        .forEach((line) => {
-          onLogLine({
-            service: payload.service,
-            line,
-            timestamp: new Date().toISOString(),
-          });
+      } catch (error) {
+        finish({
+          ok: false,
+          message: `No se pudo iniciar docker logs: ${formatChildProcessSpawnError(error)}`,
+          errorCode: "DOCKER_LOG_STREAM_SPAWN_FAILED",
         });
-    });
+        return;
+      }
 
-    return {
-      ok: true,
-      message: `Streaming de logs iniciado para ${payload.service}`,
-    };
+      this.logProcess = logProcess;
+
+      if (!logProcess.stdout || !logProcess.stderr) {
+        if (this.logProcess === logProcess) {
+          this.logProcess = null;
+        }
+        finish({
+          ok: false,
+          message:
+            "Docker logs: el proceso no expuso streams stdout/stderr legibles.",
+          errorCode: "DOCKER_LOG_STREAM_SPAWN_FAILED",
+        });
+        return;
+      }
+
+      logProcess.once("error", (error) => {
+        if (this.logProcess === logProcess) {
+          this.logProcess = null;
+        }
+        finish({
+          ok: false,
+          message: `Fallo al crear el proceso de logs Docker: ${formatChildProcessSpawnError(error)} (executable=${dockerExecutable})`,
+          errorCode: "DOCKER_LOG_STREAM_SPAWN_FAILED",
+        });
+      });
+
+      logProcess.once("spawn", () => {
+        finish({
+          ok: true,
+          message: `Streaming de logs iniciado para ${payload.service}`,
+        });
+      });
+
+      const out = logProcess.stdout;
+      const err = logProcess.stderr;
+
+      out.on("data", (chunk: Buffer) => {
+        chunk
+          .toString("utf8")
+          .split("\n")
+          .map((line) => stripAnsi(line))
+          .filter((line) => line.trim().length > 0)
+          .forEach((line) => {
+            onLogLine({
+              service: payload.service,
+              line,
+              timestamp: new Date().toISOString(),
+            });
+          });
+      });
+
+      err.on("data", (chunk: Buffer) => {
+        chunk
+          .toString("utf8")
+          .split("\n")
+          .map((line) => stripAnsi(line))
+          .filter((line) => line.trim().length > 0)
+          .forEach((line) => {
+            onLogLine({
+              service: payload.service,
+              line,
+              timestamp: new Date().toISOString(),
+            });
+          });
+      });
+    });
   }
 
   stopLogStream(): OperationResult {
@@ -1362,7 +1424,22 @@ export class DockerOrchestratorService {
   private getDockerEnvironment(
     extraEnv: NodeJS.ProcessEnv = {},
   ): NodeJS.ProcessEnv {
-    const nextEnv = { ...process.env };
+    let nextEnv: NodeJS.ProcessEnv = { ...process.env };
+
+    if (process.platform === "win32") {
+      nextEnv = mergeWindowsEssentialPathEntries(nextEnv);
+      const dockerCli = this.dockerCommand;
+      if (
+        dockerCli &&
+        path.isAbsolute(dockerCli) &&
+        dockerCli.toLowerCase().endsWith(".exe")
+      ) {
+        nextEnv = prependPathDirectory(nextEnv, path.dirname(dockerCli));
+      } else {
+        nextEnv = prependKnownDockerCliBinsOnPath(nextEnv);
+      }
+    }
+
     delete nextEnv.DOCKER_CONTEXT;
     delete nextEnv.DOCKER_HOST;
     return {

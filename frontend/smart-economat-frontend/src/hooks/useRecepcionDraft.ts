@@ -187,7 +187,10 @@ export function useRecepcionDraft({
     }
 
     try {
-      await saveRecepcionDraft(draftRef.current);
+      const persisted = await saveRecepcionDraft(draftRef.current);
+      // Sincronizamos la versión para que el siguiente auto-save no de conflicto 409
+      draftRef.current.serverVersion = persisted.version;
+      draftRef.current.serverUpdatedAt = persisted.updatedAt;
     } catch {
       // El guardado silencioso en salida no debe interrumpir navegación.
     }

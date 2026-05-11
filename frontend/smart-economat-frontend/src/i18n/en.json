@@ -1062,19 +1062,29 @@
       "confirmarPeso": "Confirm Weight",
       "webSerialNoDisponible": "Web Serial not available",
       "sinBasculaAutorizada": "No authorised scale",
+      "notAuthorized": "No authorised scale",
       "guardadaListaParaConectar": "Scale saved, ready to connect",
       "conectada": "Scale connected",
+      "connected": "Scale connected",
       "desconectada": "Scale disconnected",
+      "disconnected": "Scale disconnected",
       "desactivada": "Scale disabled",
+      "deactivated": "Scale disabled",
       "seleccionCancelada": "Port selection cancelled",
       "noSePudoConectar": "Could not connect the scale",
+      "connectError": "Could not connect the scale",
       "leyendoPeso": "Reading weight in real time",
+      "reading": "Reading weight in real time",
       "pesoRecibido": "Weight received from scale",
+      "received": "Weight received from scale",
       "errorLectura": "Scale read error",
+      "readError": "Scale read error",
       "noSePudoLeer": "Could not read the scale",
       "estadoTooltip": "Scale status: {{estado}}",
       "vincular": "Link",
-      "cambiarPuerto": "Change port"
+      "cambiarPuerto": "Change port",
+      "requestAccessError": "This browser does not support Web Serial for connecting the scale.",
+      "openPortError": "Could not open the scale's serial port."
     },
     "sync": {
       "guardando": "Saving...",
@@ -1109,6 +1119,14 @@
     "procesando": {
       "titulo": "Processing Bulk Reception...",
       "descripcion": "Ensuring transactional integrity (ACID). Please do not close the browser."
+    },
+    "wizard": {
+      "processing": "Processing...",
+      "transactionalIntegrity": "Ensuring transactional integrity (ACID). Please do not close the browser.",
+      "SELECCION_PEDIDOS": "Order Selection",
+      "ESCANEO_LOTE": "Scanning & Counting",
+      "REVISION_FINAL": "Review & Adjustment",
+      "RESULTADO": "Result"
     },
     "errors": {
       "webSerialNoSoportado": "This browser does not support Web Serial for connecting the scale.",

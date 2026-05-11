@@ -329,6 +329,21 @@ export class BootGuardianService {
     );
 
     try {
+      if (process.platform === "win32") {
+        this.log(
+          "[BOOT-GUARDIAN] Garantizando estado del servicio de Windows com.docker.service...",
+        );
+        const serviceResult =
+          await this.dockerAutostart.ensureDockerServiceActive();
+        if (!serviceResult.ok) {
+          this.log(
+            `[BOOT-GUARDIAN] ⚠️ Aviso sobre el servicio Docker: ${serviceResult.message}`,
+          );
+        } else {
+          this.log(`[BOOT-GUARDIAN] ${serviceResult.message}`);
+        }
+      }
+
       const status = await this.dockerAutostart.getAutostartStatus();
 
       if (!status.dockerDesktopInstalled) {

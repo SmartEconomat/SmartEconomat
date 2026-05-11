@@ -900,8 +900,8 @@ const DistribucionPage: React.FC = () => {
   );
 
   const hasAvailableDestinationOptions = useMemo(
-    () => userUbicaciones.some((ubicacion) => ubicacion.id !== originId),
-    [originId, userUbicaciones]
+    () => ubicaciones.some((ubicacion) => ubicacion.id !== originId),
+    [originId, ubicaciones]
   );
 
   const destinationHelperText = useMemo(() => {
@@ -945,18 +945,38 @@ const DistribucionPage: React.FC = () => {
           {t('distribucion.helper.ubicacionesUsuario')}
         </ListSubheader>
       );
+      visibleUserUbicaciones.forEach((ubicacion) => {
+        items.push(
+          <MenuItem key={`user-${ubicacion.id}`} value={ubicacion.id}>
+            {ubicacion.nombre}
+          </MenuItem>
+        );
+      });
     }
 
-    visibleUserUbicaciones.forEach((ubicacion) => {
+    const otrasUbicaciones = ubicaciones.filter(
+      (u) =>
+        u.id !== originId &&
+        !visibleUserUbicaciones.some((vu) => vu.id === u.id)
+    );
+
+    if (otrasUbicaciones.length > 0) {
       items.push(
-        <MenuItem key={ubicacion.id} value={ubicacion.id}>
-          {ubicacion.nombre}
-        </MenuItem>
+        <ListSubheader key="other-locations-header" disableSticky>
+          {t('distribucion.helper.otrasUbicaciones', 'Otras ubicaciones')}
+        </ListSubheader>
       );
-    });
+      otrasUbicaciones.forEach((ubicacion) => {
+        items.push(
+          <MenuItem key={`other-${ubicacion.id}`} value={ubicacion.id}>
+            {ubicacion.nombre}
+          </MenuItem>
+        );
+      });
+    }
 
     return items;
-  }, [t, visibleUserUbicaciones]);
+  }, [t, visibleUserUbicaciones, ubicaciones, originId]);
 
   useEffect(() => {
     if (!distributeOpen || !selectedDisponible) {

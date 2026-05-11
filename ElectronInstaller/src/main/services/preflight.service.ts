@@ -15,6 +15,7 @@ import {
 } from "./docker-desktop-windows-resolve";
 import { OSDetectorService } from "./os-detector.service";
 import { ProcessRunnerService } from "./process-runner.service";
+import { CertificateService } from "./certificate.service";
 
 export function evaluateDockerChecks(
   dockerVersion: CommandResult,
@@ -202,6 +203,7 @@ export class PreflightService {
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
+    private readonly certificateService = new CertificateService(),
   ) {}
 
   async run(runtimePath: string): Promise<OperationResult<PreflightReport>> {
@@ -211,6 +213,7 @@ export class PreflightService {
     checks.push(...(await this.dockerChecks(runtimePath)));
     checks.push(...(await this.portChecks()));
     checks.push(...(await this.certDependencyChecks()));
+    checks.push(...(await this.certTrustChecks(runtimePath)));
     checks.push(...(await this.smartAppControlChecks()));
 
     const hasBlocker = checks.some((check) => check.status === "BLOCKER");
@@ -240,6 +243,14 @@ export class PreflightService {
 
     onProgress?.("Liberando puertos conocidos (80/443) si están ocupados...");
     await this.releaseKnownBusyPorts();
+
+    if (process.platform === "win32") {
+      onProgress?.("Asegurando confianza del certificado TLS...");
+      await this.certificateService.reinstallCertificateToTrustStore(
+        runtimePath,
+      );
+    }
+
     onProgress?.("Reejecutando preflight para validar el estado final...");
     return this.run(runtimePath);
   }
@@ -618,6 +629,58 @@ export class PreflightService {
         recommendation: result.ok
           ? undefined
           : "Instalar dependencia TLS para automatizar certificados locales.",
+      },
+    ];
+  }
+
+  private async certTrustChecks(
+    runtimePath: string,
+  ): Promise<PreflightCheck[]> {
+    if (process.platform !== "win32") {
+      return [];
+    }
+
+    void runtimePath;
+
+    // Usamos el método privado de CertificateService (ahora lo haremos accesible o simularemos)
+    // Para simplificar, usamos una validación similar a la de CertificateService.isCertificateInTrustStore
+    const script = `
+      $storeLocations = @('CurrentUser', 'LocalMachine')
+      foreach ($loc in $storeLocations) {
+        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new("Root", $loc)
+        try {
+          $store.Open("ReadOnly")
+          $found = $store.Certificates | Where-Object { $_.Subject -like "*smarteconomat*" }
+          $store.Close()
+          if ($found.Count -gt 0) { exit 0 }
+        } catch {}
+      }
+      exit 1
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      timeoutMs: 10_000,
+    });
+
+    const isTrusted = result.ok;
+
+    return [
+      {
+        id: "tls-trust",
+        label: "Certificado de confianza",
+        status: isTrusted ? "OK" : "WARN",
+        detail: isTrusted
+          ? "El certificado de SmartEconomat es de confianza para Windows."
+          : "El certificado autofirmado no está en el almacén de confianza (marcará HTTPS como no seguro).",
+        recommendation: isTrusted
+          ? undefined
+          : "Haz clic en 'Reparar' para abrir el asistente de confianza de Windows.",
+        repairable: !isTrusted,
+        repairAction: "auto-repair",
+        repairHint:
+          "Abrirá el asistente de Windows para confiar en el certificado.",
       },
     ];
   }

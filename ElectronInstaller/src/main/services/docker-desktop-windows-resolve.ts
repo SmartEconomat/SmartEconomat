@@ -3,8 +3,7 @@ import fs from "node:fs/promises";
 import type { ProcessRunnerService } from "./process-runner.service";
 
 const PROGRAM_FILES_DOCKER_ROOT = "C:\\Program Files\\Docker\\Docker";
-const PROGRAM_FILES_X86_DOCKER_ROOT =
-  "C:\\Program Files (x86)\\Docker\\Docker";
+const PROGRAM_FILES_X86_DOCKER_ROOT = "C:\\Program Files (x86)\\Docker\\Docker";
 
 const dockerDesktopExeCandidates = [
   `${PROGRAM_FILES_DOCKER_ROOT}\\frontend\\Docker Desktop.exe`,

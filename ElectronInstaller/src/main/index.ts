@@ -530,7 +530,19 @@ function initApp() {
       if (runtimeIpc) {
         runtimeIpc.setBootGuardian(bootGuardian);
       }
-      void bootGuardian.bootstrap();
+      void bootGuardian.bootstrap().catch((error: unknown) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        debugLogService.publish({
+          type: "error",
+          source: "main",
+          message: `[SUPERVISOR] Fallo en bootstrap: ${detail}`,
+          timestamp: Date.now(),
+          context:
+            error instanceof Error
+              ? { name: error.name, message: error.message, stack: error.stack }
+              : { value: String(error) },
+        });
+      });
 
       // Eventos de power management (multi-OS)
       powerMonitor.on("resume", () => {

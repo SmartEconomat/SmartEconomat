@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Incidencia } from '../incidencia.entity/incidencia.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { IncidenciaQueryDto } from '../dto/incidencia-query.dto';
+import { EstadoIncidencia } from '../enums/incidencia.enums';
 
 /**
  * Ejecuta la lógica de operación dentro del flujo de la aplicación.
@@ -132,9 +133,17 @@ export class IncidenciaRepository extends Repository<Incidencia> {
         'proveedorProductoProveedor'
       );
 
-    queryBuilder
-      .andWhere('incidencia.fechaResolucion IS NULL')
-      .andWhere('lineas.id IS NOT NULL');
+    if (query.resuelta === true) {
+      queryBuilder.andWhere('incidencia.estado = :estado', {
+        estado: EstadoIncidencia.RESUELTA,
+      });
+    } else {
+      queryBuilder.andWhere('incidencia.estado != :estado', {
+        estado: EstadoIncidencia.RESUELTA,
+      });
+    }
+
+    queryBuilder.andWhere('lineas.id IS NOT NULL');
 
     if (isAdmin) {
       queryBuilder.withDeleted();

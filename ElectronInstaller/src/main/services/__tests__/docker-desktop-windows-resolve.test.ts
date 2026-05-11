@@ -24,9 +24,8 @@ describe("parseWindowsDockerDesktopResolveStdout", () => {
   });
 
   it("parsea NOTFOUND", () => {
-    const { found, exePath } = parseWindowsDockerDesktopResolveStdout(
-      "NOTFOUND\n",
-    );
+    const { found, exePath } =
+      parseWindowsDockerDesktopResolveStdout("NOTFOUND\n");
     expect(found).toBe(false);
     expect(exePath).toBeNull();
   });

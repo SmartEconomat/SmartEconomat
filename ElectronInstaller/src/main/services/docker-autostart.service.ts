@@ -299,6 +299,196 @@ export class DockerAutostartService {
     return result.ok;
   }
 
+  /**
+   * Garantiza que el servicio de Docker para Windows está activo y configurado
+   * para iniciar automáticamente.
+   *
+   * @returns {Promise<DockerAutostartConfigResult>} Resultado de la configuración del servicio.
+   */
+  async ensureDockerServiceActive(): Promise<DockerAutostartConfigResult> {
+    const platform = process.platform;
+    if (platform !== "win32") {
+      return {
+        ok: false,
+        message: "Este método solo está disponible en Windows.",
+        errorCode: "PLATFORM_NOT_WINDOWS",
+      };
+    }
+
+    try {
+      // Paso 1: Verificar si el servicio existe
+      const serviceExists = await this.checkDockerServiceExists();
+      if (!serviceExists) {
+        return {
+          ok: false,
+          message:
+            'El servicio Docker "com.docker.service" no se encontró. Verifica la instalación de Docker.',
+          errorCode: "DOCKER_SERVICE_NOT_FOUND",
+        };
+      }
+
+      // Paso 2: Configurar el servicio para iniciar automáticamente
+      const autoStartResult = await this.setDockerServiceAutoStart();
+      if (!autoStartResult) {
+        return {
+          ok: false,
+          message:
+            "No se pudo configurar el servicio Docker para iniciar automáticamente.",
+          errorCode: "SERVICE_AUTOSTART_FAILED",
+        };
+      }
+
+      // Paso 3: Verificar y activar el servicio si está detenido
+      const isRunning = await this.isDockerServiceRunning();
+      if (!isRunning) {
+        const startResult = await this.startDockerService();
+        if (!startResult) {
+          return {
+            ok: false,
+            message: "El servicio Docker está detenido y no se pudo iniciar.",
+            errorCode: "SERVICE_START_FAILED",
+          };
+        }
+      }
+
+      return {
+        ok: true,
+        message:
+          "Servicio Docker garantizado: activo y configurado para iniciar automáticamente.",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: `Error al garantizar servicio Docker: ${error instanceof Error ? error.message : String(error)}`,
+        errorCode: "ENSURE_SERVICE_ERROR",
+      };
+    }
+  }
+
+  /**
+   * Verifica si el servicio Docker existe en Windows.
+   */
+  private async checkDockerServiceExists(): Promise<boolean> {
+    const script = `
+      try {
+        $service = Get-Service -Name 'com.docker.service' -ErrorAction Stop
+        exit 0
+      } catch {
+        try {
+          $service = Get-Service -Name 'Docker Desktop Service' -ErrorAction Stop
+          exit 0
+        } catch {
+          exit 1
+        }
+      }
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-Command", script],
+      timeoutMs: 10_000,
+    });
+
+    return result.ok;
+  }
+
+  /**
+   * Configura el servicio Docker para iniciar automáticamente.
+   */
+  private async setDockerServiceAutoStart(): Promise<boolean> {
+    const script = `
+      try {
+        $service = $null
+        try {
+          $service = Get-Service -Name 'com.docker.service' -ErrorAction Stop
+        } catch {
+          $service = Get-Service -Name 'Docker Desktop Service' -ErrorAction Stop
+        }
+
+        Set-Service -Name $service.Name -StartupType Automatic
+
+        exit 0
+      } catch {
+        exit 1
+      }
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-Command", script],
+      timeoutMs: 10_000,
+    });
+
+    return result.ok;
+  }
+
+  /**
+   * Verifica si el servicio Docker está corriendo en Windows.
+   */
+  private async isDockerServiceRunning(): Promise<boolean> {
+    const script = `
+      try {
+        $service = $null
+        try {
+          $service = Get-Service -Name 'com.docker.service' -ErrorAction Stop
+        } catch {
+          $service = Get-Service -Name 'Docker Desktop Service' -ErrorAction Stop
+        }
+
+        if ($service.Status -eq 'Running') { exit 0 } else { exit 1 }
+      } catch {
+        exit 1
+      }
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-Command", script],
+      timeoutMs: 10_000,
+    });
+
+    return result.ok;
+  }
+
+  /**
+   * Inicia el servicio Docker en Windows.
+   */
+  private async startDockerService(): Promise<boolean> {
+    const script = `
+      try {
+        $service = $null
+        try {
+          $service = Get-Service -Name 'com.docker.service' -ErrorAction Stop
+        } catch {
+          $service = Get-Service -Name 'Docker Desktop Service' -ErrorAction Stop
+        }
+
+        Start-Service -Name $service.Name -ErrorAction Stop
+
+        # Esperar a que el servicio esté corriendo
+        $maxAttempts = 30
+        $attempt = 0
+        while ($service.Status -ne 'Running' -and $attempt -lt $maxAttempts) {
+          Start-Sleep -Milliseconds 500
+          $service = Get-Service -Name $service.Name
+          $attempt++
+        }
+
+        if ($service.Status -eq 'Running') { exit 0 } else { exit 1 }
+      } catch {
+        exit 1
+      }
+    `;
+
+    const result = await this.processRunner.run({
+      command: "powershell",
+      args: ["-NoProfile", "-Command", script],
+      timeoutMs: 30_000,
+    });
+
+    return result.ok;
+  }
+
   private async removeFromWindowsStartup(): Promise<boolean> {
     const script = `
       $regPath = 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run'

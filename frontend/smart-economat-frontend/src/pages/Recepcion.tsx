@@ -470,8 +470,8 @@ const Recepcion: React.FC = () => {
       nombreProducto:
         pp.productoProveedor?.producto?.nombre ||
         t('recepcion.draft.productPlaceholder'),
-      cantidadPedida: Number(pp.cantidad),
-      cantidadAlbaran: Number(pp.cantidad),
+      cantidadPedida: Number(pp.cantidad || 0),
+      cantidadAlbaran: Number(pp.cantidad || 0),
       cantidadRecibida: 0,
       isWeighedWithScale: false,
       estadoVisual: EstadoVisualProducto.OPTIMO,
@@ -733,6 +733,11 @@ const Recepcion: React.FC = () => {
         newPedidos[targetMatch.pIdx].lineas[targetMatch.lIdx] = {
           ...tLinea,
           cantidadRecibida: currRec + 1,
+          cantidadAlbaran:
+            tLinea.cantidadAlbaran === '' ||
+            Number(tLinea.cantidadAlbaran) === 0
+              ? tLinea.cantidadPedida
+              : tLinea.cantidadAlbaran,
           intervenida: true,
           estado: calculateEstado(currRec + 1, tLinea.cantidadPedida),
         };
@@ -819,18 +824,14 @@ const Recepcion: React.FC = () => {
     value: unknown
   ) => {
     let finalValue = value;
-    if (field === 'cantidadRecibida') {
-      const numValue = Number(value);
-      finalValue = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
-    } else if (
-      field === 'cantidadAlbaran' &&
-      typeof value === 'string' &&
-      value !== ''
-    ) {
-      const numValue = Number(value);
-      finalValue = !isNaN(numValue) && numValue >= 0 ? String(numValue) : '0';
-    } else if (field === 'cantidadAlbaran' && typeof value === 'number') {
-      finalValue = value >= 0 ? String(value) : '0';
+    if (field === 'cantidadRecibida' || field === 'cantidadAlbaran') {
+      if (value === '') {
+        finalValue = '';
+      } else if (typeof value === 'string') {
+        finalValue = value;
+      } else if (typeof value === 'number') {
+        finalValue = value >= 0 ? value : 0;
+      }
     }
 
     setDraft((prevDraft) => {
@@ -841,13 +842,17 @@ const Recepcion: React.FC = () => {
         const newLinea = { ...newLineas[lIdx], [field]: finalValue };
 
         if (field === 'cantidadRecibida') {
+          const numRecibida =
+            typeof finalValue === 'string'
+              ? parseFloat(finalValue.replace(',', '.'))
+              : Number(finalValue);
           newLinea.estado = calculateEstado(
-            Number(finalValue),
+            !isNaN(numRecibida) && numRecibida >= 0 ? numRecibida : 0,
             newLinea.cantidadPedida
           );
         }
         if (field === 'cantidadPedida' && !newLinea.isAlbaranDirty) {
-          newLinea.cantidadAlbaran = Number(finalValue);
+          newLinea.cantidadAlbaran = Number(finalValue || 0);
         }
 
         if (
@@ -916,10 +921,8 @@ const Recepcion: React.FC = () => {
   };
 
   const startWeighing = async () => {
-    if (!isScaleConnected || !isScaleEnabled) {
-      setError(
-        'La báscula no está activa. Vincúlala o introduce el peso manualmente.'
-      );
+    if (!isScaleEnabled) {
+      setError(t('recepcion.errors.basculaNoActiva'));
       return;
     }
 
@@ -933,7 +936,7 @@ const Recepcion: React.FC = () => {
         setIsWeighing(false);
         setIsScaleConnected(false);
         setScaleStatusText(t('recepcion.bascula.notAuthorized'));
-        setError('No hay una báscula autorizada disponible.');
+        setError(t('recepcion.errors.sinBasculaDisponible'));
         return;
       }
 
@@ -949,14 +952,14 @@ const Recepcion: React.FC = () => {
           setIsWeighing(false);
           setIsScaleConnected(false);
           setScaleStatusText(t('recepcion.bascula.readError'));
-          setError('Se perdió la comunicación con la báscula.');
+          setError(t('recepcion.errors.perdidaComunicacion'));
         }
       );
     } catch {
       setIsWeighing(false);
       setIsScaleConnected(false);
-      setScaleStatusText('No se pudo leer la báscula');
-      setError('No se pudo iniciar la lectura de la báscula.');
+      setScaleStatusText(t('recepcion.bascula.noSePudoLeer'));
+      setError(t('recepcion.errors.noSePudoIniciarLectura'));
     }
   };
 
@@ -990,7 +993,13 @@ const Recepcion: React.FC = () => {
     const totalItems = draft.pedidosSeleccionados
       .flatMap((p) => p.lineas)
       .concat(draft.productosEspontaneos);
-    const hasReception = totalItems.some((l) => Number(l.cantidadRecibida) > 0);
+    const hasReception = totalItems.some((l) => {
+      const numRec =
+        typeof l.cantidadRecibida === 'string'
+          ? parseFloat(l.cantidadRecibida.replace(',', '.'))
+          : Number(l.cantidadRecibida);
+      return !isNaN(numRec) && numRec > 0;
+    });
 
     if (!hasReception) {
       setError('Debes recepcionar al menos un producto.');
@@ -1003,10 +1012,21 @@ const Recepcion: React.FC = () => {
 
     // Validar observaciones si hay discrepancia
     for (const l of lineasActivasPedidos) {
+      const numRec =
+        typeof l.cantidadRecibida === 'string'
+          ? parseFloat(l.cantidadRecibida.replace(',', '.'))
+          : Number(l.cantidadRecibida);
+      const valRec = !isNaN(numRec) ? numRec : 0;
+
+      const numAlb =
+        typeof l.cantidadAlbaran === 'string'
+          ? parseFloat(l.cantidadAlbaran.replace(',', '.'))
+          : Number(l.cantidadAlbaran);
+      const valAlb = !isNaN(numAlb) ? numAlb : 0;
+
       const hasDiscrepancy =
-        Number(l.cantidadRecibida) !== l.cantidadPedida ||
-        (hasCantidadAlbaran(l) &&
-          Number(l.cantidadAlbaran) !== l.cantidadPedida) ||
+        valRec !== l.cantidadPedida ||
+        (hasCantidadAlbaran(l) && valAlb !== l.cantidadPedida) ||
         l.estadoVisual !== EstadoVisualProducto.OPTIMO;
 
       if (hasDiscrepancy && !hasDraftText(l.observaciones)) {
@@ -1051,37 +1071,67 @@ const Recepcion: React.FC = () => {
       observaciones: draft.observaciones,
       productos: draft.pedidosSeleccionados
         .flatMap((p) => p.lineas)
-        .filter((l) => isLineaDraftActiva(l) && Number(l.cantidadRecibida) > 0)
-        .map((l) => ({
-          pedidoProductoId: l.pedidoProductoId!,
-          cantidadRecibida: Number(l.cantidadRecibida),
-          estadoVisual: l.estadoVisual,
-          fechaCaducidad: l.fechaCaducidad
-            ? new Date(l.fechaCaducidad)
-            : undefined,
-          observaciones: l.observaciones,
-          isWeighedWithScale: Boolean(l.isWeighedWithScale),
+        .filter(
+          (l) =>
+            isLineaDraftActiva(l) &&
+            (typeof l.cantidadRecibida === 'string'
+              ? parseFloat(l.cantidadRecibida.replace(',', '.'))
+              : Number(l.cantidadRecibida)) > 0
+        )
+        .map((l) => {
+          const recParsed =
+            typeof l.cantidadRecibida === 'string'
+              ? parseFloat(l.cantidadRecibida.replace(',', '.'))
+              : Number(l.cantidadRecibida);
+          const albParsed =
+            typeof l.cantidadAlbaran === 'string'
+              ? parseFloat(l.cantidadAlbaran.replace(',', '.'))
+              : Number(l.cantidadAlbaran);
+          return {
+            pedidoProductoId: l.pedidoProductoId!,
+            cantidadRecibida: !isNaN(recParsed) ? recParsed : 0,
+            estadoVisual: l.estadoVisual,
+            fechaCaducidad: l.fechaCaducidad
+              ? new Date(l.fechaCaducidad)
+              : undefined,
+            observaciones: l.observaciones,
+            isWeighedWithScale: Boolean(l.isWeighedWithScale),
+            cantidadAlbaran:
+              l.cantidadAlbaran !== '' && !isNaN(albParsed)
+                ? albParsed
+                : undefined,
+          };
+        }),
+      productosNuevos: draft.productosEspontaneos.map((p) => {
+        const recParsed =
+          typeof p.cantidadRecibida === 'string'
+            ? parseFloat(p.cantidadRecibida.replace(',', '.'))
+            : Number(p.cantidadRecibida);
+        const albParsed =
+          typeof p.cantidadAlbaran === 'string'
+            ? parseFloat(p.cantidadAlbaran.replace(',', '.'))
+            : Number(p.cantidadAlbaran);
+        return {
+          pendienteCreacion: true,
+          codigoBarras: p.productoNuevo?.codigoBarras || p.codigoBarras || '',
+          nombre: p.productoNuevo?.nombre || p.nombreProducto,
+          marca: p.productoNuevo?.marca || '',
+          unidad:
+            normalizeUnidadMedida(
+              p.productoNuevo?.unidad || p.unidad || UnidadMedida.UNIDAD
+            ) || UnidadMedida.UNIDAD,
+          tipo: (p.productoNuevo?.tipo ||
+            CategoriaProducto.OTRO) as CategoriaProducto,
+          contenido: p.productoNuevo?.contenido || 1,
+          cantidadRecibida: !isNaN(recParsed) ? recParsed : 0,
           cantidadAlbaran:
-            l.cantidadAlbaran !== '' ? Number(l.cantidadAlbaran) : undefined,
-        })),
-      productosNuevos: draft.productosEspontaneos.map((p) => ({
-        pendienteCreacion: true,
-        codigoBarras: p.productoNuevo?.codigoBarras || p.codigoBarras || '',
-        nombre: p.productoNuevo?.nombre || p.nombreProducto,
-        marca: p.productoNuevo?.marca || '',
-        unidad:
-          normalizeUnidadMedida(
-            p.productoNuevo?.unidad || p.unidad || UnidadMedida.UNIDAD
-          ) || UnidadMedida.UNIDAD,
-        tipo: (p.productoNuevo?.tipo ||
-          CategoriaProducto.OTRO) as CategoriaProducto,
-        contenido: p.productoNuevo?.contenido || 1,
-        cantidadRecibida: Number(p.cantidadRecibida),
-        cantidadAlbaran:
-          p.cantidadAlbaran !== '' ? Number(p.cantidadAlbaran) : undefined,
-        observaciones: p.observaciones,
-        isWeighedWithScale: Boolean(p.isWeighedWithScale),
-      })),
+            p.cantidadAlbaran !== '' && !isNaN(albParsed)
+              ? albParsed
+              : undefined,
+          observaciones: p.observaciones,
+          isWeighedWithScale: Boolean(p.isWeighedWithScale),
+        };
+      }),
     };
 
     function isErrorWithMessage(e: unknown): e is { message: string } {

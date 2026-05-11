@@ -190,8 +190,7 @@ export function DeployPage({
       ? installPhases.slice(currentPhaseIndex + 1)
       : installPhases;
 
-  const deployInteractionLocked =
-    busy || isInstallerPipelineRunning(state);
+  const deployInteractionLocked = busy || isInstallerPipelineRunning(state);
 
   return (
     <Box component="section" sx={{ display: "grid", gap: 2 }}>
@@ -463,7 +462,11 @@ export function DeployPage({
           mt: 0.5,
         }}
       >
-        <Button variant="outlined" disabled={deployInteractionLocked} onClick={onBack}>
+        <Button
+          variant="outlined"
+          disabled={deployInteractionLocked}
+          onClick={onBack}
+        >
           Atrás
         </Button>
         <Button

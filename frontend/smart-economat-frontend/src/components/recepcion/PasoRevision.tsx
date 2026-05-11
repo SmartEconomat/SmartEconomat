@@ -416,6 +416,9 @@ const PasoRevision: React.FC<PasoRevisionProps> = ({
                       </Typography>
                     </TableCell>
                     <TableCell align="right">0</TableCell>
+                    <TableCell align="right">
+                      {l.cantidadAlbaran || 0}
+                    </TableCell>
                     <TableCell
                       align="right"
                       sx={{ color: 'orange', fontWeight: 'bold' }}

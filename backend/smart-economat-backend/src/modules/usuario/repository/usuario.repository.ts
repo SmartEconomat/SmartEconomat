@@ -350,6 +350,18 @@ export class UsuarioRepository {
     }
 
     Object.assign(usuario, rest);
+
+    /*Si se está limpiando explícitamente el ubicacionId, debemos anular también
+    la relación cargada para que TypeORM no restaure el ID basándose en el objeto*/
+    if (rest.ubicacionId === null) {
+      usuario.ubicacion = null as any;
+    } else if (
+      rest.ubicacionId !== undefined &&
+      usuario.ubicacion?.id !== rest.ubicacionId
+    ) {
+      usuario.ubicacion = { id: rest.ubicacionId } as Ubicacion;
+    }
+
     await this.repo.save(usuario);
 
     if (pivotUbicaciones !== undefined) {

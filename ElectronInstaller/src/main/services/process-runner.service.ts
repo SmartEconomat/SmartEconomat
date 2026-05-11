@@ -1,6 +1,13 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
+import fs from "node:fs";
 
 import type { CommandResult } from "@shared/contracts";
+
+import {
+  formatChildProcessSpawnError,
+  mergeWindowsEssentialPathEntries,
+  normalizeWindowsSpawnCommand,
+} from "./windows-spawn-support";
 
 function hasLikelyMojibake(text: string): boolean {
   return /Ã|Â|�|□/.test(text);
@@ -110,13 +117,76 @@ export class ProcessRunnerService {
   async run(options: ProcessRunOptions): Promise<CommandResult> {
     const timeoutMs = options.timeoutMs ?? 30_000;
 
+    const command = normalizeWindowsSpawnCommand(options.command.trim());
+    if (command.length === 0) {
+      return {
+        ok: false,
+        code: -1,
+        stdout: "",
+        stderr: "Comando vacío: no se puede ejecutar spawn.",
+        message: "Failed to spawn process",
+      };
+    }
+
+    if (options.cwd && !fs.existsSync(options.cwd)) {
+      return {
+        ok: false,
+        code: -1,
+        stdout: "",
+        stderr: `cwd inválido o inaccesible: ${options.cwd}`,
+        message: "Failed to spawn process",
+      };
+    }
+
+    const mergedEnv =
+      process.platform === "win32"
+        ? mergeWindowsEssentialPathEntries({
+            ...process.env,
+            ...options.env,
+          })
+        : { ...process.env, ...options.env };
+
     return new Promise<CommandResult>((resolve) => {
-      const child = spawn(options.command, options.args, {
-        cwd: options.cwd,
-        env: options.env,
-        shell: false,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+      let settled = false;
+      const finish = (result: CommandResult): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(result);
+      };
+
+      let child: ChildProcess;
+      try {
+        child = spawn(command, options.args, {
+          cwd: options.cwd,
+          env: mergedEnv,
+          shell: false,
+          windowsHide: true,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+      } catch (error) {
+        finish({
+          ok: false,
+          code: -1,
+          stdout: "",
+          stderr: formatChildProcessSpawnError(error),
+          message: "Failed to spawn process",
+        });
+        return;
+      }
+
+      if (!child.stdout || !child.stderr) {
+        finish({
+          ok: false,
+          code: -1,
+          stdout: "",
+          stderr:
+            "El proceso hijo no expuso pipes de stdout/stderr (stdio inesperado).",
+          message: "Failed to spawn process",
+        });
+        return;
+      }
 
       let stdout = "";
       let stderr = "";
@@ -159,7 +229,7 @@ export class ProcessRunnerService {
           flushCarryLine(stderrCarry, options.onStderrLine);
         }
 
-        resolve({
+        finish({
           ok: success,
           code: code ?? -1,
           stdout: stdout.trim(),
@@ -174,11 +244,13 @@ export class ProcessRunnerService {
 
       child.on("error", (error) => {
         clearTimeout(timer);
-        resolve({
+        const detail = formatChildProcessSpawnError(error);
+        finish({
           ok: false,
           code: -1,
           stdout: stdout.trim(),
-          stderr: `${stderr}\n${error.message}`.trim(),
+          stderr:
+            `${stderr}\nspawn error: ${detail}\nexecutable=${command}`.trim(),
           message: "Failed to spawn process",
         });
       });

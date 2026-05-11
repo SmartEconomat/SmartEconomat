@@ -85,7 +85,8 @@ export class SerialService {
     try {
       await this.connect();
       return true;
-    } catch {
+    } catch (err) {
+      console.warn('Fallo al conectar con el puerto serie:', err);
       return false;
     }
   }

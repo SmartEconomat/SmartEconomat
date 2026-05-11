@@ -321,7 +321,7 @@ const Incidencias: React.FC = () => {
     <Stack
       direction="row"
       spacing={0.5}
-      sx={{ minWidth: 160, justifyContent: 'flex-start' }}
+      sx={{ minWidth: 160, justifyContent: 'center' }}
     >
       <Box sx={{ width: 34, display: 'flex', justifyContent: 'center' }}>
         {!row.resuelta && canResolve && (
@@ -728,7 +728,10 @@ const Incidencias: React.FC = () => {
             columns={columns}
             data={data}
             isLoading={isLoading}
-            renderActions={renderActions}
+            renderActions={
+              resolucionTab === 'por_resolver' ? renderActions : undefined
+            }
+            actionsAlign="center"
             onRowClick={setItemToView}
             onSort={onSort}
             sortConfig={sortConfig}

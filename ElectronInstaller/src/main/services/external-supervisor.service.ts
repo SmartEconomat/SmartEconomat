@@ -17,6 +17,12 @@ import { IPCChannels } from "@shared/ipc-channels";
 import { resolveWindowsDockerCliPath } from "./docker-desktop-windows-resolve";
 import { DockerOrchestratorService } from "./docker-orchestrator.service";
 import { ProcessRunnerService } from "./process-runner.service";
+import {
+  mergeWindowsEssentialPathEntries,
+  prependKnownDockerCliBinsOnPath,
+  prependPathDirectory,
+  tryResolveWindowsPowerShellExecutable,
+} from "./windows-spawn-support";
 
 interface ExternalSupervisorOptions {
   onLog: (message: string) => void;
@@ -74,10 +80,19 @@ export class ExternalSupervisorService {
   }
 
   async bootstrap(): Promise<void> {
-    await this.refreshSnapshot();
-    this.pushHealthUpdate();
+    try {
+      await this.refreshSnapshot();
+      this.pushHealthUpdate();
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      this.onLog(`[SUPERVISOR] Error en bootstrap inicial: ${detail}`);
+    }
+
     this.timer = setInterval(() => {
-      void this.refreshAndPush();
+      void this.refreshAndPush().catch((error: unknown) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        this.onLog(`[SUPERVISOR] Error asíncrono en refreshAndPush: ${detail}`);
+      });
     }, this.intervalMs);
     this.onLog(
       "[SUPERVISOR] Cliente de supervisor externo activo (Windows Service).",
@@ -199,6 +214,11 @@ export class ExternalSupervisorService {
       await this.refreshSnapshot();
       this.pushHealthUpdate();
       await this.maybeRunAutomaticRecovery();
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      this.onLog(
+        `[SUPERVISOR] Error no controlado en ciclo de refresco: ${detail}`,
+      );
     } finally {
       this.refreshing = false;
     }
@@ -705,14 +725,43 @@ export class ExternalSupervisorService {
     );
   }
 
+  private getChildProcessEnvForExecFile(): NodeJS.ProcessEnv {
+    if (process.platform !== "win32") {
+      return { ...process.env };
+    }
+
+    const dockerCli = this.dockerCommand;
+    let next = mergeWindowsEssentialPathEntries({ ...process.env });
+    if (
+      dockerCli &&
+      path.isAbsolute(dockerCli) &&
+      dockerCli.toLowerCase().endsWith(".exe")
+    ) {
+      next = prependPathDirectory(next, path.dirname(dockerCli));
+    } else {
+      next = prependKnownDockerCliBinsOnPath(next);
+    }
+    return next;
+  }
+
+  private resolvePowerShellExecutableForExecFile(): string {
+    if (process.platform !== "win32") {
+      return "powershell";
+    }
+    return tryResolveWindowsPowerShellExecutable() ?? "powershell.exe";
+  }
+
   private async runPowerShell(
     script: string,
   ): Promise<{ ok: boolean; output: string }> {
     return new Promise((resolve) => {
       execFile(
-        "powershell.exe",
+        this.resolvePowerShellExecutableForExecFile(),
         ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
-        { windowsHide: true },
+        {
+          windowsHide: true,
+          env: this.getChildProcessEnvForExecFile(),
+        },
         (error, stdout, stderr) => {
           if (error) {
             resolve({ ok: false, output: stderr || error.message });
@@ -744,7 +793,10 @@ export class ExternalSupervisorService {
           execFile(
             command,
             attemptArgs,
-            { windowsHide: true },
+            {
+              windowsHide: true,
+              env: this.getChildProcessEnvForExecFile(),
+            },
             (error, stdout, stderr) => {
               if (error) {
                 resolve({ ok: false, output: stderr || error.message });

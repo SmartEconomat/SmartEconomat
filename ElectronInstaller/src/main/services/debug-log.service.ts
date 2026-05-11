@@ -238,7 +238,7 @@ export class DebugLogService {
     process.on("unhandledRejection", (reason: unknown) => {
       const message =
         reason instanceof Error
-          ? reason.message
+          ? `${reason.message}${reason.stack ? `\n${reason.stack}` : ""}`
           : `Unhandled rejection: ${formatUnknown(reason)}`;
 
       electronLog.error("FATAL ERROR (unhandledRejection):", reason);
@@ -246,7 +246,8 @@ export class DebugLogService {
       this.publish({
         type: "error",
         source: "main",
-        message,
+        message:
+          reason instanceof Error ? reason.message : formatUnknown(reason),
         timestamp: Date.now(),
         context:
           reason instanceof Error
@@ -257,7 +258,7 @@ export class DebugLogService {
       try {
         dialog.showErrorBox(
           "Error Inesperado (Asíncrono)",
-          `Se ha producido un fallo no controlado durante una operación en segundo plano.\n\nDetalle: ${message}`,
+          `Se ha producido un fallo no controlado durante una operación en segundo plano.\n\nDetalle: ${reason instanceof Error ? reason.message : message}`,
         );
       } catch {
         // Ignorar fallo de UI
@@ -274,6 +275,20 @@ export class DebugLogService {
           timestamp: Date.now(),
         });
       }
+    });
+
+    process.on("warning", (warning: Error) => {
+      electronLog.warn("PROCESS WARNING:", warning.name, warning.message);
+      if (!this.enabled) {
+        return;
+      }
+      this.publish({
+        type: "warn",
+        source: "main",
+        message: `[process.warning] ${warning.name}: ${warning.message}`,
+        timestamp: Date.now(),
+        context: serializeError(warning),
+      });
     });
 
     this.publish({
