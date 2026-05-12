@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 120" role="img" aria-labelledby="t3">
+  <title id="t3">Interceptores adicionales por m�dulo ra�z</title>
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+  </defs>
+  <rect width="560" height="120" rx="16" fill="url(#bg3)"/>
+  <rect x="14" y="14" width="532" height="92" rx="12" fill="#ffffff" fill-opacity="0.9" stroke="#cbd5e1"/>
+  <text x="280" y="40" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="800">APP_INTERCEPTOR en AppModule</text>
+  <text x="280" y="58" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Se aplican en paralelo al pipeline HTTP (auditor�a y alertas de tr�fico)</text>
+  <rect x="48" y="72" width="200" height="40" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.3"/>
+  <text x="148" y="97" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="800">AuditInterceptor</text>
+  <rect x="312" y="72" width="200" height="40" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.3"/>
+  <text x="412" y="97" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11.5" font-weight="800">HighTrafficAlertInterceptor</text>
+</svg>

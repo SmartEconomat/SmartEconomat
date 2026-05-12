@@ -721,6 +721,7 @@ export class BootGuardianService {
 
   /**
    * Nivel 3: Full startStack (down + up --build --force-recreate).
+   * Los volúmenes de datos (PostgreSQL, Redis) se conservan — solo se recrean contenedores.
    */
   private async performRecoveryLevel3(runtimePath: string): Promise<boolean> {
     this.markAutomaticAction("Nivel 3: compose down && up -d --build");
@@ -733,6 +734,7 @@ export class BootGuardianService {
       (event) => {
         this.log(`[DOCKER] ${event.line}`);
       },
+      { forceClean: true },
     );
 
     if (result.ok) {

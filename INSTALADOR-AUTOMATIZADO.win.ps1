@@ -458,7 +458,7 @@ function Test-StrictWindowsDomainValidation {
 
 function Invoke-RuntimeCommand {
   switch ($Command) {
-    "runtime-start" { Invoke-Compose -ComposeArgs @("up","-d","--build","--force-recreate","--remove-orphans") -MaxAttempts 3 -DelaySeconds 4; return }
+    "runtime-start" { Invoke-Compose -ComposeArgs @("up","-d","--build","--remove-orphans") -MaxAttempts 3 -DelaySeconds 4; return }
     "runtime-stop" { Invoke-Compose -ComposeArgs @("down") -MaxAttempts 2 -DelaySeconds 2; return }
     "runtime-restart" { Invoke-Compose -ComposeArgs @("restart") -MaxAttempts 2 -DelaySeconds 2; return }
     "runtime-health" { Assert-StackRunning -Retries 10 -DelaySeconds 2; return }
@@ -559,7 +559,7 @@ function Invoke-WizardEquivalentInstall {
 
   Set-InstallState -State "DOCKER_DEPLOY" -Message "Levantando stack"
   Invoke-Step -Name "Docker deploy" -Action {
-    Start-StackEquivalentInstaller
+    Start-StackEquivalentInstaller -Mode $resolved.installMode
   }
 
   Set-InstallState -State "INITIALIZE_APP" -Message "Esperando inicialización"
@@ -1471,14 +1471,24 @@ function Invoke-Compose {
 }
 
 function Start-StackEquivalentInstaller {
-  # down previo no bloquea (igual que startStack() del instalador Electron)
-  try {
-    Invoke-Compose -ComposeArgs @("down", "--remove-orphans") -MaxAttempts 1 -DelaySeconds 2
+  param([string]$Mode = "new")
+
+  if ($Mode -eq "new") {
+    Write-Log "Modo 'new' detectado. Realizando limpieza previa del stack..."
+    try {
+      Invoke-Compose -ComposeArgs @("down", "--remove-orphans") -MaxAttempts 1 -DelaySeconds 2
+    }
+    catch {
+      Write-Log "No se pudo hacer down previo del stack; se intentara continuar." "WARN"
+    }
   }
-  catch {
-    Write-Log "No se pudo hacer down previo del stack; se intentara continuar con recreate forzado." "WARN"
+
+  $upArgs = @("up", "-d", "--build", "--remove-orphans")
+  if ($Mode -eq "new") {
+    $upArgs += "--force-recreate"
   }
-  Invoke-Compose -ComposeArgs @("up", "-d", "--build", "--force-recreate", "--remove-orphans") -MaxAttempts 3 -DelaySeconds 5
+
+  Invoke-Compose -ComposeArgs $upArgs -MaxAttempts 3 -DelaySeconds 5
 }
 
 function Run-AdminBootstrapSeeder {

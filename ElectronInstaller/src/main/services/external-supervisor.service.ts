@@ -173,7 +173,7 @@ export class ExternalSupervisorService {
       this.lastHealth.some((service) => service.status === "unhealthy");
     const recoveryResult = shouldRestart
       ? await this.dockerOrchestrator.restartStack(runtimePath)
-      : await this.dockerOrchestrator.startStack(runtimePath);
+      : await this.dockerOrchestrator.startStack(runtimePath, undefined, { forceClean: false });
     if (!recoveryResult.ok) {
       this.markRecoveryFailure(mode, recoveryResult.message);
       await this.refreshSnapshot();

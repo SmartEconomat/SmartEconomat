@@ -23,6 +23,7 @@ import { IPCChannels } from "@shared/ipc-channels";
 
 import { registerIpcHandleWithDebug } from "@main/ipc/ipc-handler-with-debug";
 import type { DebugLogService } from "@main/services/debug-log.service";
+import { BackupRestoreService } from "@main/services/backup-restore.service";
 import { EnvRendererService } from "@main/services/env-renderer.service";
 import { DockerOrchestratorService } from "@main/services/docker-orchestrator.service";
 import { JournalService } from "@main/services/journal.service";
@@ -44,6 +45,7 @@ const installerConfigSchema = z
   .object({
     runtimePath: z.string().min(1),
     instanceName: z.string().min(3),
+    installMode: z.union([z.literal("new"), z.literal("reinstall")]),
     adminUsername: z.string().min(4),
     adminPassword: z.string().min(12),
     superAdminUsername: z.string().min(4),
@@ -157,6 +159,7 @@ export class InstallerIPC {
     private readonly tlsService = new TLSService(),
     private readonly dockerService = new DockerOrchestratorService(),
     private readonly journalService = new JournalService(),
+    private readonly backupService = new BackupRestoreService(),
   ) {}
 
   setWindow(window: BrowserWindow): void {
@@ -360,7 +363,15 @@ export class InstallerIPC {
         );
       }
 
+      const isReinstall = payload.installMode === "reinstall";
+
       this.emitRuntimeLog("installer", "Iniciando despliegue Docker...");
+      this.emitRuntimeLog(
+        "installer",
+        isReinstall
+          ? "Modo reinstalación: los datos existentes (PostgreSQL, Redis) se conservarán íntegramente durante todo el proceso."
+          : "Modo instalación nueva: se realizará un backup automático de seguridad y una limpieza total (volúmenes incluidos) para partir de cero.",
+      );
       this.emitRuntimeLog(
         "installer",
         "Preparando flujo transaccional de instalación...",
@@ -414,6 +425,54 @@ export class InstallerIPC {
           strictTlsValidation.message ?? "Validación TLS estricta fallida",
           strictTlsValidation.errorCode ?? "STRICT_TLS_VALIDATION_FAILED",
         );
+      }
+
+      if (!isReinstall) {
+        await this.transition(
+          payload.runtimePath,
+          "PRE_INSTALL_BACKUP",
+          "Verificando instalación previa para backup automático",
+        );
+
+        const existingRuntime = await this.hasInstalledRuntime(
+          payload.runtimePath,
+        );
+
+        if (existingRuntime) {
+          this.emitRuntimeLog(
+            "installer",
+            "Instalación previa detectada. Iniciando backup automático antes de la limpieza total...",
+          );
+
+          const backupDir =
+            payload.backupDefaultDirectory?.trim().length > 0
+              ? payload.backupDefaultDirectory.trim()
+              : path.join(payload.runtimePath, "backups");
+
+          const backupResult = await this.backupService.backupNow({
+            runtimePath: payload.runtimePath,
+            label: "pre-install-new",
+            destinationDir: backupDir,
+          });
+
+          if (!backupResult.ok) {
+            return this.fail(
+              payload.runtimePath,
+              `Backup previo a la instalación nueva fallido: ${backupResult.message}. La instalación ha sido cancelada para proteger los datos existentes. Verifica que el stack Docker esté en ejecución o realiza el backup manualmente antes de continuar.`,
+              backupResult.errorCode ?? "PRE_INSTALL_BACKUP_FAILED",
+            );
+          }
+
+          this.emitRuntimeLog(
+            "installer",
+            `Backup automático completado correctamente: ${backupResult.data?.archivePath ?? backupResult.data?.archiveName ?? "archivo generado en el directorio de backups"}.`,
+          );
+        } else {
+          this.emitRuntimeLog(
+            "installer",
+            "No se detectó instalación previa. Se omite el backup automático.",
+          );
+        }
       }
 
       await this.transition(
@@ -471,6 +530,10 @@ export class InstallerIPC {
         payload.runtimePath,
         (event) => {
           this.emitRuntimeLog(event.service, event.line, event.timestamp);
+        },
+        {
+          forceClean: !isReinstall,
+          destroyVolumes: !isReinstall,
         },
       );
       if (!deployResult.ok) {

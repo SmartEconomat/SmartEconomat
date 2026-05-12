@@ -216,30 +216,65 @@ export class DockerOrchestratorService {
   async startStack(
     runtimePath: string,
     onLogLine?: (event: RuntimeLogEvent) => void,
+    options: { forceClean?: boolean; destroyVolumes?: boolean } = {
+      forceClean: false,
+    },
   ): Promise<OperationResult> {
     const envCheck = await this.ensureRuntimeEnvFile(runtimePath);
     if (!envCheck.ok) {
       return envCheck;
     }
 
-    const downResult = await this.runCompose(
-      runtimePath,
-      ["down", "--remove-orphans"],
-      180_000,
-      onLogLine,
-    );
+    if (options.forceClean) {
+      if (options.destroyVolumes) {
+        onLogLine?.({
+          service: "docker",
+          line: "Instalación nueva: eliminando stack previo incluidos volúmenes de datos (se realizó backup automático previamente).",
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        onLogLine?.({
+          service: "docker",
+          line: "Recreación de stack: deteniendo contenedores (los volúmenes de datos se conservan).",
+          timestamp: new Date().toISOString(),
+        });
+      }
 
-    if (!downResult.ok && onLogLine) {
-      onLogLine({
+      const downArgs = ["down", "--remove-orphans"];
+      if (options.destroyVolumes) {
+        downArgs.push("--volumes");
+      }
+
+      const downResult = await this.runCompose(
+        runtimePath,
+        downArgs,
+        180_000,
+        onLogLine,
+      );
+
+      if (!downResult.ok) {
+        onLogLine?.({
+          service: "docker",
+          line: "No se pudo hacer down previo del stack; se intentará continuar.",
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } else {
+      onLogLine?.({
         service: "docker",
-        line: "No se pudo hacer down previo del stack; se intentará continuar con recreate forzado.",
+        line: "Modo reinstalación: actualización en caliente. Los volúmenes de datos (PostgreSQL, Redis) se conservan íntegramente. Solo se reconstruyen las imágenes modificadas aprovechando la caché de Docker.",
         timestamp: new Date().toISOString(),
       });
     }
 
+    const upArgs = ["up", "-d", "--build", "--remove-orphans"];
+    if (options.forceClean) {
+      upArgs.push("--force-recreate");
+    }
+
     const result = await this.runCompose(
       runtimePath,
-      ["up", "-d", "--build", "--force-recreate", "--remove-orphans"],
+      upArgs,
       this.startStackTimeoutMs,
       onLogLine,
     );
@@ -1444,6 +1479,8 @@ export class DockerOrchestratorService {
     delete nextEnv.DOCKER_HOST;
     return {
       ...nextEnv,
+      DOCKER_BUILDKIT: "1",
+      COMPOSE_DOCKER_CLI_BUILD: "1",
       ...extraEnv,
     };
   }

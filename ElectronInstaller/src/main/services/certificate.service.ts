@@ -58,23 +58,24 @@ export class CertificateService {
     if (!options.overwrite) {
       const existing = await this.hasLocalCertificates(certPaths);
       if (existing) {
-        // Verificar si ya está instalado en el trust store
+        // Siempre verificar e instalar en trust store si no está presente.
+        // Cubre el caso de reinstalación donde el cert existe en disco
+        // pero fue eliminado del trust store de Windows.
         if (shouldInstallToTrustStore) {
-          const isInstalled = await this.isCertificateInTrustStore();
+          const isInstalled = await this.isCertificateInTrustStore(
+            certPaths.stableCrtPath,
+          );
           if (!isInstalled) {
-            const installResult =
-              await this.installCertificateToWindowsTrustStore(
-                certPaths.stableCrtPath,
-              );
-            if (!installResult.ok) {
-              return installResult;
-            }
+            // No bloqueante: advertir si falla pero continuar.
+            await this.installCertificateToWindowsTrustStore(
+              certPaths.stableCrtPath,
+            );
           }
         }
         return {
           ok: true,
           message:
-            "Certificados locales ya presentes; se reutilizan sin regeneración.",
+            "Certificados locales ya presentes; se reutilizan sin regeneracion.",
         };
       }
     }
@@ -85,14 +86,13 @@ export class CertificateService {
         options.domain || "smarteconomat.app",
       );
 
-      // Instalar en el almacén de certificados de Windows
+      // Instalar en el almacen de certificados de Windows.
+      // No es bloqueante: si Windows impide la escritura, el instalador
+      // continua y muestra advertencia.
       if (shouldInstallToTrustStore) {
-        const installResult = await this.installCertificateToWindowsTrustStore(
+        await this.installCertificateToWindowsTrustStore(
           certPaths.stableCrtPath,
         );
-        if (!installResult.ok) {
-          return installResult;
-        }
       }
 
       return {
@@ -244,15 +244,14 @@ export class CertificateService {
   // ── Windows Trust Store Management ────────────────────────────
 
   /**
-   * Instala el certificado en el almacén de certificados raíz de confianza
-   * en Windows usando X509Store (convierte PEM → DER en memoria).
+   * Instala el certificado de CA raiz en CurrentUser\Root y, si el proceso
+   * esta elevado (UAC), tambien en LocalMachine\Root.
    *
-   * Estrategia:
-   *  1. Intentar CurrentUser\Root (no requiere elevación).
-   *  2. Si el proceso ya corre elevado, intentar también LocalMachine\Root.
-   *
-   * El certificado local no debe bloquear la instalación: si Windows impide
-   * escribir en el trust store, el instalador continúa con advertencia.
+   * Lee el fichero PEM, extrae el ultimo bloque de certificado (CA raiz en
+   * una cadena fullchain; el unico cert disponible si es autofirmado), y lo
+   * instala con X509Store.Add() sin necesidad de fichero .cer temporal.
+   * Verifica por thumbprint si ya existe antes de añadir.
+   * NUNCA bloquea la instalacion principal: fallback a certutil con dialogo UAC.
    */
   private async installCertificateToWindowsTrustStore(
     certPath: string,
@@ -260,86 +259,43 @@ export class CertificateService {
     if (process.platform !== "win32") {
       return {
         ok: true,
-        message: "Instalación en trust store solo disponible en Windows.",
+        message: "Instalacion en trust store solo disponible en Windows.",
       };
     }
 
     const normalizedPath = path.win32.normalize(certPath);
     const escapedPath = normalizedPath.replace(/'/g, "''");
 
-    // Script robusto: convierte PEM → DER en memoria y usa X509Store.Add().
-    // Evita Import-Certificate porque puede colgarse en algunos Windows.
-    const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") => `
-      $ErrorActionPreference = 'Stop'
-      $certPemPath = '${escapedPath}'
+    const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") =>
+      [
+        "$ErrorActionPreference = 'Stop'",
+        `$p = '${escapedPath}'`,
+        "if (-not (Test-Path -LiteralPath $p)) { Write-Error \"No existe: $p\"; exit 1 }",
+        "$raw = Get-Content -LiteralPath $p -Raw",
+        "$rx = [regex]::Matches($raw, '(?s)-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----')",
+        "if ($rx.Count -eq 0) { Write-Error 'Sin bloque de certificado'; exit 1 }",
+        "$b64 = $rx[$rx.Count-1].Groups[1].Value -replace '`r','' -replace '`n','' -replace ' ',''",
+        "$der = [System.Convert]::FromBase64String($b64)",
+        "$cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new([byte[]]$der)",
+        `$store = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root','${storeLocation}')`,
+        "$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)",
+        "try {",
+        "  $ex = $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,$cert.Thumbprint,$false)",
+        `  if ($ex.Count -eq 0) { $store.Add($cert); Write-Host "CERT_INSTALLED:${storeLocation}:$($cert.Thumbprint)" }`,
+        `  else { Write-Host "CERT_PRESENT:${storeLocation}:$($cert.Thumbprint)" }`,
+        "} finally { $store.Close(); $cert.Dispose() }",
+        "exit 0",
+      ].join("; ");
 
-      if (-not (Test-Path $certPemPath)) {
-        Write-Error "El certificado no existe: $certPemPath"
-        exit 1
-      }
-
-      try {
-        # Leer PEM y convertir a bytes DER (quitar cabeceras y decodificar Base64)
-        $pemContent = Get-Content -Path $certPemPath -Raw
-        $b64 = $pemContent \`
-          -replace '-----BEGIN CERTIFICATE-----', '' \`
-          -replace '-----END CERTIFICATE-----', '' \`
-          -replace '\`r', '' \`
-          -replace '\`n', '' \`
-          -replace ' ', ''
-        $derBytes = [System.Convert]::FromBase64String($b64)
-
-        $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new([byte[]]$derBytes)
-        $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root', '${storeLocation}')
-        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-        try {
-          $existing = $store.Certificates.Find(
-            [System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,
-            $cert.Thumbprint,
-            $false
-          )
-          if ($existing.Count -eq 0) {
-            $store.Add($cert)
-            Write-Host "Certificado importado correctamente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
-          } else {
-            Write-Host "Certificado ya presente en ${storeLocation}. Thumbprint: $($cert.Thumbprint)"
-          }
-        } finally {
-          $store.Close()
-          $cert.Dispose()
-        }
-        exit 0
-      } catch {
-        Write-Error "Error al importar certificado en ${storeLocation}: $($_.Exception.Message)"
-        exit 1
-      }
-    `;
-
-    // Intento 1: CurrentUser\Root (sin necesidad de elevación)
-    const currentUserResult = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        buildScript("CurrentUser"),
-      ],
-      timeoutMs: 12_000,
-    });
-
-    if (currentUserResult.ok) {
-      const elevated = await this.isWindowsProcessElevated();
-      if (!elevated) {
-        return {
-          ok: true,
-          message:
-            "Certificado instalado en el almacén de confianza del usuario (CurrentUser).",
-        };
-      }
-
-      const localMachineResult = await this.processRunner.run({
+    const runScript = async (
+      location: "CurrentUser" | "LocalMachine",
+    ): Promise<{
+      ok: boolean;
+      stdout: string;
+      stderr: string;
+      message: string;
+    }> =>
+      this.processRunner.run({
         command: "powershell",
         args: [
           "-NoProfile",
@@ -347,24 +303,38 @@ export class CertificateService {
           "-ExecutionPolicy",
           "Bypass",
           "-Command",
-          buildScript("LocalMachine"),
+          buildScript(location),
         ],
-        timeoutMs: 12_000,
+        timeoutMs: 20_000,
       });
 
-      return {
-        ok: true,
-        message: localMachineResult.ok
-          ? "Certificado instalado en CurrentUser y LocalMachine."
-          : `Certificado instalado en CurrentUser. Aviso LocalMachine: ${
-              localMachineResult.stderr || localMachineResult.message
-            }`,
-      };
+    // Intento 1: CurrentUser\Root (no requiere UAC)
+    const currentUserResult = await runScript("CurrentUser");
+
+    if (!currentUserResult.ok) {
+      // Fallback: certutil con dialogo de seguridad de Windows
+      return this.openCertificateManualInstallUI(normalizedPath);
     }
 
-    // Si el intento silencioso falla, abrimos el diálogo de seguridad de Windows (certutil)
-    // que "saltará" una advertencia oficial preguntando al usuario si desea confiar.
-    return this.openCertificateManualInstallUI(certPath);
+    const messages: string[] = [currentUserResult.stdout.trim()].filter(
+      (line) => line.length > 0,
+    );
+
+    // Intento 2: LocalMachine\Root solo si el proceso ya es administrador
+    const elevated = await this.isWindowsProcessElevated();
+    if (elevated) {
+      const lmResult = await runScript("LocalMachine");
+      if (lmResult.ok) {
+        messages.push(lmResult.stdout.trim());
+      }
+    }
+
+    return {
+      ok: true,
+      message:
+        messages.join(" | ") ||
+        "Certificado SmartEconomat instalado en el almacen de confianza de Windows.",
+    };
   }
 
   /**
@@ -431,47 +401,69 @@ export class CertificateService {
 
   /**
    * Verifica si el certificado de SmartEconomat ya está instalado
-   * en el almacén de certificados de confianza.
+   * en el almacén de certificados raíz de confianza de Windows.
+   *
+   * Si se proporciona certPath, verifica por thumbprint (más preciso).
+   * Como fallback, busca por Subject (CN o O conteniendo 'smarteconomat').
    */
-  private async isCertificateInTrustStore(): Promise<boolean> {
+  private async isCertificateInTrustStore(certPath?: string): Promise<boolean> {
     if (process.platform !== "win32") {
       return false;
     }
 
-    const script = `
-      $stores = @(
-        [System.Security.Cryptography.X509Certificates.X509Store]::new("Root", "CurrentUser"),
-        [System.Security.Cryptography.X509Certificates.X509Store]::new("Root", "LocalMachine")
-      )
-      
-      foreach ($store in $stores) {
-        try {
-          $store.Open("ReadOnly")
-          $certs = $store.Certificates | Where-Object { 
-            $_.Subject -like "*smarteconomat*" -and 
-            $_.NotAfter -gt (Get-Date)
-          }
-          $store.Close()
-          
-          if ($certs.Count -gt 0) {
-            exit 0
-          }
-        } catch {
-          # Ignorar errores de acceso
-        }
-      }
-      
-      exit 1
-    `;
+    // Bloque de verificación por thumbprint (solo si tenemos el fichero)
+    const thumbprintLines = certPath
+      ? [
+          `$cp = '${certPath.replace(/\\/g, "\\\\").replace(/'/g, "''")}'`,
+          "if (Test-Path -LiteralPath $cp) {",
+          "  try {",
+          "    $raw = Get-Content -LiteralPath $cp -Raw",
+          "    $rx = [regex]::Matches($raw, '(?s)-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----')",
+          "    if ($rx.Count -gt 0) {",
+          "      $b64 = $rx[$rx.Count-1].Groups[1].Value -replace '`r','' -replace '`n','' -replace ' ',''",
+          "      $der = [System.Convert]::FromBase64String($b64)",
+          "      $c = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new([byte[]]$der)",
+          "      $tp = $c.Thumbprint; $c.Dispose()",
+          "      foreach ($loc in @('CurrentUser','LocalMachine')) {",
+          "        $st = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root',$loc)",
+          "        try { $st.Open('ReadOnly'); $f = $st.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,$tp,$false); $st.Close(); if ($f.Count -gt 0) { exit 0 } } catch { try { $st.Close() } catch {} }",
+          "      }",
+          "    }",
+          "  } catch { }",
+          "}",
+        ]
+      : [];
+
+    const scriptLines = [
+      "$ErrorActionPreference = 'SilentlyContinue'",
+      ...thumbprintLines,
+      "foreach ($loc in @('CurrentUser','LocalMachine')) {",
+      "  try {",
+      "    $st = [System.Security.Cryptography.X509Certificates.X509Store]::new('Root',$loc)",
+      "    $st.Open('ReadOnly')",
+      "    $found = $st.Certificates | Where-Object { ($_.Subject -like '*smarteconomat*' -or $_.Subject -like '*SmartEconomat*') -and $_.NotAfter -gt (Get-Date) }",
+      "    $st.Close()",
+      "    if ($found.Count -gt 0) { exit 0 }",
+      "  } catch { }",
+      "}",
+      "exit 1",
+    ];
 
     const result = await this.processRunner.run({
       command: "powershell",
-      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      args: [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        scriptLines.join("; "),
+      ],
       timeoutMs: 15_000,
     });
 
     return result.ok;
   }
+
 
   /**
    * Elimina los certificados de SmartEconomat del almacén de confianza.

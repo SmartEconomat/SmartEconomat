@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 260" role="img" aria-labelledby="t2">
+  <title id="t2">Errores: filtro global de excepciones</title>
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1f2"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+    <filter id="sh2" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="560" height="260" rx="18" fill="url(#bg2)"/>
+  <rect x="16" y="16" width="528" height="228" rx="14" fill="#ffffff" fill-opacity="0.75" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="280" y="48" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="17" font-weight="800">Cuando algo falla</text>
+  <text x="280" y="72" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="12">No es un interceptor: es un Exception Filter global</text>
+  <g filter="url(#sh2)">
+    <path d="M118 154 L92 128 Q88 124 92 120 L118 94 Q122 90 126 94 L152 120 Q156 124 152 128 L126 154 Q122 158 118 154 Z" fill="#fee2e2" stroke="#f87171" stroke-width="1.8"/>
+    <text x="122" y="132" text-anchor="middle" fill="#991b1b" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">!</text>
+    <path d="M168 134 L216 134" stroke="#dc004e" stroke-width="2.5" stroke-linecap="round"/>
+    <polygon points="216,134 206,128 206,140" fill="#dc004e"/>
+    <rect x="228" y="92" width="204" height="84" rx="14" fill="#fdf2f8" stroke="#dc004e" stroke-width="2"/>
+    <text x="330" y="122" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="800">GlobalExceptionFilter</text>
+    <text x="330" y="144" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="10.5">HttpException, TypeORM, i18n&</text>
+    <text x="330" y="162" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="10.5">Sentry @SentryExceptionCaptured</text>
+    <path d="M438 134 L486 134" stroke="#dc004e" stroke-width="2.5" stroke-linecap="round"/>
+    <polygon points="486,134 476,128 476,140" fill="#dc004e"/>
+    <rect x="498" y="104" width="46" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="521" y="138" text-anchor="middle" fill="#fca5a5" font-family="ui-monospace, Consolas, monospace" font-size="9" font-weight="700">JSON</text>
+  </g>
+  <rect x="72" y="188" width="416" height="52" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+  <text x="280" y="212" text-anchor="middle" fill="#fca5a5" font-family="ui-monospace, Consolas, monospace" font-size="11" font-weight="700">{ success: false, message, error, meta }</text>
+  <text x="280" y="230" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Misma forma que el �xito: el cliente siempre parsea igual</text>
+</svg>

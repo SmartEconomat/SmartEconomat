@@ -35,12 +35,17 @@ export class TLSService {
       );
     }
 
+    // En reinstalacion forzamos regeneracion del certificado para garantizar
+    // que el trust store de Windows siempre tiene el cert correcto y vigente.
+    const overwrite = config.installMode === "reinstall";
+
     return this.certificateService.ensureLocalCertificates(runtimePath, {
-      overwrite: false,
+      overwrite,
       domain: config.localHost,
       installToTrustStore: process.platform === "win32",
     });
   }
+
 
   private async installCustomCertificates(
     runtimePath: string,

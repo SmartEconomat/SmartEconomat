@@ -117,6 +117,15 @@
       #electron > p:first-of-type { font-size: 0.98rem; line-height: 1.3; max-width: 105ch; }
       #electron .card p { font-size: 0.94rem; line-height: 1.28; }
       #electron .note { font-size: 0.92rem; line-height: 1.28; }
+      #cross-cutting-backend figure.cross-svg svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        background: #fff;
+      }
       @media (max-width: 900px) { .grid-2, .grid-3, .image-grid { grid-template-columns: 1fr; } .toc ol { columns: 1; } .slide { min-height: auto; } }
       @media print {
         @page { size: A4 landscape; margin: 8mm; }
@@ -203,6 +212,7 @@
           min-height: 0;
         }
         .image-slide img { max-height: 102mm; }
+        #cross-cutting-backend figure.cross-svg svg { max-height: 52mm; }
         .image-explanation { margin: 0.35rem 0 0; padding: 0.42rem 0.52rem; }
         .caption { margin-top: 0.26rem; font-size: 0.78rem; }
         #rbac-mermaid .mermaid-panel { margin-top: 0.28rem; padding: 0.28rem; }
@@ -329,11 +339,11 @@
         <p>El backend utiliza una arquitectura modular basada en NestJS, separando responsabilidades para garantizar la escalabilidad, el tipado estricto y la facilidad de testing.</p>
         
         <div class="diagram" aria-label="Flujo de arquitectura backend">
-          <svg viewBox="0 0 1120 300" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <marker id="arrowBackend" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#0a6151"/></marker>
             </defs>
-            
+
             <!-- Capas -->
             <rect x="50" y="100" width="180" height="100" rx="12" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
             <text x="140" y="145" text-anchor="middle" fill="#0b1220" font-weight="800">Controller</text>
@@ -351,15 +361,10 @@
             <text x="890" y="145" text-anchor="middle" fill="#0b1220" font-weight="800">Entity</text>
             <text x="890" y="170" text-anchor="middle" fill="#64748b" font-size="12">Modelado de Datos</text>
 
-            <!-- Base de Datos -->
-            <path d="M1000 110 Q1000 100 1020 100 T1040 110 V190 Q1040 200 1020 200 T1000 190 Z" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
-            <text x="1020" y="155" text-anchor="middle" fill="#475569" font-size="12" font-weight="800">PostgreSQL</text>
-
             <!-- Flechas -->
             <line x1="230" y1="150" x2="300" y2="150" stroke="#0a6151" stroke-width="2" marker-end="url(#arrowBackend)"/>
             <line x1="480" y1="150" x2="550" y2="150" stroke="#0a6151" stroke-width="2" marker-end="url(#arrowBackend)"/>
             <line x1="730" y1="150" x2="800" y2="150" stroke="#0a6151" stroke-width="2" marker-end="url(#arrowBackend)"/>
-            <line x1="980" y1="150" x2="1000" y2="150" stroke="#0a6151" stroke-width="2" marker-end="url(#arrowBackend)"/>
           </svg>
         </div>
 
@@ -379,7 +384,109 @@
         </div>
       </section>
 
+      <section class="slide" id="cross-cutting-backend">
+        <h2>Interceptores globales y respuesta JSON unificada</h2>
+        <p class="lead">Además de la arquitectura por capas, el backend aplica <strong>código transversal</strong> en <code>main.ts</code> y en el <code>AppModule</code>: interceptores que envuelven respuestas correctas, un filtro global para errores y otros interceptores de observabilidad.</p>
 
+        <div class="image-grid">
+          <figure class="cross-svg" aria-label="Diagrama: handler, ClassSerializerInterceptor y TransformInterceptor producen un JSON con success, data y meta">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 260" role="img" aria-hidden="true">
+              <title>Respuestas correctas: interceptores globales</title>
+              <defs>
+                <linearGradient id="cc-bg-success" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ecfdf5"/>
+                  <stop offset="100%" stop-color="#eff6ff"/>
+                </linearGradient>
+                <filter id="cc-sh-success" x="-8%" y="-8%" width="116%" height="116%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12"/>
+                </filter>
+              </defs>
+              <rect width="560" height="260" rx="18" fill="url(#cc-bg-success)"/>
+              <rect x="16" y="16" width="528" height="228" rx="14" fill="#ffffff" fill-opacity="0.72" stroke="#cbd5e1" stroke-width="1.2"/>
+              <text x="280" y="48" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="17" font-weight="800">Petición exitosa</text>
+              <text x="280" y="72" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Cadena global registrada en main.ts</text>
+              <g filter="url(#cc-sh-success)">
+                <rect x="42" y="98" width="140" height="72" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+                <text x="112" y="128" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="800">Handler</text>
+                <text x="112" y="150" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="10">DTO ya validado</text>
+                <path d="M190 134 L218 134" stroke="#0a6151" stroke-width="2.5" stroke-linecap="round"/>
+                <polygon points="218,134 208,128 208,140" fill="#0a6151"/>
+                <rect x="228" y="98" width="150" height="72" rx="12" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.5"/>
+                <text x="303" y="128" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">ClassSerializer</text>
+                <text x="303" y="148" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">Interceptor</text>
+                <path d="M384 134 L412 134" stroke="#0a6151" stroke-width="2.5" stroke-linecap="round"/>
+                <polygon points="412,134 402,128 402,140" fill="#0a6151"/>
+                <rect x="422" y="98" width="96" height="72" rx="12" fill="#ecfdf5" stroke="#34d399" stroke-width="1.5"/>
+                <text x="470" y="128" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">Transform</text>
+                <text x="470" y="148" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">Interceptor</text>
+              </g>
+              <rect x="72" y="188" width="416" height="52" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+              <text x="280" y="212" text-anchor="middle" fill="#86efac" font-family="ui-monospace, Consolas, monospace" font-size="11" font-weight="700">{ success, message, data, meta }</text>
+              <text x="280" y="230" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Cabecera x-request-id propagada</text>
+            </svg>
+            <figcaption><strong>Ruta feliz:</strong> <code>ClassSerializerInterceptor</code> respeta exclusiones de serialización; <code>TransformInterceptor</code> añade <code>success</code>, <code>message</code>, <code>data</code> y <code>meta</code> (incluido <code>x-request-id</code>). Se exceptúan PDF y hojas de cálculo.</figcaption>
+          </figure>
+          <figure class="cross-svg" aria-label="Diagrama: excepciones capturadas por GlobalExceptionFilter y respuesta JSON con success false">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 260" role="img" aria-hidden="true">
+              <title>Errores: filtro global de excepciones</title>
+              <defs>
+                <linearGradient id="cc-bg-error" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fff1f2"/>
+                  <stop offset="100%" stop-color="#fef3c7"/>
+                </linearGradient>
+                <filter id="cc-sh-error" x="-8%" y="-8%" width="116%" height="116%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12"/>
+                </filter>
+              </defs>
+              <rect width="560" height="260" rx="18" fill="url(#cc-bg-error)"/>
+              <rect x="16" y="16" width="528" height="228" rx="14" fill="#ffffff" fill-opacity="0.75" stroke="#cbd5e1" stroke-width="1.2"/>
+              <text x="280" y="48" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="17" font-weight="800">Cuando algo falla</text>
+              <text x="280" y="72" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="12">No es un interceptor: es un Exception Filter global</text>
+              <g filter="url(#cc-sh-error)">
+                <path d="M118 154 L92 128 Q88 124 92 120 L118 94 Q122 90 126 94 L152 120 Q156 124 152 128 L126 154 Q122 158 118 154 Z" fill="#fee2e2" stroke="#f87171" stroke-width="1.8"/>
+                <text x="122" y="132" text-anchor="middle" fill="#991b1b" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="800">!</text>
+                <path d="M168 134 L216 134" stroke="#dc004e" stroke-width="2.5" stroke-linecap="round"/>
+                <polygon points="216,134 206,128 206,140" fill="#dc004e"/>
+                <rect x="228" y="92" width="204" height="84" rx="14" fill="#fdf2f8" stroke="#dc004e" stroke-width="2"/>
+                <text x="330" y="122" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="800">GlobalExceptionFilter</text>
+                <text x="330" y="144" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="10.5">HttpException, TypeORM, i18n…</text>
+                <text x="330" y="162" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="10.5">Sentry @SentryExceptionCaptured</text>
+                <path d="M438 134 L486 134" stroke="#dc004e" stroke-width="2.5" stroke-linecap="round"/>
+                <polygon points="486,134 476,128 476,140" fill="#dc004e"/>
+                <rect x="498" y="104" width="46" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+                <text x="521" y="138" text-anchor="middle" fill="#fca5a5" font-family="ui-monospace, Consolas, monospace" font-size="9" font-weight="700">JSON</text>
+              </g>
+              <rect x="72" y="188" width="416" height="52" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+              <text x="280" y="212" text-anchor="middle" fill="#fca5a5" font-family="ui-monospace, Consolas, monospace" font-size="11" font-weight="700">{ success: false, message, error, meta }</text>
+              <text x="280" y="230" text-anchor="middle" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Misma forma que el éxito: el cliente siempre parsea igual</text>
+            </svg>
+            <figcaption><strong>Errores:</strong> no pasan por el mismo interceptor de éxito; <code>GlobalExceptionFilter</code> captura excepciones y devuelve el mismo contrato con <code>success: false</code>, mensaje traducido y detalles opcionales (integración Sentry).</figcaption>
+          </figure>
+        </div>
+
+        <figure class="single-img cross-svg" style="margin-top: 0.85rem; max-width: none;" aria-label="AppModule registra AuditInterceptor y HighTrafficAlertInterceptor como APP_INTERCEPTOR">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 120" role="img" aria-hidden="true">
+            <title>Interceptores adicionales por módulo raíz</title>
+            <defs>
+              <linearGradient id="cc-bg-sidecars" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f8fafc"/>
+                <stop offset="100%" stop-color="#f1f5f9"/>
+              </linearGradient>
+            </defs>
+            <rect width="560" height="120" rx="16" fill="url(#cc-bg-sidecars)"/>
+            <rect x="14" y="14" width="532" height="92" rx="12" fill="#ffffff" fill-opacity="0.9" stroke="#cbd5e1"/>
+            <text x="280" y="40" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="800">APP_INTERCEPTOR en AppModule</text>
+            <text x="280" y="58" text-anchor="middle" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Se aplican en paralelo al pipeline HTTP (auditoría y alertas de tráfico)</text>
+            <rect x="48" y="72" width="200" height="40" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.3"/>
+            <text x="148" y="97" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="800">AuditInterceptor</text>
+            <rect x="312" y="72" width="200" height="40" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.3"/>
+            <text x="412" y="97" text-anchor="middle" fill="#0b1220" font-family="Segoe UI, system-ui, sans-serif" font-size="11.5" font-weight="800">HighTrafficAlertInterceptor</text>
+          </svg>
+          <figcaption>Interceptores registrados con <code>APP_INTERCEPTOR</code>: trazabilidad de acciones y alertas ante picos de tráfico, sin sustituir el envoltorio JSON principal.</figcaption>
+        </figure>
+
+        <p class="note" style="margin-top: 0.85rem;"><strong>Matiz NestJS:</strong> los <em>interceptors</em> envuelven el flujo antes y después del handler; los <em>exception filters</em> solo actúan cuando se lanza una excepción. Por eso la simetría «siempre JSON» en SmartEconomat combina <strong>dos mecanismos</strong>, no dos interceptores idénticos.</p>
+      </section>
 
       <section class="slide" id="api-contratos">
         <h2>Comunicación API y contratos JSON</h2>

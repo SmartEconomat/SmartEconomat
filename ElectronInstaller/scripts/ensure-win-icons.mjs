@@ -85,9 +85,10 @@ async function writeImage(sourceSvgPath, targetPngPath, width, height, backgroun
     .toFile(targetPngPath);
 }
 
-// Colores de fondo estándar de NSIS en Windows
-const NSIS_SIDEBAR_BG = { r: 240, g: 240, b: 240, alpha: 1 }; // Gris (#F0F0F0)
-const NSIS_HEADER_BG = { r: 255, g: 255, b: 255, alpha: 1 };   // Blanco (#FFFFFF)
+// NSIS renderiza el panel lateral sobre fondo blanco; usar gris (#F0F0F0) genera
+// un BMP 32-bit con alpha que NSIS ignora y muestra en blanco. Ambos usan blanco.
+const NSIS_SIDEBAR_BG = { r: 255, g: 255, b: 255, alpha: 1 }; // Blanco (#FFFFFF)
+const NSIS_HEADER_BG = { r: 255, g: 255, b: 255, alpha: 1 };  // Blanco (#FFFFFF)
 
 async function writeBmpImage(sourceSvgPath, targetBmpPath, width, height, background = NSIS_SIDEBAR_BG) {
   const tempPngPath = targetBmpPath.replace('.bmp', '.png');
