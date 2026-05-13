@@ -97,6 +97,28 @@ describe('recetaForm.helpers', () => {
     ).rejects.toThrow(/recipes.errors.productoInvalido/i);
   });
 
+  it('omite unidadResultado cuando llega vacia desde el formulario', async () => {
+    const payload = await buildRecetaPayload(
+      {
+        nombre: 'Crema',
+        instrucciones: 'Batir.',
+        tiempoEstimadoMinutos: 30,
+        dificultad: DificultadReceta.FACIL,
+        unidadResultado: '   ',
+        ingredientes: [
+          {
+            productoId: 'producto-1',
+            cantidad: '1',
+            unidad: UnidadIngrediente.GRAMO,
+          },
+        ],
+      },
+      t
+    );
+
+    expect(payload.unidadResultado).toBeUndefined();
+  });
+
   it('normaliza relaciones nulas al mapear una receta al formulario', () => {
     const formData = mapRecetaToFormData({
       id: 'receta-1',

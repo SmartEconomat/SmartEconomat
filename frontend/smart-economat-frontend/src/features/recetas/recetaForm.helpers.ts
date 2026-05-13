@@ -201,9 +201,8 @@ export async function buildRecetaPayload(
     finalPathImg = formData.imagen.trim();
   }
 
-  const unidadResultado = formData.unidadResultado as
-    | UnidadIngrediente
-    | undefined;
+  const unidadResultadoRaw = toOptionalTrimmedString(formData.unidadResultado);
+  const unidadResultado = unidadResultadoRaw as UnidadIngrediente | undefined;
   if (
     unidadResultado &&
     !Object.values(UnidadIngrediente).includes(unidadResultado)
