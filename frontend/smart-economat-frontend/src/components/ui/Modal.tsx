@@ -1,13 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dialog,
   DialogTitle,
   DialogContent,
   IconButton,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import AccessibleDialog from './AccessibleDialog';
 
 /** Alias público (ModalSize) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -50,7 +50,7 @@ const Modal = ({
 }: ModalProps) => {
   const { t } = useTranslation();
   return (
-    <Dialog
+    <AccessibleDialog
       open={isOpen}
       onClose={(_, reason) => onClose(reason)}
       scroll="paper"
@@ -105,7 +105,7 @@ const Modal = ({
 
       {/* Content */}
       <DialogContent sx={{ p: 3, overflowY: 'auto' }}>{children}</DialogContent>
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 

@@ -4,7 +4,6 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -31,6 +30,7 @@ import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import BarcodeIcon from './BarcodeIcon';
+import AccessibleDialog from './AccessibleDialog';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import {
@@ -633,7 +633,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const isScanning = scannerState === 'scanning';
 
   return (
-    <Dialog
+    <AccessibleDialog
       open={open}
       onClose={handleClose}
       maxWidth="sm"
@@ -881,7 +881,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           {t('escaner.cancelar')}
         </Button>
       </DialogActions>
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 
