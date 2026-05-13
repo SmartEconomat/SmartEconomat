@@ -190,6 +190,7 @@ const Pedidos: React.FC = () => {
 
   const {
     searchTerm,
+    setSearchTerm,
     viewMode,
     setViewMode,
     tabIndex,
@@ -678,6 +679,7 @@ const Pedidos: React.FC = () => {
         viewMode={viewMode}
         onSearchChange={(value) => {
           onSearchChange(value);
+          setSearchTerm(value);
         }}
         onViewModeChange={setViewMode}
         onCreateClick={handleCreateClick}

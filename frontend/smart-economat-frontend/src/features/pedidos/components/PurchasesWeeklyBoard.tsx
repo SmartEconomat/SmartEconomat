@@ -124,7 +124,7 @@ const PurchasesWeeklyBoard: React.FC<PurchasesWeeklyBoardProps> = ({
 
       {!isLoading &&
         groupedData.map((group) => (
-          <Accordion key={group.weekKey} defaultExpanded disableGutters>
+          <Accordion key={group.weekKey} disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
                 sx={{

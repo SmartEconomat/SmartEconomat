@@ -161,16 +161,22 @@ vi.mock('../../src/features/pedidos/components/PedidosPageHeader', () => ({
     onCreateClick,
     onContinueDraftClick,
     draft,
+    onSearchChange,
   }: {
     onCreateClick: () => void;
     onContinueDraftClick: () => void;
     draft: PedidoDraftRecord | null;
+    onSearchChange: (value: string) => void;
   }) => (
     <div>
       <button onClick={onCreateClick}>Nuevo Pedido</button>
       {draft ? (
         <button onClick={onContinueDraftClick}>Continuar Pedido</button>
       ) : null}
+      <input
+        aria-label="buscar pedidos"
+        onChange={(event) => onSearchChange(event.target.value)}
+      />
     </div>
   ),
 }));
@@ -377,6 +383,26 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
       expect(
         screen.getByText(i18n.t('pedidos.recovery.titulo'))
       ).toBeInTheDocument();
+    });
+  });
+
+  it('sincroniza la búsqueda de pedidos con filtros de URL', async () => {
+    render(
+      <MemoryRouter>
+        <Pedidos />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(mockLoadDraft).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByLabelText('buscar pedidos'), {
+      target: { value: 'lentejas' },
+    });
+
+    await waitFor(() => {
+      expect(stablePedidosMocks.filtersReturn.setSearchTerm).toHaveBeenCalledWith(
+        'lentejas'
+      );
     });
   });
 });

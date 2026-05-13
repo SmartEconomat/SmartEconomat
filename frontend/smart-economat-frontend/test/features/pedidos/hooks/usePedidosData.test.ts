@@ -162,4 +162,78 @@ describe('usePedidosData', () => {
       'pedido-usuario-2',
     ]);
   });
+
+  it('propaga searchTerm en todas las páginas del tab semanal', async () => {
+    vi.mocked(pedidoService.fetchPedidoUsuarios)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'pedido-usuario-a',
+            numeroGlobal: '11',
+            fechaPedido: '2026-04-10T09:00:00.000Z',
+            costeTotal: 10,
+            estado: EstadoPedidoUsuario.PENDIENTE,
+            pedidos: [],
+          },
+        ],
+        total: 2,
+        totalPages: 2,
+        page: 1,
+        limit: 50,
+      } as Awaited<ReturnType<typeof pedidoService.fetchPedidoUsuarios>>)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'pedido-usuario-b',
+            numeroGlobal: '12',
+            fechaPedido: '2026-04-11T09:00:00.000Z',
+            costeTotal: 12,
+            estado: EstadoPedidoUsuario.APROBADO,
+            pedidos: [],
+          },
+        ],
+        total: 2,
+        totalPages: 2,
+        page: 2,
+        limit: 50,
+      } as Awaited<ReturnType<typeof pedidoService.fetchPedidoUsuarios>>);
+
+    const { result } = renderHook(() =>
+      usePedidosData({
+        page: 1,
+        pageSize: 10,
+        searchTerm: 'garbanzo',
+        tabIndex: 1,
+        currentUserId: 'admin-user-id',
+        misPedidosStatus: 'pendientes',
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(pedidoService.fetchPedidoUsuarios).toHaveBeenNthCalledWith(
+      1,
+      1,
+      50,
+      'garbanzo',
+      '',
+      {
+        sortBy: 'fechaPedido',
+        order: 'DESC',
+      }
+    );
+    expect(pedidoService.fetchPedidoUsuarios).toHaveBeenNthCalledWith(
+      2,
+      2,
+      50,
+      'garbanzo',
+      '',
+      {
+        sortBy: 'fechaPedido',
+        order: 'DESC',
+      }
+    );
+  });
 });

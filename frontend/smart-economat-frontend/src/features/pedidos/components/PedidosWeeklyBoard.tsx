@@ -386,7 +386,7 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
 
       {!isLoading &&
         groupedData.map((group) => (
-          <Accordion key={group.weekKey} defaultExpanded disableGutters>
+          <Accordion key={group.weekKey} disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
                 sx={{
@@ -465,7 +465,6 @@ const PedidosWeeklyBoard: React.FC<PedidosWeeklyBoardProps> = ({
                 {group.users.map((user) => (
                   <Accordion
                     key={user.userId}
-                    defaultExpanded
                     disableGutters
                     sx={{
                       border: 1,
