@@ -400,9 +400,9 @@ describe('Pedidos Page - Recovery Modal Bug', () => {
     });
 
     await waitFor(() => {
-      expect(stablePedidosMocks.filtersReturn.setSearchTerm).toHaveBeenCalledWith(
-        'lentejas'
-      );
+      expect(
+        stablePedidosMocks.filtersReturn.setSearchTerm
+      ).toHaveBeenCalledWith('lentejas');
     });
   });
 });
