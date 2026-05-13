@@ -24,6 +24,29 @@ interface UsePedidosDataParams {
   misPedidosStatus: MisPedidosStatusFilter;
 }
 
+const WEEKLY_PEDIDOS_PAGE_SIZE = 50;
+
+type FetchPedidoUsuariosResponse = Awaited<
+  ReturnType<typeof fetchPedidoUsuarios>
+>;
+
+const mergeUniquePedidoUsuarios = (
+  responses: FetchPedidoUsuariosResponse[]
+): FetchPedidoUsuariosResponse['data'] => {
+  const uniqueById = new Map<
+    string,
+    FetchPedidoUsuariosResponse['data'][number]
+  >();
+
+  responses.forEach((response) => {
+    response.data.forEach((pedidoUsuario) => {
+      uniqueById.set(pedidoUsuario.id, pedidoUsuario);
+    });
+  });
+
+  return Array.from(uniqueById.values());
+};
+
 /**
  * Ejecuta la lógica de operación dentro del flujo de la aplicación.
  */
@@ -78,23 +101,53 @@ export function usePedidosData({
       }
 
       if (tabIndex === 1) {
-        pedidoOptions.sortBy = 'fechaPedido';
+        const firstWeeklyPage = await fetchPedidoUsuarios(
+          1,
+          WEEKLY_PEDIDOS_PAGE_SIZE,
+          searchTerm,
+          '',
+          pedidoOptions
+        );
+
+        const weeklyResponses: FetchPedidoUsuariosResponse[] = [
+          firstWeeklyPage,
+        ];
+
+        if (firstWeeklyPage.totalPages > 1) {
+          const remainingWeeklyPages = await Promise.all(
+            Array.from({ length: firstWeeklyPage.totalPages - 1 }, (_, index) =>
+              fetchPedidoUsuarios(
+                index + 2,
+                WEEKLY_PEDIDOS_PAGE_SIZE,
+                searchTerm,
+                '',
+                pedidoOptions
+              )
+            )
+          );
+
+          weeklyResponses.push(...remainingWeeklyPages);
+        }
+
+        const weeklyData = mergeUniquePedidoUsuarios(weeklyResponses);
+
+        setData(weeklyData.map(mapPedidoUsuarioToVisibleRow));
+        setTotalItems(weeklyData.length);
+        setTotalPages(1);
+        setError(null);
+        return;
       }
 
-      const effectivePageSize = tabIndex === 1 ? 50 : pageSize;
-      const effectivePage = page;
       const estadoFilter =
-        tabIndex !== 0
-          ? ''
-          : misPedidosStatus === 'pendientes'
-            ? EstadoPedidoUsuario.PENDIENTE
-            : misPedidosStatus === 'activos'
-              ? EstadoPedidoUsuario.APROBADO
-              : '';
+        misPedidosStatus === 'pendientes'
+          ? EstadoPedidoUsuario.PENDIENTE
+          : misPedidosStatus === 'activos'
+            ? EstadoPedidoUsuario.APROBADO
+            : '';
 
       const pedidosResponse = await fetchPedidoUsuarios(
-        effectivePage,
-        effectivePageSize,
+        page,
+        pageSize,
         searchTerm,
         estadoFilter,
         pedidoOptions
@@ -102,7 +155,7 @@ export function usePedidosData({
 
       setData(pedidosResponse.data.map(mapPedidoUsuarioToVisibleRow));
       setTotalItems(pedidosResponse.total);
-      setTotalPages(tabIndex === 1 ? 1 : pedidosResponse.totalPages);
+      setTotalPages(pedidosResponse.totalPages);
       // Éxito: aseguramos que el error sea nulo
       setError(null);
     } catch (err: unknown) {

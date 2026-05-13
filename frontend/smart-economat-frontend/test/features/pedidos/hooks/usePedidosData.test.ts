@@ -79,4 +79,87 @@ describe('usePedidosData', () => {
       estado: EstadoPedidoUsuario.PENDIENTE,
     });
   });
+
+  it('carga todas las páginas en Pedidos semanales sin filtrar por usuario', async () => {
+    vi.mocked(pedidoService.fetchPedidoUsuarios)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'pedido-usuario-1',
+            numeroGlobal: '1',
+            fechaPedido: '2026-04-08T09:00:00.000Z',
+            costeTotal: 20,
+            estado: EstadoPedidoUsuario.PENDIENTE,
+            pedidos: [],
+          },
+        ],
+        total: 2,
+        totalPages: 2,
+        page: 1,
+        limit: 50,
+      } as Awaited<ReturnType<typeof pedidoService.fetchPedidoUsuarios>>)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'pedido-usuario-2',
+            numeroGlobal: '2',
+            fechaPedido: '2026-04-09T09:00:00.000Z',
+            costeTotal: 35,
+            estado: EstadoPedidoUsuario.APROBADO,
+            pedidos: [],
+          },
+        ],
+        total: 2,
+        totalPages: 2,
+        page: 2,
+        limit: 50,
+      } as Awaited<ReturnType<typeof pedidoService.fetchPedidoUsuarios>>);
+
+    const { result } = renderHook(() =>
+      usePedidosData({
+        page: 3,
+        pageSize: 10,
+        searchTerm: '',
+        tabIndex: 1,
+        currentUserId: 'admin-user-id',
+        misPedidosStatus: 'pendientes',
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(pedidoService.fetchPedidoUsuarios).toHaveBeenCalledTimes(2);
+    expect(pedidoService.fetchPedidoUsuarios).toHaveBeenNthCalledWith(
+      1,
+      1,
+      50,
+      '',
+      '',
+      {
+        sortBy: 'fechaPedido',
+        order: 'DESC',
+      }
+    );
+    expect(pedidoService.fetchPedidoUsuarios).toHaveBeenNthCalledWith(
+      2,
+      2,
+      50,
+      '',
+      '',
+      {
+        sortBy: 'fechaPedido',
+        order: 'DESC',
+      }
+    );
+
+    expect(result.current.totalItems).toBe(2);
+    expect(result.current.totalPages).toBe(1);
+    expect(result.current.data).toHaveLength(2);
+    expect(result.current.data.map((item) => item.id)).toEqual([
+      'pedido-usuario-1',
+      'pedido-usuario-2',
+    ]);
+  });
 });

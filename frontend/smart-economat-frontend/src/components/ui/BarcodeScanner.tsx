@@ -36,7 +36,9 @@ import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import {
   BarcodeFormat,
   DecodeHintType,
+  Exception,
   NotFoundException,
+  Result,
 } from '@zxing/library';
 
 /** Contrato de tipos público (BarcodeScannerProps). Contexto: smart-economat-frontend (SPA). */
@@ -108,6 +110,32 @@ const buildVideoConstraints = (deviceId: string): MediaTrackConstraints => ({
   height: { ideal: 1080 },
   aspectRatio: { ideal: 1.7777777778 },
 });
+
+const buildVideoConstraintAttempts = (
+  deviceId: string
+): Array<MediaStreamConstraints['video']> => {
+  const normalizedDeviceId = deviceId.trim();
+
+  const attempts: Array<MediaStreamConstraints['video']> = [];
+
+  if (normalizedDeviceId) {
+    attempts.push(buildVideoConstraints(normalizedDeviceId));
+    attempts.push({
+      deviceId: { ideal: normalizedDeviceId },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    });
+  }
+
+  attempts.push({
+    facingMode: { ideal: 'environment' },
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  });
+  attempts.push(true);
+
+  return attempts;
+};
 
 const getActiveVideoTrack = (
   videoElement: HTMLVideoElement | null
@@ -195,6 +223,52 @@ const isExpectedVideoAbortError = (error: unknown): boolean => {
     ) ||
     normalizedErrorMsg.includes('play() request was interrupted') ||
     normalizedErrorMsg.includes('it was not possible to play the video')
+  );
+};
+
+const getErrorFingerprint = (error: unknown) => {
+  const name = error instanceof DOMException ? error.name : '';
+  const message =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : String(error).toLowerCase();
+
+  return { name, message };
+};
+
+const isPermissionError = (error: unknown): boolean => {
+  const { name, message } = getErrorFingerprint(error);
+  return (
+    name === 'NotAllowedError' ||
+    name === 'PermissionDeniedError' ||
+    name === 'SecurityError' ||
+    message.includes('permission') ||
+    message.includes('denied') ||
+    message.includes('notallowed')
+  );
+};
+
+const isNoCameraError = (error: unknown): boolean => {
+  const { name, message } = getErrorFingerprint(error);
+  return (
+    name === 'NotFoundError' ||
+    name === 'DevicesNotFoundError' ||
+    message.includes('notfound') ||
+    message.includes('no camera')
+  );
+};
+
+const isRetriableCameraStartError = (error: unknown): boolean => {
+  const { name, message } = getErrorFingerprint(error);
+
+  return (
+    name === 'OverconstrainedError' ||
+    name === 'ConstraintNotSatisfiedError' ||
+    name === 'NotReadableError' ||
+    message.includes('constraint') ||
+    message.includes('could not start video source') ||
+    message.includes('starting video input') ||
+    message.includes('notreadable')
   );
 };
 
@@ -292,45 +366,70 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       const currentStartId = startScannerIdRef.current;
 
       try {
-        const reader = readerRef.current!;
-        const controls = await reader.decodeFromConstraints(
-          {
-            audio: false,
-            video: buildVideoConstraints(deviceId),
-          },
-          videoRef.current,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (result: any, error: any) => {
-            if (result) {
-              const code = String(result.getText() || '').trim();
-              if (!code) return;
+        const reader = readerRef.current;
+        if (!reader) {
+          return;
+        }
 
-              const now = Date.now();
-              const duplicateTimeout = continuous ? 2000 : 1500;
+        const decodeCallback = (
+          result: Result | undefined,
+          error: Exception | Error | undefined
+        ) => {
+          if (result) {
+            const code = String(result.getText() || '').trim();
+            if (!code) return;
 
-              if (
-                lastScannedRef.current.code === code &&
-                now - lastScannedRef.current.time < duplicateTimeout
-              ) {
-                return;
-              }
-              lastScannedRef.current = { code, time: now };
+            const now = Date.now();
+            const duplicateTimeout = continuous ? 2000 : 1500;
 
-              setLastCode(code);
-              setShowSuccess(true);
-              playBeep();
-              setTimeout(() => setShowSuccess(false), 1000);
-              onScan(code);
-              if (!continuous) {
-                stopScanner();
-                onClose();
-              }
+            if (
+              lastScannedRef.current.code === code &&
+              now - lastScannedRef.current.time < duplicateTimeout
+            ) {
+              return;
             }
-            if (error && !(error instanceof NotFoundException)) {
-              // Errores transitorios de lectura son normales durante el escaneo
+            lastScannedRef.current = { code, time: now };
+
+            setLastCode(code);
+            setShowSuccess(true);
+            playBeep();
+            setTimeout(() => setShowSuccess(false), 1000);
+            onScan(code);
+            if (!continuous) {
+              stopScanner();
+              onClose();
             }
           }
-        );
+          if (error && !(error instanceof NotFoundException)) {
+            // Errores transitorios de lectura son normales durante el escaneo
+          }
+        };
+
+        let controls: IScannerControls | null = null;
+        let lastStartError: unknown = null;
+
+        for (const constraints of buildVideoConstraintAttempts(deviceId)) {
+          try {
+            controls = await reader.decodeFromConstraints(
+              {
+                audio: false,
+                video: constraints,
+              },
+              videoRef.current,
+              decodeCallback
+            );
+            break;
+          } catch (startError) {
+            lastStartError = startError;
+            if (!isRetriableCameraStartError(startError)) {
+              throw startError;
+            }
+          }
+        }
+
+        if (!controls) {
+          throw lastStartError ?? new Error('No se pudo iniciar la camara.');
+        }
 
         if (currentStartId !== startScannerIdRef.current) {
           controls.stop();
@@ -352,17 +451,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           return;
         }
 
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        if (
-          errorMsg.toLowerCase().includes('permission') ||
-          errorMsg.toLowerCase().includes('denied') ||
-          errorMsg.toLowerCase().includes('notallowed')
-        ) {
+        if (isPermissionError(err)) {
           setScannerState('error_permission');
-        } else if (
-          errorMsg.toLowerCase().includes('notfound') ||
-          errorMsg.toLowerCase().includes('no camera')
-        ) {
+        } else if (isNoCameraError(err)) {
           setScannerState('error_no_camera');
         } else {
           setScannerState('error_generic');
@@ -427,14 +518,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         setSelectedCamera(initialCamera);
         await startScanner(initialCamera);
       } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        if (
-          errorMsg.toLowerCase().includes('permission') ||
-          errorMsg.toLowerCase().includes('denied')
-        ) {
+        if (isPermissionError(err)) {
           setScannerState('error_permission');
-        } else {
+        } else if (isNoCameraError(err)) {
           setScannerState('error_no_camera');
+        } else {
+          setScannerState('error_generic');
         }
       }
     };
