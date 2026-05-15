@@ -246,7 +246,6 @@ export class RecetaRepository {
       if (!receta.unidadResultado) {
         receta.unidadResultado = UnidadIngrediente.PIEZA;
       }
-      await this.recetaRepo.save(receta);
     }
 
     return receta;
@@ -445,6 +444,26 @@ export class RecetaRepository {
     );
   }
 
+  async findPreferredProveedorForProductoElaborado(
+    manager: EntityManager,
+    productoId: string
+  ): Promise<ProductoProveedor | null> {
+    return manager
+      .createQueryBuilder(ProductoProveedor, 'pp')
+      .leftJoinAndSelect('pp.proveedor', 'prov')
+      .leftJoinAndSelect('pp.producto', 'prod')
+      .where('pp.producto_id = :productoId', { productoId })
+      .orderBy(
+        'CASE WHEN prov.nombre ILIKE :internalName THEN 0 ELSE 1 END',
+        'ASC'
+      )
+      .addOrderBy('pp.precio_unitario', 'ASC', 'NULLS LAST')
+      .addOrderBy('pp.created_at', 'ASC')
+      .addOrderBy('pp.id', 'ASC')
+      .setParameter('internalName', 'Producción Propia')
+      .getOne();
+  }
+
   private resolveProveedorFavoritoId(
     producto?: Producto,
     proveedorFavoritoId?: string
@@ -529,14 +548,6 @@ export class RecetaRepository {
     manager: EntityManager,
     productoId: string
   ): Promise<void> {
-    const existingLink = await manager.findOne(ProductoProveedor, {
-      where: { productoId },
-    });
-
-    if (existingLink) {
-      return;
-    }
-
     let internalProvider = await manager.findOne(Proveedor, {
       where: { nombre: ILike('Producción Propia') },
     });
@@ -550,6 +561,17 @@ export class RecetaRepository {
         direccion: 'Sede Central',
       });
       internalProvider = await manager.save(Proveedor, internalProvider);
+    }
+
+    const existingInternalLink = await manager.findOne(ProductoProveedor, {
+      where: {
+        productoId,
+        proveedorId: internalProvider.id,
+      },
+    });
+
+    if (existingInternalLink) {
+      return;
     }
 
     const pp = manager.create(ProductoProveedor, {

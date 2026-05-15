@@ -3,11 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { installApiMocks } from './helpers/session';
 
 async function openForgotPassword(page: Page) {
-  const forgotPasswordLink = page
-    .getByRole('link')
-    .filter({ hasText: /contrase|password|forgot/i })
-    .first();
-
+  const forgotPasswordLink = page.getByTestId('login-link-forgot-password');
   await expect(forgotPasswordLink).toBeVisible();
   await forgotPasswordLink.click();
 }

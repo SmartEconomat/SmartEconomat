@@ -506,6 +506,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <Link
               href="#"
               variant="body2"
+              data-testid="login-link-forgot-password"
               onClick={(e) => {
                 e.preventDefault();
                 setIsForgotPassword(true);

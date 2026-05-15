@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
@@ -65,7 +66,11 @@ export class MovimientoController {
     status: 403,
     description: 'docs.ACCESO_DENEGADO_ROL_INSUFICIENTE',
   })
-  create(@Body() dto: CreateMovimientoDto) {
+  create(
+    @Body() dto: CreateMovimientoDto,
+    @Req() req: { user: { id: string } }
+  ) {
+    dto.usuario = req.user.id;
     return this.movimientoService.create(dto);
   }
 

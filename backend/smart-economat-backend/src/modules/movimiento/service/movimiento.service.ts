@@ -44,8 +44,8 @@ export class MovimientoService {
       entityId: string;
       action: AccionMovimiento;
       description?: string;
-      before?: any;
-      after?: any;
+      before?: Record<string, unknown>;
+      after?: Record<string, unknown>;
       userId?: string;
       tipo?: TipoMovimiento;
       cantidad?: number;

@@ -42,7 +42,7 @@ jobs:
 
       - name: Lint backend
         working-directory: backend/smart-economat-backend
-        run: npm run lint
+        run: npm run lint -- --fix
 
       - name: Tests backend
         working-directory: backend/smart-economat-backend
@@ -58,7 +58,7 @@ jobs:
 
       - name: Lint frontend
         working-directory: frontend/smart-economat-frontend
-        run: npm run lint
+        run: npm run lint -- --fix
 
       - name: Tests frontend
         working-directory: frontend/smart-economat-frontend

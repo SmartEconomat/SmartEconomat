@@ -13,8 +13,7 @@ Comandos:
 - `npm run test` - unitarios.
 - `npm run test:e2e` - integracion e2e.
 - `npm run test:cov` - cobertura.
-- `npm run qa:gate` - build + lint + e2e.
-
+- `npm run qa:gate` - build + lint + e2e (sin suite Jest unitaria en este script; ver `package.json`).
 ## Frontend
 
 Ubicacion: `frontend/smart-economat-frontend`.
@@ -25,18 +24,17 @@ Comandos:
 - `npm run test:watch` - modo watch.
 - `npm run test:coverage` - cobertura.
 - `npm run test:e2e` - Playwright.
-- `npm run qa:gate` - build + lint + tests.
-
+- `npm run qa:gate` - build + lint (eslint con `--fix`) + Vitest + Playwright (ver script en `package.json`).
 ## ElectronInstaller
 
 Ubicacion: `ElectronInstaller`.
 
 Comandos:
 
-- `npm run test` - unitarios.
-- `npm run test:e2e` - e2e del instalador.
+- `npm run test` - unitarios (Vitest).
+- `npm run test:e2e` - e2e del instalador (Playwright).
 - `npm run capture:screenshots` - capturas funcionales.
-- `npm run qa:gate` - build + lint + unit + e2e.
+- `npm run lint` y `npm run type-check` - calidad estática (no existe un script `qa:gate` unificado en este paquete; ejecutar los anteriores según el cambio).
 
 ## Estrategia recomendada por cambio
 

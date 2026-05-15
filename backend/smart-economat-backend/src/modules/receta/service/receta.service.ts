@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
 import { Receta } from '../receta.entity/receta.entity';
 import { RecetaRepository } from '../repository/receta.repository';
@@ -22,12 +19,11 @@ import { RecetaPreviewCostDto } from '../dto/receta-preview-cost.dto';
 import { Producto } from '../../producto/producto.entity/producto.entity';
 import { ProductoProveedor } from '../../producto/producto-proveedor.entity/producto-proveedor.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
-import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
-import { TipoMovimiento } from '../../movimiento/enums/movimiento.enums';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Alergeno } from '../../producto/enums/producto.enums';
 import { RecetaListQueryDto } from '../dto/receta-list-query.dto';
+import { ProduccionService } from './produccion.service';
 
 /**
  * Servicio de dominio para receta.
@@ -39,7 +35,8 @@ export class RecetaService {
    */
   constructor(
     private readonly recetaRepository: RecetaRepository,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly produccionService: ProduccionService
   ) {}
 
   /**
@@ -391,81 +388,19 @@ export class RecetaService {
    * @param dto Parámetro de entrada para la operación.
    * @returns Valor resultante de la operación.
    */
-  async cocinar(id: string, dto: CocinarRecetaDto): Promise<void> {
-    const cantidadRecetas = dto.cantidad || 1;
-    const receta = await this.recetaRepository.findById(id);
-
-    if (!receta) {
-      throw new NotFoundException(I18nHelper.getError('RECIPE_NOT_FOUND'));
-    }
-
-    if (!receta.ingredientes || receta.ingredientes.length === 0) {
-      return;
-    }
-
-    await this.dataSource.transaction(async (manager) => {
-      const productoIds = receta.ingredientes.map((i) => i.producto.id);
-
-      const inventarios = await manager
-        .createQueryBuilder(Inventario, 'inv')
-        .innerJoinAndSelect('inv.productoProveedor', 'pp')
-        .innerJoinAndSelect('pp.producto', 'prod')
-        .where('pp.productoId IN (:...productoIds)', { productoIds })
-        .andWhere('inv.cantidad_actual > 0')
-        .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
-        .addOrderBy('inv.fecha_entrada', 'ASC')
-        .setLock('pessimistic_write')
-        .getMany();
-
-      const movimientos: Movimiento[] = [];
-
-      for (const ing of receta.ingredientes) {
-        let cantidadRequerida = ing.cantidad * cantidadRecetas;
-
-        const invsProducto = inventarios.filter(
-          (inv) => inv.productoProveedor.producto.id === ing.producto.id
-        );
-
-        const totalStock = invsProducto.reduce(
-          (sum, inv) => sum + Number(inv.cantidadActual),
-          0
-        );
-
-        if (totalStock < cantidadRequerida) {
-          throw new BadRequestException(
-            I18nHelper.getError('NOT_ENOUGH_STOCK_FOR_INGREDIENT', {
-              ingredient: ing.producto.nombre,
-            })
-          );
-        }
-
-        for (const inv of invsProducto) {
-          if (cantidadRequerida <= 0) break;
-
-          const disponible = Number(inv.cantidadActual);
-          const descontar = Math.min(disponible, cantidadRequerida);
-
-          inv.ajustarCantidad(-descontar);
-          cantidadRequerida -= descontar;
-
-          const movimiento = manager.create(Movimiento, {
-            tipo: TipoMovimiento.SALIDA_ELABORACION,
-            cantidad: descontar,
-            inventario: inv,
-            productoProveedor: inv.productoProveedor,
-            entidad: 'Receta',
-            entidadId: id,
-            descripcion: I18nHelper.translate('receta.movimiento.descripcion', {
-              nombre: receta.nombre,
-            }),
-          });
-          movimientos.push(movimiento);
-        }
-      }
-
-      await manager.save(Inventario, inventarios);
-      await manager.save(Movimiento, movimientos);
-    });
+  async cocinar(
+    id: string,
+    dto: CocinarRecetaDto,
+    userId: string
+  ): Promise<void> {
+    await this.produccionService.ejecutarProduccion(
+      {
+        recetaId: id,
+        cantidadAProducir: dto.cantidad || 1,
+        idempotencyKey: randomUUID(),
+      },
+      userId
+    );
   }
 
   /**

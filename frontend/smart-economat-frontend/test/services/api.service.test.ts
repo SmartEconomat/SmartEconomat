@@ -57,6 +57,36 @@ describe('api.service baseFetch', () => {
       expect.objectContaining({ credentials: 'include' })
     );
   });
+
+  it('reintenta por defecto GET ante errores transitorios', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await baseFetch('/recetas');
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('no reintenta por defecto mutaciones POST', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      baseFetch('/produccion/ejecutar', {
+        method: 'POST',
+        body: JSON.stringify({ recetaId: 'id-1' }),
+      })
+    ).rejects.toBeInstanceOf(ApiError);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('api.service filtros globales', () => {

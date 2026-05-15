@@ -112,9 +112,9 @@ npm run seed:bootstrap-admin-users
 
 ## Documentacion oficial
 
-Toda la documentacion mantenida como fuente de verdad esta en `docs/README.md`.
+Toda la documentacion mantenida como fuente de verdad esta en [docs/README.md](docs/README.md). Para una primera incorporación, usar también [docs/onboarding/README.md](docs/onboarding/README.md).
 
-Documentos clave:
+Documentos clave (runbooks en la raíz de `docs/`):
 
 - `docs/architecture.md`
 - `docs/business-rules.md`

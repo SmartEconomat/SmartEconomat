@@ -53,4 +53,11 @@ export class EjecutarProduccionDto {
   @IsOptional()
   @IsUUID('all')
   ubicacionDestinoId?: string;
+
+  @ApiProperty({
+    description:
+      'Clave de idempotencia obligatoria para evitar ejecuciones duplicadas por reintentos',
+  })
+  @IsUUID('all')
+  idempotencyKey!: string;
 }

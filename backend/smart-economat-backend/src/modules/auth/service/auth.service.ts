@@ -2,9 +2,11 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, FindOptionsWhere } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterUserDto } from '../dto/register-user.dto';
@@ -35,7 +37,8 @@ export class AuthService {
     private readonly usuarioRepo: Repository<Usuario>,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -49,8 +52,16 @@ export class AuthService {
    * @undefined {Promise<{ access_token: string; }>} Datos efectivos después de ejecutar la operación.
    */
   async register(dto: RegisterUserDto) {
+    if (this.configService.get<string>('ALLOW_PUBLIC_REGISTER') !== 'true') {
+      throw new ForbiddenException(
+        I18nHelper.getError('PUBLIC_REGISTER_DISABLED')
+      );
+    }
+
     return await this.dataSource.transaction(async (manager) => {
-      const whereConditions: any[] = [{ username: dto.username }];
+      const whereConditions: FindOptionsWhere<Usuario>[] = [
+        { username: dto.username },
+      ];
       if (dto.email) {
         whereConditions.push({ email: dto.email });
       }

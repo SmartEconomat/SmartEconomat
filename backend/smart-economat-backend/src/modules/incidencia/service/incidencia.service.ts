@@ -324,6 +324,11 @@ export class IncidenciaService {
       } else if (dto.estadoFinal === EstadoFinalIncidenciaDto.INVALIDA) {
         obs = `[invalida] ${obs || ''}`.trim();
         incidencia.resolver(usuarioResolutorId || 'sistema', obs || '');
+      } else if (
+        dto.estadoFinal === EstadoFinalIncidenciaDto.RESUELTA ||
+        dto.marcarComoResuelta === true
+      ) {
+        incidencia.resolver(usuarioResolutorId || 'sistema', obs || '');
       } else if (obs) {
         incidencia.observacionesResolucion = obs;
       }
@@ -593,6 +598,10 @@ export class IncidenciaService {
       throw new BadRequestException(
         'No se puede persistir una incidencia sin líneas de producto.'
       );
+    }
+
+    if (incidencia.estaResuelta()) {
+      return manager.save(Incidencia, incidencia);
     }
 
     const todasAjustadas = lineas.every(

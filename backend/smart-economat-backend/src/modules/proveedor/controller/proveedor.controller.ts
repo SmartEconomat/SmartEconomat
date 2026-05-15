@@ -10,8 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   Req,
-  ParseUUIDPipe,
 } from '@nestjs/common';
+import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
 import { UpdateProveedorDto } from '../dto/update-proveedor.dto';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
@@ -90,7 +90,7 @@ export class ProveedorController {
   @Get(':id')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user?: { rol?: string } }
   ): Promise<Proveedor> {
     const userRole = req.user?.rol;
@@ -106,7 +106,7 @@ export class ProveedorController {
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.proveedores.editar)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: UpdateProveedorDto
   ): Promise<Proveedor> {
     return this.proveedorService.update(id, dto);
@@ -126,7 +126,7 @@ export class ProveedorController {
   @RequirePermissions(PERMISSIONS.proveedores.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user: { id: string } }
   ): Promise<void> {
     return this.proveedorService.remove(id, req.user.id);
@@ -141,7 +141,7 @@ export class ProveedorController {
   @RequirePermissions(PERMISSIONS.proveedores.editar)
   @HttpCode(HttpStatus.OK)
   restore(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: { user: { id: string } }
   ): Promise<Proveedor> {
     return this.proveedorService.restore(id, req.user.id);

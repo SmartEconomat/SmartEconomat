@@ -183,9 +183,19 @@ const Pedidos: React.FC = () => {
   const canEdit = usePermission(PERMISSIONS.pedidos.editar);
   const canDelete = usePermission(PERMISSIONS.pedidos.eliminar);
   const canCreate = usePermission(PERMISSIONS.pedidos.crear);
+  const canCancel = usePermission(PERMISSIONS.pedidos.cancelar);
+  // No existe pedidos:aprobar en el backend; se usa pedidos:editar como requisito mínimo.
+  const canApprove = usePermission(PERMISSIONS.pedidos.editar);
   const permissions: PedidoPermissions = useMemo(
-    () => buildPedidoPermissions(canCreate, canEdit, canDelete),
-    [canCreate, canDelete, canEdit]
+    () =>
+      buildPedidoPermissions(
+        canCreate,
+        canEdit,
+        canDelete,
+        canCancel,
+        canApprove
+      ),
+    [canApprove, canCancel, canCreate, canDelete, canEdit]
   );
 
   const {

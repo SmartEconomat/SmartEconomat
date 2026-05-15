@@ -326,12 +326,31 @@ export class AlbaranService {
    * @undefined {UploadAlbaranDto} dto - Entrada efectiva esperada por el contrato.
    * @undefined {Promise<Albaran>} Datos efectivos después de ejecutar la operación.
    */
+  private static readonly ALLOWED_UPLOAD_MIME_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'application/pdf',
+  ]);
+  private static readonly MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+
   async uploadDocumento(
     file: Express.Multer.File,
     dto: UploadAlbaranDto
   ): Promise<Albaran> {
     if (!file) {
       throw new BadRequestException(I18nHelper.getError('FILE_REQUIRED'));
+    }
+
+    if (!AlbaranService.ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
+      throw new BadRequestException(
+        I18nHelper.getError('UNSUPPORTED_FILE_TYPE')
+      );
+    }
+
+    if (file.size > AlbaranService.MAX_UPLOAD_SIZE_BYTES) {
+      throw new BadRequestException(I18nHelper.getError('FILE_TOO_LARGE'));
     }
 
     const processedFile = await this.archivoService.compressImageFile(file);

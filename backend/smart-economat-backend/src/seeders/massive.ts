@@ -587,6 +587,10 @@ function getEndpointBatchLimit(key: string, fallback: number): number {
     return 1;
   }
 
+  if (key.startsWith('POST /admin/users/') && key.includes('force-reset')) {
+    return 1;
+  }
+
   if (key.startsWith('PATCH /distribuciones')) {
     return 1;
   }
@@ -891,6 +895,41 @@ async function runMassiveSeeder(): Promise<void> {
             success++;
             successByEndpoint.set(key, success);
             const warnMsg = `[seed-massive] ${key} intento ${attempts}: sin discrepancias en recepción, ignorando y continuando`;
+            console.warn(warnMsg);
+            continue;
+          } else if (
+            (key === 'POST /auth/register' ||
+              key === 'POST /profesores/register') &&
+            result.statusCode === 403
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: registro público deshabilitado (ALLOW_PUBLIC_REGISTER≠true), omitiendo`;
+            console.warn(warnMsg);
+            continue;
+          } else if (
+            (key === 'PATCH /produccion/lote/:id/consumir' ||
+              key === 'POST /merma/produccion/reportar') &&
+            result.statusCode === 400 &&
+            typeof result.error === 'string' &&
+            (result.error.includes('Stock insuficiente') ||
+              result.error.includes('Insufficient stock'))
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: stock insuficiente de ingrediente (omitido)`;
+            console.warn(warnMsg);
+            continue;
+          } else if (
+            (key === 'POST /recepciones' || key === 'POST /distribuciones') &&
+            result.statusCode === 400 &&
+            typeof result.error === 'string' &&
+            (result.error.includes('duplicate key') ||
+              result.error.includes('UQ_ubicacion_codigo'))
+          ) {
+            success++;
+            successByEndpoint.set(key, success);
+            const warnMsg = `[seed-massive] ${key} intento ${attempts}: duplicado de ubicación o recurso relacionado (omitido)`;
             console.warn(warnMsg);
             continue;
           } else if (isTransientNetworkError(result)) {

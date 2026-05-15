@@ -32,7 +32,7 @@ export function buildFindManyOptions<T>(
   const sortBy = sortableFieldMap?.[requestedSortField] ?? requestedSortField;
   const order = query.order ?? 'ASC';
 
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   if (query.filters) {
     Object.entries(query.filters).forEach(([key, value]) => {
@@ -58,7 +58,7 @@ export function buildFindManyOptions<T>(
   return {
     skip: (page - 1) * limit,
     take: limit,
-    order: { [sortBy]: order } as any,
-    where,
+    order: { [sortBy]: order } as FindManyOptions<T>['order'],
+    where: where as FindManyOptions<T>['where'],
   };
 }

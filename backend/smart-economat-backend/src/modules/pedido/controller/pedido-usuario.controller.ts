@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Logger,
   Param,
   Patch,
   Post,
@@ -14,6 +13,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
 type PedidoUsuarioRequest = {
@@ -21,10 +21,7 @@ type PedidoUsuarioRequest = {
   url: string;
 };
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
-import {
-  RequirePermissions,
-  RequireAnyPermission,
-} from '../../../common/decorators/require-permissions.decorator';
+import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -52,6 +49,7 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /** Clase pública (PedidoUsuarioController). Paquete: smart-economat-backend (Nest). */
+@ApiTags('pedido-usuarios')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('pedido-usuarios')
 export class PedidoUsuarioController {
@@ -228,32 +226,21 @@ export class PedidoUsuarioController {
   @RequirePermissions(PERMISSIONS.pedidos.ver)
   async generatePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Query() _query: PedidoUsuarioPdfDto,
-    @Res() res: Response,
-    @Req() req: PedidoUsuarioRequest
+    @Query() pdfQuery: PedidoUsuarioPdfDto,
+    @Res() res: Response
   ) {
-    const logger = new Logger(PedidoUsuarioController.name);
-    logger.debug(`generatePdf pedidoUsuario: RAW URL=${req.url}`);
-
-    const url = new URL(req.url, 'http://localhost');
-    const qIncluir = url.searchParams.get('incluirCancelados');
-    const qPagina = url.searchParams.get('paginaPorProveedor');
-
-    const reportQuery = new RecepcionReportePdfDto();
-    if (qIncluir !== null) {
-      reportQuery.incluirCancelados = qIncluir === 'true';
-    }
-    if (qPagina !== null) {
-      reportQuery.paginaPorProveedor = qPagina === 'true';
-    }
+    const reportQuery = Object.assign(new RecepcionReportePdfDto(), {
+      pedidoUsuarioId: id,
+      tipo: TipoReportePdf.PEDIDO,
+      incluirCancelados: pdfQuery.incluirCancelados,
+      paginaPorProveedor: pdfQuery.paginaPorProveedor,
+    });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="pedido-${id.slice(0, 8)}.pdf"`
     );
-    reportQuery.pedidoUsuarioId = id;
-    reportQuery.tipo = TipoReportePdf.PEDIDO;
     await this.pdfReportService.generateReport(reportQuery, res);
   }
 
@@ -264,10 +251,7 @@ export class PedidoUsuarioController {
    * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
    */
   @Delete(':id')
-  @RequireAnyPermission(
-    PERMISSIONS.pedidos.eliminar,
-    PERMISSIONS.pedidos.listar
-  )
+  @RequirePermissions(PERMISSIONS.pedidos.eliminar)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', ParseUUIDv7Pipe) id: string,

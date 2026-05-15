@@ -22,6 +22,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
+import { Archivo } from '../archivo.entity/archivo.entity';
 import { FileResponseDto } from '../dto/file-response.dto';
 import { ArchivoService } from '../service/archivo.service';
 import { FileListFilterDto } from '../dto/file-list-filter.dto';
@@ -82,7 +83,7 @@ export class ArchivoController {
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: { user: Usuario }
-  ): Promise<any> {
+  ): Promise<{ message: string; data: FileResponseDto }> {
     const user = req.user;
     const result = await this.archivoService.uploadFile(file, user);
     return {
@@ -184,7 +185,7 @@ export class ArchivoController {
    * @param archivo Parámetro de entrada para la operación.
    * @returns Valor resultante de la operación.
    */
-  private mapToResponseDto(archivo: any): FileResponseDto {
+  private mapToResponseDto(archivo: Archivo): FileResponseDto {
     const dto = new FileResponseDto();
     dto.id = archivo.id;
     dto.nombre = archivo.nombre;
@@ -199,7 +200,7 @@ export class ArchivoController {
     if (archivo.usuario) {
       dto.subidoPor = {
         id: archivo.usuario.id,
-        nombre: archivo.usuario.nombre,
+        nombre: archivo.usuario.nombre ?? archivo.usuario.username,
         username: archivo.usuario.username,
       };
     }

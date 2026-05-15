@@ -20,26 +20,13 @@ import { UpdateAdminUserActivationDto } from '../dto/update-admin-user-activatio
 import { RolesGuard } from '../../auth/guards/role.guard';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
-/**
- * Controlador REST para admin.
- */
+/** Controlador de operaciones administrativas restringidas al rol ADMIN. */
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 export class AdminController {
-  /**
-   * Inicializa la instancia con los colaboradores necesarios para el flujo.
-   *
-   * @param private readonly adminService Parámetro de entrada para la operación.
-   */
   constructor(private readonly adminService: AdminService) {}
 
-  /**
-   * Obtiene roles.
-   */
-  /**
-   * Obtiene valores o vistas materializadas.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/roles/rol.entity/rol.entity").Rol[]>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Lista todos los roles activos del sistema con sus permisos asociados. */
   @Get('roles')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.listar)
@@ -47,13 +34,7 @@ export class AdminController {
     return this.adminService.getRoles();
   }
 
-  /**
-   * Obtiene permissions.
-   */
-  /**
-   * Obtiene valores o vistas materializadas.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Lista todos los permisos activos del sistema. */
   @Get('permissions')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.listar)
@@ -61,14 +42,7 @@ export class AdminController {
     return this.adminService.getPermissions();
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Crea recursos nuevos en base a las reglas de negocio.
-   * @undefined {CreateProfesorDto} dto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<{ id: string; user_id: string; username: string; cial: string; status: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus; }>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Crea un nuevo profesor desde el panel de administración. */
   @Post('profesores')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.crear)
@@ -76,16 +50,7 @@ export class AdminController {
     return this.adminService.createProfesor(dto);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Persiste modificaciones válidas sobre entidades existentes.
-   * @undefined {string} actorUserId - Entrada efectiva esperada por el contrato.
-   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
-   * @undefined {UpdateAdminUserRoleDto} dto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario | null>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Actualiza el rol y los permisos adicionales/excluidos de un usuario. */
   @Patch('users/:id/role')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.editar)
@@ -103,15 +68,7 @@ export class AdminController {
     );
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "activateUser" en smart-economat-backend (Nest).
-   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
-   * @undefined {UpdateAdminUserActivationDto} dto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<{ message: string; id: string; status: import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus.INACTIVE | import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/enums/usuario.enums").UserStatus.ACTIVE; activo: boolean; }>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Activa o desactiva la cuenta de un usuario. */
   @Patch('users/:id/activate')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.activar_desactivar)
@@ -122,14 +79,7 @@ export class AdminController {
     return this.adminService.activateUser(userId, dto.active);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "forcePasswordReset" en smart-economat-backend (Nest).
-   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<{ message: string; provisionalPassword: string; mustChangePassword: boolean; }>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Genera una contraseña provisional y obliga al usuario a cambiarla en el próximo login. */
   @Post('users/:id/force-reset')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.resetear_password)

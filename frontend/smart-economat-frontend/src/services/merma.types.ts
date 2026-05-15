@@ -17,6 +17,7 @@ export enum TipoMerma {
   CADUCIDAD = 'caducidad',
   ROTURA = 'rotura',
   INVENTARIO = 'inventario',
+  HURTO = 'hurto',
 }
 
 /** Contrato de tipos público (Merma). Contexto: smart-economat-frontend (SPA). */
@@ -24,7 +25,7 @@ export interface Merma {
   id: string;
   productoId: string;
   producto?: Producto;
-  usuarioId: string | number;
+  usuarioId?: string;
   usuario?: Usuario;
   cantidad: number;
   motivo: MotivoMerma;
@@ -47,6 +48,8 @@ export interface CreateMermaPayload {
   origenEntidad?: string;
   origenId?: string;
   referenciaId?: string;
+  inventarioId?: string;
+  ubicacionId?: string;
   idempotencyKey?: string;
   notas?: string;
 }
@@ -57,6 +60,8 @@ export interface CreateMermaProduccionPayload {
   productoId: string;
   cantidad: number;
   motivo?: MotivoMerma;
+  inventarioId?: string;
+  ubicacionId?: string;
   notas?: string;
   idempotencyKey?: string;
 }
@@ -76,12 +81,19 @@ export interface MermaStats {
   }>;
 }
 
+/** Parámetros opcionales para estadísticas de merma (misma ventana que usa el backend por defecto). */
+export interface MermaStatsQueryParams {
+  startDate?: string;
+  endDate?: string;
+  motivo?: MotivoMerma;
+}
+
 /** Contrato de tipos público (MermasQueryParams). Contexto: smart-economat-frontend (SPA). */
 export interface MermasQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  order?: 'ASC' | 'DESC' | 'asc' | 'desc';
+  order?: 'ASC' | 'DESC';
   motivo?: MotivoMerma;
   startDate?: string;
   endDate?: string;

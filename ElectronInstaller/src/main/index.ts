@@ -466,6 +466,7 @@ function initApp() {
       debugLogService.installProcessErrorCapture();
 
       const localDomainSelfHeal = new LocalDomainSelfHealService({
+        allowElevation: !app.isPackaged,
         onLog: (message) => {
           debugLogService.publish({
             type: "system",

@@ -9,9 +9,11 @@ import {
   ArrayNotEmpty,
   MaxLength,
 } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 import { CreatePedidoLineDto } from './create-pedido-line.dto';
 import { ApiProperty } from '@nestjs/swagger';
+
 import { TrimStringTransformer } from '../../../common/transformers/trim-string.transformer';
 
 /** Clase pública (CreatePedidoDto). Paquete: smart-economat-backend (Nest). */
@@ -57,4 +59,13 @@ export class CreatePedidoDto {
   @ValidateNested({ each: true })
   @Type(() => CreatePedidoLineDto)
   lineas!: CreatePedidoLineDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Clave de idempotencia (UUID v4). Si se envía y ya existe un pedido con la misma clave para este usuario, se devuelve el pedido existente sin crear uno nuevo.',
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  idempotencyKey?: string;
 }

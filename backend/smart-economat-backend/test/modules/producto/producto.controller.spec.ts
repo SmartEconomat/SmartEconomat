@@ -10,6 +10,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Reflector } from '@nestjs/core';
 import { AuthPermissionsService } from '../../../src/modules/auth/service/auth-permissions.service';
 import { PermisosGuard } from '../../../src/modules/auth/guards/auth-permissions.guard';
+import type { ProductFilterDto } from '../../../src/modules/producto/dto/product-filter.dto';
+import type { ProductPriceHistoryQueryDto } from '../../../src/modules/producto/dto/product-price-history-query.dto';
 
 describe('ProductoController', () => {
   let controller: ProductoController;
@@ -55,6 +57,7 @@ describe('ProductoController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
+    getHistorialPrecios: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
     addProveedor: jest.fn(),
@@ -123,5 +126,52 @@ describe('ProductoController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('debe delegar findAll en el servicio con el query recibido', async () => {
+    const query: ProductFilterDto = { page: 1, limit: 10, nombre: 'leche' };
+    const payload = {
+      data: [],
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    };
+
+    mockProductoService.findAll.mockResolvedValue(payload);
+
+    const result = await controller.findAll(query);
+
+    expect(mockProductoService.findAll).toHaveBeenCalledWith(query);
+    expect(result).toEqual(payload);
+  });
+
+  it('debe delegar findOne en el servicio con el id recibido', async () => {
+    const producto = { id: 'prod-1', nombre: 'Leche Entera' };
+    mockProductoService.findOne.mockResolvedValue(producto);
+
+    const result = await controller.findOne('prod-1');
+
+    expect(mockProductoService.findOne).toHaveBeenCalledWith('prod-1');
+    expect(result).toEqual(producto);
+  });
+
+  it('debe delegar historial de precios con proveedorId validado por DTO', async () => {
+    const historial = [{ id: 'hist-1' }];
+    const query: ProductPriceHistoryQueryDto = {
+      proveedorId: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1',
+    };
+
+    mockProductoService.getHistorialPrecios.mockResolvedValue(historial);
+
+    const result = await controller.getHistorialPrecios('prod-1', query);
+
+    expect(mockProductoService.getHistorialPrecios).toHaveBeenCalledWith(
+      'prod-1',
+      query.proveedorId
+    );
+    expect(result).toEqual(historial);
   });
 });

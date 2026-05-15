@@ -1,6 +1,7 @@
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -25,6 +26,8 @@ import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.const
  */
 @Injectable()
 export class RolesService {
+  private readonly logger = new Logger(RolesService.name);
+
   /**
    * Construye la instancia configurada.
    * @undefined {Repository<Rol>} rolRepo - Entrada efectiva esperada por el contrato.
@@ -326,6 +329,10 @@ export class RolesService {
 
     await this.invalidateCacheForRole(rolId);
 
+    this.logger.log(
+      `[RBAC] Permisos actualizados para rol ${rolId} (${rol.nombre}): ${dto.permisoIds.length} permisos asignados (actor: ${actorUserId ?? 'sistema'})`
+    );
+
     return this.findOne(rolId);
   }
 
@@ -356,9 +363,13 @@ export class RolesService {
     });
 
     if (existente) {
+      const prevActivo = existente.activo;
       existente.activo = dto.activo !== undefined ? dto.activo : true;
       const updated = await this.usuarioRolRepo.save(existente);
       await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
+      this.logger.log(
+        `[RBAC] Rol ${dto.rolId} actualizado para usuario ${dto.usuarioId}: activo ${prevActivo} → ${existente.activo} (actor: ${asignadoPor ?? 'sistema'})`
+      );
       return updated;
     }
 
@@ -372,6 +383,9 @@ export class RolesService {
     const saved = await this.usuarioRolRepo.save(usuarioRol);
 
     await this.authPermissionsService.invalidateUserCache(dto.usuarioId);
+    this.logger.log(
+      `[RBAC] Rol ${dto.rolId} asignado a usuario ${dto.usuarioId} (actor: ${asignadoPor ?? 'sistema'})`
+    );
 
     return saved;
   }

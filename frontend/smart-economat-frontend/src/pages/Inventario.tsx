@@ -495,7 +495,7 @@ const Inventario: React.FC = () => {
         }
       }
 
-      const items = await fetchInventario({
+      const paginated = await fetchInventario({
         search:
           typeof queryParams.searchTerm === 'string'
             ? queryParams.searchTerm
@@ -503,8 +503,11 @@ const Inventario: React.FC = () => {
         ubicacionIds,
         onlyLowStock: hasDashboardFilter,
         forceRefresh: true,
+        page: queryParams.page,
+        limit: queryParams.limit,
       });
 
+      const items = Array.isArray(paginated.data) ? paginated.data : [];
       setRawItems(items);
 
       let filteredItems = items;
@@ -527,7 +530,7 @@ const Inventario: React.FC = () => {
       const agregado = agregarInventarioPorProducto(itemsToGroup);
 
       setData(agregado);
-      onTotalItemsChange(agregado.length);
+      onTotalItemsChange(paginated.total);
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -543,6 +546,8 @@ const Inventario: React.FC = () => {
     hasDashboardFilter,
     onTotalItemsChange,
     queryParams.searchTerm,
+    queryParams.page,
+    queryParams.limit,
     tabIndex,
     tableFilters,
     t,
@@ -868,7 +873,7 @@ const Inventario: React.FC = () => {
         proveedoresPayload.some(
           (proveedor) =>
             Number.isNaN(proveedor.precioUnitario) ||
-            proveedor.precioUnitario < 0
+            proveedor.precioUnitario < 0.01
         )
       ) {
         throw new Error(

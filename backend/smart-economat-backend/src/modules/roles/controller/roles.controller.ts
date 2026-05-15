@@ -22,7 +22,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
-import { GetUser } from '../../sherlock-auth/decorators/get-user.decorator';
+import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 

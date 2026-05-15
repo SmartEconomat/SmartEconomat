@@ -83,7 +83,13 @@ export class TransformInterceptor<T> implements NestInterceptor<
           const dataObj = data as { message: string; data: T };
           message = dataObj.message;
           responseData = dataObj.data;
-        } else if (data && typeof data === 'object' && 'message' in data) {
+        } else if (
+          data &&
+          typeof data === 'object' &&
+          'message' in data &&
+          !('id' in (data as Record<string, unknown>)) &&
+          !('success' in (data as Record<string, unknown>))
+        ) {
           const dataObj = data as {
             message: string;
             [key: string]: unknown;

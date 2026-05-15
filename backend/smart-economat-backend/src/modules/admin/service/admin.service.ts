@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -158,7 +159,9 @@ export class AdminService {
    */
   async getRoles() {
     if (!this.rolRepo) {
-      return [];
+      throw new InternalServerErrorException(
+        'RolRepository no disponible: módulo admin mal configurado'
+      );
     }
 
     return this.rolRepo.find({
@@ -177,7 +180,9 @@ export class AdminService {
    */
   async getPermissions() {
     if (!this.permisoRepo) {
-      return [];
+      throw new InternalServerErrorException(
+        'PermisoRepository no disponible: módulo admin mal configurado'
+      );
     }
 
     return this.permisoRepo.find({

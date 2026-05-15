@@ -5,96 +5,48 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
-/**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-interface CarouselItem {
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
+export interface CarouselItem {
   id: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   title: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   description: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   image: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   time: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   difficulty: string;
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
   category: string;
 }
 
-/**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-const ITEMS: CarouselItem[] = [
-  {
-    id: '1',
-    title: 'Handmade Marble Chicken',
-    description:
-      'Una pechuga de pollo veteada con finas hierbas y especias, cocinada a baja temperatura para una jugosidad extrema.',
-    image: '/assets/images/recetas/chicken.png',
-    time: '45 min',
-    difficulty: 'Media',
-    category: 'Gourmet',
-  },
-  {
-    id: '2',
-    title: 'Fresh Mediterranean Pasta',
-    description:
-      'Pasta artesanal con tomates cherry confitados, albahaca fresca y lascas de parmesano de 24 meses.',
-    image: '/assets/images/recetas/pasta.png',
-    time: '20 min',
-    difficulty: 'Fácil',
-    category: 'Italiana',
-  },
-  {
-    id: '3',
-    title: 'Quinoa & Avocado Power Bowl',
-    description:
-      'Ensalada vibrante de quinoa con aguacate maduro, garbanzos tostados y semillas de granada.',
-    image: '/assets/images/recetas/salad.png',
-    time: '15 min',
-    difficulty: 'Fácil',
-    category: 'Saludable',
-  },
-];
+interface RecipeCarouselProps {
+  items?: CarouselItem[];
+}
 
-/**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-const RecipeCarousel: React.FC = () => {
+const RecipeCarousel: React.FC<RecipeCarouselProps> = ({ items = [] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const nextSlide = () => {
-    setActiveIndex((prev) => (prev === ITEMS.length - 1 ? 0 : prev + 1));
+    setActiveIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
   };
 
   const prevSlide = () => {
-    setActiveIndex((prev) => (prev === 0 ? ITEMS.length - 1 : prev - 1));
+    setActiveIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
   };
 
   useEffect(() => {
+    if (items.length === 0) return;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev === ITEMS.length - 1 ? 0 : prev + 1));
+      setActiveIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [items.length]);
+
+  if (items.length === 0) {
+    return (
+      <Box sx={{ width: '100%', mb: 4, textAlign: 'center', py: 4 }}>
+        <Typography color="text.secondary">
+          No hay recetas disponibles
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -112,7 +64,7 @@ const RecipeCarousel: React.FC = () => {
           transition: 'all 0.5s ease-in-out',
         }}
       >
-        {ITEMS.map((item, index) => (
+        {items.map((item, index) => (
           <Box
             key={item.id}
             sx={{
@@ -252,7 +204,7 @@ const RecipeCarousel: React.FC = () => {
             zIndex: 3,
           }}
         >
-          {ITEMS.map((_, index) => (
+          {items.map((_, index) => (
             <Box
               key={index}
               onClick={() => setActiveIndex(index)}

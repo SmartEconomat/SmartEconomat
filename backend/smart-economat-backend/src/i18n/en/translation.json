@@ -1,5 +1,8 @@
 {
   "errors": {
+    "PUBLIC_REGISTER_DISABLED": "Public registration is disabled in this environment. Contact your administrator.",
+    "UNSUPPORTED_FILE_TYPE": "Unsupported file type. Allowed: images (JPEG, PNG, WebP, GIF) and PDF.",
+    "FILE_TOO_LARGE": "The file exceeds the maximum allowed size of 10 MB.",
     "ALBARAN_ALREADY_HAS_DOCUMENT": "Delivery note {nAlbaran} already has an attached document",
     "ALBARAN_NOT_FOUND": "Delivery note not found",
     "ALBARAN_UPLOAD_FAILED": "Failed to upload delivery note document: {message}",
@@ -75,6 +78,9 @@
     "ORDER_NOT_CANCELLABLE": "Cannot cancel an order that has already been received or is in shipping process",
     "ORDER_NOT_FOUND": "Order not found",
     "ORDER_NOT_RECEPTABLE": "The order is not in a valid state to be received (must be POR_RECEPCIONAR)",
+    "ORDER_FECHA_ENTREGA_REQUIRED": "A valid delivery date is required.",
+    "ORDER_UPDATE_FORBIDDEN_STATE": "The order cannot be edited in its current state.",
+    "ORDER_LINES_LOCKED_BY_RECEPTION": "Order lines cannot be changed because linked receptions already exist.",
     "PEDIDO_PRODUCT_NOT_FOUND": "Order product not found",
     "PERMISO_NO_ENCONTRADO": "Permission not found",
     "PARENT_TEMPLATE_NOT_FOUND": "Parent template not found",
@@ -97,6 +103,8 @@
     "RECEPTION_PRODUCT_NOT_FOUND": "Reception product not found",
     "RECIPE_NOT_FOUND": "Recipe not found",
     "MIN_ONE_RECIPE_ID_REQUIRED": "At least one recipe ID must be provided.",
+    "MAX_RECIPES_PDF_EXPORT_EXCEEDED": "Only {max} recipes can be exported per request.",
+    "UNSUPPORTED_UNIT_CONVERSION": "Unsupported unit conversion between '{from}' and '{to}'.",
     "RUN_SEEDER_NOT_FOUND": "runSeeder not found in file",
     "SEEDER_NOT_FOUND": "Seeder not found",
     "SLOT_CAPACITY_REACHED": "The selected classroom/class has reached its maximum capacity",
@@ -174,7 +182,11 @@
     "PEDIDO_UPDATE_FAILED": "Error updating the order: {message}",
     "BATCH_NOT_FOUND": "Purchase batch not found",
     "MERMA_LOTE_NOT_FOUND": "Production lot not found",
+    "MERMA_LOTE_CANCELADO": "Cannot record waste on a cancelled production lot",
     "MERMA_INGREDIENTE_NOT_IN_RECIPE": "The indicated product does not belong to the ingredients of the recipe associated with this lot",
+    "MERMA_IDEMPOTENCY_KEY_PAYLOAD_MISMATCH": "The idempotency key already exists with a different payload; use a new key or resend the exact same request",
+    "MERMA_TIPO_MOTIVO_MISMATCH": "The waste type and reason combination is inconsistent",
+    "MERMA_CONTEXT_STOCK_NOT_FOUND": "There is not enough stock in the specified inventory or location context",
     "INVALID_START_DATE": "startDate must be a valid ISO date",
     "INVALID_END_DATE": "endDate must be a valid ISO date",
     "START_DATE_AFTER_END_DATE": "startDate must be less than or equal to endDate",
@@ -592,6 +604,9 @@
   "pedidos": {
     "cancelar": {
       "motivoPorDefecto": "Cancelled by user"
+    },
+    "movimiento": {
+      "descripcion_creacion": "Order creation #{id}"
     }
   },
   "pdf": {

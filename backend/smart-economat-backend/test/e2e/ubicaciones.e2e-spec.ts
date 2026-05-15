@@ -22,7 +22,7 @@ describe('UbicacionController (e2e)', () => {
 
   beforeEach(async () => {
     const response = await request(app.getHttpServer() as string)
-      .post('/api/v1/ubicacion')
+      .post('/api/v1/ubicaciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: `Ubicacion E2E ${Date.now()}-${Math.random()}`,
@@ -38,7 +38,7 @@ describe('UbicacionController (e2e)', () => {
   describe('Seguridad y Autorización', () => {
     it('GET /ubicacion - Debe fallar sin token (401)', async () => {
       const response = await request(app.getHttpServer() as string).get(
-        '/api/v1/ubicacion'
+        '/api/v1/ubicaciones'
       );
       expect(response.status).toBe(401);
     });
@@ -48,7 +48,7 @@ describe('UbicacionController (e2e)', () => {
     it('POST /ubicacion - Debe crear una ubicación (201)', async () => {
       const nombre = `Almacén de Test ${Date.now()}`;
       const response = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombre,
@@ -62,13 +62,13 @@ describe('UbicacionController (e2e)', () => {
 
     it('POST /ubicacion - Debe fallar si el nombre ya existe (400/409)', async () => {
       const responseGet = await request(app.getHttpServer() as string)
-        .get(`/api/v1/ubicacion/${testUbicacionId}`)
+        .get(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       const nombreExistente = responseGet.body.data.nombre;
 
       const response = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombre: nombreExistente,
@@ -80,7 +80,7 @@ describe('UbicacionController (e2e)', () => {
 
     it('GET /ubicacion - Debe listar ubicaciones con paginación (200)', async () => {
       const response = await request(app.getHttpServer() as string)
-        .get('/api/v1/ubicacion')
+        .get('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -92,7 +92,7 @@ describe('UbicacionController (e2e)', () => {
 
     it('GET /ubicacion/:id - Debe obtener una ubicación específica (200)', async () => {
       const response = await request(app.getHttpServer() as string)
-        .get(`/api/v1/ubicacion/${testUbicacionId}`)
+        .get(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -102,7 +102,7 @@ describe('UbicacionController (e2e)', () => {
     it('GET /ubicacion/:id - Debe devolver 404 para ID inexistente (Formato UUIDv7 válido)', async () => {
       const fakeId = '018f0000-0000-7000-8000-000000000000';
       const response = await request(app.getHttpServer() as string)
-        .get(`/api/v1/ubicacion/${fakeId}`)
+        .get(`/api/v1/ubicaciones/${fakeId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(404);
@@ -111,7 +111,7 @@ describe('UbicacionController (e2e)', () => {
     it('PATCH /ubicacion/:id - Debe actualizar una ubicación (200)', async () => {
       const nuevoNombre = `Actualizado ${Date.now()}`;
       const response = await request(app.getHttpServer() as string)
-        .patch(`/api/v1/ubicacion/${testUbicacionId}`)
+        .patch(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombre: nuevoNombre,
@@ -123,13 +123,13 @@ describe('UbicacionController (e2e)', () => {
 
     it('DELETE /ubicacion/:id - Debe eliminar una ubicación lógicamente (200)', async () => {
       const responseDelete = await request(app.getHttpServer() as string)
-        .delete(`/api/v1/ubicacion/${testUbicacionId}`)
+        .delete(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(responseDelete.status).toBe(200);
 
       const responseGet = await request(app.getHttpServer() as string)
-        .get(`/api/v1/ubicacion/${testUbicacionId}`)
+        .get(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(responseGet.status).toBe(404);
@@ -137,17 +137,17 @@ describe('UbicacionController (e2e)', () => {
 
     it('POST /ubicacion/:id/restore - Debe restaurar una ubicación eliminada (201)', async () => {
       await request(app.getHttpServer() as string)
-        .delete(`/api/v1/ubicacion/${testUbicacionId}`)
+        .delete(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       const responseRestore = await request(app.getHttpServer() as string)
-        .post(`/api/v1/ubicacion/${testUbicacionId}/restore`)
+        .post(`/api/v1/ubicaciones/${testUbicacionId}/restore`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(responseRestore.status).toBe(201);
 
       const responseGet = await request(app.getHttpServer() as string)
-        .get(`/api/v1/ubicacion/${testUbicacionId}`)
+        .get(`/api/v1/ubicaciones/${testUbicacionId}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(responseGet.status).toBe(200);

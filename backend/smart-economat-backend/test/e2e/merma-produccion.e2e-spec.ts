@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { DificultadReceta } from '../../src/modules/receta/enums/receta.enums';
 import { Movimiento } from '../../src/modules/movimiento/movimiento.entity/movimiento.entity';
 import { TipoMovimiento } from '../../src/modules/movimiento/enums/movimiento.enums';
@@ -21,8 +22,6 @@ describe('Merma desde Produccion (e2e)', () => {
   let recetaId: string;
   let loteId: string;
 
-  const idempotencyKey = '01961496-cc99-7d4d-89f8-e7ac15e809fa';
-
   beforeAll(async () => {
     app = await getTestApp();
     dataSource = app.get(DataSource);
@@ -39,7 +38,7 @@ describe('Merma desde Produccion (e2e)', () => {
 
   beforeEach(async () => {
     const ubicacionResponse = await request(app.getHttpServer() as string)
-      .post('/api/v1/ubicacion')
+      .post('/api/v1/ubicaciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ nombre: `Ubi Merma Prod ${Date.now()}` });
 
@@ -94,7 +93,7 @@ describe('Merma desde Produccion (e2e)', () => {
       .send({
         nombre: `Receta Merma Prod ${Date.now()}`,
         instrucciones: 'Preparar',
-        tiempoEstimadoMinutos: 5,
+        tiempoEstimadoMinutos: 10,
         dificultad: DificultadReceta.FACIL,
         rendimiento: 2,
         unidadResultado: 'kg',
@@ -111,6 +110,7 @@ describe('Merma desde Produccion (e2e)', () => {
         recetaId,
         cantidadProducida: 2,
         ubicacionDestinoId: ubicacionId,
+        idempotencyKey: randomUUID(),
       })
       .expect(201);
 
@@ -134,6 +134,7 @@ describe('Merma desde Produccion (e2e)', () => {
   }
 
   it('registra merma de ingrediente desde producción y no duplica por idempotencia', async () => {
+    const idempotencyKey = randomUUID();
     const stockAntes = await getStockConsolidadoProducto(productoId);
 
     const firstResponse = await request(app.getHttpServer() as string)
@@ -157,10 +158,23 @@ describe('Merma desde Produccion (e2e)', () => {
         productoId,
         cantidad: 3,
         motivo: 'error_preparacion',
-        notas: 'Retry de cliente',
+        notas: 'Merma real en mise en place',
         idempotencyKey,
       })
       .expect(201);
+
+    await request(app.getHttpServer() as string)
+      .post('/api/v1/merma/produccion/reportar')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        produccionLoteId: loteId,
+        productoId,
+        cantidad: 3,
+        motivo: 'error_preparacion',
+        notas: 'Retry de cliente con payload alterado',
+        idempotencyKey,
+      })
+      .expect(409);
 
     expect(firstResponse.body.data.id).toBe(secondResponse.body.data.id);
     expect(firstResponse.body.data.tipo).toBe('produccion');

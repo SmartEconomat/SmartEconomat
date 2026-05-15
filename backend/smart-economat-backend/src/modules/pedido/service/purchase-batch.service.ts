@@ -37,11 +37,15 @@ import {
   reserveNextPurchaseBatchNumero,
 } from '../utils/purchase-batch-numero.util';
 import { PedidoUsuarioStateMachine } from '../state/pedido-usuario.state-machine';
+import { PedidoStateMachine } from '../state/pedido.state-machine';
 import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
 import {
   canApprove,
   canConsolidateWeek,
 } from '../domain/order-consolidation.rules';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { calculatePedidoFechaEntrega } from '../utils/calculate-pedido-fecha-entrega.util';
 
 type BatchCreationMode = 'approve' | 'consolidate';
 type PedidoSemanticShape = Pedido & {
@@ -142,7 +146,7 @@ export class PurchaseBatchService {
           createPedidoDto,
           userId,
           EstadoPedido.POR_RECEPCIONAR,
-          () => this.calculateFechaEntrega()
+          () => calculatePedidoFechaEntrega(this.configService)
         );
 
         built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
@@ -172,9 +176,15 @@ export class PurchaseBatchService {
         await this.movimientoHelper.trackPedidoCreation(
           userId,
           savedPedido.id,
-          `Pedido #${savedPedido.id} (Lote #${savedBatch.id})`
+          `Pedido #${savedPedido.id} (Lote #${savedBatch.id})`,
+          undefined,
+          queryRunner.manager
         );
       }
+
+      savedBatch.isAprobado = true;
+      savedBatch.modifiedBy = userId;
+      await queryRunner.manager.save(PurchaseBatch, savedBatch);
 
       await queryRunner.commitTransaction();
       const createdBatch = await this.findOne(savedBatch.id);
@@ -292,6 +302,49 @@ export class PurchaseBatchService {
     return {
       observaciones: dto.observaciones,
       lineas,
+    };
+  }
+
+  /**
+   * Lista paginada de lotes de compra (con relaciones habituales).
+   */
+  async findAllPaginated(
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<PurchaseBatch>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const orderDir = query.order ?? query.sortOrder ?? 'DESC';
+    const sortFieldMap: Record<string, keyof PurchaseBatch> = {
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      numeroGlobal: 'numeroGlobal',
+      estado: 'estado',
+      fechaCreacion: 'createdAt',
+      referencia: 'referencia',
+    };
+    const sortBy =
+      sortFieldMap[query.sortBy ?? 'createdAt'] ?? ('createdAt' as const);
+
+    const [batches, total] = await this.dataSource
+      .getRepository(PurchaseBatch)
+      .findAndCount({
+        relations: [
+          'pedidos',
+          'pedidos.proveedor',
+          'pedidos.pedidoUsuario',
+          'usuario',
+        ],
+        order: { [sortBy]: orderDir },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+
+    return {
+      data: batches.map((batch) => this.decorateBatchIdentity(batch)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
     };
   }
 
@@ -522,7 +575,9 @@ export class PurchaseBatchService {
               batchId: batch.id,
               estado: EstadoPedido.POR_RECEPCIONAR,
               observaciones: dto.observaciones,
-              fechaEntrega: this.calculateFechaEntrega(),
+              fechaEntrega:
+                dto.fechaEntrega ??
+                calculatePedidoFechaEntrega(this.configService),
               costeTotal: 0,
               modifiedBy: userId,
             })
@@ -727,13 +782,22 @@ export class PurchaseBatchService {
 
       for (const pedido of batch.pedidos) {
         if (pedido.estado === EstadoPedido.PENDIENTE_DE_APROBACION) {
-          pedido.estado = EstadoPedido.POR_RECEPCIONAR;
+          PedidoStateMachine.applyTransition(
+            pedido,
+            EstadoPedido.POR_RECEPCIONAR
+          );
         }
         if (userId) {
           pedido.modifiedBy = userId;
         }
         await queryRunner.manager.save(Pedido, pedido);
       }
+
+      batch.isAprobado = true;
+      if (userId) {
+        batch.modifiedBy = userId;
+      }
+      await queryRunner.manager.save(PurchaseBatch, batch);
 
       await this.syncBatchStatus(batch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
@@ -837,7 +901,10 @@ export class PurchaseBatchService {
       }
 
       for (const pedido of batch.pedidos) {
-        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+        PedidoStateMachine.applyTransition(
+          pedido,
+          EstadoPedido.PENDIENTE_DE_APROBACION
+        );
         pedido.motivoCancelacion = undefined;
         if (userId) {
           pedido.modifiedBy = userId;
@@ -854,7 +921,10 @@ export class PurchaseBatchService {
       );
 
       for (const pedidoUsuario of touchedPedidoUsuarios) {
-        pedidoUsuario.estado = EstadoPedidoUsuario.PENDIENTE;
+        PedidoUsuarioStateMachine.applyTransition(
+          pedidoUsuario,
+          EstadoPedidoUsuario.PENDIENTE
+        );
         if (userId) {
           pedidoUsuario.modifiedBy = userId;
         }
@@ -964,7 +1034,7 @@ export class PurchaseBatchService {
       const motivo = dto.motivoCancelacion || 'Cancelado por el usuario';
 
       for (const pedido of batch.pedidos) {
-        pedido.estado = EstadoPedido.CANCELADO;
+        PedidoStateMachine.applyTransition(pedido, EstadoPedido.CANCELADO);
         pedido.motivoCancelacion = motivo;
         if (userId) {
           pedido.modifiedBy = userId;
@@ -981,7 +1051,10 @@ export class PurchaseBatchService {
       );
 
       for (const pedidoUsuario of touchedPedidoUsuarios) {
-        pedidoUsuario.estado = EstadoPedidoUsuario.CANCELADO;
+        PedidoUsuarioStateMachine.applyTransition(
+          pedidoUsuario,
+          EstadoPedidoUsuario.CANCELADO
+        );
         if (userId) {
           pedidoUsuario.modifiedBy = userId;
         }
@@ -1154,15 +1227,6 @@ export class PurchaseBatchService {
     });
   }
 
-  private calculateFechaEntrega(baseDate = new Date()): Date {
-    const hours = this.configService.get<number>(
-      'PEDIDO_FECHA_ENTREGA_HOURS',
-      48
-    );
-    const fechaEntrega = new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
-    return fechaEntrega;
-  }
-
   private async createBatchFromPedidoUsuarioIds(
     pedidoUsuarioIds: string[],
     userId: string,
@@ -1322,10 +1386,18 @@ export class PurchaseBatchService {
 
       for (const pedido of pedidos) {
         pedido.batchId = savedBatch.id;
-        pedido.estado = EstadoPedido.POR_RECEPCIONAR;
+        if (pedido.estado !== EstadoPedido.POR_RECEPCIONAR) {
+          PedidoStateMachine.applyTransition(
+            pedido,
+            EstadoPedido.POR_RECEPCIONAR
+          );
+        }
         pedido.modifiedBy = userId;
         await queryRunner.manager.save(Pedido, pedido);
       }
+
+      savedBatch.isAprobado = true;
+      await queryRunner.manager.save(PurchaseBatch, savedBatch);
 
       await this.syncBatchStatus(savedBatch.id, queryRunner.manager, userId);
       await queryRunner.commitTransaction();
@@ -1335,8 +1407,8 @@ export class PurchaseBatchService {
         entidad: 'PurchaseBatch',
         entidadId: createdBatch.id,
         accion:
-          mode === 'approve'
-            ? AccionMovimiento.UPDATE
+          mode === 'consolidate'
+            ? AccionMovimiento.CREATE
             : AccionMovimiento.UPDATE,
         descripcion:
           mode === 'approve'

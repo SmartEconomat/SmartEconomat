@@ -6,7 +6,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -49,9 +48,9 @@ export class DistribucionController {
   @ApiOperation({ summary: 'Listar distribuciones' })
   findAll(
     @Query() query: PaginationQueryDto,
-    @Req() req: { user?: { rol?: string } }
+    @GetUser('rol') userRole: string
   ) {
-    return this.distribucionService.findAll(query, req.user?.rol);
+    return this.distribucionService.findAll(query, userRole);
   }
 
   /**
@@ -83,9 +82,9 @@ export class DistribucionController {
   @ApiOperation({ summary: 'Ver detalle de distribución' })
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Req() req: { user?: { rol?: string } }
+    @GetUser('rol') userRole: string
   ) {
-    return this.distribucionService.findOne(id, req.user?.rol);
+    return this.distribucionService.findOne(id, userRole);
   }
 
   /**

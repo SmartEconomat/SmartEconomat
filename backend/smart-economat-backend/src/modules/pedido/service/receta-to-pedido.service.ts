@@ -230,9 +230,12 @@ export class RecetaToPedidoService {
         }
 
         const current = consolidado.get(ingrediente.productoId);
+        const cantidadBase = Number(ingrediente.cantidad);
+        const merma = Number(ingrediente.mermaAplicada ?? 0);
         const cantidadConMerma =
-          Number(ingrediente.cantidad) *
-          (1 + Number(ingrediente.mermaAplicada ?? 0) / 100);
+          merma > 0 && merma < 100
+            ? cantidadBase / (1 - merma / 100)
+            : cantidadBase;
 
         if (current && current.unidad !== ingrediente.unidad) {
           throw new BadRequestException(

@@ -15,6 +15,7 @@ import { normalizeLimitParam, normalizePageParam } from './api.utils';
  * Interfaz para datos crudos de proveedor desde la API.
  */
 interface RawProveedor {
+  id?: string | null;
   nombre?: string | null;
 }
 
@@ -179,38 +180,38 @@ function formatMotivoDesdeTipo(tipo: TipoDiferencia): string {
 
 /**
  * Normaliza y mapea el estado de una incidencia desde el backend.
+ * Convierte a mayúsculas antes de comparar para que coincida con los valores
+ * del enum (que son todos mayúsculas), evitando el bug de case-sensitivity.
  */
 function normalizeEstadoIncidencia(value: unknown): EstadoIncidencia | null {
   if (typeof value !== 'string') {
     return null;
   }
 
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  const normalized = value.trim().toUpperCase();
 
   switch (normalized) {
-    case EstadoIncidencia.NUEVA:
+    case 'NUEVA':
+    case 'PENDIENTE':
       return EstadoIncidencia.NUEVA;
-    case EstadoIncidencia.EN_AJUSTE:
+    case 'ABIERTA':
+      return EstadoIncidencia.ABIERTA;
+    case 'EN_PROCESO':
+      return EstadoIncidencia.EN_PROCESO;
+    case 'EN_AJUSTE':
+    case 'EN_REVISION':
+    case 'PARCIAL':
       return EstadoIncidencia.EN_AJUSTE;
-    case EstadoIncidencia.PENDIENTE_VALIDACION:
+    case 'PENDIENTE_VALIDACION':
       return EstadoIncidencia.PENDIENTE_VALIDACION;
-    case EstadoIncidencia.RESUELTA:
+    case 'RESUELTA':
       return EstadoIncidencia.RESUELTA;
-    case EstadoIncidencia.CANCELADA:
-    case 'cancelado':
+    case 'CANCELADA':
+    case 'CANCELADO':
       return EstadoIncidencia.CANCELADA;
-    case EstadoIncidencia.INVALIDA:
-    case 'invalido':
+    case 'INVALIDA':
+    case 'INVALIDO':
       return EstadoIncidencia.INVALIDA;
-    case 'pendiente':
-      return EstadoIncidencia.NUEVA;
-    case 'en_revision':
-    case 'parcial':
-      return EstadoIncidencia.EN_AJUSTE;
     default:
       return null;
   }
@@ -414,7 +415,10 @@ function mapIncidencia(raw: RawIncidencia): Incidencia {
     recepcionId: toOptionalText(raw.recepcionId) || '',
     pedidoId:
       toOptionalText(raw.pedidoId) || toOptionalText(raw.pedido?.id) || null,
-    proveedorId: toOptionalText(raw.pedido?.proveedor?.nombre) || '', // fallback id
+    proveedorId:
+      toOptionalText(raw.pedido?.proveedor?.id) ||
+      toOptionalText(raw.pedidoId) ||
+      '',
     proveedorNombre,
     motivoIncidencia: buildMotivoIncidencia(raw, lineas),
     estado:

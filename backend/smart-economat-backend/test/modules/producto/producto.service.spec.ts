@@ -8,7 +8,11 @@ import { MovimientoHelper } from '../../../src/common/helpers/movimiento.helper'
 import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Proveedor } from '../../../src/modules/proveedor/proveedor.entity/proveedor.entity';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   UnidadMedida,
   Alergeno,
@@ -237,6 +241,24 @@ describe('ProductoService', () => {
     );
   });
 
+  it('debe resetear PMP global a 0 cuando no hay proveedores activos', async () => {
+    const em = {
+      findOne: jest.fn().mockResolvedValue({ id: 'prod-1', pmp: 9.25 }),
+      getRepository: jest.fn().mockReturnValue({
+        find: jest.fn().mockResolvedValue([]),
+      }),
+      update: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await (service as any).recalcularPmpProducto('prod-1', em);
+
+    expect(em.update).toHaveBeenCalledWith(
+      Producto,
+      { id: 'prod-1' },
+      { pmp: 0 }
+    );
+  });
+
   it('debe actualizar precio del proveedor sin recalcular PMP global desde ABM', async () => {
     const manager = {
       find: jest.fn().mockImplementation((entity: unknown) => {
@@ -289,6 +311,98 @@ describe('ProductoService', () => {
     );
     expect(recalcularSpy).toHaveBeenCalledWith('prod-1', manager);
   });
+
+  it('debe restaurar una relación proveedor soft-deleteada al re-vincularla', async () => {
+    const manager = {
+      find: jest.fn().mockImplementation((entity: unknown) => {
+        if (entity === ProductoProveedor) {
+          return Promise.resolve([
+            {
+              id: 'pp-deleted',
+              productoId: 'prod-1',
+              proveedorId: 'prov-1',
+              precioUnitario: 2,
+              marca: 'Marca Antigua',
+              codigoBarras: 'EAN-OLD',
+              deletedAt: new Date('2026-01-01T00:00:00.000Z'),
+              proveedor: { id: 'prov-1' },
+            },
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }),
+      restore: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn().mockResolvedValue(undefined),
+      softDelete: jest.fn().mockResolvedValue(undefined),
+    };
+
+    jest
+      .spyOn(service as any, 'registrarPrecioYResolverPrecioActual')
+      .mockResolvedValue(4.2);
+
+    const recalcularSpy = jest
+      .spyOn(service as any, 'recalcularPmpProducto')
+      .mockResolvedValue(undefined);
+
+    await (service as any).syncProveedoresWithManager(
+      manager,
+      'prod-1',
+      [
+        {
+          proveedorId: 'prov-1',
+          precioUnitario: 4.2,
+          marcaEspecifica: 'Marca Restituida',
+          codigoBarras: 'EAN-NEW',
+        },
+      ],
+      'EAN-MASTER',
+      'Marca Maestra'
+    );
+
+    expect(manager.restore).toHaveBeenCalledWith(
+      ProductoProveedor,
+      'pp-deleted'
+    );
+    expect(manager.update).toHaveBeenCalledWith(
+      ProductoProveedor,
+      { id: 'pp-deleted' },
+      {
+        precioUnitario: 4.2,
+        marca: 'Marca Restituida',
+        codigoBarras: 'EAN-NEW',
+      }
+    );
+    expect(recalcularSpy).toHaveBeenCalledWith('prod-1', manager);
+  });
+
+  it('debe bloquear la eliminación de proveedor si mantiene inventario activo', async () => {
+    const manager = {
+      find: jest.fn().mockImplementation((entity: unknown) => {
+        if (entity === ProductoProveedor) {
+          return Promise.resolve([
+            {
+              id: 'pp-1',
+              productoId: 'prod-1',
+              proveedorId: 'prov-1',
+              proveedor: { id: 'prov-1' },
+            },
+          ]);
+        }
+
+        return Promise.resolve([]);
+      }),
+      count: jest.fn().mockResolvedValue(2),
+      softDelete: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await expect(
+      (service as any).syncProveedoresWithManager(manager, 'prod-1', [])
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(manager.softDelete).not.toHaveBeenCalled();
+  });
+
   it('debe usar el precioUnitario como semilla si el PMP anterior es 0', async () => {
     const mockPP = {
       id: 'pp-1',

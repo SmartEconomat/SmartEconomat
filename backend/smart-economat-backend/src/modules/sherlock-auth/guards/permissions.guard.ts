@@ -79,7 +79,8 @@ export class SherlockPermissionsGuard implements CanActivate {
       );
     }
 
-    if (isSherlockElevatedRole(user.rol)) {
+    const ELEVATED_ROLE_BYPASS_ENABLED = true;
+    if (ELEVATED_ROLE_BYPASS_ENABLED && isSherlockElevatedRole(user.rol)) {
       return true;
     }
 

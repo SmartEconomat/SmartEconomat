@@ -79,6 +79,26 @@ type ScannerState =
   | 'error_no_camera'
   | 'error_generic';
 
+type BarcodeScannerE2EMode =
+  | 'success'
+  | 'error_permission'
+  | 'error_no_camera'
+  | 'error_generic';
+
+interface BarcodeScannerE2EMockConfig {
+  mode?: BarcodeScannerE2EMode;
+  codes?: string[];
+  delayMs?: number;
+}
+
+const getBarcodeScannerE2EMock = (): BarcodeScannerE2EMockConfig | null => {
+  const runtime = globalThis as typeof globalThis & {
+    __SMART_ECONOMAT_BARCODE_SCANNER_E2E__?: BarcodeScannerE2EMockConfig;
+  };
+
+  return runtime.__SMART_ECONOMAT_BARCODE_SCANNER_E2E__ ?? null;
+};
+
 const SCANNER_HINTS = new Map<DecodeHintType, unknown>([
   [
     DecodeHintType.POSSIBLE_FORMATS,
@@ -111,7 +131,7 @@ const buildVideoConstraints = (deviceId: string): MediaTrackConstraints => ({
   aspectRatio: { ideal: 1.7777777778 },
 });
 
-const buildVideoConstraintAttempts = (
+export const buildVideoConstraintAttempts = (
   deviceId: string
 ): Array<MediaStreamConstraints['video']> => {
   const normalizedDeviceId = deviceId.trim();
@@ -236,7 +256,7 @@ const getErrorFingerprint = (error: unknown) => {
   return { name, message };
 };
 
-const isPermissionError = (error: unknown): boolean => {
+export const isPermissionError = (error: unknown): boolean => {
   const { name, message } = getErrorFingerprint(error);
   return (
     name === 'NotAllowedError' ||
@@ -248,7 +268,7 @@ const isPermissionError = (error: unknown): boolean => {
   );
 };
 
-const isNoCameraError = (error: unknown): boolean => {
+export const isNoCameraError = (error: unknown): boolean => {
   const { name, message } = getErrorFingerprint(error);
   return (
     name === 'NotFoundError' ||
@@ -258,7 +278,7 @@ const isNoCameraError = (error: unknown): boolean => {
   );
 };
 
-const isRetriableCameraStartError = (error: unknown): boolean => {
+export const isRetriableCameraStartError = (error: unknown): boolean => {
   const { name, message } = getErrorFingerprint(error);
 
   return (
@@ -309,6 +329,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const isOpenRef = useRef(open);
   const startScannerIdRef = useRef(0);
   const lastScannedRef = useRef({ code: '', time: 0 });
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mockTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
@@ -328,6 +350,24 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     isOpenRef.current = open;
   }, [open]);
 
+  const clearSuccessTimeout = useCallback(() => {
+    if (successTimeoutRef.current !== null) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearMockTimers = useCallback(() => {
+    if (mockTimersRef.current.length === 0) {
+      return;
+    }
+
+    mockTimersRef.current.forEach((timerId) => {
+      clearTimeout(timerId);
+    });
+    mockTimersRef.current = [];
+  }, []);
+
   const releaseVideoStream = useCallback(() => {
     const videoElement = videoRef.current;
     if (!videoElement) {
@@ -345,6 +385,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   const stopScanner = useCallback(() => {
     startScannerIdRef.current += 1;
+    clearSuccessTimeout();
+    clearMockTimers();
     try {
       controlsRef.current?.stop();
     } catch {
@@ -355,15 +397,108 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setTorchAvailable(false);
     setTorchEnabled(false);
     setTorchBusy(false);
-  }, [releaseVideoStream]);
+  }, [releaseVideoStream, clearSuccessTimeout, clearMockTimers]);
+
+  const handleDecodedCode = useCallback(
+    (rawCode: string) => {
+      const code = String(rawCode || '').trim();
+      if (!code) {
+        return;
+      }
+
+      const now = Date.now();
+      const duplicateTimeout = continuous ? 2000 : 1500;
+
+      if (
+        lastScannedRef.current.code === code &&
+        now - lastScannedRef.current.time < duplicateTimeout
+      ) {
+        return;
+      }
+
+      lastScannedRef.current = { code, time: now };
+      setLastCode(code);
+      setShowSuccess(true);
+      playBeep();
+      clearSuccessTimeout();
+      successTimeoutRef.current = setTimeout(() => {
+        setShowSuccess(false);
+        successTimeoutRef.current = null;
+      }, 1000);
+      void onScan(code);
+
+      if (!continuous) {
+        stopScanner();
+        onClose();
+      }
+    },
+    [continuous, onClose, onScan, stopScanner, clearSuccessTimeout]
+  );
+
+  const handleDecodedCodeRef = useRef(handleDecodedCode);
+  handleDecodedCodeRef.current = handleDecodedCode;
+
+  const runE2EMockScanner = useCallback(
+    (mockConfig: BarcodeScannerE2EMockConfig): boolean => {
+      const mode = mockConfig.mode ?? 'success';
+
+      if (mode === 'error_permission') {
+        setScannerState('error_permission');
+        return true;
+      }
+
+      if (mode === 'error_no_camera') {
+        setScannerState('error_no_camera');
+        return true;
+      }
+
+      if (mode === 'error_generic') {
+        setScannerState('error_generic');
+        return true;
+      }
+
+      const cameraDeviceId = 'mock-camera';
+      setCameras([
+        {
+          deviceId: cameraDeviceId,
+          label: t('escaner.camaraSinNombre', { id: 'mock' }),
+        },
+      ]);
+      setSelectedCamera(cameraDeviceId);
+      setScannerState('scanning');
+
+      clearMockTimers();
+      const codes = (mockConfig.codes ?? [])
+        .map((code) => String(code || '').trim())
+        .filter(Boolean);
+
+      const delayMs = Math.max(20, mockConfig.delayMs ?? 180);
+
+      codes.forEach((code, index) => {
+        const timerId = setTimeout(
+          () => {
+            handleDecodedCodeRef.current(code);
+          },
+          delayMs * (index + 1)
+        );
+
+        mockTimersRef.current.push(timerId);
+      });
+
+      return true;
+    },
+    [clearMockTimers, t]
+  );
 
   const startScanner = useCallback(
     async (deviceId: string) => {
       if (!videoRef.current) return;
       setScannerState('scanning');
       stopScanner();
-
       const currentStartId = startScannerIdRef.current;
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
 
       try {
         const reader = readerRef.current;
@@ -376,29 +511,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           error: Exception | Error | undefined
         ) => {
           if (result) {
-            const code = String(result.getText() || '').trim();
-            if (!code) return;
-
-            const now = Date.now();
-            const duplicateTimeout = continuous ? 2000 : 1500;
-
-            if (
-              lastScannedRef.current.code === code &&
-              now - lastScannedRef.current.time < duplicateTimeout
-            ) {
-              return;
-            }
-            lastScannedRef.current = { code, time: now };
-
-            setLastCode(code);
-            setShowSuccess(true);
-            playBeep();
-            setTimeout(() => setShowSuccess(false), 1000);
-            onScan(code);
-            if (!continuous) {
-              stopScanner();
-              onClose();
-            }
+            handleDecodedCodeRef.current(result.getText() || '');
           }
           if (error && !(error instanceof NotFoundException)) {
             // Errores transitorios de lectura son normales durante el escaneo
@@ -421,6 +534,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             break;
           } catch (startError) {
             lastStartError = startError;
+            releaseVideoStream();
+            await new Promise<void>((resolve) => {
+              queueMicrotask(() => resolve());
+            });
             if (!isRetriableCameraStartError(startError)) {
               throw startError;
             }
@@ -460,7 +577,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         }
       }
     },
-    [stopScanner, onScan, onClose, continuous]
+    [stopScanner, releaseVideoStream]
   );
 
   // Inicializar cuando el modal se abre
@@ -480,6 +597,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     const init = async () => {
       try {
+        const e2eMock = getBarcodeScannerE2EMock();
+        if (e2eMock) {
+          runE2EMockScanner(e2eMock);
+          return;
+        }
+
         if (!navigator.mediaDevices?.getUserMedia) {
           setScannerState('error_no_camera');
           return;
@@ -533,7 +656,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     return () => {
       stopScanner();
     };
-  }, [open, startScanner, stopScanner, t]);
+  }, [open, startScanner, stopScanner, t, runE2EMockScanner]);
 
   // Limpiar al cerrar
   const handleClose = () => {
@@ -709,7 +832,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              display: isScanning ? 'block' : 'none',
+              // Debe permanecer en el layout mientras ZXing hace play(); si estaba display:none
+              // en "requesting", el navegador abortaba play() al activar el stream.
+              display:
+                scannerState === 'scanning' ||
+                scannerState === 'requesting' ||
+                scannerState === 'error_generic'
+                  ? 'block'
+                  : 'none',
             }}
             muted
             playsInline

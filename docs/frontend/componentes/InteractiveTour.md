@@ -47,10 +47,10 @@ El componente consume objetos tipo `TutorialStep` definidos en `tutorialData.tsx
 ---
 
 ## Uso Técnico
-Este componente se monta una sola vez en el `MainLayout.tsx` o `App.tsx` para estar disponible en toda la aplicación. No requiere props de entrada ya que lee su estado directamente desde el Store de Redux/Zustand mediante el hook `useTutorial`.
+Este componente se monta una sola vez en el layout principal de la aplicación para estar disponible globalmente. El estado del tour se obtiene mediante el hook `useTutorial` (`src/store/tutorial.hooks`).
 
 ---
 
 ## Documentos Relacionados
-- [TutorialHelper.md](file:///Users/alexisruiz/SmartEconomat/docs/frontend/componentes/TutorialHelper.md) (El botón disparador)
-- [tutorialData.tsx](file:///Users/alexisruiz/SmartEconomat/frontend/smart-economat-frontend/src/utils/config/tutorialData.tsx) (Configuración de pasos)
+- [TutorialHelper.md](./TutorialHelper.md) (El botón disparador)
+- [Código fuente de pasos del tour](../../../frontend/smart-economat-frontend/src/utils/config/tutorialData.tsx) (definición de pasos; ruta relativa al repositorio)

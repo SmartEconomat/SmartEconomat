@@ -204,6 +204,10 @@ const InventarioFilters: React.FC<InventarioFiltersProps> = ({
                   ? t('inventario.filtros.placeholderUbicacion')
                   : ''
               }
+              inputProps={{
+                ...params.inputProps,
+                'aria-label': t('inventario.filtros.placeholderUbicacion'),
+              }}
               InputProps={{
                 ...params.InputProps,
                 startAdornment: (

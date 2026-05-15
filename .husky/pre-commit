@@ -27,17 +27,20 @@ if [ "$HAS_BACKEND" -eq 1 ]; then
     exit 1
   fi
 
-  echo "📊 [backend 1/4] Actualizando lista de contribuidores..."
+  echo "📊 [backend 1/5] Actualizando lista de contribuidores..."
   node scripts/contributors/count-commits.js
   git add -- CONTRIBUTORS.md
 
-  echo "📝 [backend 2/4] Running staged quality checks (eslint + prettier)..."
+  echo "📝 [backend 2/5] Running staged quality checks (eslint + prettier)..."
   node backend/smart-economat-backend/scripts/git-hooks/run-staged-quality.js
 
-  echo "🧪 [backend 3/4] Ejecutando tests unitarios..."
+  echo "🧹 [backend 3/5] Ejecutando lint con autofix..."
+  (cd backend/smart-economat-backend && npm run lint -- --fix)
+
+  echo "🧪 [backend 4/5] Ejecutando tests unitarios..."
   (cd backend/smart-economat-backend && npm test)
 
-  echo "🚦 [backend 4/4] Ejecutando tests E2E..."
+  echo "🚦 [backend 5/5] Ejecutando tests E2E..."
   (cd backend/smart-economat-backend && npm run test:e2e)
 else
   echo "ℹ️ No hay cambios staged en backend."
@@ -49,10 +52,13 @@ if [ "$HAS_FRONTEND" -eq 1 ]; then
     exit 1
   fi
 
-  echo "📝 [frontend 1/2] Running staged quality checks (eslint + prettier)..."
+  echo "📝 [frontend 1/3] Running staged quality checks (eslint + prettier)..."
   node frontend/smart-economat-frontend/scripts/git-hooks/run-staged-quality.mjs
 
-  echo "🧪 [frontend 2/2] Ejecutando tests del frontend (sin E2E Playwright)..."
+  echo "🧹 [frontend 2/3] Ejecutando lint con autofix..."
+  (cd frontend/smart-economat-frontend && npm run lint -- --fix)
+
+  echo "🧪 [frontend 3/3] Ejecutando tests del frontend (sin E2E Playwright)..."
   SKIP_E2E_IN_HOOKS=1 node frontend/smart-economat-frontend/scripts/git-hooks/run-all-tests.mjs
 else
   echo "ℹ️ No hay cambios staged en frontend."

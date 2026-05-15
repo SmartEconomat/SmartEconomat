@@ -42,7 +42,7 @@ import {
   searchProductosByName,
 } from '../services/producto.service';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { usePermission } from '../store/auth.hooks';
+import { useAuth, usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 import {
   CategoriaProducto,
@@ -176,6 +176,7 @@ const getScaleHeaderChipConfig = (
 
 const Recepcion: React.FC = () => {
   const { t } = useTranslation();
+  const { isAuthResolved } = useAuth();
   const steps = [
     t('recepcion.pasos.seleccionPedidos'),
     t('recepcion.pasos.escaneoConteo'),
@@ -449,10 +450,11 @@ const Recepcion: React.FC = () => {
   }, [t]);
 
   useEffect(() => {
+    if (!isAuthResolved) return;
     if (canCreate === false) {
       navigate('/');
     }
-  }, [canCreate, navigate]);
+  }, [canCreate, navigate, isAuthResolved]);
 
   useEffect(() => {
     void loadPedidos();

@@ -12,7 +12,10 @@ import { EstadoLote } from '../enums/receta.enums';
 @Entity('produccion_lote')
 @Index(['recetaId'])
 @Index(['usuarioId'])
-@Index(['preparacionId'])
+@Index('UQ_produccion_lote_preparacion_unica', ['preparacionId'], {
+  unique: true,
+  where: '"preparacion_id" IS NOT NULL',
+})
 @Index(['fechaProduccion'])
 @Check(
   'CHK_produccion_lote_producidas_step_05',

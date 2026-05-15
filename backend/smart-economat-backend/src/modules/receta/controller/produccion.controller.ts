@@ -99,6 +99,7 @@ export class ProduccionController {
    * Expone "consumirPorciones" en smart-economat-backend (Nest).
    * @undefined {string} id - Entrada efectiva esperada por el contrato.
    * @undefined {ConsumirProduccionDto} dto - Entrada efectiva esperada por el contrato.
+   * @undefined {string} userId - Entrada efectiva esperada por el contrato.
    * @undefined {Promise<ProduccionLote>} Datos efectivos después de ejecutar la operación.
    */
   @Patch('lote/:id/consumir')
@@ -109,9 +110,10 @@ export class ProduccionController {
   @ApiResponse({ status: 200, type: ProduccionLote })
   consumirPorciones(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: ConsumirProduccionDto
+    @Body() dto: ConsumirProduccionDto,
+    @GetUser('id') userId: string
   ): Promise<ProduccionLote> {
-    return this.produccionService.consumirPorciones(id, dto);
+    return this.produccionService.consumirPorciones(id, dto, userId);
   }
 
   /**

@@ -210,12 +210,22 @@ test.describe('Critical flows with stable selectors', () => {
           nombre: 'QA Recepcion Stable',
           email: 'qa-recepcion-stable@smarteconomat.local',
           rol: 'admin',
-          permisos: ['recepciones:crear', 'pedidos:listar'],
+          permisos: [
+            'recepciones:crear',
+            'recepciones:listar',
+            'pedidos:listar',
+          ],
         })
       );
     });
 
     await page.route('**/api/v1/pedidos**', async (route) => {
+      await route.fulfill(
+        okJson({ data: [], total: 0, page: 1, limit: 50, totalPages: 1 })
+      );
+    });
+
+    await page.route('**/api/v1/pedido-usuarios**', async (route) => {
       await route.fulfill(
         okJson({ data: [], total: 0, page: 1, limit: 50, totalPages: 1 })
       );

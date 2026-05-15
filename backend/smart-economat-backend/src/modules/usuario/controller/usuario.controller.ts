@@ -9,17 +9,15 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { UsuarioService } from '../service/usuario.service';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
-import { UpdateSelfPerfilDto } from '../dto/update-self-perfil.dto';
-import { UpdateMisUbicacionesDto } from '../dto/update-mis-ubicaciones.dto';
 import { UpdateUsuarioStatusDto } from '../dto/update-status.dto';
 import { UpdateUsuarioRolDto } from '../dto/update-rol.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { ChangePasswordDto } from '../dto/change-password.dto';
 import { AdminCreateUsuarioDto } from '../dto/admin-create-usuario.dto';
 import { AdminUpdateUsuarioDto } from '../dto/admin-update-usuario.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -33,120 +31,38 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
 
 /**
- * Controlador para la gestión de usuarios, perfiles y permisos granulares.
- * Permite la administración de cuentas de usuario, cambios de contraseña,
- * y la asignación/exclusión de permisos adicionales sobre los roles base.
+ * Controlador de administración de usuarios.
+ * Solo incluye operaciones CRUD y gestión de permisos granulares.
+ * Los endpoints de auto-servicio (perfil, contraseña, preferencias) viven en UsuarioPerfilController.
  */
+@ApiTags('Usuarios (Admin)')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
-  /**
-   * Crea una instancia de UsuarioController.
-   * @param usuarioService Servicio para la gestión lógica de usuarios.
-   */
   constructor(private readonly usuarioService: UsuarioService) {}
 
-  /**
-   * Crea un nuevo usuario en el sistema.
-   * @param dto Datos del usuario (nombre, email, rol, contraseña).
-   * @returns El usuario creado.
-   */
+  /** Crea un nuevo usuario en el sistema. */
   @Post()
   @RequirePermissions(PERMISSIONS.usuarios.crear)
+  @ApiOperation({ summary: 'Crear usuario' })
   create(@Body() dto: CreateUsuarioDto) {
     return this.usuarioService.create(dto);
   }
 
-  /**
-   * Crea un usuario con privilegios administrativos (solo accesible por ADMIN).
-   * @param dto Datos extendidos de creación administrativa.
-   * @returns El usuario administrativo creado.
-   */
+  /** Crea un usuario con privilegios administrativos (solo ADMIN). */
   @Post('admin')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.crear)
+  @ApiOperation({ summary: 'Crear usuario administrativo' })
   createAdmin(@Body() dto: AdminCreateUsuarioDto) {
     return this.usuarioService.createAdmin(dto);
   }
 
-  /**
-   * Obtiene la información del perfil del usuario autenticado, incluyendo sus permisos efectivos.
-   * @param id ID del usuario obtenido del token JWT.
-   * @returns Perfil completo del usuario.
-   */
-  @Get('perfil')
-  async getPerfil(@GetUser('id') id: string) {
-    const usuario = await this.usuarioService.findOne(id);
-    const permisos = await this.usuarioService.getUserPermissions(id);
-    return {
-      ...usuario,
-      permisos,
-    };
-  }
-
-  /**
-   * Catálogo mínimo de ubicaciones para enlazar la cuenta (Inventario → Mis ubicaciones).
-   */
-  @Get('perfil/catalogo-ubicaciones')
-  getCatalogoUbicacionesParaPerfil() {
-    return this.usuarioService.findCatalogoUbicacionesParaEnlaces();
-  }
-
-  /**
-   * Actualiza los vínculos usuario↔ubicación del propio usuario.
-   */
-  @Patch('perfil/mis-ubicaciones')
-  updateMisUbicacionesPerfil(
-    @GetUser('id') id: string,
-    @Body() dto: UpdateMisUbicacionesDto
-  ) {
-    return this.usuarioService.updateMisUbicaciones(id, dto);
-  }
-
-  /**
-   * Actualiza la información del perfil del usuario autenticado.
-   * @param id ID del usuario.
-   * @param dto Datos a actualizar.
-   * @returns El usuario actualizado.
-   */
-  @Patch('perfil')
-  updatePerfil(@GetUser('id') id: string, @Body() dto: UpdateSelfPerfilDto) {
-    return this.usuarioService.update(id, dto);
-  }
-
-  /**
-   * Actualiza las preferencias del usuario (tutoriales, configuración UI).
-   * @param id ID del usuario.
-   * @param preferences Objeto de preferencias.
-   * @returns El usuario actualizado.
-   */
-  @Patch('perfil/preferences')
-  updatePreferences(
-    @GetUser('id') id: string,
-    @Body() preferences: Record<string, any>
-  ) {
-    return this.usuarioService.updatePreferences(id, preferences);
-  }
-
-  /**
-   * Cambia la contraseña del usuario autenticado verificando la anterior.
-   * @param id ID del usuario.
-   * @param dto Contraseña antigua y nueva.
-   * @returns Resultado de la operación.
-   */
-  @Patch('perfil/password')
-  changePassword(@GetUser('id') id: string, @Body() dto: ChangePasswordDto) {
-    return this.usuarioService.changePassword(id, dto);
-  }
-
-  /**
-   * Lista todos los usuarios con soporte para paginación y ordenación.
-   * @param query Parámetros de consulta.
-   * @param userRole Rol del usuario que realiza la consulta.
-   * @returns Lista paginada de usuarios.
-   */
+  /** Lista todos los usuarios con paginación. */
   @Get()
   @RequirePermissions(PERMISSIONS.usuarios.listar)
+  @ApiOperation({ summary: 'Listar usuarios' })
   findAll(
     @SortableFields(SORTABLE_FIELDS.usuarios)
     query: PaginationQueryDto,
@@ -155,39 +71,26 @@ export class UsuarioController {
     return this.usuarioService.findAll(query, userRole);
   }
 
-  /**
-   * Obtiene una lista minimalista de usuarios (ID y nombre) para selectores.
-   * @returns Lista de usuarios simplificada.
-   */
-  /**
-   * Expone "findAllMinimal" en smart-economat-backend (Nest).
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario[]>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Lista usuarios en formato mínimo (id + nombre) para selectores. */
   @Get('minimos')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
+  @ApiOperation({ summary: 'Listar usuarios (formato mínimo para selectores)' })
   findAllMinimal() {
     return this.usuarioService.findAllMinimal();
   }
 
-  /**
-   * Obtiene el detalle de un usuario por su UUID.
-   * @param id UUID del usuario.
-   * @returns El usuario encontrado.
-   */
+  /** Obtiene el detalle de un usuario por UUID. */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.usuarios.ver)
+  @ApiOperation({ summary: 'Obtener usuario por ID' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.findOne(id);
   }
 
-  /**
-   * Actualiza la información de un usuario específico.
-   * @param id UUID del usuario.
-   * @param dto Datos a actualizar.
-   * @returns El usuario actualizado.
-   */
+  /** Actualiza los datos de un usuario. */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Actualizar usuario' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioDto
@@ -195,15 +98,11 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-  /**
-   * Actualización administrativa de un usuario (solo para ADMIN).
-   * @param id UUID del usuario.
-   * @param dto Datos administrativos.
-   * @returns El usuario actualizado.
-   */
+  /** Actualización administrativa de usuario (solo ADMIN). */
   @Patch(':id/admin')
   @Roles(rolUsuario.ADMIN)
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Actualización administrativa de usuario' })
   updateAdmin(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AdminUpdateUsuarioDto
@@ -211,14 +110,10 @@ export class UsuarioController {
     return this.usuarioService.updateAdmin(id, dto);
   }
 
-  /**
-   * Activa o desactiva la cuenta de un usuario.
-   * @param id UUID del usuario.
-   * @param dto Estado de activación.
-   * @returns El usuario con el nuevo estado.
-   */
+  /** Activa o desactiva la cuenta de un usuario. */
   @Patch(':id/activar')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Activar o desactivar usuario' })
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioStatusDto
@@ -226,14 +121,10 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-  /**
-   * Cambia el rol principal de un usuario.
-   * @param id UUID del usuario.
-   * @param dto Nuevo rol.
-   * @returns El usuario actualizado.
-   */
+  /** Cambia el rol principal de un usuario. */
   @Patch(':id/rol')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Cambiar rol del usuario' })
   updateRol(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUsuarioRolDto
@@ -241,14 +132,10 @@ export class UsuarioController {
     return this.usuarioService.update(id, dto);
   }
 
-  /**
-   * Fuerza el restablecimiento de la contraseña de un usuario por un administrador.
-   * @param id UUID del usuario.
-   * @param dto Nueva contraseña.
-   * @returns Resultado de la operación.
-   */
+  /** Fuerza el restablecimiento de contraseña (admin). */
   @Patch(':id/password')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Forzar restablecimiento de contraseña' })
   updatePassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ResetPasswordDto
@@ -256,29 +143,18 @@ export class UsuarioController {
     return this.usuarioService.resetPassword(id, dto);
   }
 
-  /**
-   * Elimina un usuario del sistema (eliminación lógica).
-   * @param id UUID del usuario.
-   */
-  /**
-   * Expone "remove" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Elimina un usuario del sistema (soft delete). */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.usuarios.eliminar)
+  @ApiOperation({ summary: 'Eliminar usuario (soft delete)' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usuarioService.remove(id);
   }
 
-  /**
-   * Añade un permiso individual adicional a un usuario, independientemente de su rol.
-   * @param id UUID del usuario.
-   * @param permisoId UUID del permiso.
-   * @returns Resultado de la asociación.
-   */
+  /** Añade un permiso adicional a un usuario, independientemente de su rol. */
   @Post(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Añadir permiso adicional a usuario' })
   addAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -286,19 +162,10 @@ export class UsuarioController {
     return this.usuarioService.addAdditionalPermission(id, permisoId);
   }
 
-  /**
-   * Elimina un permiso adicional previamente asignado.
-   * @param id UUID del usuario.
-   * @param permisoId UUID del permiso.
-   */
-  /**
-   * Expone "removeAdditionalPermission" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Elimina un permiso adicional previamente asignado a un usuario. */
   @Delete(':id/permisos-adicionales/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Eliminar permiso adicional de usuario' })
   removeAdditionalPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -306,20 +173,10 @@ export class UsuarioController {
     return this.usuarioService.removeAdditionalPermission(id, permisoId);
   }
 
-  /**
-   * Añade un permiso a la lista de exclusiones de un usuario.
-   * El usuario NO tendrá este permiso aunque su rol se lo otorgue.
-   * @param id UUID del usuario.
-   * @param permisoId UUID del permiso.
-   */
-  /**
-   * Expone "addExcludedPermission" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/usuario/usuario.entity/usuario.entity").Usuario>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Añade un permiso a la lista de exclusiones del usuario (sobrescribe permiso del rol). */
   @Post(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Excluir permiso de usuario' })
   addExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string
@@ -327,19 +184,10 @@ export class UsuarioController {
     return this.usuarioService.addExcludedPermission(id, permisoId);
   }
 
-  /**
-   * Elimina un permiso de la lista de exclusiones.
-   * @param id UUID del usuario.
-   * @param permisoId UUID del permiso.
-   */
-  /**
-   * Expone "removeExcludedPermission" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {string} permisoId - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<{ success: boolean; }>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Elimina un permiso de la lista de exclusiones del usuario. */
   @Delete(':id/permisos-excluidos/:permisoId')
   @RequirePermissions(PERMISSIONS.usuarios.editar)
+  @ApiOperation({ summary: 'Restaurar permiso excluido de usuario' })
   removeExcludedPermission(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('permisoId', ParseUUIDPipe) permisoId: string

@@ -29,7 +29,7 @@ describe('InventarioController (e2e)', () => {
 
   beforeEach(async () => {
     const ubiRes = await request(app.getHttpServer() as string)
-      .post('/api/v1/ubicacion')
+      .post('/api/v1/ubicaciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ nombre: `Ubi Inv ${Date.now()}` });
     ubicacionId = ubiRes.body.data.id;
@@ -116,7 +116,7 @@ describe('InventarioController (e2e)', () => {
     it('E2E-INV-06B-GET: Listar inventario filtrado por ubicacionIds', async () => {
       const item = await createInventario();
       const otraUbi = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: `Ubi aislamiento ${Date.now()}` });
 
@@ -373,7 +373,7 @@ describe('InventarioController (e2e)', () => {
 
     it('E2E-INV-STOCK-01: Debe desglosar stock por ubicación', async () => {
       const segundaUbicacion = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: `Ubi Inv Stock ${Date.now()}` });
 
@@ -408,7 +408,7 @@ describe('InventarioController (e2e)', () => {
 
     it('E2E-INV-STOCK-02: Debe devolver stock consolidado por producto', async () => {
       const segundaUbicacion = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: `Ubi Inv Consolidado ${Date.now()}` });
 
@@ -433,7 +433,7 @@ describe('InventarioController (e2e)', () => {
 
     it('E2E-INV-STOCK-03: Debe filtrar sólo stock bajo', async () => {
       const segundaUbicacion = await request(app.getHttpServer() as string)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: `Ubi Inv Low ${Date.now()}` });
 

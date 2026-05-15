@@ -109,6 +109,8 @@ const recetasMock = [
   },
 ];
 
+const startBatchButtonName = /iniciar|start|recipes\.preparacionLote\.iniciar/i;
+
 describe('Recetas toolbar batch actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -231,16 +233,27 @@ describe('Recetas toolbar batch actions', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /preparar \(2\)/i }));
 
-    const startButton = await screen.findByRole('button', {
-      name: /iniciar .*lote/i,
-    });
+    const startButton = await screen.findByRole(
+      'button',
+      {
+        name: startBatchButtonName,
+      },
+      { timeout: 10000 }
+    );
 
     expect(startButton).toBeDisabled();
 
     resolveUbicaciones([{ id: 'ubi-1', nombre: 'Cocina' }]);
 
     await waitFor(() => {
-      expect(startButton).toBeEnabled();
+      expect(produccionService.validarStock).toHaveBeenCalledTimes(1);
     });
-  });
+
+    await waitFor(
+      () => {
+        expect(startButton).toBeEnabled();
+      },
+      { timeout: 10000 }
+    );
+  }, 15000);
 });

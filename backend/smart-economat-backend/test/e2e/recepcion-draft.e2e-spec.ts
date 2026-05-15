@@ -20,7 +20,7 @@ describe('RecepcionDraftController (e2e)', () => {
     };
 
     const saveRes = await request(app.getHttpServer())
-      .post('/api/v1/recepcion/draft')
+      .post('/api/v1/recepciones/draft')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ payload });
 
@@ -28,7 +28,7 @@ describe('RecepcionDraftController (e2e)', () => {
     expect(saveRes.body.data.version).toBe(1);
 
     const getRes = await request(app.getHttpServer())
-      .get('/api/v1/recepcion/draft')
+      .get('/api/v1/recepciones/draft')
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(getRes.status).toBe(200);
@@ -37,12 +37,12 @@ describe('RecepcionDraftController (e2e)', () => {
 
   it('debería eliminar el borrador', async () => {
     await request(app.getHttpServer())
-      .delete('/api/v1/recepcion/draft')
+      .delete('/api/v1/recepciones/draft')
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(204);
 
     const getRes = await request(app.getHttpServer())
-      .get('/api/v1/recepcion/draft')
+      .get('/api/v1/recepciones/draft')
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(getRes.body.data).toBeNull();

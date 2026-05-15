@@ -23,11 +23,6 @@ import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 
-type PlantillasRolesCrudContract = {
-  duplicateTemplate: (id: string, nombre?: string) => Promise<unknown>;
-  setTemplateActivo: (id: string, activo: boolean) => Promise<unknown>;
-};
-
 /** Clase pública (PlantillasRolesController). Paquete: smart-economat-backend (Nest). */
 @Controller('plantillas-roles')
 @UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
@@ -99,9 +94,7 @@ export class PlantillasRolesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: DuplicatePlantillaDto
   ) {
-    const service = this
-      .plantillasRolesService as unknown as PlantillasRolesCrudContract;
-    return service.duplicateTemplate(id, dto.nombre);
+    return this.plantillasRolesService.duplicateTemplate(id, dto.nombre);
   }
 
   /**
@@ -146,9 +139,7 @@ export class PlantillasRolesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePlantillaActivoDto
   ) {
-    const service = this
-      .plantillasRolesService as unknown as PlantillasRolesCrudContract;
-    return service.setTemplateActivo(id, dto.activo);
+    return this.plantillasRolesService.setTemplateActivo(id, dto.activo);
   }
 
   /**

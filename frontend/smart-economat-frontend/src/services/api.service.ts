@@ -515,8 +515,11 @@ export async function baseFetch(
   options: RequestInit = {},
   retryOptions: { maxRetries?: number; delayMs?: number; silent?: boolean } = {}
 ): Promise<Response> {
+  const method = String(options.method || 'GET').toUpperCase();
+  const defaultRetries = ['GET', 'HEAD', 'OPTIONS'].includes(method) ? 1 : 0;
+
   const {
-    maxRetries = 1,
+    maxRetries = defaultRetries,
     delayMs = 1000,
     silent: _silent = false,
   } = retryOptions;

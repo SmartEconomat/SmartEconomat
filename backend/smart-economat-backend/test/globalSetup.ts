@@ -9,4 +9,6 @@ module.exports = (): void => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key';
   process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
   process.env.DB_SYNC = 'false';
+  process.env.ALLOW_PUBLIC_REGISTER =
+    process.env.ALLOW_PUBLIC_REGISTER ?? 'true';
 };

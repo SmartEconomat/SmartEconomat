@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   Box,
   Paper,
@@ -38,6 +44,7 @@ import {
   normalizeRecetaTiempoMinutos,
   type RecetaTiempoFiltro,
 } from '../features/recetas/receta-tiempo.utils';
+import { resolveRecetaDificultadLabel } from '../features/recetas/receta-dificultad-label';
 import RecetaAlergenos from '../components/ui/RecetaAlergenos';
 import {
   Receta,
@@ -80,7 +87,9 @@ import { useToast } from '../store/toast.hooks';
 import StatusChip from '../components/ui/StatusChip';
 import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
-import RecipeCarousel from '../components/ui/RecipeCarousel';
+import RecipeCarousel, {
+  type CarouselItem,
+} from '../components/ui/RecipeCarousel';
 import PageToolbar from '../components/ui/PageToolbar';
 
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
@@ -97,6 +106,7 @@ import {
 import { DownloadService } from '../services/download.service';
 import { useTranslation } from 'react-i18next';
 import { useDataTable } from '../hooks/useDataTable';
+import { generateIdempotencyKey } from '../utils/idempotency';
 
 const RecetaIngredientesView: React.FC<{
   ingredientes?: RecetaIngrediente[];
@@ -340,7 +350,12 @@ const Recetas: React.FC = () => {
   const [isCooking, setIsCooking] = useState(false);
   const [stockValidation, setStockValidation] =
     useState<StockValidationResult | null>(null);
+  const [stockValidationError, setStockValidationError] = useState<
+    string | null
+  >(null);
   const [isValidatingStock, setIsValidatingStock] = useState(false);
+  const recetasLoadRequestRef = useRef(0);
+  const stockValidationRequestRef = useRef(0);
   const toast = useToast();
 
   const {
@@ -360,6 +375,9 @@ const Recetas: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const requestId = recetasLoadRequestRef.current + 1;
+    recetasLoadRequestRef.current = requestId;
+
     setIsLoading(true);
     setError(null);
     try {
@@ -372,24 +390,60 @@ const Recetas: React.FC = () => {
         queryParams.order,
         tiempoRange
       );
+
+      if (requestId !== recetasLoadRequestRef.current) {
+        return;
+      }
+
       setData(recetasData.data);
       const nextTotal = recetasData.total || recetasData.data.length;
       setTotalItems(nextTotal);
       syncPaginationFromResponse(recetasData);
     } catch (err: unknown) {
+      if (requestId !== recetasLoadRequestRef.current) {
+        return;
+      }
+
       syncPaginationFromResponse({ total: 0, data: [] });
       setError(
         err instanceof Error ? err.message : t('recipes.toast.errorCargar')
       );
     } finally {
-      setIsLoading(false);
+      if (requestId === recetasLoadRequestRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [queryParams, tiempoFilter, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
-    UbicacionService.findAll().then(setUbicaciones).catch(console.error);
   }, [loadData]);
+
+  useEffect(() => {
+    UbicacionService.findAll().then(setUbicaciones).catch(console.error);
+  }, []);
+
+  const carouselItems = useMemo<CarouselItem[]>(
+    () =>
+      data.slice(0, 5).map((receta) => {
+        const dificultadLabel = resolveRecetaDificultadLabel(
+          receta.dificultad,
+          t
+        );
+        return {
+          id: receta.id,
+          title: receta.nombre,
+          description: receta.instrucciones?.slice(0, 150) ?? '',
+          image: getRecipeImageUrl(receta) ?? '',
+          time: receta.tiempoEstimadoMinutos
+            ? `${receta.tiempoEstimadoMinutos} min`
+            : '',
+          difficulty: dificultadLabel,
+          category: dificultadLabel,
+        };
+      }),
+    [data, t]
+  );
 
   useEffect(() => {
     if (!isCookModalOpen || ubicaciones.length === 0) return;
@@ -525,6 +579,7 @@ const Recetas: React.FC = () => {
       );
     } catch (err: unknown) {
       console.error('Export Excel Error:', err);
+      toast.error(t('recipes.toast.errorExportExcel'));
     }
   };
 
@@ -536,6 +591,7 @@ const Recetas: React.FC = () => {
       })),
       ubicacionId: ubicaciones[0]?.id || '',
     });
+    setStockValidationError(null);
     setIsCookModalOpen(true);
   };
 
@@ -553,12 +609,34 @@ const Recetas: React.FC = () => {
 
   useEffect(() => {
     if (!isCookModalOpen || cookData.items.length === 0) {
+      stockValidationRequestRef.current += 1;
       setStockValidation(null);
+      setStockValidationError(null);
+      setIsValidatingStock(false);
       return;
     }
 
+    const hasInvalidQuantities = cookData.items.some(
+      (item) => !isCantidadObjetivoModalValida(item.cantidadAProducir)
+    );
+
+    if (hasInvalidQuantities) {
+      stockValidationRequestRef.current += 1;
+      setStockValidation(null);
+      setStockValidationError(
+        t('recipes.preparacionLote.cantidadInvalidaStock')
+      );
+      setIsValidatingStock(false);
+      return;
+    }
+
+    const requestId = stockValidationRequestRef.current + 1;
+    stockValidationRequestRef.current = requestId;
+    let cancelled = false;
+
     const timer = setTimeout(async () => {
       setIsValidatingStock(true);
+      setStockValidationError(null);
       try {
         const result = await validarStock({
           items: cookData.items.map((it) => ({
@@ -566,16 +644,31 @@ const Recetas: React.FC = () => {
             cantidadAProducir: it.cantidadAProducir,
           })),
         });
+        if (cancelled || requestId !== stockValidationRequestRef.current) {
+          return;
+        }
         setStockValidation(result);
-      } catch (err) {
-        console.error('Error al validar stock:', err);
+      } catch (err: unknown) {
+        if (!cancelled && requestId === stockValidationRequestRef.current) {
+          setStockValidation(null);
+          setStockValidationError(
+            err instanceof Error && err.message
+              ? err.message
+              : t('recipes.preparacionLote.errorValidarStock')
+          );
+        }
       } finally {
-        setIsValidatingStock(false);
+        if (!cancelled && requestId === stockValidationRequestRef.current) {
+          setIsValidatingStock(false);
+        }
       }
     }, 600);
 
-    return () => clearTimeout(timer);
-  }, [cookData.items, isCookModalOpen]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [cookData.items, isCookModalOpen, t]);
 
   const missingIngredients =
     stockValidation?.ingredients.filter((ing) => !ing.isEnough) ?? [];
@@ -630,6 +723,11 @@ const Recetas: React.FC = () => {
       return;
     }
 
+    if (!stockValidation || stockValidationError) {
+      toast.error(t('recipes.preparacionLote.errorValidarStock'));
+      return;
+    }
+
     setIsCooking(true);
     try {
       const results = await Promise.all(
@@ -640,6 +738,7 @@ const Recetas: React.FC = () => {
               cantidadAProducir: item.cantidadAProducir,
               ubicacionDestinoId: cookData.ubicacionId || undefined,
               fechaCaducidadManual: cookData.fechaCaducidadManual || undefined,
+              idempotencyKey: generateIdempotencyKey(),
             });
           } catch (e: unknown) {
             const axiosLike = e as {
@@ -1019,7 +1118,7 @@ const Recetas: React.FC = () => {
 
   return (
     <Box>
-      <RecipeCarousel />
+      <RecipeCarousel items={carouselItems} />
 
       <PageToolbar
         title={t('recipes.gestionTitulo')}
@@ -1773,7 +1872,19 @@ const Recetas: React.FC = () => {
                     )}
                   </Box>
 
-                  {hasMissingIngredients ? (
+                  {stockValidationError ? (
+                    <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        {stockValidationError}
+                      </Typography>
+                    </Alert>
+                  ) : !stockValidation ? (
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        {t('recipes.preparacionLote.validacionPendiente')}
+                      </Typography>
+                    </Alert>
+                  ) : hasMissingIngredients ? (
                     <Alert
                       severity="error"
                       variant="standard"
@@ -1867,6 +1978,8 @@ const Recetas: React.FC = () => {
             disabled={
               isCooking ||
               !cookData.ubicacionId ||
+              !stockValidation ||
+              Boolean(stockValidationError) ||
               cookData.items.some(
                 (i) => !isCantidadObjetivoModalValida(i.cantidadAProducir)
               ) ||

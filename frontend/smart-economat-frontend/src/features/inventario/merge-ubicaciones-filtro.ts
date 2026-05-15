@@ -17,8 +17,9 @@ export interface UbicacionFiltroFuente {
 export function inferidasPorLotesFirma(
   items: ItemUbicacionInferible[]
 ): string {
+  const safeItems = Array.isArray(items) ? items : [];
   const byId = new Map<string, string>();
-  for (const item of items) {
+  for (const item of safeItems) {
     const u = item.ubicacion;
     const id = u?.id?.trim();
     const nombre = u?.nombre?.trim();

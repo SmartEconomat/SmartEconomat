@@ -1,22 +1,12 @@
+import type { TFunction } from 'i18next';
 import { DynamicField } from '../components/ui/DynamicFormModal';
 import { MotivoMerma } from '../services/merma.types';
-import i18n from '../i18n';
 import { getEnumLabel } from '../i18n/enumPresentation';
 
 /**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
+ * Campos del formulario de registro de merma (labels reactivos al idioma).
  */
-
-/**
- * Obtiene merma schema.
- * @returns Valor resultante de la operación.
- */
-/**
- * Obtiene valores o vistas materializadas.
- * @undefined {DynamicField[]} Datos efectivos después de ejecutar la operación.
- */
-export function getMermaSchema(): DynamicField[] {
-  const t = i18n.t.bind(i18n);
+export function getMermaSchema(t: TFunction): DynamicField[] {
   return [
     {
       name: 'productoId',
@@ -38,7 +28,7 @@ export function getMermaSchema(): DynamicField[] {
       required: true,
       options: Object.values(MotivoMerma).map((value) => ({
         value,
-        label: getEnumLabel(i18n.t.bind(i18n), 'mermaMotivo', value),
+        label: getEnumLabel(t, 'mermaMotivo', value),
       })),
     },
     {
@@ -49,8 +39,3 @@ export function getMermaSchema(): DynamicField[] {
     },
   ];
 }
-
-/**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-export const mermaSchema: DynamicField[] = getMermaSchema();

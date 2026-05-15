@@ -298,10 +298,26 @@ describe('RecepcionStockService', () => {
       expect(result.movimientosGenerados).toBe(1);
       expect(result.pedidosActualizados[0].estadoNuevo).toBe(EstadoPedido.RECEPCIONADO);
     });
+  const defaultUbicacionCommitted = {
+    id: 'ubi-default-committed',
+    nombre: 'Almacén Principal',
+    codigo: 'ALMACEN_PRINCIPAL',
+  };
+
   const mockDataSource = {
     manager: {
       findOne: jest.fn(),
       find: jest.fn(),
+      create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
+        ...data,
+        id: defaultUbicacionCommitted.id,
+      })),
+      save: jest.fn((entity: Record<string, unknown>) =>
+        Promise.resolve({
+          ...entity,
+          id: defaultUbicacionCommitted.id,
+        })
+      ),
     },
     createQueryRunner: jest.fn(),
   };
@@ -324,6 +340,7 @@ describe('RecepcionStockService', () => {
     isTransactionActive: boolean;
     manager: {
       findOne: jest.Mock;
+      findOneByOrFail: jest.Mock;
       find: jest.Mock;
       create: jest.Mock;
       save: jest.Mock;
@@ -394,6 +411,9 @@ describe('RecepcionStockService', () => {
       isTransactionActive: true,
       manager: {
         findOne: jest.fn(),
+        findOneByOrFail: jest
+          .fn()
+          .mockResolvedValue(defaultUbicacionCommitted),
         find: jest.fn(),
         create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
           ...data,
@@ -933,10 +953,26 @@ const assignIds = <T>(value: T): T => {
 };
 
 describe('RecepcionStockService', () => {
+  const defaultUbicacionCommitted = {
+    id: 'ubi-default-committed',
+    nombre: 'Almacén Principal',
+    codigo: 'ALMACEN_PRINCIPAL',
+  };
+
   const mockDataSource = {
     manager: {
       findOne: jest.fn(),
       find: jest.fn(),
+      create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
+        ...data,
+        id: defaultUbicacionCommitted.id,
+      })),
+      save: jest.fn((entity: Record<string, unknown>) =>
+        Promise.resolve({
+          ...entity,
+          id: defaultUbicacionCommitted.id,
+        })
+      ),
     },
     createQueryRunner: jest.fn(),
   };
@@ -967,6 +1003,7 @@ describe('RecepcionStockService', () => {
     isTransactionActive: boolean;
     manager: {
       findOne: jest.Mock;
+      findOneByOrFail: jest.Mock;
       find: jest.Mock;
       create: jest.Mock;
       save: jest.Mock;
@@ -987,6 +1024,7 @@ describe('RecepcionStockService', () => {
       isTransactionActive: true,
       manager: {
         findOne: jest.fn(),
+        findOneByOrFail: jest.fn().mockResolvedValue(defaultUbicacionCommitted),
         find: jest.fn(),
         create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
           ...data,

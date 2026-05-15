@@ -55,5 +55,5 @@ El componente delega la búsqueda de pasos al motor central. Para que una págin
 ---
 
 ## Documentos Relacionados
-- [InteractiveTour.md](file:///Users/alexisruiz/SmartEconomat/docs/frontend/componentes/InteractiveTour.md) (Motor del sistema)
-- [LearningModeToggle.md](file:///Users/alexisruiz/SmartEconomat/docs/frontend/componentes/LearningModeToggle.md) (Interruptor de Tips)
+- [InteractiveTour.md](./InteractiveTour.md) (Motor del sistema)
+- [LearningModeToggle.md](./LearningModeToggle.md) (Interruptor de Tips)

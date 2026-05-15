@@ -4,14 +4,29 @@ const PURCHASE_BATCH_SERIE_INICIAL = 100000;
 const PURCHASE_BATCH_NUMERO_SEQUENCE = 'purchase_batch_numero_global_seq';
 const PURCHASE_BATCH_NUMERO_LOCK_KEY = 98432158;
 
-async function reserveNextPurchaseBatchNumeroWithSequence(
-  manager: Pick<EntityManager, 'query'>
-): Promise<string> {
+async function withPurchaseBatchAdvisoryLock<T>(
+  manager: Pick<EntityManager, 'query'>,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (process.env.NODE_ENV === 'test') {
+    return fn();
+  }
   await manager.query('SELECT pg_advisory_lock($1)', [
     PURCHASE_BATCH_NUMERO_LOCK_KEY,
   ]);
-
   try {
+    return await fn();
+  } finally {
+    await manager.query('SELECT pg_advisory_unlock($1)', [
+      PURCHASE_BATCH_NUMERO_LOCK_KEY,
+    ]);
+  }
+}
+
+async function reserveNextPurchaseBatchNumeroWithSequence(
+  manager: Pick<EntityManager, 'query'>
+): Promise<string> {
+  return withPurchaseBatchAdvisoryLock(manager, async () => {
     await manager.query(
       `CREATE SEQUENCE IF NOT EXISTS "${PURCHASE_BATCH_NUMERO_SEQUENCE}" START WITH ${PURCHASE_BATCH_SERIE_INICIAL}`
     );
@@ -40,11 +55,7 @@ async function reserveNextPurchaseBatchNumeroWithSequence(
     );
 
     return String(Math.max(nextValue, PURCHASE_BATCH_SERIE_INICIAL));
-  } finally {
-    await manager.query('SELECT pg_advisory_unlock($1)', [
-      PURCHASE_BATCH_NUMERO_LOCK_KEY,
-    ]);
-  }
+  });
 }
 
 /**

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usuarioService } from '../../src/services/usuarioService';
 import * as apiService from '../../src/services/api.service';
+import type { CrearUsuarioDTO } from '../../src/types/usuario';
 
-// Mock de baseFetch y parseApiResponse
 vi.mock('../../src/services/api.service', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../src/services/api.service')>();
@@ -13,23 +13,30 @@ vi.mock('../../src/services/api.service', async (importOriginal) => {
   };
 });
 
+const mockSuccessResponse = (
+  data: Record<string, unknown> = { id: '1', username: 'test' }
+) => {
+  vi.mocked(apiService.baseFetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+  } as Response);
+  vi.mocked(apiService.parseApiResponse).mockResolvedValue({
+    success: true,
+    data,
+    message: 'OK',
+  });
+};
+
 describe('usuarioService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  // ─── Tests existentes ────────────────────────────────────────────────────────
+
   describe('actualizarUsuario', () => {
     it('debe limpiar el payload de campos no permitidos antes de enviarlo al backend', async () => {
-      // Configuramos el mock de baseFetch para devolver una respuesta exitosa
-      const mockResponse = { ok: true, status: 200 } as Response;
-      const mockData = {
-        success: true,
-        data: { id: '1', username: 'test' },
-        message: 'Updated',
-      };
-
-      vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
-      vi.mocked(apiService.parseApiResponse).mockResolvedValue(mockData);
+      mockSuccessResponse();
 
       const updateData = {
         id: 'user-id-original',
@@ -50,47 +57,36 @@ describe('usuarioService', () => {
         updateData as Parameters<typeof usuarioService.actualizarUsuario>[1]
       );
 
-      // Verificamos que baseFetch fue llamado con el payload LIMPIO
-      expect(apiService.baseFetch).toHaveBeenCalledWith(
-        '/usuarios/user-id-original',
-        expect.objectContaining({
-          method: 'PATCH',
-          body: expect.stringContaining('"username":"new_username"'),
-        })
-      );
-
       const lastCall = vi.mocked(apiService.baseFetch).mock.calls[0];
       const body = JSON.parse(lastCall[1]?.body as string);
 
-      // Campos que DEBEN estar
       expect(body.username).toBe('new_username');
       expect(body.nombre).toBe('Nuevo Nombre');
       expect(body.email).toBe('test@example.com');
-      expect(body.rol).toBe('PROFESOR'); // Convertido a uppercase
-      expect(body.status).toBe('ACTIVE'); // 'Activo' -> 'ACTIVE'
+      expect(body.rol).toBe('PROFESOR');
+      expect(body.status).toBe('ACTIVE');
 
-      // Campos que NO deben estar (whitelist del backend)
       expect(body.id).toBeUndefined();
       expect(body.roleId).toBeUndefined();
       expect(body.roleName).toBeUndefined();
       expect(body.permisosAdicionalesIds).toBeUndefined();
       expect(body.permisosExcluidosIds).toBeUndefined();
-      expect(body.estado).toBeUndefined(); // Convertido a status
+      expect(body.estado).toBeUndefined();
       expect(body.fecha_registro).toBeUndefined();
     });
   });
 
   describe('crearUsuario', () => {
     it('debe mapear correctamente los campos para la creación', async () => {
-      const mockResponse = { ok: true, status: 201 } as Response;
-      const mockData = {
+      vi.mocked(apiService.baseFetch).mockResolvedValue({
+        ok: true,
+        status: 201,
+      } as Response);
+      vi.mocked(apiService.parseApiResponse).mockResolvedValue({
         success: true,
         data: { id: 'new-id', username: 'new' },
         message: '',
-      };
-
-      vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
-      vi.mocked(apiService.parseApiResponse).mockResolvedValue(mockData);
+      });
 
       const newData = {
         username: 'new_user',
@@ -110,7 +106,169 @@ describe('usuarioService', () => {
       expect(body.username).toBe('new_user');
       expect(body.rol).toBe('ALUMNO');
       expect(body.status).toBe('INACTIVE');
-      expect(body.password).toBeDefined(); // Contraseña temporal por defecto
+    });
+  });
+
+  // ─── Tests de seguridad: contraseñas ─────────────────────────────────────────
+
+  describe('crearUsuario - sin contraseña por defecto hardcodeada', () => {
+    it('no debe incluir Temp1234! en el payload cuando no se provee contraseña', async () => {
+      vi.mocked(apiService.baseFetch).mockResolvedValue({
+        ok: true,
+        status: 201,
+      } as Response);
+      vi.mocked(apiService.parseApiResponse).mockResolvedValue({
+        success: true,
+        data: { id: 'new-id', username: 'new' },
+        message: '',
+      });
+
+      await usuarioService.crearUsuario({
+        username: 'usuario_test',
+        email: 'usuario_test@test.local',
+        rol: 'ALUMNO',
+        estado: 'Activo',
+      });
+
+      const lastCall = vi.mocked(apiService.baseFetch).mock.calls[0];
+      const body = JSON.parse(lastCall[1]?.body as string);
+
+      expect(body.password).not.toBe('Temp1234!');
+    });
+
+    it('no debe incluir ninguna contraseña por defecto cuando el campo no se provee', async () => {
+      vi.mocked(apiService.baseFetch).mockResolvedValue({
+        ok: true,
+        status: 201,
+      } as Response);
+      vi.mocked(apiService.parseApiResponse).mockResolvedValue({
+        success: true,
+        data: { id: 'new-id', username: 'new' },
+        message: '',
+      });
+
+      await usuarioService.crearUsuario({
+        username: 'usuario_test',
+        email: 'usuario_test@test.local',
+        rol: 'ALUMNO',
+        estado: 'Activo',
+      });
+
+      const lastCall = vi.mocked(apiService.baseFetch).mock.calls[0];
+      const body = JSON.parse(lastCall[1]?.body as string);
+
+      expect(body.password).toBeUndefined();
+    });
+
+    it('sí debe incluir la contraseña explícita cuando el usuario la provee', async () => {
+      vi.mocked(apiService.baseFetch).mockResolvedValue({
+        ok: true,
+        status: 201,
+      } as Response);
+      vi.mocked(apiService.parseApiResponse).mockResolvedValue({
+        success: true,
+        data: { id: 'new-id', username: 'new' },
+        message: '',
+      });
+
+      const payload = {
+        username: 'usuario_test',
+        email: 'usuario_test@test.local',
+        rol: 'ALUMNO',
+        estado: 'Activo',
+        password: 'MiPassword@99',
+      };
+      await usuarioService.crearUsuario(payload as unknown as CrearUsuarioDTO);
+
+      const lastCall = vi.mocked(apiService.baseFetch).mock.calls[0];
+      const body = JSON.parse(lastCall[1]?.body as string);
+
+      expect(body.password).toBe('MiPassword@99');
+    });
+  });
+
+  describe('resetPassword - generación segura de contraseñas', () => {
+    it('debe usar crypto.getRandomValues en lugar de Math.random', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const cryptoSpy = vi.spyOn(crypto, 'getRandomValues');
+
+      await usuarioService.resetPassword('user-1');
+
+      expect(cryptoSpy).toHaveBeenCalled();
+    });
+
+    it('no debe llamar a Math.random durante la generación de contraseña', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const mathRandomSpy = vi.spyOn(Math, 'random');
+
+      await usuarioService.resetPassword('user-1');
+
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+    });
+
+    it('la contraseña generada debe tener al menos 10 caracteres', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const result = await usuarioService.resetPassword('user-1');
+
+      expect(result.data.length).toBeGreaterThanOrEqual(10);
+    });
+
+    it('la contraseña generada debe cumplir complejidad mínima (mayúscula, minúscula, número, símbolo)', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const result = await usuarioService.resetPassword('user-1');
+      const password = result.data;
+
+      expect(/[a-z]/.test(password)).toBe(true);
+      expect(/[A-Z]/.test(password)).toBe(true);
+      expect(/[0-9]/.test(password)).toBe(true);
+      expect(/[!@#$%^&*]/.test(password)).toBe(true);
+    });
+
+    it('debe generar contraseñas distintas en llamadas sucesivas', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const r1 = await usuarioService.resetPassword('user-1');
+
+      vi.clearAllMocks();
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const r2 = await usuarioService.resetPassword('user-1');
+
+      expect(r1.data).not.toBe(r2.data);
+    });
+
+    it('no debe generar Temp1234! como resultado posible', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      const passwords = await Promise.all(
+        Array.from({ length: 20 }, () => {
+          vi.clearAllMocks();
+          mockSuccessResponse({ id: '1', username: 'test' });
+          return usuarioService.resetPassword('user-1').then((r) => r.data);
+        })
+      );
+
+      expect(passwords.every((p) => p !== 'Temp1234!')).toBe(true);
+    });
+
+    it('debe enviar la contraseña generada al endpoint correcto', async () => {
+      mockSuccessResponse({ id: '1', username: 'test' });
+
+      await usuarioService.resetPassword('user-42');
+
+      expect(apiService.baseFetch).toHaveBeenCalledWith(
+        '/usuarios/user-42/password',
+        expect.objectContaining({ method: 'PATCH' })
+      );
+
+      const lastCall = vi.mocked(apiService.baseFetch).mock.calls[0];
+      const body = JSON.parse(lastCall[1]?.body as string);
+      expect(typeof body.password).toBe('string');
+      expect(body.password.length).toBeGreaterThanOrEqual(10);
     });
   });
 });

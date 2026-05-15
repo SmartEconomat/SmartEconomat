@@ -283,8 +283,13 @@ async function upsertSeedUserViaRepository(params: {
 
   const adminLikeRole =
     params.role === rolUsuario.ADMIN || params.role === rolUsuario.SUPER_ADMIN;
+  const seedingHttpMassive =
+    (process.env.IS_SEEDING || '').trim().toLowerCase() === 'true';
+  /** Durante `npm run seed`, alinear hash con `resolveMassiveSeedFixedAdminCredentials` aunque el login HTTP previo usara otra contraseña (p. ej. candidatos por defecto). */
   const shouldOverwritePassword =
-    !adminLikeRole || parseSeedBootstrapOverwriteExistingAdminPassword();
+    !adminLikeRole ||
+    parseSeedBootstrapOverwriteExistingAdminPassword() ||
+    (adminLikeRole && seedingHttpMassive);
 
   existing.username = params.username;
   existing.email = params.email;
@@ -888,7 +893,7 @@ export async function warmCollections(context: SeedContext): Promise<void> {
     { path: '/productos?limit=50&page=1', method: 'GET' },
     { path: '/producto-proveedor/search?limit=50&offset=0', method: 'GET' },
     { path: '/historial-precio?order=DESC', method: 'GET' },
-    { path: '/ubicacion?limit=50&page=1', method: 'GET' },
+    { path: '/ubicaciones?limit=50&page=1', method: 'GET' },
     { path: '/inventario?limit=50&page=1', method: 'GET' },
     { path: '/pedidos?limit=50&page=1', method: 'GET' },
     { path: '/pedido-usuarios?limit=50&page=1', method: 'GET' },

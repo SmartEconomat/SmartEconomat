@@ -32,7 +32,9 @@ import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { isSherlockElevatedRole } from '../../sherlock-auth/utils/access.utils';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { PedidoUsuarioStateMachine } from '../state/pedido-usuario.state-machine';
+import { PedidoStateMachine } from '../state/pedido.state-machine';
 import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
+import { calculatePedidoFechaEntrega } from '../utils/calculate-pedido-fecha-entrega.util';
 
 type PendingAggregateLine = {
   productoProveedorId: string;
@@ -84,17 +86,36 @@ export class PedidoUsuarioService {
         userId
       );
 
-      await queryRunner.commitTransaction();
-      const created = await this.findOne(pedidoUsuario.id);
+      const createdForAudit = await queryRunner.manager.findOne(PedidoUsuario, {
+        where: { id: pedidoUsuario.id },
+        relations: [
+          'usuario',
+          'lineas',
+          'lineas.productoProveedor',
+          'lineas.productoProveedor.producto',
+          'lineas.productoProveedor.proveedor',
+          'pedidos',
+          'pedidos.batch',
+          'pedidos.proveedor',
+          'pedidos.pedidoProductos',
+          'pedidos.pedidoProductos.productoProveedor',
+          'pedidos.pedidoProductos.productoProveedor.producto',
+          'pedidos.pedidoProductos.productoProveedor.proveedor',
+        ],
+      });
+
       await this.movimientoHelper.trackAction({
         userId,
         entidad: 'PedidoUsuario',
-        entidadId: created.id,
+        entidadId: pedidoUsuario.id,
         accion: AccionMovimiento.CREATE,
-        descripcion: `Creación de pedido de usuario ${created.id}`,
-        after: created,
+        descripcion: `Creación de pedido de usuario ${pedidoUsuario.id}`,
+        after: createdForAudit ?? pedidoUsuario,
+        manager: queryRunner.manager,
       });
-      return created;
+
+      await queryRunner.commitTransaction();
+      return this.findOne(pedidoUsuario.id);
     } catch (error: any) {
       if (queryRunner.isTransactionActive) {
         await queryRunner.rollbackTransaction();
@@ -342,20 +363,23 @@ export class PedidoUsuarioService {
       }
 
       if (childLineIds.length > 0) {
-        await queryRunner.manager.delete(PedidoProducto, {
+        await queryRunner.manager.softDelete(PedidoProducto, {
           id: In(childLineIds),
         });
       }
       if (childPedidoIds.length > 0) {
-        await queryRunner.manager.delete(Pedido, { id: In(childPedidoIds) });
+        await queryRunner.manager.softDelete(Pedido, {
+          id: In(childPedidoIds),
+        });
       }
       if ((existing.lineas || []).length > 0) {
-        await queryRunner.manager.delete(PedidoUsuarioLinea, {
+        await queryRunner.manager.softDelete(PedidoUsuarioLinea, {
           pedidoUsuarioId: existing.id,
         });
       }
 
-      const nuevaFechaEntrega = this.calculateFechaEntrega();
+      const nuevaFechaEntrega =
+        dto.fechaEntrega != null ? dto.fechaEntrega : existing.fechaEntrega;
       existing.observaciones = dto.observaciones;
       existing.fechaEntrega = nuevaFechaEntrega;
       existing.modifiedBy = userId || existing.modifiedBy || existing.usuarioId;
@@ -458,7 +482,7 @@ export class PedidoUsuarioService {
     const after = await this.changePendingAggregateStatus(
       id,
       (pedido) => {
-        pedido.estado = EstadoPedido.CANCELADO;
+        PedidoStateMachine.applyTransition(pedido, EstadoPedido.CANCELADO);
         pedido.motivoCancelacion = motivo;
       },
       false,
@@ -497,7 +521,10 @@ export class PedidoUsuarioService {
             'Solo se pueden restaurar los pedidos que estén en estado cancelado.'
           );
         }
-        pedido.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+        PedidoStateMachine.applyTransition(
+          pedido,
+          EstadoPedido.PENDIENTE_DE_APROBACION
+        );
         pedido.motivoCancelacion = undefined;
       },
       true,
@@ -734,7 +761,7 @@ export class PedidoUsuarioService {
     const pedidoUsuario = manager.create(PedidoUsuario, {
       usuarioId: userId,
       observaciones: dto.observaciones,
-      fechaEntrega: this.calculateFechaEntrega(),
+      fechaEntrega: calculatePedidoFechaEntrega(this.configService),
       estado: EstadoPedidoUsuario.PENDIENTE,
       costeTotal: 0,
       modifiedBy: userId,
@@ -844,7 +871,7 @@ export class PedidoUsuarioService {
         createPedidoDto,
         userId,
         EstadoPedido.PENDIENTE_DE_APROBACION,
-        () => this.calculateFechaEntrega()
+        () => calculatePedidoFechaEntrega(this.configService)
       );
 
       built.pedido.numeroGlobal =
@@ -898,6 +925,12 @@ export class PedidoUsuarioService {
     const pedidos = pedidoUsuario.pedidos || [];
 
     if (pedidos.length === 0) {
+      if (
+        pedidoUsuario.estado === EstadoPedidoUsuario.CONSOLIDADO ||
+        pedidoUsuario.estado === EstadoPedidoUsuario.APROBADO
+      ) {
+        return pedidoUsuario.estado;
+      }
       return EstadoPedidoUsuario.PENDIENTE;
     }
 
@@ -1010,16 +1043,5 @@ export class PedidoUsuarioService {
         line.hasLinkedMovements = referencedLineIds.has(line.id);
       });
     });
-  }
-
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  private calculateFechaEntrega(baseDate = new Date()): Date {
-    const hours = this.configService.get<number>(
-      'PEDIDO_FECHA_ENTREGA_HOURS',
-      48
-    );
-    return new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
   }
 }

@@ -48,6 +48,11 @@ export const BACKEND_ALLERGENS = [
 /** Alias público (BackendAlergeno) para simplificar payloads o props en smart-economat-frontend (SPA). */
 export type BackendAlergeno = (typeof BACKEND_ALLERGENS)[number];
 
+const UNIDADES_MEDIDA_VALIDAS = new Set<UnidadMedida>(
+  Object.values(UnidadMedida)
+);
+const ALERGENOS_BACKEND_VALIDOS = new Set<BackendAlergeno>(BACKEND_ALLERGENS);
+
 /**
  * Expone "normalizeUnidadMedida" en smart-economat-frontend (SPA).
  * @undefined {string | null | undefined} value - Entrada efectiva esperada por el contrato.
@@ -57,7 +62,11 @@ export function normalizeUnidadMedida(
   value?: string | null
 ): UnidadMedida | undefined {
   if (!value) return undefined;
-  return value.toUpperCase() as UnidadMedida;
+
+  const normalized = value.toUpperCase();
+  return UNIDADES_MEDIDA_VALIDAS.has(normalized as UnidadMedida)
+    ? (normalized as UnidadMedida)
+    : undefined;
 }
 
 /**
@@ -69,12 +78,16 @@ export function normalizeAlergeno(
   value?: string | null
 ): BackendAlergeno | undefined {
   if (!value) return undefined;
-  return value.toUpperCase() as BackendAlergeno;
+
+  const normalized = value.toUpperCase();
+  return ALERGENOS_BACKEND_VALIDOS.has(normalized as BackendAlergeno)
+    ? (normalized as BackendAlergeno)
+    : undefined;
 }
 
 /** Contrato de tipos público (ProductoAlergeno). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoAlergeno {
-  id_producto: string;
+  productoId: string;
   alergeno: string;
 }
 
@@ -113,7 +126,7 @@ export interface Producto {
   fechaCaducidad?: string;
   proveedores?: ProductoProveedor[];
   pmp?: number;
-  /** false: fuera del catálogo sin soft-delete; se lista en «Eliminados». */
+  /** false: inactivo lógico sin soft-delete; no aparece en «Eliminados» si deletedAt es null. */
   activo?: boolean;
   deletedAt?: string | null;
   createdAt: string;

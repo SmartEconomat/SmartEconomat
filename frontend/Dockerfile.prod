@@ -12,7 +12,8 @@
 #   npm ci --prefer-offline
 #   npm run build
 # ============================================================================
-FROM nginx:alpine
+# ECR Public evita fallos TLS intermitentes del CDN R2 de Docker Hub en algunos entornos (proxy/inspección SSL).
+FROM public.ecr.aws/docker/library/nginx:alpine
 
 ARG BUILD_DATE=unknown
 ARG VCS_REF=unknown

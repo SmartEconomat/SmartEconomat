@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -53,6 +53,9 @@ import { useTranslation } from 'react-i18next';
 import { getEnumLabel } from '../i18n/enumPresentation';
 import i18n from '../i18n';
 import PortionInput from '../components/ui/PortionInput';
+import { usePermission } from '../store/auth.hooks';
+import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
+import { generateIdempotencyKey } from '../utils/idempotency';
 
 const formatAmount = (value?: number): string =>
   formatLocalizedNumber(value ?? 0, 3);
@@ -227,6 +230,10 @@ const Preparaciones: React.FC = () => {
   const [mermaLoadError, setMermaLoadError] = useState<string | null>(null);
   const [isLoadingMermaDetalle, setIsLoadingMermaDetalle] = useState(false);
   const [isSubmittingMerma, setIsSubmittingMerma] = useState(false);
+  const mermaIdempotencyKeyRef = useRef<string | null>(null);
+  const loadRequestRef = useRef(0);
+  const canConsume = usePermission(PERMISSIONS.recetas.cocinar);
+  const canReportMerma = usePermission(PERMISSIONS.merma.crear);
 
   const {
     searchTerm,
@@ -245,24 +252,54 @@ const Preparaciones: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const requestId = loadRequestRef.current + 1;
+    loadRequestRef.current = requestId;
+
     setIsLoading(true);
     setError(null);
     try {
-      const estado = activeTab === 0 ? 'sin_consumo' : 'consumido';
-      const response = await fetchProducciones(
-        queryParams.page,
-        queryParams.limit,
-        estado
-      );
+      const estado = activeTab === 0 ? 'disponible' : 'agotado';
+      const response = await fetchProducciones({
+        page:
+          typeof queryParams.page === 'number'
+            ? queryParams.page
+            : Number(queryParams.page) || 1,
+        limit:
+          typeof queryParams.limit === 'number'
+            ? queryParams.limit
+            : Number(queryParams.limit) || 10,
+        estado,
+        sortBy:
+          typeof queryParams.sortBy === 'string'
+            ? queryParams.sortBy
+            : undefined,
+        order:
+          typeof queryParams.order === 'string' ? queryParams.order : undefined,
+        searchTerm:
+          typeof queryParams.searchTerm === 'string'
+            ? queryParams.searchTerm
+            : undefined,
+      });
+
+      if (requestId !== loadRequestRef.current) {
+        return;
+      }
+
       setData(response.data);
       syncPaginationFromResponse(response);
     } catch (err: unknown) {
+      if (requestId !== loadRequestRef.current) {
+        return;
+      }
+
       syncPaginationFromResponse({ total: 0, data: [] });
       setError(
         err instanceof Error ? err.message : t('preparaciones.errors.cargar')
       );
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [queryParams, activeTab, syncPaginationFromResponse, t]);
 
@@ -441,6 +478,7 @@ const Preparaciones: React.FC = () => {
       await consumirPorciones(consumingId, {
         tipo: consumeMode,
         valor: currentValue,
+        idempotencyKey: generateIdempotencyKey(),
       });
       toast.success(t('preparaciones.consume.ok'));
       setConsumingId(null);
@@ -477,6 +515,7 @@ const Preparaciones: React.FC = () => {
 
   const openMermaDialog = useCallback(
     async (lote: ProduccionLote) => {
+      mermaIdempotencyKeyRef.current = generateIdempotencyKey();
       setMermaLote(lote);
       resetMermaForm();
 
@@ -554,6 +593,7 @@ const Preparaciones: React.FC = () => {
         cantidad: mermaCantidad,
         motivo: mermaMotivo,
         notas: mermaNotas.trim() || undefined,
+        idempotencyKey: mermaIdempotencyKeyRef.current ?? undefined,
       });
 
       toast.success(t('preparaciones.merma.ok'));
@@ -586,7 +626,7 @@ const Preparaciones: React.FC = () => {
       render: (row) => row.receta?.nombre ?? '—',
       sortable: true,
       sortType: 'string',
-      sortKey: 'recetaId',
+      sortKey: 'recetaNombre',
     },
     {
       id: 'cantidadProducida',
@@ -606,7 +646,7 @@ const Preparaciones: React.FC = () => {
       render: (row) => row.usuario?.nombre ?? '—',
       sortable: true,
       sortType: 'string',
-      sortKey: 'usuarioId',
+      sortKey: 'usuarioNombre',
       hideOnMobile: true,
     },
     ...(activeTab === 1
@@ -654,7 +694,7 @@ const Preparaciones: React.FC = () => {
 
   const renderActions = (row: ProduccionLote) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      {activeTab === 0 && row.estado === 'disponible' && (
+      {activeTab === 0 && canConsume && row.estado === 'disponible' && (
         <Tooltip title={t('preparaciones.actions.consumir')}>
           <IconButton
             color="success"
@@ -675,7 +715,7 @@ const Preparaciones: React.FC = () => {
           </IconButton>
         </Tooltip>
       )}
-      {activeTab === 0 && row.estado === 'disponible' && (
+      {activeTab === 0 && canReportMerma && row.estado === 'disponible' && (
         <Tooltip title={t('preparaciones.actions.reportarMerma')}>
           <IconButton
             color="warning"

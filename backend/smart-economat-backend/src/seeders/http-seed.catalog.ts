@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { SeedContext } from './seed-context';
 import { INCIDENCIA_ESTADOS, SEED_GLOBAL_CONFIG } from './massive.config';
 import {
@@ -101,7 +102,7 @@ const LIST_ENDPOINTS_WITH_PAGE = new Set([
   '/usuarios',
   '/proveedor',
   '/productos',
-  '/ubicacion',
+  '/ubicaciones',
   '/inventario',
   '/pedido-usuarios',
   '/pedidos',
@@ -318,7 +319,7 @@ async function usuariosTask(context: SeedContext): Promise<void> {
     );
   }
 
-  await saveListIds(context, '/ubicacion', 'ubicacionIds');
+  await saveListIds(context, '/ubicaciones', 'ubicacionIds');
 
   try {
     await safe('crear slot fijo profesor', () =>
@@ -734,7 +735,7 @@ async function ubicacionTask(context: SeedContext): Promise<void> {
   const volumeMultiplier = getVolumeMultiplier(context);
   const current = (await saveListIds(
     context,
-    '/ubicacion',
+    '/ubicaciones',
     'ubicacionIds'
   )) as SeedUbicacionEntity[];
   const existingNames = new Set(
@@ -750,7 +751,7 @@ async function ubicacionTask(context: SeedContext): Promise<void> {
     }
 
     const created = await safe(`crear ubicacion ${nombre}`, () =>
-      context.postJson<SeedEntity>('/ubicacion', {
+      context.postJson<SeedEntity>('/ubicaciones', {
         nombre,
         descripcion: `Ubicacion automatica ${i}`,
         activo: true,
@@ -760,16 +761,16 @@ async function ubicacionTask(context: SeedContext): Promise<void> {
     pushId(context, 'ubicacionIds', getEntityId(created));
   }
 
-  await saveListIds(context, '/ubicacion', 'ubicacionIds');
+  await saveListIds(context, '/ubicaciones', 'ubicacionIds');
 
   const ubiIds = context.getState<string[]>('ubicacionIds') || [];
   if (ubiIds.length > 0) {
     const uid = ubiIds[0];
     await safe(`get ubicacion ${uid}`, () =>
-      context.getJson(`/ubicacion/${uid}`)
+      context.getJson(`/ubicaciones/${uid}`)
     );
     await safe(`delete ubicacion ${uid}`, () =>
-      context.deleteJson(`/ubicacion/${uid}`)
+      context.deleteJson(`/ubicaciones/${uid}`)
     );
   }
 }
@@ -781,7 +782,7 @@ async function inventarioTask(context: SeedContext): Promise<void> {
     '/producto-proveedor/search',
     'productoProveedorIds'
   );
-  await saveListIds(context, '/ubicacion', 'ubicacionIds');
+  await saveListIds(context, '/ubicaciones', 'ubicacionIds');
 
   const productoProveedorIds =
     context.getState<string[]>('productoProveedorIds') || [];
@@ -1001,7 +1002,7 @@ async function recepcionTask(context: SeedContext): Promise<void> {
   await saveListIds(context, '/recepciones', 'recepcionIds');
   for (let i = 0; i < 5 * volumeMultiplier; i++) {
     await safe(`recepcion-draft ${i}`, () =>
-      context.postJson('/recepcion/draft', {
+      context.postJson('/recepciones/draft', {
         payload: {
           nombre: `Borrador Recepcion ${i}`,
           nota: pickDeterministic(
@@ -1022,9 +1023,11 @@ async function recepcionTask(context: SeedContext): Promise<void> {
     'productoProveedorIds'
   );
 
-  await safe('get recepcion draft', () => context.getJson('/recepcion/draft'));
+  await safe('get recepcion draft', () =>
+    context.getJson('/recepciones/draft')
+  );
   await safe('delete recepcion draft', () =>
-    context.deleteJson('/recepcion/draft')
+    context.deleteJson('/recepciones/draft')
   );
 
   const recIds = context.getState<string[]>('recepcionIds') || [];
@@ -1564,9 +1567,16 @@ async function produccionTask(context: SeedContext): Promise<void> {
   await safe('validar produccion', () =>
     context.postJson('/produccion/validar', { items: [] })
   );
-  await safe('ejecutar produccion', () =>
-    context.postJson('/produccion/ejecutar', {})
-  );
+  const recetaIds = context.getState<string[]>('recetaIds') || [];
+  if (recetaIds.length > 0) {
+    await safe('ejecutar produccion', () =>
+      context.postJson('/produccion/ejecutar', {
+        recetaId: recetaIds[0],
+        cantidadProducida: 1.5,
+        idempotencyKey: randomUUID(),
+      })
+    );
+  }
 
   await saveListIds(context, '/produccion', 'produccionLoteIds');
   const lotIds = context.getState<string[]>('produccionLoteIds') || [];
@@ -1583,6 +1593,7 @@ async function produccionTask(context: SeedContext): Promise<void> {
         context.patchJson(`/produccion/lote/${lid}/consumir`, {
           tipo: 'raciones',
           valor,
+          idempotencyKey: randomUUID(),
         })
       );
     }

@@ -136,7 +136,7 @@ export class CreateMovimientoDto {
     ),
   })
   @IsOptional()
-  datosAntes?: any;
+  datosAntes?: Record<string, unknown>;
 
   @IsObject({
     message: i18nValidationMessage(
@@ -144,5 +144,5 @@ export class CreateMovimientoDto {
     ),
   })
   @IsOptional()
-  datosDespues?: any;
+  datosDespues?: Record<string, unknown>;
 }

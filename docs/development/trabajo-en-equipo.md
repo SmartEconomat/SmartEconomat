@@ -34,7 +34,7 @@ src/
 │   ├── constants/             # Constantes de mensajes de error
 │   ├── transformers/          # TrimStringTransformer
 │   └── utils/                 # EAN-13 y utilidades
-├── modules/                   # 20 módulos de negocio
+├── modules/                   # 26 módulos de negocio
 │   └── <modulo>/
 │       ├── controller/        # Controladores HTTP + Swagger
 │       ├── service/           # Lógica de negocio
@@ -47,7 +47,7 @@ src/
 └── migrations/                # Migraciones de base de datos
 ```
 
-> Para más detalle, consulta [Estructura del Backend](../architecture/backend-structure.md) y [Convenciones de Código](convenciones.md).
+> Para más detalle, consulta [Arquitectura backend](../architecture/backend.md) y [Convenciones de código](convenciones.md).
 
 ---
 
@@ -56,7 +56,7 @@ src/
 | Carpeta / Archivo | Descripción |
 |--------------------|-------------|
 | **main.ts** | Punto de entrada. Configura pipes globales, Swagger, filtros de excepciones y prefijo `/api/v1`. |
-| **app.module.ts** | Módulo raíz que importa los 20 módulos de negocio, configuración y TypeORM. |
+| **app.module.ts** | Módulo raíz que importa los módulos de negocio, configuración y TypeORM (ver `app.module.ts` para el recuento actual). |
 | **config/** | Configuración de base de datos (con detección de Docker), TypeORM CLI e i18n. |
 | **common/** | Elementos compartidos por todos los módulos: |
 | ├── **dto/** | DTOs base: PaginationQueryDto, PaginatedResponseDto. |

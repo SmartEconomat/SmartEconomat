@@ -3,7 +3,13 @@ import {
   ProductosQueryParams,
   HistorialPrecio,
 } from './producto.types';
-import { baseFetch, ApiResponse, PaginatedData } from './api.service';
+import {
+  baseFetch,
+  ApiError,
+  ApiResponse,
+  extractApiMessage,
+  PaginatedData,
+} from './api.service';
 
 const PRODUCTOS_CACHE_TTL_MS = 15000;
 const PRODUCTOS_BY_ID_CACHE_TTL_MS = 30000;
@@ -167,8 +173,18 @@ async function requestProductoById(id: string): Promise<Producto | null> {
 
   const requestPromise = baseFetch(`/productos/${normalizedId}`)
     .then(async (response) => {
-      if (!response.ok) {
+      if (response.status === 404) {
         return null;
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new ApiError(
+          extractApiMessage(payload) ||
+            `Error al obtener producto: ${response.status}`,
+          response.status,
+          payload
+        );
       }
 
       const body = (await response.json()) as ApiResponse<Producto>;

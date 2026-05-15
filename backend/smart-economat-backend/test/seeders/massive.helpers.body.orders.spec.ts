@@ -314,7 +314,7 @@ describe('massive.helpers.body.orders', () => {
     );
   });
 
-  it('fecha-entrega body is empty to match backend dto contract', () => {
+  it('fecha-entrega body includes fechaEntrega aligned with seed contract', () => {
     const context = createContext({});
 
     const body = buildBodyOrdersAndReception(
@@ -329,7 +329,9 @@ describe('massive.helpers.body.orders', () => {
       })
     );
 
-    expect(body).toEqual({});
+    expect(body).toEqual({
+      fechaEntrega: '2026-01-19T08:00:00.000Z',
+    });
   });
 
   it('recepciones body uses fixed fecha and albaran by iteration', () => {

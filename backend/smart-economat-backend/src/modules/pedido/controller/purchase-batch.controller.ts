@@ -9,8 +9,8 @@ import {
   HttpStatus,
   UseGuards,
   Request,
-  Logger,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { PurchaseBatchService } from '../service/purchase-batch.service';
 import {
   CreatePurchaseBatchDto,
@@ -33,13 +33,18 @@ import { CreateMissingStockBatchDto } from '../dto/create-missing-stock-batch.dt
 import { GeneratePedidoFromRecetasDto } from '../dto/generate-pedido-from-recetas.dto';
 import { RecetaToPedidoService } from '../service/receta-to-pedido.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
+import { PurchaseBatch } from '../purchase-batch.entity/purchase-batch.entity';
 
 type PurchaseBatchRequest = {
   user: { id: string };
-  url: string;
 };
 
 /** Clase pública (PurchaseBatchController). Paquete: smart-economat-backend (Nest). */
+@ApiTags('purchase-batches')
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('purchase-batches')
 export class PurchaseBatchController {
@@ -112,13 +117,15 @@ export class PurchaseBatchController {
   }
 
   /**
-   * Expone "findAll" en smart-economat-backend (Nest).
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/pedido/purchase-batch.entity/purchase-batch.entity").PurchaseBatch[]>} Datos efectivos después de ejecutar la operación.
+   * Lista paginada de lotes de compra.
    */
   @Get()
   @RequirePermissions(PERMISSIONS.pedidos.listar)
-  findAll() {
-    return this.batchService.findAll();
+  findAll(
+    @SortableFields(SORTABLE_FIELDS.purchaseBatches)
+    query: PaginationQueryDto
+  ): Promise<PaginatedResponseDto<PurchaseBatch>> {
+    return this.batchService.findAllPaginated(query);
   }
 
   /**
@@ -238,35 +245,16 @@ export class PurchaseBatchController {
   async generatePdf(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Query() query: RecepcionReportePdfDto,
-    @Res() res: Response,
-    @Request() req: PurchaseBatchRequest
+    @Res() res: Response
   ) {
-    const logger = new Logger('PurchaseBatchController');
-    logger.debug(`generatePdf: RAW URL=${req.url}`);
-    logger.debug(`generatePdf: Initial Query=${JSON.stringify(query)}`);
-
-    const url = new URL(String(req.url), 'http://localhost');
-    const qIncluir = url.searchParams.get('incluirCancelados');
-    const qPagina = url.searchParams.get('paginaPorProveedor');
-
-    if (qIncluir !== null) {
-      query.incluirCancelados = qIncluir === 'true';
-    }
-    if (qPagina !== null) {
-      query.paginaPorProveedor = qPagina === 'true';
-    }
-
-    logger.debug(
-      `generatePdf: Final Query after fallback=${JSON.stringify(query)}`
-    );
+    query.batchId = id;
+    query.tipo = TipoReportePdf.PEDIDO;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="lote-${id.slice(0, 8)}.pdf"`
     );
-    query.batchId = id;
-    query.tipo = TipoReportePdf.PEDIDO;
     await this.pdfReportService.generateReport(query, res);
   }
 }

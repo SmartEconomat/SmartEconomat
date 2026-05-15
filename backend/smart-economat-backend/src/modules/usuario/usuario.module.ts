@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Usuario } from './usuario.entity/usuario.entity';
 import { UsuarioController } from './controller/usuario.controller';
+import { UsuarioPerfilController } from './controller/usuario-perfil.controller';
 import { UsuarioService } from './service/usuario.service';
 import { UsuarioRepository } from './repository/usuario.repository';
 import { SherlockAuthModule } from '../sherlock-auth/module/sherlock-auth.module';
@@ -24,7 +25,7 @@ import { UsuarioUbicacion } from './usuario-ubicacion.entity/usuario-ubicacion.e
     SherlockAuthModule,
     MovimientoModule,
   ],
-  controllers: [UsuarioController],
+  controllers: [UsuarioPerfilController, UsuarioController],
   providers: [UsuarioService, UsuarioRepository],
   exports: [UsuarioService, TypeOrmModule],
 })

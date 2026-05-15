@@ -63,3 +63,33 @@ Fecha: 2026-04-26
 - Duplicados criticos eliminados (env) y despliegue consolidado en un unico documento.
 - README profesional y orientado a uso real.
 - Informe de auditoria y riesgos incluido.
+
+---
+
+## 8) Revisión mayor 2026-05-15 (estructura y saneamiento)
+
+**Alcance:** segunda pasada enterprise sobre `docs/` (navegación, enlaces rotos, duplicados obvios y artefactos no mantenibles).
+
+### Cambios realizados
+
+- Reescritura de [README.md](./README.md) como **hub** con mapa mental, taxonomía de carpetas, convenciones terminológicas y enlaces a `.github/ai/`.
+- Nueva ruta de onboarding: [onboarding/README.md](./onboarding/README.md).
+- Fusión del contenido operativo de `CENTRALIZACION_CONFIGURACION.md` en [configuration.md](./configuration.md) (dominios y URLs derivadas); fichero duplicado eliminado.
+- Corrección de [architecture/index.md](./architecture/index.md): enlaces rotos sustituidos por rutas reales y nota explícita sobre `docs/archive/obsolete/`.
+- Corrección de enlaces `file://` absolutos en documentación de componentes (`TutorialHelper`, `LearningModeToggle`, `InteractiveTour`) y rutas de ejemplo en `PROMO_UI_KIT.md`.
+- [frontend/README.md](./frontend/README.md): enlace canónico a arquitectura frontend (`architecture/frontend.md`).
+- `ElectronInstaller/README.md`: runbooks apuntan a `ElectronInstaller/docs/...` (rutas válidas desde la raíz del repo).
+- Eliminación de `docs/.pptx-export/` (artefactos y dependencias de exportación a diapositivas, no mantenidos como documentación).
+- Eliminación de `docs/por_corregir/` (nota histórica sustituida por enlaces en seguridad/variables).
+- Traslado de memoria/presentación HTML a [archive/tfg-artifacts/](./archive/tfg-artifacts/) con README explicativo.
+- Traslado de `I18N_REPORT.md` a [audits/i18n-implementacion-informe-2026-04-14.md](./audits/i18n-implementacion-informe-2026-04-14.md); índice actualizado en [audits/README.md](./audits/README.md).
+
+### Riesgos residuales
+
+- Subárboles muy grandes (`frontend/componentes`, `frontend/accesibilidad`, `planning/`) siguen dependiendo de mantenimiento incremental; el hub prioriza rutas estables y runbooks raíz.
+- CI valida enlaces relativos en `docs/` vía `scripts/check-docs-internal-links.mjs` (no comprueba URLs HTTP ni el árbol `docs/archive/`).
+
+### Fase 2 (convención de rutas y CI)
+
+- Renombrado `docs/guia_usuario/` → `docs/guia-usuario/`; `guia_usuario.html` → `guia-usuario.html`.
+- Workflow [`.github/workflows/docs-internal-links.yml`](../.github/workflows/docs-internal-links.yml) en push/PR cuando cambian `docs/` o el script de verificación.

@@ -7,6 +7,7 @@ import {
   Get,
   Param,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
@@ -22,6 +23,7 @@ import { PERMISSIONS } from '../../../common/constants/permissions.constants';
  * Controlador REST para alumno.
  */
 @Controller('alumnos')
+@UseGuards(JwtAuthGuard, PermisosGuard)
 export class AlumnoController {
   /**
    * Inicializa la instancia con los colaboradores necesarios para el flujo.
@@ -40,6 +42,7 @@ export class AlumnoController {
    */
   @Post('register')
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   async register(@Body() dto: RegisterAlumnoDto) {
     return this.alumnoService.register(dto);
   }
@@ -54,6 +57,7 @@ export class AlumnoController {
    */
   @Get('slots/:codigoClase')
   @Public()
+  @Throttle({ read: { limit: 30, ttl: 60000 } })
   async getSlotByCode(@Param('codigoClase') codigoClase: string) {
     return this.alumnoService.getSlotByCode(codigoClase);
   }
@@ -67,6 +71,7 @@ export class AlumnoController {
    */
   @Get('aulas')
   @Public()
+  @Throttle({ read: { limit: 60, ttl: 60000 } })
   async getAulas() {
     return this.alumnoService.getAulas();
   }
@@ -81,6 +86,7 @@ export class AlumnoController {
    */
   @Get('aulas/:aula/clases')
   @Public()
+  @Throttle({ read: { limit: 60, ttl: 60000 } })
   async getClasesByAula(@Param('aula') aula: string) {
     return this.alumnoService.getClasesByAula(aula);
   }
@@ -96,6 +102,7 @@ export class AlumnoController {
    */
   @Get('aulas/:aula/clases/:clase/profesores')
   @Public()
+  @Throttle({ read: { limit: 60, ttl: 60000 } })
   async getProfesoresBySlot(
     @Param('aula') aula: string,
     @Param('clase') clase: string
@@ -114,7 +121,6 @@ export class AlumnoController {
    * @undefined {Promise<{ message: string; }>} Datos efectivos después de ejecutar la operación.
    */
   @Patch('change-profesor')
-  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermissions(PERMISSIONS.alumno.cambiar_profesor)
   async changeProfesor(
     @GetUser('id') userId: string,

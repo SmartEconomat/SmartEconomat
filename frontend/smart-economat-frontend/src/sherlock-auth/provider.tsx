@@ -130,16 +130,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = React.useCallback(async () => {
     refreshPromiseRef.current = null;
+    setUser(null);
+    dispatch(resetPermissions());
     clearPersistedSessionArtifacts();
     setIsSessionVerified(false);
     setIsAuthResolved(true);
     localStorage.removeItem('sm_has_session');
     try {
       await authService.logout();
-    } catch {
-      return;
+    } catch (error) {
+      console.warn('Server logout failed — local session cleared:', error);
     }
-  }, []);
+  }, [dispatch]);
 
   const login = React.useCallback(
     async (userData: User) => {

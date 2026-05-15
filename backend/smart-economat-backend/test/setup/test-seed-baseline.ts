@@ -14,6 +14,11 @@ import {
   UserLanguage,
 } from '../../src/modules/usuario/enums/usuario.enums';
 import { ALL_PERMISSION_CODES } from '../../src/common/constants/permissions.constants';
+import { PEDIDO_PROVEEDOR_SERIE_INICIAL } from '../../src/modules/pedido/utils/pedido-numero.util';
+import { PURCHASE_BATCH_SERIE_INICIAL } from '../../src/modules/pedido/utils/purchase-batch-numero.util';
+
+const PEDIDO_NUMERO_SEQUENCE_NAME = 'pedido_numero_global_seq';
+const PURCHASE_BATCH_NUMERO_SEQUENCE_NAME = 'purchase_batch_numero_global_seq';
 
 const SEED_PASSWORD = 'SmartEconomat2026!';
 const SOURCE_ROOT = join(__dirname, '../../src');
@@ -482,5 +487,14 @@ export async function seedTestBaseline(dataSource: DataSource): Promise<void> {
     slotRepo,
     alumnoRepo,
     roleMap
+  );
+
+  /** Evita que los e2e ejecuten CREATE SEQUENCE y alteren el esquema de pg-mem
+   * de forma incompatible con restore(seedSnapshot). */
+  await dataSource.query(
+    `CREATE SEQUENCE IF NOT EXISTS "${PEDIDO_NUMERO_SEQUENCE_NAME}" START WITH ${PEDIDO_PROVEEDOR_SERIE_INICIAL}`
+  );
+  await dataSource.query(
+    `CREATE SEQUENCE IF NOT EXISTS "${PURCHASE_BATCH_NUMERO_SEQUENCE_NAME}" START WITH ${PURCHASE_BATCH_SERIE_INICIAL}`
   );
 }

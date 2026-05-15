@@ -1,5 +1,15 @@
-import React from 'react';
-import { Box, TextField, MenuItem } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Box,
+  TextField,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  IconButton,
+} from '@mui/material';
 import DateRangeFilter from '../../components/ui/DateRangeFilter';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import StatusChip from '../../components/ui/StatusChip';
@@ -12,6 +22,7 @@ import {
   type FilterValue,
 } from '../../hooks/useDataTable';
 import { getEnumLabel } from '../../i18n/enumPresentation';
+import StickyNote2OutlinedIcon from '@mui/icons-material/StickyNote2Outlined';
 
 interface MermasTableProps {
   data: Merma[];
@@ -45,6 +56,13 @@ const MermasTable: React.FC<MermasTableProps> = ({
   onFilter,
 }) => {
   const { t } = useTranslation();
+  const [notasDialogOpen, setNotasDialogOpen] = useState(false);
+  const [notasDialogText, setNotasDialogText] = useState('');
+
+  const openNotasDialog = (text: string) => {
+    setNotasDialogText(text);
+    setNotasDialogOpen(true);
+  };
 
   const columns: Column<Merma>[] = [
     {
@@ -88,6 +106,28 @@ const MermasTable: React.FC<MermasTableProps> = ({
       sortType: 'string',
       sortKey: 'usuarioId',
     },
+    {
+      id: 'notas',
+      label: t('merma.tabla.columnaNotas'),
+      align: 'center',
+      width: 56,
+      render: (row) =>
+        row.notas ? (
+          <IconButton
+            size="small"
+            color="info"
+            aria-label={t('merma.tabla.verNotas')}
+            onClick={(e) => {
+              e.stopPropagation();
+              openNotasDialog(row.notas ?? '');
+            }}
+          >
+            <StickyNote2OutlinedIcon fontSize="small" aria-hidden />
+          </IconButton>
+        ) : (
+          <Box component="span" sx={{ display: 'inline-block', width: 40 }} />
+        ),
+    },
   ];
 
   return (
@@ -129,22 +169,34 @@ const MermasTable: React.FC<MermasTableProps> = ({
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onRowClick={(row) => {
-          if (row.notas) {
-            alert(`${t('merma.tabla.notas')}: ${row.notas}`);
-          }
-        }}
         onSort={onSort}
         sortConfig={sortConfig}
         filters={tableFilters}
         onFilter={onFilter}
-        getRowAriaLabel={(row) =>
-          row.notas
-            ? t('merma.tabla.ariaVerNotas', { producto: row.producto?.nombre })
-            : ''
-        }
         pagination={pagination}
       />
+
+      <Dialog
+        open={notasDialogOpen}
+        onClose={() => setNotasDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="mermas-notas-dialog-title"
+      >
+        <DialogTitle id="mermas-notas-dialog-title">
+          {t('merma.tabla.notas')}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {notasDialogText}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNotasDialogOpen(false)} variant="contained">
+            {t('comun.cerrar')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -10,6 +10,7 @@ import {
   CreateMermaProduccionPayload,
   MermaStats,
   MermasQueryParams,
+  MermaStatsQueryParams,
 } from './merma.types';
 
 /**
@@ -34,13 +35,34 @@ function buildMermasQueryString(params?: MermasQueryParams): string {
   return qs ? `?${qs}` : '';
 }
 
+function buildMermaStatsQueryString(params?: MermaStatsQueryParams): string {
+  const search = new URLSearchParams();
+  if (params?.startDate) {
+    search.set('startDate', params.startDate);
+  }
+  if (params?.endDate) {
+    search.set('endDate', params.endDate);
+  }
+  if (params?.motivo) {
+    search.set('motivo', params.motivo);
+  }
+
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
+}
+
+function isPaginatedMermaPayload(
+  value: unknown
+): value is PaginatedData<Merma> {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const v = value as Record<string, unknown>;
+  return Array.isArray(v.data) && typeof v.total === 'number';
+}
+
 /**
  * Recupera una lista paginada de registros de merma.
- */
-/**
- * Expone "fetchMermas" en smart-economat-frontend (SPA).
- * @undefined {MermasQueryParams | undefined} params - Entrada efectiva esperada por el contrato.
- * @undefined {Promise<PaginatedData<Merma>>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchMermas(
   params?: MermasQueryParams
@@ -52,26 +74,15 @@ export async function fetchMermas(
   }
   const body = (await response.json()) as ApiResponse<PaginatedData<Merma>>;
 
-  if (Array.isArray(body.data)) {
-    return {
-      data: body.data,
-      total: body.data.length,
-      page: params?.page ?? 1,
-      limit: params?.limit ?? 10,
-      totalPages: 1,
-    };
+  if (isPaginatedMermaPayload(body.data)) {
+    return body.data;
   }
 
-  return body.data || { data: [], total: 0, page: 1, limit: 10, totalPages: 1 };
+  throw new Error('Respuesta de mermas con formato inesperado');
 }
 
 /**
  * Registra una nueva pérdida o merma de stock manual.
- */
-/**
- * Crea recursos nuevos en base a las reglas de negocio.
- * @undefined {CreateMermaPayload} payload - Entrada efectiva esperada por el contrato.
- * @undefined {Promise<Merma>} Datos efectivos después de ejecutar la operación.
  */
 export async function createMerma(payload: CreateMermaPayload): Promise<Merma> {
   const response = await baseFetch('/merma', {
@@ -91,11 +102,6 @@ export async function createMerma(payload: CreateMermaPayload): Promise<Merma> {
 
 /**
  * Registra una merma derivada de un proceso de producción en cocina.
- */
-/**
- * Crea recursos nuevos en base a las reglas de negocio.
- * @undefined {CreateMermaProduccionPayload} payload - Entrada efectiva esperada por el contrato.
- * @undefined {Promise<Merma>} Datos efectivos después de ejecutar la operación.
  */
 export async function createMermaProduccion(
   payload: CreateMermaProduccionPayload
@@ -121,12 +127,11 @@ export async function createMermaProduccion(
 /**
  * Obtiene las estadísticas agregadas de mermas (totales, por motivo, etc.).
  */
-/**
- * Expone "fetchMermaStats" en smart-economat-frontend (SPA).
- * @undefined {Promise<MermaStats>} Datos efectivos después de ejecutar la operación.
- */
-export async function fetchMermaStats(): Promise<MermaStats> {
-  const response = await baseFetch('/merma/stats');
+export async function fetchMermaStats(
+  params?: MermaStatsQueryParams
+): Promise<MermaStats> {
+  const query = buildMermaStatsQueryString(params);
+  const response = await baseFetch(`/merma/stats${query}`);
   if (!response.ok) {
     throw new Error(
       `Error al obtener estadísticas de merma: ${response.status}`

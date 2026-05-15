@@ -20,7 +20,7 @@ export interface ProduccionLote {
   };
   porcionesProducidas: number;
   porcionesRestantes: number;
-  estado: 'disponible' | 'agotado';
+  estado: 'disponible' | 'agotado' | 'cancelado';
 }
 
 /** Contrato de tipos público (ValidarStockDto). Contexto: smart-economat-frontend (SPA). */
@@ -63,6 +63,7 @@ export interface EjecutarProduccionDto {
   cantidadAProducir?: number;
   fechaCaducidadManual?: string;
   ubicacionDestinoId?: string;
+  idempotencyKey: string;
 }
 
 /** Alias público (TipoConsumoProduccion) para simplificar payloads o props en smart-economat-frontend (SPA). */
@@ -72,6 +73,7 @@ export type TipoConsumoProduccion = 'raciones' | 'cantidad';
 export interface ConsumirProduccionDto {
   tipo: TipoConsumoProduccion;
   valor: number;
+  idempotencyKey: string;
 }
 
 /**
@@ -122,8 +124,11 @@ export async function fetchProducciones(
   if (params.limit) query.append('limit', params.limit.toString());
   if (params.estado) query.append('status', params.estado);
   if (params.sortBy) query.append('sortBy', params.sortBy);
-  if (params.order) query.append('order', params.order);
-  if (params.searchTerm) query.append('searchTerm', params.searchTerm);
+  if (params.order) query.append('order', params.order.toUpperCase());
+  if (params.searchTerm) {
+    query.append('searchTerm', params.searchTerm);
+    query.append('search', params.searchTerm);
+  }
 
   const response = await baseFetch(`/produccion?${query.toString()}`);
   const body = await parseApiResponse<PaginatedData<ProduccionLote>>(

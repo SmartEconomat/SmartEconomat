@@ -12,6 +12,7 @@ import { ProcessRunnerService } from "./process-runner.service";
 
 interface SelfHealOptions {
   onLog: (message: string) => void;
+  allowElevation?: boolean;
 }
 
 interface HostsUpdatePlan {
@@ -40,9 +41,11 @@ export class LocalDomainSelfHealService {
   private readonly certificateService = new CertificateService();
   private readonly firewallFacade = new FirewallFacadeService();
   private readonly onLog: (message: string) => void;
+  private readonly allowElevation: boolean;
 
   constructor(options: SelfHealOptions) {
     this.onLog = options.onLog;
+    this.allowElevation = options.allowElevation ?? true;
   }
 
   async run(): Promise<void> {
@@ -57,6 +60,11 @@ export class LocalDomainSelfHealService {
     this.onLog(
       `[SELF-HEAL] Iniciando autorreparación de dominio local en ${process.platform}...`,
     );
+    if (!this.allowElevation) {
+      this.onLog(
+        "[SELF-HEAL] Modo sin elevacion activo: no se solicitaran prompts UAC en segundo plano.",
+      );
+    }
 
     const envPath = path.join(runtimePath, ".env.prod");
     const envContent = await fs.readFile(envPath, "utf8");
@@ -157,6 +165,7 @@ export class LocalDomainSelfHealService {
       host: LOCAL_DOMAIN,
       runtimePath,
       verificationMode: "preHostMapping",
+      allowElevation: this.allowElevation,
       log: (line) => this.onLog(`[SELF-HEAL] ${line}`),
     });
     this.onLog(`[SELF-HEAL] ${result.userMessage}`);
@@ -350,6 +359,15 @@ export class LocalDomainSelfHealService {
     backupPath: string;
     tempHostsPath: string;
   }): Promise<{ ok: boolean; cancelled: boolean; detail: string }> {
+    if (!this.allowElevation) {
+      return {
+        ok: false,
+        cancelled: true,
+        detail:
+          "La elevacion esta deshabilitada para autorreparacion en segundo plano.",
+      };
+    }
+
     if (process.platform === "win32") {
       return this.applyHostsWithElevationWindows(context);
     }

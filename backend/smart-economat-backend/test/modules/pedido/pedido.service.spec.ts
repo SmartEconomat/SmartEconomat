@@ -175,7 +175,8 @@ describe('PedidoService', () => {
       'user-1',
       'pedido-1',
       expect.any(String),
-      expect.objectContaining({ id: 'pedido-1' })
+      expect.objectContaining({ id: 'pedido-1' }),
+      queryRunner.manager
     );
     expect(result).toEqual({
       id: 'pedido-1',
@@ -348,18 +349,10 @@ describe('PedidoService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('updateFechaEntrega es idempotente y devuelve el pedido', async () => {
-    mockPedidoRepository.findOneWithRelations.mockResolvedValue({
-      id: 'pedido-8',
-      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
-    });
-
+  it('updateFechaEntrega rechaza DTO sin fecha de entrega', async () => {
     await expect(
       service.updateFechaEntrega('pedido-8', {} as any)
-    ).resolves.toEqual({
-      id: 'pedido-8',
-      estado: EstadoPedido.PENDIENTE_DE_APROBACION,
-    });
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('remove rechaza pedidos que no estén pendientes o cancelados', async () => {

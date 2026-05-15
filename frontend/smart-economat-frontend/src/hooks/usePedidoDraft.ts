@@ -10,14 +10,11 @@ import {
  * Hook para la gestión persistente de borradores de pedidos a proveedores.
  * Permite guardar y recuperar el estado de un pedido en construcción para evitar pérdida de datos.
  */
-/**
- * Expone "usePedidoDraft" en smart-economat-frontend (SPA).
- * @undefined {{ draft: PedidoDraftRecord | null; loadDraft: () => Promise<void>; saveDraft: (payload: Record<string, unknown>) => Promise<void>; discardDraft: () => Promise<void>; flushSave: (payload: Record<string, unknown>) => Promise<void>; isLoadingDraft: boolean; }} Datos efectivos después de ejecutar la operación.
- */
 export function usePedidoDraft() {
   const [draft, _setDraft] = useState<PedidoDraftRecord | null>(null);
   const draftRef = useRef<PedidoDraftRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [saveError, setSaveError] = useState<Error | null>(null);
   const lastSavedPayloadRef = useRef<string>('');
 
   const setDraft = useCallback((d: PedidoDraftRecord | null) => {
@@ -63,6 +60,10 @@ export function usePedidoDraft() {
         if (err?.status === 409 && err?.data?.draft) {
           setDraft(err.data.draft);
         } else {
+          const autosaveErr = new Error(
+            'Error al guardar borrador automáticamente'
+          );
+          setSaveError(autosaveErr);
           console.error('Error flushing pedido draft:', error);
         }
       }
@@ -93,6 +94,10 @@ export function usePedidoDraft() {
           if (err?.status === 409 && err?.data?.draft) {
             setDraft(err.data.draft);
           } else {
+            const autosaveErr = new Error(
+              'Error al guardar borrador automáticamente'
+            );
+            setSaveError(autosaveErr);
             console.error('Error saving pedido draft:', error);
           }
         }
@@ -108,13 +113,22 @@ export function usePedidoDraft() {
   }, []);
 
   const discardDraft = useCallback(async () => {
+    const previousDraft = draftRef.current;
+    const previousPayload = lastSavedPayloadRef.current;
+
+    setDraft(null);
+    lastSavedPayloadRef.current = '';
+
     try {
-      // Optimista: Limpiar local primero
-      setDraft(null);
-      lastSavedPayloadRef.current = '';
       await deletePedidoDraft();
     } catch (error) {
-      console.error('Error deleting pedido draft:', error);
+      setDraft(previousDraft);
+      lastSavedPayloadRef.current = previousPayload;
+      console.error(
+        'Error al descartar borrador — restaurando estado anterior:',
+        error
+      );
+      throw error;
     }
   }, [setDraft]);
 
@@ -125,5 +139,6 @@ export function usePedidoDraft() {
     discardDraft,
     flushSave,
     isLoadingDraft: isLoading,
+    saveError,
   };
 }

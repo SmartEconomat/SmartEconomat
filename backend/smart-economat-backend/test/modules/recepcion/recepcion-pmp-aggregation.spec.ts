@@ -20,6 +20,12 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
       actualizarPMP: jest.fn().mockResolvedValue(10),
     };
 
+    const defaultUbicacionCommitted = {
+      id: 'ubi-default-committed',
+      nombre: 'Almacén Principal',
+      codigo: 'ALMACEN_PRINCIPAL',
+    };
+
     queryRunner = {
       connect: jest.fn().mockResolvedValue(undefined),
       startTransaction: jest.fn().mockResolvedValue(undefined),
@@ -28,6 +34,7 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
       release: jest.fn().mockResolvedValue(undefined),
       manager: {
         findOne: jest.fn(),
+        findOneByOrFail: jest.fn().mockResolvedValue(defaultUbicacionCommitted),
         find: jest.fn().mockResolvedValue([]),
         create: jest.fn((_, data) => data),
         save: jest.fn((data) =>
@@ -40,6 +47,16 @@ describe('RecepcionStockService (PMP Aggregation)', () => {
       createQueryRunner: jest.fn().mockReturnValue(queryRunner),
       manager: {
         findOne: jest.fn(),
+        create: jest.fn((_entity: unknown, data: Record<string, unknown>) => ({
+          ...data,
+          id: defaultUbicacionCommitted.id,
+        })),
+        save: jest.fn((entity: Record<string, unknown>) =>
+          Promise.resolve({
+            ...entity,
+            id: defaultUbicacionCommitted.id,
+          })
+        ),
       },
     };
 

@@ -76,6 +76,23 @@ export class FirewallExecutorService {
       timedOut = true;
     }
 
+    if (context.allowElevation === false) {
+      return {
+        ok: false,
+        usedElevation,
+        usedFallbackNetsh,
+        timedOut,
+        steps,
+        errors: [
+          ...steps
+            .filter((step) => !step.ok)
+            .map((step) => step.stderr || step.message)
+            .filter((entry) => entry.length > 0),
+          "Firewall requiere elevacion y esta deshabilitada para este flujo.",
+        ],
+      };
+    }
+
     const fallbackResult = await this.runFallbackScript(context);
     steps.push(fallbackResult);
     usedFallbackNetsh = true;

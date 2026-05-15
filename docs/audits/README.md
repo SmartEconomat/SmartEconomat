@@ -33,6 +33,15 @@
 | [architecture-review.md](./architecture-review.md) | Revisión de arquitectura con diagrama Mermaid del sistema |
 | [security-report.md](./security-report.md) | Informe detallado de seguridad OWASP Top 10 |
 
+## Informes complementarios (no sustituyen a los runbooks de `docs/`)
+
+| Documento | Descripción |
+|---|---|
+| [i18n-implementacion-informe-2026-04-14.md](./i18n-implementacion-informe-2026-04-14.md) | Inventario de i18n y JSDoc en frontend/backend (instantánea abril 2026) |
+| [auditoria-tecnica-completa-productos-2026-05-13.md](./auditoria-tecnica-completa-productos-2026-05-13.md) | Auditoría de módulo productos |
+| [auditoria-tecnica-completa-recetas-2026-05-13.md](./auditoria-tecnica-completa-recetas-2026-05-13.md) | Auditoría de recetas/producción |
+| [auditoria-tecnica-completa-produccion-2026-05-14.md](./auditoria-tecnica-completa-produccion-2026-05-14.md) | Auditoría de endurecimiento / producción |
+
 ---
 
 ## Resumen de hallazgos

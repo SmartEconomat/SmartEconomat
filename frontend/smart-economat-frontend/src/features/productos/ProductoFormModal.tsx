@@ -17,6 +17,9 @@ import { usePermission } from '../../store/auth.hooks';
 import { PERMISSIONS } from '../../sherlock-auth/permissions.constants';
 import { useToast } from '../../store/toast.hooks';
 
+const PROVEEDORES_PAGE_SIZE = 50;
+const PROVEEDORES_MAX_PAGES = 40;
+
 // ── Base schema ────────────────────────────────────────────────────────
 
 // Estructura de campos para el formulario de producto
@@ -151,10 +154,31 @@ const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   const canGenerateEan13 = usePermission(PERMISSIONS.productos.generar_ean13);
   const toast = useToast();
 
-  const loadProveedores = useCallback(() => {
-    fetchProveedores(1, 100) // Aumentamos un poco el límite para asegurarnos de que el nuevo aparezca
-      .then((resp) => setProveedores(resp.data))
-      .catch(() => setProveedores([]));
+  const loadProveedores = useCallback(async () => {
+    try {
+      const providersById = new Map<string, Proveedor>();
+      let page = 1;
+      let totalPages = 1;
+
+      while (page <= totalPages && page <= PROVEEDORES_MAX_PAGES) {
+        const response = await fetchProveedores(page, PROVEEDORES_PAGE_SIZE);
+
+        response.data.forEach((proveedor) => {
+          providersById.set(proveedor.id, proveedor);
+        });
+
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
+      }
+
+      setProveedores(
+        Array.from(providersById.values()).sort((a, b) =>
+          a.nombre.localeCompare(b.nombre)
+        )
+      );
+    } catch {
+      setProveedores([]);
+    }
   }, []);
 
   useEffect(() => {

@@ -78,8 +78,7 @@ export class RecepcionController {
     @Body() dto: CreateRecepcionDto,
     @Req() req: { user: { id: string } }
   ): Promise<RecepcionResultadoDto> {
-    const userId = req.user.id;
-    dto.usuarioId = dto.usuarioId || userId;
+    dto.usuarioId = req.user.id;
     return this.recepcionStockService.procesarRecepcion(dto);
   }
 

@@ -13,7 +13,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
    - NODE_ENV=production
 2. Configura el archivo `.env.prod` con los valores de tu dominio y API.
 3. Si usas Docker, asegúrate de que docker-compose use las variables correctas y exponga los puertos necesarios.
-4. Consulta la guía [Centralización de configuración](../../wiki/CENTRALIZACION_CONFIGURACION.md) para más detalles.
+4. Consulta [Configuración (dominios, proxy y entornos)](../../docs/configuration.md) y el inventario de [variables de entorno](../../docs/environment-variables.md).
 
 In the project directory, you can run:
 

@@ -16,7 +16,6 @@ import {
 import { UserStatusEnum } from '../enums/user-status.enum';
 import { mapUserStatusBackendToEnum } from '../utils/usuario-status.utils';
 
-const DEFAULT_TEMP_PASSWORD = 'Temp1234!';
 const BACKEND_DEFAULT_PAGE_LIMIT = 20;
 const BACKEND_MAX_PAGE_LIMIT = 50;
 
@@ -56,10 +55,8 @@ const mapFrontendToBackend = (
     mapped.email = null;
   }
 
-  if (isUpdate) {
+  if (isUpdate || !mapped.password) {
     delete mapped.password;
-  } else if (!mapped.password) {
-    mapped.password = DEFAULT_TEMP_PASSWORD;
   }
 
   // Remove extra fields that are not in backend DTOs
@@ -360,27 +357,40 @@ export const usuarioService = {
   },
 
   async resetPassword(id: string | number): Promise<ApiResponse<string>> {
-    const characters =
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    const generateRandomPassword = () => {
-      let pass = '';
-      // Asegurar al menos uno de cada tipo para validación del backend
-      pass += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
-      pass += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
-      pass += '0123456789'[Math.floor(Math.random() * 10)];
-      pass += '!@#$%^&*'[Math.floor(Math.random() * 8)];
-
-      for (let i = 0; i < 6; i++) {
-        pass += characters[Math.floor(Math.random() * characters.length)];
-      }
-      // Barajar
-      return pass
-        .split('')
-        .sort(() => 0.5 - Math.random())
-        .join('');
+    const getSecureRandom = (max: number): number => {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0] % max;
     };
 
-    const randomPassword = generateRandomPassword();
+    const generateSecurePassword = (): string => {
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const digits = '0123456789';
+      const symbols = '!@#$%^&*';
+      const all = lowercase + uppercase + digits + symbols;
+
+      const required = [
+        lowercase[getSecureRandom(lowercase.length)],
+        uppercase[getSecureRandom(uppercase.length)],
+        digits[getSecureRandom(digits.length)],
+        symbols[getSecureRandom(symbols.length)],
+      ];
+
+      const extra = Array.from(
+        { length: 6 },
+        () => all[getSecureRandom(all.length)]
+      );
+
+      const chars = [...required, ...extra];
+      for (let i = chars.length - 1; i > 0; i--) {
+        const j = getSecureRandom(i + 1);
+        [chars[i], chars[j]] = [chars[j], chars[i]];
+      }
+      return chars.join('');
+    };
+
+    const randomPassword = generateSecurePassword();
 
     try {
       const response = await baseFetch(`/usuarios/${id}/password`, {

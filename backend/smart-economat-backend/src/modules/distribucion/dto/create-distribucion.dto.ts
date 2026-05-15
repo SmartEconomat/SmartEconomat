@@ -51,4 +51,9 @@ export class CreateDistribucionDto {
   @ValidateNested({ each: true })
   @Type(() => CreateDistribucionLineaDto)
   lineas!: CreateDistribucionLineaDto[];
+
+  /** Clave de idempotencia opcional (UUID). Previene doble distribución por doble clic o retry. */
+  @IsOptional()
+  @IsUUID()
+  idempotencyKey?: string;
 }

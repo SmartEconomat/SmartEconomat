@@ -71,7 +71,11 @@ test.describe('Recetas i18n enums', () => {
     }
 
     await expect(page.getByText('pdf.receta.dificultad')).toHaveCount(0);
-    await expect(page.locator('tbody').getByText('Dificultad')).toBeVisible();
+    await expect(
+      page.getByRole('columnheader', { name: /dificultad/i })
+    ).toBeVisible();
+    // Carrusel y tabla pueden repetir el nombre; comprobamos presencia sin strict mode.
+    await expect(page.getByText('Crema de Verduras').first()).toBeVisible();
   });
 
   test('exportación PDF dispara endpoint sin exponer keys en UI', async ({

@@ -45,12 +45,17 @@ describe('ProfesorService', () => {
 
   let service: ProfesorService;
 
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue('true'),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     service = new ProfesorService(
       mockProfesorRepo as any,
       mockSlotRepo as any,
-      mockDataSource as any
+      mockDataSource as any,
+      mockConfigService as any
     );
   });
 

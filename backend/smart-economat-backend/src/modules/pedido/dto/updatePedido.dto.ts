@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayNotEmpty,
   IsArray,
+  IsDate,
   IsOptional,
   IsString,
   IsUUID,
@@ -54,4 +55,16 @@ export class UpdatePedidoDto {
   @ValidateNested({ each: true })
   @Type(() => CreatePedidoLineDto)
   lineas?: CreatePedidoLineDto[];
+
+  @ApiPropertyOptional({
+    description: 'Fecha estimada de entrega',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_ENTREGA_DEBE_SER_UNA_FECHA_V'
+    ),
+  })
+  fechaEntrega?: Date;
 }

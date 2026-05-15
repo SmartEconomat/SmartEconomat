@@ -308,7 +308,7 @@ export function buildBodyOrdersAndReception(
     return {};
   }
 
-  if (resolvedPath === '/recepcion/draft') {
+  if (resolvedPath === '/recepciones/draft') {
     return {
       payload: {
         nombre: `Draft recepcion ${suffix}`,
@@ -432,7 +432,9 @@ export function buildBodyOrdersAndReception(
   }
 
   if (templatePath === '/pedidos/:id/fecha-entrega') {
-    return {};
+    return {
+      fechaEntrega: seedDate(14 + (iteration % 20)),
+    };
   }
 
   if (resolvedPath === '/purchase-batches/consolidate') {

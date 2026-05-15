@@ -68,6 +68,10 @@ import { deleteResource, resolveStoredFileUrl } from '../services/api.service';
 import { DownloadService } from '../services/download.service';
 import { HistorialPrecio } from '../services/producto.types';
 import { getProductoByBarcode } from '../services/producto.service';
+import {
+  fetchComparacionProveedores,
+  type ComparacionProveedorItem,
+} from '../services/productoProveedor.service';
 
 // Utilidad para construir query string de filtros actuales
 function buildExportQuery(filters: ProductFiltersState, searchTerm: string) {
@@ -162,7 +166,10 @@ const Productos: React.FC = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyProviderFilter, setHistoryProviderFilter] =
     useState<string>('all');
+  const [providerComparisonByRelationId, setProviderComparisonByRelationId] =
+    useState<Record<string, ComparacionProveedorItem>>({});
   const historySectionRef = useRef<HTMLDivElement | null>(null);
+  const loadDataRequestIdRef = useRef(0);
 
   const {
     searchTerm,
@@ -229,35 +236,46 @@ const Productos: React.FC = () => {
   const canCreate = usePermission(PERMISSIONS.productos.crear);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadDataRequestIdRef.current;
+
     setIsLoading(true);
     setError(null);
 
-    fetchProductos({
-      page: queryParams.page,
-      limit: queryParams.limit,
-      searchTerm: queryParams.searchTerm,
-      // Combinar filtros de chips con filtros de tabla
-      categorias: [
-        ...(filters.categorias || []),
-        ...(tableFilters.tipo ? [tableFilters.tipo] : []),
-      ],
-      sortBy: queryParams.sortBy,
-      order: queryParams.order,
-      soloEliminados: activeTab === 'deleted',
-    })
-      .then((productosData) => {
-        setData(productosData.data);
-        syncPaginationFromResponse(productosData);
-      })
-      .catch((err: unknown) => {
-        syncPaginationFromResponse({ total: 0, data: [] });
-        const message =
-          err instanceof Error
-            ? err.message
-            : t('productos.errors.errorCargar');
-        setError(message);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const productosData = await fetchProductos({
+        page: queryParams.page,
+        limit: queryParams.limit,
+        searchTerm: queryParams.searchTerm,
+        // Combinar filtros de chips con filtros de tabla
+        categorias: [
+          ...(filters.categorias || []),
+          ...(tableFilters.tipo ? [tableFilters.tipo] : []),
+        ],
+        sortBy: queryParams.sortBy,
+        order: queryParams.order,
+        soloEliminados: activeTab === 'deleted',
+      });
+
+      if (requestId !== loadDataRequestIdRef.current) {
+        return;
+      }
+
+      setData(productosData.data);
+      syncPaginationFromResponse(productosData);
+    } catch (err: unknown) {
+      if (requestId !== loadDataRequestIdRef.current) {
+        return;
+      }
+
+      syncPaginationFromResponse({ total: 0, data: [] });
+      const message =
+        err instanceof Error ? err.message : t('productos.errors.errorCargar');
+      setError(message);
+    } finally {
+      if (requestId === loadDataRequestIdRef.current) {
+        setIsLoading(false);
+      }
+    }
   }, [
     queryParams,
     filters.categorias,
@@ -301,7 +319,7 @@ const Productos: React.FC = () => {
 
   const handleSaveProduct = async (formData: ProductoFormValues) => {
     setIsSaving(true);
-    console.log('[DEBUG] Guardando producto:', formData);
+
     try {
       const payload = await buildProductoPayload(
         formData as Record<string, unknown>
@@ -309,13 +327,11 @@ const Productos: React.FC = () => {
       const category = formData.tipo;
 
       if (formData.id) {
-        console.log('[DEBUG] Actualizando producto con ID:', formData.id);
         await updateProducto(formData.id, payload);
         toast.success(t('productos.toast.actualizado'), undefined, {
           productCategory: category,
         });
       } else {
-        console.log('[DEBUG] Creando nuevo producto');
         await createProducto(payload);
         toast.success(t('productos.toast.creado'), undefined, {
           productCategory: category,
@@ -325,7 +341,6 @@ const Productos: React.FC = () => {
       await loadData();
       setProductToEdit(null);
     } catch (err: unknown) {
-      console.error('[DEBUG] Error al guardar producto:', err);
       const message =
         err instanceof Error ? err.message : t('productos.toast.errorGuardar');
       toast.error(message, undefined, {
@@ -344,7 +359,6 @@ const Productos: React.FC = () => {
       );
       await loadData();
     } catch (error) {
-      console.error('Error restaurando producto:', error);
       const message =
         error instanceof Error && error.message.trim().length > 0
           ? error.message
@@ -554,8 +568,8 @@ const Productos: React.FC = () => {
             providerId
           );
           setPriceHistory(history);
-        } catch (error) {
-          console.error('Error fetching price history:', error);
+        } catch {
+          setPriceHistory([]);
         } finally {
           setIsLoadingHistory(false);
         }
@@ -566,13 +580,54 @@ const Productos: React.FC = () => {
     }
   }, [productToView, historyProviderFilter]);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!productToView) {
+      setProviderComparisonByRelationId({});
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    const loadProviderComparison = async () => {
+      try {
+        const comparison = await fetchComparacionProveedores(productToView.id);
+
+        if (isCancelled) {
+          return;
+        }
+
+        const comparisonById = comparison.proveedores.reduce<
+          Record<string, ComparacionProveedorItem>
+        >((acc, item) => {
+          acc[item.productoProveedorId] = item;
+          return acc;
+        }, {});
+
+        setProviderComparisonByRelationId(comparisonById);
+      } catch {
+        if (!isCancelled) {
+          setProviderComparisonByRelationId({});
+        }
+      }
+    };
+
+    void loadProviderComparison();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [productToView]);
+
   const renderActions = (row: Producto) => (
     <Stack direction="row" spacing={1} justifyContent="center">
       {activeTab === 'active' && canEdit && (
         <Tooltip title={t('productos.actions.editar')}>
           <IconButton
             color="secondary"
-            onClick={() => {
+            onClick={(event) => {
+              event.stopPropagation();
               setProductToEdit(buildEditData(row));
             }}
             size="small"
@@ -586,7 +641,10 @@ const Productos: React.FC = () => {
         <Tooltip title={t('productos.actions.eliminar')}>
           <IconButton
             color="error"
-            onClick={() => setProductToDelete(row)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setProductToDelete(row);
+            }}
             size="small"
             aria-label={t('productos.actions.eliminar')}
           >
@@ -1052,11 +1110,33 @@ const Productos: React.FC = () => {
                         content: (
                           <Stack spacing={1.5}>
                             {proveedoresAsociados.map((pv, idx: number) => {
-                              const providerId = resolveProveedorId(pv);
+                              const comparison = pv.id
+                                ? providerComparisonByRelationId[pv.id]
+                                : undefined;
+                              const providerId =
+                                comparison?.proveedorId ??
+                                resolveProveedorId(pv);
                               const providerName =
+                                comparison?.proveedorNombre ??
                                 pv.proveedor?.nombre ??
                                 pv.nombre ??
                                 t('forms.productFallback', { index: idx + 1 });
+                              const isOptimal =
+                                comparison?.esOptimo ?? pv.esOptimo;
+                              const ahorroAbsolutoPct =
+                                comparison?.ahorroAbsolutoPct ??
+                                pv.ahorroAbsolutoPct;
+                              const precioUnitario =
+                                comparison?.precioUnitario ?? pv.precioUnitario;
+                              const mermaEsperada =
+                                comparison?.mermaEsperada ?? pv.mermaEsperada;
+                              const costeEfectivoUnitario =
+                                comparison?.costeEfectivoUnitario ??
+                                pv.costeEfectivoUnitario;
+                              const marcaProveedor =
+                                comparison?.marca ?? pv.marca;
+                              const codigoBarrasProveedor =
+                                comparison?.codigoBarras ?? pv.codigoBarras;
 
                               return (
                                 <Paper
@@ -1064,10 +1144,10 @@ const Productos: React.FC = () => {
                                   variant="outlined"
                                   sx={{
                                     p: 2,
-                                    borderColor: pv.esOptimo
+                                    borderColor: isOptimal
                                       ? 'success.main'
                                       : 'divider',
-                                    bgcolor: pv.esOptimo
+                                    bgcolor: isOptimal
                                       ? 'rgba(46, 125, 50, 0.06)'
                                       : 'transparent',
                                   }}
@@ -1091,14 +1171,14 @@ const Productos: React.FC = () => {
                                       spacing={1}
                                       alignItems="center"
                                     >
-                                      {pv.esOptimo && (
+                                      {isOptimal && (
                                         <Chip
                                           label={
-                                            pv.ahorroAbsolutoPct != null
+                                            ahorroAbsolutoPct != null
                                               ? t(
                                                   'productos.detail.mejorOpcionConAhorro',
                                                   {
-                                                    pct: pv.ahorroAbsolutoPct.toFixed(
+                                                    pct: ahorroAbsolutoPct.toFixed(
                                                       1
                                                     ),
                                                   }
@@ -1146,7 +1226,7 @@ const Productos: React.FC = () => {
                                       gap: 1.5,
                                     }}
                                   >
-                                    {pv.precioUnitario != null && (
+                                    {precioUnitario != null && (
                                       <Box>
                                         <Typography
                                           variant="caption"
@@ -1162,11 +1242,11 @@ const Productos: React.FC = () => {
                                           {t('productos.detail.precio')}
                                         </Typography>
                                         <Typography variant="body2">
-                                          {pv.precioUnitario.toFixed(2)} €
+                                          {precioUnitario.toFixed(2)} €
                                         </Typography>
                                       </Box>
                                     )}
-                                    {pv.mermaEsperada != null && (
+                                    {mermaEsperada != null && (
                                       <Box>
                                         <Typography
                                           variant="caption"
@@ -1182,11 +1262,11 @@ const Productos: React.FC = () => {
                                           {t('productos.detail.merma')}
                                         </Typography>
                                         <Typography variant="body2">
-                                          {pv.mermaEsperada.toFixed(1)} %
+                                          {mermaEsperada.toFixed(1)} %
                                         </Typography>
                                       </Box>
                                     )}
-                                    {pv.costeEfectivoUnitario != null && (
+                                    {costeEfectivoUnitario != null && (
                                       <Box>
                                         <Typography
                                           variant="caption"
@@ -1205,28 +1285,28 @@ const Productos: React.FC = () => {
                                           variant="body2"
                                           sx={{
                                             fontWeight: 700,
-                                            color: pv.esOptimo
+                                            color: isOptimal
                                               ? 'success.main'
                                               : 'text.primary',
                                           }}
                                         >
-                                          {pv.costeEfectivoUnitario.toFixed(2)}{' '}
-                                          €
+                                          {costeEfectivoUnitario.toFixed(2)} €
                                         </Typography>
                                       </Box>
                                     )}
                                   </Box>
-                                  {(pv.marca || pv.codigoBarras) && (
+                                  {(marcaProveedor ||
+                                    codigoBarrasProveedor) && (
                                     <Typography
                                       variant="caption"
                                       color="text.secondary"
                                       sx={{ mt: 1, display: 'block' }}
                                     >
                                       {[
-                                        pv.marca &&
-                                          `${t('proveedores.campoMarca')}: ${pv.marca}`,
-                                        pv.codigoBarras &&
-                                          `${t('productos.columns.codigoBarras')}: ${pv.codigoBarras}`,
+                                        marcaProveedor &&
+                                          `${t('proveedores.campoMarca')}: ${marcaProveedor}`,
+                                        codigoBarrasProveedor &&
+                                          `${t('productos.columns.codigoBarras')}: ${codigoBarrasProveedor}`,
                                       ]
                                         .filter(Boolean)
                                         .join(' · ')}

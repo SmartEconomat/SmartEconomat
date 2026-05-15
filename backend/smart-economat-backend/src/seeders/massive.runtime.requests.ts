@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { QueryFailedError } from 'typeorm';
 import { SeedContext, HttpSeedRequestError } from './seed-context';
 import AppDataSource from '../config/typeorm.config';
 import { Preparacion } from '../modules/preparacion/preparacion.entity/preparacion.entity';
@@ -41,6 +43,7 @@ import {
 } from './massive.runtime.deletables';
 import {
   adminRouteActorByIteration,
+  ensureCanonicalSeedCredentials,
   expectedStatusForAdminRouteRequest,
 } from './massive.runtime.actors';
 import {
@@ -54,6 +57,38 @@ import { seedDateIso } from './deterministic.seed-data';
 async function ensureRepositoryReady(): Promise<void> {
   if (!AppDataSource.isInitialized) {
     await AppDataSource.initialize();
+  }
+}
+
+/**
+ * Evita carrera al crear recepciones: dos transacciones pueden intentar insertar
+ * `ALMACEN_PRINCIPAL` y PostgreSQL devuelve UQ_ubicacion_codigo.
+ */
+async function ensureAlmacenPrincipalUbicacionExists(): Promise<void> {
+  await ensureRepositoryReady();
+  const repo = AppDataSource.getRepository(Ubicacion);
+  const byCodigo = await repo.findOne({
+    where: { codigo: 'ALMACEN_PRINCIPAL' },
+  });
+  if (byCodigo) {
+    return;
+  }
+  const byNombre = await repo.findOne({
+    where: { nombre: 'Almacén Principal' },
+  });
+  if (byNombre) {
+    return;
+  }
+  try {
+    await repo.save(
+      repo.create({
+        nombre: 'Almacén Principal',
+        codigo: 'ALMACEN_PRINCIPAL',
+        descripcion: 'Ubicación por defecto del economato',
+      })
+    );
+  } catch {
+    void 0;
   }
 }
 
@@ -922,8 +957,7 @@ async function bumpInventarioForRecetaIngredients(
   recetaId: string
 ): Promise<void> {
   await ensureRepositoryReady();
-  await AppDataSource.query(
-    `UPDATE inventario AS i
+  const sql = `UPDATE inventario AS i
      SET cantidad_actual = GREATEST(i.cantidad_actual::numeric, 500)
      FROM producto_proveedor AS pp
      WHERE pp.id = i.producto_proveedor_id
@@ -932,9 +966,26 @@ async function bumpInventarioForRecetaIngredients(
        AND pp.producto_id IN (
          SELECT ri.producto_id FROM receta_ingrediente ri
          WHERE ri.receta_id = $1::uuid AND ri.deleted_at IS NULL
-       )`,
-    [recetaId]
-  );
+       )`;
+  const maxAttempts = 6;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await AppDataSource.query(sql, [recetaId]);
+      return;
+    } catch (error) {
+      const isDeadlock =
+        error instanceof QueryFailedError &&
+        typeof error.driverError === 'object' &&
+        error.driverError !== null &&
+        (error.driverError as { code?: string }).code === '40P01';
+      if (!isDeadlock || attempt === maxAttempts - 1) {
+        throw error;
+      }
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, 60 * 2 ** attempt + Math.floor(Math.random() * 100))
+      );
+    }
+  }
 }
 
 async function ensureLoteWithSufficientPortions(
@@ -995,6 +1046,7 @@ async function ensureLoteWithSufficientPortions(
       const payload: Record<string, unknown> = {
         recetaId,
         cantidadProducida,
+        idempotencyKey: randomUUID(),
       };
       if (ubicacionId) {
         payload.ubicacionDestinoId = ubicacionId;
@@ -2091,6 +2143,8 @@ async function ensureDistribucionDisponibilidadBootstrap(
 
   const recepcionToken = chooseTokenForPath(context, '/recepciones', 'POST');
 
+  await ensureAlmacenPrincipalUbicacionExists();
+
   const recepcionResponse = await context.requestJson<unknown>('/recepciones', {
     method: 'POST',
     body: recepcionBody,
@@ -2271,7 +2325,7 @@ async function fetchObservedIncidenciaStates(
 ): Promise<Set<string>> {
   const observed = new Set<string>();
 
-  for (let page = 1; page <= 5; page++) {
+  for (let page = 1; page <= 25; page++) {
     const payload = await context.requestJson<unknown>(
       buildPaginatedListPath('/incidencias', page, 50),
       {
@@ -2466,6 +2520,7 @@ export async function ensureIncidenciaEstadosPostRun(
     (estado) => !observedBefore.has(estado)
   );
 
+  const verifiedDuringRun = new Set<string>();
   let cursor = 0;
   for (const estado of missingStates) {
     const incidenciaId = await ensureIncidenciaStateSample(
@@ -2485,13 +2540,23 @@ export async function ensureIncidenciaEstadosPostRun(
       );
     }
 
+    verifiedDuringRun.add(estado);
     cursor += 1;
   }
 
   const observedAfter = await fetchObservedIncidenciaStates(context, token);
-  const stillMissing = INCIDENCIA_ESTADOS.filter(
-    (estado) => !observedAfter.has(estado)
-  );
+  const stillMissing = INCIDENCIA_ESTADOS.filter((estado) => {
+    if (observedAfter.has(estado)) {
+      return false;
+    }
+    if (verifiedDuringRun.has(estado)) {
+      return false;
+    }
+    if (observedBefore.has(estado)) {
+      return false;
+    }
+    return true;
+  });
 
   if (stillMissing.length > 0) {
     throw new Error(
@@ -2558,19 +2623,37 @@ async function buildDistribucionCreateBody(
         pickStateValue(context, 'ubicacionIds', iteration, '');
 
       const destino = resolveDistribucionDestinoDesdeDisponible(candidato);
+      const allUbicacionIds = getStateArray(context, 'ubicacionIds').filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      );
       const fallbackUbicacionDestinoId =
-        getStateArray(context, 'ubicacionIds').find(
-          (ubicacionId) =>
-            typeof ubicacionId === 'string' &&
-            ubicacionId.length > 0 &&
-            ubicacionId !== ubicacionOrigenId
+        allUbicacionIds.find(
+          (ubicacionId) => ubicacionId !== ubicacionOrigenId
         ) ||
         pickStateValue(context, 'ubicacionIds', iteration + offset + 1, '');
-      const ubicacionDestinoId =
-        destino.ubicacionDestinoId || fallbackUbicacionDestinoId;
+
+      let ubicacionDestinoId =
+        destino.ubicacionDestinoId &&
+        destino.ubicacionDestinoId !== ubicacionOrigenId
+          ? destino.ubicacionDestinoId
+          : fallbackUbicacionDestinoId;
 
       if (!ubicacionDestinoId) {
         continue;
+      }
+
+      const effectiveOrigenId =
+        ubicacionOrigenId ||
+        context.getState<string>('seedDefaultUbicacionId') ||
+        '';
+      if (effectiveOrigenId && ubicacionDestinoId === effectiveOrigenId) {
+        const altDestino = allUbicacionIds.find(
+          (id) => id !== effectiveOrigenId
+        );
+        if (!altDestino) {
+          continue;
+        }
+        ubicacionDestinoId = altDestino;
       }
 
       return {
@@ -3053,6 +3136,14 @@ export async function executeEndpointRequest(
   let requestPayload: unknown;
 
   try {
+    if (
+      endpoint.method === 'POST' &&
+      resolvedPath === '/auth/login' &&
+      iteration === 0
+    ) {
+      await ensureCanonicalSeedCredentials(context);
+    }
+
     const requestPath =
       endpoint.method === 'GET'
         ? buildGetPath(context, resolvedPath, iteration)
@@ -3136,6 +3227,8 @@ export async function executeEndpointRequest(
     }
 
     if (endpoint.method === 'POST' && resolvedPath === '/recepciones') {
+      await ensureAlmacenPrincipalUbicacionExists();
+
       const pedidoEndpoint: Endpoint = {
         method: 'POST',
         path: '/pedidos',

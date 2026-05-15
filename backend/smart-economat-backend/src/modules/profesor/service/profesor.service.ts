@@ -2,9 +2,11 @@ import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { Profesor } from '../profesor.entity/profesor.entity';
@@ -31,13 +33,20 @@ export class ProfesorService {
     private readonly profesorRepo: Repository<Profesor>,
     @InjectRepository(AlumnoSlot)
     private readonly slotRepo: Repository<AlumnoSlot>,
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly configService: ConfigService
   ) {}
 
   /**
    * Documentación en español.
    */
   async register(dto: CreateProfesorDto) {
+    if (this.configService.get<string>('ALLOW_PUBLIC_REGISTER') !== 'true') {
+      throw new ForbiddenException(
+        I18nHelper.getError('PUBLIC_REGISTER_DISABLED')
+      );
+    }
+
     return this.dataSource.transaction(async (manager) => {
       const whereConditions: FindOptionsWhere<Usuario>[] = [
         { username: dto.username },

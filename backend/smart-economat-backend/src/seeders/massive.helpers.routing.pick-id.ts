@@ -58,7 +58,22 @@ export function pickIdForRoute(
         'seedAdminRouteTargetUserIds'
       );
       if (adminRouteTargetIds.length > 0) {
-        return adminRouteTargetIds[iteration % adminRouteTargetIds.length];
+        const picked =
+          adminRouteTargetIds[iteration % adminRouteTargetIds.length] || '';
+        if (picked) {
+          return picked;
+        }
+      }
+      const mutable = getStateArray(context, 'seedMutableUserIds').filter(
+        (id) => !protectedIds.includes(id)
+      );
+      if (mutable.length > 0) {
+        return mutable[iteration % mutable.length] || mutable[0] || '';
+      }
+      if (method === 'POST' && path.includes('force-reset')) {
+        throw new Error(
+          '[seed-massive] POST /admin/users/:id/force-reset sin seedAdminRouteTargetUserIds ni seedMutableUserIds utilizables (evitando usuarios protegidos)'
+        );
       }
       return pickFiltered('usuarioIds');
     }

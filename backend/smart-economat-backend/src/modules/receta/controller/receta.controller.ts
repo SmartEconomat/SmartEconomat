@@ -13,6 +13,7 @@ import {
   Res,
   Query,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
 import * as express from 'express';
@@ -34,17 +35,21 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
+import { RolesGuard } from '../../auth/guards/role.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { rolUsuario } from '../../usuario/enums/usuario.enums';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { RecetaListQueryDto } from '../dto/receta-list-query.dto';
 import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
+import type { Request } from 'express';
+
+const MAX_RECIPES_PDF_EXPORT = 50;
 
 /**
  * Controlador REST para receta.
  */
 @ApiTags('docs.TAG_RECETAS')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermisosGuard)
 @Controller('recetas')
 export class RecetaController {
   /**
@@ -174,9 +179,17 @@ export class RecetaController {
   @HttpCode(HttpStatus.OK)
   cocinar(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() cocinarRecetaDto: CocinarRecetaDto
+    @Body() cocinarRecetaDto: CocinarRecetaDto,
+    @Req() req: Request & { user?: { id?: string } }
   ): Promise<void> {
-    return this.recetaService.cocinar(id, cocinarRecetaDto);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException(
+        I18nHelper.getError('USER_NOT_AUTHENTICATED')
+      );
+    }
+
+    return this.recetaService.cocinar(id, cocinarRecetaDto, userId);
   }
 
   /**
@@ -228,6 +241,14 @@ export class RecetaController {
     if (idArray.length === 0) {
       throw new BadRequestException(
         I18nHelper.getError('MIN_ONE_RECIPE_ID_REQUIRED')
+      );
+    }
+
+    if (idArray.length > MAX_RECIPES_PDF_EXPORT) {
+      throw new BadRequestException(
+        I18nHelper.getError('MAX_RECIPES_PDF_EXPORT_EXCEEDED', {
+          max: MAX_RECIPES_PDF_EXPORT,
+        })
       );
     }
 
@@ -286,6 +307,7 @@ export class RecetaController {
    * @undefined {Promise<Receta>} Datos efectivos después de ejecutar la operación.
    */
   @Post(':id/recalcular-costes')
+  @RequirePermissions(PERMISSIONS.recetas.editar)
   @Roles(rolUsuario.ADMIN, rolUsuario.PROFESOR)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

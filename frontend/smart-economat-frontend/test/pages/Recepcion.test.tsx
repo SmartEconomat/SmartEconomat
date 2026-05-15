@@ -119,6 +119,27 @@ vi.mock('react-redux', () => ({
 
 vi.mock('../../src/store/auth.hooks', () => ({
   usePermission: vi.fn().mockReturnValue(true),
+  useAuth: vi.fn(() => ({
+    isAuthResolved: true,
+    isSessionVerified: true,
+    isAuthenticated: true,
+    user: {
+      id: 'test-user',
+      name: 'Test',
+      email: 'test@example.com',
+      rol: 'ADMIN',
+      permisos: [],
+      username: 'test',
+      idioma: 'es' as const,
+      ubicaciones: [],
+      preferences: {},
+    },
+    login: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+    updateUser: vi.fn(),
+    changeLanguage: vi.fn(),
+  })),
 }));
 
 describe('Recepcion component', () => {

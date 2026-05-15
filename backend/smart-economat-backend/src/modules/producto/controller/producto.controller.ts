@@ -13,6 +13,7 @@ import {
   Req,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ProductoService } from '../service/producto.service';
 import { HistorialPrecio } from '../historial-precio-proveedor.entity/historial.entity';
 import {
@@ -21,11 +22,13 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ProductFilterDto } from '../dto/product-filter.dto';
 import { CreateProductoDto } from '../dto/create-producto.dto';
 import { UpdateProductoDto } from '../dto/update-producto.dto';
+import { ProductPriceHistoryQueryDto } from '../dto/product-price-history-query.dto';
 import { Producto } from '../producto.entity/producto.entity';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -59,6 +62,7 @@ export class ProductoController {
    */
   @Get('generar-ean13')
   @RequirePermissions(PERMISSIONS.productos.generar_ean13)
+  @Throttle({ read: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Generar un código EAN-13 único' })
   @ApiResponse({
     status: 200,
@@ -116,7 +120,6 @@ export class ProductoController {
   /**
    * Lista los productos del sistema aplicando filtros, ordenación y paginación.
    * @param query DTO de filtros y parámetros de paginación.
-   * @param req Objeto de petición para extraer el rol del usuario (filtra productos inactivos para alumnos).
    * @returns Respuesta paginada con la lista de productos.
    */
   @Get()
@@ -124,17 +127,14 @@ export class ProductoController {
   @ApiOperation({ summary: 'Listar productos con filtros y paginación' })
   findAll(
     @SortableFields(SORTABLE_FIELDS.productos, ProductFilterDto)
-    query: ProductFilterDto,
-    @Req() req: { user?: { rol?: string } }
+    query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
-    const userRole = req.user?.rol;
-    return this.productoService.findAll(query, userRole);
+    return this.productoService.findAll(query);
   }
 
   /**
    * Obtiene el detalle completo de un producto por su identificador único.
    * @param id UUID del producto solicitado.
-   * @param req Objeto de petición para control de visibilidad por rol.
    * @returns El producto con sus relaciones (proveedores, alérgenos).
    */
   @Get(':id')
@@ -143,12 +143,8 @@ export class ProductoController {
   @ApiParam({ name: 'id', description: 'docs.UUID_DEL_PRODUCTO' })
   @ApiResponse({ status: 200, type: Producto })
   @ApiResponse({ status: 404, description: 'docs.PRODUCTO_NO_ENCONTRADO' })
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: { user?: { rol?: string } }
-  ): Promise<Producto> {
-    const userRole = req.user?.rol;
-    return this.productoService.findOne(id, userRole);
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Producto> {
+    return this.productoService.findOne(id);
   }
 
   /**
@@ -217,12 +213,17 @@ export class ProductoController {
   @RequirePermissions(PERMISSIONS.productos.ver)
   @ApiOperation({ summary: 'Obtener el historial de precios de un producto' })
   @ApiParam({ name: 'id', description: 'ID del producto' })
+  @ApiQuery({
+    name: 'proveedorId',
+    required: false,
+    description: 'UUID del proveedor para filtrar historial por proveedor',
+  })
   @ApiResponse({ status: 200, type: [HistorialPrecio] })
   async getHistorialPrecios(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('proveedorId') proveedorId?: string
+    @Query() query: ProductPriceHistoryQueryDto
   ): Promise<HistorialPrecio[]> {
-    return this.productoService.getHistorialPrecios(id, proveedorId);
+    return this.productoService.getHistorialPrecios(id, query.proveedorId);
   }
 
   /**

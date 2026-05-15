@@ -12,7 +12,6 @@ import {
   Patch,
   Post,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { IncidenciaService } from '../service/incidencia.service';
@@ -91,10 +90,9 @@ export class IncidenciaController {
   findAll(
     @SortableFields(SORTABLE_FIELDS.incidencias, IncidenciaQueryDto)
     query: IncidenciaQueryDto,
-    @Req() req: { user?: { rol?: string } }
+    @GetUser('rol') userRole: string
   ): Promise<PaginatedResponseDto<Incidencia>> {
     validateDateRange(query.startDate, query.endDate, 365, 'Incidencias');
-    const userRole = req.user?.rol;
     return this.incidenciaService.findAll(query, userRole).then((result) => ({
       ...result,
       data: result.data.map((incidencia) =>
@@ -116,9 +114,8 @@ export class IncidenciaController {
   @RequirePermissions(PERMISSIONS.incidencias.ver)
   findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Req() req: { user?: { rol?: string } }
+    @GetUser('rol') userRole: string
   ): Promise<Incidencia> {
-    const userRole = req.user?.rol;
     return this.incidenciaService
       .findOne(id, userRole)
       .then((incidencia) => this.withIncidenciaLabels(incidencia));
@@ -171,6 +168,13 @@ export class IncidenciaController {
    */
   @Patch(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
+  @ApiOperation({
+    summary: 'Resolución parcial/progresiva de incidencia desde recepción',
+    description:
+      'Usa ResolverIncidenciaDto: permite actualizar líneas individuales, marcar como resuelta y ' +
+      'fijar un estado final (resuelta/cancelada/inválida). Diseñado para el flujo de recepción ' +
+      'donde el operador resuelve la incidencia línea a línea.',
+  })
   resolver(
     @Param('id', ParseUUIDv7Pipe) id: string,
     @Body() dto: ResolverIncidenciaDto,
@@ -219,7 +223,13 @@ export class IncidenciaController {
    */
   @Post(':id/resolver')
   @RequirePermissions(PERMISSIONS.incidencias.resolver)
-  @ApiOperation({ summary: 'Resuelve una incidencia de forma transaccional' })
+  @ApiOperation({
+    summary: 'Cierre administrativo transaccional de incidencia',
+    description:
+      'Usa ResolveIncidenciaDto: requiere una acción explícita (TipoResolucion) y observaciones opcionales. ' +
+      'Ejecuta el cierre completo en una sola transacción — diferente de PATCH /:id/resolver ' +
+      '(ResolverIncidenciaDto) que es progresivo. Usar este endpoint para cierres definitivos desde admin.',
+  })
   @ApiResponse({
     status: 201,
     description: 'Incidencia resuelta correctamente',

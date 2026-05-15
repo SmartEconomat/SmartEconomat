@@ -1,14 +1,30 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Inventario from '../../src/pages/Inventario';
 import * as inventarioService from '../../src/services/inventario.service';
 import { UbicacionService } from '../../src/services/ubicacion.service';
 import { profesorService } from '../../src/services/profesor.service';
+import * as productoService from '../../src/services/producto.service';
 import * as authHooks from '../../src/store/auth.hooks';
 import * as toastHooks from '../../src/store/toast.hooks';
+
+const dynamicFormMock = vi.hoisted(() => ({
+  props: null as null | {
+    isOpen?: boolean;
+    onSubmit?: (data: Record<string, unknown>) => Promise<void>;
+  },
+}));
+
+const barcodeScannerMock = vi.hoisted(() => ({
+  props: null as null | {
+    open?: boolean;
+    onScan?: (code: string) => void;
+    onClose?: () => void;
+  },
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -33,15 +49,22 @@ vi.mock('../../src/components/ui/PageToolbar', () => ({
     title,
     searchPlaceholder,
     totalItemsLabel,
+    onScanBarcode,
   }: {
     title?: React.ReactNode;
     searchPlaceholder?: React.ReactNode;
     totalItemsLabel?: React.ReactNode;
+    onScanBarcode?: () => void;
   }) => (
     <div>
       <div>{title}</div>
       <div>{searchPlaceholder}</div>
       <div>{totalItemsLabel}</div>
+      {onScanBarcode ? (
+        <button onClick={onScanBarcode} aria-label="scan-toolbar">
+          scan-toolbar
+        </button>
+      ) : null}
     </div>
   ),
 }));
@@ -62,13 +85,36 @@ vi.mock('../../src/components/ui/DataTable', () => ({
   ),
 }));
 vi.mock('../../src/components/ui/BarcodeScanner', () => ({
-  default: () => null,
+  default: (props: {
+    open?: boolean;
+    onScan?: (code: string) => void;
+    onClose?: () => void;
+  }) => {
+    barcodeScannerMock.props = props;
+
+    return props.open ? (
+      <button
+        onClick={() => {
+          props.onScan?.(' 8412345678901 ');
+        }}
+        aria-label="emit-inventario-scan"
+      >
+        emit-inventario-scan
+      </button>
+    ) : null;
+  },
 }));
 vi.mock('../../src/components/ui/ConfirmDialog', () => ({
   default: () => null,
 }));
 vi.mock('../../src/components/ui/DynamicFormModal', () => ({
-  default: () => null,
+  default: (props: {
+    isOpen?: boolean;
+    onSubmit?: (data: Record<string, unknown>) => Promise<void>;
+  }) => {
+    dynamicFormMock.props = props;
+    return props.isOpen ? <div>dynamic-form-open</div> : null;
+  },
 }));
 vi.mock('../../src/components/inventario/UbicacionesModal', () => ({
   default: () => null,
@@ -98,14 +144,24 @@ vi.mock('../../src/services/producto.service', () => ({
 }));
 
 describe('Inventario page i18n smoke', () => {
+  let toast: {
+    success: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(toastHooks.useToast).mockReturnValue({
+    dynamicFormMock.props = null;
+    barcodeScannerMock.props = null;
+    toast = {
       success: vi.fn(),
       error: vi.fn(),
       warning: vi.fn(),
       info: vi.fn(),
-    });
+    };
+    vi.mocked(toastHooks.useToast).mockReturnValue(toast);
     vi.mocked(authHooks.useAuth).mockReturnValue({
       user: {
         id: 'u-1',
@@ -127,7 +183,13 @@ describe('Inventario page i18n smoke', () => {
       changeLanguage: vi.fn().mockResolvedValue(undefined),
     });
     vi.mocked(authHooks.usePermission).mockReturnValue(true);
-    vi.mocked(inventarioService.fetchInventario).mockResolvedValue([]);
+    vi.mocked(inventarioService.fetchInventario).mockResolvedValue({
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    });
     vi.mocked(inventarioService.agregarInventarioPorProducto).mockReturnValue(
       []
     );
@@ -161,5 +223,71 @@ describe('Inventario page i18n smoke', () => {
     expect(
       screen.getByText('inventario.columns.ubicaciones')
     ).toBeInTheDocument();
+  });
+
+  it('rechaza precio de proveedor menor a 0.01 al crear producto desde inventario', async () => {
+    render(
+      <MemoryRouter>
+        <Inventario />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(inventarioService.fetchInventario).toHaveBeenCalled();
+      expect(dynamicFormMock.props?.onSubmit).toBeDefined();
+    });
+
+    act(() => {
+      void dynamicFormMock.props?.onSubmit?.({
+        nombre: 'Leche',
+        unidad: 'L',
+        contenido: 1,
+        proveedores: [
+          {
+            proveedorId: 'prov-1',
+            precioUnitario: 0,
+          },
+        ],
+      });
+    });
+
+    await waitFor(() => {
+      expect(vi.mocked(productoService.createProducto)).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(
+        'inventario.crearProductoValidacion.precioProveedorInvalido'
+      );
+    });
+  });
+
+  it('propaga el código escaneado al flujo de búsqueda de inventario', async () => {
+    vi.mocked(productoService.getProductoByBarcode).mockResolvedValue(null);
+
+    render(
+      <MemoryRouter>
+        <Inventario />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(inventarioService.fetchInventario).toHaveBeenCalled();
+    });
+
+    act(() => {
+      screen.getByRole('button', { name: 'scan-toolbar' }).click();
+    });
+
+    await waitFor(() => {
+      expect(barcodeScannerMock.props?.open).toBe(true);
+    });
+
+    act(() => {
+      screen.getByRole('button', { name: 'emit-inventario-scan' }).click();
+    });
+
+    await waitFor(() => {
+      expect(
+        vi.mocked(productoService.getProductoByBarcode)
+      ).toHaveBeenCalledWith('8412345678901');
+    });
   });
 });

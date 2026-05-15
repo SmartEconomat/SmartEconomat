@@ -67,6 +67,11 @@ const buildProductKey = (productoId?: string, nombreProducto?: string) =>
   productoId ||
   `nombre:${(nombreProducto || 'desconocido').trim().toLowerCase()}`;
 
+const toFiniteNumber = (value: unknown, fallback: number = 0): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const mapToFlatProductoProveedor = (
   option: ProductoProveedorOption
 ): FlatProductoProveedor => ({
@@ -78,7 +83,7 @@ const mapToFlatProductoProveedor = (
   contenido: option.contenido,
   nombreProveedor: option.proveedorNombre || 'Desconocido',
   proveedorId: option.proveedorId || '',
-  precioUnitario: Number(option.precioUnitario ?? 0),
+  precioUnitario: toFiniteNumber(option.precioUnitario, 0),
   marca: option.marca,
 });
 
@@ -544,7 +549,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
 
   const totalOrder = value.reduce(
     (sum, line) =>
-      sum + Number(line.cantidad || 0) * Number(line.precioUnitario || 0),
+      sum +
+      toFiniteNumber(line.cantidad, 0) * toFiniteNumber(line.precioUnitario, 0),
     0
   );
 
@@ -596,7 +602,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
     const groupTotal = groupLines.reduce(
       (sum, item) =>
         sum +
-        Number(item.line.cantidad || 0) * Number(item.line.precioUnitario || 0),
+        toFiniteNumber(item.line.cantidad, 0) *
+          toFiniteNumber(item.line.precioUnitario, 0),
       0
     );
 
@@ -965,8 +972,8 @@ const PedidoLineasSelector: React.FC<PedidoLineasSelectorProps> = ({
                         variant="outlined"
                         fullWidth
                         value={`${(
-                          Number(line.cantidad || 0) *
-                          Number(line.precioUnitario || 0)
+                          toFiniteNumber(line.cantidad, 0) *
+                          toFiniteNumber(line.precioUnitario, 0)
                         ).toFixed(2)} €`}
                         InputProps={{
                           readOnly: true,

@@ -18,10 +18,10 @@ import { RecepcionDraftService } from '../service/recepcion-draft.service';
 import { UpsertRecepcionDraftDto } from '../dto/upsert-recepcion-draft.dto';
 import { RecepcionDraftResponseDto } from '../dto/recepcion-draft-response.dto';
 
-/** Clase pública (RecepcionDraftController). Paquete: smart-economat-backend (Nest). */
+/** Controlador de borrador de recepción. Ruta canónica: /recepciones/draft */
 @ApiTags('Recepcion Draft')
 @UseGuards(JwtAuthGuard, PermisosGuard)
-@Controller('recepcion/draft')
+@Controller('recepciones/draft')
 export class RecepcionDraftController {
   /**
    * Construye la instancia configurada.

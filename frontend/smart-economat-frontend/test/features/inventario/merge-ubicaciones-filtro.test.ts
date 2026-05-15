@@ -81,4 +81,13 @@ describe('inferidas desde lotes (firma estable)', () => {
       ])
     ).toBe(JSON.stringify([]));
   });
+
+  it('trata entrada no iterable como lista vacía (no lanza)', () => {
+    expect(inferidasPorLotesFirma(null as unknown as [])).toBe(
+      JSON.stringify([])
+    );
+    expect(inferidasPorLotesFirma(undefined as unknown as [])).toBe(
+      JSON.stringify([])
+    );
+  });
 });

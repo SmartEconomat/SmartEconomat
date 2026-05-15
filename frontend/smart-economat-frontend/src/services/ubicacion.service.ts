@@ -50,7 +50,7 @@ export const UbicacionService = {
     }
 
     ubicacionesInFlightRequest = (async () => {
-      const response = await baseFetch('/ubicacion');
+      const response = await baseFetch('/ubicaciones');
       if (!response.ok) throw new Error('Error al obtener ubicaciones');
       const { data } = (await response.json()) as ApiResponse<unknown>;
       const ubicaciones = unwrapList<UbicacionApiRecord>(data).filter(
@@ -71,7 +71,7 @@ export const UbicacionService = {
   },
 
   create: async (data: CreateUbicacionDto): Promise<Ubicacion> => {
-    const response = await baseFetch('/ubicacion', {
+    const response = await baseFetch('/ubicaciones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -83,7 +83,7 @@ export const UbicacionService = {
   },
 
   update: async (id: string, data: UpdateUbicacionDto): Promise<Ubicacion> => {
-    const response = await baseFetch(`/ubicacion/${id}`, {
+    const response = await baseFetch(`/ubicaciones/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -95,7 +95,9 @@ export const UbicacionService = {
   },
 
   remove: async (id: string): Promise<void> => {
-    const response = await baseFetch(`/ubicacion/${id}`, { method: 'DELETE' });
+    const response = await baseFetch(`/ubicaciones/${id}`, {
+      method: 'DELETE',
+    });
     if (!response.ok) throw new Error('Error al eliminar ubicación');
     invalidateUbicacionesCache();
   },

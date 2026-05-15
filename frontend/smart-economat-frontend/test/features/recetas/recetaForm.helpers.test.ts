@@ -97,6 +97,28 @@ describe('recetaForm.helpers', () => {
     ).rejects.toThrow(/recipes.errors.productoInvalido/i);
   });
 
+  it('rechaza ingredientes con mermaAplicada superior al máximo del backend', async () => {
+    await expect(
+      buildRecetaPayload(
+        {
+          nombre: 'Crema rota',
+          instrucciones: 'Batir.',
+          tiempoEstimadoMinutos: 30,
+          dificultad: DificultadReceta.FACIL,
+          ingredientes: [
+            {
+              productoId: 'producto-1',
+              cantidad: '1',
+              unidad: UnidadIngrediente.GRAMO,
+              mermaAplicada: 120,
+            },
+          ],
+        },
+        t
+      )
+    ).rejects.toThrow(/entre 0 y 99/i);
+  });
+
   it('omite unidadResultado cuando llega vacia desde el formulario', async () => {
     const payload = await buildRecetaPayload(
       {

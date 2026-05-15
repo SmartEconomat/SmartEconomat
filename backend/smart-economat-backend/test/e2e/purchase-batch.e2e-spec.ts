@@ -155,7 +155,7 @@ describe('PurchaseBatchController (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.data.data)).toBe(true);
   });
 
   it('POST /purchase-batches/from-recipes - Debería crear un lote a partir de recetas', async () => {

@@ -122,7 +122,7 @@ describe('ProductoProveedorService', () => {
     } as any);
 
     expect(findAndCount).toHaveBeenCalledWith({
-      where: { productoProveedor: { id: 'pp-4' } },
+      where: { productoProveedorId: 'pp-4' },
       order: { fecha: 'DESC' },
       skip: 10,
       take: 10,

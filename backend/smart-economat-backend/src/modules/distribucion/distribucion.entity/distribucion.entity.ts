@@ -22,6 +22,10 @@ import { DistribucionLinea } from '../distribucion-linea.entity/distribucion-lin
 @Index(['estado'])
 @Index(['ubicacionOrigenId'])
 @Index(['ubicacionDestinoId'])
+@Index(['idempotencyKey'], {
+  unique: true,
+  where: '"idempotency_key" IS NOT NULL',
+})
 export class Distribucion extends BaseEntity {
   @Column({ name: 'usuario_responsable_id', nullable: true })
   usuarioResponsableId?: string;
@@ -100,4 +104,13 @@ export class Distribucion extends BaseEntity {
     cascade: true,
   })
   lineas!: Relation<DistribucionLinea[]>;
+
+  /** Clave de idempotencia opcional para prevenir distribuciones duplicadas por doble clic o retry. */
+  @Column({
+    name: 'idempotency_key',
+    type: 'uuid',
+    nullable: true,
+    unique: true,
+  })
+  idempotencyKey?: string;
 }

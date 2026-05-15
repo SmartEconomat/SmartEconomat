@@ -1,4 +1,4 @@
-import { baseFetch } from './api.service';
+import { baseFetch, type ApiResponse } from './api.service';
 
 /** Contrato de tipos público (ProductoProveedorOption). Contexto: smart-economat-frontend (SPA). */
 export interface ProductoProveedorOption {
@@ -15,10 +15,26 @@ export interface ProductoProveedorOption {
   label: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
+/** Contrato de tipos público (ComparacionProveedorItem). Contexto: smart-economat-frontend (SPA). */
+export interface ComparacionProveedorItem {
+  productoProveedorId: string;
+  proveedorId?: string;
+  proveedorNombre?: string;
+  marca?: string;
+  codigoBarras?: string;
+  precioUnitario: number;
+  mermaEsperada: number;
+  costeEfectivoUnitario: number;
+  esOptimo: boolean;
+  ahorroAbsoluto: number;
+  ahorroAbsolutoPct: number;
+}
+
+/** Contrato de tipos público (ComparacionProveedoresResponse). Contexto: smart-economat-frontend (SPA). */
+export interface ComparacionProveedoresResponse {
+  productoId: string;
+  productoNombre: string;
+  proveedores: ComparacionProveedorItem[];
 }
 
 /**
@@ -81,4 +97,30 @@ export async function searchProductoProveedor(
     ...r,
     label: `${r.productoNombre} (${r.proveedorNombre})${r.marca ? ` - ${r.marca}` : ''}`,
   }));
+}
+
+/**
+ * Obtiene la comparativa de proveedores para un producto.
+ * @param productoId UUID del producto.
+ * @returns Comparativa ordenada por coste efectivo unitario.
+ */
+export async function fetchComparacionProveedores(
+  productoId: string
+): Promise<ComparacionProveedoresResponse> {
+  const response = await baseFetch(
+    `/producto-proveedor/comparar/${productoId}`
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(
+      errorBody.message ||
+        `Error al obtener comparativa de proveedores: ${response.status}`
+    );
+  }
+
+  const body =
+    (await response.json()) as ApiResponse<ComparacionProveedoresResponse>;
+
+  return body.data;
 }

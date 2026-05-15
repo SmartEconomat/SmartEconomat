@@ -1,23 +1,20 @@
 import { PedidoPermissions } from '../types/pedidos-ui.types';
 
 /**
- * Ejecuta la lógica de operación dentro del flujo de la aplicación.
- */
-/**
- * Expone "buildPedidoPermissions" en smart-economat-frontend (SPA).
- * @undefined {boolean} canCreate - Entrada efectiva esperada por el contrato.
- * @undefined {boolean} canEdit - Entrada efectiva esperada por el contrato.
- * @undefined {boolean} canDelete - Entrada efectiva esperada por el contrato.
- * @undefined {PedidoPermissions} Datos efectivos después de ejecutar la operación.
+ * Construye el objeto de permisos para el módulo de pedidos.
+ * Cada permiso es independiente para evitar escalación de privilegios:
+ * un usuario con canEdit no obtiene automáticamente canCancel ni canApprove.
  */
 export const buildPedidoPermissions = (
   canCreate: boolean,
   canEdit: boolean,
-  canDelete: boolean
+  canDelete: boolean,
+  canCancel: boolean,
+  canApprove: boolean
 ): PedidoPermissions => ({
   canCreate,
   canEdit,
   canDelete,
-  canCancel: canEdit,
-  canApprove: canEdit,
+  canCancel,
+  canApprove,
 });

@@ -4,6 +4,8 @@ import { RecetaRepository } from '../../../src/modules/receta/repository/receta.
 import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { EstadoLote } from '../../../src/modules/receta/enums/receta.enums';
+import { Movimiento } from '../../../src/modules/movimiento/movimiento.entity/movimiento.entity';
+import { ProduccionLote } from '../../../src/modules/receta/produccion-lote.entity/produccion-lote.entity';
 import {
   ConsumirProduccionDto,
   TipoConsumoProduccion,
@@ -20,6 +22,7 @@ describe('ProduccionService', () => {
       findById: jest.fn(),
       findByIds: jest.fn(),
       ensureProductoElaborado: jest.fn(),
+      findPreferredProveedorForProductoElaborado: jest.fn(),
     };
 
     manager = {
@@ -29,7 +32,9 @@ describe('ProduccionService', () => {
       findOne: jest.fn(),
       find: jest.fn().mockResolvedValue([]),
       update: jest.fn(),
-      getRepository: jest.fn(),
+      getRepository: jest.fn().mockImplementation(() => ({
+        findOne: jest.fn().mockResolvedValue(null),
+      })),
     };
 
     dataSource = {
@@ -72,7 +77,11 @@ describe('ProduccionService', () => {
       recetaRepository.findById.mockResolvedValue(null);
       await expect(
         service.ejecutarProduccion(
-          { recetaId: 'invalid', cantidadProducida: 10 },
+          {
+            recetaId: 'invalid',
+            cantidadProducida: 10,
+            idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e11',
+          },
           mockUser
         )
       ).rejects.toThrow(NotFoundException);
@@ -83,11 +92,12 @@ describe('ProduccionService', () => {
       recetaRepository.ensureProductoElaborado.mockResolvedValue({
         id: 'prod-res-1',
       });
-
-      const mockProductoProveedor = {
-        id: 'pp-res-1',
-        producto: { id: 'prod-res-1', unidad: 'kg' },
-      };
+      recetaRepository.findPreferredProveedorForProductoElaborado.mockResolvedValue(
+        {
+          id: 'pp-res-1',
+          producto: { id: 'prod-res-1', unidad: 'kg' },
+        }
+      );
 
       const mockInventarioIng = {
         id: 'inv-1',
@@ -114,22 +124,32 @@ describe('ProduccionService', () => {
 
       manager.create.mockImplementation((entity, data) => data);
       manager.save.mockResolvedValue({ id: 'lote-1' });
-      manager.findOne
-        .mockResolvedValueOnce(mockProductoProveedor)
-        .mockResolvedValueOnce({
-          id: 'lote-1',
-          receta: mockReceta,
-          usuario: { id: mockUser },
-        });
+      manager.findOne.mockResolvedValueOnce({
+        id: 'lote-1',
+        receta: mockReceta,
+        usuario: { id: mockUser },
+      });
 
       const mockUbicacion = { id: 'ub-1' };
-      manager.getRepository.mockReturnValue({
-        findOne: jest.fn().mockResolvedValue(mockUbicacion),
-        update: jest.fn().mockResolvedValue({}),
+      manager.getRepository.mockImplementation((entity: unknown) => {
+        if (entity === Movimiento || entity === ProduccionLote) {
+          return {
+            findOne: jest.fn().mockResolvedValue(null),
+          };
+        }
+
+        return {
+          findOne: jest.fn().mockResolvedValue(mockUbicacion),
+          update: jest.fn().mockResolvedValue({}),
+        };
       });
 
       const result = await service.ejecutarProduccion(
-        { recetaId: 'receta-1', cantidadProducida: 5 },
+        {
+          recetaId: 'receta-1',
+          cantidadProducida: 5,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e12',
+        },
         mockUser
       );
 
@@ -154,7 +174,18 @@ describe('ProduccionService', () => {
         fechaAgotado: null,
       };
 
+      jest
+        .spyOn(service as any, 'consumeInventarioProductoElaborado')
+        .mockResolvedValue([
+          {
+            inv: { id: 'inv-res-1' },
+            descontar: 5,
+            pp: { id: 'pp-res-1' },
+          },
+        ]);
+
       manager.findOne
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockLote)
         .mockResolvedValueOnce(mockReceta)
         .mockResolvedValueOnce({
@@ -169,6 +200,7 @@ describe('ProduccionService', () => {
       const result = await service.consumirPorciones('lote-1', {
         tipo: TipoConsumoProduccion.RACIONES,
         valor: 5,
+        idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e13',
       } satisfies ConsumirProduccionDto);
 
       expect(result.porcionesRestantes).toBe(0);
@@ -197,6 +229,7 @@ describe('ProduccionService', () => {
       };
 
       manager.findOne
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockLote)
         .mockResolvedValueOnce(mockReceta);
 
@@ -204,6 +237,7 @@ describe('ProduccionService', () => {
         service.consumirPorciones('lote-1', {
           tipo: TipoConsumoProduccion.RACIONES,
           valor: 5,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e14',
         } satisfies ConsumirProduccionDto)
       ).rejects.toThrow(BadRequestException);
     });
@@ -222,7 +256,18 @@ describe('ProduccionService', () => {
         fechaAgotado: null,
       };
 
+      jest
+        .spyOn(service as any, 'consumeInventarioProductoElaborado')
+        .mockResolvedValue([
+          {
+            inv: { id: 'inv-res-2' },
+            descontar: 1.5,
+            pp: { id: 'pp-res-2' },
+          },
+        ]);
+
       manager.findOne
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockLote)
         .mockResolvedValueOnce(mockReceta)
         .mockResolvedValueOnce({
@@ -237,6 +282,7 @@ describe('ProduccionService', () => {
       const result = await service.consumirPorciones('lote-1', {
         tipo: TipoConsumoProduccion.CANTIDAD,
         valor: 1.5,
+        idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e15',
       } satisfies ConsumirProduccionDto);
 
       expect(result.porcionesRestantes).toBe(7);
@@ -265,6 +311,7 @@ describe('ProduccionService', () => {
       };
 
       manager.findOne
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockLote)
         .mockResolvedValueOnce(mockReceta);
 
@@ -272,6 +319,7 @@ describe('ProduccionService', () => {
         service.consumirPorciones('lote-1', {
           tipo: TipoConsumoProduccion.CANTIDAD,
           valor: 1.2,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e16',
         } satisfies ConsumirProduccionDto)
       ).rejects.toThrow('La cantidad a consumir debe ser múltiplo de 0.25 kg.');
     });
@@ -289,7 +337,18 @@ describe('ProduccionService', () => {
         estado: EstadoLote.DISPONIBLE,
       };
 
+      jest
+        .spyOn(service as any, 'consumeInventarioProductoElaborado')
+        .mockResolvedValue([
+          {
+            inv: { id: 'inv-res-3' },
+            descontar: 1.445,
+            pp: { id: 'pp-res-3' },
+          },
+        ]);
+
       manager.findOne
+        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockLote)
         .mockResolvedValueOnce(mockReceta)
         .mockResolvedValueOnce({
@@ -303,6 +362,7 @@ describe('ProduccionService', () => {
       const result = await service.consumirPorciones('lote-1', {
         tipo: TipoConsumoProduccion.CANTIDAD,
         valor: 1.445,
+        idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e17',
       } satisfies ConsumirProduccionDto);
 
       expect(result.porcionesRestantes).toBe(0);
@@ -437,6 +497,52 @@ describe('ProduccionService', () => {
       expect(result.ingredients[0].requerido).toBe(1.111);
       expect(result.ingredients[0].disponible).toBe(1.05);
       expect(result.ingredients[0].isEnough).toBe(false);
+    });
+
+    it('lanza error cuando intenta convertir unidades incompatibles', () => {
+      expect(() => (service as any).conversionFactor('ud', 'kg')).toThrow(
+        BadRequestException
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('combina filtros de estado y búsqueda sin sobrescribir condiciones', async () => {
+      const queryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+
+      dataSource.getRepository.mockReturnValue({
+        createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      });
+
+      await service.findAll({
+        estado: String(EstadoLote.DISPONIBLE),
+        searchTerm: 'tortilla',
+        page: 1,
+        limit: 10,
+      } as any);
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'lote.deleted_at IS NULL'
+      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        'lote.estado = :estado',
+        {
+          estado: EstadoLote.DISPONIBLE,
+        }
+      );
+      expect(
+        queryBuilder.andWhere.mock.calls.some(
+          (call: unknown[]) =>
+            call.length > 0 && typeof call[0] !== 'string' && call[0] != null
+        )
+      ).toBe(true);
     });
   });
 });

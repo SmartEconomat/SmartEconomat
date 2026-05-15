@@ -43,6 +43,8 @@ process.env.LOCAL_STORAGE_PATH =
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-mock';
 process.env.JWT_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
 process.env.OFF_API_ENABLED = 'false';
+/** Registro público vía API en e2e (AuthService / ProfesorService). */
+process.env.ALLOW_PUBLIC_REGISTER = process.env.ALLOW_PUBLIC_REGISTER ?? 'true';
 
 mockBcryptForTests();
 

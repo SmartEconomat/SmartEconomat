@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -12,7 +13,6 @@ import {
   Repository,
 } from 'typeorm';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
@@ -21,17 +21,45 @@ import { Producto } from '../../producto/producto.entity/producto.entity';
 import { CreateMermaDto } from '../dto/create-merma.dto';
 import { CreateMermaProduccionDto } from '../dto/create-merma-produccion.dto';
 import { MermaKpiQueryDto } from '../dto/merma-kpi-query.dto';
+import { MermaQueryDto } from '../dto/merma-query.dto';
+import { MermaStatsQueryDto } from '../dto/merma-stats-query.dto';
 import { MotivoMerma, TipoMerma } from '../enums/merma.enums';
 import { Merma } from '../merma.entity/merma.entity';
 import { ProduccionLote } from '../../receta/produccion-lote.entity/produccion-lote.entity';
 import { RecetaIngrediente } from '../../receta/receta-ingrediente.entity/receta-ingrediente.entity';
+import { EstadoLote } from '../../receta/enums/receta.enums';
 
-const MERMA_UMBRAL_ALTO = 50;
+/** Agregación de mermas por motivo (valores numéricos ya normalizados). */
+export interface MermaStatsByMotivo {
+  motivo: MotivoMerma;
+  totalRegistros: number;
+  totalCantidad: number;
+}
+
+/** Agregación de mermas por producto (valores numéricos ya normalizados). */
+export interface MermaStatsByProducto {
+  productoId: string;
+  productoNombre: string;
+  totalRegistros: number;
+  totalCantidad: number;
+}
+
+/** Respuesta de estadísticas agregadas de mermas. */
+export interface MermaStatsResponse {
+  porMotivo: MermaStatsByMotivo[];
+  porProducto: MermaStatsByProducto[];
+}
+
+/** Cantidad de merma considerada alta cuando no hay PMP fiable para valorar en dinero. */
+const MERMA_UMBRAL_CANTIDAD_SIN_PMP = 50;
+/** Valor estimado (cantidad × PMP) a partir del cual se registra alerta de seguridad. */
+const MERMA_UMBRAL_VALOR_ESTIMADO = 50;
 const MOVIMIENTOS_REFERENCIA_MERMA: TipoMovimiento[] = [
   TipoMovimiento.ENTRADA,
   TipoMovimiento.ENTRADA_COMPRA,
   TipoMovimiento.PRODUCCION_RESULTADO,
 ];
+const ORIGEN_ENTIDAD_PRODUCCION_LOTE = 'ProduccionLote';
 
 /**
  * Ejecuta la lógica de operación dentro del flujo de la aplicación.
@@ -45,6 +73,8 @@ interface MermaCommand {
   origenEntidad?: string;
   origenId?: string;
   referenciaId?: string;
+  inventarioId?: string;
+  ubicacionId?: string;
   idempotencyKey?: string;
 }
 
@@ -120,6 +150,8 @@ export class MermaService {
         origenEntidad: dto.origenEntidad,
         origenId: dto.origenId,
         referenciaId: dto.referenciaId,
+        inventarioId: dto.inventarioId,
+        ubicacionId: dto.ubicacionId,
         idempotencyKey: dto.idempotencyKey,
       },
       userId
@@ -149,6 +181,12 @@ export class MermaService {
       throw new NotFoundException(I18nHelper.getError('MERMA_LOTE_NOT_FOUND'));
     }
 
+    if (lote.estado === EstadoLote.CANCELADO) {
+      throw new BadRequestException(
+        I18nHelper.getError('MERMA_LOTE_CANCELADO')
+      );
+    }
+
     const ingrediente = await this.recetaIngredienteRepository.findOne({
       where: {
         recetaId: lote.recetaId,
@@ -170,9 +208,11 @@ export class MermaService {
         motivo: dto.motivo ?? MotivoMerma.ERROR_PREPARACION,
         notas: dto.notas,
         tipo: TipoMerma.PRODUCCION,
-        origenEntidad: 'ProduccionLote',
+        origenEntidad: ORIGEN_ENTIDAD_PRODUCCION_LOTE,
         origenId: dto.produccionLoteId,
         referenciaId: ingrediente.id,
+        inventarioId: dto.inventarioId,
+        ubicacionId: dto.ubicacionId,
         idempotencyKey: dto.idempotencyKey,
       },
       userId
@@ -188,20 +228,41 @@ export class MermaService {
    * @param query Parámetros de paginación.
    * @returns Respuesta paginada.
    */
-  async findAll(
-    query: PaginationQueryDto
-  ): Promise<PaginatedResponseDto<Merma>> {
+  async findAll(query: MermaQueryDto): Promise<PaginatedResponseDto<Merma>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const sortBy = query.sortBy ?? 'createdAt';
     const order = query.order ?? 'DESC';
 
-    const [data, total] = await this.mermaRepository.findAndCount({
-      relations: ['producto', 'usuario'],
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const dateRange = this.resolveDateRange(query.startDate, query.endDate);
+
+    const qb = this.mermaRepository
+      .createQueryBuilder('m')
+      .leftJoinAndSelect('m.producto', 'producto')
+      .leftJoinAndSelect('m.usuario', 'usuario')
+      .where('m.deleted_at IS NULL');
+
+    if (query.motivo) {
+      qb.andWhere('m.motivo = :motivo', { motivo: query.motivo });
+    }
+
+    if (dateRange.start) {
+      qb.andWhere('m.created_at >= :startDate', {
+        startDate: dateRange.start,
+      });
+    }
+
+    if (dateRange.end) {
+      qb.andWhere('m.created_at <= :endDate', {
+        endDate: dateRange.end,
+      });
+    }
+
+    qb.orderBy(`m.${sortBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
@@ -354,37 +415,89 @@ export class MermaService {
 
   /**
    * Obtiene estadísticas agregadas de mermas para su representación visual.
-   * @returns Agregaciones por motivo y por producto.
+   * Si no se envían fechas, aplica una ventana por defecto de los últimos 90 días (inclusive fin de día en `endDate`).
    */
-  /**
-   * Obtiene valores o vistas materializadas.
-   * @undefined {Promise<{ porMotivo: unknown[]; porProducto: unknown[]; }>} Datos efectivos después de ejecutar la operación.
-   */
-  async getStats(): Promise<{ porMotivo: unknown[]; porProducto: unknown[] }> {
-    const porMotivo = await this.mermaRepository
-      .createQueryBuilder('m')
+  async getStats(query?: MermaStatsQueryDto): Promise<MermaStatsResponse> {
+    let startDate = query?.startDate;
+    let endDate = query?.endDate;
+
+    if (!startDate && !endDate) {
+      const end = new Date();
+      const start = new Date();
+      start.setUTCDate(start.getUTCDate() - 90);
+      endDate = end.toISOString().slice(0, 10);
+      startDate = start.toISOString().slice(0, 10);
+    }
+
+    const dateRange = this.resolveDateRange(startDate, endDate);
+
+    const baseQb = () =>
+      this.mermaRepository
+        .createQueryBuilder('m')
+        .where('m.deleted_at IS NULL');
+
+    const applyFilters = (
+      qb: ReturnType<typeof baseQb>
+    ): ReturnType<typeof baseQb> => {
+      if (query?.motivo) {
+        qb.andWhere('m.motivo = :motivo', { motivo: query.motivo });
+      }
+
+      if (dateRange.start) {
+        qb.andWhere('m.created_at >= :startDate', {
+          startDate: dateRange.start,
+        });
+      }
+      if (dateRange.end) {
+        qb.andWhere('m.created_at <= :endDate', {
+          endDate: dateRange.end,
+        });
+      }
+      return qb;
+    };
+
+    const porMotivoRaw = await applyFilters(baseQb())
       .select('m.motivo', 'motivo')
       .addSelect('COUNT(*)', 'totalRegistros')
       .addSelect('SUM(m.cantidad)', 'totalCantidad')
-      .where('m.deleted_at IS NULL')
       .groupBy('m.motivo')
       .orderBy('"totalCantidad"', 'DESC')
-      .getRawMany();
+      .getRawMany<{
+        motivo: MotivoMerma;
+        totalRegistros: string;
+        totalCantidad: string;
+      }>();
 
-    const porProducto = await this.mermaRepository
-      .createQueryBuilder('m')
+    const porProductoRaw = await applyFilters(baseQb())
       .innerJoin('m.producto', 'p')
       .select('m.producto_id', 'productoId')
       .addSelect('p.nombre', 'productoNombre')
       .addSelect('COUNT(*)', 'totalRegistros')
       .addSelect('SUM(m.cantidad)', 'totalCantidad')
-      .where('m.deleted_at IS NULL')
       .groupBy('m.producto_id')
       .addGroupBy('p.nombre')
       .orderBy('"totalCantidad"', 'DESC')
-      .getRawMany();
+      .limit(20)
+      .getRawMany<{
+        productoId: string;
+        productoNombre: string;
+        totalRegistros: string;
+        totalCantidad: string;
+      }>();
 
-    return { porMotivo, porProducto };
+    return {
+      porMotivo: porMotivoRaw.map((item) => ({
+        motivo: item.motivo,
+        totalRegistros: Number(item.totalRegistros),
+        totalCantidad: Number(item.totalCantidad),
+      })),
+      porProducto: porProductoRaw.map((item) => ({
+        productoId: item.productoId,
+        productoNombre: item.productoNombre,
+        totalRegistros: Number(item.totalRegistros),
+        totalCantidad: Number(item.totalCantidad),
+      })),
+    };
   }
 
   /**
@@ -398,11 +511,26 @@ export class MermaService {
     command: MermaCommand,
     userId: string
   ): Promise<Merma> {
+    const finalTipo = this.resolveFinalTipo(command);
+    const normalizedOrigenEntidad = this.normalizeOrigenEntidad(
+      command.origenEntidad
+    );
+    const normalizedCommand: MermaCommand = {
+      ...command,
+      tipo: finalTipo,
+      origenEntidad: normalizedOrigenEntidad,
+    };
+
     if (command.idempotencyKey) {
       const existingMerma = await this.findByIdempotencyKey(
         command.idempotencyKey
       );
       if (existingMerma) {
+        this.assertIdempotencyPayloadMatches(
+          existingMerma,
+          normalizedCommand,
+          userId
+        );
         return existingMerma;
       }
     }
@@ -417,35 +545,44 @@ export class MermaService {
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        if (command.idempotencyKey) {
+        if (normalizedCommand.idempotencyKey) {
           const existingInTransaction = await manager.findOne(Merma, {
-            where: { idempotencyKey: command.idempotencyKey },
+            where: { idempotencyKey: normalizedCommand.idempotencyKey },
             relations: ['producto', 'usuario'],
           });
 
           if (existingInTransaction) {
+            this.assertIdempotencyPayloadMatches(
+              existingInTransaction,
+              normalizedCommand,
+              userId
+            );
             return existingInTransaction;
           }
         }
 
         const consumos = await this.consumeInventoryByProduct(
           manager,
-          command.productoId,
-          command.cantidad,
-          producto.nombre
+          normalizedCommand.productoId,
+          normalizedCommand.cantidad,
+          producto.nombre,
+          {
+            inventarioId: normalizedCommand.inventarioId,
+            ubicacionId: normalizedCommand.ubicacionId,
+          }
         );
 
         const nuevaMerma = manager.create(Merma, {
-          productoId: command.productoId,
+          productoId: normalizedCommand.productoId,
           usuarioId: userId,
-          cantidad: command.cantidad,
-          motivo: command.motivo,
-          tipo: command.tipo ?? this.resolveTipoMerma(command.motivo),
-          notas: command.notas,
-          origenEntidad: command.origenEntidad,
-          origenId: command.origenId,
-          referenciaId: command.referenciaId,
-          idempotencyKey: command.idempotencyKey,
+          cantidad: normalizedCommand.cantidad,
+          motivo: normalizedCommand.motivo,
+          tipo: finalTipo,
+          notas: normalizedCommand.notas,
+          origenEntidad: normalizedCommand.origenEntidad,
+          origenId: normalizedCommand.origenId,
+          referenciaId: normalizedCommand.referenciaId,
+          idempotencyKey: normalizedCommand.idempotencyKey,
         });
 
         await manager.save(Merma, nuevaMerma);
@@ -471,6 +608,11 @@ export class MermaService {
         );
 
         if (mermaExistente) {
+          this.assertIdempotencyPayloadMatches(
+            mermaExistente,
+            normalizedCommand,
+            userId
+          );
           return mermaExistente;
         }
       }
@@ -493,14 +635,32 @@ export class MermaService {
     manager: EntityManager,
     productoId: string,
     cantidad: number,
-    productoNombre: string
+    productoNombre: string,
+    context?: {
+      inventarioId?: string;
+      ubicacionId?: string;
+    }
   ): Promise<Array<{ inventario: Inventario; descontar: number }>> {
-    const inventarios = await manager
+    const inventoryQb = manager
       .createQueryBuilder(Inventario, 'inv')
       .innerJoinAndSelect('inv.productoProveedor', 'pp')
       .innerJoinAndSelect('pp.producto', 'prod')
       .where('pp.producto_id = :productoId', { productoId })
-      .andWhere('inv.cantidad_actual > 0')
+      .andWhere('inv.cantidad_actual > 0');
+
+    if (context?.inventarioId) {
+      inventoryQb.andWhere('inv.id = :inventarioId', {
+        inventarioId: context.inventarioId,
+      });
+    }
+
+    if (context?.ubicacionId) {
+      inventoryQb.andWhere('inv.ubicacion_id = :ubicacionId', {
+        ubicacionId: context.ubicacionId,
+      });
+    }
+
+    const inventarios = await inventoryQb
       .orderBy('inv.fecha_caducidad', 'ASC', 'NULLS LAST')
       .addOrderBy('inv.fecha_entrada', 'ASC')
       .setLock('pessimistic_write')
@@ -512,6 +672,12 @@ export class MermaService {
     );
 
     if (stockTotal < cantidad) {
+      if (context?.inventarioId || context?.ubicacionId) {
+        throw new BadRequestException(
+          I18nHelper.getError('MERMA_CONTEXT_STOCK_NOT_FOUND')
+        );
+      }
+
       throw new BadRequestException(
         I18nHelper.getError('NOT_ENOUGH_STOCK_FOR_INGREDIENT', {
           ingredient: productoNombre,
@@ -585,9 +751,114 @@ export class MermaService {
         return TipoMerma.CADUCIDAD;
       case MotivoMerma.ERROR_PREPARACION:
         return TipoMerma.PRODUCCION;
+      case MotivoMerma.HURTO:
+        return TipoMerma.HURTO;
       default:
         return TipoMerma.INVENTARIO;
     }
+  }
+
+  /**
+   * Resuelve el tipo final de merma y bloquea combinaciones inconsistentes entre tipo/motivo.
+   */
+  private resolveFinalTipo(command: MermaCommand): TipoMerma {
+    const derivedTipo = this.resolveTipoMerma(command.motivo);
+
+    if (!command.tipo) {
+      return derivedTipo;
+    }
+
+    if (command.tipo === derivedTipo) {
+      return command.tipo;
+    }
+
+    const normalizedOrigenEntidad = this.normalizeOrigenEntidad(
+      command.origenEntidad
+    );
+
+    if (
+      command.tipo === TipoMerma.PRODUCCION &&
+      normalizedOrigenEntidad === ORIGEN_ENTIDAD_PRODUCCION_LOTE
+    ) {
+      return command.tipo;
+    }
+
+    throw new BadRequestException(
+      I18nHelper.getError('MERMA_TIPO_MOTIVO_MISMATCH')
+    );
+  }
+
+  /**
+   * Comprueba que una repetición con la misma clave de idempotencia tenga exactamente el mismo payload funcional.
+   */
+  private assertIdempotencyPayloadMatches(
+    existingMerma: Merma,
+    command: MermaCommand,
+    userId: string
+  ): void {
+    const expectedTipo = command.tipo ?? this.resolveTipoMerma(command.motivo);
+    const existingOrigenEntidad = this.normalizeOrigenEntidad(
+      existingMerma.origenEntidad
+    );
+    const commandOrigenEntidad = this.normalizeOrigenEntidad(
+      command.origenEntidad
+    );
+
+    const payloadMatches =
+      existingMerma.productoId === command.productoId &&
+      this.areNumericValuesEqual(
+        Number(existingMerma.cantidad),
+        Number(command.cantidad)
+      ) &&
+      existingMerma.motivo === command.motivo &&
+      existingMerma.tipo === expectedTipo &&
+      (existingMerma.usuarioId ?? null) === userId &&
+      this.normalizeOptionalText(existingMerma.notas) ===
+        this.normalizeOptionalText(command.notas) &&
+      existingOrigenEntidad === commandOrigenEntidad &&
+      (existingMerma.origenId ?? null) === (command.origenId ?? null) &&
+      (existingMerma.referenciaId ?? null) === (command.referenciaId ?? null);
+
+    if (!payloadMatches) {
+      throw new ConflictException(
+        I18nHelper.getError('MERMA_IDEMPOTENCY_KEY_PAYLOAD_MISMATCH')
+      );
+    }
+  }
+
+  private normalizeOrigenEntidad(origenEntidad?: string): string | undefined {
+    if (!origenEntidad) {
+      return undefined;
+    }
+
+    const trimmed = origenEntidad.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    const tokens = trimmed
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .split(/[^A-Za-z0-9]+/)
+      .filter(Boolean);
+
+    if (tokens.length === 0) {
+      return undefined;
+    }
+
+    return tokens
+      .map(
+        (token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
+      )
+      .join('');
+  }
+
+  private areNumericValuesEqual(left: number, right: number): boolean {
+    return Math.abs(left - right) <= 0.0001;
+  }
+
+  private normalizeOptionalText(value?: string | null): string | null {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
   }
 
   /**
@@ -634,24 +905,26 @@ export class MermaService {
     end?: Date;
   } {
     const start = startDate ? new Date(startDate) : undefined;
-    const end = endDate ? new Date(endDate) : undefined;
+    const endRaw = endDate ? new Date(endDate) : undefined;
 
     if (start && Number.isNaN(start.getTime())) {
       throw new BadRequestException(I18nHelper.getError('INVALID_START_DATE'));
     }
 
-    if (end && Number.isNaN(end.getTime())) {
+    if (endRaw && Number.isNaN(endRaw.getTime())) {
       throw new BadRequestException(I18nHelper.getError('INVALID_END_DATE'));
     }
 
-    if (start && end && start > end) {
+    if (start && endRaw && start > endRaw) {
       throw new BadRequestException(
         I18nHelper.getError('START_DATE_AFTER_END_DATE')
       );
     }
 
-    if (end) {
-      end.setHours(23, 59, 59, 999);
+    let end: Date | undefined;
+    if (endRaw) {
+      end = new Date(endRaw.getTime());
+      end.setUTCHours(23, 59, 59, 999);
     }
 
     return { start, end };
@@ -663,9 +936,19 @@ export class MermaService {
    * @param userId ID del usuario responsable.
    */
   private logHighValueMerma(merma: Merma, userId: string): void {
-    if (merma.cantidad >= MERMA_UMBRAL_ALTO) {
+    const cantidad = Number(merma.cantidad);
+    const pmp = merma.producto ? Number(merma.producto.pmp) : 0;
+    const valorEstimado =
+      Number.isFinite(pmp) && pmp > 0 ? cantidad * pmp : null;
+
+    const esAlta =
+      valorEstimado !== null
+        ? valorEstimado >= MERMA_UMBRAL_VALOR_ESTIMADO
+        : cantidad >= MERMA_UMBRAL_CANTIDAD_SIN_PMP;
+
+    if (esAlta) {
       this.logger.warn(
-        `[SECURITY] Merma de alto valor registrada: productoId=${merma.productoId} cantidad=${merma.cantidad} motivo=${merma.motivo} tipo=${merma.tipo} usuarioId=${userId} mermaId=${merma.id}`
+        `[SECURITY] Merma de alto valor registrada: productoId=${merma.productoId} cantidad=${merma.cantidad} valorEstimado=${valorEstimado ?? 'n/a'} motivo=${merma.motivo} tipo=${merma.tipo} usuarioId=${userId} mermaId=${merma.id}`
       );
     }
   }

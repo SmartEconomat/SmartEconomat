@@ -182,6 +182,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const [activeBarcodeField, setActiveBarcodeField] = useState<string | null>(
     null
   );
+  const activeBarcodeFieldRef = useRef<string | null>(null);
+  activeBarcodeFieldRef.current = activeBarcodeField;
   const [offResults, setOffResults] = useState<Array<Record<string, unknown>>>(
     []
   );
@@ -556,6 +558,37 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   const bottomFields = nonImageFields.filter((f) => f.position === 'bottom');
   const rightFields = nonImageFields.filter(
     (f) => f.position !== 'left' && f.position !== 'bottom'
+  );
+
+  const activeBarcodeFieldMeta = useMemo(() => {
+    if (!activeBarcodeField) {
+      return null;
+    }
+    const field = fields.find((f) => f.name === activeBarcodeField);
+    return field ? { label: field.label } : null;
+  }, [activeBarcodeField, fields]);
+
+  const handleBarcodeScannerClose = useCallback(() => {
+    setActiveBarcodeField(null);
+  }, []);
+
+  const handleBarcodeScanned = useCallback(
+    async (code: string) => {
+      const name = activeBarcodeFieldRef.current;
+      if (!name) {
+        return;
+      }
+      setFormData((prev) => ({ ...prev, [name]: code }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setActiveBarcodeField(null);
+      if (onBarcodeFetch) {
+        const newData = await onBarcodeFetch(code);
+        if (newData) {
+          setFormData((prev) => ({ ...prev, ...newData }));
+        }
+      }
+    },
+    [onBarcodeFetch]
   );
 
   const renderFieldContent = (field: DynamicField) => {
@@ -950,22 +983,6 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 </List>
               </Paper>
             )}
-            <BarcodeScanner
-              open={activeBarcodeField === name}
-              onClose={() => setActiveBarcodeField(null)}
-              onScan={async (code) => {
-                setFormData((prev) => ({ ...prev, [name]: code }));
-                setErrors((prev) => ({ ...prev, [name]: '' }));
-                setActiveBarcodeField(null);
-                if (onBarcodeFetch) {
-                  const newData = await onBarcodeFetch(code);
-                  if (newData) {
-                    setFormData((prev) => ({ ...prev, ...newData }));
-                  }
-                }
-              }}
-              title={t('forms.scanField', { label })}
-            />
           </Box>
         );
 
@@ -995,152 +1012,183 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleModalClose}
-      title={title}
-      size={size || 'md'}
-    >
-      <form onSubmit={handleSubmit}>
-        <Grid
-          container
-          spacing={3}
-          sx={{ mt: 0, alignItems: { md: 'flex-start' } }}
-        >
-          {/* Image Sidebar Layout - Left on MD+ */}
-          {mainImageField && (
-            <Grid
-              size={{ xs: 12, md: 2, lg: 2 }}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                pt: { xs: 0, sm: 0 }, // Alineación superior pura
-              }}
-            >
-              {(() => {
-                const { name, disabled, getFallbackIcon } = mainImageField;
-                const value = formData[name];
-                const previewUrl =
-                  value instanceof File
-                    ? imageBlobUrl
-                    : typeof value === 'string'
-                      ? resolveStoredFileUrl(value)
-                      : null;
-                const Fallback = getFallbackIcon ? (
-                  getFallbackIcon(formData)
-                ) : (
-                  <PhotoCameraIcon
-                    sx={{ fontSize: 60, color: 'text.secondary' }}
-                  />
-                );
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={handleModalClose}
+        title={title}
+        size={size || 'md'}
+      >
+        <form onSubmit={handleSubmit}>
+          <Grid
+            container
+            spacing={3}
+            sx={{ mt: 0, alignItems: { md: 'flex-start' } }}
+          >
+            {/* Image Sidebar Layout - Left on MD+ */}
+            {mainImageField && (
+              <Grid
+                size={{ xs: 12, md: 2, lg: 2 }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  pt: { xs: 0, sm: 0 }, // Alineación superior pura
+                }}
+              >
+                {(() => {
+                  const { name, disabled, getFallbackIcon } = mainImageField;
+                  const value = formData[name];
+                  const previewUrl =
+                    value instanceof File
+                      ? imageBlobUrl
+                      : typeof value === 'string'
+                        ? resolveStoredFileUrl(value)
+                        : null;
+                  const Fallback = getFallbackIcon ? (
+                    getFallbackIcon(formData)
+                  ) : (
+                    <PhotoCameraIcon
+                      sx={{ fontSize: 60, color: 'text.secondary' }}
+                    />
+                  );
 
-                return (
-                  <Box sx={{ width: '100%', mt: 0, mb: 0 }} key={name}>
-                    <Box
-                      component="label"
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop(name)}
-                      sx={{
-                        width: '100%',
-                        height: { md: 120 },
-                        border: '2px dashed',
-                        borderColor: isDragOver ? 'primary.main' : 'divider',
-                        borderRadius: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        cursor: disabled ? 'default' : 'pointer',
-                        bgcolor: isDragOver
-                          ? 'rgba(216, 27, 96, 0.05)'
-                          : 'background.default',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          borderColor: disabled ? 'divider' : 'primary.main',
-                          '& .upload-overlay': {
-                            opacity: 1,
+                  return (
+                    <Box sx={{ width: '100%', mt: 0, mb: 0 }} key={name}>
+                      <Box
+                        component="label"
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop(name)}
+                        sx={{
+                          width: '100%',
+                          height: { md: 120 },
+                          border: '2px dashed',
+                          borderColor: isDragOver ? 'primary.main' : 'divider',
+                          borderRadius: 2,
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          overflow: 'hidden',
+                          position: 'relative',
+                          cursor: disabled ? 'default' : 'pointer',
+                          bgcolor: isDragOver
+                            ? 'rgba(216, 27, 96, 0.05)'
+                            : 'background.default',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: disabled ? 'divider' : 'primary.main',
+                            '& .upload-overlay': {
+                              opacity: 1,
+                            },
                           },
-                        },
+                        }}
+                      >
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          disabled={disabled}
+                          onChange={handleImageChange(name)}
+                        />
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt={t('forms.image.previewAlt')}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <Stack alignItems="center" spacing={1} sx={{ p: 2 }}>
+                            {Fallback}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              textAlign="center"
+                            >
+                              {t('forms.image.clickOrDrag')}
+                            </Typography>
+                          </Stack>
+                        )}
+
+                        {/* Hover Overlay */}
+                        {!disabled && (
+                          <Box
+                            className="upload-overlay"
+                            sx={{
+                              position: 'absolute',
+                              inset: 0,
+                              bgcolor: 'rgba(0, 0, 0, 0.4)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              opacity: 0,
+                              transition: 'opacity 0.2s ease',
+                              pointerEvents: 'none',
+                            }}
+                          >
+                            <CloudUploadOutlinedIcon
+                              sx={{ fontSize: 40, mb: 1 }}
+                            />
+                            <Typography variant="button">
+                              {previewUrl
+                                ? t('forms.image.changeImage')
+                                : t('forms.image.uploadImage')}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                })()}
+              </Grid>
+            )}
+
+            {/* Right Side - Grid for Fields */}
+            <Grid
+              size={mainImageField ? { xs: 12, md: 10, lg: 10 } : { xs: 12 }}
+            >
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(12, 1fr)"
+                gap={2} // Restaurado el espaciado original
+              >
+                {rightFields.map((field) => {
+                  const { name, width = 12 } = field;
+
+                  return (
+                    <Box
+                      key={name}
+                      sx={{
+                        gridColumn: { xs: 'span 12', sm: `span ${width}` },
                       }}
                     >
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        disabled={disabled}
-                        onChange={handleImageChange(name)}
-                      />
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          alt={t('forms.image.previewAlt')}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      ) : (
-                        <Stack alignItems="center" spacing={1} sx={{ p: 2 }}>
-                          {Fallback}
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            textAlign="center"
-                          >
-                            {t('forms.image.clickOrDrag')}
-                          </Typography>
-                        </Stack>
-                      )}
-
-                      {/* Hover Overlay */}
-                      {!disabled && (
-                        <Box
-                          className="upload-overlay"
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            bgcolor: 'rgba(0, 0, 0, 0.4)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            opacity: 0,
-                            transition: 'opacity 0.2s ease',
-                            pointerEvents: 'none',
-                          }}
-                        >
-                          <CloudUploadOutlinedIcon
-                            sx={{ fontSize: 40, mb: 1 }}
-                          />
-                          <Typography variant="button">
-                            {previewUrl
-                              ? t('forms.image.changeImage')
-                              : t('forms.image.uploadImage')}
-                          </Typography>
-                        </Box>
-                      )}
+                      {renderFieldContent(field)}
                     </Box>
-                  </Box>
-                );
-              })()}
+                  );
+                })}
+              </Box>
             </Grid>
-          )}
+          </Grid>
 
-          {/* Right Side - Grid for Fields */}
-          <Grid size={mainImageField ? { xs: 12, md: 10, lg: 10 } : { xs: 12 }}>
+          {/* Bottom Row Fields */}
+          {bottomFields.length > 0 && (
             <Box
-              display="grid"
-              gridTemplateColumns="repeat(12, 1fr)"
-              gap={2} // Restaurado el espaciado original
+              sx={{
+                mt: 2,
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(12, 1fr)',
+                gap: 2,
+              }}
             >
-              {rightFields.map((field) => {
+              {bottomFields.map((field) => {
                 const { name, width = 12 } = field;
-
                 return (
                   <Box
                     key={name}
@@ -1151,95 +1199,80 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                 );
               })}
             </Box>
-          </Grid>
-        </Grid>
+          )}
 
-        {/* Bottom Row Fields */}
-        {bottomFields.length > 0 && (
           <Box
-            sx={{
-              mt: 2,
-              width: '100%',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(12, 1fr)',
-              gap: 2,
-            }}
+            sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
           >
-            {bottomFields.map((field) => {
-              const { name, width = 12 } = field;
-              return (
-                <Box
-                  key={name}
-                  sx={{ gridColumn: { xs: 'span 12', sm: `span ${width}` } }}
-                >
-                  {renderFieldContent(field)}
-                </Box>
-              );
-            })}
-          </Box>
-        )}
-
-        <Box
-          sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
-        >
-          {Boolean(resolvedCancelLabel) && (
+            {Boolean(resolvedCancelLabel) && (
+              <Button
+                onClick={handleCancel}
+                variant="outlined"
+                fullWidth={false}
+                sx={{ mt: 0, mb: 0 }}
+              >
+                {resolvedCancelLabel}
+              </Button>
+            )}
+            {secondarySubmitLabel && onSecondarySubmit && (
+              <Button
+                onClick={handleSecondarySubmit}
+                isLoading={isSubmitting}
+                variant="outlined"
+                color={secondarySubmitColor}
+                fullWidth={false}
+                sx={{ mt: 0, mb: 0 }}
+              >
+                {secondarySubmitLabel}
+              </Button>
+            )}
             <Button
-              onClick={handleCancel}
-              variant="outlined"
-              fullWidth={false}
-              sx={{ mt: 0, mb: 0 }}
-            >
-              {resolvedCancelLabel}
-            </Button>
-          )}
-          {secondarySubmitLabel && onSecondarySubmit && (
-            <Button
-              onClick={handleSecondarySubmit}
+              type="submit"
               isLoading={isSubmitting}
-              variant="outlined"
-              color={secondarySubmitColor}
+              variant="contained"
               fullWidth={false}
               sx={{ mt: 0, mb: 0 }}
             >
-              {secondarySubmitLabel}
+              {resolvedSubmitLabel}
             </Button>
-          )}
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            variant="contained"
-            fullWidth={false}
-            sx={{ mt: 0, mb: 0 }}
-          >
-            {resolvedSubmitLabel}
-          </Button>
-        </Box>
-      </form>
+          </Box>
+        </form>
 
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleConfirmSubmit}
-        title={t('comun.confirmarAccion')}
-        message={confirmationMessage || t('comun.confirmarGuardar')}
-        confirmText={t('comun.guardar')}
-        cancelText={t('comun.cerrar')}
-        confirmColor="primary"
+        <ConfirmDialog
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={handleConfirmSubmit}
+          title={t('comun.confirmarAccion')}
+          message={confirmationMessage || t('comun.confirmarGuardar')}
+          confirmText={t('comun.guardar')}
+          cancelText={t('comun.cerrar')}
+          confirmColor="primary"
+        />
+        <ConfirmDialog
+          isOpen={isDiscardConfirmOpen}
+          onClose={() => {
+            pendingCloseReasonRef.current = undefined;
+            setIsDiscardConfirmOpen(false);
+          }}
+          onConfirm={handleConfirmDiscard}
+          title={t('forms.discard.title')}
+          message={t('forms.discard.message')}
+          confirmText={t('forms.discard.confirm')}
+          cancelText={t('forms.discard.cancel')}
+          confirmColor="warning"
+        />
+      </Modal>
+      <BarcodeScanner
+        open={Boolean(activeBarcodeField)}
+        onClose={handleBarcodeScannerClose}
+        onScan={handleBarcodeScanned}
+        title={
+          activeBarcodeFieldMeta
+            ? t('forms.scanField', { label: activeBarcodeFieldMeta.label })
+            : t('escaner.tituloDefault')
+        }
       />
-      <ConfirmDialog
-        isOpen={isDiscardConfirmOpen}
-        onClose={() => {
-          pendingCloseReasonRef.current = undefined;
-          setIsDiscardConfirmOpen(false);
-        }}
-        onConfirm={handleConfirmDiscard}
-        title={t('forms.discard.title')}
-        message={t('forms.discard.message')}
-        confirmText={t('forms.discard.confirm')}
-        cancelText={t('forms.discard.cancel')}
-        confirmColor="warning"
-      />
-    </Modal>
+    </>
   );
 };
 

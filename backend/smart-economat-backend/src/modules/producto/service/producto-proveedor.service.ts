@@ -146,7 +146,7 @@ export class ProductoProveedorService {
     const limit = Math.min(query.limit ?? 20, 100);
 
     const [data, total] = await repo.findAndCount({
-      where: { productoProveedor: { id: idProductoProveedor } as any },
+      where: { productoProveedorId: idProductoProveedor },
       order: { fecha: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -207,6 +207,7 @@ export class ProductoProveedorService {
       .select([
         'pp.id',
         'pp.marca',
+        'pp.codigoBarras',
         'pp.precioUnitario',
         'pp.mermaEsperada',
         'producto.id',
@@ -253,6 +254,7 @@ export class ProductoProveedorService {
           proveedorId: pp.proveedor?.id,
           proveedorNombre: pp.proveedor?.nombre,
           marca: pp.marca ?? undefined,
+          codigoBarras: pp.codigoBarras ?? undefined,
           precioUnitario: precio,
           mermaEsperada: merma,
           costeEfectivoUnitario: parseFloat(costeEfectivo.toFixed(4)),
@@ -280,7 +282,7 @@ export class ProductoProveedorService {
       contenido?: number;
       proveedorId: string;
       proveedorNombre: string;
-      marcaEspecifica?: string;
+      marca?: string;
       codigoBarras?: string;
       precioUnitario?: number;
     }>
@@ -333,7 +335,7 @@ export class ProductoProveedorService {
       contenido: pp.producto?.contenido,
       proveedorId: pp.proveedor?.id,
       proveedorNombre: pp.proveedor?.nombre,
-      marca: pp.marca,
+      marca: pp.marca ?? undefined,
       codigoBarras: pp.codigoBarras || pp.producto?.codigoBarras,
       precioUnitario: pp.precioUnitario,
     }));

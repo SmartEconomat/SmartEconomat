@@ -3,6 +3,7 @@ import { Brackets, DataSource, Repository } from 'typeorm';
 import { Pedido } from '../pedido.entity/pedido.entity';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { EstadoPedido } from '../enums/estado-pedido.enum';
 
 /** Clase pública (PedidoRepository). Paquete: smart-economat-backend (Nest). */
 @Injectable()
@@ -73,7 +74,7 @@ export class PedidoRepository extends Repository<Pedido> {
       sortFieldMap[query.sortBy ?? 'createdAt'] || 'pedido.createdAt';
     const order = query.order ?? 'ASC';
 
-    const queryBuilder = this.createQueryBuilder('pedido').distinct(true);
+    const queryBuilder = this.createQueryBuilder('pedido');
 
     if (loadRelations) {
       queryBuilder
@@ -175,12 +176,33 @@ export class PedidoRepository extends Repository<Pedido> {
       );
     }
 
-    const total = await queryBuilder.clone().getCount();
-    const data = await queryBuilder
-      .orderBy(sortBy, order)
+    /**
+     * PostgreSQL: `DISTINCT ON (pedido.id)` + `ORDER BY pedido.id, …` evita duplicados
+     * por joins 1:N y errores de `ORDER BY` con `DISTINCT` genérico.
+     */
+    queryBuilder
+      .distinctOn(['pedido.id'])
+      .orderBy('pedido.id', 'ASC')
+      .addOrderBy(sortBy, order)
       .skip((page - 1) * limit)
-      .take(limit)
-      .getMany();
+      .take(limit);
+
+    const countQb = queryBuilder.clone();
+    countQb.expressionMap.orderBys = {};
+    countQb.expressionMap.selectDistinctOn = [];
+    countQb.expressionMap.selectDistinct = false;
+    countQb.expressionMap.skip = undefined;
+    countQb.expressionMap.take = undefined;
+    countQb.expressionMap.offset = undefined;
+    countQb.expressionMap.limit = undefined;
+    countQb.expressionMap.selects = [];
+    countQb.select('COUNT(DISTINCT "pedido"."id")', 'cnt');
+
+    const [data, countRow] = await Promise.all([
+      queryBuilder.getMany(),
+      countQb.getRawOne<{ cnt: string }>(),
+    ]);
+    const total = Number(countRow?.cnt ?? 0);
 
     return {
       data,
@@ -231,7 +253,7 @@ export class PedidoRepository extends Repository<Pedido> {
    */
   async findByEstado(estado: string, loadRelations = false): Promise<Pedido[]> {
     return await this.find({
-      where: { estado: estado as any },
+      where: { estado: estado as EstadoPedido },
       relations: loadRelations
         ? [
             'usuario',

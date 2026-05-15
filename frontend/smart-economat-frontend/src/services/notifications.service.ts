@@ -1,4 +1,7 @@
-import { fetchAlertasStock, fetchInventario } from './inventario.service';
+import {
+  fetchAlertasStock,
+  fetchAllInventarioForExport,
+} from './inventario.service';
 import { usuarioService } from './usuarioService';
 import type { AlertaStock, InventarioItem } from './inventario.types';
 import type { Usuario } from '../types/usuario';
@@ -141,7 +144,7 @@ const buildPendingUserPreview = (user: Usuario): string => {
 
 async function getInventoryNotifications(): Promise<AppNotification[]> {
   const [inventarioResult, alertasStockResult] = await Promise.allSettled([
-    fetchInventario(),
+    fetchAllInventarioForExport(),
     fetchAlertasStock(),
   ]);
 

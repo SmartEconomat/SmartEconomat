@@ -132,10 +132,9 @@ export class RecetaPdfService {
   ): Promise<void> {
     const normalizedLang = normalizeI18nLang(lang);
     try {
-      const recipesData: CompleteRecetaData[] = [];
-      for (const id of ids) {
-        recipesData.push(await this.getCompleteRecetaData(id, normalizedLang));
-      }
+      const recipesData = await Promise.all(
+        ids.map((id) => this.getCompleteRecetaData(id, normalizedLang))
+      );
 
       if (recipesData.length === 0) return;
 
@@ -724,6 +723,15 @@ export class RecetaPdfService {
     }
 
     const normalizedUrl = this.normalizeImageUrl(imageUrl);
+    const normalizedUrlLower = normalizedUrl.toLowerCase();
+    const isAllowedSource =
+      normalizedUrlLower.includes('/uploads/') ||
+      normalizedUrlLower.includes('/archivos/content/');
+
+    if (!isAllowedSource) {
+      return null;
+    }
+
     const configUploadDir =
       this.configService.get<string>('LOCAL_STORAGE_PATH') || './uploads';
     const uploadDirCandidates = [
@@ -732,25 +740,18 @@ export class RecetaPdfService {
       path.resolve(process.cwd(), 'uploads'),
     ];
 
-    const possiblePaths = new Set<string>();
     const filename = this.extractFilenameFromImageUrl(normalizedUrl);
 
-    if (path.isAbsolute(normalizedUrl)) {
-      possiblePaths.add(normalizedUrl);
+    if (!filename) {
+      return null;
     }
-
-    possiblePaths.add(
-      path.resolve(process.cwd(), normalizedUrl.replace(/^\/+/, ''))
-    );
-    possiblePaths.add(path.resolve(normalizedUrl));
 
     for (const uploadDir of uploadDirCandidates) {
-      if (filename) {
-        possiblePaths.add(path.resolve(uploadDir, filename));
+      const candidatePath = path.resolve(uploadDir, filename);
+      if (!this.isPathInsideDir(candidatePath, uploadDir)) {
+        continue;
       }
-    }
 
-    for (const candidatePath of possiblePaths) {
       if (fs.existsSync(candidatePath)) {
         return candidatePath;
       }
@@ -770,8 +771,25 @@ export class RecetaPdfService {
   }
 
   private extractFilenameFromImageUrl(imageUrl: string): string | null {
-    const filename = path.basename(imageUrl);
-    return filename ? filename : null;
+    const filename = path.basename(imageUrl).trim();
+    if (!filename) return null;
+    if (!/^[A-Za-z0-9._-]+$/.test(filename)) {
+      return null;
+    }
+
+    return filename;
+  }
+
+  private isPathInsideDir(candidate: string, dir: string): boolean {
+    const relativePath = path.relative(
+      path.resolve(dir),
+      path.resolve(candidate)
+    );
+    return (
+      relativePath.length > 0 &&
+      !relativePath.startsWith('..') &&
+      !path.isAbsolute(relativePath)
+    );
   }
 
   private async loadEsmModule<T>(specifier: string): Promise<T> {

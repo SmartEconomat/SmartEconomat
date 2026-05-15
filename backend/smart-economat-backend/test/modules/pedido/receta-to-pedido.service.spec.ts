@@ -390,7 +390,7 @@ describe('RecetaToPedidoService', () => {
       expect.objectContaining({
         proveedorId: 'prov-barato',
         lineas: expect.arrayContaining([
-          { productoProveedorId: 'pp-1-b', cantidad: 3.2 },
+          { productoProveedorId: 'pp-1-b', cantidad: 3.2222 },
           { productoProveedorId: 'pp-2-b', cantidad: 1 },
         ]),
       }),

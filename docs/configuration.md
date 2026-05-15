@@ -53,3 +53,20 @@ Puntos relevantes:
 ## Configuracion no encontrada (explicita)
 
 - No hay gestion unificada de configuracion mediante schema global unico de backend con Joi/Zod en arranque.
+
+## Dominios, URLs derivadas y proxy
+
+Para despliegues con dominio propio o varios hosts (app pública, API, TLS), conviene alinear estas variables entre `.env.dev` / `.env.prod` y Docker Compose:
+
+| Variable | Rol |
+| --- | --- |
+| `DOMAIN` | Dominio lógico del despliegue (documentación operativa). |
+| `URL_BACKEND_DERIVADA` | URL pública o interna del API NestJS (p. ej. `https://api.ejemplo.com` o `http://localhost:3000`). |
+| `URL_FRONTEND_DERIVADA` | URL del cliente web (p. ej. `https://app.ejemplo.com` o `http://localhost:5173`). |
+| `VITE_PROXY_DERIVADO` | Destino del proxy de Vite en desarrollo: debe apuntar al mismo backend que consumirá el navegador. |
+
+Buenas prácticas:
+
+- Mantener valores de local y producción en ficheros `.env` distintos; no mezclar secretos.
+- Tras cambiar dominio, puertos o proxy, recrear contenedores para aplicar la configuración.
+- Inventario detallado de variables: [environment-variables.md](./environment-variables.md).

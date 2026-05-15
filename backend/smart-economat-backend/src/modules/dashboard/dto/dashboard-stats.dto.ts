@@ -1,4 +1,5 @@
-import { IsNumber, IsObject } from 'class-validator';
+import { IsDate, IsNumber, IsObject } from 'class-validator';
+import type { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
 
 /** Clase pública (DashboardStatsDto). Paquete: smart-economat-backend (Nest). */
 export class DashboardStatsDto {
@@ -32,5 +33,9 @@ export class DashboardStatsDto {
     caducados: number;
   };
 
-  movimientosRecientes: any[];
+  movimientosRecientes: Partial<Movimiento>[];
+
+  /** Timestamp de generación. Permite al cliente saber la antigüedad del dato cacheado. */
+  @IsDate()
+  generatedAt: Date;
 }

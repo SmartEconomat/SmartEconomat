@@ -27,6 +27,7 @@ import {
 import { PedidoUsuario } from '../../pedido/pedido-usuario.entity/pedido-usuario.entity';
 import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
+import { ensureDefaultAlmacenPrincipalUbicacion } from '../../ubicacion/utils/ensure-default-almacen-ubicacion.util';
 import { AlumnoSlot } from '../../profesor/profesor.entity/alumno-slot.entity';
 import { Inventario } from '../../inventario/inventario.entity/inventario.entity';
 import { Movimiento } from '../../movimiento/movimiento.entity/movimiento.entity';
@@ -239,6 +240,15 @@ export class DistribucionService {
     dto: CreateDistribucionDto,
     userId: string
   ): Promise<Distribucion> {
+    if (dto.idempotencyKey) {
+      const existing = await this.distribucionRepository.findOne({
+        where: { idempotencyKey: dto.idempotencyKey },
+      });
+      if (existing) {
+        return existing;
+      }
+    }
+
     return this.dataSource.transaction(async (manager) => {
       const requestedLineIds = dto.lineas.map(
         (linea) => linea.pedidoUsuarioLineaId
@@ -300,6 +310,7 @@ export class DistribucionService {
         estado: EstadoDistribucion.PREPARADA,
         observaciones: dto.observaciones,
         modifiedBy: userId,
+        ...(dto.idempotencyKey ? { idempotencyKey: dto.idempotencyKey } : {}),
       });
 
       distribucion.lineas = dto.lineas.map((lineaDto) => {
@@ -488,17 +499,16 @@ export class DistribucionService {
       return origen;
     }
 
-    let defaultUbicacion = await manager.findOne(Ubicacion, {
-      where: { nombre: 'Almacén Principal' },
+    const committed = await ensureDefaultAlmacenPrincipalUbicacion(
+      this.dataSource.manager
+    );
+    const defaultUbicacion = await manager.findOne(Ubicacion, {
+      where: { id: committed.id },
     });
-
     if (!defaultUbicacion) {
-      defaultUbicacion = manager.create(Ubicacion, {
-        nombre: 'Almacén Principal',
-        codigo: 'ALMACEN_PRINCIPAL',
-        descripcion: 'Ubicación por defecto del economato',
-      });
-      defaultUbicacion = await manager.save(defaultUbicacion);
+      throw new NotFoundException(
+        I18nHelper.getError('DISTRIBUCION_ORIGIN_NOT_FOUND')
+      );
     }
 
     return defaultUbicacion;

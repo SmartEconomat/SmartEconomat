@@ -18,7 +18,10 @@ import {
   seedSafeStringify,
 } from './seed-context.http-utils';
 import { seedDateIso } from './deterministic.seed-data';
-import { parseSeedBootstrapOverwriteExistingAdminPassword } from './bootstrap-admin-users.seed';
+import {
+  parseSeedBootstrapOverwriteExistingAdminPassword,
+  resolveBootstrapAdminUsersFromEnv,
+} from './bootstrap-admin-users.seed';
 
 type SeedCredential = {
   email: string;
@@ -685,14 +688,6 @@ export class SeedContext {
     }
     this.bootstrapAdminAttempted = true;
 
-    const email =
-      process.env.SEED_BOOTSTRAP_ADMIN_EMAIL?.trim() ||
-      'superadmin@smarteconomat.com';
-    const username =
-      process.env.SEED_BOOTSTRAP_ADMIN_USERNAME?.trim() || 'superadmin';
-    const password =
-      process.env.SEED_BOOTSTRAP_ADMIN_PASSWORD?.trim() || 'SmartEconomat2026!';
-
     try {
       if (!AppDataSource.isInitialized) {
         console.log(
@@ -703,6 +698,81 @@ export class SeedContext {
       }
 
       const repo = AppDataSource.getRepository(Usuario);
+      const seedingActive =
+        (process.env.IS_SEEDING || '').trim().toLowerCase() === 'true';
+
+      if (seedingActive) {
+        const bootstrapDefs = resolveBootstrapAdminUsersFromEnv();
+        for (const def of bootstrapDefs) {
+          const existingUser = await repo
+            .createQueryBuilder('usuario')
+            .addSelect('usuario.password')
+            .where(
+              '(LOWER(usuario.email) = LOWER(:email) OR LOWER(usuario.username) = LOWER(:username))',
+              { email: def.email, username: def.username }
+            )
+            .getOne();
+
+          const defHashedPassword = await bcrypt.hash(def.tempPassword, 10);
+          if (existingUser) {
+            existingUser.email = def.email;
+            existingUser.username = def.username;
+            existingUser.password = defHashedPassword;
+            existingUser.rol = def.rol;
+            existingUser.nombre = def.nombre;
+            existingUser.status = UserStatus.ACTIVE;
+            existingUser.activo = true;
+            existingUser.mustChangePassword = false;
+            existingUser.idioma = existingUser.idioma || def.idioma;
+            await repo.save(existingUser);
+          } else {
+            await repo.save(
+              repo.create({
+                nombre: def.nombre,
+                username: def.username,
+                email: def.email,
+                password: defHashedPassword,
+                rol: def.rol,
+                status: UserStatus.ACTIVE,
+                activo: true,
+                mustChangePassword: false,
+                idioma: def.idioma,
+              })
+            );
+          }
+        }
+
+        const bootstrapCandidates: SeedCredential[] = [];
+        for (const def of bootstrapDefs) {
+          bootstrapCandidates.push(
+            { email: def.email, password: def.tempPassword },
+            { email: def.username, password: def.tempPassword }
+          );
+        }
+
+        this.authCandidates = [
+          ...bootstrapCandidates,
+          ...this.authCandidates.filter(
+            (candidate) =>
+              !bootstrapCandidates.some(
+                (bootstrap) =>
+                  bootstrap.email === candidate.email &&
+                  bootstrap.password === candidate.password
+              )
+          ),
+        ];
+        return;
+      }
+
+      const email =
+        process.env.SEED_BOOTSTRAP_ADMIN_EMAIL?.trim() ||
+        'superadmin@smarteconomat.com';
+      const username =
+        process.env.SEED_BOOTSTRAP_ADMIN_USERNAME?.trim() || 'superadmin';
+      const password =
+        process.env.SEED_BOOTSTRAP_ADMIN_PASSWORD?.trim() ||
+        'SmartEconomat2026!';
+
       const existing = await repo
         .createQueryBuilder('usuario')
         .addSelect('usuario.password')

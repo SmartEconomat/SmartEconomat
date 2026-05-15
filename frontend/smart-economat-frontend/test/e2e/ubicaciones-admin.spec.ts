@@ -35,18 +35,18 @@ test.describe('Administración — ubicaciones', () => {
       descripcion?: string;
     }> = [{ id: 'ubi-seed', nombre: 'Cocina central', descripcion: '' }];
 
-    await page.route('**/api/v1/ubicacion**', async (route) => {
+    await page.route('**/api/v1/ubicaciones**', async (route) => {
       const req = route.request();
       const method = req.method();
       const url = new URL(req.url());
       const path = url.pathname.replace(/\/$/, '');
 
-      if (method === 'GET' && path.endsWith('/ubicacion')) {
+      if (method === 'GET' && path.endsWith('/ubicaciones')) {
         await route.fulfill(okJsonBody(ubicaciones));
         return;
       }
 
-      if (method === 'POST' && path.endsWith('/ubicacion')) {
+      if (method === 'POST' && path.endsWith('/ubicaciones')) {
         const body = req.postDataJSON() as {
           nombre: string;
           descripcion?: string;

@@ -65,6 +65,8 @@ export interface ConsolidatePurchaseBatchPayload {
 export interface UpdatePurchaseBatchPayload {
   observaciones?: string;
   lineas: PedidoLinePayload[];
+  /** Fecha de entrega estimada (ISO); opcional. */
+  fechaEntrega?: string;
 }
 
 /** Contrato de tipos público (UpdatePedidoPayload). Contexto: smart-economat-frontend (SPA). */
@@ -183,12 +185,24 @@ export const mapPedidoUsuarioToVisibleRow = (
 ): PedidoUsuarioRow => {
   const normalizedPedidoUsuario = normalizePedidoUsuario(pedidoUsuario);
 
+  const uniqueProveedorIds = Array.from(
+    new Set(
+      (normalizedPedidoUsuario.pedidos || [])
+        .map((p) => p.proveedor?.id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const proveedorRowId =
+    uniqueProveedorIds.length === 1
+      ? uniqueProveedorIds[0]!
+      : `agg:${normalizedPedidoUsuario.id}`;
+
   return {
     ...normalizedPedidoUsuario,
     entityType: 'pedido_usuario',
     pedidoUsuarioId: normalizedPedidoUsuario.id,
     proveedor: {
-      id: normalizedPedidoUsuario.id,
+      id: proveedorRowId,
       nombre: buildProviderSummary(normalizedPedidoUsuario),
     },
     pedidoProductos:
@@ -266,37 +280,23 @@ export async function fetchPedidoUsuarios(
   estado: string = '',
   options: FetchPedidoUsuariosOptions = {}
 ): Promise<PaginatedData<PedidoUsuario>> {
-  const buildParams = (safeMode = false): URLSearchParams => {
-    const params = new URLSearchParams({
-      page: normalizePageParam(page).toString(),
-      limit: normalizeLimitParam(limit).toString(),
-    });
+  const params = new URLSearchParams({
+    page: normalizePageParam(page).toString(),
+    limit: normalizeLimitParam(limit).toString(),
+  });
 
-    if (searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
-    if (!safeMode && estado.trim()) params.set('estado', estado.trim());
-    if (options.usuarioId?.trim())
-      params.set('usuarioId', options.usuarioId.trim());
-    if (options.fechaDesde?.trim())
-      params.set('fechaDesde', options.fechaDesde.trim());
-    if (options.fechaHasta?.trim())
-      params.set('fechaHasta', options.fechaHasta.trim());
-    if (!safeMode && options.sortBy?.trim())
-      params.set('sortBy', options.sortBy.trim());
-    if (!safeMode && options.order) params.set('order', options.order);
+  if (searchTerm.trim()) params.set('searchTerm', searchTerm.trim());
+  if (estado.trim()) params.set('estado', estado.trim());
+  if (options.usuarioId?.trim())
+    params.set('usuarioId', options.usuarioId.trim());
+  if (options.fechaDesde?.trim())
+    params.set('fechaDesde', options.fechaDesde.trim());
+  if (options.fechaHasta?.trim())
+    params.set('fechaHasta', options.fechaHasta.trim());
+  if (options.sortBy?.trim()) params.set('sortBy', options.sortBy.trim());
+  if (options.order) params.set('order', options.order);
 
-    return params;
-  };
-
-  let response = await baseFetch(
-    `/pedido-usuarios?${buildParams(false).toString()}`
-  );
-
-  // Fallback defensivo: algunos despliegues rechazan filtros/opciones concretas con 400.
-  if (response.status === 400) {
-    response = await baseFetch(
-      `/pedido-usuarios?${buildParams(true).toString()}`
-    );
-  }
+  const response = await baseFetch(`/pedido-usuarios?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error(
@@ -636,19 +636,55 @@ export async function consolidatePurchaseBatch(
 }
 
 /**
- * Recupera todos los lotes de compra activos.
+ * Recupera lotes de compra (todas las páginas hasta `maxPages` o hasta agotar resultados).
  */
 /**
  * Expone "fetchPurchaseBatches" en smart-economat-frontend (SPA).
+ * @undefined {number} pageSize - Tamaño de página alineado con el backend (máx. 50).
+ * @undefined {number} maxPages - Límite de seguridad para evitar bucles infinitos.
  * @undefined {Promise<PurchaseBatch[]>} Datos efectivos después de ejecutar la operación.
  */
-export async function fetchPurchaseBatches(): Promise<PurchaseBatch[]> {
-  const response = await baseFetch('/purchase-batches');
-  if (!response.ok) {
-    throw new Error(`Error al obtener lotes: ${response.status}`);
+export async function fetchPurchaseBatches(
+  pageSize = 50,
+  maxPages = 200
+): Promise<PurchaseBatch[]> {
+  const limit = normalizeLimitParam(pageSize);
+  const firstResponse = await baseFetch(
+    `/purchase-batches?page=${normalizePageParam(1)}&limit=${limit}`
+  );
+  if (!firstResponse.ok) {
+    throw new Error(`Error al obtener lotes: ${firstResponse.status}`);
   }
-  const body = (await response.json()) as ApiResponse<PurchaseBatch[]>;
-  return body.data.map(normalizePurchaseBatch);
+  const firstBody = (await firstResponse.json()) as ApiResponse<
+    PaginatedData<PurchaseBatch>
+  >;
+  const first = firstBody.data;
+  const merged: PurchaseBatch[] = [...first.data.map(normalizePurchaseBatch)];
+
+  const totalPages = Math.min(first.totalPages, maxPages);
+  if (totalPages <= 1) {
+    return merged;
+  }
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      baseFetch(
+        `/purchase-batches?page=${normalizePageParam(index + 2)}&limit=${limit}`
+      )
+    )
+  );
+
+  for (const res of rest) {
+    if (!res.ok) {
+      throw new Error(`Error al obtener lotes: ${res.status}`);
+    }
+    const body = (await res.json()) as ApiResponse<
+      PaginatedData<PurchaseBatch>
+    >;
+    merged.push(...body.data.data.map(normalizePurchaseBatch));
+  }
+
+  return merged;
 }
 
 /**

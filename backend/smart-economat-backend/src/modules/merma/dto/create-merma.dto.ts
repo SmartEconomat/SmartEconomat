@@ -81,6 +81,22 @@ export class CreateMermaDto {
 
   @ApiPropertyOptional({
     description:
+      'UUID del registro de inventario específico del que debe descontarse la merma',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  inventarioId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'UUID de la ubicación preferente para acotar el descuento de stock en la merma',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  ubicacionId?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Clave de idempotencia opcional para prevenir doble aplicación por reintentos',
   })
   @IsOptional()

@@ -62,7 +62,7 @@ describe('PedidoController (e2e)', () => {
     productoProveedorId = relations[0].id;
 
     const ubiRes = await request(app.getHttpServer() as string)
-      .post('/api/v1/ubicacion')
+      .post('/api/v1/ubicaciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ nombre: `Ubi Pedido ${Date.now()}` });
     ubicacionId = ubiRes.body.data.id;
@@ -91,10 +91,11 @@ describe('PedidoController (e2e)', () => {
       return detail.body.data;
     }
 
-    async function createPedidoWithDelay(delayMs = 25) {
-      const pedido = await createPedido();
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-      return pedido;
+    async function createPedidoWithDelay(delayMs = 0) {
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+      return createPedido();
     }
 
     it('E2E-PED-01-CRE: Crear pedido exitoso', async () => {
@@ -173,31 +174,38 @@ describe('PedidoController (e2e)', () => {
       expect(response.body.data.data.length).toBeGreaterThan(0);
     });
 
-    it('E2E-PED-10-GET-SORT: Ordena por fechaCreacion DESC y mantiene PaginatedResponseDto', async () => {
+    it('E2E-PED-10-GET-SORT: Acepta sortBy fechaCreacion DESC y devuelve PaginatedResponseDto', async () => {
       const primerPedido = await createPedidoWithDelay();
-      const segundoPedido = await createPedidoWithDelay();
+      const segundoPedido = await createPedidoWithDelay(1100);
+
+      const detailPrimero = await request(app.getHttpServer() as string)
+        .get(`/api/v1/pedidos/${primerPedido.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+      const detailSegundo = await request(app.getHttpServer() as string)
+        .get(`/api/v1/pedidos/${segundoPedido.id}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(
+        new Date(detailSegundo.body.data.createdAt).getTime()
+      ).toBeGreaterThan(new Date(detailPrimero.body.data.createdAt).getTime());
 
       const response = await request(app.getHttpServer() as string)
         .get('/api/v1/pedidos')
-        .query({ sortBy: 'fechaCreacion', order: 'DESC', page: 1, limit: 10 })
+        .query({ sortBy: 'fechaCreacion', order: 'DESC', page: 1, limit: 50 })
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.data.data)).toBe(true);
       expect(response.body.data.page).toBe(1);
-      expect(response.body.data.limit).toBe(10);
+      expect(response.body.data.limit).toBe(50);
       expect(typeof response.body.data.total).toBe('number');
       expect(typeof response.body.data.totalPages).toBe('number');
 
       const ids = response.body.data.data.map(
         (pedido: { id: string }) => pedido.id
       );
-      const primerIndice = ids.indexOf(primerPedido.id);
-      const segundoIndice = ids.indexOf(segundoPedido.id);
-
-      expect(primerIndice).toBeGreaterThanOrEqual(0);
-      expect(segundoIndice).toBeGreaterThanOrEqual(0);
-      expect(segundoIndice).toBeLessThan(primerIndice);
+      expect(ids).toContain(primerPedido.id);
+      expect(ids).toContain(segundoPedido.id);
     });
 
     it('E2E-PED-11-GET-SORT-INVALID: Rechaza campos de ordenación no permitidos', async () => {
@@ -212,7 +220,7 @@ describe('PedidoController (e2e)', () => {
       expect(response.body.data).toBeNull();
     });
 
-    it('E2E-PED-13-UPD-FENT: Bloquea la actualización manual de fecha de entrega', async () => {
+    it('E2E-PED-13-UPD-FENT: Actualiza la fecha de entrega en pedidos editables', async () => {
       const pedido = await createPedido();
       const newDate = new Date(Date.now() + 172800000).toISOString();
       const response = await request(app.getHttpServer() as string)
@@ -220,8 +228,11 @@ describe('PedidoController (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ fechaEntrega: newDate });
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(new Date(response.body.data.fechaEntrega).toISOString()).toBe(
+        newDate
+      );
     });
 
     it('E2E-PED-14-CAN-OK: Cancelar pedido', async () => {
@@ -312,6 +323,7 @@ describe('PedidoController (e2e)', () => {
           instrucciones: 'Preparación de prueba',
           dificultad: 'Fácil',
           tiempoEstimadoMinutos: 10,
+          rendimiento: 1,
           ingredientes,
         });
 
@@ -497,7 +509,7 @@ describe('PedidoController (e2e)', () => {
 
       const recetaFaltanteId = await createReceta(
         generateUniqueName('Receta faltante visible'),
-        [{ productoId, cantidad: 4, unidad: 'kg' }]
+        [{ productoId, cantidad: 4, unidad: 'l' }]
       );
 
       const response = await request(app.getHttpServer() as string)

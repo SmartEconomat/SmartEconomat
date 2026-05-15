@@ -33,6 +33,7 @@ import {
   TipoDiferencia,
 } from '../../incidencia/enums/incidencia.enums';
 import { Ubicacion } from '../../ubicacion/ubicacion.entity/ubicacion.entity';
+import { ensureDefaultAlmacenPrincipalUbicacion } from '../../ubicacion/utils/ensure-default-almacen-ubicacion.util';
 import { EstadoRecepcion } from '../enums/estado-recepcion.enum';
 import { EstadoProductoRecepcion } from '../enums/estado-producto.enum';
 import { EstadoVisualProducto } from '../enums/estado-visual.enum';
@@ -54,7 +55,6 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RecepcionCompletadaEvent } from '../events/recepcion-completada.event';
 import { HistorialPrecio } from '../../producto/historial-precio-proveedor.entity/historial.entity';
-import { Inject, forwardRef } from '@nestjs/common';
 import { ProductoService } from '../../producto/service/producto.service';
 
 interface LineaIncidencia {
@@ -111,7 +111,6 @@ export class RecepcionStockService {
     private dataSource: DataSource,
     private readonly pedidoService: PedidoService,
     private readonly eventEmitter: EventEmitter2,
-    @Inject(forwardRef(() => ProductoService))
     private readonly productoService: ProductoService,
     private readonly movimientoHelper: MovimientoHelper
   ) {}
@@ -153,6 +152,9 @@ export class RecepcionStockService {
       );
     }
 
+    const defaultUbicacionCommitted =
+      await ensureDefaultAlmacenPrincipalUbicacion(this.dataSource.manager);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -163,17 +165,10 @@ export class RecepcionStockService {
       const incidenciasGeneradas: IncidenciaGenerada[] = [];
       let recepcionEstadoEnum = EstadoRecepcion.COMPLETADA;
 
-      let defaultUbicacion = await queryRunner.manager.findOne(Ubicacion, {
-        where: { nombre: 'Almacén Principal' },
-      });
-      if (!defaultUbicacion) {
-        defaultUbicacion = queryRunner.manager.create(Ubicacion, {
-          nombre: 'Almacén Principal',
-          codigo: 'ALMACEN_PRINCIPAL',
-          descripcion: 'Ubicación por defecto del economato',
-        });
-        defaultUbicacion = await queryRunner.manager.save(defaultUbicacion);
-      }
+      const defaultUbicacion = await queryRunner.manager.findOneByOrFail(
+        Ubicacion,
+        { id: defaultUbicacionCommitted.id }
+      );
 
       const recepcion = queryRunner.manager.create(Recepcion, {
         usuario: { id: userId },
@@ -566,6 +561,9 @@ export class RecepcionStockService {
       }
     }
 
+    const defaultUbicacionCommitted =
+      await ensureDefaultAlmacenPrincipalUbicacion(this.dataSource.manager);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -610,17 +608,10 @@ export class RecepcionStockService {
         manager: queryRunner.manager,
       });
 
-      let defaultUbicacion = await queryRunner.manager.findOne(Ubicacion, {
-        where: { nombre: 'Almacén Principal' },
-      });
-      if (!defaultUbicacion) {
-        defaultUbicacion = queryRunner.manager.create(Ubicacion, {
-          nombre: 'Almacén Principal',
-          codigo: 'ALMACEN_PRINCIPAL',
-          descripcion: 'Ubicación por defecto del economato',
-        });
-        defaultUbicacion = await queryRunner.manager.save(defaultUbicacion);
-      }
+      const defaultUbicacion = await queryRunner.manager.findOneByOrFail(
+        Ubicacion,
+        { id: defaultUbicacionCommitted.id }
+      );
 
       if (dto.productosNuevos && dto.productosNuevos.length > 0) {
         for (const pNew of dto.productosNuevos) {

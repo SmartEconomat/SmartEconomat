@@ -6,7 +6,7 @@ import { RecepcionDraft, RecepcionDraftEnvelope } from './recepcion.types';
  * @undefined {Promise<RecepcionDraftEnvelope | null>} Datos efectivos después de ejecutar la operación.
  */
 export async function fetchRecepcionDraft(): Promise<RecepcionDraftEnvelope | null> {
-  const response = await baseFetch('/recepcion/draft');
+  const response = await baseFetch('/recepciones/draft');
   const body = await parseApiResponse<RecepcionDraftEnvelope | null>(
     response,
     'No se pudo recuperar el borrador de recepción.'
@@ -23,7 +23,7 @@ export async function fetchRecepcionDraft(): Promise<RecepcionDraftEnvelope | nu
 export async function saveRecepcionDraft(
   draft: RecepcionDraft
 ): Promise<RecepcionDraftEnvelope> {
-  const response = await baseFetch('/recepcion/draft', {
+  const response = await baseFetch('/recepciones/draft', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -45,7 +45,7 @@ export async function saveRecepcionDraft(
  * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
  */
 export async function deleteRecepcionDraft(): Promise<void> {
-  const response = await baseFetch('/recepcion/draft', {
+  const response = await baseFetch('/recepciones/draft', {
     method: 'DELETE',
   });
 

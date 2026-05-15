@@ -10,7 +10,7 @@ vi.mock('../../src/services/inventario.service', async (importOriginal) => {
     >();
   return {
     ...actual,
-    fetchInventario: vi.fn(),
+    fetchAllInventarioForExport: vi.fn(),
     fetchAlertasStock: vi.fn(),
   };
 });
@@ -58,7 +58,9 @@ describe('notifications.service inventory alerts', () => {
   });
 
   it('incluye notificacion urgente cuando hay productos bajo minimo en alertas de stock', async () => {
-    vi.mocked(inventarioService.fetchInventario).mockResolvedValue([]);
+    vi.mocked(inventarioService.fetchAllInventarioForExport).mockResolvedValue(
+      []
+    );
     vi.mocked(inventarioService.fetchAlertasStock).mockResolvedValue([
       {
         id: 'inv-1',
@@ -96,7 +98,7 @@ describe('notifications.service inventory alerts', () => {
       new Error('alertas no disponibles')
     );
 
-    vi.mocked(inventarioService.fetchInventario).mockResolvedValue([
+    vi.mocked(inventarioService.fetchAllInventarioForExport).mockResolvedValue([
       buildInventarioItem({
         id: 'inv-3',
         productoId: 'prod-1',
@@ -138,7 +140,7 @@ describe('notifications.service inventory alerts', () => {
       },
     ]);
 
-    vi.mocked(inventarioService.fetchInventario).mockResolvedValue([
+    vi.mocked(inventarioService.fetchAllInventarioForExport).mockResolvedValue([
       buildInventarioItem({
         id: 'inv-6',
         productoId: 'prod-3',

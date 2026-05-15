@@ -4,14 +4,14 @@ En SmartEconomat, el diseño no es una capa superficial; es el resultado de una 
 
 ---
 
-## 🏛️ UI Architecture Collage
+## UI Architecture Collage
 
 Explora las diferentes capas de nuestro sistema a través de fragmentos reales de su implementación.
 
 ````carousel
 ```typescript
 // [Layer 01] Design Tokens & Themes
-// file:///Users/alexisruiz/SmartEconomat/frontend/smart-economat-frontend/src/utils/theme/themes.ts
+// `frontend/smart-economat-frontend/src/utils/theme/themes.ts`
 
 const lightPalette = {
   mode: 'light',
@@ -29,7 +29,7 @@ const typography = {
 <!-- slide -->
 ```typescript
 // [Layer 02] Intelligent Status Mapping
-// file:///Users/alexisruiz/SmartEconomat/frontend/smart-economat-frontend/src/components/ui/StatusChip.tsx
+// `frontend/smart-economat-frontend/src/components/ui/StatusChip.tsx`
 
 export const getStatusColor = (status: string) => {
   const normalized = status.toLowerCase();
@@ -48,7 +48,7 @@ export const getStatusColor = (status: string) => {
 <!-- slide -->
 ```typescript
 // [Layer 03] Universal Accessibility (a11y)
-// file:///Users/alexisruiz/SmartEconomat/frontend/smart-economat-frontend/src/utils/a11y-format.ts
+// `frontend/smart-economat-frontend/src/utils/a11y-format.ts`
 
 /**
  * Heurística para lectores de pantalla:
@@ -65,7 +65,7 @@ export const formatDigitsForSR = (text: string): string => {
 <!-- slide -->
 ```tsx
 // [Layer 04] Domain Physics (Weight & Validation)
-// file:///Users/alexisruiz/SmartEconomat/frontend/smart-economat-frontend/src/components/recepcion/PasoEscaneo.tsx
+// `frontend/smart-economat-frontend/src/components/recepcion/PasoEscaneo.tsx`
 
 const getValidationColor = (recibida: number, pedida: number) => {
   if (recibida === pedida) return 'success.main';

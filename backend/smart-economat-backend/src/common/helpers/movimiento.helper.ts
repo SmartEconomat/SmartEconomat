@@ -329,7 +329,8 @@ export class MovimientoHelper {
     userId: string,
     pedidoId: string,
     descripcion?: string,
-    after?: any
+    after?: any,
+    manager?: EntityManager
   ) {
     return this.createMovimiento(
       userId,
@@ -342,7 +343,8 @@ export class MovimientoHelper {
       descripcion || `Creación de pedido ${pedidoId}`,
       AccionMovimiento.CREATE,
       undefined,
-      after
+      after,
+      manager
     );
   }
 

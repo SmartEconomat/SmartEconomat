@@ -1,6 +1,5 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { RecetaService } from '../../../src/modules/receta/service/receta.service';
-import { TipoMovimiento } from '../../../src/modules/movimiento/enums/movimiento.enums';
 
 describe('RecetaService', () => {
   const mockRecetaRepo = {
@@ -14,6 +13,10 @@ describe('RecetaService', () => {
   const mockDataSource = {
     getRepository: jest.fn(),
     transaction: jest.fn(),
+  };
+
+  const mockProduccionService = {
+    ejecutarProduccion: jest.fn(),
   };
 
   let service: RecetaService;
@@ -55,7 +58,11 @@ describe('RecetaService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new RecetaService(mockRecetaRepo as any, mockDataSource as any);
+    service = new RecetaService(
+      mockRecetaRepo as any,
+      mockDataSource as any,
+      mockProduccionService as any
+    );
   });
 
   it('calcularEscandallo calcula el coste total usando PMP cuando no hay precio por proveedor', async () => {
@@ -259,91 +266,38 @@ describe('RecetaService', () => {
     expect(result.alergenosConsolidados).toEqual(['GLUTEN']);
   });
 
-  it('cocinar rechaza cuando no hay stock suficiente', async () => {
-    mockRecetaRepo.findById.mockResolvedValue({
-      id: 'rec-3',
-      nombre: 'Sopa',
-      ingredientes: [
-        { producto: { id: 'prod-3', nombre: 'Caldo' }, cantidad: 5 },
-      ],
+  it('cocinar delega en ProduccionService con la cantidad indicada', async () => {
+    mockProduccionService.ejecutarProduccion.mockResolvedValue({
+      id: 'lote-1',
     });
-    const qb = {
-      innerJoinAndSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      addOrderBy: jest.fn().mockReturnThis(),
-      setLock: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
-        {
-          cantidadActual: 2,
-          productoProveedor: { producto: { id: 'prod-3' } },
-        },
-      ]),
-    };
-    const manager = {
-      createQueryBuilder: jest.fn().mockReturnValue(qb),
-      create: jest.fn(),
-      save: jest.fn(),
-    };
-    mockDataSource.transaction.mockImplementation((cb) => cb(manager));
 
-    await expect(
-      service.cocinar('rec-3', { cantidad: 1 } as any)
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await service.cocinar('rec-4', { cantidad: 3 } as any, 'user-1');
+
+    expect(mockProduccionService.ejecutarProduccion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recetaId: 'rec-4',
+        cantidadAProducir: 3,
+        idempotencyKey: expect.any(String),
+      }),
+      'user-1'
+    );
   });
 
-  it('cocinar consume inventario FIFO por caducidad y crea movimientos', async () => {
-    const inv1 = {
-      id: 'inv-1',
-      cantidadActual: 2,
-      ajustarCantidad: jest.fn(function (this: any, delta: number) {
-        this.cantidadActual += delta;
-      }),
-      productoProveedor: { id: 'pp-1', producto: { id: 'prod-4' } },
-    };
-    const inv2 = {
-      id: 'inv-2',
-      cantidadActual: 5,
-      ajustarCantidad: jest.fn(function (this: any, delta: number) {
-        this.cantidadActual += delta;
-      }),
-      productoProveedor: { id: 'pp-2', producto: { id: 'prod-4' } },
-    };
-    mockRecetaRepo.findById.mockResolvedValue({
-      id: 'rec-4',
-      nombre: 'Crema',
-      ingredientes: [
-        { producto: { id: 'prod-4', nombre: 'Leche' }, cantidad: 4 },
-      ],
+  it('cocinar usa cantidad por defecto cuando no se indica', async () => {
+    mockProduccionService.ejecutarProduccion.mockResolvedValue({
+      id: 'lote-2',
     });
-    const qb = {
-      innerJoinAndSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      addOrderBy: jest.fn().mockReturnThis(),
-      setLock: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([inv1, inv2]),
-    };
-    const createdMovements: any[] = [];
-    const manager = {
-      createQueryBuilder: jest.fn().mockReturnValue(qb),
-      create: jest.fn().mockImplementation((_: unknown, payload: any) => {
-        createdMovements.push(payload);
-        return payload;
+
+    await service.cocinar('rec-5', {} as any, 'user-2');
+
+    expect(mockProduccionService.ejecutarProduccion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recetaId: 'rec-5',
+        cantidadAProducir: 1,
+        idempotencyKey: expect.any(String),
       }),
-      save: jest.fn().mockResolvedValue(undefined),
-    };
-    mockDataSource.transaction.mockImplementation((cb) => cb(manager));
-
-    await service.cocinar('rec-4', { cantidad: 1 } as any);
-
-    expect(inv1.ajustarCantidad).toHaveBeenCalledWith(-2);
-    expect(inv2.ajustarCantidad).toHaveBeenCalledWith(-2);
-    expect(createdMovements[0]).toMatchObject({
-      tipo: TipoMovimiento.SALIDA_ELABORACION,
-    });
+      'user-2'
+    );
   });
 
   it('duplicate delega en el repositorio', async () => {

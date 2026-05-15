@@ -72,7 +72,7 @@ export class ProfesorController {
    * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/profesor/profesor.entity/alumno-slot.entity").AlumnoSlot>} Datos efectivos después de ejecutar la operación.
    */
   @Post('admin-slots')
-  @RequirePermissions(PERMISSIONS.usuarios.listar)
+  @RequirePermissions(PERMISSIONS.profesor.gestionar_slots)
   async adminCreateSlot(@Body() dto: AdminCreateSlotDto) {
     return this.profesorService.adminCreateSlot(dto);
   }

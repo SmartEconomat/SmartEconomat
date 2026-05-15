@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { BuildBodyEnv } from './massive.helpers.body.shared';
 import {
   UnidadIngrediente,
@@ -422,6 +423,7 @@ export function buildBodyInventoryAndProduction(
         'produccion-ejecutar-cantidad'
       ),
       ubicacionDestinoId: ubicacionId,
+      idempotencyKey: randomUUID(),
     };
   }
 
@@ -473,6 +475,7 @@ export function buildBodyInventoryAndProduction(
     return {
       tipo: 'raciones',
       valor,
+      idempotencyKey: randomUUID(),
     };
   }
 

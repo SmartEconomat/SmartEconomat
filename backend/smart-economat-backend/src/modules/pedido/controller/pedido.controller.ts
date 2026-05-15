@@ -11,6 +11,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
 import { CreatePedidoDto } from '../dto/create-pedido.dto';
@@ -35,6 +36,7 @@ import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.const
  * hasta su cancelación, aceptación y seguimiento de fechas de entrega.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
+@ApiTags('pedidos')
 @Controller('pedidos')
 export class PedidoController {
   private withPedidoLabels<T extends { estado?: string | null }>(
@@ -178,10 +180,11 @@ export class PedidoController {
   @RequirePermissions(PERMISSIONS.pedidos.editar)
   updateFechaEntrega(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Body() dto: UpdatePedidoDto
+    @Body() dto: UpdatePedidoDto,
+    @Req() req: { user: { id: string } }
   ): Promise<Pedido> {
     return this.pedidoService
-      .updateFechaEntrega(id, dto)
+      .updateFechaEntrega(id, dto, req.user.id)
       .then((pedido) => this.withPedidoLabels(pedido));
   }
 

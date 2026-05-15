@@ -2,6 +2,7 @@ import {
   baseFetch,
   ApiResponse,
   buildQueryParams,
+  PaginatedData,
   unwrapList,
   unwrapPaginated,
 } from './api.service';
@@ -17,11 +18,14 @@ import type {
 const INVENTARIO_CACHE_TTL_MS = 30_000;
 
 let inventarioCache: {
-  data: InventarioItem[];
+  data: PaginatedData<InventarioItem>;
   expiresAt: number;
 } | null = null;
 
-const inventarioInFlightByKey = new Map<string, Promise<InventarioItem[]>>();
+const inventarioInFlightByKey = new Map<
+  string,
+  Promise<PaginatedData<InventarioItem>>
+>();
 
 /** Contrato de tipos público (FetchInventarioFilters). Contexto: smart-economat-frontend (SPA). */
 export interface FetchInventarioFilters {
@@ -30,6 +34,10 @@ export interface FetchInventarioFilters {
   ubicacionIds?: string[];
   onlyLowStock?: boolean;
   forceRefresh?: boolean;
+  /** Número de página (1-indexed). Por defecto: 1. */
+  page?: number;
+  /** Máximo de ítems por página. Por defecto: 20. */
+  limit?: number;
 }
 
 const buildInventarioFetchKey = (filters?: FetchInventarioFilters): string =>
@@ -37,6 +45,8 @@ const buildInventarioFetchKey = (filters?: FetchInventarioFilters): string =>
     search: filters?.search?.trim() ?? '',
     ubicacionIds: [...(filters?.ubicacionIds ?? [])].sort().join('|'),
     onlyLowStock: Boolean(filters?.onlyLowStock),
+    page: filters?.page ?? 1,
+    limit: filters?.limit ?? 20,
   });
 
 const isInventarioCacheValid = (): boolean =>
@@ -80,17 +90,16 @@ export async function fetchAlertasStock(): Promise<AlertaStock[]> {
 }
 
 /**
- * Obtiene el estado actual del inventario (todas las páginas necesarias) filtrable por búsqueda, ubicación y stock bajo.
- * Implementa caché reactiva para la vista sin filtros.
- */
-/**
- * Expone "fetchInventario" en smart-economat-frontend (SPA).
- * @undefined {FetchInventarioFilters | undefined} filters - Entrada efectiva esperada por el contrato.
- * @undefined {Promise<InventarioItem[]>} Datos efectivos después de ejecutar la operación.
+ * Obtiene UNA página del inventario con paginación server-side.
+ * Realiza UNA SOLA petición HTTP — nunca itera páginas.
+ * Para exportar o procesar todo el inventario usar fetchAllInventarioForExport().
  */
 export async function fetchInventario(
   filters?: FetchInventarioFilters
-): Promise<InventarioItem[]> {
+): Promise<PaginatedData<InventarioItem>> {
+  const page = filters?.page ?? 1;
+  const limit = filters?.limit ?? 20;
+
   const hasServerFilters =
     Boolean(filters?.search?.trim()) ||
     Boolean(filters?.ubicacionIds?.length) ||
@@ -99,6 +108,7 @@ export async function fetchInventario(
   if (
     filters?.forceRefresh !== true &&
     !hasServerFilters &&
+    page === 1 &&
     isInventarioCacheValid() &&
     inventarioCache
   ) {
@@ -111,61 +121,57 @@ export async function fetchInventario(
     return inFlight;
   }
 
-  const run = (async (): Promise<InventarioItem[]> => {
-    const merged: InventarioItem[] = [];
-    let page = 1;
-    let totalPages = 1;
-    const limit = 50;
-    const MAX_PAGES = 400;
-
-    while (page <= totalPages && page <= MAX_PAGES) {
-      const queryParams = buildQueryParams(
-        {
-          page,
-          limit,
-          searchTerm: filters?.search?.trim(),
-          onlyLowStock: filters?.onlyLowStock ? true : undefined,
-          ubicacionIds: filters?.ubicacionIds?.length
-            ? filters.ubicacionIds
-            : undefined,
-        },
+  const run = (async (): Promise<PaginatedData<InventarioItem>> => {
+    const queryParams = buildQueryParams(
+      {
+        page,
         limit,
-        limit
+        searchTerm: filters?.search?.trim(),
+        onlyLowStock: filters?.onlyLowStock ? true : undefined,
+        ubicacionIds: filters?.ubicacionIds?.length
+          ? filters.ubicacionIds
+          : undefined,
+      },
+      limit,
+      limit
+    );
+
+    const response = await baseFetch(`/inventario?${queryParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(
+        `Error al obtener inventario: ${response.status} ${response.statusText}`
       );
-
-      const response = await baseFetch(`/inventario?${queryParams.toString()}`);
-      if (!response.ok) {
-        throw new Error(
-          `Error al obtener inventario: ${response.status} ${response.statusText}`
-        );
-      }
-      const body = (await response.json()) as ApiResponse<unknown>;
-      const paginated = unwrapPaginated<InventarioItem>(body.data);
-      const chunk = (
-        paginated ? paginated.data : unwrapList<InventarioItem>(body.data)
-      ).filter(
-        (item) =>
-          !isInventarioItemDeleted(item) && Number(item.cantidadActual ?? 0) > 0
-      );
-
-      merged.push(...chunk);
-
-      if (paginated && typeof paginated.totalPages === 'number') {
-        totalPages = paginated.totalPages;
-      } else {
-        break;
-      }
-      page += 1;
     }
 
-    if (!hasServerFilters) {
+    const body = (await response.json()) as ApiResponse<unknown>;
+    const paginated = unwrapPaginated<InventarioItem>(body.data);
+    const rawData = paginated
+      ? paginated.data
+      : unwrapList<InventarioItem>(body.data);
+
+    const filteredData = rawData.filter(
+      (item) =>
+        !isInventarioItemDeleted(item) && Number(item.cantidadActual ?? 0) > 0
+    );
+
+    const result: PaginatedData<InventarioItem> = paginated
+      ? { ...paginated, data: filteredData }
+      : {
+          data: filteredData,
+          total: filteredData.length,
+          page,
+          limit,
+          totalPages: 1,
+        };
+
+    if (!hasServerFilters && page === 1) {
       inventarioCache = {
-        data: merged,
+        data: result,
         expiresAt: Date.now() + INVENTARIO_CACHE_TTL_MS,
       };
     }
 
-    return merged;
+    return result;
   })();
 
   inventarioInFlightByKey.set(key, run);
@@ -175,6 +181,65 @@ export async function fetchInventario(
   } finally {
     inventarioInFlightByKey.delete(key);
   }
+}
+
+/**
+ * ⚠️ ADVERTENCIA DE RENDIMIENTO: Descarga TODO el inventario iterando todas las páginas.
+ * Puede consumir cientos de MB de memoria con inventarios grandes (>20.000 ítems).
+ * Usar exclusivamente para exportación o procesamiento batch fuera de la UI principal.
+ * Para visualización paginada usar fetchInventario() con los parámetros page y limit.
+ */
+export async function fetchAllInventarioForExport(
+  filters?: Omit<FetchInventarioFilters, 'page' | 'limit' | 'forceRefresh'>
+): Promise<InventarioItem[]> {
+  const merged: InventarioItem[] = [];
+  let page = 1;
+  let totalPages = 1;
+  const limit = 50;
+  const MAX_PAGES = 400;
+
+  while (page <= totalPages && page <= MAX_PAGES) {
+    const queryParams = buildQueryParams(
+      {
+        page,
+        limit,
+        searchTerm: filters?.search?.trim(),
+        onlyLowStock: filters?.onlyLowStock ? true : undefined,
+        ubicacionIds: filters?.ubicacionIds?.length
+          ? filters.ubicacionIds
+          : undefined,
+      },
+      limit,
+      limit
+    );
+
+    const response = await baseFetch(`/inventario?${queryParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(
+        `Error al obtener inventario: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const body = (await response.json()) as ApiResponse<unknown>;
+    const paginated = unwrapPaginated<InventarioItem>(body.data);
+    const chunk = (
+      paginated ? paginated.data : unwrapList<InventarioItem>(body.data)
+    ).filter(
+      (item) =>
+        !isInventarioItemDeleted(item) && Number(item.cantidadActual ?? 0) > 0
+    );
+
+    merged.push(...chunk);
+
+    if (paginated && typeof paginated.totalPages === 'number') {
+      totalPages = paginated.totalPages;
+    } else {
+      break;
+    }
+    page += 1;
+  }
+
+  return merged;
 }
 
 /**

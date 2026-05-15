@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNumber, IsPositive, ValidateIf } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsPositive,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 import { StringToNumberTransformer } from '../../../common/transformers/string-to-number.transformer';
 import { IsPortion } from '../../../common/decorators/is-portion.decorator';
 
@@ -33,4 +39,12 @@ export class ConsumirProduccionDto {
   )
   @IsPortion()
   valor!: number;
+
+  @ApiProperty({
+    description:
+      'Clave de idempotencia obligatoria para evitar consumos duplicados por reintentos',
+    example: '019658f5-2b6a-7fd8-bb20-1f6a812f3e11',
+  })
+  @IsUUID('all')
+  idempotencyKey!: string;
 }

@@ -110,6 +110,11 @@ export interface FirewallEnsureContext {
   runtimePath: string;
   log: (line: string) => void;
   /**
+   * Permite usar fallback con elevacion (UAC) en Windows cuando los cmdlets
+   * nativos fallan por permisos. En modo automatico/background debe quedar en false.
+   */
+  allowElevation?: boolean;
+  /**
    * Modo de verificación:
    * - `preHostMapping`: antes de escribir `hosts` (no se puede asumir resolución DNS del dominio local).
    * - `postHostMapping`: después de escribir `hosts` (se puede validar loopback DNS del dominio).

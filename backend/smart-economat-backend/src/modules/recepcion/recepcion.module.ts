@@ -1,9 +1,11 @@
 import { forwardRef, Module } from '@nestjs/common';
+
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recepcion } from './recepcion.entity/recepcion.entity';
 import { Usuario } from '../usuario/usuario.entity/usuario.entity';
 import { RecepcionController } from './controller/recepcion.controller';
+import { RecepcionDraftController } from '../recepcion-draft/controller/recepcion-draft.controller';
 import { RecepcionProductoController } from './controller/recepcion-producto.controller';
 import { RecepcionService } from './service/recepcion.service';
 import { RecepcionStockService } from './service/recepcion-stock.service';
@@ -21,6 +23,7 @@ import { MovimientoModule } from '../movimiento/movimiento.module';
 import { PdfReportService } from './service/pdf-report.service';
 import { PedidoModule } from '../pedido/pedido.module';
 import { ProductoModule } from '../producto/producto.module';
+import { RecepcionDraftModule } from '../recepcion-draft/recepcion-draft.module';
 
 /** Clase pública (RecepcionModule). Paquete: smart-economat-backend (Nest). */
 @Module({
@@ -39,10 +42,15 @@ import { ProductoModule } from '../producto/producto.module';
     ]),
     MovimientoModule,
     forwardRef(() => PedidoModule),
-    forwardRef(() => ProductoModule),
+    ProductoModule,
+    RecepcionDraftModule,
     EventEmitterModule,
   ],
-  controllers: [RecepcionController, RecepcionProductoController],
+  controllers: [
+    RecepcionDraftController,
+    RecepcionController,
+    RecepcionProductoController,
+  ],
   providers: [
     RecepcionService,
     RecepcionStockService,

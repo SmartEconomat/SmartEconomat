@@ -45,6 +45,7 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
     (acc, curr) => acc + Number(curr.totalRegistros),
     0
   );
+  const safeTotalCantidad = totalCantidad > 0 ? totalCantidad : 1;
 
   return (
     <Box mb={4}>
@@ -74,6 +75,14 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                   </Typography>
                   <Typography variant="h4" fontWeight={700}>
                     {totalCantidad.toFixed(2)}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    mt={0.5}
+                  >
+                    {t('merma.stats.disclaimerUnidadesMixtas')}
                   </Typography>
                 </Box>
               </Stack>
@@ -134,13 +143,16 @@ const MermaStatsView: React.FC<MermaStatsProps> = ({ stats, isLoading }) => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {Number(m.totalCantidad).toFixed(2)} (
-                  {((Number(m.totalCantidad) / totalCantidad) * 100).toFixed(1)}
+                  {(
+                    (Number(m.totalCantidad) / safeTotalCantidad) *
+                    100
+                  ).toFixed(1)}
                   %)
                 </Typography>
               </Box>
               <LinearProgress
                 variant="determinate"
-                value={(Number(m.totalCantidad) / totalCantidad) * 100}
+                value={(Number(m.totalCantidad) / safeTotalCantidad) * 100}
                 color={m.motivo === MotivoMerma.HURTO ? 'error' : 'warning'}
                 sx={{ height: 8, borderRadius: 4 }}
               />

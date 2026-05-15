@@ -4,9 +4,9 @@
     "ADMIN_SUPER_ADMIN_PERMISSIONS_IMMUTABLE": "No se pueden modificar los permisos de ADMIN o SUPER_ADMIN",
     "CANNOT_DELETE_SYSTEM_TEMPLATE": "No se puede eliminar una plantilla de sistema",
     "CANNOT_DELETE_SYSTEM_BASE_ROLE_TEMPLATES": "No se pueden eliminar las plantillas base del sistema",
-    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "No se puede eliminar la plantilla porque está vinculada a {count} rol(es)",
+    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "No se puede eliminar la plantilla porque está vinculada a {{count}} rol(es)",
     "TEMPLATE_HIERARCHY_CIRCULAR_REFERENCE": "Referencia circular detectada en la jerarquía de plantillas",
-    "TEMPLATE_NAME_ALREADY_EXISTS": "Ya existe una plantilla con el nombre \"{nombre}\"",
+    "TEMPLATE_NAME_ALREADY_EXISTS": "Ya existe una plantilla con el nombre \"{{nombre}}\"",
     "PARENT_TEMPLATE_CIRCULAR_REFERENCE": "No se puede asignar la plantilla padre porque genera una referencia circular",
     "CANNOT_GENERATE_UNIQUE_TEMPLATE_NAME": "No se pudo generar un nombre único para la plantilla duplicada",
     "INVENTARIO_DELETED_CANNOT_ADJUST": "No se puede ajustar un inventario eliminado",
@@ -349,6 +349,7 @@
         "producto": "Producto",
         "cantidad": "Cantidad",
         "unidad": "Unidad",
+        "merma": "Merma %",
         "proveedorFav": "Proveedor fav."
       }
     },
@@ -372,7 +373,8 @@
       "seleccionaRecetasPedido": "Selecciona al menos una receta para generar el pedido.",
       "pedidoGeneradoDesdeRecetas_one": "Pedido #{{numero}} generado correctamente desde 1 receta.",
       "pedidoGeneradoDesdeRecetas_other": "Pedido #{{numero}} generado correctamente desde {{count}} recetas.",
-      "errorPedidoDesdeRecetas": "Error al generar el pedido desde recetas."
+      "errorPedidoDesdeRecetas": "Error al generar el pedido desde recetas.",
+      "errorExportExcel": "Error al exportar las recetas a Excel."
     },
     "errors": {
       "cargaDesconocida": "Error desconocido al cargar recetas.",
@@ -382,6 +384,7 @@
       "dificultadObligatoria": "La dificultad de la receta es obligatoria.",
       "ingredienteObligatorio": "Debes añadir al menos un ingrediente.",
       "errorSubirImagen": "Hubo un error al subir la imagen de la receta.",
+      "imagenRutaInvalida": "La ruta de imagen no es válida. Usa una imagen subida al sistema.",
       "unidadInvalida": "La unidad de resultado de la receta no es válida.",
       "productoInvalido": "Producto no válido en la lista de ingredientes.",
       "unidadIngredienteInvalida": "La unidad del ingrediente {{index}} no es válida.",
@@ -406,6 +409,9 @@
       "equivProduccion": "{{cantidad}} {{unidad}} · escala ×{{factor}}",
       "verificacionStock": "Verificación de Stock",
       "validandoStock": "Garantizando stock...",
+      "validacionPendiente": "Completa cantidades válidas para validar stock.",
+      "cantidadInvalidaStock": "Cada receta debe tener una cantidad objetivo mayor que 0.",
+      "errorValidarStock": "No se pudo validar el stock en este momento.",
       "insufTitulo": "INGREDIENTES INSUFICIENTES",
       "faltaLinea": "{{nombre}}: faltan {{cantidad}} {{unidad}}",
       "provEtiqueta": "(Prov: {{nombre}})",
@@ -1786,6 +1792,7 @@
       "registradoPor": "Registrado por",
       "verNotas": "Ver notas",
       "notas": "Notas",
+      "columnaNotas": "Obs.",
       "sinNotas": "Sin notas",
       "ariaVerNotas": "Ver notas de la merma de {{producto}}"
     },
@@ -1793,7 +1800,8 @@
       "totalPerdidas": "Total pérdidas",
       "totalRegistros": "Total registros",
       "distribucionPorMotivo": "Distribución por motivo",
-      "sinDatos": "No hay datos de mermas para este periodo"
+      "sinDatos": "No hay datos de mermas para este periodo",
+      "disclaimerUnidadesMixtas": "Las cantidades suman unidades distintas (kg, l, piezas, etc.); el total es orientativo."
     },
     "filtros": {
       "motivo": "Motivo",

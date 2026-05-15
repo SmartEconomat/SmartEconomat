@@ -524,8 +524,9 @@ const DistribucionPage: React.FC = () => {
   };
 
   const handleCancel = async (id: string) => {
-    const motivo =
-      window.prompt(t('distribucion.motivoCancelacion')) || undefined;
+    const result = window.prompt(t('distribucion.motivoCancelacion'));
+    if (result === null) return;
+    const motivo = result.trim() || undefined;
     try {
       await cancelDistribucion(id, motivo);
       toast.success(t('distribucion.toast.distribucionCancelada'));

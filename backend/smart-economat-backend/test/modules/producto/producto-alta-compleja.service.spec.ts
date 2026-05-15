@@ -207,6 +207,7 @@ describe('ProductoService - Alta compleja', () => {
     expect(manager.find).toHaveBeenCalledWith(ProductoProveedor, {
       where: { producto: { id: '01954a85-6215-7f83-8e5c-2b6fd3d6a4b1' } },
       relations: ['proveedor'],
+      withDeleted: true,
     });
     expect(mockMovimientoHelper.trackProductoCreation).toHaveBeenCalledWith(
       'user-1',

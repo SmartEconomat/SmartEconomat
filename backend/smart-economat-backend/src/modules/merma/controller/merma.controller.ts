@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
 import { SortableFields } from '../../../common/decorators/sortable-fields.decorator';
 import { ParseUUIDv7Pipe } from '../../../common/pipes';
@@ -21,8 +20,14 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { CreateMermaDto } from '../dto/create-merma.dto';
 import { CreateMermaProduccionDto } from '../dto/create-merma-produccion.dto';
 import { MermaKpiQueryDto } from '../dto/merma-kpi-query.dto';
+import { MermaQueryDto } from '../dto/merma-query.dto';
+import { MermaStatsQueryDto } from '../dto/merma-stats-query.dto';
 import { Merma } from '../merma.entity/merma.entity';
-import { MermaKpiResponse, MermaService } from '../service/merma.service';
+import {
+  MermaKpiResponse,
+  MermaService,
+  MermaStatsResponse,
+} from '../service/merma.service';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
 import { validateDateRange } from '../../../common/utils/date-range.util';
 import { SORTABLE_FIELDS } from '../../../common/constants/sortable-fields.constants';
@@ -112,11 +117,6 @@ export class MermaController {
 
   /**
    * Obtiene estadísticas agregadas de mermas por motivo y por producto.
-   * @returns Agregaciones para visualización en dashboards.
-   */
-  /**
-   * Obtiene valores o vistas materializadas.
-   * @undefined {Promise<{ porMotivo: unknown[]; porProducto: unknown[]; }>} Datos efectivos después de ejecutar la operación.
    */
   @Get('stats')
   @RequirePermissions(PERMISSIONS.merma.stats)
@@ -124,8 +124,9 @@ export class MermaController {
     summary: 'Obtener estadísticas de merma por motivo y producto',
   })
   @ApiResponse({ status: 200 })
-  getStats(): Promise<{ porMotivo: unknown[]; porProducto: unknown[] }> {
-    return this.mermaService.getStats();
+  getStats(@Query() query: MermaStatsQueryDto): Promise<MermaStatsResponse> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Mermas');
+    return this.mermaService.getStats(query);
   }
 
   /**
@@ -138,9 +139,10 @@ export class MermaController {
   @ApiOperation({ summary: 'Listar todas las mermas con paginación' })
   @ApiResponse({ status: 200, type: [Merma] })
   findAll(
-    @SortableFields(SORTABLE_FIELDS.mermas)
-    query: PaginationQueryDto
+    @SortableFields(SORTABLE_FIELDS.mermas, MermaQueryDto)
+    query: MermaQueryDto
   ): Promise<PaginatedResponseDto<Merma>> {
+    validateDateRange(query.startDate, query.endDate, 365, 'Mermas');
     return this.mermaService.findAll(query);
   }
 

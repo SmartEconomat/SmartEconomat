@@ -72,7 +72,7 @@ $ npm run test:cov
 
 2. Configura el archivo `.env.prod` con los valores de tu dominio y base de datos.
 3. Si usas Docker, asegúrate de que docker-compose use las variables correctas y exponga los puertos necesarios.
-4. Consulta la guía [Centralización de configuración](../../wiki/CENTRALIZACION_CONFIGURACION.md) para más detalles.
+4. Consulta [Configuración (dominios, proxy y entornos)](../../docs/configuration.md) y el inventario de [variables de entorno](../../docs/environment-variables.md).
 
 ## Resources
 

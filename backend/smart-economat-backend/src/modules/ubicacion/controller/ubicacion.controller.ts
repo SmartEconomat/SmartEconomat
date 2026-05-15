@@ -22,37 +22,24 @@ import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { BaseController } from '../../../common/base/base.controller';
 import { Ubicacion } from '../ubicacion.entity/ubicacion.entity';
 import { PERMISSIONS } from '../../../common/constants/permissions.constants';
+import type { AuthenticatedUser } from '../../../common/interfaces/authenticated-user.interface';
 
-/**
- * Controlador REST para ubicacion.
- */
+/** Controlador REST para la gestión de ubicaciones de almacenamiento. */
 @ApiTags('Ubicaciones')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermisosGuard)
-@Controller('ubicacion')
+@Controller('ubicaciones')
 export class UbicacionController extends BaseController<
   Ubicacion,
   CreateUbicacionDto,
   UpdateUbicacionDto,
   UbicacionService
 > {
-  /**
-   * Inicializa la instancia con los colaboradores necesarios para el flujo.
-   *
-   * @param service Parámetro de entrada para la operación.
-   */
   constructor(service: UbicacionService) {
     super(service);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Crea recursos nuevos en base a las reglas de negocio.
-   * @undefined {CreateUbicacionDto} createUbicacionDto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Crea una nueva ubicación de almacenamiento. */
   @Post()
   @RequirePermissions(PERMISSIONS.ubicaciones.crear)
   @ApiOperation({ summary: 'Crear nueva ubicación' })
@@ -60,53 +47,29 @@ export class UbicacionController extends BaseController<
     return super.create(createUbicacionDto);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "findAll" en smart-economat-backend (Nest).
-   * @undefined {PaginationQueryDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/common/dto/paginated-response.dto").PaginatedResponseDto<Ubicacion>>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Lista todas las ubicaciones con paginación. Los admins también ven las eliminadas. */
   @Get()
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   @ApiOperation({ summary: 'Obtener todas las ubicaciones' })
   override findAll(
     @Query() query: PaginationQueryDto,
-    @Req() req: { user?: { rol?: string } }
+    @Req() req: { user: AuthenticatedUser }
   ) {
     return super.findAll(query, req);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "findOne" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {{ user?: { rol?: string; }; }} req - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Obtiene el detalle de una ubicación por su UUID. */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.ver)
   @ApiOperation({ summary: 'Obtener ubicación por ID' })
   override findOne(
     @Param('id', ParseUUIDv7Pipe) id: string,
-    @Req() req: { user?: { rol?: string } }
+    @Req() req: { user: AuthenticatedUser }
   ) {
     return super.findOne(id, req);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Persiste modificaciones válidas sobre entidades existentes.
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {UpdateUbicacionDto} updateUbicacionDto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Actualiza los datos de una ubicación existente. */
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.editar)
   @ApiOperation({ summary: 'Actualizar una ubicación' })
@@ -117,14 +80,7 @@ export class UbicacionController extends BaseController<
     return super.update(id, updateUbicacionDto);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "remove" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Elimina lógicamente una ubicación (soft delete). */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.ubicaciones.eliminar)
   @ApiOperation({ summary: 'Eliminar una ubicación lógica' })
@@ -132,14 +88,7 @@ export class UbicacionController extends BaseController<
     return super.remove(id);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "restore" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<Ubicacion>} Datos efectivos después de ejecutar la operación.
-   */
+  /** Restaura una ubicación previamente eliminada. */
   @Post(':id/restore')
   @RequirePermissions(PERMISSIONS.ubicaciones.restaurar)
   @ApiOperation({ summary: 'Restaurar una ubicación eliminada' })

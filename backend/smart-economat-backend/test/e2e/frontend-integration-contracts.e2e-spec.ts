@@ -408,7 +408,7 @@ describe('Frontend Integration Contracts (e2e)', () => {
       const { productoProveedorId } = await createProductoConProveedor();
 
       const ubicacionResponse = await request(app.getHttpServer())
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ nombre: `Ubicacion Integracion ${Date.now()}` })
         .expect(201);

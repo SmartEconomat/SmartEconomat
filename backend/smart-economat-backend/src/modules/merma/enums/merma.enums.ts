@@ -14,4 +14,5 @@ export enum TipoMerma {
   CADUCIDAD = 'caducidad',
   ROTURA = 'rotura',
   INVENTARIO = 'inventario',
+  HURTO = 'hurto',
 }

@@ -57,6 +57,22 @@ export class CreateMermaProduccionDto {
 
   @ApiPropertyOptional({
     description:
+      'UUID del inventario concreto del ingrediente sobre el que se registra la merma',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  inventarioId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'UUID de ubicación para acotar el descuento de stock del ingrediente en la merma',
+  })
+  @IsOptional()
+  @IsUUID('all')
+  ubicacionId?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Clave de idempotencia opcional para prevenir doble aplicación por reintentos',
   })
   @IsOptional()

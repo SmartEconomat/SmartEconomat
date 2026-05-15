@@ -23,26 +23,15 @@ const XLSX_MIME =
 const PDF_MIME = 'application/pdf';
 
 /**
- * Controlador REST para export.
+ * Controlador transversal de exportación a Excel y PDF.
+ * Todos los endpoints devuelven un stream binario (no JSON envelope) — el cliente debe
+ * usar blob/arrayBuffer para procesar la respuesta.
  */
 @UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('export')
 export class ExportController {
-  /**
-   * Construye la instancia configurada.
-   * @undefined {ExportService} exportService - Entrada efectiva esperada por el contrato.
-   */
   constructor(private readonly exportService: ExportService) {}
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportProductos" en smart-economat-backend (Nest).
-   * @undefined {ExportProductoFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('productos/xlsx')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductos(
@@ -57,15 +46,6 @@ export class ExportController {
     await this.exportService.streamProductosToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportPedidos" en smart-economat-backend (Nest).
-   * @undefined {ExportPedidoFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('pedidos/xlsx')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidos(
@@ -83,15 +63,6 @@ export class ExportController {
     await this.exportService.streamPedidosToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportProveedores" en smart-economat-backend (Nest).
-   * @undefined {ExportProveedorFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('proveedores/xlsx')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedores(
@@ -106,15 +77,6 @@ export class ExportController {
     await this.exportService.streamProveedoresToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportAlbaranes" en smart-economat-backend (Nest).
-   * @undefined {ExportAlbaranFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('albaranes/xlsx')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranes(
@@ -135,15 +97,6 @@ export class ExportController {
     await this.exportService.streamAlbaranesToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportIncidencias" en smart-economat-backend (Nest).
-   * @undefined {ExportIncidenciaFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('incidencias/xlsx')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidencias(
@@ -164,15 +117,6 @@ export class ExportController {
     await this.exportService.streamIncidenciasToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportInventario" en smart-economat-backend (Nest).
-   * @undefined {ExportInventarioFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('inventario/xlsx')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventario(
@@ -187,15 +131,6 @@ export class ExportController {
     await this.exportService.streamInventarioToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportMovimientos" en smart-economat-backend (Nest).
-   * @undefined {ExportMovimientoFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('movimientos/xlsx')
   @RequirePermissions(PERMISSIONS.movimientos.listar)
   async exportMovimientos(
@@ -216,15 +151,6 @@ export class ExportController {
     await this.exportService.streamMovimientosToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportRecepciones" en smart-economat-backend (Nest).
-   * @undefined {ExportRecepcionFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('recepciones/xlsx')
   @RequirePermissions(PERMISSIONS.recepciones.listar)
   async exportRecepciones(
@@ -245,15 +171,6 @@ export class ExportController {
     await this.exportService.streamRecepcionesToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportRecetas" en smart-economat-backend (Nest).
-   * @undefined {ExportRecetaFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('recetas/xlsx')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetas(
@@ -265,15 +182,6 @@ export class ExportController {
     await this.exportService.streamRecetasToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportUbicaciones" en smart-economat-backend (Nest).
-   * @undefined {ExportUbicacionFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('ubicaciones/xlsx')
   @RequirePermissions(PERMISSIONS.ubicaciones.listar)
   async exportUbicaciones(
@@ -288,15 +196,6 @@ export class ExportController {
     await this.exportService.streamUbicacionesToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportUsuarios" en smart-economat-backend (Nest).
-   * @undefined {ExportUsuarioFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('usuarios/xlsx')
   @RequirePermissions(PERMISSIONS.usuarios.listar)
   async exportUsuarios(
@@ -311,15 +210,6 @@ export class ExportController {
     await this.exportService.streamUsuariosToExcel(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportProductosPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportProductoFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('productos/pdf')
   @RequirePermissions(PERMISSIONS.productos.listar)
   async exportProductosPdf(
@@ -334,15 +224,6 @@ export class ExportController {
     await this.exportService.streamProductosToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportProveedoresPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportProveedorFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('proveedores/pdf')
   @RequirePermissions(PERMISSIONS.proveedores.listar)
   async exportProveedoresPdf(
@@ -357,15 +238,6 @@ export class ExportController {
     await this.exportService.streamProveedoresToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportInventarioPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportInventarioFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('inventario/pdf')
   @RequirePermissions(PERMISSIONS.inventario.listar)
   async exportInventarioPdf(
@@ -380,15 +252,6 @@ export class ExportController {
     await this.exportService.streamInventarioToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportPedidosPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportPedidoFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('pedidos/pdf')
   @RequirePermissions(PERMISSIONS.pedidos.listar)
   async exportPedidosPdf(
@@ -406,15 +269,6 @@ export class ExportController {
     await this.exportService.streamPedidosToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportAlbaranesPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportAlbaranFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('albaranes/pdf')
   @RequirePermissions(PERMISSIONS.albaranes.listar)
   async exportAlbaranesPdf(
@@ -435,15 +289,6 @@ export class ExportController {
     await this.exportService.streamAlbaranesToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportIncidenciasPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportIncidenciaFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('incidencias/pdf')
   @RequirePermissions(PERMISSIONS.incidencias.listar)
   async exportIncidenciasPdf(
@@ -464,15 +309,6 @@ export class ExportController {
     await this.exportService.streamIncidenciasToPdf(query, res);
   }
 
-  /**
-   * Ejecuta la lógica de operación dentro del flujo de la aplicación.
-   */
-  /**
-   * Expone "exportRecetasPdf" en smart-economat-backend (Nest).
-   * @undefined {ExportRecetaFilterDto} query - Entrada efectiva esperada por el contrato.
-   * @undefined {Response<any, Record<string, any>>} res - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<void>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('recetas/pdf')
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async exportRecetasPdf(

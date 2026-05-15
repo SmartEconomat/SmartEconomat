@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { AdminService } from '../../../src/modules/admin/service/admin.service';
@@ -213,6 +214,42 @@ describe('AdminService', () => {
     await expect(service.activateUser('missing-user')).rejects.toBeInstanceOf(
       NotFoundException
     );
+  });
+
+  describe('getRoles y getPermissions — repositorios opcionales (ADMIN-002)', () => {
+    it('getRoles lanza InternalServerErrorException si rolRepo no está inyectado', async () => {
+      const serviceWithoutRepos = new AdminService(
+        mockUsuarioRepo as any,
+        mockProfesorRepo as any,
+        mockDataSource as any,
+        undefined,
+        undefined
+      );
+      await expect(serviceWithoutRepos.getRoles()).rejects.toBeInstanceOf(
+        InternalServerErrorException
+      );
+    });
+
+    it('getPermissions lanza InternalServerErrorException si permisoRepo no está inyectado', async () => {
+      const serviceWithoutRepos = new AdminService(
+        mockUsuarioRepo as any,
+        mockProfesorRepo as any,
+        mockDataSource as any,
+        mockRolRepo as any,
+        undefined,
+        undefined
+      );
+      await expect(serviceWithoutRepos.getPermissions()).rejects.toBeInstanceOf(
+        InternalServerErrorException
+      );
+    });
+
+    it('getRoles devuelve roles cuando rolRepo está disponible', async () => {
+      const roles = [{ id: 'r-1', nombre: 'ADMIN' }];
+      mockRolRepo.find.mockResolvedValue(roles);
+      const result = await service.getRoles();
+      expect(result).toEqual(roles);
+    });
   });
 
   it('forcePasswordReset genera password provisional de 8 caracteres y mustChangePassword', async () => {

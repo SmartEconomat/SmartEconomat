@@ -77,6 +77,25 @@ function parsePositiveOptionalInteger(
   return parsedValue;
 }
 
+function normalizeRecipeImagePath(imagePath: string): string | undefined {
+  const trimmedPath = imagePath.trim();
+  if (!trimmedPath) return undefined;
+
+  if (/^https?:\/\//i.test(trimmedPath) || trimmedPath.startsWith('blob:')) {
+    return trimmedPath;
+  }
+
+  const normalizedPath = trimmedPath.replace(/\\/g, '/');
+  if (
+    /^\/?uploads\/[A-Za-z0-9._/-]+$/i.test(normalizedPath) ||
+    /^\/?archivos\/content\/[A-Za-z0-9._/-]+$/i.test(normalizedPath)
+  ) {
+    return normalizedPath;
+  }
+
+  return undefined;
+}
+
 function normalizeIngredients(
   ingredients: RecetaIngredienteFormValue[],
   t: (key: string) => string
@@ -108,9 +127,13 @@ function normalizeIngredients(
       }
 
       const mermaAplicada = Number(ingredient.mermaAplicada ?? 0);
-      if (!Number.isFinite(mermaAplicada) || mermaAplicada < 0) {
+      if (
+        !Number.isFinite(mermaAplicada) ||
+        mermaAplicada < 0 ||
+        mermaAplicada > 99
+      ) {
         throw new Error(
-          `La merma del ingrediente ${index + 1} debe ser un numero mayor o igual que 0.`
+          `La merma del ingrediente ${index + 1} debe estar entre 0 y 99.`
         );
       }
 
@@ -198,7 +221,11 @@ export async function buildRecetaPayload(
       throw new Error('Hubo un error al subir la imagen de la receta.');
     }
   } else if (typeof formData.imagen === 'string' && formData.imagen.trim()) {
-    finalPathImg = formData.imagen.trim();
+    const normalizedPath = normalizeRecipeImagePath(formData.imagen);
+    if (!normalizedPath) {
+      throw new Error(t('recipes.errors.imagenRutaInvalida'));
+    }
+    finalPathImg = normalizedPath;
   }
 
   const unidadResultadoRaw = toOptionalTrimmedString(formData.unidadResultado);

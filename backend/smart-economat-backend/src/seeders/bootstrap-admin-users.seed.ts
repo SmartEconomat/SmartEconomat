@@ -20,6 +20,17 @@ type BootstrapAdminUserSeed = {
 
 const SEED_TAG = '[seed-bootstrap-admin-users]';
 
+/**
+ * Credenciales bootstrap leídas de `process.env` se memorizan una vez por proceso.
+ * Sin esto, cada llamada a `resolveBootstrapAdminUsersFromEnv()` generaba contraseñas
+ * aleatorias distintas: el upsert guardaba un hash y el siguiente `POST /auth/login`
+ * del seed masivo enviaba otra contraseña → 400 y admin/superadmin dejaban de coincidir
+ * con `SmartEconomat2026!` aunque estuviera en `.env.example`.
+ */
+let memoizedBootstrapUsersForProcessEnv:
+  | readonly BootstrapAdminUserSeed[]
+  | null = null;
+
 function generateSecureTemporaryPassword(): string {
   return randomBytes(18).toString('base64url');
 }
@@ -95,13 +106,8 @@ export function resolveMassiveSeedFixedAdminCredentials(
   };
 }
 
-/**
- * Expone "resolveBootstrapAdminUsersFromEnv" en smart-economat-backend (Nest).
- * @undefined {NodeJS.ProcessEnv} env - Entrada efectiva esperada por el contrato.
- * @undefined {readonly BootstrapAdminUserSeed[]} Datos efectivos después de ejecutar la operación.
- */
-export function resolveBootstrapAdminUsersFromEnv(
-  env: NodeJS.ProcessEnv = process.env
+function computeBootstrapAdminUsersFromEnv(
+  env: NodeJS.ProcessEnv
 ): readonly BootstrapAdminUserSeed[] {
   const providedLegacyTempPassword = readOptionalEnv(
     env,
@@ -191,6 +197,25 @@ export function resolveBootstrapAdminUsersFromEnv(
       idioma: UserLanguage.ES,
     },
   ] as const;
+}
+
+/**
+ * Expone "resolveBootstrapAdminUsersFromEnv" en smart-economat-backend (Nest).
+ * @undefined {NodeJS.ProcessEnv} env - Entrada efectiva esperada por el contrato.
+ * @undefined {readonly BootstrapAdminUserSeed[]} Datos efectivos después de ejecutar la operación.
+ */
+export function resolveBootstrapAdminUsersFromEnv(
+  env: NodeJS.ProcessEnv = process.env
+): readonly BootstrapAdminUserSeed[] {
+  if (env === process.env) {
+    if (memoizedBootstrapUsersForProcessEnv === null) {
+      memoizedBootstrapUsersForProcessEnv =
+        computeBootstrapAdminUsersFromEnv(env);
+    }
+    return memoizedBootstrapUsersForProcessEnv;
+  }
+
+  return computeBootstrapAdminUsersFromEnv(env);
 }
 
 function normalizeId(value: unknown): string | null {

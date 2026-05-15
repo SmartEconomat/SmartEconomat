@@ -4,9 +4,9 @@
     "ADMIN_SUPER_ADMIN_PERMISSIONS_IMMUTABLE": "Permissions for ADMIN or SUPER_ADMIN cannot be modified",
     "CANNOT_DELETE_SYSTEM_TEMPLATE": "Cannot delete a system template",
     "CANNOT_DELETE_SYSTEM_BASE_ROLE_TEMPLATES": "Cannot delete system base role templates",
-    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "Cannot delete template because it is linked to {count} role(s)",
+    "CANNOT_DELETE_TEMPLATE_LINKED_TO_ROLES": "Cannot delete template because it is linked to {{count}} role(s)",
     "TEMPLATE_HIERARCHY_CIRCULAR_REFERENCE": "Circular reference detected in template hierarchy",
-    "TEMPLATE_NAME_ALREADY_EXISTS": "A template with the name \"{nombre}\" already exists",
+    "TEMPLATE_NAME_ALREADY_EXISTS": "A template with the name \"{{nombre}}\" already exists",
     "PARENT_TEMPLATE_CIRCULAR_REFERENCE": "Cannot assign parent template because it creates a circular reference",
     "CANNOT_GENERATE_UNIQUE_TEMPLATE_NAME": "Could not generate a unique name for the duplicated template",
     "INVENTARIO_DELETED_CANNOT_ADJUST": "Cannot adjust a deleted inventory item",
@@ -349,6 +349,7 @@
         "producto": "Product",
         "cantidad": "Quantity",
         "unidad": "Unit",
+        "merma": "Waste %",
         "proveedorFav": "Fav. supplier"
       }
     },
@@ -372,7 +373,8 @@
       "seleccionaRecetasPedido": "Select at least one recipe to generate the order.",
       "pedidoGeneradoDesdeRecetas_one": "Order #{{numero}} generated successfully from 1 recipe.",
       "pedidoGeneradoDesdeRecetas_other": "Order #{{numero}} generated successfully from {{count}} recipes.",
-      "errorPedidoDesdeRecetas": "Error generating the order from recipes."
+      "errorPedidoDesdeRecetas": "Error generating the order from recipes.",
+      "errorExportExcel": "Error exporting recipes to Excel."
     },
     "errors": {
       "cargaDesconocida": "Unknown error while loading recipes.",
@@ -382,6 +384,7 @@
       "dificultadObligatoria": "Recipe difficulty is required.",
       "ingredienteObligatorio": "You must add at least one ingredient.",
       "errorSubirImagen": "There was an error uploading the recipe image.",
+      "imagenRutaInvalida": "Image path is invalid. Use an image uploaded in the system.",
       "unidadInvalida": "Recipe result unit is invalid.",
       "productoInvalido": "Invalid product in the ingredients list.",
       "unidadIngredienteInvalida": "Ingredient {{index}} unit is invalid.",
@@ -406,6 +409,9 @@
       "equivProduccion": "{{cantidad}} {{unidad}} · scale ×{{factor}}",
       "verificacionStock": "Stock check",
       "validandoStock": "Ensuring stock...",
+      "validacionPendiente": "Enter valid target quantities to validate stock.",
+      "cantidadInvalidaStock": "Each recipe must have a target quantity greater than 0.",
+      "errorValidarStock": "Could not validate stock right now.",
       "insufTitulo": "INSUFFICIENT INGREDIENTS",
       "faltaLinea": "{{nombre}}: short by {{cantidad}} {{unidad}}",
       "provEtiqueta": "(Supplier: {{nombre}})",
@@ -859,7 +865,7 @@
       "lineasCount": "{{count}} line",
       "lineasCount_plural": "{{count}} lines",
       "cantidadesPorProducto": "Quantities by product",
-      "cantidadLinea": "{{producto}}: O {{esperada}} {{unidad}} · R {{recibida}} {{unidad}} · P {{pendiente}} {{unidad}}",
+      "cantidadLinea": "{{producto}}: O {{pedida}} {{unidad}} · R {{recibida}} {{unidad}} · Aj {{ajustada}} {{unidad}}",
       "masProductos": "+{{count}} product(s)",
       "estado": "Status"
     },
@@ -1167,6 +1173,7 @@
       "registradoPor": "Recorded by",
       "verNotas": "View notes",
       "notas": "Notes",
+      "columnaNotas": "Notes",
       "sinNotas": "No notes",
       "ariaVerNotas": "View notes for waste of {{producto}}"
     },
@@ -1174,7 +1181,8 @@
       "totalPerdidas": "Total losses",
       "totalRegistros": "Total records",
       "distribucionPorMotivo": "Distribution by reason",
-      "sinDatos": "No waste data for this period"
+      "sinDatos": "No waste data for this period",
+      "disclaimerUnidadesMixtas": "Quantities mix different units (kg, l, pieces, etc.); the total is indicative only."
     },
     "filtros": {
       "motivo": "Reason",

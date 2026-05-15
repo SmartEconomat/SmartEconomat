@@ -2,16 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Redis from 'ioredis';
-import { RecepcionDraftController } from './controller/recepcion-draft.controller';
 import { RecepcionDraftService } from './service/recepcion-draft.service';
 import { RecepcionDraft } from './recepcion-draft.entity/recepcion-draft.entity';
 import { RECEPCION_DRAFT_REDIS } from './constants/recepcion-draft.constants';
 import { createInMemoryRedisClient } from '../../common/testing/in-memory-redis';
 
-/** Clase pública (RecepcionDraftModule). Paquete: smart-economat-backend (Nest). */
+/**
+ * Providers del borrador de recepción. El controlador se declara en RecepcionModule
+ * **antes** de RecepcionController para que GET/DELETE `/recepciones/draft` no caigan en `:id`.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([RecepcionDraft])],
-  controllers: [RecepcionDraftController],
+  controllers: [],
   providers: [
     RecepcionDraftService,
     {

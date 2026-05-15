@@ -38,7 +38,6 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AlbaranModule } from './modules/albaran/albaran.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PedidoDraftModule } from './modules/pedido-draft/pedido-draft.module';
-import { RecepcionDraftModule } from './modules/recepcion-draft/recepcion-draft.module';
 import { OpenfoodfactsModule } from './modules/openfoodfacts/openfoodfacts.module';
 import { DistribucionModule } from './modules/distribucion/distribucion.module';
 import { I18nConfigModule } from './config/i18n.module';
@@ -109,7 +108,6 @@ import { I18nConfigModule } from './config/i18n.module';
     AlbaranModule,
     DashboardModule,
     PedidoDraftModule,
-    RecepcionDraftModule,
     OpenfoodfactsModule,
     DistribucionModule,
   ],

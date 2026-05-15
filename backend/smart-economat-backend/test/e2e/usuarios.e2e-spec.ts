@@ -88,7 +88,7 @@ describe('UsuarioController (e2e)', () => {
 
     it('PATCH /usuarios/perfil/mis-ubicaciones - Debe vincular ubicaciones válidas (200)', async () => {
       const ubiRes = await request(app.getHttpServer() as Server)
-        .post('/api/v1/ubicacion')
+        .post('/api/v1/ubicaciones')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombre: `Perfil ubicación E2E ${Date.now()}`,

@@ -128,8 +128,7 @@ describe('massive.runtime.deletables producto-alergeno', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ max: '199999' }])
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ value: '200000' }])
-        .mockResolvedValueOnce([]),
+        .mockResolvedValueOnce([{ value: '200000' }]),
     };
 
     jest.spyOn(AppDataSource, 'initialize').mockResolvedValue(AppDataSource);
@@ -141,7 +140,7 @@ describe('massive.runtime.deletables producto-alergeno', () => {
 
     await ensureDeletablePedidoResource(context, {} as never, 0);
 
-    expect(manager.query).toHaveBeenCalledTimes(6);
+    expect(manager.query).toHaveBeenCalledTimes(4);
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         numeroGlobal: '200000',

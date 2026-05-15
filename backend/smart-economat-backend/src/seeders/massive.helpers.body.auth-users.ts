@@ -1,8 +1,5 @@
-import {
-  ALT_SEED_PASSWORD,
-  DEFAULT_ADMIN_EMAIL,
-  DEFAULT_SEED_PASSWORD,
-} from './massive.config';
+import { resolveMassiveSeedFixedAdminCredentials } from './bootstrap-admin-users.seed';
+import { ALT_SEED_PASSWORD, DEFAULT_SEED_PASSWORD } from './massive.config';
 import { getRequiredStateString, getStateArray } from './massive.state';
 import { BuildBodyEnv } from './massive.helpers.body.shared';
 import {
@@ -150,14 +147,10 @@ export function buildBodyAuthUsers(
   }
 
   if (resolvedPath === '/auth/login') {
-    const loginEmail =
-      context.getState<string>('seedAdminLoginEmail') || DEFAULT_ADMIN_EMAIL;
-    const loginPassword =
-      context.getState<string>('seedAdminCurrentPassword') ||
-      DEFAULT_SEED_PASSWORD;
+    const fixed = resolveMassiveSeedFixedAdminCredentials();
     return {
-      email: loginEmail,
-      password: loginPassword,
+      email: fixed.superAdmin.email,
+      password: fixed.superAdmin.password,
     };
   }
 

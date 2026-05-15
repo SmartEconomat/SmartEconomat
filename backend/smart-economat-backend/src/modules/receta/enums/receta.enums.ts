@@ -76,4 +76,5 @@ export function getTiempoRecetaMinutos(tiempoReceta: TiempoReceta): number {
 export enum EstadoLote {
   DISPONIBLE = 'disponible',
   AGOTADO = 'agotado',
+  CANCELADO = 'cancelado',
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -37,7 +37,7 @@ import { useToast } from '../../store/toast.hooks';
 import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import DynamicFormModal, { DynamicField } from '../ui/DynamicFormModal';
 import { SelectOption } from '../ui/Select';
-import { mermaSchema } from '../../utils/schemas';
+import { getMermaSchema } from '../../utils/schemas';
 import { createMerma } from '../../services/merma.service';
 import { MotivoMerma } from '../../services/merma.types';
 import { fetchProductosPaginated } from '../../services/producto.service';
@@ -48,6 +48,7 @@ import {
 } from '../../utils/numberUtils';
 import { UbicacionService } from '../../services/ubicacion.service';
 import type { Ubicacion } from '../../services/ubicacion.types';
+import { generateIdempotencyKey } from '../../utils/idempotency';
 
 const AUDIT_MANUAL_REASON_KEY = 'inventario.detalle.auditManualReason';
 const MERMA_PRODUCT_SEARCH_LIMIT = 20;
@@ -183,6 +184,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   const [productosOptions, setProductosOptions] = useState<SelectOption[]>([]);
   const [isSearchingProductos, setIsSearchingProductos] = useState(false);
   const mermaProductSearchRequestIdRef = React.useRef(0);
+  const mermaIdempotencyKeyRef = useRef<string | null>(null);
   const [ubicacionesTransfer, setUbicacionesTransfer] = useState<Ubicacion[]>(
     []
   );
@@ -375,11 +377,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
       return;
     }
 
-    const idempotency =
-      typeof globalThis.crypto !== 'undefined' &&
-      typeof globalThis.crypto.randomUUID === 'function'
-        ? globalThis.crypto.randomUUID()
-        : `fe-${inventarioItem.id}-${destId}-${Date.now()}`;
+    const idempotency = generateIdempotencyKey();
 
     setIsTransferring((prev) => ({ ...prev, [inventarioItem.id]: true }));
     try {
@@ -476,6 +474,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
   );
 
   const handleOpenMerma = () => {
+    mermaIdempotencyKeyRef.current = generateIdempotencyKey();
     if (selectedProductOption) {
       setProductosOptions([selectedProductOption]);
     } else {
@@ -494,6 +493,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         cantidad: Number(formData.cantidad),
         motivo: formData.motivo as MotivoMerma,
         notas: formData.notas as string | undefined,
+        idempotencyKey: mermaIdempotencyKeyRef.current ?? undefined,
       });
       toast.success(t('inventario.detalle.toast.wasteSuccess'));
       setIsMermaModalOpen(false);
@@ -511,7 +511,7 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
 
   const dynamicMermaSchema: DynamicField[] = React.useMemo(
     () =>
-      mermaSchema.map((field) => {
+      getMermaSchema(t).map((field) => {
         if (field.name === 'productoId') {
           return {
             ...field,
@@ -526,7 +526,13 @@ const InventoryDetailModal: React.FC<InventoryDetailModalProps> = ({
         }
         return field;
       }),
-    [isSearchingProductos, productoId, productosOptions, searchMermaProductos]
+    [
+      isSearchingProductos,
+      productoId,
+      productosOptions,
+      searchMermaProductos,
+      t,
+    ]
   );
 
   const mermaInitialData = React.useMemo(() => ({ productoId }), [productoId]);

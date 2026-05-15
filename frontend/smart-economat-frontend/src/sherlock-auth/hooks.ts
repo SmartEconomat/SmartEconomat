@@ -30,9 +30,9 @@ export const usePermission = (
 
   return useMemo(() => {
     if (isElevatedRole(userRole)) return true;
-    if (!permiso) return true;
+    if (!permiso) return false;
     if (Array.isArray(permiso)) {
-      if (permiso.length === 0) return true;
+      if (permiso.length === 0) return false;
       return permiso.every((p) => !!permissionsMap[p]);
     }
     return !!permissionsMap[permiso];

@@ -58,21 +58,12 @@ export class PermisosController {
     return this.permisosService.findAllNoPagination();
   }
 
-  /**
-   * Expone "findGroupedByModule" en smart-economat-backend (Nest).
-   * @undefined {Promise<Record<string, import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso[]>>} Datos efectivos después de ejecutar la operación.
-   */
   @Get('grouped')
   @RequirePermissions(PERMISSIONS.permisos.listar)
   findGroupedByModule() {
     return this.permisosService.findGroupedByModule();
   }
 
-  /**
-   * Expone "findOne" en smart-economat-backend (Nest).
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<import("/home/psych/projects/SmartEconomat/backend/smart-economat-backend/src/modules/permisos/permiso.entity/permiso.entity").Permiso>} Datos efectivos después de ejecutar la operación.
-   */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.permisos.ver)
   findOne(@Param('id', ParseUUIDPipe) id: string) {

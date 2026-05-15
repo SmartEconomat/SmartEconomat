@@ -1,6 +1,8 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { PreparacionService } from '../../../src/modules/preparacion/service/preparacion.service';
 import { PreparacionEstado } from '../../../src/modules/preparacion/enums/preparacion.enums';
+import { Preparacion } from '../../../src/modules/preparacion/preparacion.entity/preparacion.entity';
+import { ProduccionLote } from '../../../src/modules/receta/produccion-lote.entity/produccion-lote.entity';
 
 describe('PreparacionService', () => {
   const preparacionRepository = {
@@ -19,6 +21,35 @@ describe('PreparacionService', () => {
     findById: jest.fn(),
   };
 
+  const preparacionQb = {
+    where: jest.fn().mockReturnThis(),
+    setLock: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+  };
+
+  const preparacionTxRepository = {
+    createQueryBuilder: jest.fn().mockReturnValue(preparacionQb),
+  };
+
+  const produccionLoteTxRepository = {
+    findOne: jest.fn(),
+  };
+
+  const manager = {
+    getRepository: jest.fn((entity: unknown) => {
+      if (entity === Preparacion) return preparacionTxRepository;
+      if (entity === ProduccionLote) return produccionLoteTxRepository;
+      return null;
+    }),
+    save: jest.fn(),
+  };
+
+  const dataSource = {
+    transaction: jest.fn((cb: (managerArg: typeof manager) => unknown) =>
+      cb(manager)
+    ),
+  };
+
   let service: PreparacionService;
 
   beforeEach(() => {
@@ -26,7 +57,8 @@ describe('PreparacionService', () => {
     service = new PreparacionService(
       preparacionRepository as any,
       produccionService as any,
-      recetaRepository as any
+      recetaRepository as any,
+      dataSource as any
     );
   });
 
@@ -73,24 +105,28 @@ describe('PreparacionService', () => {
       },
     };
 
-    jest.spyOn(service, 'findOne').mockResolvedValue(preparacion as any);
+    preparacionQb.getOne.mockResolvedValue(preparacion);
+    produccionLoteTxRepository.findOne.mockResolvedValue(null);
     produccionService.ejecutarProduccion.mockResolvedValue({ id: 'lote-1' });
-    preparacionRepository.save.mockImplementation((value: any) =>
+    manager.save.mockImplementation((_entity: unknown, value: any) =>
       Promise.resolve(value)
     );
 
     await service.finalizarPreparacion('prep-1', 'user-1');
 
     expect(produccionService.ejecutarProduccion).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         recetaId: 'receta-9',
         cantidadAProducir: 6,
         ubicacionDestinoId: 'ubicacion-1',
-      },
+        idempotencyKey: expect.any(String),
+      }),
       'user-1',
-      'prep-1'
+      'prep-1',
+      manager
     );
-    expect(preparacionRepository.save).toHaveBeenCalledWith(
+    expect(manager.save).toHaveBeenCalledWith(
+      Preparacion,
       expect.objectContaining({
         id: 'prep-1',
         estado: PreparacionEstado.COMPLETADA,
@@ -98,14 +134,36 @@ describe('PreparacionService', () => {
     );
   });
 
+  it('trata finalizar como idempotente cuando la preparación ya está completada', async () => {
+    const completed = {
+      id: 'prep-1',
+      estado: PreparacionEstado.COMPLETADA,
+    };
+
+    preparacionQb.getOne.mockResolvedValue(completed);
+
+    await expect(
+      service.finalizarPreparacion('prep-1', 'user-1', 'ubicacion-1')
+    ).resolves.toEqual(completed);
+    expect(produccionService.ejecutarProduccion).not.toHaveBeenCalled();
+  });
+
   it('rechaza finalizar una preparación fuera de proceso', async () => {
-    jest.spyOn(service, 'findOne').mockResolvedValue({
+    preparacionQb.getOne.mockResolvedValue({
       id: 'prep-2',
       estado: PreparacionEstado.PENDIENTE,
-    } as any);
+    });
 
     await expect(
       service.finalizarPreparacion('prep-2', 'user-1', 'ubicacion-1')
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('lanza NotFoundException al finalizar una preparación inexistente', async () => {
+    preparacionQb.getOne.mockResolvedValue(null);
+
+    await expect(
+      service.finalizarPreparacion('prep-404', 'user-1', 'ubicacion-1')
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

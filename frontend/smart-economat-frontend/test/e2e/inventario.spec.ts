@@ -11,7 +11,7 @@ const profileInventarioAdmin = {
   username: 'qa-inv',
   nombre: 'QA Inventario E2E',
   email: 'qa-inv@smarteconomat.e2e',
-  rol: 'ADMIN',
+  rol: 'admin',
   permisos: [
     'inventario:listar',
     'inventario:crear',
@@ -38,7 +38,7 @@ test.describe('Inventario ubicación y modal', () => {
   }) => {
     await setupAuthenticatedWithCatchAll(page);
 
-    await page.route('**/api/v1/ubicacion**', async (route) =>
+    await page.route('**/api/v1/ubicaciones**', async (route) =>
       route.fulfill(
         okJsonBody([
           { id: 'ubi-e2e-1', nombre: 'Laboratorio gastronómico' },
@@ -87,12 +87,10 @@ test.describe('Inventario ubicación y modal', () => {
     await page.goto('/inventario', { waitUntil: 'networkidle' });
 
     await expect(
-      page.getByTestId('filtro-inventario-ubicaciones')
+      page.getByRole('combobox', { name: /Ubicación/i })
     ).toBeVisible();
     await expect(
-      page
-        .getByTestId('filtro-inventario-ubicaciones')
-        .getByPlaceholder('Ubicación...')
+      page.getByRole('combobox', { name: 'Ubicación...' })
     ).toBeVisible();
     await expect(
       page.locator(':text-matches("Filtrar almac[eé]n","i")')
@@ -104,7 +102,7 @@ test.describe('Inventario ubicación y modal', () => {
 
     await setupAuthenticatedWithCatchAll(page);
 
-    await page.route('**/api/v1/ubicacion**', async (route) =>
+    await page.route('**/api/v1/ubicaciones**', async (route) =>
       route.fulfill(
         okJsonBody([{ id: 'ubi-modal', nombre: 'Cocina docente e2e' }])
       )
@@ -201,6 +199,10 @@ test.describe('Inventario ubicación y modal', () => {
     expect(stockCantidad).toBe(11);
 
     await page.reload({ waitUntil: 'networkidle' });
-    await expect(page.getByText(/11[.,]00/)).toBeVisible();
+    await expect(
+      page
+        .getByRole('button', { name: /inventario\.aria\.filaProducto/i })
+        .first()
+    ).toContainText(/11([.,]0+)?/);
   });
 });

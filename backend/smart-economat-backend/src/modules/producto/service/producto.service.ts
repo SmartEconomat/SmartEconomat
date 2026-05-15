@@ -12,7 +12,14 @@ import { UpdateProductoDto } from '../dto/update-producto.dto';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
 import { MovimientoHelper } from '../../../common/helpers/movimiento.helper';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager, In } from 'typeorm';
+import {
+  Repository,
+  DataSource,
+  EntityManager,
+  In,
+  IsNull,
+  MoreThan,
+} from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ProductoProveedor } from '../producto-proveedor.entity/producto-proveedor.entity';
 import { ProductFilterDto } from '../dto/product-filter.dto';
@@ -148,14 +155,11 @@ export class ProductoService {
   /**
    * Recupera una lista paginada de productos aplicando filtros dinámicos.
    * @param query Filtros de búsqueda (nombre, EAN, categoría, marca, alérgenos).
-   * @param userRole Rol del usuario solicitante para aplicar reglas de visibilidad.
    * @returns Objeto con datos paginados y metadatos de paginación.
    */
   async findAll(
-    query: ProductFilterDto,
-    userRole?: string
+    query: ProductFilterDto
   ): Promise<PaginatedResponseDto<Producto>> {
-    void userRole;
     const page = query.page ?? 1;
     const {
       skip,
@@ -249,13 +253,10 @@ export class ProductoService {
   /**
    * Busca un producto por su UUID.
    * @param id Identificador único del producto.
-   * @param _userRole (Opcional) Rol del usuario para futuras restricciones de visibilidad.
    * @returns El producto encontrado con proveedores y alérgenos.
    * @throws NotFoundException Si el producto no existe.
    */
-  async findOne(id: string, _userRole?: string): Promise<Producto> {
-    void _userRole;
-
+  async findOne(id: string): Promise<Producto> {
     const producto = await this.productoRepository.findOne({
       where: { id },
       relations: ['proveedores', 'proveedores.proveedor', 'alergenos'],
@@ -602,7 +603,10 @@ export class ProductoService {
       where: { productoId: producto.id },
     });
 
-    if (proveedores.length === 0) return;
+    if (proveedores.length === 0) {
+      await em.update(Producto, { id: productoId }, { pmp: 0 });
+      return;
+    }
 
     const ppIds = proveedores.map((p) => p.id);
 
@@ -900,11 +904,26 @@ export class ProductoService {
     const existing = await manager.find(ProductoProveedor, {
       where: { producto: { id: productoId } },
       relations: ['proveedor'],
+      withDeleted: true,
     });
 
-    const existingIds = existing.map((ep) => ep.proveedorId);
+    const activeExisting = existing.filter((relation) => !relation.deletedAt);
+    const deletedExistingByProveedorId = new Map(
+      existing
+        .filter((relation) => Boolean(relation.deletedAt))
+        .map((relation) => [relation.proveedorId, relation] as const)
+    );
+
+    const existingIds = activeExisting.map((ep) => ep.proveedorId);
     const newProveedores = proveedores.filter(
-      (p) => !existingIds.includes(p.proveedorId)
+      (p) =>
+        !existingIds.includes(p.proveedorId) &&
+        !deletedExistingByProveedorId.has(p.proveedorId)
+    );
+    const proveedoresToRestore = proveedores.filter(
+      (p) =>
+        !existingIds.includes(p.proveedorId) &&
+        deletedExistingByProveedorId.has(p.proveedorId)
     );
     const proveedoresToUpdate = proveedores.filter((p) =>
       existingIds.includes(p.proveedorId)
@@ -913,15 +932,15 @@ export class ProductoService {
     if (newProveedores.length > 0) {
       const newRelations = newProveedores.map((p) =>
         manager.create(ProductoProveedor, {
-          producto: { id: productoId } as any,
-          proveedor: { id: p.proveedorId } as any,
+          productoId,
+          proveedorId: p.proveedorId,
 
           precioUnitario: p.precioUnitario,
           marca: p.marcaEspecifica === masterMarca ? null : p.marcaEspecifica,
           codigoBarras:
             p.codigoBarras === productoBarcode ? null : p.codigoBarras,
           pmp: 0,
-        } as any)
+        })
       );
 
       const savedNewRelations = await manager.save(
@@ -957,9 +976,49 @@ export class ProductoService {
       }
     }
 
+    if (proveedoresToRestore.length > 0) {
+      for (const p of proveedoresToRestore) {
+        const toRestore = deletedExistingByProveedorId.get(p.proveedorId);
+
+        if (!toRestore) {
+          continue;
+        }
+
+        await manager.restore(ProductoProveedor, toRestore.id);
+
+        let precioActual = toRestore.precioUnitario;
+
+        if (p.precioUnitario !== undefined && p.precioUnitario !== null) {
+          precioActual = await this.registrarPrecioYResolverPrecioActual(
+            manager,
+            toRestore.id,
+            p.precioUnitario
+          );
+        }
+
+        const payloadUpdate: QueryDeepPartialEntity<ProductoProveedor> = {
+          precioUnitario: precioActual,
+          marca:
+            p.marcaEspecifica === masterMarca
+              ? null
+              : (p.marcaEspecifica ?? toRestore.marca),
+          codigoBarras:
+            p.codigoBarras === productoBarcode ? null : p.codigoBarras,
+        };
+
+        await manager.update(
+          ProductoProveedor,
+          { id: toRestore.id },
+          payloadUpdate
+        );
+      }
+    }
+
     if (proveedoresToUpdate.length > 0) {
       for (const p of proveedoresToUpdate) {
-        const toUpdate = existing.find((e) => e.proveedorId === p.proveedorId);
+        const toUpdate = activeExisting.find(
+          (e) => e.proveedorId === p.proveedorId
+        );
         if (toUpdate) {
           if (
             p.precioUnitario !== undefined &&
@@ -1000,8 +1059,22 @@ export class ProductoService {
 
     if (idsToRemove.length > 0) {
       for (const id of idsToRemove) {
-        const toDelete = existing.find((e) => e.proveedor.id === id);
+        const toDelete = activeExisting.find((e) => e.proveedorId === id);
         if (toDelete) {
+          const inventarioActivoCount = await manager.count(Inventario, {
+            where: {
+              productoProveedorId: toDelete.id,
+              deletedAt: IsNull(),
+              cantidadActual: MoreThan(0),
+            },
+          });
+
+          if (inventarioActivoCount > 0) {
+            throw new BadRequestException(
+              `No se puede eliminar el proveedor ${id} porque mantiene inventario activo asociado.`
+            );
+          }
+
           await manager.softDelete(ProductoProveedor, toDelete.id);
         }
       }

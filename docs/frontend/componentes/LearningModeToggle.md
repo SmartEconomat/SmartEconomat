@@ -40,5 +40,5 @@ El componente debe ser montado en el Sidebar para garantizar que el usuario siem
 ---
 
 ## Documentos Relacionados
-- [TutorialHelper.md](file:///Users/alexisruiz/SmartEconomat/docs/frontend/componentes/TutorialHelper.md) (Asistencia interactiva)
-- [MainLayout.md](file:///Users/alexisruiz/SmartEconomat/docs/frontend/componentes/MainLayout.md) (Estructura donde se aloja el toggle)
+- [TutorialHelper.md](./TutorialHelper.md) (Asistencia interactiva)
+- [MainLayout.md](./MainLayout.md) (Estructura donde se aloja el toggle)

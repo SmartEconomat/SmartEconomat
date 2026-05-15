@@ -4,6 +4,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
+  IsDate,
   IsOptional,
   IsString,
   IsUUID,
@@ -91,7 +92,19 @@ export class ConsolidatePurchaseBatchDto {
 }
 
 /** Clase pública (UpdatePurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
-export class UpdatePurchaseBatchDto extends CreatePurchaseBatchDto {}
+export class UpdatePurchaseBatchDto extends CreatePurchaseBatchDto {
+  @ApiPropertyOptional({
+    description: 'Nueva fecha de entrega estimada del pedido de usuario',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({
+    message: i18nValidationMessage(
+      'validation.LA_FECHA_DE_ENTREGA_DEBE_SER_UNA_FECHA_V'
+    ),
+  })
+  fechaEntrega?: Date;
+}
 
 /** Clase pública (CancelPurchaseBatchDto). Paquete: smart-economat-backend (Nest). */
 export class CancelPurchaseBatchDto {

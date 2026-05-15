@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import type { EntityManager } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Pedido } from '../pedido.entity/pedido.entity';
@@ -28,6 +28,9 @@ import { forwardRef, Inject } from '@nestjs/common';
 import { reserveNextPedidoProveedorNumero } from '../utils/pedido-numero.util';
 import { validateDateRange } from '../../../common/utils/date-range.util';
 import { AccionMovimiento } from '../../movimiento/enums/movimiento.enums';
+import { RecepcionProducto } from '../../recepcion/recepcion-productos.entity/recepcion-producto.entity';
+import { PedidoStateMachine } from '../state/pedido.state-machine';
+import { calculatePedidoFechaEntrega } from '../utils/calculate-pedido-fecha-entrega.util';
 
 /**
  * Servicio encargado de la lógica de negocio para la gestión de pedidos a proveedores.
@@ -68,6 +71,15 @@ export class PedidoService {
     createPedidoDto: CreatePedidoDto,
     userId: string
   ): Promise<Pedido> {
+    if (createPedidoDto.idempotencyKey) {
+      const existing = await this.dataSource.manager.findOne(Pedido, {
+        where: { idempotencyKey: createPedidoDto.idempotencyKey },
+      });
+      if (existing) {
+        return this.findOne(existing.id);
+      }
+    }
+
     const estadoInicial = this.getInitialStatus();
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -80,12 +92,15 @@ export class PedidoService {
         createPedidoDto,
         userId,
         estadoInicial,
-        () => this.calculateFechaEntrega()
+        () => calculatePedidoFechaEntrega(this.configService)
       );
       built.pedido.numeroGlobal = await reserveNextPedidoProveedorNumero(
         queryRunner.manager
       );
       built.pedido.modifiedBy = userId;
+      if (createPedidoDto.idempotencyKey) {
+        built.pedido.idempotencyKey = createPedidoDto.idempotencyKey;
+      }
 
       const savedPedido = await queryRunner.manager.save(Pedido, built.pedido);
 
@@ -97,20 +112,19 @@ export class PedidoService {
         });
       }
 
-      await queryRunner.commitTransaction();
-
-      const finalPedido = await this.findOne(savedPedido.id);
-
       await this.movimientoHelper.trackPedidoCreation(
         userId,
-        finalPedido.id,
-        I18nHelper.translate('receta.movimiento.descripcion_creacion', {
-          id: finalPedido.id,
+        savedPedido.id,
+        I18nHelper.translate('pedidos.movimiento.descripcion_creacion', {
+          id: savedPedido.id,
         }),
-        finalPedido
+        { ...built.pedido, id: savedPedido.id },
+        queryRunner.manager
       );
 
-      return finalPedido;
+      await queryRunner.commitTransaction();
+
+      return this.findOne(savedPedido.id);
     } catch (error: any) {
       if (queryRunner.isTransactionActive) {
         await queryRunner.rollbackTransaction();
@@ -178,6 +192,18 @@ export class PedidoService {
     try {
       const pedidoUpdateData: QueryDeepPartialEntity<Pedido> = {};
 
+      const touchesStructuralData =
+        updatePedidoDto.lineas !== undefined ||
+        updatePedidoDto.proveedorId !== undefined;
+
+      if (touchesStructuralData) {
+        if (before.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
+          throw new BadRequestException(
+            I18nHelper.getError('ORDER_UPDATE_FORBIDDEN_STATE')
+          );
+        }
+      }
+
       if (updatePedidoDto.proveedorId) {
         pedidoUpdateData.proveedorId = updatePedidoDto.proveedorId;
       }
@@ -195,6 +221,21 @@ export class PedidoService {
           throw new BadRequestException(
             I18nHelper.getError('PEDIDO_MUST_HAVE_ONE_PRODUCT')
           );
+        }
+
+        const existingLineIds = (before.pedidoProductos ?? []).map(
+          (pp) => pp.id
+        );
+        if (existingLineIds.length > 0) {
+          const recepcionesVinculadas = await queryRunner.manager.count(
+            RecepcionProducto,
+            { where: { pedidoProductoId: In(existingLineIds) } }
+          );
+          if (recepcionesVinculadas > 0) {
+            throw new BadRequestException(
+              I18nHelper.getError('ORDER_LINES_LOCKED_BY_RECEPTION')
+            );
+          }
         }
 
         await queryRunner.manager.delete(PedidoProducto, {
@@ -289,13 +330,49 @@ export class PedidoService {
   }
 
   /**
-   * Persiste modificaciones válidas sobre entidades existentes.
-   * @undefined {string} id - Entrada efectiva esperada por el contrato.
-   * @undefined {UpdatePedidoDto} dto - Entrada efectiva esperada por el contrato.
-   * @undefined {Promise<Pedido>} Datos efectivos después de ejecutar la operación.
+   * Actualiza la fecha estimada de entrega del pedido.
    */
-  updateFechaEntrega(id: string, dto: UpdatePedidoDto): Promise<Pedido> {
-    void dto;
+  async updateFechaEntrega(
+    id: string,
+    dto: UpdatePedidoDto,
+    userId?: string
+  ): Promise<Pedido> {
+    if (dto.fechaEntrega === undefined || dto.fechaEntrega === null) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_FECHA_ENTREGA_REQUIRED')
+      );
+    }
+
+    const pedido = await this.findOne(id);
+    const allowed: EstadoPedido[] = [
+      EstadoPedido.PENDIENTE_DE_APROBACION,
+      EstadoPedido.POR_RECEPCIONAR,
+    ];
+    if (!allowed.includes(pedido.estado)) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_UPDATE_FORBIDDEN_STATE')
+      );
+    }
+
+    const fechaEntrega =
+      dto.fechaEntrega instanceof Date
+        ? dto.fechaEntrega
+        : new Date(String(dto.fechaEntrega));
+
+    if (Number.isNaN(fechaEntrega.getTime())) {
+      throw new BadRequestException(
+        I18nHelper.getError('ORDER_FECHA_ENTREGA_REQUIRED')
+      );
+    }
+
+    await this.pedidoRepository.update(
+      { id },
+      {
+        fechaEntrega,
+        ...(userId ? { modifiedBy: userId } : {}),
+      }
+    );
+
     return this.findOne(id);
   }
 
@@ -326,7 +403,7 @@ export class PedidoService {
       );
     }
 
-    before.estado = EstadoPedido.CANCELADO;
+    PedidoStateMachine.applyTransition(before, EstadoPedido.CANCELADO);
     before.motivoCancelacion =
       dto.motivoCancelacion ||
       I18nHelper.translate('pedidos.cancelar.motivoPorDefecto');
@@ -365,7 +442,10 @@ export class PedidoService {
       );
     }
 
-    before.estado = EstadoPedido.PENDIENTE_DE_APROBACION;
+    PedidoStateMachine.applyTransition(
+      before,
+      EstadoPedido.PENDIENTE_DE_APROBACION
+    );
     before.motivoCancelacion = undefined;
     if (userId) {
       before.modifiedBy = userId;
@@ -394,12 +474,6 @@ export class PedidoService {
    * @returns El pedido actualizado.
    */
   async aceptarPedido(id: string, userId?: string): Promise<Pedido> {
-    const pedido = await this.findOne(id);
-    if (pedido.estado !== EstadoPedido.PENDIENTE_DE_APROBACION) {
-      throw new BadRequestException(
-        I18nHelper.getError('ORDER_ONLY_PENDING_CAN_BE_ACCEPTED')
-      );
-    }
     return this.handleStatusTransition(
       id,
       PedidoStatusTrigger.ACEPTAR,
@@ -437,7 +511,9 @@ export class PedidoService {
       );
     }
 
-    before.estado = this.resolveStatusFromTrigger(trigger);
+    const nuevoEstado = this.resolveStatusFromTrigger(trigger);
+    PedidoStateMachine.validateTransition(before.estado, nuevoEstado);
+    before.estado = nuevoEstado;
     if (actorId) {
       before.modifiedBy = actorId;
     }
@@ -471,6 +547,7 @@ export class PedidoService {
         descripcion: `Cambio de estado de pedido ${pedidoId} a ${after.estado}`,
         before,
         after,
+        manager,
       });
     }
 
@@ -512,15 +589,6 @@ export class PedidoService {
         before,
       });
     }
-  }
-
-  private calculateFechaEntrega(baseDate = new Date()): Date {
-    const hours = this.configService.get<number>(
-      'PEDIDO_FECHA_ENTREGA_HOURS',
-      48
-    );
-    const fechaEntrega = new Date(baseDate.getTime() + hours * 60 * 60 * 1000);
-    return fechaEntrega;
   }
 
   private getInitialStatus(): EstadoPedido {

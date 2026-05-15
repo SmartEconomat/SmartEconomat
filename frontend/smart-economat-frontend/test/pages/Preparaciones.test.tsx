@@ -15,6 +15,7 @@ import {
   UnidadIngrediente,
 } from '../../src/services/receta.types';
 import * as toastHooks from '../../src/store/toast.hooks';
+import * as authHooks from '../../src/store/auth.hooks';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -28,6 +29,9 @@ const toastWarning = vi.hoisted(() => vi.fn());
 const toastInfo = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/services/produccion.service');
+vi.mock('../../src/store/auth.hooks', () => ({
+  usePermission: vi.fn(() => true),
+}));
 vi.mock('../../src/store/toast.hooks', () => ({
   useToast: vi.fn(() => ({
     success: toastSuccess,
@@ -161,6 +165,7 @@ describe('Preparaciones page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    vi.mocked(authHooks.usePermission).mockReturnValue(true);
     vi.mocked(toastHooks.useToast).mockReturnValue({
       success: toastSuccess,
       error: toastError,
@@ -188,9 +193,11 @@ describe('Preparaciones page', () => {
 
     await waitFor(() => {
       expect(produccionService.fetchProducciones).toHaveBeenCalledWith(
-        1,
-        10,
-        'sin_consumo'
+        expect.objectContaining({
+          page: 1,
+          limit: 10,
+          estado: 'disponible',
+        })
       );
     });
 
@@ -447,9 +454,11 @@ describe('Preparaciones page', () => {
 
     await waitFor(() => {
       expect(produccionService.fetchProducciones).toHaveBeenLastCalledWith(
-        1,
-        10,
-        'consumido'
+        expect.objectContaining({
+          page: 1,
+          limit: 10,
+          estado: 'agotado',
+        })
       );
     });
 
@@ -510,9 +519,11 @@ describe('Preparaciones page', () => {
 
     await waitFor(() => {
       expect(produccionService.fetchProducciones).toHaveBeenLastCalledWith(
-        1,
-        10,
-        'consumido'
+        expect.objectContaining({
+          page: 1,
+          limit: 10,
+          estado: 'agotado',
+        })
       );
     });
 
@@ -528,5 +539,22 @@ describe('Preparaciones page', () => {
     expect(
       screen.getAllByText('preparaciones.columns.racionesPreparadas').length
     ).toBeGreaterThan(0);
+  });
+
+  it('oculta acciones sensibles cuando faltan permisos de consumir y merma', async () => {
+    vi.mocked(authHooks.usePermission).mockReturnValue(false);
+
+    render(<Preparaciones />);
+
+    await waitFor(() => {
+      expect(produccionService.fetchProducciones).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.queryByRole('button', { name: /consum|consume/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /merma|reportar/i })
+    ).not.toBeInTheDocument();
   });
 });

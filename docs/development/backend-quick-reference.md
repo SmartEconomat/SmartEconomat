@@ -265,4 +265,4 @@ npm run test:e2e       # Pruebas E2E
 
 ---
 
-Para información detallada, consulte [architecture/backend-structure.md](../architecture/backend-structure.md).
+Para información detallada, consulte [architecture/backend.md](../architecture/backend.md) y el mapa de carpetas en [`.github/ai/ARCHITECTURE.md`](../../.github/ai/ARCHITECTURE.md).

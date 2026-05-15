@@ -4,6 +4,8 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { DataSource } from 'typeorm';
 import { PreparacionRepository } from '../repository/preparacion.repository';
 import { ProduccionService } from '../../receta/service/produccion.service';
 import { RecetaRepository } from '../../receta/repository/receta.repository';
@@ -13,6 +15,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
 import { Preparacion } from '../preparacion.entity/preparacion.entity';
 import { I18nHelper } from '../../../common/helpers/i18n.helper';
+import { ProduccionLote } from '../../receta/produccion-lote.entity/produccion-lote.entity';
 
 /**
  * Servicio de dominio para preparacion.
@@ -28,7 +31,8 @@ export class PreparacionService {
   constructor(
     private readonly preparacionRepository: PreparacionRepository,
     private readonly produccionService: ProduccionService,
-    private readonly recetaRepository: RecetaRepository
+    private readonly recetaRepository: RecetaRepository,
+    private readonly dataSource: DataSource
   ) {}
 
   /**
@@ -119,38 +123,65 @@ export class PreparacionService {
     userId: string,
     ubicacionDestinoId?: string
   ): Promise<Preparacion> {
-    const preparacion = await this.findOne(id);
+    return this.dataSource.transaction(async (manager) => {
+      const preparacion = await manager
+        .getRepository(Preparacion)
+        .createQueryBuilder('preparacion')
+        .where('preparacion.id = :id', { id })
+        .setLock('pessimistic_write')
+        .getOne();
 
-    if (preparacion.estado !== PreparacionEstado.EN_PROCESO) {
-      throw new ConflictException(
-        I18nHelper.getError('PREPARACION_MUST_BE_IN_PROCESS', {
-          estado: preparacion.estado,
-        })
-      );
-    }
+      if (!preparacion) {
+        throw new NotFoundException(
+          I18nHelper.getError('PREPARACION_NOT_FOUND')
+        );
+      }
 
-    const destinoId = ubicacionDestinoId || preparacion.ubicacionDestinoId;
-    if (!destinoId) {
-      throw new BadRequestException(
-        I18nHelper.getError('PREPARACION_MISSING_DESTINATION')
-      );
-    }
+      if (preparacion.estado === PreparacionEstado.COMPLETADA) {
+        return preparacion;
+      }
 
-    await this.produccionService.ejecutarProduccion(
-      {
-        recetaId: preparacion.recetaId,
-        cantidadAProducir: preparacion.cantidadAProducir,
-        ubicacionDestinoId: destinoId,
-      },
-      userId,
-      preparacion.id
-    );
+      if (preparacion.estado !== PreparacionEstado.EN_PROCESO) {
+        throw new ConflictException(
+          I18nHelper.getError('PREPARACION_MUST_BE_IN_PROCESS', {
+            estado: preparacion.estado,
+          })
+        );
+      }
 
-    preparacion.estado = PreparacionEstado.COMPLETADA;
-    preparacion.fechaFinalizacion = new Date();
-    if (ubicacionDestinoId) preparacion.ubicacionDestinoId = ubicacionDestinoId;
+      const destinoId = ubicacionDestinoId || preparacion.ubicacionDestinoId;
+      if (!destinoId) {
+        throw new BadRequestException(
+          I18nHelper.getError('PREPARACION_MISSING_DESTINATION')
+        );
+      }
 
-    return this.preparacionRepository.save(preparacion);
+      const existingLote = await manager.getRepository(ProduccionLote).findOne({
+        where: { preparacionId: preparacion.id },
+      });
+
+      if (!existingLote) {
+        await this.produccionService.ejecutarProduccion(
+          {
+            recetaId: preparacion.recetaId,
+            cantidadAProducir: preparacion.cantidadAProducir,
+            ubicacionDestinoId: destinoId,
+            idempotencyKey: randomUUID(),
+          },
+          userId,
+          preparacion.id,
+          manager
+        );
+      }
+
+      preparacion.estado = PreparacionEstado.COMPLETADA;
+      preparacion.fechaFinalizacion = new Date();
+      if (ubicacionDestinoId) {
+        preparacion.ubicacionDestinoId = ubicacionDestinoId;
+      }
+
+      return manager.save(Preparacion, preparacion);
+    });
   }
 
   /**

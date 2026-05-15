@@ -1,5 +1,8 @@
 {
   "errors": {
+    "PUBLIC_REGISTER_DISABLED": "El registro público está deshabilitado en este entorno. Contacta con el administrador.",
+    "UNSUPPORTED_FILE_TYPE": "Tipo de archivo no soportado. Se permiten: imágenes (JPEG, PNG, WebP, GIF) y PDF.",
+    "FILE_TOO_LARGE": "El archivo supera el tamaño máximo permitido de 10 MB.",
     "ACCOUNT_BLOCKED": "Tu cuenta ha sido bloqueada. Contacta con el soporte.",
     "ACCOUNT_INACTIVE": "Tu cuenta está inactiva. Por favor, espera a que un administrador la active.",
     "ALBARAN_ALREADY_HAS_DOCUMENT": "El albarán {nAlbaran} ya tiene un documento adjunto",
@@ -77,6 +80,9 @@
     "ORDER_NOT_CANCELLABLE": "No se puede cancelar un pedido que ya está por recepcionar, ha sido recepcionado o tiene una incidencia",
     "ORDER_NOT_FOUND": "Pedido no encontrado",
     "ORDER_NOT_RECEPTABLE": "El pedido no se encuentra en un estado válido para ser recepcionado (debe estar POR_RECEPCIONAR)",
+    "ORDER_FECHA_ENTREGA_REQUIRED": "Debes indicar una fecha de entrega válida.",
+    "ORDER_UPDATE_FORBIDDEN_STATE": "No se puede editar el pedido en su estado actual.",
+    "ORDER_LINES_LOCKED_BY_RECEPTION": "No se pueden modificar las líneas del pedido porque ya existen recepciones vinculadas.",
     "PEDIDO_PRODUCT_NOT_FOUND": "Producto del pedido no encontrado",
     "PERMISO_NO_ENCONTRADO": "Permiso no encontrado",
     "PARENT_TEMPLATE_NOT_FOUND": "Plantilla padre no encontrada",
@@ -99,6 +105,8 @@
     "RECEPTION_PRODUCT_NOT_FOUND": "Producto de la recepción no encontrado",
     "RECIPE_NOT_FOUND": "Receta no encontrada",
     "MIN_ONE_RECIPE_ID_REQUIRED": "Debe proporcionar al menos un ID de receta.",
+    "MAX_RECIPES_PDF_EXPORT_EXCEEDED": "Solo se pueden exportar {max} recetas por solicitud.",
+    "UNSUPPORTED_UNIT_CONVERSION": "Conversión de unidades no soportada entre '{from}' y '{to}'.",
     "RUN_SEEDER_NOT_FOUND": "No se encontró runSeeder en el archivo",
     "SEEDER_NOT_FOUND": "Seeder no encontrado",
     "STORAGE_TYPE_LOCAL_ONLY": "Solo aplicable para almacenamiento local",
@@ -174,7 +182,11 @@
     "PEDIDO_UPDATE_FAILED": "Error al actualizar el pedido: {message}",
     "BATCH_NOT_FOUND": "Lote de compra no encontrado",
     "MERMA_LOTE_NOT_FOUND": "Lote de producción no encontrado",
+    "MERMA_LOTE_CANCELADO": "No se puede registrar merma en un lote de producción cancelado",
     "MERMA_INGREDIENTE_NOT_IN_RECIPE": "El producto indicado no pertenece a los ingredientes de la receta asociada al lote",
+    "MERMA_IDEMPOTENCY_KEY_PAYLOAD_MISMATCH": "La clave de idempotencia ya existe con un payload distinto; usa una nueva clave o repite exactamente la misma solicitud",
+    "MERMA_TIPO_MOTIVO_MISMATCH": "La combinación de tipo y motivo de merma no es coherente",
+    "MERMA_CONTEXT_STOCK_NOT_FOUND": "No hay stock suficiente en el contexto de inventario o ubicación especificado",
     "INVALID_START_DATE": "La fecha de inicio no es una fecha ISO válida",
     "INVALID_END_DATE": "La fecha de fin no es una fecha ISO válida",
     "START_DATE_AFTER_END_DATE": "La fecha de inicio debe ser anterior o igual a la fecha de fin",
@@ -614,6 +626,9 @@
   "pedidos": {
     "cancelar": {
       "motivoPorDefecto": "Cancelado por el usuario"
+    },
+    "movimiento": {
+      "descripcion_creacion": "Creación de pedido #{id}"
     }
   },
   "exceptions": {}

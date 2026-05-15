@@ -33,6 +33,10 @@ import { PedidoUsuario } from '../pedido-usuario.entity/pedido-usuario.entity';
 @Index(['batchId'])
 @Index(['pedidoUsuarioId'])
 @Index(['estado', 'createdAt'])
+@Index(['idempotencyKey'], {
+  unique: true,
+  where: '"idempotency_key" IS NOT NULL',
+})
 @Check(`"coste_total" >= 0`)
 export class Pedido extends BaseEntity {
   /**
@@ -221,6 +225,15 @@ export class Pedido extends BaseEntity {
     this.estado = EstadoPedido.CANCELADO;
     this.motivoCancelacion = motivo;
   }
+
+  /** Clave de idempotencia opcional. Si se envía, un segundo intento con la misma clave devuelve el pedido existente. */
+  @Column({
+    name: 'idempotency_key',
+    type: 'uuid',
+    nullable: true,
+    unique: true,
+  })
+  idempotencyKey?: string;
 }
 
 export { EstadoPedido };

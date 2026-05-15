@@ -218,6 +218,7 @@ export class DashboardService {
         caducados,
       },
       movimientosRecientes: movimientosConNombres,
+      generatedAt: new Date(),
     };
   }
 }

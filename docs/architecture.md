@@ -82,3 +82,8 @@ Flujo recomendado:
 
 - No hay `package.json` en la raiz del repo.
 - No existe una carpeta `wiki/` activa en la estructura actual.
+
+## Profundización
+
+- [Índice de arquitectura (ADRs y capas)](./architecture/index.md)
+- [Mapa estructural extendido](../.github/ai/ARCHITECTURE.md) (fuente usada por automatización y `AGENTS.md`)

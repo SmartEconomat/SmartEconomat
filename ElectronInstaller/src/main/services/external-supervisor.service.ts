@@ -144,7 +144,9 @@ export class ExternalSupervisorService {
     this.onLog(`[SUPERVISOR] ${actionLabel}`);
     this.pushHealthUpdate();
 
-    const dockerServiceStarted = await this.ensureWindowsDockerServiceStarted();
+    const dockerServiceStarted = await this.ensureWindowsDockerServiceStarted(
+      mode === "manual",
+    );
     if (!dockerServiceStarted && process.platform === "win32") {
       this.onLog(
         "[SUPERVISOR] com.docker.service no pudo arrancar sin elevación; se intentará continuar con Docker y se notificará si el daemon no responde.",
@@ -608,7 +610,9 @@ export class ExternalSupervisorService {
     }
   }
 
-  private async ensureWindowsDockerServiceStarted(): Promise<boolean> {
+  private async ensureWindowsDockerServiceStarted(
+    allowElevation: boolean,
+  ): Promise<boolean> {
     if (process.platform !== "win32") {
       return true;
     }
@@ -634,6 +638,13 @@ export class ExternalSupervisorService {
       now - this.lastElevatedDockerServiceRepairAttemptMs <
       ELEVATED_DOCKER_SERVICE_REPAIR_COOLDOWN_MS
     ) {
+      return false;
+    }
+
+    if (!allowElevation) {
+      this.onLog(
+        "[SUPERVISOR] Requiere elevacion para reparar com.docker.service, pero se omite en recuperacion automatica para evitar prompts UAC repetitivos.",
+      );
       return false;
     }
 

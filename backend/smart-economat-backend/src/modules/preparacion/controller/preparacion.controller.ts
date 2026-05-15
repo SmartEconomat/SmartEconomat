@@ -8,10 +8,12 @@ import {
   Patch,
   UseGuards,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PreparacionService } from '../service/preparacion.service';
 import { CreatePreparacionDto } from '../dto/create-preparacion.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { ParseUUIDv7Pipe } from '../../../common/pipes/parse-uuid-v7.pipe';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../auth/guards/auth-permissions.guard';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator';
@@ -50,7 +52,9 @@ export class PreparacionController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error(I18nHelper.getError('USER_NOT_AUTHENTICATED'));
+      throw new UnauthorizedException(
+        I18nHelper.getError('USER_NOT_AUTHENTICATED')
+      );
     }
     return this.preparacionService.create(dto, userId);
   }
@@ -68,9 +72,9 @@ export class PreparacionController {
   @RequirePermissions(PERMISSIONS.recetas.listar)
   async findAll(
     @SortableFields(SORTABLE_FIELDS.preparaciones) query: PaginationQueryDto,
-    @Req() req: Request & { user?: { rol?: { nombre?: string } } }
+    @Req() req: Request & { user?: { rol?: string } }
   ) {
-    const userRole = req.user?.rol?.nombre;
+    const userRole = req.user?.rol;
     return this.preparacionService.findAll(query, userRole);
   }
 
@@ -86,10 +90,10 @@ export class PreparacionController {
   @Get(':id')
   @RequirePermissions(PERMISSIONS.recetas.ver)
   async findOne(
-    @Param('id') id: string,
-    @Req() req: Request & { user?: { rol?: { nombre?: string } } }
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Req() req: Request & { user?: { rol?: string } }
   ) {
-    const userRole = req.user?.rol?.nombre;
+    const userRole = req.user?.rol;
     return this.preparacionService.findOne(id, userRole);
   }
 
@@ -103,7 +107,7 @@ export class PreparacionController {
    */
   @Patch(':id/iniciar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
-  async iniciar(@Param('id') id: string) {
+  async iniciar(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.preparacionService.iniciarPreparacion(id);
   }
 
@@ -120,13 +124,15 @@ export class PreparacionController {
   @Patch(':id/finalizar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
   async finalizar(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDv7Pipe) id: string,
     @Req() req: Request & { user?: { id?: string } },
     @Body('ubicacionDestinoId') ubicacionDestinoId?: string
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new Error(I18nHelper.getError('USER_NOT_AUTHENTICATED'));
+      throw new UnauthorizedException(
+        I18nHelper.getError('USER_NOT_AUTHENTICATED')
+      );
     }
     return this.preparacionService.finalizarPreparacion(
       id,
@@ -145,7 +151,7 @@ export class PreparacionController {
    */
   @Patch(':id/cancelar')
   @RequirePermissions(PERMISSIONS.recetas.cocinar)
-  async cancelar(@Param('id') id: string) {
+  async cancelar(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.preparacionService.cancelarPreparacion(id);
   }
 
@@ -159,7 +165,7 @@ export class PreparacionController {
    */
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.recetas.eliminar)
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDv7Pipe) id: string) {
     return this.preparacionService.remove(id);
   }
 }

@@ -48,7 +48,7 @@ export interface UI_RecetaIngrediente {
   producto?: {
     id: string;
     nombre: string;
-    alergenos?: { id_producto: string; alergeno: string }[];
+    alergenos?: { productoId: string; alergeno: string }[];
     proveedores?: ProductoProveedor[];
   } | null;
 }
@@ -293,7 +293,12 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
   const handleAddLine = () => {
     const newLines = [
       ...value,
-      { productoId: '', cantidad: 1, unidad: UnidadIngrediente.GRAMO },
+      {
+        productoId: '',
+        cantidad: 1,
+        unidad: UnidadIngrediente.GRAMO,
+        mermaAplicada: 0,
+      },
     ];
     onChange(newLines);
   };
@@ -573,27 +578,32 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
         <Table
           size="small"
           aria-label={t('recipes.ingredientes.titulo')}
-          sx={{ minWidth: 860, tableLayout: 'fixed' }}
+          sx={{ minWidth: 960, tableLayout: 'fixed' }}
         >
           <TableHead sx={{ bgcolor: 'action.hover' }}>
             <TableRow>
               <TableCell
-                sx={{ fontWeight: 'bold', width: '44%', whiteSpace: 'nowrap' }}
+                sx={{ fontWeight: 'bold', width: '38%', whiteSpace: 'nowrap' }}
               >
                 {t('recipes.ingredientes.columns.producto')}
               </TableCell>
               <TableCell
-                sx={{ fontWeight: 'bold', width: '10%', whiteSpace: 'nowrap' }}
+                sx={{ fontWeight: 'bold', width: '9%', whiteSpace: 'nowrap' }}
               >
                 {t('recipes.ingredientes.columns.cantidad')}
               </TableCell>
               <TableCell
-                sx={{ fontWeight: 'bold', width: '10%', whiteSpace: 'nowrap' }}
+                sx={{ fontWeight: 'bold', width: '9%', whiteSpace: 'nowrap' }}
               >
                 {t('recipes.ingredientes.columns.unidad')}
               </TableCell>
               <TableCell
-                sx={{ fontWeight: 'bold', width: '30%', whiteSpace: 'nowrap' }}
+                sx={{ fontWeight: 'bold', width: '9%', whiteSpace: 'nowrap' }}
+              >
+                {t('recipes.ingredientes.columns.merma')}
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 'bold', width: '29%', whiteSpace: 'nowrap' }}
               >
                 {t('recipes.ingredientes.columns.proveedorFav')}
               </TableCell>
@@ -604,7 +614,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
             {value.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   align="center"
                   sx={{ py: 3, color: 'text.secondary' }}
                 >
@@ -748,6 +758,28 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                           </MenuItem>
                         ))}
                       </Select>
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                      <NumericInput
+                        name={`ing-merma-${index}`}
+                        label=""
+                        value={line.mermaAplicada ?? 0}
+                        onChange={(parsed) =>
+                          handleUpdateLine(
+                            index,
+                            'mermaAplicada',
+                            Math.min(100, Math.max(0, parsed ?? 0))
+                          )
+                        }
+                        inputProps={{
+                          min: 0,
+                          max: 100,
+                          'aria-label': `merma-aplicada-${index}`,
+                        }}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                      />
                     </TableCell>
                     <TableCell
                       sx={{ verticalAlign: 'top', py: 1, minWidth: 0 }}
@@ -921,7 +953,7 @@ const RecetaIngredientesSelector: React.FC<RecetaIngredientesSelectorProps> = ({
                               >
                                 {pp.proveedor?.nombre ||
                                   t(
-                                    'recetas.ingredientes.proveedorDesconocido'
+                                    'recipes.ingredientes.proveedorDesconocido'
                                   )}
                               </Box>
                               <Box

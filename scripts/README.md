@@ -36,6 +36,7 @@ Hace todo automáticamente:
 - `deploy.sh` - Deploy a servidor remoto.
 - `collect-host-info.sh` / `collect-host-info.ps1` - Exportan variables `HOST_*` para el entorno de desarrollo.
 - `install-docker.sh` - Instalador auxiliar para hosts Linux compatibles.
+- `check-docs-internal-links.mjs` - Comprueba que los enlaces relativos en `docs/**/*.md` resuelvan a ficheros existentes (sin red; excluye `docs/archive/`). Misma orden que ejecuta el workflow `docs-internal-links.yml`.
 
 ---
 

@@ -89,7 +89,7 @@ Esta aproximación prioriza:
 - `backend/smart-economat-backend/test/`: tests unit/e2e
 
 ## Documentos relacionados
-- [Arquitectura detallada](./architecture/backend-nestjs-typeorm.md)
+- [Arquitectura backend](./architecture/backend.md)
 - [Patrones y trade-offs](./architecture/patrones-y-tradeoffs.md)
 - [Tutorial de arranque](./tutorials/levantar-proyecto-desde-cero.md)
 - [Referencia de endpoints](./reference/endpoints.md)

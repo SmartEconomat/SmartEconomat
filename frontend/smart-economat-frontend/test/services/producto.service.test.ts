@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchProductos,
   generateProductoEan13,
+  getProductoById,
   invalidateProductosCache,
 } from '../../src/services/producto.service';
 import * as apiService from '../../src/services/api.service';
+import { ApiError } from '../../src/services/api.service';
 
 vi.mock('../../src/services/api.service', async (importOriginal) => {
   const actual =
@@ -116,5 +118,33 @@ describe('producto.service', () => {
     const calledUrl = vi.mocked(apiService.baseFetch).mock
       .calls[0][0] as string;
     expect(calledUrl).not.toMatch(/[&?]soloEliminados=true\b/);
+  });
+
+  it('getProductoById devuelve null cuando el backend responde 404', async () => {
+    const mockResponse = {
+      ok: false,
+      status: 404,
+      json: vi.fn().mockResolvedValue({
+        message: 'Producto no encontrado',
+      }),
+    } as unknown as Response;
+
+    vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+
+    await expect(getProductoById('prod-no-existe')).resolves.toBeNull();
+  });
+
+  it('getProductoById lanza ApiError en errores distintos de 404', async () => {
+    const mockResponse = {
+      ok: false,
+      status: 500,
+      json: vi.fn().mockResolvedValue({
+        message: 'Fallo interno',
+      }),
+    } as unknown as Response;
+
+    vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+
+    await expect(getProductoById('prod-1')).rejects.toBeInstanceOf(ApiError);
   });
 });

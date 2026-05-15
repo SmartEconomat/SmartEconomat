@@ -1,16 +1,21 @@
 import { getTestApp } from '../setup/test-app';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { randomUUID } from 'crypto';
+import { DataSource } from 'typeorm';
 import { DificultadReceta } from '../../src/modules/receta/enums/receta.enums';
 import {
   UnidadMedida,
   TipoProducto,
 } from '../../src/modules/producto/enums/producto.enums';
+import { Movimiento } from '../../src/modules/movimiento/movimiento.entity/movimiento.entity';
+import { TipoMovimiento } from '../../src/modules/movimiento/enums/movimiento.enums';
 
 describe('ProduccionController (e2e)', () => {
   jest.setTimeout(60000);
 
   let app: INestApplication;
+  let dataSource: DataSource;
   let adminToken: string;
   let recetaId: string;
   let ingredienteId: string;
@@ -19,6 +24,7 @@ describe('ProduccionController (e2e)', () => {
 
   beforeAll(async () => {
     app = await getTestApp();
+    dataSource = app.get(DataSource);
 
     const response = await request(app.getHttpServer() as string)
       .post('/api/v1/auth/login')
@@ -31,7 +37,7 @@ describe('ProduccionController (e2e)', () => {
 
   beforeEach(async () => {
     const ubiRes = await request(app.getHttpServer() as string)
-      .post('/api/v1/ubicacion')
+      .post('/api/v1/ubicaciones')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ nombre: `Ubi Prod ${Date.now()}` });
     if (ubiRes.status !== 201) {
@@ -100,8 +106,11 @@ describe('ProduccionController (e2e)', () => {
       .send({
         nombre: `Receta E2E ${Date.now()}_${Math.random()}`,
         instrucciones: 'Mezclar y listo',
-        tiempoEstimadoMinutos: 5,
+        tiempoEstimadoMinutos: 10,
         dificultad: DificultadReceta.FACIL,
+        rendimiento: 1,
+        unidadResultado: 'kg',
+        raciones: 2,
         ingredientes: [
           { productoId: ingredienteId, cantidad: 2, unidad: 'kg' },
         ],
@@ -132,6 +141,7 @@ describe('ProduccionController (e2e)', () => {
           recetaId,
           cantidadProducida: 1,
           ubicacionDestinoId: ubicacionId,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e31',
         });
 
       if (cookRes.status !== 201) {
@@ -139,6 +149,31 @@ describe('ProduccionController (e2e)', () => {
       }
       expect(cookRes.status).toBe(201);
       const loteId = cookRes.body.data.id;
+
+      const cookRetryRes = await request(app.getHttpServer() as string)
+        .post('/api/v1/produccion/ejecutar')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          recetaId,
+          cantidadProducida: 1,
+          ubicacionDestinoId: ubicacionId,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e31',
+        })
+        .expect(201);
+
+      expect(cookRetryRes.body.data.id).toBe(loteId);
+
+      const movimientoRepo = dataSource.getRepository(Movimiento);
+      const movResultado = await movimientoRepo.find({
+        where: {
+          entidad: 'ProduccionLote',
+          entidadId: loteId,
+          tipo: TipoMovimiento.PRODUCCION_RESULTADO,
+          idempotenciaKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e31',
+        },
+      });
+      expect(movResultado).toHaveLength(1);
+
       const porcionesIniciales = Number(cookRes.body.data.porcionesProducidas);
       expect(porcionesIniciales).toBeGreaterThan(0);
       expect(Number(cookRes.body.data.porcionesRestantes)).toBe(
@@ -149,7 +184,11 @@ describe('ProduccionController (e2e)', () => {
       const consumeRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ tipo: 'raciones', valor: 0.5 });
+        .send({
+          tipo: 'raciones',
+          valor: 0.5,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e41',
+        });
 
       expect(consumeRes.status).toBe(200);
       expect(Number(consumeRes.body.data.porcionesRestantes)).toBe(
@@ -157,10 +196,38 @@ describe('ProduccionController (e2e)', () => {
       );
       expect(consumeRes.body.data.fechaAgotado ?? null).toBeNull();
 
+      const consumeRetryRes = await request(app.getHttpServer() as string)
+        .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          tipo: 'raciones',
+          valor: 0.5,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e41',
+        })
+        .expect(200);
+
+      expect(Number(consumeRetryRes.body.data.porcionesRestantes)).toBe(
+        porcionesIniciales - 0.5
+      );
+
+      const movSalida = await movimientoRepo.find({
+        where: {
+          entidad: 'ProduccionLote',
+          entidadId: loteId,
+          tipo: TipoMovimiento.SALIDA_ELABORACION,
+          idempotenciaKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e41',
+        },
+      });
+      expect(movSalida).toHaveLength(1);
+
       const consumeFinalRes = await request(app.getHttpServer() as string)
         .patch(`/api/v1/produccion/lote/${loteId}/consumir`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ tipo: 'raciones', valor: porcionesIniciales - 0.5 });
+        .send({
+          tipo: 'raciones',
+          valor: porcionesIniciales - 0.5,
+          idempotencyKey: '019658f5-2b6a-7fd8-bb20-1f6a812f3e42',
+        });
 
       expect(consumeFinalRes.status).toBe(200);
       expect(Number(consumeFinalRes.body.data.porcionesRestantes)).toBe(0);
@@ -176,6 +243,7 @@ describe('ProduccionController (e2e)', () => {
           recetaId,
           cantidadProducida: 100,
           ubicacionDestinoId: ubicacionId,
+          idempotencyKey: randomUUID(),
         });
 
       expect(cookRes.status).toBe(400);

@@ -267,7 +267,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <Tooltip title={t('productos.actions.editar')}>
                 <IconButton
                   color="secondary"
-                  onClick={() => onEdit(producto)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEdit(producto);
+                  }}
                   size="small"
                   aria-label={t('productos.actions.editar')}
                 >
@@ -279,7 +282,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <Tooltip title={t('productos.actions.eliminar')}>
                 <IconButton
                   color="error"
-                  onClick={() => onDelete(producto)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(producto);
+                  }}
                   size="small"
                   aria-label={t('productos.actions.eliminar')}
                 >
@@ -291,7 +297,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <Tooltip title={t('comun.restaurar')}>
                 <IconButton
                   color="success"
-                  onClick={() => onRestore(producto)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRestore(producto);
+                  }}
                   size="small"
                   aria-label={t('comun.restaurar')}
                 >
