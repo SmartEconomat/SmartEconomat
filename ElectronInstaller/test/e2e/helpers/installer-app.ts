@@ -39,6 +39,14 @@ export async function gotoInstallerWithMock(page: Page): Promise<void> {
   await page.goto("/");
 }
 
+/** Panel de control en preview web (mismo `ControlPanelPage` sin recorrer el wizard). */
+export async function gotoControlPanelPreview(page: Page): Promise<void> {
+  await page.goto("/?preview=control-panel");
+  await expect(
+    page.getByRole("button", { name: "Iniciar Stack", exact: true }),
+  ).toBeVisible();
+}
+
 export async function readBridgeCalls(
   page: Page,
 ): Promise<InstallerBridgeCallCounts | undefined> {
@@ -62,7 +70,8 @@ export async function navigateToConfigStep(page: Page): Promise<void> {
   const confirmNewInstallCheckbox = page.getByRole("checkbox", {
     name: /Entiendo las implicaciones y deseo continuar con la instalación nueva/i,
   });
-  if (await confirmNewInstallCheckbox.isVisible()) {
+  if ((await confirmNewInstallCheckbox.count()) > 0) {
+    await confirmNewInstallCheckbox.scrollIntoViewIfNeeded();
     await confirmNewInstallCheckbox.check();
   }
 
@@ -94,8 +103,15 @@ export async function goToControlPanel(page: Page): Promise<void> {
 
   await page.getByRole("button", { name: "Iniciar instalación" }).click();
   await expect(page.getByText("Instalación finalizada")).toBeVisible();
-  await page.getByRole("button", { name: "Abrir panel de control local" }).click();
+  const openControlPanel = page.getByRole("button", {
+    name: "Abrir panel de control local",
+  });
+  await expect(openControlPanel).toBeEnabled();
+  await openControlPanel.click();
   await expect(
     page.getByRole("heading", { name: "Panel de Control" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Iniciar Stack", exact: true }),
   ).toBeVisible();
 }

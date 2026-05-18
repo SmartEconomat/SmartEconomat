@@ -87,9 +87,9 @@ Fecha: 2026-04-26
 ### Riesgos residuales
 
 - Subárboles muy grandes (`frontend/componentes`, `frontend/accesibilidad`, `planning/`) siguen dependiendo de mantenimiento incremental; el hub prioriza rutas estables y runbooks raíz.
-- CI valida enlaces relativos en `docs/` vía `scripts/check-docs-internal-links.mjs` (no comprueba URLs HTTP ni el árbol `docs/archive/`).
+- No hay workflow en CI que valide enlaces relativos en `docs/` (el script y el workflow asociados se retiraron).
 
 ### Fase 2 (convención de rutas y CI)
 
 - Renombrado `docs/guia_usuario/` → `docs/guia-usuario/`; `guia_usuario.html` → `guia-usuario.html`.
-- Workflow [`.github/workflows/docs-internal-links.yml`](../.github/workflows/docs-internal-links.yml) en push/PR cuando cambian `docs/` o el script de verificación.
+- ~~Workflow `docs-internal-links.yml`~~ (retirado): la validación de enlaces en `docs/` queda a criterio manual en revisión de PR.

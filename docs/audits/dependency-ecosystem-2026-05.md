@@ -97,7 +97,7 @@ El frontend usa **Vitest** exclusivamente. `jest`, `ts-jest` y `@types/jest` era
 | `ElectronInstaller/package.json` | engines `>=22.13.0` |
 | `backend/Dockerfile.dev`, `frontend/Dockerfile.dev` | Node 22.13 + `npm ci` en build |
 | `backend/Dockerfile.prod` | Node 22.13 |
-| `.github/workflows/docs-internal-links.yml` | Node `22.13.1` |
+| `.github/workflows/docs-internal-links.yml` | Node `22.13.1` _(workflow retirado del repo con posterioridad)_ |
 | `README.md` | requisito Node actualizado |
 | `frontend/eslint.config.mjs` | eliminado `globals.jest` (tests importan desde vitest) |
 

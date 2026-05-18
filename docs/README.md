@@ -99,7 +99,7 @@ API REST bajo **`/api/v1`**; Swagger en **`/api/v1/docs`** solo en desarrollo o 
 2. No duplicar tablas de variables: el inventario vive en [environment-variables.md](./environment-variables.md).
 3. Los informes puntuales (auditorías, i18n, producto) van bajo [audits/](./audits/) con fecha en el nombre cuando aporte trazabilidad.
 4. El índice de esta página debe actualizarse cuando se cree una **nueva categoría** de primer nivel en `docs/`.
-5. Antes de fusionar cambios grandes en `docs/`, ejecutar en la raíz del repo: `node scripts/check-docs-internal-links.mjs` (también corre en CI en `.github/workflows/docs-internal-links.yml`).
+5. Antes de fusionar cambios grandes en `docs/`, revisar enlaces relativos en Markdown (no hay comprobación automática en CI).
 
 ---
 

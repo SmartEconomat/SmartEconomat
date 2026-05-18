@@ -119,37 +119,41 @@ describe("BackupRestoreService.configureScheduledBackup", () => {
     vi.restoreAllMocks();
   });
 
-  it("retorna ok cuando Register-ScheduledTask con SYSTEM tiene éxito (Nivel 1)", async () => {
+  it("programa con schtasks en SYSTEM cuando el primer /Create tiene éxito", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // Nivel 1 (Register-ScheduledTask SYSTEM): ok
     runSpy.mockResolvedValueOnce(OK_RESULT);
 
     const service = new BackupRestoreService(pathResolver, processRunner);
     const result = await service.configureScheduledBackup(buildConfig());
 
     expect(result.ok).toBe(true);
-    expect(result.message).toContain("SYSTEM");
+    expect(result.message).toContain("Backup automático programado");
+    expect(result.message).toContain("03:00");
     expect(runSpy).toHaveBeenCalledTimes(1);
 
-    // Verifica que usa powershell -Command con Register-ScheduledTask
     const firstCall = runSpy.mock.calls[0]?.[0] as {
       command: string;
       args: string[];
     };
-    expect(firstCall.command).toBe("powershell");
-    expect(firstCall.args).toContain("-Command");
-    const psScript = firstCall.args[firstCall.args.indexOf("-Command") + 1];
-    expect(psScript).toContain("Register-ScheduledTask");
-    expect(psScript).toContain("SYSTEM");
+    expect(firstCall.command).toBe("schtasks");
+    expect(firstCall.args).toContain("/Create");
+    expect(firstCall.args).toContain("/RU");
+    expect(firstCall.args).toContain("SYSTEM");
+    expect(firstCall.args).toContain("/SC");
+    expect(firstCall.args).toContain("DAILY");
+    expect(firstCall.args).toContain("/MO");
+    expect(firstCall.args).toContain("1");
+    const trIndex = firstCall.args.indexOf("/TR");
+    expect(trIndex).toBeGreaterThan(-1);
+    expect(firstCall.args[trIndex + 1]).toMatch(/powershell\.exe/i);
+    expect(firstCall.args[trIndex + 1]).toContain("run-backup-scheduled.ps1");
   });
 
-  it("hace fallback a usuario cuando SYSTEM falla con acceso denegado (Nivel 2)", async () => {
+  it("hace fallback a schtasks sin SYSTEM cuando el primer intento devuelve acceso denegado", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // Nivel 1 (SYSTEM): access denied
     runSpy.mockResolvedValueOnce(failResult("Acceso denegado"));
-    // Nivel 2 (usuario): ok
     runSpy.mockResolvedValueOnce(OK_RESULT);
 
     const service = new BackupRestoreService(pathResolver, processRunner);
@@ -158,101 +162,82 @@ describe("BackupRestoreService.configureScheduledBackup", () => {
     expect(result.ok).toBe(true);
     expect(result.message).toContain("contexto de usuario");
     expect(runSpy).toHaveBeenCalledTimes(2);
-  });
 
-  it("hace fallback a schtasks cuando PowerShell falla con acceso denegado (Nivel 3)", async () => {
-    const { pathResolver, processRunner, runSpy } = createStubs();
-
-    // Nivel 1 (SYSTEM): access denied
-    runSpy.mockResolvedValueOnce(failResult("Acceso denegado"));
-    // Nivel 2 (usuario): también falla
-    runSpy.mockResolvedValueOnce(failResult("Error genérico PowerShell"));
-    // Nivel 3 (schtasks): ok
-    runSpy.mockResolvedValueOnce(OK_RESULT);
-
-    const service = new BackupRestoreService(pathResolver, processRunner);
-    const result = await service.configureScheduledBackup(buildConfig());
-
-    expect(result.ok).toBe(true);
-    expect(result.message).toContain("schtasks fallback");
-    expect(runSpy).toHaveBeenCalledTimes(3);
-
-    // Verifica que la tercera llamada usa schtasks
-    const thirdCall = runSpy.mock.calls[2]?.[0] as {
+    const secondCall = runSpy.mock.calls[1]?.[0] as {
       command: string;
       args: string[];
     };
-    expect(thirdCall.command).toBe("schtasks");
+    expect(secondCall.command).toBe("schtasks");
+    expect(secondCall.args).toContain("/Create");
+    expect(secondCall.args).not.toContain("SYSTEM");
   });
 
-  it("retorna ok:false cuando todos los niveles fallan (Nivel 4)", async () => {
+  it("retorna error cuando hay acceso denegado y también falla el /Create en contexto usuario", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // Nivel 1 (SYSTEM): access denied
     runSpy.mockResolvedValueOnce(failResult("Acceso denegado"));
-    // Nivel 2 (usuario): falla
     runSpy.mockResolvedValueOnce(failResult("Error PS usuario"));
-    // Nivel 3 (schtasks): falla
-    runSpy.mockResolvedValueOnce(failResult("schtasks error final"));
 
     const service = new BackupRestoreService(pathResolver, processRunner);
     const result = await service.configureScheduledBackup(buildConfig());
 
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("BACKUP_SCHEDULE_FAILED");
-    expect(result.message).toContain("múltiples intentos");
-    expect(runSpy).toHaveBeenCalledTimes(3);
+    expect(result.message).toContain("Error PS usuario");
+    expect(result.message).toContain("diagnóstico scheduler");
+    expect(result.message).toContain("fallback-user");
+    expect(runSpy).toHaveBeenCalledTimes(2);
   });
 
-  it("salta a Nivel 3 sin pasar por Nivel 2 si el error NO es de elevación", async () => {
+  it("no hace fallback a usuario si el fallo no es de acceso denegado", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // Nivel 1 (SYSTEM): falla por error genérico (no acceso denegado)
     runSpy.mockResolvedValueOnce(
       failResult("Error: Module ScheduledTasks not found"),
     );
-    // Nivel 3 (schtasks): ok (se salta nivel 2)
-    runSpy.mockResolvedValueOnce(OK_RESULT);
 
     const service = new BackupRestoreService(pathResolver, processRunner);
     const result = await service.configureScheduledBackup(buildConfig());
 
-    expect(result.ok).toBe(true);
-    expect(result.message).toContain("schtasks fallback");
-    // Solo 2 llamadas: nivel 1 + nivel 3 (nivel 2 se saltó)
-    expect(runSpy).toHaveBeenCalledTimes(2);
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("BACKUP_SCHEDULE_FAILED");
+    expect(runSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("detecta múltiples variantes de error de elevación", async () => {
+  it("trata Access is denied y Acceso denegado como disparadores del fallback usuario", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    for (const errorMsg of [
-      "Access is denied",
-      "0x80070005",
-      "error 740",
-      "requires elevation",
-      "UnauthorizedAccessException",
-      "not have the required privileges",
-    ]) {
+    for (const errorMsg of ["Access is denied", "Acceso denegado"]) {
       runSpy.mockReset();
-      // Nivel 1: variante de error de elevación
       runSpy.mockResolvedValueOnce(failResult(errorMsg));
-      // Nivel 2: ok
       runSpy.mockResolvedValueOnce(OK_RESULT);
 
       const service = new BackupRestoreService(pathResolver, processRunner);
       const result = await service.configureScheduledBackup(buildConfig());
 
       expect(result.ok).toBe(true);
+      expect(result.message).toContain("contexto de usuario");
       expect(runSpy).toHaveBeenCalledTimes(2);
     }
   });
 
-  it("elimina tarea cuando backupFrequency es 'off'", async () => {
+  it("no reintenta en usuario cuando el texto de error no coincide con acceso denegado", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // PowerShell Unregister: ok
-    runSpy.mockResolvedValueOnce({ ...OK_RESULT, stdout: "NOT_FOUND" });
+    runSpy.mockResolvedValueOnce(failResult("0x80070005 elevation required"));
+
+    const service = new BackupRestoreService(pathResolver, processRunner);
+    const result = await service.configureScheduledBackup(buildConfig());
+
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("BACKUP_SCHEDULE_FAILED");
+    expect(runSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("elimina tarea cuando backupFrequency es 'off' y schtasks /Delete tiene éxito", async () => {
+    const { pathResolver, processRunner, runSpy } = createStubs();
+
+    runSpy.mockResolvedValueOnce(OK_RESULT);
 
     const service = new BackupRestoreService(pathResolver, processRunner);
     const result = await service.configureScheduledBackup(
@@ -260,10 +245,17 @@ describe("BackupRestoreService.configureScheduledBackup", () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(result.message).toContain("No existía");
+    expect(result.message).toBe("Tarea programada de backups eliminada.");
+    expect(runSpy).toHaveBeenCalledTimes(1);
+    const firstCall = runSpy.mock.calls[0]?.[0] as {
+      command: string;
+      args: string[];
+    };
+    expect(firstCall.command).toBe("schtasks");
+    expect(firstCall.args).toContain("/Delete");
   });
 
-  it("usa intervalo 7 para frecuencia semanal", async () => {
+  it("usa /MO 7 para frecuencia semanal (intervalo de 7 días bajo /SC DAILY)", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
     runSpy.mockResolvedValueOnce(OK_RESULT);
@@ -274,8 +266,9 @@ describe("BackupRestoreService.configureScheduledBackup", () => {
     );
 
     const firstCall = runSpy.mock.calls[0]?.[0] as { args: string[] };
-    const psScript = firstCall.args[firstCall.args.indexOf("-Command") + 1];
-    expect(psScript).toContain("-DaysInterval 7");
+    const moIndex = firstCall.args.indexOf("/MO");
+    expect(moIndex).toBeGreaterThan(-1);
+    expect(firstCall.args[moIndex + 1]).toBe("7");
   });
 
   it("retorna ok en plataforma no-win32 sin ejecutar nada", async () => {
@@ -325,7 +318,7 @@ describe("BackupRestoreService.deleteScheduledBackupTask (vía configureSchedule
     vi.restoreAllMocks();
   });
 
-  it("elimina con PowerShell Unregister-ScheduledTask", async () => {
+  it("elimina con schtasks /Delete /F", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
     runSpy.mockResolvedValueOnce(OK_RESULT);
 
@@ -341,40 +334,14 @@ describe("BackupRestoreService.deleteScheduledBackupTask (vía configureSchedule
       command: string;
       args: string[];
     };
-    expect(firstCall.command).toBe("powershell");
-    expect(firstCall.args.join(" ")).toContain("Unregister-ScheduledTask");
+    expect(firstCall.command).toBe("schtasks");
+    expect(firstCall.args).toContain("/Delete");
+    expect(firstCall.args).toContain("/F");
   });
 
-  it("hace fallback a schtasks /Delete si PowerShell falla", async () => {
+  it("retorna ok:true si schtasks indica que la tarea no existe", async () => {
     const { pathResolver, processRunner, runSpy } = createStubs();
 
-    // PowerShell Unregister: falla
-    runSpy.mockResolvedValueOnce(failResult("PS error"));
-    // schtasks /Delete: ok
-    runSpy.mockResolvedValueOnce(OK_RESULT);
-
-    const service = new BackupRestoreService(pathResolver, processRunner);
-    const result = await service.configureScheduledBackup(
-      buildConfig({ backupFrequency: "off" }),
-    );
-
-    expect(result.ok).toBe(true);
-    expect(runSpy).toHaveBeenCalledTimes(2);
-
-    const secondCall = runSpy.mock.calls[1]?.[0] as {
-      command: string;
-      args: string[];
-    };
-    expect(secondCall.command).toBe("schtasks");
-    expect(secondCall.args).toContain("/Delete");
-  });
-
-  it("retorna ok:true si la tarea no existe (schtasks fallback)", async () => {
-    const { pathResolver, processRunner, runSpy } = createStubs();
-
-    // PowerShell: falla
-    runSpy.mockResolvedValueOnce(failResult("PS error"));
-    // schtasks: not found
     runSpy.mockResolvedValueOnce(
       failResult("ERROR: The system cannot find the file specified."),
     );
@@ -386,5 +353,37 @@ describe("BackupRestoreService.deleteScheduledBackupTask (vía configureSchedule
 
     expect(result.ok).toBe(true);
     expect(result.message).toContain("No existía");
+    expect(runSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("retorna ok:true con mensaje en español cuando no se puede encontrar la tarea", async () => {
+    const { pathResolver, processRunner, runSpy } = createStubs();
+
+    runSpy.mockResolvedValueOnce(
+      failResult("No se puede encontrar el archivo especificado."),
+    );
+
+    const service = new BackupRestoreService(pathResolver, processRunner);
+    const result = await service.configureScheduledBackup(
+      buildConfig({ backupFrequency: "off" }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("No existía");
+  });
+
+  it("retorna error si schtasks /Delete falla por un motivo distinto a no encontrado", async () => {
+    const { pathResolver, processRunner, runSpy } = createStubs();
+
+    runSpy.mockResolvedValueOnce(failResult("ERROR: Access denied"));
+
+    const service = new BackupRestoreService(pathResolver, processRunner);
+    const result = await service.configureScheduledBackup(
+      buildConfig({ backupFrequency: "off" }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("BACKUP_SCHEDULE_DELETE_FAILED");
+    expect(runSpy).toHaveBeenCalledTimes(1);
   });
 });

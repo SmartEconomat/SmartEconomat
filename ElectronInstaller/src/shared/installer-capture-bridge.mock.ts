@@ -422,6 +422,13 @@ export function createInstallerCaptureBridgeMock(): Record<string, unknown> {
         lastIncidentAt: null,
         latestIncident: null,
         recentIncidents: [],
+        healthModel: {
+          systemState: "healthy",
+          sourceOfTruth: "hybrid",
+          summary: "Stack operativo en entorno de captura.",
+          primaryIssues: [],
+          auxiliaryIssues: [],
+        },
       },
     }),
 

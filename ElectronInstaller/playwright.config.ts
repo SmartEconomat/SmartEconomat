@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './test/e2e',
+  // Flujo Electron + capturas: requiere `out/main/index.js` y `playwright.screenshots.config.ts`.
+  testIgnore: ['**/installer-screenshots.spec.ts'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

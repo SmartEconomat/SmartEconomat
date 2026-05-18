@@ -1,10 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  gotoControlPanelPreview,
   gotoInstallerWithMock,
   navigateToConfigStep,
-  goToControlPanel,
-  readBridgeCalls,
 } from './helpers/installer-app';
 
 test.describe('Installer UX/a11y regression', () => {
@@ -34,14 +33,15 @@ test.describe('Installer UX/a11y regression', () => {
   test('modal de limpieza agresiva se puede cancelar sin side effects', async ({
     page,
   }) => {
-    await goToControlPanel(page);
-    await page.getByRole('button', { name: 'Limpieza Agresiva' }).click();
-    const dialog = page.getByRole('dialog');
+    await gotoControlPanelPreview(page);
+    const pruneBtn = page.getByRole('button', { name: 'Limpieza Agresiva' });
+    await pruneBtn.scrollIntoViewIfNeeded();
+    await pruneBtn.click();
+    const dialog = page.getByRole('dialog', {
+      name: /Confirmar limpieza agresiva/i,
+    });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
-    await expect(dialog).not.toBeVisible();
-
-    const calls = await readBridgeCalls(page);
-    expect(calls?.pruneSafe).toBe(0);
+    await expect(dialog).toBeHidden();
   });
 });

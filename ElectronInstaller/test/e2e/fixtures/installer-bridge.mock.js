@@ -323,6 +323,18 @@
         lastAutomaticActionAt: null,
         lastAutomaticAction: null,
         uptimeSeconds: 120,
+        incidentsResolved: 0,
+        incidentsOpen: 0,
+        lastIncidentAt: null,
+        latestIncident: null,
+        recentIncidents: [],
+        healthModel: {
+          systemState: "healthy",
+          sourceOfTruth: "hybrid",
+          summary: "Stack operativo en entorno de prueba E2E.",
+          primaryIssues: [],
+          auxiliaryIssues: [],
+        },
       },
     }),
     restartDockerDesktop: async () => {
