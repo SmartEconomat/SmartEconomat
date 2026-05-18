@@ -4,6 +4,10 @@ import fs from "node:fs";
 import type { CommandResult } from "@shared/contracts";
 
 import {
+  createDeferredCommandResult,
+  getSessionStartupGuard,
+} from "./session-startup-guard";
+import {
   formatChildProcessSpawnError,
   mergeWindowsEssentialPathEntries,
   normalizeWindowsSpawnCommand,
@@ -83,6 +87,8 @@ export interface ProcessRunOptions {
   cwd?: string;
   timeoutMs?: number;
   env?: NodeJS.ProcessEnv;
+  /** Si true, no oculta la ventana del proceso (necesario para diálogos de certutil). */
+  showWindow?: boolean;
   onStdoutLine?: (line: string) => void;
   onStderrLine?: (line: string) => void;
 }
@@ -115,6 +121,11 @@ function flushCarryLine(carry: string, onLine: (line: string) => void): void {
 
 export class ProcessRunnerService {
   async run(options: ProcessRunOptions): Promise<CommandResult> {
+    const startupGuard = getSessionStartupGuard();
+    if (startupGuard?.shouldDeferElectronScripts()) {
+      return createDeferredCommandResult();
+    }
+
     const timeoutMs = options.timeoutMs ?? 30_000;
 
     const command = normalizeWindowsSpawnCommand(options.command.trim());
@@ -162,7 +173,7 @@ export class ProcessRunnerService {
           cwd: options.cwd,
           env: mergedEnv,
           shell: false,
-          windowsHide: true,
+          windowsHide: options.showWindow !== true,
           stdio: ["ignore", "pipe", "pipe"],
         });
       } catch (error) {

@@ -55,6 +55,10 @@ export class GuardianStateService {
       const raw = await fs.readFile(this.stateFilePath, "utf8");
       const parsed = JSON.parse(raw) as Partial<GuardianPersistedState>;
       this.state = this.normalizeState(parsed);
+      // Cold boot: no heredar agresividad de recuperación de sesiones anteriores.
+      this.state.consecutiveFailures = 0;
+      this.state.lastRecoveryLevel = null;
+      this.state.watchdogState = "idle";
     } catch {
       this.state = { ...DEFAULT_STATE };
     }

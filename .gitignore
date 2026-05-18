@@ -81,6 +81,15 @@ deploy_key.pub
 #reports
 **/e2e-report/**
 **/e2e-report/*.*
+**/playwright-report/
+**/test-results/
+**/*-out.txt
+**/e2e-out.txt
+
+# Seeder / runtime logs (regenerables)
+**/src/seeders/logs/
+**/seed-http-log.txt
+**/seed-massive-requests.log
 
 # SSL certs & prod volumes (Except renewal hooks)
 /certs-data/

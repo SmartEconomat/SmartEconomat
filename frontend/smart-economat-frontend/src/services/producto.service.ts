@@ -59,6 +59,42 @@ export interface ProductoMutationPayload {
 
 import { buildQueryParams } from './api.service';
 
+type ProductoApiRecord = Producto & {
+  deleted_at?: string | null;
+};
+
+function isProductoSoftDeleted(producto: ProductoApiRecord): boolean {
+  return Boolean(producto.deletedAt || producto.deleted_at);
+}
+
+function filterProductosBySoftDelete(
+  productos: Producto[],
+  soloEliminados?: boolean
+): Producto[] {
+  const typedProductos = productos as ProductoApiRecord[];
+
+  if (soloEliminados) {
+    return typedProductos.filter((producto) => isProductoSoftDeleted(producto));
+  }
+
+  return typedProductos.filter(
+    (producto) => !isProductoSoftDeleted(producto) && producto.activo !== false
+  );
+}
+
+function normalizeProductosPage(
+  page: PaginatedData<Producto>,
+  params?: Pick<ProductosQueryParams, 'soloEliminados'>
+): PaginatedData<Producto> {
+  return {
+    ...page,
+    data: filterProductosBySoftDelete(
+      page.data,
+      params?.soloEliminados === true
+    ),
+  };
+}
+
 function buildProductosQueryString(params?: Record<string, unknown>): string {
   if (!params) return `?limit=${PRODUCTOS_MAX_LIMIT}`;
 
@@ -240,7 +276,8 @@ export async function fetchProductos(
         }
       : arg1;
   const query = buildProductosQueryString(params);
-  return requestProductos(query);
+  const page = await requestProductos(query);
+  return normalizeProductosPage(page, params);
 }
 
 // ─── Tipos para listados ──────────────────────────────────────────────────
@@ -303,7 +340,7 @@ export async function fetchProductosPaginated(
     limit: PRODUCTOS_DEFAULT_LIMIT,
     ...params,
   });
-  const inner = await requestProductos(query);
+  const inner = normalizeProductosPage(await requestProductos(query), params);
   if (!inner || !Array.isArray(inner.data)) {
     return {
       data: [],

@@ -21,6 +21,7 @@ Centro de documentación técnica del monorepo: economato educativo (catálogo, 
 | Día a día de desarrollo | [development.md](./development.md) |
 | Pruebas (Jest, Vitest, Playwright, E2E) | [testing.md](./testing.md) |
 | CI/CD y producción | [deployment.md](./deployment.md) |
+| Docker backend (prod / debug / dev) | [operations/docker-backend-architecture.md](./operations/docker-backend-architecture.md) |
 | Fallos habituales | [troubleshooting.md](./troubleshooting.md) y [operations/troubleshooting/](./operations/troubleshooting/README.md) |
 | Preguntas frecuentes | [faq.md](./faq.md) |
 | Historial documental | [changelog.md](./changelog.md) |
@@ -38,7 +39,7 @@ Las carpetas siguientes tienen **propósito estable**. El detalle (cientos de fi
 | [architecture/](./architecture/) | Profundización: backend, frontend, modelo de datos, UUID v7, soft delete, trade-offs. |
 | [reference/](./reference/) | API, endpoints, pipes/guards, dependencias, máquinas de estado. |
 | [security/](./security/) | Autenticación, RBAC, CSRF, TLS, flujos educativos. |
-| [operations/](./operations/) | HTTPS local, runbooks, troubleshooting operativo. |
+| [operations/](./operations/) | HTTPS local, runbooks, **arquitectura Docker backend**, troubleshooting operativo. |
 | [development/](./development/) | Guías de testing, rendimiento, trabajo en equipo, quick references. |
 | [how-to/](./how-to/) | Recetas técnicas (migraciones, transacciones, entidades, logging). |
 | [explanation/](./explanation/) | Contexto y trade-offs de diseño. |
@@ -79,7 +80,7 @@ Versiones tomadas de `package.json` de backend y frontend (mayo 2026):
 - **Frontend:** React 19, Vite 6, React Router 7, MUI 7, Redux Toolkit, Vitest, Playwright.
 - **Runtime:** Node.js ≥ 22.2.0 en backend, frontend e instalador.
 
-API REST bajo **`/api/v1`**; Swagger en **`/api/v1/docs`**.
+API REST bajo **`/api/v1`**; Swagger en **`/api/v1/docs`** solo en desarrollo o imagen **debug** (deshabilitado en producción por defecto).
 
 ---
 

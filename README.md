@@ -28,7 +28,7 @@ docs                                Documentacion canonicamente mantenida
 
 ### Desarrollo local fuera de Docker (opcional)
 
-- Node.js `>=22.2.0` (backend, frontend y ElectronInstaller)
+- Node.js `>=22.13.0` LTS (backend, frontend y ElectronInstaller; ver `.nvmrc`)
 - npm (incluido con Node)
 
 ## Inicio rapido

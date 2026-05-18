@@ -2,6 +2,7 @@ export const IPCChannels = {
   installer: {
     runPreflight: "installer:run-preflight",
     runAutoRepair: "installer:run-auto-repair",
+    trustWindowsRootCertificate: "installer:trust-windows-root-certificate",
     releaseBusyPort: "installer:release-busy-port",
     startInstall: "installer:start-install",
     getState: "installer:get-state",
@@ -32,6 +33,7 @@ export const IPCChannels = {
     getSupervisorSnapshot: "runtime:get-supervisor-snapshot",
     restartDockerDesktop: "runtime:restart-docker-desktop",
     runSupervisorRecovery: "runtime:run-supervisor-recovery",
+    repairLocalDomain: "runtime:repair-local-domain",
   },
   debug: {
     rendererLog: "debug:renderer-log",

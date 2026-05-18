@@ -25,6 +25,7 @@ import {
 import { registerIpcHandleWithDebug } from "@main/ipc/ipc-handler-with-debug";
 import type { DebugLogService } from "@main/services/debug-log.service";
 import type { ExternalSupervisorService } from "@main/services/external-supervisor.service";
+import type { LocalDomainSelfHealService } from "@main/services/local-domain-selfheal.service";
 import { assertDangerConfirmation } from "@main/security/command-allowlist";
 import { BackupRestoreService } from "@main/services/backup-restore.service";
 import { CertificateService } from "@main/services/certificate.service";
@@ -95,9 +96,14 @@ export class RuntimeIPC {
   ) {}
 
   private bootGuardian: ExternalSupervisorService | null = null;
+  private localDomainSelfHeal: LocalDomainSelfHealService | null = null;
 
   setBootGuardian(guardian: ExternalSupervisorService | null): void {
     this.bootGuardian = guardian;
+  }
+
+  setLocalDomainSelfHeal(service: LocalDomainSelfHealService | null): void {
+    this.localDomainSelfHeal = service;
   }
 
   setWindow(window: BrowserWindow): void {
@@ -389,7 +395,7 @@ export class RuntimeIPC {
         if (!this.bootGuardian) {
           return {
             ok: false,
-            message: "Boot Guardian no está activo.",
+            message: "Supervisor no está activo.",
             errorCode: "GUARDIAN_NOT_ACTIVE",
           };
         }
@@ -402,6 +408,34 @@ export class RuntimeIPC {
                 "La recuperación manual se ejecutó, pero el stack sigue degradado.",
               errorCode: "SUPERVISOR_RECOVERY_FAILED",
             };
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
+      IPCChannels.runtime.repairLocalDomain,
+      async (): Promise<OperationResult> => {
+        if (!this.localDomainSelfHeal) {
+          return {
+            ok: false,
+            message: "Servicio de reparación local no disponible.",
+            errorCode: "SELF_HEAL_NOT_AVAILABLE",
+          };
+        }
+        try {
+          await this.localDomainSelfHeal.runIfNeeded("user-repair");
+          return {
+            ok: true,
+            message: "Reparación de dominio local ejecutada.",
+          };
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          return {
+            ok: false,
+            message: detail,
+            errorCode: "SELF_HEAL_FAILED",
+          };
+        }
       },
     );
   }

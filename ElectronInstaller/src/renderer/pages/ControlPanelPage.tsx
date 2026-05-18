@@ -3,6 +3,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   Chip,
@@ -19,7 +20,6 @@ import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRound
 import TerminalRoundedIcon from "@mui/icons-material/TerminalRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded";
-import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import type {
@@ -27,26 +27,26 @@ import type {
   SupervisorSnapshot,
   WatchdogStatus,
 } from "@shared/contracts";
+import { buildMonitoredServiceHealth } from "@shared/service-health";
 import { ServiceStatusCard } from "@renderer/components/ServiceStatusCard";
 
 interface ControlPanelPageProps {
   busy: boolean;
   health: ServiceHealth[];
-  watchdogStatus: WatchdogStatus | null;
-  supervisorSnapshot: SupervisorSnapshot | null;
+  watchdogStatus?: WatchdogStatus | null;
+  supervisorSnapshot?: SupervisorSnapshot | null;
+  onRestartDockerDesktop?: () => Promise<void>;
+  onRunSupervisorRecovery?: () => Promise<void>;
   onStart: () => Promise<void>;
   onStop: () => Promise<void>;
   onRestart: () => Promise<void>;
   onRefresh: () => Promise<void>;
-  onRestartDockerDesktop: () => Promise<void>;
-  onRunSupervisorRecovery: () => Promise<void>;
   onStartLogs: (
     service: "frontend" | "backend" | "db" | "redis",
   ) => Promise<void>;
   onStopLogs: () => Promise<void>;
   onDiagnostics: () => Promise<void>;
   onOpenDanger: () => void;
-  onOpenUninstall: () => void;
   children: ReactNode;
 }
 
@@ -142,53 +142,16 @@ const actionPalettes: Record<ActionPaletteName, ActionPalette> = {
   },
 };
 
-function buildMonitoredServices(health: ServiceHealth[]): ServiceHealth[] {
-  const orderedServices: ServiceHealth["service"][] = [
-    "backend",
-    "frontend",
-    "db",
-    "redis",
-  ];
-
-  return orderedServices.map((serviceName) => {
-    const matched = health.find((service) => service.service === serviceName);
-    if (matched) {
-      return matched;
-    }
-
-    const placeholderDetails: Record<ServiceHealth["service"], string> = {
-      backend:
-        "Ejecuta Verificar Salud para consultar el estado de la API y la capa de negocio.",
-      frontend:
-        "Ejecuta Verificar Salud para consultar el estado de la interfaz y el proxy HTTPS local.",
-      db: "Ejecuta Verificar Salud para consultar el estado de PostgreSQL y la persistencia.",
-      redis:
-        "Ejecuta Verificar Salud para consultar el estado de Redis y las colas auxiliares.",
-    };
-
-    return {
-      service: serviceName,
-      status: "unknown",
-      detail: placeholderDetails[serviceName],
-    } as ServiceHealth;
-  });
-}
-
 function resolveOverallState(services: ServiceHealth[]): {
   label: "Healthy" | "Warning" | "Error";
   color: "success" | "warning" | "error";
   text: string;
 } {
-  if (
-    services.some(
-      (service) =>
-        service.status === "unhealthy" || service.status === "unknown",
-    )
-  ) {
+  if (services.some((service) => service.status === "unhealthy")) {
     return {
       label: "Error",
       color: "error",
-      text: "Hay servicios sin contenedor activo o con incidencia real en Docker.",
+      text: "Hay al menos un servicio con incidencia y requiere atención inmediata.",
     };
   }
 
@@ -211,6 +174,36 @@ function resolveOverallState(services: ServiceHealth[]): {
   };
 }
 
+function formatSupervisorSystemState(state?: string): string {
+  switch (state) {
+    case "SYSTEM_OK":
+      return "SYSTEM_OK";
+    case "STARTING":
+      return "STARTING";
+    case "RECOVERING":
+      return "RECOVERING";
+    case "DOCKER_ENGINE_DOWN":
+      return "DOCKER_ENGINE_DOWN";
+    case "STACK_PARTIAL":
+      return "STACK_PARTIAL";
+    case "CONTAINER_UNHEALTHY":
+      return "CONTAINER_UNHEALTHY";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+function formatSupervisorSourceOfTruth(source?: string): string {
+  switch (source) {
+    case "live-docker":
+      return "live-docker";
+    case "windows-supervisor":
+      return "windows-supervisor";
+    default:
+      return "hybrid";
+  }
+}
+
 function ActionCard({
   title,
   description,
@@ -219,10 +212,6 @@ function ActionCard({
   disabled,
   onClick,
 }: ActionCardProps) {
-  const stableIcon = (
-    <Box sx={{ display: "grid", placeItems: "center" }}>{icon}</Box>
-  );
-
   return (
     <Tooltip title={description} arrow placement="top">
       <Paper
@@ -252,7 +241,7 @@ function ActionCard({
                 flexShrink: 0,
               }}
             >
-              {stableIcon}
+              {icon}
             </Box>
             <Typography
               variant="subtitle2"
@@ -277,6 +266,7 @@ function ActionCard({
           disableElevation
           disabled={disabled}
           onClick={onClick}
+          startIcon={icon}
           sx={{
             bgcolor: palette.buttonBg,
             color: palette.buttonText,
@@ -312,11 +302,11 @@ export function ControlPanelPage({
   onStopLogs,
   onDiagnostics,
   onOpenDanger,
-  onOpenUninstall,
   children,
 }: ControlPanelPageProps) {
-  const monitoredServices = buildMonitoredServices(health);
+  const monitoredServices = buildMonitoredServiceHealth(health);
   const overallState = resolveOverallState(monitoredServices);
+  const auxiliarySignals = supervisorSnapshot?.healthModel?.auxiliaryIssues ?? [];
 
   const primaryActions: ActionDefinition[] = [
     {
@@ -364,37 +354,23 @@ export function ControlPanelPage({
       icon: <TerminalRoundedIcon fontSize="small" />,
       onClick: () => void onStartLogs("frontend"),
     },
-    {
-      title: "Logs DB",
-      description: "Abre el stream de logs de PostgreSQL en el contenedor db.",
-      palette: actionPalettes.neutral,
-      icon: <TerminalRoundedIcon fontSize="small" />,
-      onClick: () => void onStartLogs("db"),
-    },
-    {
-      title: "Logs Redis",
-      description: "Abre el stream de logs del contenedor Redis.",
-      palette: actionPalettes.neutral,
-      icon: <TerminalRoundedIcon fontSize="small" />,
-      onClick: () => void onStartLogs("redis"),
-    },
   ];
 
   const advancedActions: ActionDefinition[] = [
     {
       title: "Reparar ahora",
       description:
-        "Ejecuta de inmediato la recuperación automática del supervisor.",
+        "Ejecuta de inmediato la recuperación del stack por el sentinela.",
       palette: actionPalettes.warning,
       icon: <RestartAltRoundedIcon fontSize="small" />,
-      onClick: () => void onRunSupervisorRecovery(),
+      onClick: () => void onRunSupervisorRecovery?.(),
     },
     {
       title: "Reiniciar Docker",
       description: "Reinicia Docker Desktop y vuelve a verificar el stack.",
       palette: actionPalettes.info,
       icon: <RestartAltRoundedIcon fontSize="small" />,
-      onClick: () => void onRestartDockerDesktop(),
+      onClick: () => void onRestartDockerDesktop?.(),
     },
     {
       title: "Detener Logs",
@@ -418,14 +394,6 @@ export function ControlPanelPage({
       palette: actionPalettes.destructive,
       icon: <DeleteSweepRoundedIcon fontSize="small" />,
       onClick: onOpenDanger,
-    },
-    {
-      title: "Desinstalar SmartEconomat",
-      description:
-        "Elimina completamente la instalación: contenedores, volúmenes, certificados, registro y atajos.",
-      palette: actionPalettes.destructive,
-      icon: <DeleteForeverRoundedIcon fontSize="small" />,
-      onClick: onOpenUninstall,
     },
   ];
 
@@ -515,7 +483,7 @@ export function ControlPanelPage({
         </Paper>
       </Box>
 
-      {watchdogStatus && (
+      {watchdogStatus ? (
         <Paper
           variant="outlined"
           sx={{
@@ -561,57 +529,47 @@ export function ControlPanelPage({
               />
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                  Boot Guardian
+                  Sentinela (vigilancia)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {watchdogStatus.state === "active" &&
-                    "Vigilancia activa — todos los servicios bajo monitorización."}
+                    "Vigilancia activa: el sentinela monitoriza los contenedores Docker."}
                   {watchdogStatus.state === "recovering" &&
-                    `Recuperación en curso — nivel ${watchdogStatus.currentRecoveryLevel}/3, ${watchdogStatus.consecutiveFailures} fallo(s).`}
+                    `Reparación en curso (nivel ${watchdogStatus.currentRecoveryLevel}, ${watchdogStatus.consecutiveFailures} incidencia(s) abierta(s)).`}
                   {watchdogStatus.state === "backoff" &&
-                    `Backoff activo — esperando ${Math.round(watchdogStatus.nextCheckInMs / 1000)}s antes del próximo intento.`}
+                    `Esperando ${Math.round(watchdogStatus.nextCheckInMs / 1000)} s antes del próximo intento automático.`}
                   {watchdogStatus.state === "idle" &&
-                    "Guardian inactivo — no se está monitorizando el stack."}
+                    "Sentinela en pausa (arranque o gracia de estabilización)."}
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip
-                label={
-                  watchdogStatus.state === "active"
-                    ? "Activo"
-                    : watchdogStatus.state === "recovering"
-                      ? "Recuperando"
-                      : watchdogStatus.state === "backoff"
-                        ? "Backoff"
-                        : "Inactivo"
-                }
-                size="small"
-                color={
-                  watchdogStatus.state === "active"
-                    ? "success"
-                    : watchdogStatus.state === "recovering"
-                      ? "warning"
-                      : watchdogStatus.state === "backoff"
-                        ? "error"
-                        : "default"
-                }
-                sx={{ fontWeight: 800 }}
-              />
-              {watchdogStatus.currentRecoveryLevel > 1 && (
-                <Chip
-                  label={`Nivel ${watchdogStatus.currentRecoveryLevel}`}
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontWeight: 700 }}
-                />
-              )}
-            </Stack>
+            <Chip
+              label={
+                watchdogStatus.state === "active"
+                  ? "Activo"
+                  : watchdogStatus.state === "recovering"
+                    ? "Reparando"
+                    : watchdogStatus.state === "backoff"
+                      ? "En espera"
+                      : "Inactivo"
+              }
+              size="small"
+              color={
+                watchdogStatus.state === "active"
+                  ? "success"
+                  : watchdogStatus.state === "recovering"
+                    ? "warning"
+                    : watchdogStatus.state === "backoff"
+                      ? "error"
+                      : "default"
+              }
+              sx={{ fontWeight: 800 }}
+            />
           </Stack>
         </Paper>
-      )}
+      ) : null}
 
-      {supervisorSnapshot && (
+      {supervisorSnapshot ? (
         <Paper
           variant="outlined"
           sx={{
@@ -624,55 +582,90 @@ export function ControlPanelPage({
             direction="row"
             justifyContent="space-between"
             alignItems="center"
+            spacing={1}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-              Supervisor autónomo
+              Sentinela Docker
             </Typography>
             <Chip
               size="small"
               color={
                 supervisorSnapshot.overallState === "healthy"
                   ? "success"
-                  : supervisorSnapshot.overallState === "recovering"
-                    ? "warning"
-                    : "error"
+                  : supervisorSnapshot.overallState === "stabilizing"
+                    ? "info"
+                    : supervisorSnapshot.overallState === "recovering"
+                      ? "warning"
+                      : "error"
               }
               label={
                 supervisorSnapshot.overallState === "healthy"
-                  ? "Todo correcto"
-                  : supervisorSnapshot.overallState === "recovering"
-                    ? "Recuperando"
-                    : "Error crítico"
+                  ? "Operativo"
+                  : supervisorSnapshot.overallState === "stabilizing"
+                    ? "Estabilizando"
+                    : supervisorSnapshot.overallState === "recovering"
+                      ? "Reparando"
+                      : "Degradado"
               }
+              sx={{ fontWeight: 800 }}
             />
           </Stack>
-          <Typography variant="caption" color="text.secondary">
+
+          {supervisorSnapshot.overallState === "degraded" &&
+          supervisorSnapshot.incidentsOpen > 0 ? (
+            <Alert severity="error" sx={{ mt: 1.25 }}>
+              {supervisorSnapshot.healthModel?.summary ??
+                "El sentinela detectó un problema y no pudo dejarlo resuelto."}
+              {supervisorSnapshot.lastAutomaticAction
+                ? ` Último intento: ${supervisorSnapshot.lastAutomaticAction}.`
+                : " Usa «Reparar ahora» o revisa los logs."}
+            </Alert>
+          ) : null}
+
+          {supervisorSnapshot.overallState === "healthy" &&
+          auxiliarySignals.length > 0 ? (
+            <Alert severity="info" sx={{ mt: 1.25 }}>
+              {supervisorSnapshot.healthModel?.summary}
+              {auxiliarySignals[0] ? ` Primera observación: ${auxiliarySignals[0]}.` : ""}
+            </Alert>
+          ) : null}
+
+          {supervisorSnapshot.overallState === "recovering" ? (
+            <Alert severity="warning" sx={{ mt: 1.25 }}>
+              Reparación automática en curso. Se te avisará si no puede
+              completarse.
+            </Alert>
+          ) : null}
+
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
             Uptime: {Math.floor(supervisorSnapshot.uptimeSeconds / 60)} min ·
             Próxima comprobación:{" "}
             {Math.max(
               1,
-              Math.round((supervisorSnapshot.nextCheckInMs ?? 0) / 1000),
+              Math.round((watchdogStatus?.nextCheckInMs ?? 30_000) / 1000),
             )}
-            s · Incidentes resueltos: {supervisorSnapshot.incidentsResolved}
+            s · Incidentes abiertos: {supervisorSnapshot.incidentsOpen} ·
+            Resueltos: {supervisorSnapshot.incidentsResolved}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
-            Última reparación automática:{" "}
+            Última acción:{" "}
             {supervisorSnapshot.lastAutomaticAction ?? "Sin acciones aún"} ·
             Última verificación:{" "}
             {supervisorSnapshot.checks[0]?.measuredAt ?? "Sin datos"}
           </Typography>
-          {supervisorSnapshot.latestIncident && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-            >
-              Servicio afectado: {supervisorSnapshot.latestIncident.title} ·{" "}
-              {supervisorSnapshot.latestIncident.state === "open"
-                ? "Incidente activo"
-                : "Recuperado"}
+          {supervisorSnapshot.healthModel ? (
+            <Typography variant="caption" color="text.secondary" display="block">
+              Modelo: {formatSupervisorSystemState(supervisorSnapshot.healthModel.systemState)} · Fuente: {formatSupervisorSourceOfTruth(supervisorSnapshot.healthModel.sourceOfTruth)}
             </Typography>
-          )}
+          ) : null}
+          {supervisorSnapshot.latestIncident ? (
+            <Typography variant="caption" color="text.secondary" display="block">
+              Incidencia: {supervisorSnapshot.latestIncident.title} ·{" "}
+              {supervisorSnapshot.latestIncident.state === "open"
+                ? "activa"
+                : "resuelta"}
+            </Typography>
+          ) : null}
           <Accordion
             disableGutters
             elevation={0}
@@ -721,7 +714,7 @@ export function ControlPanelPage({
             </AccordionDetails>
           </Accordion>
         </Paper>
-      )}
+      ) : null}
 
       <Paper
         variant="outlined"
@@ -784,7 +777,7 @@ export function ControlPanelPage({
           sx={{
             display: "grid",
             gap: 1.25,
-            gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" },
+            gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
           }}
         >
           {advancedActions.map((action) => (

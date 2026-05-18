@@ -16,6 +16,9 @@ Inventario consolidado y operativo. Fuente principal: `.env.example` y `docker-c
 - `DB_HOST`
 - `DB_SYNC`
 - `STARTUP_RUN_MIGRATIONS`
+- `ENABLE_SWAGGER` — `true` solo en dev/debug; **debe ser `false` en producción** (fijado en `docker-compose.prod.yml`)
+- `LOG_LEVEL` — `info` en prod, `debug` en dev/debug
+- `BACKEND_DEBUG_PORT` — puerto inspector Node (solo perfil `debug`, default `9229`)
 
 ## Frontend
 

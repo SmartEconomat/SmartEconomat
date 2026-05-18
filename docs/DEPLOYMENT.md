@@ -27,12 +27,24 @@ El workflow inyecta variables/secretos criticos:
 - Configuracion TLS.
 - Password temporal admin seed.
 
+## Imágenes Docker del backend
+
+El backend de producción usa build multi-stage (`backend/Dockerfile`, target `production`):
+
+- Sin Swagger UI en runtime (`ENABLE_SWAGGER=false`).
+- Sin devDependencies (`npm ci --omit=dev`).
+- Node `22.13.1-bookworm-slim`.
+
+Referencia: [operations/docker-backend-architecture.md](./operations/docker-backend-architecture.md).
+
+Para staging/diagnóstico con Swagger: `docker-compose.debug.yml` y perfil `debug` (ver [how-to/docker-backend-imagenes.md](./how-to/docker-backend-imagenes.md)).
+
 ## Despliegue manual (fallback)
 
 En servidor con repo preparado:
 
 ```bash
-docker compose -f docker-compose.prod.yml up --build -d
+docker compose --env-file .env.prod -f docker-compose.prod.yml up --build -d
 ```
 
 Comandos utiles:
@@ -47,6 +59,7 @@ docker compose -f docker-compose.prod.yml logs -f frontend
 
 - `db-seeding`: ejecuta contenedor `seeder`.
 - `tools`: utilidades operativas puntuales.
+- `debug` (en `docker-compose.debug.yml`): backend con Swagger e inspector Node; **no** usar en producción expuesta a Internet.
 
 ## TLS
 

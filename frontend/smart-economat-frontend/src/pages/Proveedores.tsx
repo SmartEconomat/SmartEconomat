@@ -8,9 +8,10 @@ import {
   Button,
   Tooltip,
   Stack,
-  FormControlLabel,
-  Switch,
   Chip,
+  Tabs,
+  Tab,
+  alpha,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -37,6 +38,7 @@ import { usePermission } from '../store/auth.hooks';
 import { PERMISSIONS } from '../sherlock-auth/permissions.constants';
 
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import { DownloadService } from '../services/download.service';
@@ -60,7 +62,7 @@ const Proveedores: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [itemToRestore, setItemToRestore] = useState<Proveedor | null>(null);
 
   const {
@@ -92,7 +94,7 @@ const Proveedores: React.FC = () => {
         queryParams.searchTerm,
         queryParams.sortBy,
         queryParams.order,
-        includeDeleted
+        activeTab === 'deleted'
       );
       setData(proveedoresData.data);
       syncPaginationFromResponse(proveedoresData);
@@ -106,7 +108,7 @@ const Proveedores: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [queryParams, includeDeleted, syncPaginationFromResponse, t]);
+  }, [queryParams, activeTab, syncPaginationFromResponse, t]);
 
   useEffect(() => {
     loadData();
@@ -121,7 +123,7 @@ const Proveedores: React.FC = () => {
     try {
       await deleteResource(`/proveedor/${itemToDelete.id}`);
       // Si no estamos viendo eliminados, lo quitamos de la lista
-      if (!includeDeleted) {
+      if (activeTab === 'active') {
         setData((prev) => prev.filter((p) => p.id !== itemToDelete.id));
       } else {
         // Si estamos viendo eliminados, refrescamos para ver el cambio de estado
@@ -274,8 +276,6 @@ const Proveedores: React.FC = () => {
   const canEdit = usePermission(PERMISSIONS.proveedores.editar);
   const canDelete = usePermission(PERMISSIONS.proveedores.eliminar);
   const canCreate = usePermission(PERMISSIONS.proveedores.crear);
-  const hasAdminPermission = usePermission('ADMIN');
-  const hasSuperAdminPermission = usePermission('SUPER_ADMIN');
   const proveedorSchema: DynamicField[] = useMemo(
     () => [
       {
@@ -318,8 +318,6 @@ const Proveedores: React.FC = () => {
     ],
     [t]
   );
-
-  const isAdmin = hasAdminPermission || hasSuperAdminPermission;
 
   const columns: Column<Proveedor>[] = useMemo(() => {
     const cols: Column<Proveedor>[] = [
@@ -409,11 +407,14 @@ const Proveedores: React.FC = () => {
    */
   const renderActions = (row: Proveedor) => (
     <Stack direction="row" spacing={1} justifyContent="center">
-      {canEdit && !row.deletedAt && (
+      {activeTab === 'active' && canEdit && (
         <Tooltip title={t('comun.editar')}>
           <IconButton
             color="secondary"
-            onClick={() => handleEditClick(row)}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleEditClick(row);
+            }}
             size="small"
             aria-label={t('comun.editar')}
           >
@@ -421,27 +422,33 @@ const Proveedores: React.FC = () => {
           </IconButton>
         </Tooltip>
       )}
-      {canEdit && row.deletedAt && (
-        <Tooltip title={t('proveedores.actions.restaurar')}>
-          <IconButton
-            color="success"
-            onClick={() => setItemToRestore(row)}
-            size="small"
-            aria-label={t('proveedores.actions.restaurar')}
-          >
-            <RestoreFromTrashIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
-      {canDelete && !row.deletedAt && (
+      {activeTab === 'active' && canDelete && (
         <Tooltip title={t('comun.eliminar')}>
           <IconButton
             color="error"
-            onClick={() => setItemToDelete(row)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setItemToDelete(row);
+            }}
             size="small"
             aria-label={t('comun.eliminar')}
           >
             <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {activeTab === 'deleted' && (
+        <Tooltip title={t('comun.restaurar')}>
+          <IconButton
+            color="success"
+            onClick={(event) => {
+              event.stopPropagation();
+              setItemToRestore(row);
+            }}
+            size="small"
+            aria-label={t('comun.restaurar')}
+          >
+            <RestoreFromTrashIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
@@ -458,29 +465,6 @@ const Proveedores: React.FC = () => {
         searchId="search-proveedores"
         totalItems={totalItems}
         totalItemsLabel={t('proveedores.totalItemsLabel')}
-        filters={
-          isAdmin ? (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={includeDeleted}
-                  onChange={(e) => {
-                    setIncludeDeleted(e.target.checked);
-                    onPageChange(null, 1);
-                  }}
-                  size="small"
-                  color="warning"
-                />
-              }
-              label={
-                <Typography variant="body2" color="text.secondary">
-                  {t('proveedores.toolbar.mostrarEliminados')}
-                </Typography>
-              }
-              sx={{ ml: 2, mt: 0.5 }}
-            />
-          ) : undefined
-        }
         primaryAction={
           canCreate
             ? {
@@ -493,193 +477,276 @@ const Proveedores: React.FC = () => {
         onViewModeChange={undefined}
       />
 
-      <Paper elevation={0} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
-        {!isLoading && error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          hideTopBar={false}
-          exportHandlers={{
-            onExportPdf: handleExportPdf,
-            onExportExcel: handleExportExcel,
-            exportLabel: t('proveedores.exportLabel'),
+      <Paper
+        elevation={2}
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
-          onSort={onSort}
-          sortConfig={sortConfig}
-          onFilter={onFilter}
-          pagination={paginationProps}
-          defaultViewMode="list"
-          onRowClick={handleViewClick}
-          getRowAriaLabel={(row: Proveedor) =>
-            t('proveedores.actions.ariaVerDetalle', { nombre: row.nombre })
-          }
-          emptyStateMessage={
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <StorefrontOutlinedIcon
-                sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
-              />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchTerm.trim()
-                  ? t('proveedores.empty.sinResultados')
-                  : t('proveedores.empty.sinProveedores')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchTerm.trim()
-                  ? t('proveedores.empty.prueba')
-                  : t('proveedores.empty.empieza')}
-              </Typography>
-              {!searchTerm.trim() && canCreate && (
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(
+              _e: React.SyntheticEvent,
+              newValue: 'active' | 'deleted'
+            ) => {
+              setActiveTab(newValue);
+              onPageChange(null, 1);
+            }}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label={t('proveedores.titulo')}
+          >
+            <Tab
+              icon={<StorefrontOutlinedIcon />}
+              label={t('comun.activos')}
+              value="active"
+            />
+            <Tab
+              icon={<DeleteSweepOutlinedIcon />}
+              label={t('comun.eliminados')}
+              value="deleted"
+            />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {!isLoading && error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            hideTopBar={true}
+            exportHandlers={{
+              onExportPdf: handleExportPdf,
+              onExportExcel: handleExportExcel,
+              exportLabel: t('proveedores.exportLabel'),
+            }}
+            onSort={onSort}
+            sortConfig={sortConfig}
+            onFilter={onFilter}
+            pagination={paginationProps}
+            defaultViewMode="list"
+            onRowClick={handleViewClick}
+            getRowAriaLabel={(row: Proveedor) =>
+              t('proveedores.actions.ariaVerDetalle', { nombre: row.nombre })
+            }
+            emptyStateMessage={
+              <Box
+                sx={{
+                  py: { xs: 6, md: 10 },
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  maxWidth: 450,
+                  mx: 'auto',
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    color: 'primary.main',
+                    mb: 3,
+                    boxShadow: (theme) =>
+                      `0 8px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
+                  }}
+                >
+                  {activeTab === 'deleted' ? (
+                    <DeleteSweepOutlinedIcon sx={{ fontSize: 40 }} />
+                  ) : (
+                    <StorefrontOutlinedIcon sx={{ fontSize: 40 }} />
+                  )}
+                </Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
+                >
+                  {searchTerm.trim()
+                    ? t('proveedores.empty.sinResultados')
+                    : activeTab === 'deleted'
+                      ? t('proveedores.empty.sinEliminados')
+                      : t('proveedores.empty.sinProveedores')}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 4 }}
+                >
+                  {searchTerm.trim()
+                    ? t('proveedores.empty.prueba')
+                    : activeTab === 'deleted'
+                      ? t('proveedores.empty.sinEliminadosHint')
+                      : t('proveedores.empty.empieza')}
+                </Typography>
+                {!searchTerm.trim() && canCreate && activeTab === 'active' && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setItemToEdit({})}
+                  >
+                    {t('proveedores.acciones.anadir')}
+                  </Button>
+                )}
+              </Box>
+            }
+            renderActions={renderActions}
+          />
+
+          <ConfirmDialog
+            isOpen={!!itemToDelete}
+            onClose={() => !isDeleting && setItemToDelete(null)}
+            onConfirm={() => void handleDeleteConfirm()}
+            title={t('proveedores.confirm.eliminarTitulo')}
+            message={
+              <>
+                {t('proveedores.confirm.eliminarMensaje', {
+                  nombre: itemToDelete?.nombre,
+                })}
+              </>
+            }
+            confirmText={t('proveedores.confirm.eliminarConfirm')}
+            cancelText={t('comun.cancelar')}
+            isLoading={isDeleting}
+          />
+
+          <ConfirmDialog
+            isOpen={!!itemToRestore}
+            onClose={() => !isRestoring && setItemToRestore(null)}
+            onConfirm={() => void handleRestoreConfirm()}
+            title={t('proveedores.confirm.restaurarTitulo')}
+            message={
+              <>
+                {t('proveedores.confirm.restaurarMensaje', {
+                  nombre: itemToRestore?.nombre,
+                })}
+              </>
+            }
+            confirmText={t('proveedores.confirm.restaurarConfirm')}
+            cancelText={t('comun.cancelar')}
+            isLoading={isRestoring}
+            confirmColor="success"
+          />
+
+          <DynamicFormModal
+            isOpen={!!itemToEdit}
+            onClose={() => setItemToEdit(null)}
+            title={
+              itemToEdit?.id
+                ? t('proveedores.modal.tituloEditar', {
+                    nombre: itemToEdit.nombre || '',
+                  })
+                : t('proveedores.modal.tituloCrear')
+            }
+            size="md"
+            fields={proveedorSchema}
+            initialData={itemToEdit || {}}
+            onSubmit={handleSave}
+            isSubmitting={isSaving}
+            requireConfirmation={true}
+            confirmationMessage={
+              itemToEdit?.id
+                ? t('proveedores.confirm.guardarCambios')
+                : t('proveedores.confirm.crearNuevo')
+            }
+          />
+
+          <DetailModal
+            isOpen={!!itemToView}
+            onClose={() => setItemToView(null)}
+            title={itemToView?.nombre || ''}
+            subtitle={itemToView?.nif || undefined}
+            size="md"
+            editLabel={t('proveedores.actions.editarProveedor')}
+            onEdit={
+              canEdit
+                ? () => {
+                    if (itemToView) {
+                      handleEditClick(itemToView);
+                      setItemToView(null);
+                    }
+                  }
+                : undefined
+            }
+            actions={
+              itemToView && (
                 <Button
                   variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setItemToEdit({})}
+                  color="error"
+                  startIcon={<PictureAsPdfOutlinedIcon />}
+                  onClick={() => handleExportIndividualPdf(itemToView)}
+                  disableElevation
                 >
-                  {t('proveedores.acciones.anadir')}
+                  {t('proveedores.actions.descargarFicha')}
                 </Button>
-              )}
-            </Box>
-          }
-          renderActions={renderActions}
-        />
-
-        <ConfirmDialog
-          isOpen={!!itemToDelete}
-          onClose={() => !isDeleting && setItemToDelete(null)}
-          onConfirm={() => void handleDeleteConfirm()}
-          title={t('proveedores.confirm.eliminarTitulo')}
-          message={
-            <>
-              {t('proveedores.confirm.eliminarMensaje', {
-                nombre: itemToDelete?.nombre,
-              })}
-            </>
-          }
-          confirmText={t('proveedores.confirm.eliminarConfirm')}
-          cancelText={t('comun.cancelar')}
-          isLoading={isDeleting}
-        />
-
-        <ConfirmDialog
-          isOpen={!!itemToRestore}
-          onClose={() => !isRestoring && setItemToRestore(null)}
-          onConfirm={() => void handleRestoreConfirm()}
-          title={t('proveedores.confirm.restaurarTitulo')}
-          message={
-            <>
-              {t('proveedores.confirm.restaurarMensaje', {
-                nombre: itemToRestore?.nombre,
-              })}
-            </>
-          }
-          confirmText={t('proveedores.confirm.restaurarConfirm')}
-          cancelText={t('comun.cancelar')}
-          isLoading={isRestoring}
-          confirmColor="success"
-        />
-
-        <DynamicFormModal
-          isOpen={!!itemToEdit}
-          onClose={() => setItemToEdit(null)}
-          title={
-            itemToEdit?.id
-              ? t('proveedores.modal.tituloEditar', {
-                  nombre: itemToEdit.nombre || '',
-                })
-              : t('proveedores.modal.tituloCrear')
-          }
-          size="md"
-          fields={proveedorSchema}
-          initialData={itemToEdit || {}}
-          onSubmit={handleSave}
-          isSubmitting={isSaving}
-          requireConfirmation={true}
-          confirmationMessage={
-            itemToEdit?.id
-              ? t('proveedores.confirm.guardarCambios')
-              : t('proveedores.confirm.crearNuevo')
-          }
-        />
-
-        <DetailModal
-          isOpen={!!itemToView}
-          onClose={() => setItemToView(null)}
-          title={itemToView?.nombre || ''}
-          subtitle={itemToView?.nif || undefined}
-          size="md"
-          editLabel={t('proveedores.actions.editarProveedor')}
-          onEdit={
-            canEdit
-              ? () => {
-                  if (itemToView) {
-                    handleEditClick(itemToView);
-                    setItemToView(null);
-                  }
-                }
-              : undefined
-          }
-          actions={
-            itemToView && (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<PictureAsPdfOutlinedIcon />}
-                onClick={() => handleExportIndividualPdf(itemToView)}
-                disableElevation
-              >
-                {t('proveedores.actions.descargarFicha')}
-              </Button>
-            )
-          }
-          sections={[
-            {
-              title: t('proveedores.detail.infoFiscal'),
-              fields: [
-                {
-                  label: t('proveedores.detail.razonSocial'),
-                  value: itemToView?.nombre,
-                },
-                {
-                  label: t('proveedores.detail.nifCuit'),
-                  value: itemToView?.nif,
-                },
-              ],
-            },
-            {
-              title: t('proveedores.detail.contacto'),
-              fields: [
-                {
-                  label: t('proveedores.detail.personaContacto'),
-                  value: itemToView?.contacto,
-                },
-                {
-                  label: t('proveedores.detail.telefono'),
-                  value: itemToView?.telefono,
-                },
-                {
-                  label: t('proveedores.detail.email'),
-                  value: itemToView?.email,
-                  fullWidth: true,
-                },
-              ],
-            },
-            {
-              title: t('proveedores.detail.ubicacion'),
-              fields: [
-                {
-                  label: t('proveedores.detail.direccion'),
-                  value: itemToView?.direccion,
-                  fullWidth: true,
-                },
-              ],
-            },
-          ]}
-        />
+              )
+            }
+            sections={[
+              {
+                title: t('proveedores.detail.infoFiscal'),
+                fields: [
+                  {
+                    label: t('proveedores.detail.razonSocial'),
+                    value: itemToView?.nombre,
+                  },
+                  {
+                    label: t('proveedores.detail.nifCuit'),
+                    value: itemToView?.nif,
+                  },
+                ],
+              },
+              {
+                title: t('proveedores.detail.contacto'),
+                fields: [
+                  {
+                    label: t('proveedores.detail.personaContacto'),
+                    value: itemToView?.contacto,
+                  },
+                  {
+                    label: t('proveedores.detail.telefono'),
+                    value: itemToView?.telefono,
+                  },
+                  {
+                    label: t('proveedores.detail.email'),
+                    value: itemToView?.email,
+                    fullWidth: true,
+                  },
+                ],
+              },
+              {
+                title: t('proveedores.detail.ubicacion'),
+                fields: [
+                  {
+                    label: t('proveedores.detail.direccion'),
+                    value: itemToView?.direccion,
+                    fullWidth: true,
+                  },
+                ],
+              },
+            ]}
+          />
+        </Box>
       </Paper>
     </Box>
   );

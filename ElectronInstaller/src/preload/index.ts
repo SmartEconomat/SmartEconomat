@@ -210,6 +210,11 @@ if (__INSTALLER_CAPTURE_BRIDGE_MOCK__) {
         IPCChannels.installer.runAutoRepair,
         payload,
       ),
+    trustWindowsRootCertificate: (payload: RuntimePaths) =>
+      invokeWithTracing<RuntimePaths, OperationResult<PreflightReport>>(
+        IPCChannels.installer.trustWindowsRootCertificate,
+        payload,
+      ),
     releaseBusyPort: (payload: PortRepairPayload) =>
       invokeWithTracing<PortRepairPayload, OperationResult<PreflightReport>>(
         IPCChannels.installer.releaseBusyPort,

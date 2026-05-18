@@ -119,10 +119,19 @@ function normalizeSupervisorForComparison(
     lastAutomaticAction: snapshot.lastAutomaticAction,
     incidentsOpen: snapshot.incidentsOpen,
     incidentsResolved: snapshot.incidentsResolved,
+    healthModel: snapshot.healthModel
+      ? {
+          systemState: snapshot.healthModel.systemState,
+          summary: snapshot.healthModel.summary,
+          primaryIssues: snapshot.healthModel.primaryIssues,
+          auxiliaryIssues: snapshot.healthModel.auxiliaryIssues,
+        }
+      : null,
     checks: snapshot.checks.map((check) => ({
       id: check.id,
       state: check.state,
       detail: check.detail,
+      authority: check.authority,
     })),
     latestIncident: snapshot.latestIncident
       ? {
@@ -232,6 +241,18 @@ export function useInstallerFlow() {
 
     if (shouldOpenControlPanelFromHash()) {
       setStep("control");
+    }
+
+    const runtimeForHealth =
+      nextRuntimePath.length > 0 ? nextRuntimePath : config.runtimePath;
+    if (result.data.installed && runtimeForHealth.length > 0) {
+      void bridge
+        .getHealth({ runtimePath: runtimeForHealth })
+        .then((healthResult) => {
+          if (healthResult.ok && healthResult.data) {
+            setHealth(healthResult.data);
+          }
+        });
     }
   }
 
@@ -453,6 +474,42 @@ export function useInstallerFlow() {
         error instanceof Error
           ? error.message
           : "Error inesperado al ejecutar autorreparación de preflight.";
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function trustWindowsRootCertificate(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    setLogs([]);
+
+    const bridge = requireBridge(true);
+    if (!bridge) {
+      return;
+    }
+
+    try {
+      const result = await bridge.trustWindowsRootCertificate({
+        runtimePath: config.runtimePath,
+      });
+
+      if (result.data) {
+        setPreflightReport(result.data);
+      }
+
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      setError(null);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al confiar el certificado en Windows.";
       setError(message);
     } finally {
       setBusy(false);
@@ -902,6 +959,7 @@ export function useInstallerFlow() {
     setBackupDefaultDirectory,
     runPreflight,
     runAutoRepair,
+    trustWindowsRootCertificate,
     closeBusyPort,
     startInstallation,
     refreshHealth,

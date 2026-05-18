@@ -2424,6 +2424,7 @@
       "verDetalle": "View detail",
       "editarProveedor": "Edit supplier",
       "descargarFicha": "Download Profile",
+      "restaurar": "Restore",
       "ariaVerDetalle": "View supplier detail {{nombre}}"
     },
     "form": {
@@ -2455,6 +2456,9 @@
       "eliminarTitulo": "Delete supplier",
       "eliminarMensaje": "Are you sure you want to delete supplier {{nombre}}? This action cannot be undone.",
       "eliminarConfirm": "Yes, delete",
+      "restaurarTitulo": "Restore supplier",
+      "restaurarMensaje": "Do you want to restore supplier {{nombre}}?",
+      "restaurarConfirm": "Yes, restore",
       "guardarCambios": "Are you sure you want to save the changes made to this supplier?",
       "crearNuevo": "Are you sure you want to add this new supplier to the system?"
     },
@@ -2462,19 +2466,26 @@
       "eliminado": "Supplier deleted successfully.",
       "actualizado": "Supplier updated successfully.",
       "creado": "Supplier created successfully.",
-      "creadoNombre": "Supplier \"{{nombre}}\" created successfully."
+      "creadoNombre": "Supplier \"{{nombre}}\" created successfully.",
+      "restaurado": "Supplier \"{{nombre}}\" restored successfully."
     },
     "errors": {
       "errorCargar": "Unknown error loading suppliers.",
       "errorEliminar": "Error deleting the supplier.",
       "errorGuardar": "Error saving the supplier.",
-      "errorCrear": "Error creating the supplier."
+      "errorCrear": "Error creating the supplier.",
+      "errorRestaurar": "Could not restore the supplier."
     },
     "empty": {
       "sinResultados": "No suppliers matching your search",
       "sinProveedores": "No suppliers found",
+      "sinEliminados": "No deleted suppliers",
+      "sinEliminadosHint": "No previously deleted suppliers found.",
       "prueba": "Try other terms or clear the filter.",
       "empieza": "Start by adding the first supplier to your catalog."
+    },
+    "status": {
+      "eliminado": "Deleted"
     },
     "condicionesLabel": "Suppliers & Conditions",
     "nombreDesconocido": "Unknown Supplier",

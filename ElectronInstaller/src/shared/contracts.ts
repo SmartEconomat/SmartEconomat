@@ -7,7 +7,11 @@ export interface PreflightCheck {
   detail: string;
   recommendation?: string;
   repairable?: boolean;
-  repairAction?: "auto-repair" | "release-port" | "open-security";
+  repairAction?:
+    | "auto-repair"
+    | "release-port"
+    | "open-security"
+    | "trust-certificate";
   repairHint?: string;
   metadata?: {
     port?: number;
@@ -27,10 +31,8 @@ export interface InstallerConfigPayload {
   installMode: "new" | "reinstall";
   adminUsername: string;
   adminPassword: string;
-  adminEmail?: string;
   superAdminUsername: string;
   superAdminPassword: string;
-  superAdminEmail?: string;
   verifyExistingAdminSession: boolean;
   repairAdminCredentialsOnFailure: boolean;
   verifyAdminUsername?: string;
@@ -46,29 +48,13 @@ export interface InstallerConfigPayload {
   backupScheduleTime: string;
   backupRetentionDays: number;
   postgresPassword?: string;
-  /** Si vacío en el renderer, se usa `postgres`. */
-  postgresUser?: string;
-  /** Si vacío en el renderer, se usa `smarteconomat`. */
-  postgresDb?: string;
   redisPassword?: string;
   jwtSecret?: string;
-  /** Expiración JWT (p. ej. `7d`). Si vacío, `7d`. */
-  jwtExpiration?: string;
-  /** Ruta i18n custom; vacío = resolución por defecto del backend. */
-  i18nPath?: string;
-  /** Idioma por defecto i18n (p. ej. `es`). */
-  i18nFallbackLanguage?: string;
   sentryDsn?: string;
   viteSentryDsn?: string;
   startupRunMigrations?: boolean;
   httpPort: number;
   httpsPort: number;
-  smtpHost?: string;
-  smtpPort?: string;
-  smtpUser?: string;
-  smtpPass?: string;
-  smtpFrom?: string;
-  smtpSecure?: boolean;
 }
 
 export interface InstallerFilePickerPayload {
@@ -86,14 +72,12 @@ export type InstallerStep =
   | "IDLE"
   | "PREFLIGHT"
   | "CONFIG_VALIDATION"
-  | "PRE_INSTALL_BACKUP"
   | "ENV_RENDER"
   | "TLS_SETUP"
   | "DOCKER_DEPLOY"
   | "INITIALIZE_APP"
   | "VERIFY"
   | "DONE"
-  | "DONE_WITH_WARNINGS"
   | "FAILED";
 
 export interface InstallerStateSnapshot {
@@ -103,7 +87,6 @@ export interface InstallerStateSnapshot {
   stageLabel?: string;
   progressPercent?: number;
   errorCode?: string;
-  warnings?: string[];
 }
 
 export interface InstallJournalEntry extends InstallerStateSnapshot {
@@ -168,10 +151,6 @@ export interface PrunePayload extends RuntimePaths {
   confirmationPhrase: string;
 }
 
-export interface UninstallPayload extends RuntimePaths {
-  confirmationPhrase: string;
-}
-
 export interface InstallerProgressEvent {
   snapshot: InstallerStateSnapshot;
 }
@@ -180,11 +159,6 @@ export interface RuntimeLogEvent {
   service: string;
   line: string;
   timestamp: string;
-}
-
-export interface InstallerBootState {
-  installed: boolean;
-  runtimePath: string;
 }
 
 export interface ExportVisibleLogsPayload extends RuntimePaths {
@@ -202,10 +176,45 @@ export interface DebugLogEntry {
   source?: "main" | "renderer";
 }
 
-// ── Watchdog / Health Push ───────────────────────────────────
+// ── Ciclo de vida y contexto de ejecución (supervisión) ─────────────────
 
-export type WatchdogState = "active" | "recovering" | "backoff" | "idle";
-export type RecoveryLevel = 1 | 2 | 3 | 4 | 5 | 6;
+export type LifecyclePhase = "OBSERVE_ONLY" | "RUNTIME" | "INCIDENT";
+
+export type ExecutionContext =
+  | "observe"
+  | "runtime-auto-light"
+  | "user-repair"
+  | "install";
+
+export type PlatformState =
+  | "UNKNOWN"
+  | "STABILIZING"
+  | "DESKTOP_STARTING"
+  | "DAEMON_STARTING"
+  | "DAEMON_READY"
+  | "DAEMON_FAULT"
+  | "NOT_INSTALLED";
+
+export type StackState =
+  | "STACK_UNKNOWN"
+  | "STACK_STARTING"
+  | "STACK_DEGRADED"
+  | "STACK_DOWN"
+  | "STACK_HEALTHY";
+
+export type IncidentLifecycle =
+  | "OPEN"
+  | "ACKNOWLEDGED"
+  | "REPAIRING"
+  | "RESOLVED";
+
+export type TraySupervisorState =
+  | "healthy"
+  | "recovering"
+  | "degraded"
+  | "stabilizing";
+
+// ── Docker runtime (legacy + mapeo a PlatformState) ─────────────────────
 
 export type DockerRuntimeState =
   | "not-installed"
@@ -219,18 +228,98 @@ export type DockerRuntimeState =
 export interface DockerRuntimeStatus {
   state: DockerRuntimeState;
   detail: string;
-  source: "boot-guardian" | "preflight" | "runtime";
+  source: "boot-guardian" | "runtime" | "preflight" | "orchestrator";
   retries: number;
   lastCheckedAt: string;
 }
+
+// ── Watchdog / guardian ─────────────────────────────────────────────────
+
+export type WatchdogState =
+  | "idle"
+  | "active"
+  | "recovering"
+  | "backoff";
+
+export type RecoveryLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface WatchdogStatus {
   state: WatchdogState;
   consecutiveFailures: number;
   currentRecoveryLevel: RecoveryLevel;
   nextCheckInMs: number;
-  lastCheck: string | null;
+  lastCheck: string;
   dockerStatus?: DockerRuntimeStatus;
+}
+
+// ── Supervisor snapshot ─────────────────────────────────────────────────
+
+export type SupervisorOverallState =
+  | "healthy"
+  | "recovering"
+  | "degraded"
+  | "stabilizing";
+
+export interface SupervisorCheck {
+  id: string;
+  label: string;
+  state: "ok" | "warn" | "error";
+  detail: string;
+  measuredAt: string;
+  authority?: "primary" | "secondary" | "auxiliary";
+  affectsOverall?: boolean;
+}
+
+export type SupervisorSystemHealth =
+  | "SYSTEM_OK"
+  | "STARTING"
+  | "RECOVERING"
+  | "DOCKER_ENGINE_DOWN"
+  | "STACK_PARTIAL"
+  | "CONTAINER_UNHEALTHY"
+  | "UNKNOWN";
+
+export interface SupervisorHealthModel {
+  systemState: SupervisorSystemHealth;
+  sourceOfTruth: "live-docker" | "windows-supervisor" | "hybrid";
+  summary: string;
+  primaryIssues: string[];
+  auxiliaryIssues: string[];
+}
+
+export interface SupervisorIncident {
+  id: string;
+  service: string;
+  title: string;
+  detail: string;
+  severity: "warn" | "error" | "critical";
+  state: "open" | "resolved";
+  detectedAt: string;
+  resolvedAt?: string;
+  occurrences: number;
+  lifecycle?: IncidentLifecycle;
+}
+
+export interface SupervisorPlatformSnapshot {
+  platform: PlatformState;
+  stack: StackState;
+  lifecyclePhase: LifecyclePhase;
+  bootGraceRemainingMs?: number;
+}
+
+export interface SupervisorSnapshot {
+  overallState: SupervisorOverallState;
+  checks: SupervisorCheck[];
+  lastAutomaticActionAt: string | null;
+  lastAutomaticAction: string | null;
+  uptimeSeconds: number;
+  incidentsResolved: number;
+  incidentsOpen: number;
+  lastIncidentAt: string | null;
+  latestIncident: SupervisorIncident | null;
+  recentIncidents: SupervisorIncident[];
+  platform?: SupervisorPlatformSnapshot;
+  healthModel?: SupervisorHealthModel;
 }
 
 export interface HealthUpdateEvent {
@@ -240,64 +329,13 @@ export interface HealthUpdateEvent {
   timestamp: string;
 }
 
-export type SupervisorCheckState = "ok" | "warn" | "error";
+// ── Instalador / runtime auxiliar ───────────────────────────────────────
 
-export interface SupervisorCheck {
-  id:
-    | "docker-desktop"
-    | "wsl2"
-    | "docker-engine"
-    | "docker-version"
-    | "docker-info"
-    | "docker-network"
-    | "docker-volumes"
-    | "compose-stack"
-    | "backend-api"
-    | "database"
-    | "reverse-proxy"
-    | "certificates"
-    | "hosts-file"
-    | "containers-running"
-    | "containers-health"
-    | "ports"
-    | "disk"
-    | "memory"
-    | "cpu"
-    | "http-endpoint"
-    | "https-endpoint";
-  label: string;
-  state: SupervisorCheckState;
-  detail: string;
-  recommendation?: string;
-  measuredAt: string;
+export interface InstallerBootState {
+  installed: boolean;
+  runtimePath: string;
 }
 
-export type SupervisorOverallState = "healthy" | "recovering" | "degraded";
-
-export type SupervisorIncidentSeverity = "info" | "warn" | "error" | "critical";
-
-export interface SupervisorIncident {
-  id: string;
-  service: string;
-  title: string;
-  detail: string;
-  severity: SupervisorIncidentSeverity;
-  state: "open" | "resolved";
-  detectedAt: string;
-  resolvedAt?: string;
-  occurrences: number;
-}
-
-export interface SupervisorSnapshot {
-  overallState: SupervisorOverallState;
-  checks: SupervisorCheck[];
-  lastAutomaticActionAt: string | null;
-  lastAutomaticAction: string | null;
-  uptimeSeconds: number;
-  nextCheckInMs?: number;
-  incidentsResolved: number;
-  incidentsOpen: number;
-  lastIncidentAt: string | null;
-  latestIncident: SupervisorIncident | null;
-  recentIncidents: SupervisorIncident[];
+export interface UninstallPayload extends RuntimePaths {
+  confirmationPhrase: string;
 }

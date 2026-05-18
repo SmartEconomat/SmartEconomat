@@ -1,7 +1,9 @@
 import path from "node:path";
 
 import { resolveWindowsDockerDesktopExePath } from "./docker-desktop-windows-resolve";
+import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
+import { WindowsDockerServiceConfigService } from "./windows-docker-service-config.service";
 
 export interface DockerAutostartStatus {
   /**
@@ -34,7 +36,19 @@ export interface DockerAutostartConfigResult {
  * macOS (launchctl) y Linux (systemd).
  */
 export class DockerAutostartService {
-  private readonly processRunner = new ProcessRunnerService();
+  private readonly processRunner: ProcessRunnerService;
+  private readonly dockerServiceConfig: WindowsDockerServiceConfigService;
+
+  constructor(
+    processRunner: ProcessRunnerService = new ProcessRunnerService(),
+    pathResolver: PathResolverService = new PathResolverService(),
+  ) {
+    this.processRunner = processRunner;
+    this.dockerServiceConfig = new WindowsDockerServiceConfigService(
+      processRunner,
+      pathResolver,
+    );
+  }
 
   async getAutostartStatus(): Promise<DockerAutostartStatus> {
     const platform = process.platform;
@@ -143,21 +157,40 @@ export class DockerAutostartService {
 
     const settingsResult = await this.configureDockerSettingsWindows(true);
     const registryResult = await this.addToWindowsStartup(dockerPath);
+    const serviceResult = await this.dockerServiceConfig.ensureAutomatic({
+      startIfStopped: false,
+    });
 
     if (settingsResult || registryResult) {
+      const serviceNote = serviceResult.ok
+        ? " com.docker.service en Automatic."
+        : serviceResult.errorCode
+          ? ` Advertencia servicio Windows: ${serviceResult.detail}`
+          : "";
       return {
         ok: true,
         message:
-          "Docker Desktop configurado para iniciar automáticamente con Windows.",
+          `Docker Desktop configurado para iniciar automáticamente con Windows.${serviceNote}`,
       };
     }
 
     const taskResult = await this.createStartupTaskWindows(dockerPath);
     if (taskResult) {
+      const serviceNote = serviceResult.ok
+        ? " com.docker.service en Automatic."
+        : "";
       return {
         ok: true,
         message:
-          "Docker Desktop configurado mediante tarea programada para iniciar con Windows.",
+          `Docker Desktop configurado mediante tarea programada para iniciar con Windows.${serviceNote}`,
+      };
+    }
+
+    if (serviceResult.ok) {
+      return {
+        ok: true,
+        message:
+          "com.docker.service configurado en Automatic (Docker Desktop Run/settings no aplicados).",
       };
     }
 
@@ -327,14 +360,17 @@ export class DockerAutostartService {
         };
       }
 
-      // Paso 2: Configurar el servicio para iniciar automáticamente
-      const autoStartResult = await this.setDockerServiceAutoStart();
-      if (!autoStartResult) {
+      // Paso 2: Configurar el servicio para iniciar automáticamente (script canónico + verificación)
+      const autoStartResult = await this.dockerServiceConfig.ensureAutomatic({
+        startIfStopped: false,
+      });
+      if (!autoStartResult.ok) {
         return {
           ok: false,
           message:
+            autoStartResult.detail ||
             "No se pudo configurar el servicio Docker para iniciar automáticamente.",
-          errorCode: "SERVICE_AUTOSTART_FAILED",
+          errorCode: autoStartResult.errorCode ?? "SERVICE_AUTOSTART_FAILED",
         };
       }
 

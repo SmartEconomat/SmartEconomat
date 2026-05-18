@@ -13,6 +13,8 @@ export interface DockerWaitOptions {
   initialDelayMs?: number;
   maxDelayMs?: number;
   source?: DockerRuntimeStatus["source"];
+  /** Si true, no promueve daemon-starting/desktop-not-running a daemon-error al expirar. */
+  preserveTransientOnTimeout?: boolean;
 }
 
 function nowIso(): string {
@@ -214,6 +216,11 @@ export class DockerReadinessService {
       lastStatus = await this.probe({ source, timeoutMs: 12_000 });
     }
 
+    const preserveTransient = options.preserveTransientOnTimeout === true;
+    const transientState =
+      lastStatus.state === "daemon-starting" ||
+      lastStatus.state === "desktop-not-running";
+
     return {
       ...lastStatus,
       retries,
@@ -222,11 +229,15 @@ export class DockerReadinessService {
           ? "daemon-ready"
           : lastStatus.state === "not-installed"
             ? "not-installed"
-            : "daemon-error",
+            : preserveTransient && transientState
+              ? lastStatus.state
+              : "daemon-error",
       detail:
         lastStatus.state === "daemon-ready"
           ? lastStatus.detail
-          : `Docker no quedó operativo dentro de ${Math.round(maxWaitMs / 1000)}s. ${lastStatus.detail}`,
+          : preserveTransient && transientState
+            ? `Docker aún no operativo tras ${Math.round(maxWaitMs / 1000)}s (estado transitorio). ${lastStatus.detail}`
+            : `Docker no quedó operativo dentro de ${Math.round(maxWaitMs / 1000)}s. ${lastStatus.detail}`,
       lastCheckedAt: nowIso(),
     };
   }

@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-05-12T08:52:15.315Z",
-  "elapsedMs": 74078,
-  "elapsedSeconds": 74.1,
+  "timestamp": "2026-05-17T21:05:35.510Z",
+  "elapsedMs": 42404,
+  "elapsedSeconds": 42.4,
   "stageMetrics": [
     {
       "label": "build-backend",
-      "elapsedMs": 40103,
-      "elapsedSeconds": 40.1
+      "elapsedMs": 22973,
+      "elapsedSeconds": 22.97
     },
     {
       "label": "build-frontend",
-      "elapsedMs": 33975,
-      "elapsedSeconds": 33.98
+      "elapsedMs": 19430,
+      "elapsedSeconds": 19.43
     }
   ]
 }

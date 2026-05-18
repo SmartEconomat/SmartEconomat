@@ -7,7 +7,7 @@ services:
     image: smarteconomat-db:dev
     env_file: .env.dev
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '${DB_PORT:-5432}:5432'
     volumes:
       - database_dev:/var/lib/postgresql/data
     healthcheck:
@@ -40,11 +40,8 @@ services:
     env_file: .env.dev
     environment:
       - HOME=/tmp
-      - NODE_OPTIONS=--max-old-space-size=3072
-      # Linux + bind mount: inotify suele bastar y evita saturar CPU (polling cada 1s).
-      # macOS Docker Desktop: define CHOKIDAR_USEPOLLING=true en .env.dev si el watch falla.
-      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING:-false}
-      - CHOKIDAR_INTERVAL=${CHOKIDAR_INTERVAL:-2000}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     command: sh -c "sh scripts/ensure-deps.sh && npm run migration:run && npm run start:dev"
@@ -72,21 +69,17 @@ services:
     env_file: .env.dev
     environment:
       - HOME=/tmp
-      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING:-false}
-      - CHOKIDAR_INTERVAL=${CHOKIDAR_INTERVAL:-2000}
     command: sh -c "sh scripts/ensure-deps.sh && npm run dev -- --host"
     networks:
       - smarteconomat-dev-network
     volumes:
       - ./frontend/smart-economat-frontend:/app
       - /app/node_modules # Volumen anónimo para aislar node_modules
-      - vite_cache:/tmp/.vite-smarteconomat # Persistir caché entre reinicios
 
 
 volumes:
   database_dev:
   redis_dev:
-  vite_cache:
 
 networks:
   smarteconomat-dev-network:

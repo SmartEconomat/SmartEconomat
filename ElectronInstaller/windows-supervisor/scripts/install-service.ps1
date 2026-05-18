@@ -11,8 +11,19 @@ New-Item -ItemType Directory -Path "C:\ProgramData\SmartEconomat\state" -Force |
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sourceDir = Join-Path $scriptRoot "..\src"
 $winswSourceDir = Join-Path $scriptRoot "..\winsw"
+$opsScriptSource = Join-Path $scriptRoot "..\..\scripts\ops\ensure-com-docker-service-automatic.ps1"
 
 dotnet publish (Join-Path $sourceDir "SmartEconomat.WindowsSupervisor.csproj") -c Release -o $PublishDir
+
+$opsDestDir = Join-Path $PublishDir "scripts\ops"
+New-Item -ItemType Directory -Path $opsDestDir -Force | Out-Null
+if (Test-Path $opsScriptSource) {
+  Copy-Item $opsScriptSource (Join-Path $opsDestDir "ensure-com-docker-service-automatic.ps1") -Force
+} else {
+  Write-Warning "No se encontró script canónico en $opsScriptSource"
+}
+
+Copy-Item (Join-Path $sourceDir "appsettings.json") (Join-Path $PublishDir "appsettings.json") -Force
 
 $winswExe = Join-Path $PublishDir "winsw-x64.exe"
 $winswXml = Join-Path $PublishDir "SmartEconomatSupervisor.xml"

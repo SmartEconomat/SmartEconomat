@@ -47,6 +47,7 @@ import {
   ProfesorInfo,
 } from '../services/profesor.service';
 import Button from '../components/ui/Button';
+import { isElevatedRole } from '../sherlock-auth/permissions';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -128,6 +129,7 @@ const Administracion: React.FC = () => {
   const toast = useToast();
 
   const userRole = user?.rol?.toUpperCase() || '';
+  const isElevatedAcademicRole = isElevatedRole(userRole);
   const canViewAdmin = useAnyPermission([
     PERMISSIONS.profesor.ver_alumnos,
     PERMISSIONS.profesor.gestionar_slots,
@@ -223,6 +225,12 @@ const Administracion: React.FC = () => {
     Partial<Record<AdminTabKey, boolean>>
   >({});
 
+  const currentUserProfesorId = useMemo(
+    () =>
+      allProfesores.find((profesor) => profesor.userId === user?.id)?.id ?? '',
+    [allProfesores, user?.id]
+  );
+
   const availableTabs = useMemo(
     () =>
       availableTabKeys.map((key) => {
@@ -264,15 +272,11 @@ const Administracion: React.FC = () => {
     setError(null);
 
     try {
-      const [slotsRes, allSlotsRes, profesoresRes] = await Promise.all([
-        isPureProfesor ? profesorService.getSlots() : Promise.resolve(null),
+      const [allSlotsRes, profesoresRes, ownSlotsRes] = await Promise.all([
         isAdmin ? profesorService.getAllSlots() : Promise.resolve(null),
         isAdmin ? profesorService.getAllProfesores() : Promise.resolve(null),
+        isPureProfesor ? profesorService.getSlots() : Promise.resolve(null),
       ]);
-
-      if (slotsRes?.success) {
-        setSlots(slotsRes.data);
-      }
 
       if (allSlotsRes?.success) {
         setAllSlots(allSlotsRes.data);
@@ -282,6 +286,22 @@ const Administracion: React.FC = () => {
         setAllProfesores(profesoresRes.data);
       }
 
+      let resolvedOwnSlots = ownSlotsRes;
+
+      if (
+        !resolvedOwnSlots &&
+        isAdmin &&
+        isElevatedAcademicRole &&
+        profesoresRes?.success &&
+        profesoresRes.data.some((profesor) => profesor.userId === user?.id)
+      ) {
+        resolvedOwnSlots = await profesorService.getSlots();
+      }
+
+      if (resolvedOwnSlots?.success) {
+        setSlots(resolvedOwnSlots.data);
+      }
+
       setLoadedTabs((prev) => ({ ...prev, slots: true }));
     } catch (loadError) {
       console.error('Error loading administración data', loadError);
@@ -289,7 +309,15 @@ const Administracion: React.FC = () => {
     } finally {
       setLoadingTab((current) => (current === 'slots' ? null : current));
     }
-  }, [canViewAdmin, navigate, isPureProfesor, isAdmin, t]);
+  }, [
+    canViewAdmin,
+    navigate,
+    isPureProfesor,
+    isAdmin,
+    isElevatedAcademicRole,
+    t,
+    user?.id,
+  ]);
 
   /**
    * Ejecuta la lógica de operación dentro del flujo de la aplicación.
@@ -387,9 +415,8 @@ const Administracion: React.FC = () => {
 
       // Si es admin y elige "-- Mío (Propio) --" (vacío), buscamos si tiene perfil de profesor
       if (isAdmin && !targetProfesorId) {
-        const myProfile = allProfesores.find((p) => p.userId === user?.id);
-        if (myProfile) {
-          targetProfesorId = myProfile.id;
+        if (currentUserProfesorId) {
+          targetProfesorId = currentUserProfesorId;
         } else if (!isPureProfesor) {
           // Si no es "puro profesor" y no tiene perfil, el backend fallará con PROFESSOR_PROFILE_NOT_FOUND
           toast.error(t('admin.errors.sinProfesorVinculado'));
@@ -398,19 +425,37 @@ const Administracion: React.FC = () => {
         }
       }
 
-      const res =
-        isAdmin && targetProfesorId
-          ? await profesorService.adminCreateSlot({
-              ...data,
-              profesorId: targetProfesorId,
-            })
-          : await profesorService.createSlot(data);
+      const usesAdminCreateFlow = isAdmin && Boolean(targetProfesorId);
+
+      const res = usesAdminCreateFlow
+        ? await profesorService.adminCreateSlot({
+            ...data,
+            profesorId: targetProfesorId,
+          })
+        : await profesorService.createSlot(data);
 
       if (res.success) {
-        if (isAdmin && newSlot.profesorId) {
-          // Si lo crea un admin para otro, recargamos la lista total
-          const allSlotsRes = await profesorService.getAllSlots();
-          if (allSlotsRes.success) setAllSlots(allSlotsRes.data);
+        if (usesAdminCreateFlow) {
+          // Siempre refrescamos la vista administrativa tras un alta asociada.
+          const refreshRequests: Promise<void>[] = [
+            profesorService.getAllSlots().then((allSlotsRes) => {
+              if (allSlotsRes.success) {
+                setAllSlots(allSlotsRes.data);
+              }
+            }),
+          ];
+
+          if (targetProfesorId === currentUserProfesorId) {
+            refreshRequests.push(
+              profesorService.getSlots().then((slotsRes) => {
+                if (slotsRes.success) {
+                  setSlots(slotsRes.data);
+                }
+              })
+            );
+          }
+
+          await Promise.all(refreshRequests);
         } else {
           setSlots((prev) => [...prev, res.data]);
         }

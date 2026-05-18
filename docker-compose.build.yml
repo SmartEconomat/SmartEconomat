@@ -23,7 +23,8 @@ services:
   backend:
     build:
       context: ./backend/smart-economat-backend
-      dockerfile: ../Dockerfile.prod
+      dockerfile: ../Dockerfile
+      target: production
     image: smarteconomat-backend:prod
 
   frontend:

@@ -4,6 +4,7 @@ import fsSync from "node:fs";
 import path from "node:path";
 
 import type {
+  ExecutionContext,
   OperationResult,
   RuntimeLogEvent,
   ServiceHealth,
@@ -17,6 +18,16 @@ import {
 
 import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
+import { getSessionStartupGuard } from "./session-startup-guard";
+import {
+  DOCKER_SERVICE_NOT_FOUND,
+  DOCKER_SERVICE_STARTMODE_MANUAL,
+  WindowsDockerServiceConfigService,
+} from "./windows-docker-service-config.service";
+import {
+  allowsDestructiveDocker,
+  allowsElevation as allowsElevationByContext,
+} from "./supervisor-policy";
 import {
   resolveWindowsDockerCliPath,
   resolveWindowsDockerDesktopExePath,
@@ -203,14 +214,37 @@ export class DockerOrchestratorService {
     "SmartEconomat-LetsEncrypt-Renewal";
   private readonly dockerStartupWaitMs: number;
   private readonly dockerStartupPollMs: number;
+  private executionContext: ExecutionContext = "user-repair";
+
+  private readonly dockerServiceConfig: WindowsDockerServiceConfigService;
 
   constructor(
     private readonly pathResolver = new PathResolverService(),
     private readonly processRunner = new ProcessRunnerService(),
     options: DockerOrchestratorOptions = {},
   ) {
+    this.dockerServiceConfig = new WindowsDockerServiceConfigService(
+      this.processRunner,
+      this.pathResolver,
+    );
     this.dockerStartupWaitMs = options.dockerStartupWaitMs ?? 120_000;
     this.dockerStartupPollMs = options.dockerStartupPollMs ?? 3_000;
+  }
+
+  setExecutionContext(context: ExecutionContext): void {
+    this.executionContext = context;
+  }
+
+  getExecutionContext(): ExecutionContext {
+    return this.executionContext;
+  }
+
+  private allowsElevationForContext(): boolean {
+    const guard = getSessionStartupGuard();
+    if (guard) {
+      return guard.allowsElevation(this.executionContext);
+    }
+    return allowsElevationByContext(this.executionContext);
   }
 
   async startStack(
@@ -223,6 +257,15 @@ export class DockerOrchestratorService {
     const envCheck = await this.ensureRuntimeEnvFile(runtimePath);
     if (!envCheck.ok) {
       return envCheck;
+    }
+
+    if (options.forceClean && !allowsDestructiveDocker(this.executionContext)) {
+      return {
+        ok: false,
+        message:
+          "Recreación destructiva del stack no permitida en modo observación o recuperación ligera.",
+        errorCode: "DOCKER_DESTRUCTIVE_NOT_ALLOWED",
+      };
     }
 
     if (options.forceClean) {
@@ -1205,6 +1248,13 @@ export class DockerOrchestratorService {
       return true;
     }
 
+    if (!this.allowsElevationForContext()) {
+      emit?.(
+        "com.docker.service no pudo iniciarse sin elevación; se omite UAC en este contexto.",
+      );
+      return false;
+    }
+
     const elevatedRepair =
       await this.tryElevatedWindowsDockerServiceRepair(emit);
     return elevatedRepair
@@ -1215,38 +1265,25 @@ export class DockerOrchestratorService {
   private async ensureWindowsDockerServiceConfigured(
     emit?: (line: string) => void,
   ): Promise<boolean> {
-    const configureAndStart = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        [
-          "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue",
-          "if ($null -eq $service) { exit 2 }",
-          "sc.exe config com.docker.service start= auto | Out-Null",
-          "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
-          "Set-Service -Name 'com.docker.service' -StartupType Automatic -ErrorAction Stop",
-          "$service = Get-Service -Name 'com.docker.service'",
-          "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' -ErrorAction Stop }",
-          "$service = Get-Service -Name 'com.docker.service'",
-          "if ($service.Status -eq 'Running') { exit 0 }",
-          "exit 1",
-        ].join("; "),
-      ],
-      timeoutMs: 20_000,
-      cwd: this.pathResolver.getProjectRoot(),
-      env: this.getDockerEnvironment(),
+    const configured = await this.dockerServiceConfig.ensureAutomatic({
+      startIfStopped: true,
     });
 
-    if (!configureAndStart.ok && configureAndStart.code === 2) {
+    if (configured.errorCode === DOCKER_SERVICE_NOT_FOUND) {
       emit?.("Servicio com.docker.service no encontrado en Windows.");
       return false;
     }
 
-    if (!configureAndStart.ok) {
-      emit?.(
-        "No se pudo configurar com.docker.service en modo normal; puede requerir elevación.",
-      );
+    if (!configured.ok) {
+      if (configured.errorCode === DOCKER_SERVICE_STARTMODE_MANUAL) {
+        emit?.(
+          `${DOCKER_SERVICE_STARTMODE_MANUAL}: com.docker.service sigue en ${configured.startMode}. ${configured.detail}`,
+        );
+      } else {
+        emit?.(
+          `No se pudo configurar com.docker.service en modo normal; puede requerir elevación. ${configured.detail}`,
+        );
+      }
       return false;
     }
 
@@ -1288,23 +1325,21 @@ export class DockerOrchestratorService {
     emit?.(
       "Windows requiere elevación para configurar com.docker.service. Solicitando UAC para dejarlo en Automatic/Running...",
     );
-    const script = [
-      "$ErrorActionPreference = 'Stop'",
-      "sc.exe config com.docker.service start= auto | Out-Null",
-      "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
-      "Set-Service -Name 'com.docker.service' -StartupType Automatic",
-      "$service = Get-Service -Name 'com.docker.service'",
-      "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' }",
-    ].join("; ");
-    const encodedScript = Buffer.from(script, "utf16le").toString("base64");
+
+    const scriptPath = path.join(
+      this.pathResolver.getInstallerScriptsRoot(),
+      "ops",
+      "ensure-com-docker-service-automatic.ps1",
+    );
+    const safePath = scriptPath.replace(/'/g, "''");
     const elevateCommand = [
-      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','${encodedScript}')`,
+      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-File','${safePath}','-StartIfStopped')`,
       "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList $argumentList",
       "if ($null -eq $process) { exit 1 }",
       "exit $process.ExitCode",
     ].join("; ");
 
-    const elevated = await this.processRunner.run({
+    await this.processRunner.run({
       command: "powershell",
       args: [
         "-NoProfile",
@@ -1318,14 +1353,24 @@ export class DockerOrchestratorService {
       env: this.getDockerEnvironment(),
     });
 
-    if (elevated.ok) {
+    const verified = await this.dockerServiceConfig.ensureAutomatic({
+      startIfStopped: false,
+    });
+
+    if (verified.ok) {
       emit?.("Servicio com.docker.service configurado con elevación.");
       return true;
     }
 
-    emit?.(
-      "No se pudo configurar com.docker.service con elevación o el usuario canceló UAC.",
-    );
+    if (verified.errorCode === DOCKER_SERVICE_STARTMODE_MANUAL) {
+      emit?.(
+        `${DOCKER_SERVICE_STARTMODE_MANUAL} tras UAC: ${verified.detail}`,
+      );
+    } else {
+      emit?.(
+        "No se pudo configurar com.docker.service con elevación o el usuario canceló UAC.",
+      );
+    }
     return false;
   }
 

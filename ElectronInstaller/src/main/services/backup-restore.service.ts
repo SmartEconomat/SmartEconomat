@@ -171,146 +171,95 @@ export class BackupRestoreService {
       projectRoot,
       outputDir,
     });
+    const command = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${launcherPath}"`;
 
-    const successMessage = (mode: string): string =>
-      `Backup automático programado cada ${intervalDays} días a las ${config.backupScheduleTime} (${mode}).`;
-
-    // ── Nivel 1: Register-ScheduledTask con SYSTEM ──
-    const systemResult = await this.registerScheduledTaskPowerShell({
-      taskName,
-      launcherPath,
-      intervalDays,
-      scheduleTime: config.backupScheduleTime,
-      principal: "SYSTEM",
-    });
-
-    if (systemResult.ok) {
-      return { ok: true, message: successMessage("SYSTEM") };
-    }
-
-    // ── Nivel 2: Register-ScheduledTask con usuario actual ──
-    if (this.isElevationOrAccessError(systemResult.detail)) {
-      const userResult = await this.registerScheduledTaskPowerShell({
-        taskName,
-        launcherPath,
-        intervalDays,
-        scheduleTime: config.backupScheduleTime,
-        principal: "BUILTIN\\Users",
-      });
-
-      if (userResult.ok) {
-        return {
-          ok: true,
-          message:
-            successMessage("contexto de usuario") +
-            " Nota: sin permisos para SYSTEM.",
-        };
-      }
-    }
-
-    // ── Nivel 3: schtasks clásico (fallback) ──
-    const schtasksResult = await this.registerWithSchtasks({
-      taskName,
-      launcherPath,
-      intervalDays,
-      scheduleTime: config.backupScheduleTime,
-    });
-
-    if (schtasksResult.ok) {
-      return {
-        ok: true,
-        message: successMessage("schtasks fallback"),
-      };
-    }
-
-    // ── Nivel 4: todos los métodos fallaron ──
-    return {
-      ok: false,
-      message:
-        `No se pudo programar el backup automático tras múltiples intentos. ` +
-        `Último error: ${schtasksResult.detail} ` +
-        `(launcher=${launcherPath})`,
-      errorCode: "BACKUP_SCHEDULE_FAILED",
-    };
-  }
-
-  private async registerScheduledTaskPowerShell(input: {
-    taskName: string;
-    launcherPath: string;
-    intervalDays: number;
-    scheduleTime: string;
-    principal: "SYSTEM" | "BUILTIN\\Users";
-  }): Promise<{ ok: boolean; detail: string }> {
-    const escapedTaskName = input.taskName.replaceAll("'", "''");
-    const escapedLauncher = input.launcherPath.replaceAll("'", "''");
-
-    const principalSnippet =
-      input.principal === "SYSTEM"
-        ? "$principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest"
-        : "$principal = New-ScheduledTaskPrincipal -GroupId 'BUILTIN\\Users' -RunLevel Limited";
-
-    const psScript = [
-      "$ErrorActionPreference = 'Stop'",
-      `$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -ExecutionPolicy Bypass -File "' + '${escapedLauncher}' + '"')`,
-      `$trigger = New-ScheduledTaskTrigger -Daily -DaysInterval ${input.intervalDays} -At '${input.scheduleTime}'`,
-      principalSnippet,
-      `$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 2)`,
-      `Register-ScheduledTask -Force -TaskName '${escapedTaskName}' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'SmartEconomat - Backup automático programado'`,
-    ].join("; ");
-
-    const result = await this.processRunner.run({
-      command: "powershell",
-      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript],
-      timeoutMs: 60_000,
-    });
-
-    return {
-      ok: result.ok,
-      detail: result.ok
-        ? ""
-        : `${result.stderr || ""} ${result.message || ""}`.trim(),
-    };
-  }
-
-  private async registerWithSchtasks(input: {
-    taskName: string;
-    launcherPath: string;
-    intervalDays: number;
-    scheduleTime: string;
-  }): Promise<{ ok: boolean; detail: string }> {
-    const trValue = `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${input.launcherPath}"`;
-
-    const result = await this.processRunner.run({
+    const privilegedResult = await this.processRunner.run({
       command: "schtasks",
       args: [
         "/Create",
         "/F",
         "/TN",
-        input.taskName,
+        taskName,
         "/SC",
         "DAILY",
         "/MO",
-        String(input.intervalDays),
+        String(intervalDays),
         "/ST",
-        input.scheduleTime,
+        config.backupScheduleTime,
         "/TR",
-        trValue,
+        command,
+        "/RL",
+        "HIGHEST",
+        "/RU",
+        "SYSTEM",
       ],
       timeoutMs: 60_000,
     });
 
-    return {
-      ok: result.ok,
-      detail: result.ok
-        ? ""
-        : `${result.stderr || ""} ${result.message || ""}`.trim(),
-    };
-  }
+    if (privilegedResult.ok) {
+      return {
+        ok: true,
+        message: `Backup automático programado cada ${intervalDays} días a las ${config.backupScheduleTime}.`,
+      };
+    }
 
-  private isElevationOrAccessError(detail: string): boolean {
-    return /acceso denegado|access is denied|0x80070005|error 740|requires elevation|elevation required|UnauthorizedAccessException|not have the required privileges/i.test(
-      detail,
+    const privilegedErrorText = `${privilegedResult.stderr || ""} ${privilegedResult.message || ""}`;
+    const accessDenied = /acceso denegado|access is denied/i.test(
+      privilegedErrorText,
     );
+
+    if (accessDenied) {
+      const userFallbackResult = await this.processRunner.run({
+        command: "schtasks",
+        args: [
+          "/Create",
+          "/F",
+          "/TN",
+          taskName,
+          "/SC",
+          "DAILY",
+          "/MO",
+          String(intervalDays),
+          "/ST",
+          config.backupScheduleTime,
+          "/TR",
+          command,
+        ],
+        timeoutMs: 60_000,
+      });
+
+      if (userFallbackResult.ok) {
+        return {
+          ok: true,
+          message:
+            `Backup automático programado cada ${intervalDays} días a las ${config.backupScheduleTime}. ` +
+            "Nota: se programó en contexto de usuario por falta de permisos para SYSTEM.",
+        };
+      }
+
+      return {
+        ok: false,
+        message:
+          `${userFallbackResult.stderr || userFallbackResult.message} ` +
+          `(diagnóstico scheduler: TR length=${command.length}, launcher=${launcherPath}, modo=fallback-user)`,
+        errorCode: "BACKUP_SCHEDULE_FAILED",
+      };
+    }
+
+    if (!privilegedResult.ok) {
+      return {
+        ok: false,
+        message:
+          `${privilegedResult.stderr || privilegedResult.message} ` +
+          `(diagnóstico scheduler: TR length=${command.length}, launcher=${launcherPath})`,
+        errorCode: "BACKUP_SCHEDULE_FAILED",
+      };
+    }
+
+    return {
+      ok: true,
+      message: `Backup automático programado cada ${intervalDays} días a las ${config.backupScheduleTime}.`,
+    };
   }
 
   private async writeWindowsScheduledBackupLauncher(input: {
@@ -410,30 +359,6 @@ export class BackupRestoreService {
   private async deleteScheduledBackupTask(
     taskName: string,
   ): Promise<OperationResult> {
-    const escapedTaskName = taskName.replaceAll("'", "''");
-    const psScript =
-      `$ErrorActionPreference = 'Stop'; ` +
-      `if (Get-ScheduledTask -TaskName '${escapedTaskName}' -ErrorAction SilentlyContinue) { ` +
-      `Unregister-ScheduledTask -TaskName '${escapedTaskName}' -Confirm:$false ` +
-      `} else { Write-Output 'NOT_FOUND' }`;
-
-    const psResult = await this.processRunner.run({
-      command: "powershell",
-      args: ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript],
-      timeoutMs: 30_000,
-    });
-
-    if (psResult.ok) {
-      const notFound = psResult.stdout.includes("NOT_FOUND");
-      return {
-        ok: true,
-        message: notFound
-          ? "No existía una tarea programada previa de backups."
-          : "Tarea programada de backups eliminada.",
-      };
-    }
-
-    // Fallback: schtasks clásico
     const result = await this.processRunner.run({
       command: "schtasks",
       args: ["/Delete", "/TN", taskName, "/F"],

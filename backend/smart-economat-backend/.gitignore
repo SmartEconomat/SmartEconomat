@@ -7,6 +7,9 @@
 # Logs
 logs
 *.log
+/e2e-out.txt
+**/src/seeders/logs/
+!**/src/seeders/logs/.gitkeep
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*

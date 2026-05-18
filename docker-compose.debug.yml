@@ -1,0 +1,63 @@
+# Overlay de depuración — Swagger UI + inspector Node (puerto 9229).
+# NO exponer a Internet en producción real.
+#
+# Levantar stack prod con backend de debug (sin backend prod):
+#   docker compose --env-file .env.prod \
+#     -f docker-compose.prod.yml -f docker-compose.debug.yml \
+#     --profile debug up --build db redis backend-debug frontend
+#
+# Verificar Swagger: http://localhost:${BACKEND_PORT:-3000}/api/v1/docs
+
+name: smarteconomat-debug
+
+services:
+  backend-debug:
+    profiles:
+      - debug
+    build:
+      context: ./backend/smart-economat-backend
+      dockerfile: ../Dockerfile
+      target: debug
+    image: smarteconomat-backend:debug
+    restart: unless-stopped
+    init: true
+    env_file:
+      - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
+    environment:
+      - NODE_ENV=development
+      - ENABLE_SWAGGER=true
+      - LOG_LEVEL=debug
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      - DOMAIN=${DOMAIN:-smarteconomat.app}
+      - DB_SYNC=${DB_SYNC:-false}
+      - STARTUP_RUN_MIGRATIONS=${STARTUP_RUN_MIGRATIONS:-true}
+    ports:
+      - '${BACKEND_PORT:-3000}:3000'
+      - '${BACKEND_DEBUG_PORT:-9229}:9229'
+    networks:
+      - backend-network
+      - frontend-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads_prod:/app/uploads
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://127.0.0.1:3000/api/v1/docs',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s

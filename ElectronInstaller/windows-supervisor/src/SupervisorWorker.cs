@@ -12,7 +12,15 @@ public sealed class SupervisorWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Supervisor arrancado. Intervalo {Interval}s", _options.WatchdogIntervalSeconds);
+        logger.LogInformation(
+            "Supervisor reconciliación arrancada. Intervalo={Interval}s desired_state={Desired} "
+            + "L1cooldown={L1}s L2cooldown={L2}s L3cooldown={L3}s L4cooldown={L4}s",
+            _options.WatchdogIntervalSeconds,
+            DesiredStateCatalog.Summarize(),
+            _options.ContainerRecoveryCooldownSeconds,
+            _options.DockerRecoveryCooldownSeconds,
+            _options.ComposeLightRecoveryCooldownSeconds,
+            _options.ComposeFullRecoveryCooldownSeconds);
 
         var previousSnapshot = await stateStore.LoadAsync(stoppingToken) ?? new SupervisorSnapshot();
 
@@ -23,15 +31,6 @@ public sealed class SupervisorWorker(
                 var snapshot = await dockerSupervisor.EvaluateAndRepairAsync(previousSnapshot, stoppingToken);
                 await stateStore.SaveAsync(snapshot, stoppingToken);
                 previousSnapshot = snapshot;
-
-                logger.LogInformation(
-                    "Estado={Overall} Docker={Docker} Compose={Compose} LocalWeb={LocalWeb} PublicWeb={PublicWeb} Failures={Failures}",
-                    snapshot.Overall,
-                    snapshot.DockerDaemonReady,
-                    snapshot.ComposeHealthy,
-                    snapshot.LocalWebHealthy,
-                    snapshot.PublicWebHealthy,
-                    snapshot.ConsecutiveFailures);
             }
             catch (Exception exception)
             {

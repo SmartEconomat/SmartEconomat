@@ -1,8 +1,8 @@
 import './instrument';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { I18nValidationPipe } from 'nestjs-i18n';
+import { setupSwagger } from './config/swagger.setup';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -44,16 +44,7 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(helmet());
 
-  const config = new DocumentBuilder()
-    .setTitle('SmartEconomat API')
-    .setDescription('API for economat and stock management')
-    .setVersion('1.0')
-    .addTag('SmartEconomat')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-
-  SwaggerModule.setup('docs', app, document);
+  setupSwagger(app);
 
   app.useGlobalPipes(
     new NormalizeDataPipe(),

@@ -144,6 +144,14 @@ export function createInstallerCaptureBridgeMock(): Record<string, unknown> {
       data: preflightReport,
     }),
 
+    trustWindowsRootCertificate: async (): Promise<
+      OperationResult<PreflightReport>
+    > => ({
+      ok: true,
+      message: "Certificado confiado (mock)",
+      data: preflightReport,
+    }),
+
     testSmtp: async (): Promise<OperationResult<boolean>> => {
       bridgeCalls.testSmtp += 1;
       return {

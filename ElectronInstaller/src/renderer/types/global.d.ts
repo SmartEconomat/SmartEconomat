@@ -31,6 +31,9 @@ declare global {
       runPreflightAutoRepair: (
         payload: RuntimePaths,
       ) => Promise<OperationResult<PreflightReport>>;
+      trustWindowsRootCertificate: (
+        payload: RuntimePaths,
+      ) => Promise<OperationResult<PreflightReport>>;
       releaseBusyPort: (
         payload: PortRepairPayload,
       ) => Promise<OperationResult<PreflightReport>>;

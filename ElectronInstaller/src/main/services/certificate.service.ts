@@ -17,11 +17,16 @@ interface CertificatePaths {
   stableCrtPath: string;
 }
 
-interface ReinstallCertificateToTrustStoreOptions {
+interface WindowsTrustInstallOptions {
   /**
-   * Solo para acción explícita del usuario: abre certmgr y el asistente de importación.
-   * Las rutas automáticas (preflight, self-heal) deben dejarlo en false.
+   * Fuerza el diálogo de seguridad de Windows (certutil / asistente de importación).
+   * Las rutas automáticas (TLS en despliegue, self-heal) deben dejarlo en false.
    */
+  preferInteractivePrompt?: boolean;
+}
+
+interface ReinstallCertificateToTrustStoreOptions
+  extends WindowsTrustInstallOptions {
   openManualTrustUi?: boolean;
 }
 
@@ -255,6 +260,7 @@ export class CertificateService {
    */
   private async installCertificateToWindowsTrustStore(
     certPath: string,
+    options?: WindowsTrustInstallOptions,
   ): Promise<OperationResult> {
     if (process.platform !== "win32") {
       return {
@@ -264,6 +270,11 @@ export class CertificateService {
     }
 
     const normalizedPath = path.win32.normalize(certPath);
+    const preferInteractivePrompt = options?.preferInteractivePrompt === true;
+
+    if (preferInteractivePrompt) {
+      return this.openCertificateManualInstallUI(normalizedPath);
+    }
     const escapedPath = normalizedPath.replace(/'/g, "''");
 
     const buildScript = (storeLocation: "CurrentUser" | "LocalMachine") =>
@@ -339,7 +350,7 @@ export class CertificateService {
 
   /**
    * Abre la interfaz de Windows para que el usuario confíe manualmente en el certificado.
-   * Usa certutil -addstore -user Root, que lanza un diálogo de seguridad crítico de Windows.
+   * Usa certutil -addstore -user Root (diálogo de seguridad) y, si falla, el asistente CryptExtAddCER.
    */
   async openCertificateManualInstallUI(
     certPath: string,
@@ -349,31 +360,73 @@ export class CertificateService {
     }
 
     const normalizedPath = path.win32.normalize(certPath);
+    const escapedPath = normalizedPath.replace(/'/g, "''");
 
-    // Intentamos certutil que es el que lanza el pop-up de seguridad de "Desea instalar..."
-    const result = await this.processRunner.run({
-      command: "certutil",
-      args: ["-addstore", "-user", "Root", normalizedPath],
-      timeoutMs: 60_000, // Esperamos a que el usuario interactúe
-    });
-
-    if (result.ok) {
+    try {
+      await fs.access(normalizedPath);
+    } catch {
       return {
-        ok: true,
-        message: "El usuario ha aceptado instalar el certificado manualmente.",
+        ok: false,
+        message: `No se encontró el certificado en: ${normalizedPath}`,
+        errorCode: "TLS_CERTIFICATE_NOT_FOUND",
       };
     }
 
-    // Como último recurso, abrimos el archivo para que el usuario vea el asistente de importación
-    await this.processRunner.run({
-      command: "powershell",
-      args: ["-Command", `Start-Process '${normalizedPath}'`],
+    const certutilResult = await this.processRunner.run({
+      command: "certutil",
+      args: ["-addstore", "-user", "Root", normalizedPath],
+      timeoutMs: 120_000,
+      showWindow: true,
     });
+
+    if (certutilResult.ok) {
+      const trusted = await this.isCertificateInTrustStore(normalizedPath);
+      if (trusted) {
+        return {
+          ok: true,
+          message:
+            "Certificado añadido al almacén de entidades de certificación raíz de confianza del usuario.",
+        };
+      }
+    }
+
+    const wizardResult = await this.processRunner.run({
+      command: "rundll32.exe",
+      args: ["cryptext.dll,CryptExtAddCER", normalizedPath],
+      timeoutMs: 15_000,
+      showWindow: true,
+    });
+
+    if (!wizardResult.ok) {
+      await this.processRunner.run({
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          `Start-Process -FilePath '${escapedPath}'`,
+        ],
+        showWindow: true,
+        timeoutMs: 10_000,
+      });
+    }
+
+    const trustedAfterWizard = await this.isCertificateInTrustStore(
+      normalizedPath,
+    );
+    if (trustedAfterWizard) {
+      return {
+        ok: true,
+        message:
+          "Certificado instalado en el almacén de confianza de Windows.",
+      };
+    }
 
     return {
       ok: false,
       message:
-        "No se pudo instalar automáticamente. Se ha abierto el certificado: haz clic en 'Instalar certificado' -> 'Usuario actual' -> 'Colocar todos los certificados en el siguiente almacén' -> 'Entidades de certificación de raíz de confianza'.",
+        "Confirma el diálogo de seguridad de Windows o usa el asistente abierto: Instalar certificado → Usuario actual → Entidades de certificación raíz de confianza.",
       errorCode: "TLS_CERTIFICATE_MANUAL_INSTALL_REQUIRED",
     };
   }
@@ -530,24 +583,13 @@ export class CertificateService {
 
     await this.removeCertificateFromWindowsTrustStore();
 
-    const installResult = await this.installCertificateToWindowsTrustStore(
-      certPaths.stableCrtPath,
-    );
-
     if (openManualTrustUi) {
-      try {
-        await this.openCertificateManager();
-        const { spawn } = await import("node:child_process");
-        spawn("cmd", ["/c", "start", "", certPaths.stableCrtPath], {
-          shell: true,
-          detached: true,
-        });
-      } catch (e) {
-        console.error("No se pudo abrir la interfaz de certificados:", e);
-      }
+      return this.installCertificateToWindowsTrustStore(certPaths.stableCrtPath, {
+        preferInteractivePrompt: true,
+      });
     }
 
-    return installResult;
+    return this.installCertificateToWindowsTrustStore(certPaths.stableCrtPath);
   }
 
   /**

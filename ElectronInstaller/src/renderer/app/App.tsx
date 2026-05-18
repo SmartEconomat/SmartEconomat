@@ -13,6 +13,41 @@ import { PreflightPage } from "@renderer/pages/PreflightPage";
 import { WelcomePage } from "@renderer/pages/WelcomePage";
 import { SmtpConfigPage } from "@renderer/pages/SmtpConfigPage";
 import BrandLogo from "@renderer/assets/images/SVG/logo-smat-economato.svg";
+import type { SupervisorSnapshot } from "@shared/contracts";
+import { countOperationalServices } from "@shared/service-health";
+
+function supervisorStatusChip(snapshot: SupervisorSnapshot | null): {
+  label: string;
+  color: "default" | "success" | "warning" | "error" | "info";
+} {
+  if (!snapshot) {
+    return { label: "Supervisor: sin datos", color: "default" };
+  }
+
+  if (
+    snapshot.overallState === "healthy" &&
+    (snapshot.healthModel?.auxiliaryIssues.length ?? 0) > 0
+  ) {
+    return {
+      label: "Supervisor: operativo con observaciones",
+      color: "info",
+    };
+  }
+
+  switch (snapshot.overallState) {
+    case "healthy":
+      return { label: "Supervisor: operativo", color: "success" };
+    case "stabilizing":
+      return {
+        label: "Inicializando entorno Docker…",
+        color: "info",
+      };
+    case "recovering":
+      return { label: "Supervisor: recuperando", color: "warning" };
+    default:
+      return { label: "Supervisor: degradado", color: "error" };
+  }
+}
 
 export function App() {
   const flow = useInstallerFlow();
@@ -30,10 +65,10 @@ export function App() {
   const useContentHeightLayout = !isControlStep && !isSmtpStep;
   const shouldCenterMainCard = isCompactStep;
   const lastBackupLabel = flow.lastBackup ? "Disponible" : "Sin backup";
-  const servicesUp =
-    flow.health.length > 0
-      ? flow.health.filter((service) => service.status === "running").length
-      : 0;
+  const supervisorChip = supervisorStatusChip(flow.supervisorSnapshot);
+  const { up: servicesUp, total: servicesTotal } = countOperationalServices(
+    flow.health,
+  );
 
   useEffect(() => {
     if (flow.step === "control") {
@@ -237,6 +272,9 @@ export function App() {
                   )}
                   onRun={flow.runPreflight}
                   onAutoRepair={flow.runAutoRepair}
+                  onTrustWindowsRootCertificate={
+                    flow.trustWindowsRootCertificate
+                  }
                   onCloseBusyPort={flow.closeBusyPort}
                   onBack={() => {
                     if (flow.busy) {
@@ -355,12 +393,20 @@ export function App() {
                             >
                               Estado rápido del runtime
                             </Typography>
-                            <Chip
-                              size="small"
-                              label={lastBackupLabel}
-                              color={flow.lastBackup ? "success" : "default"}
-                              variant={flow.lastBackup ? "filled" : "outlined"}
-                            />
+                            <Stack direction="row" spacing={0.75} flexWrap="wrap">
+                              <Chip
+                                size="small"
+                                label={supervisorChip.label}
+                                color={supervisorChip.color}
+                                variant="outlined"
+                              />
+                              <Chip
+                                size="small"
+                                label={lastBackupLabel}
+                                color={flow.lastBackup ? "success" : "default"}
+                                variant={flow.lastBackup ? "filled" : "outlined"}
+                              />
+                            </Stack>
                           </Stack>
 
                           <Box
@@ -407,7 +453,7 @@ export function App() {
                                 Servicios activos
                               </Typography>
                               <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                                {servicesUp}/{flow.health.length}
+                                {servicesUp}/{servicesTotal}
                               </Typography>
                             </Paper>
                             <Paper

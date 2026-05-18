@@ -148,7 +148,7 @@ export function BackupRestorePanel({
     <Paper
       variant="outlined"
       sx={{
-        p: { xs: 1.75, sm: 2 },
+        p: 2.25,
         borderRadius: 3,
         borderColor: "rgba(148, 163, 184, 0.28)",
       }}
@@ -163,254 +163,193 @@ export function BackupRestorePanel({
         </Typography>
       </Stack>
 
-      <Stack spacing={1.3}>
-        <Box
-          sx={{
-            display: "grid",
-            gap: 1.15,
-            gridTemplateColumns: {
-              xs: "1fr",
-              lg: "minmax(0, 1.2fr) minmax(0, 1fr)",
-            },
-          }}
-        >
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 1.35,
-              borderRadius: 2.5,
-              bgcolor: "rgba(15, 118, 110, 0.04)",
-              borderColor: "rgba(15, 118, 110, 0.16)",
-            }}
-          >
-            <Stack spacing={1}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                  Crear backup manual
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.3 }}
-                >
-                  Genera una copia inmediata del estado actual para restaurar
-                  con seguridad.
-                </Typography>
-              </Box>
-
-              <TextField
-                fullWidth
-                size="small"
-                label="Etiqueta del backup"
-                placeholder="Nombre o etiqueta del backup (ej: backup-20260413)"
-                value={label}
-                onChange={(event) => setLabel(event.target.value)}
-              />
-
-              <TextField
-                fullWidth
-                size="small"
-                label="Ruta por defecto de backups"
-                value={backupDefaultDirectory}
-                slotProps={{ htmlInput: { readOnly: true } }}
-              />
-
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <Button
-                  fullWidth
-                  size="small"
-                  variant="outlined"
-                  disabled={busy || pickingArtifact}
-                  onClick={() => void handleUpdateDefaultBackupDirectory()}
-                >
-                  Cambiar ruta
-                </Button>
-                <Tooltip
-                  title="Antes de crear el backup te pediremos confirmar si usas ruta por defecto o personalizada."
-                  arrow
-                >
-                  <span style={{ width: "100%" }}>
-                    <Button
-                      fullWidth
-                      size="small"
-                      variant="contained"
-                      disabled={busy || pickingArtifact}
-                      onClick={openBackupDialog}
-                      sx={{ fontWeight: 800 }}
-                    >
-                      Crear Backup Ahora
-                    </Button>
-                  </span>
-                </Tooltip>
-              </Stack>
-            </Stack>
-          </Paper>
-
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 1.35,
-              borderRadius: 2.5,
-              borderStyle: lastBackup ? "solid" : "dashed",
-              borderColor: "rgba(148, 163, 184, 0.28)",
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.8 }}>
-              Último backup disponible
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.6,
+          borderRadius: 2.5,
+          bgcolor: "rgba(15, 118, 110, 0.04)",
+          borderColor: "rgba(15, 118, 110, 0.16)",
+        }}
+      >
+        <Stack spacing={1.2}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+              Crear backup manual
             </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.45 }}
+            >
+              Genera una copia inmediata de la base de datos y de los ficheros
+              de la instalación actual para poder volver atrás con seguridad.
+            </Typography>
+          </Box>
 
-            {lastBackup ? (
-              <Stack spacing={0.7}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {lastBackup.archiveName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Generado el {formatBackupDate(lastBackup.createdAt)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{
-                    fontFamily: '"JetBrains Mono", Consolas, monospace',
-                    wordBreak: "break-all",
-                  }}
-                >
-                  Checksum: {lastBackup.checksum}
-                </Typography>
-              </Stack>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                Todavía no se ha registrado ningún backup manual desde este
-                panel.
-              </Typography>
-            )}
-          </Paper>
+          <TextField
+            fullWidth
+            label="Etiqueta del backup"
+            placeholder="Nombre o etiqueta del backup (ej: backup-20260413)"
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+          />
+
+          <Typography variant="caption" color="text.secondary">
+            Si dejas la etiqueta vacía, el instalador utilizará el nombre manual
+            automáticamente.
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Ruta por defecto de backups"
+            value={backupDefaultDirectory}
+            slotProps={{ htmlInput: { readOnly: true } }}
+          />
+
+          <Button
+            variant="outlined"
+            disabled={busy || pickingArtifact}
+            onClick={() => void handleUpdateDefaultBackupDirectory()}
+          >
+            Cambiar ruta por defecto
+          </Button>
+
+          <Tooltip
+            title="Antes de crear el backup te pediremos confirmar si usas la ruta por defecto o una carpeta personalizada."
+            arrow
+          >
+            <span>
+              <Button
+                fullWidth
+                variant="contained"
+                disabled={busy || pickingArtifact}
+                onClick={openBackupDialog}
+                sx={{ fontWeight: 800 }}
+              >
+                Crear Backup Ahora
+              </Button>
+            </span>
+          </Tooltip>
+        </Stack>
+      </Paper>
+
+      <Paper
+        variant="outlined"
+        sx={{
+          mt: 1.5,
+          p: 1.6,
+          borderRadius: 2.5,
+          borderStyle: lastBackup ? "solid" : "dashed",
+          borderColor: "rgba(148, 163, 184, 0.28)",
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
+          Último backup disponible
+        </Typography>
+
+        {lastBackup ? (
+          <Stack spacing={0.85}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {lastBackup.archiveName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Generado el {formatBackupDate(lastBackup.createdAt)}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontFamily: '"JetBrains Mono", Consolas, monospace' }}
+            >
+              Checksum: {lastBackup.checksum}
+            </Typography>
+          </Stack>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            Todavía no se ha registrado ningún backup manual desde este panel.
+          </Typography>
+        )}
+      </Paper>
+
+      <Divider sx={{ my: 1.75 }} />
+
+      <Stack spacing={1.2}>
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+            Restaurar desde un backup existente
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.45 }}>
+            Selecciona el artefacto de backup y confirma explícitamente la
+            operación antes de sobrescribir el estado actual de SmartEconomat.
+          </Typography>
         </Box>
 
-        <Divider />
+        <TextField
+          fullWidth
+          label="Archivo de backup seleccionado"
+          placeholder="Todavía no se ha seleccionado ningún archivo."
+          value={artifactPath}
+          slotProps={{ htmlInput: { readOnly: true } }}
+        />
 
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 1.35,
-            borderRadius: 2.5,
-            borderColor: "rgba(148, 163, 184, 0.24)",
-          }}
+        <Tooltip
+          title="Abre el selector seguro del instalador para elegir un backup local sin dar acceso directo al filesystem desde el renderer."
+          arrow
         >
-          <Stack spacing={1}>
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                Restaurar desde un backup existente
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.35 }}
-              >
-                Selecciona el artefacto de backup y confirma explícitamente la
-                operación antes de sobrescribir el estado actual de
-                SmartEconomat.
-              </Typography>
-            </Box>
+          <span>
+            <Button
+              variant="outlined"
+              disabled={busy || pickingArtifact}
+              onClick={() => void handlePickRestoreArtifact()}
+            >
+              {pickingArtifact
+                ? "Abriendo selector..."
+                : "Seleccionar archivo..."}
+            </Button>
+          </span>
+        </Tooltip>
 
-            <TextField
+        <Typography variant="caption" color="text.secondary">
+          Formatos habituales: .tar.gz en Linux o macOS y .zip en Windows.
+        </Typography>
+
+        <Alert severity="error" variant="outlined">
+          La restauración reemplazará la base de datos y los ficheros actuales.
+          Usa esta acción solo con un backup verificado y reciente.
+        </Alert>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={restoreAcknowledged}
+              onChange={(event) => setRestoreAcknowledged(event.target.checked)}
+            />
+          }
+          label="Entiendo que esta restauración sobrescribirá el estado actual de SmartEconomat."
+        />
+
+        <Tooltip
+          title="El botón solo se activa cuando hay un archivo seleccionado y la confirmación destructiva está marcada."
+          arrow
+        >
+          <span>
+            <Button
               fullWidth
-              size="small"
-              label="Archivo de backup seleccionado"
-              placeholder="Todavía no se ha seleccionado ningún archivo."
-              value={artifactPath}
-              slotProps={{ htmlInput: { readOnly: true } }}
-            />
-
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1}
-              alignItems={{ xs: "stretch", sm: "center" }}
+              variant="contained"
+              disabled={restoreDisabled}
+              onClick={() => void onRestore(artifactPath.trim())}
+              sx={{
+                fontWeight: 800,
+                bgcolor: "#7f1d1d",
+                "&:hover": {
+                  bgcolor: "#5f1515",
+                },
+              }}
             >
-              <Tooltip
-                title="Abre el selector seguro del instalador para elegir un backup local sin dar acceso directo al filesystem desde el renderer."
-                arrow
-              >
-                <span>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={busy || pickingArtifact}
-                    onClick={() => void handlePickRestoreArtifact()}
-                  >
-                    {pickingArtifact
-                      ? "Abriendo selector..."
-                      : "Seleccionar archivo..."}
-                  </Button>
-                </span>
-              </Tooltip>
-
-              <Typography variant="caption" color="text.secondary">
-                Formatos habituales: .tar.gz en Linux o macOS y .zip en Windows.
-              </Typography>
-            </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 1.35,
-            borderRadius: 2.5,
-            borderColor: "rgba(220, 38, 38, 0.3)",
-            bgcolor: "rgba(254, 242, 242, 0.55)",
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-              Confirmación de restauración
-            </Typography>
-
-            <Alert severity="error" variant="outlined" sx={{ py: 0.15 }}>
-              La restauración reemplazará la base de datos y los ficheros
-              actuales. Usa esta acción solo con un backup verificado y
-              reciente.
-            </Alert>
-
-            <FormControlLabel
-              sx={{ alignItems: "flex-start", m: 0 }}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={restoreAcknowledged}
-                  onChange={(event) =>
-                    setRestoreAcknowledged(event.target.checked)
-                  }
-                />
-              }
-              label="Entiendo que esta restauración sobrescribirá el estado actual de SmartEconomat."
-            />
-
-            <Tooltip
-              title="El botón solo se activa cuando hay un archivo seleccionado y la confirmación destructiva está marcada."
-              arrow
-            >
-              <span>
-                <Button
-                  fullWidth
-                  size="small"
-                  variant="contained"
-                  disabled={restoreDisabled}
-                  onClick={() => void onRestore(artifactPath.trim())}
-                  sx={{
-                    fontWeight: 800,
-                    bgcolor: "#7f1d1d",
-                    "&:hover": {
-                      bgcolor: "#5f1515",
-                    },
-                  }}
-                >
-                  Restaurar Backup Seleccionado
-                </Button>
-              </span>
-            </Tooltip>
-          </Stack>
-        </Paper>
+              Restaurar Backup Seleccionado
+            </Button>
+          </span>
+        </Tooltip>
       </Stack>
 
       <Dialog

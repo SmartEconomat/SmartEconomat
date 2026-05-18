@@ -221,6 +221,39 @@ export class InstallerIPC {
 
     registerIpcHandleWithDebug(
       this.debugLogService,
+      IPCChannels.installer.trustWindowsRootCertificate,
+      async (
+        _event,
+        payload: RuntimePaths,
+      ): Promise<OperationResult<PreflightReport>> => {
+        const parsed = runtimePathSchema.safeParse(payload);
+        if (!parsed.success) {
+          return {
+            ok: false,
+            message: parsed.error.message,
+            errorCode: "INVALID_TRUST_CERTIFICATE_PAYLOAD",
+          };
+        }
+        this.emitRuntimeLog(
+          "installer",
+          "TLS_TRUST · Abriendo diálogo de confianza de certificado en Windows...",
+        );
+        const result = await this.preflightService.trustWindowsRootCertificate(
+          parsed.data.runtimePath,
+          (line) => this.emitRuntimeLog("installer", `[TLS_TRUST] ${line}`),
+        );
+        this.emitRuntimeLog(
+          "installer",
+          result.ok
+            ? "TLS_TRUST · Certificado confiado o confirmado por el usuario."
+            : `TLS_TRUST · ${result.message}`,
+        );
+        return result;
+      },
+    );
+
+    registerIpcHandleWithDebug(
+      this.debugLogService,
       IPCChannels.installer.releaseBusyPort,
       async (
         _event,

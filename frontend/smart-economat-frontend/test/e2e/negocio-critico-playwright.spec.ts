@@ -309,7 +309,7 @@ test.describe('Suite E2E negocio crítico', () => {
         .url()
         .includes('includeDeleted=true');
       const data = includeDeleted
-        ? proveedores
+        ? proveedores.filter((item) => item.deletedAt)
         : proveedores.filter((item) => !item.deletedAt);
       await route.fulfill(
         okJson({

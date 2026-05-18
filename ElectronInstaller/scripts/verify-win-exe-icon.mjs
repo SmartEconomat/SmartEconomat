@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
@@ -5,13 +6,38 @@ import { fileURLToPath } from "node:url";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const rootDir = path.resolve(path.dirname(scriptPath), "..");
-const exePath =
-  process.env.VERIFY_WIN_EXE_PATH?.trim() ||
-  path.join(rootDir, "dist", "win-unpacked", "SmartEconomat.exe");
+
+function resolveExePath() {
+  const fromEnv = process.env.VERIFY_WIN_EXE_PATH?.trim();
+  if (fromEnv) {
+    return path.isAbsolute(fromEnv) ? fromEnv : path.resolve(rootDir, fromEnv);
+  }
+
+  const candidates = [
+    path.join(
+      rootDir,
+      ".cache",
+      "builder-workspace",
+      "dir-output",
+      "win-unpacked",
+      "SmartEconomat.exe",
+    ),
+    path.join(rootDir, "dist", "win-unpacked", "SmartEconomat.exe"),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[candidates.length - 1];
+}
+
+const exePath = resolveExePath();
 const icoPath = path.join(rootDir, "resources", "icons", "win", "icon.ico");
-const verifyTempDir = path.resolve(rootDir, ".cache", "verify-icon");
-const bmpExePath = path.join(verifyTempDir, "_icon-from-exe.bmp");
-const bmpSrcPath = path.join(verifyTempDir, "_icon-from-src.bmp");
+const bmpExePath = path.join(rootDir, "dist", "_icon-from-exe.bmp");
+const bmpSrcPath = path.join(rootDir, "dist", "_icon-from-src.bmp");
 
 const psScript = [
   "Add-Type -AssemblyName System.Drawing",
@@ -19,7 +45,7 @@ const psScript = [
   `$icoPath = '${icoPath.replace(/'/g, "''")}'`,
   `$bmpExePath = '${bmpExePath.replace(/'/g, "''")}'`,
   `$bmpSrcPath = '${bmpSrcPath.replace(/'/g, "''")}'`,
-  "if (-not (Test-Path -LiteralPath $exePath)) { throw \"SmartEconomat.exe no encontrado para verificacion de icono\" }",
+  "if (-not (Test-Path -LiteralPath $exePath)) { throw \"SmartEconomat.exe no encontrado para verificacion de icono en: $exePath\" }",
   "if (-not (Test-Path -LiteralPath $icoPath)) { throw \"icon.ico no encontrado para verificacion\" }",
   "$exeIcon = [System.Drawing.Icon]::ExtractAssociatedIcon($exePath)",
   "$bmpExe = New-Object System.Drawing.Bitmap 256,256",
@@ -42,10 +68,6 @@ const psScript = [
   "if ($h1 -ne $h2) { Write-Error \"ICON_MISMATCH\"; exit 2 }",
   "Write-Output \"ICON_MATCH\"",
 ].join("; ");
-
-await import("node:fs/promises").then((fs) =>
-  fs.mkdir(verifyTempDir, { recursive: true }),
-);
 
 const result = spawnSync(
   "powershell",

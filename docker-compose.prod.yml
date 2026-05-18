@@ -83,7 +83,8 @@ services:
   backend:
     build:
       context: ./backend/smart-economat-backend
-      dockerfile: ../Dockerfile.prod
+      dockerfile: ../Dockerfile
+      target: production
     image: smarteconomat-backend:prod
     restart: always
     init: true
@@ -91,6 +92,8 @@ services:
       - ${SMARTECONOMAT_ENV_FILE:-.env.prod}
     environment:
       - NODE_ENV=production
+      - ENABLE_SWAGGER=false
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379

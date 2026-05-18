@@ -55,7 +55,6 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.jest,
       },
     },
   },

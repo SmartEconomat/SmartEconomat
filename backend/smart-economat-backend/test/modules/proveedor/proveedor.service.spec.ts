@@ -40,7 +40,19 @@ describe('ProveedorService', () => {
   });
 
   it('findAll construye búsqueda multi-campo con paginación y orden', async () => {
-    mockProveedorRepository.findAndCount.mockResolvedValue([[], 0]);
+    const getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+    const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount,
+    };
+    mockProveedorRepository.createQueryBuilder = jest
+      .fn()
+      .mockReturnValue(queryBuilder);
 
     const result = await service.findAll({
       page: 2,
@@ -50,13 +62,15 @@ describe('ProveedorService', () => {
       searchTerm: 'acme',
     } as PaginationQueryDto);
 
-    const findArgs = mockProveedorRepository.findAndCount.mock.calls[0][0];
-
-    expect(Array.isArray(findArgs.where)).toBe(true);
-    expect(findArgs.where).toHaveLength(4);
-    expect(findArgs.order).toEqual({ email: 'DESC' });
-    expect(findArgs.skip).toBe(5);
-    expect(findArgs.take).toBe(5);
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'proveedor.deleted_at IS NULL'
+    );
+    expect(queryBuilder.orderBy).toHaveBeenCalledWith(
+      'proveedor.email',
+      'DESC'
+    );
+    expect(queryBuilder.skip).toHaveBeenCalledWith(5);
+    expect(queryBuilder.take).toHaveBeenCalledWith(5);
     expect(result).toEqual({
       data: [],
       total: 0,
@@ -64,6 +78,32 @@ describe('ProveedorService', () => {
       limit: 5,
       totalPages: 1,
     });
+  });
+
+  it('findAll con includeDeleted lista solo proveedores eliminados (admin)', async () => {
+    const getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+    const queryBuilder = {
+      withDeleted: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount,
+    };
+    mockProveedorRepository.createQueryBuilder = jest
+      .fn()
+      .mockReturnValue(queryBuilder);
+
+    await service.findAll(
+      { includeDeleted: true } as PaginationQueryDto,
+      'ADMIN'
+    );
+
+    expect(queryBuilder.withDeleted).toHaveBeenCalled();
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'proveedor.deleted_at IS NOT NULL'
+    );
   });
 
   it('findOne lanza NotFoundException si el proveedor no existe', async () => {

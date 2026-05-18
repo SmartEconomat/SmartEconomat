@@ -3,7 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { ILike } from 'typeorm';
 import { Proveedor } from '../proveedor.entity/proveedor.entity';
 import { ProveedorRepository } from '../repository/proveedor.repository';
 import { CreateProveedorDto } from '../dto/create-proveedor.dto';
@@ -70,7 +69,7 @@ export class ProveedorService {
   /**
    * Busca proveedores aplicando filtros de búsqueda, paginación y ordenación.
    * @param query DTO con parámetros de paginación y término de búsqueda.
-   * @param userRole Rol del usuario (los administradores ven registros eliminados).
+   * @param userRole Rol del usuario (solo administradores pueden listar eliminados).
    * @returns Respuesta paginada con la lista de proveedores.
    */
   async findAll(
@@ -85,25 +84,36 @@ export class ProveedorService {
     const sortBy = query.sortBy ?? 'nombre';
     const order = query.order ?? 'ASC';
 
-    const showDeleted = query.includeDeleted === true && isAdmin;
+    const soloEliminados = query.includeDeleted === true && isAdmin;
 
-    const whereCondition = query.searchTerm
-      ? [
-          { nombre: ILike(`%${query.searchTerm}%`) },
-          { nif: ILike(`%${query.searchTerm}%`) },
-          { contacto: ILike(`%${query.searchTerm}%`) },
-          { email: ILike(`%${query.searchTerm}%`) },
-        ]
-      : {};
+    const queryBuilder =
+      this.proveedorRepository.createQueryBuilder('proveedor');
 
-    const [data, total] = await this.proveedorRepository.findAndCount({
-      where: whereCondition,
-      relations: ['productos'],
-      withDeleted: showDeleted,
-      order: { [sortBy]: order },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (soloEliminados) {
+      queryBuilder.withDeleted();
+    }
+
+    queryBuilder.leftJoinAndSelect('proveedor.productos', 'productos');
+
+    if (soloEliminados) {
+      queryBuilder.andWhere('proveedor.deleted_at IS NOT NULL');
+    } else {
+      queryBuilder.andWhere('proveedor.deleted_at IS NULL');
+    }
+
+    if (query.searchTerm) {
+      queryBuilder.andWhere(
+        '(proveedor.nombre ILIKE :searchTerm OR proveedor.nif ILIKE :searchTerm OR proveedor.contacto ILIKE :searchTerm OR proveedor.email ILIKE :searchTerm)',
+        { searchTerm: `%${query.searchTerm}%` }
+      );
+    }
+
+    queryBuilder
+      .orderBy(`proveedor.${sortBy}`, order)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
 
     const processedData = data.map((proveedor) => ({
       ...proveedor,

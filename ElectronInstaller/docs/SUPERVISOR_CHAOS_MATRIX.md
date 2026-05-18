@@ -1,16 +1,22 @@
 # SmartEconomat Supervisor: Matriz de Pruebas de Caos
 
-Este runbook valida que el supervisor autónomo de `ElectronInstaller` se comporta correctamente ante fallos reales en Windows 10/11.
+Este runbook valida la supervisión en Windows 10/11 con la arquitectura actual:
+
+- **Electron (`ExternalSupervisorService`)**: observación en arranque (OBSERVE_ONLY), repair ligero (`compose restart`) en runtime con K-of-N, sin UAC automático.
+- **Servicio Windows (`SmartEconomatSupervisor`)**: ciclo 180s; corrección `com.docker.service` (script canónico, cooldown 10 min); repair fuerte (`down/up`) tras gracia boot (300s), umbral 3 ciclos y cooldown 15 min.
+- **`BootGuardianService`**: deprecado, no es path de producción.
+
+Ver también [SUPERVISOR_RESPONSIBILITY_MATRIX.md](./SUPERVISOR_RESPONSIBILITY_MATRIX.md).
 
 ## Objetivo
 
 Validar de forma repetible:
 
 - detección temprana de fallos en Docker Desktop/Engine/stack;
-- autorecuperación por niveles (1-6) sin bucles infinitos;
-- mensajes claros para usuario no técnico;
-- estado visible y consistente en panel + tray + notificaciones;
-- tolerancia a reinicios, red inestable y recursos degradados.
+- sin UAC ni `compose down` durante los primeros 5–15 min tras login;
+- repair ligero en Electron y repair fuerte en servicio sin bucles;
+- mensajes claros (tray `stabilizing`, panel informativo);
+- tolerancia a arranques lentos (WSL/Docker/healthchecks en `starting`).
 
 ## Precondiciones
 

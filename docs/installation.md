@@ -10,6 +10,7 @@
 ### Requisitos
 
 - Docker + Docker Compose v2
+- Node >= 22.13.0 (si ejecutas paquetes sin Docker)
 - Git
 
 ### Pasos
@@ -27,7 +28,9 @@ docker compose -f docker-compose.dev.yml up --build
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3000/api/v1`
-- Swagger: `http://localhost:3000/api/v1/docs`
+- Swagger (solo dev/debug): `http://localhost:3000/api/v1/docs`
+
+La imagen de desarrollo usa `backend/Dockerfile` con `target: development`. Ver [Arquitectura Docker backend](./operations/docker-backend-architecture.md).
 
 ## 2) Instalacion para produccion (compose)
 
@@ -35,13 +38,24 @@ docker compose -f docker-compose.dev.yml up --build
 2. Arrancar:
 
 ```bash
-docker compose -f docker-compose.prod.yml up --build -d
+docker compose --env-file .env.prod -f docker-compose.prod.yml up --build -d
 ```
 
 3. Verificar:
 
 - Frontend: `http(s)://<dominio>`
 - Backend healthcheck en contenedor (`/api/v1`)
+- Swagger **no** debe estar expuesto en producción (`ENABLE_SWAGGER=false`)
+
+### Modo debug (Swagger + inspector, no producción)
+
+```bash
+docker compose --env-file .env.prod \
+  -f docker-compose.prod.yml -f docker-compose.debug.yml \
+  --profile debug up --build db redis backend-debug frontend
+```
+
+Detalle: [How-to: imágenes Docker backend](./how-to/docker-backend-imagenes.md).
 
 ## 3) Instalacion local por paquetes (sin Docker)
 

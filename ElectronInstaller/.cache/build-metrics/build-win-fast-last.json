@@ -1,42 +1,42 @@
 {
-  "timestamp": "2026-05-12T09:03:26.626Z",
-  "totalElapsedMs": 745535,
-  "totalElapsedSeconds": 745.53,
+  "timestamp": "2026-05-17T21:19:24.060Z",
+  "totalElapsedMs": 871090,
+  "totalElapsedSeconds": 871.09,
   "stageMetrics": [
     {
       "stageName": "pre-build-project",
-      "elapsedMs": 74251,
-      "elapsedSeconds": 74.25
+      "elapsedMs": 42563,
+      "elapsedSeconds": 42.56
     },
     {
       "stageName": "maybe-electron-rebuild",
-      "elapsedMs": 209,
-      "elapsedSeconds": 0.21
+      "elapsedMs": 300,
+      "elapsedSeconds": 0.3
     },
     {
       "stageName": "ensure-win-icons",
-      "elapsedMs": 272,
-      "elapsedSeconds": 0.27
+      "elapsedMs": 4009,
+      "elapsedSeconds": 4.01
     },
     {
       "stageName": "electron-vite-build",
-      "elapsedMs": 22364,
-      "elapsedSeconds": 22.36
+      "elapsedMs": 23477,
+      "elapsedSeconds": 23.48
     },
     {
       "stageName": "electron-builder-dir",
-      "elapsedMs": 541327,
-      "elapsedSeconds": 541.33
+      "elapsedMs": 683639,
+      "elapsedSeconds": 683.64
     },
     {
       "stageName": "verify-win-exe-icon",
-      "elapsedMs": 11398,
-      "elapsedSeconds": 11.4
+      "elapsedMs": 12468,
+      "elapsedSeconds": 12.47
     },
     {
       "stageName": "electron-builder-nsis",
-      "elapsedMs": 88104,
-      "elapsedSeconds": 88.1
+      "elapsedMs": 98004,
+      "elapsedSeconds": 98
     }
   ]
 }

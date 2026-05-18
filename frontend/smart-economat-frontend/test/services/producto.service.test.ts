@@ -120,6 +120,117 @@ describe('producto.service', () => {
     expect(calledUrl).not.toMatch(/[&?]soloEliminados=true\b/);
   });
 
+  it('lista de eliminados: filtra localmente productos sin soft-delete si la respuesta viene mezclada', async () => {
+    const listPayload = {
+      success: true,
+      message: 'ok',
+      data: {
+        data: [
+          {
+            id: 'prod-activo',
+            nombre: 'Producto activo colado',
+            contenido: 1,
+            activo: true,
+            deletedAt: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'prod-eliminado',
+            nombre: 'Producto eliminado real',
+            contenido: 1,
+            activo: false,
+            deletedAt: '2026-02-01T00:00:00.000Z',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      },
+    };
+    const mockResponse = {
+      ok: true,
+      json: vi.fn().mockResolvedValue(listPayload),
+    } as unknown as Response;
+    vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+
+    const result = await fetchProductos({
+      page: 1,
+      limit: 20,
+      searchTerm: '',
+      categorias: [],
+      sortBy: 'nombre',
+      order: 'asc',
+      soloEliminados: true,
+    });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]?.id).toBe('prod-eliminado');
+  });
+
+  it('lista de activos: descarta soft-delete e inactivos si la respuesta viene mezclada', async () => {
+    const listPayload = {
+      success: true,
+      message: 'ok',
+      data: {
+        data: [
+          {
+            id: 'prod-activo',
+            nombre: 'Producto visible',
+            contenido: 1,
+            activo: true,
+            deletedAt: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'prod-inactivo',
+            nombre: 'Producto inactivo',
+            contenido: 1,
+            activo: false,
+            deletedAt: null,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'prod-eliminado',
+            nombre: 'Producto eliminado',
+            contenido: 1,
+            activo: false,
+            deletedAt: '2026-02-01T00:00:00.000Z',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+          },
+        ],
+        total: 3,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      },
+    };
+    const mockResponse = {
+      ok: true,
+      json: vi.fn().mockResolvedValue(listPayload),
+    } as unknown as Response;
+    vi.mocked(apiService.baseFetch).mockResolvedValue(mockResponse);
+
+    const result = await fetchProductos({
+      page: 1,
+      limit: 20,
+      searchTerm: '',
+      categorias: [],
+      sortBy: 'nombre',
+      order: 'asc',
+      soloEliminados: false,
+    });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]?.id).toBe('prod-activo');
+  });
+
   it('getProductoById devuelve null cuando el backend responde 404', async () => {
     const mockResponse = {
       ok: false,

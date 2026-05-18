@@ -6,6 +6,8 @@ import { request as httpsRequest } from "node:https";
 
 import { app } from "electron";
 
+import type { ExecutionContext } from "@shared/contracts";
+
 import { CertificateService } from "./certificate.service";
 import { FirewallFacadeService } from "./firewall/firewall-facade.service";
 import { ProcessRunnerService } from "./process-runner.service";
@@ -46,6 +48,16 @@ export class LocalDomainSelfHealService {
   constructor(options: SelfHealOptions) {
     this.onLog = options.onLog;
     this.allowElevation = options.allowElevation ?? true;
+  }
+
+  async runIfNeeded(context: ExecutionContext): Promise<void> {
+    if (context === "observe" || context === "runtime-auto-light") {
+      this.onLog(
+        "[SELF-HEAL] Omitido: reparación de dominio local solo bajo demanda (user-repair/install).",
+      );
+      return;
+    }
+    await this.run();
   }
 
   async run(): Promise<void> {

@@ -15,6 +15,7 @@ import type {
   SupervisorCheck,
   SupervisorIncident,
   SupervisorSnapshot,
+  TraySupervisorState,
   WatchdogState,
 } from "@shared/contracts";
 import { IPCChannels } from "@shared/ipc-channels";
@@ -59,10 +60,14 @@ export interface BootGuardianOptions {
    */
   postResumeDelayMs?: number;
   onSnapshot?: (snapshot: SupervisorSnapshot) => void;
-  onTrayStateChange?: (state: "healthy" | "recovering" | "degraded") => void;
+  onTrayStateChange?: (state: TraySupervisorState) => void;
 }
 
 /**
+ * @deprecated No cableado en producción. La supervisión activa usa
+ * `ExternalSupervisorService` (Electron) + `SmartEconomatSupervisor` (servicio Windows).
+ * Se conserva para referencia de políticas de recuperación graduada y tests.
+ *
  * Servicio que garantiza la alta disponibilidad del stack Docker.
  *
  * Mejoras sobre la versión anterior:
@@ -82,9 +87,7 @@ export class BootGuardianService {
   private readonly processRunner = new ProcessRunnerService();
   private readonly onLog: (message: string) => void;
   private readonly onSnapshot?: (snapshot: SupervisorSnapshot) => void;
-  private readonly onTrayStateChange?: (
-    state: "healthy" | "recovering" | "degraded",
-  ) => void;
+  private readonly onTrayStateChange?: (state: TraySupervisorState) => void;
   private readonly baseIntervalMs: number;
   private readonly maxIntervalMs: number;
   private readonly maxRetriesPerLevel: number;
@@ -186,7 +189,6 @@ export class BootGuardianService {
       lastAutomaticActionAt: this.lastAutomaticActionAt,
       lastAutomaticAction: this.lastAutomaticAction,
       uptimeSeconds: Math.max(0, Math.floor((now - this.startedAtMs) / 1000)),
-      nextCheckInMs: this.computeCurrentInterval(),
       incidentsResolved: this.incidentsResolved,
       incidentsOpen: openIncidents.length,
       lastIncidentAt: this.lastIncidentAt,

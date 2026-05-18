@@ -12,6 +12,53 @@ import {
   parseComposeHealthOutput,
 } from "../docker-orchestrator.service";
 
+const DOCKER_SERVICE_CONFIG_OK_JSON =
+  '{"ok":true,"startMode":"Auto","state":"Running","detail":"test"}\n';
+
+function createPathResolverStub(): PathResolverService {
+  return {
+    getProjectRoot: () => process.cwd(),
+    getInstallerScriptsRoot: () =>
+      path.join(process.cwd(), "ElectronInstaller", "scripts"),
+  } as PathResolverService;
+}
+
+function matchDockerServiceRunner(
+  commandLine: string,
+  statusStdout = "Running",
+): {
+  ok: boolean;
+  code: number;
+  stdout: string;
+  stderr: string;
+  message: string;
+} | null {
+  if (commandLine.includes("ensure-com-docker-service-automatic.ps1")) {
+    return {
+      ok: true,
+      code: 0,
+      stdout: DOCKER_SERVICE_CONFIG_OK_JSON,
+      stderr: "",
+      message: "ok",
+    };
+  }
+
+  if (
+    commandLine.includes("Get-Service -Name 'com.docker.service'") ||
+    commandLine.includes("(Get-Service -Name 'com.docker.service'")
+  ) {
+    return {
+      ok: true,
+      code: 0,
+      stdout: statusStdout,
+      stderr: "",
+      message: "ok",
+    };
+  }
+
+  return null;
+}
+
 describe("parseComposeHealthOutput", () => {
   it("mapea salida JSON de compose a estado de servicios", () => {
     const raw = JSON.stringify([
@@ -99,14 +146,9 @@ describe("DockerOrchestratorService context recovery", () => {
         calls.push({ command: options.command, args: options.args });
         const commandLine = options.args.join(" ");
 
-        if (commandLine.includes("Get-Service -Name 'com.docker.service'")) {
-          return {
-            ok: true,
-            code: 0,
-            stdout: "Running",
-            stderr: "",
-            message: "ok",
-          };
+        const dockerServiceMatch = matchDockerServiceRunner(commandLine);
+        if (dockerServiceMatch) {
+          return dockerServiceMatch;
         }
 
         if (
@@ -152,12 +194,8 @@ describe("DockerOrchestratorService context recovery", () => {
       },
     };
 
-    const pathResolver = {
-      getProjectRoot: () => process.cwd(),
-    };
-
     const service = new DockerOrchestratorService(
-      pathResolver as PathResolverService,
+      createPathResolverStub(),
       processRunner as ProcessRunnerService,
       { dockerStartupWaitMs: 0, dockerStartupPollMs: 0 },
     );
@@ -184,24 +222,23 @@ describe("DockerOrchestratorService context recovery", () => {
         calls.push({ command: options.command, args: options.args });
         const commandLine = options.args.join(" ");
 
-        if (commandLine.includes("Set-Service")) {
+        if (commandLine.includes("ensure-com-docker-service-automatic.ps1")) {
           return {
             ok: false,
             code: 1,
-            stdout: "",
-            stderr: "Acceso denegado",
+            stdout:
+              '{"ok":false,"startMode":"Manual","state":"Stopped","detail":"denied"}\n',
+            stderr: "",
             message: "failed",
           };
         }
 
-        if (commandLine.includes("Get-Service -Name 'com.docker.service'")) {
-          return {
-            ok: true,
-            code: 0,
-            stdout: "Stopped",
-            stderr: "",
-            message: "ok",
-          };
+        const dockerServiceMatch = matchDockerServiceRunner(
+          commandLine,
+          "Stopped",
+        );
+        if (dockerServiceMatch) {
+          return dockerServiceMatch;
         }
 
         if (options.args[0] === "info") {
@@ -218,12 +255,8 @@ describe("DockerOrchestratorService context recovery", () => {
       },
     };
 
-    const pathResolver = {
-      getProjectRoot: () => process.cwd(),
-    };
-
     const service = new DockerOrchestratorService(
-      pathResolver as PathResolverService,
+      createPathResolverStub(),
       processRunner as ProcessRunnerService,
       { dockerStartupWaitMs: 0, dockerStartupPollMs: 0 },
     );
@@ -244,14 +277,9 @@ describe("DockerOrchestratorService context recovery", () => {
       run: async (options: { args: string[]; env?: NodeJS.ProcessEnv }) => {
         const commandLine = options.args.join(" ");
 
-        if (commandLine.includes("Get-Service -Name 'com.docker.service'")) {
-          return {
-            ok: true,
-            code: 0,
-            stdout: "Running",
-            stderr: "",
-            message: "ok",
-          };
+        const dockerServiceMatch = matchDockerServiceRunner(commandLine);
+        if (dockerServiceMatch) {
+          return dockerServiceMatch;
         }
 
         if (options.args[0] === "info") {
@@ -272,12 +300,8 @@ describe("DockerOrchestratorService context recovery", () => {
       },
     };
 
-    const pathResolver = {
-      getProjectRoot: () => process.cwd(),
-    };
-
     const service = new DockerOrchestratorService(
-      pathResolver as PathResolverService,
+      createPathResolverStub(),
       processRunner as ProcessRunnerService,
     );
 
@@ -296,14 +320,9 @@ describe("DockerOrchestratorService context recovery", () => {
         calls.push({ command: options.command, args: options.args });
         const commandLine = options.args.join(" ");
 
-        if (commandLine.includes("Get-Service -Name 'com.docker.service'")) {
-          return {
-            ok: true,
-            code: 0,
-            stdout: "Running",
-            stderr: "",
-            message: "ok",
-          };
+        const dockerServiceMatch = matchDockerServiceRunner(commandLine);
+        if (dockerServiceMatch) {
+          return dockerServiceMatch;
         }
 
         if (commandLine.includes("-SwitchLinuxEngine")) {
@@ -360,12 +379,8 @@ describe("DockerOrchestratorService context recovery", () => {
       },
     };
 
-    const pathResolver = {
-      getProjectRoot: () => process.cwd(),
-    };
-
     const service = new DockerOrchestratorService(
-      pathResolver as PathResolverService,
+      createPathResolverStub(),
       processRunner as ProcessRunnerService,
       { dockerStartupWaitMs: 1, dockerStartupPollMs: 0 },
     );
@@ -394,12 +409,8 @@ describe("DockerOrchestratorService context recovery", () => {
         message: "failed",
       }),
     };
-    const pathResolver = {
-      getProjectRoot: () => process.cwd(),
-    };
-
     const service = new DockerOrchestratorService(
-      pathResolver as PathResolverService,
+      createPathResolverStub(),
       processRunner as ProcessRunnerService,
       { dockerStartupWaitMs: 0, dockerStartupPollMs: 0 },
     );

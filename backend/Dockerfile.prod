@@ -1,75 +1,70 @@
 # syntax=docker/dockerfile:1.4
-# ============================================================================
-# Dockerfile.prod — Backend SmartEconomat (MODO INSTALADOR — SLIM)
-# ============================================================================
-# Compila Nest en la etapa builder; la imagen final solo instala dependencias
-# de runtime. No hace falta ejecutar `npm run build` en el host antes de
-# `docker compose build` (evita el error "/dist: not found" del contexto).
-# ============================================================================
-FROM node:22.2.0-alpine AS builder
+# =============================================================================
+# Shim de compatibilidad — delega al Dockerfile unificado (target: production).
+# Preferido: docker build -f Dockerfile --target production smart-economat-backend
+# =============================================================================
+ARG NODE_VERSION=22.13.1
+
+FROM node:${NODE_VERSION}-bookworm-slim AS base
+
+ENV NPM_CONFIG_FETCH_RETRIES=5 \
+    NPM_CONFIG_FETCH_RETRY_FACTOR=2 \
+    NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000 \
+    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
+    NPM_CONFIG_MAXSOCKETS=1 \
+    NPM_CONFIG_PREFER_OFFLINE=false \
+    NPM_CONFIG_PROGRESS=false
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates dumb-init \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+FROM base AS deps-prod
 COPY package.json package-lock.json ./
-RUN npm config set fetch-retries 5 \
-    && npm config set fetch-retry-factor 2 \
-    && npm config set fetch-retry-mintimeout 20000 \
-    && npm config set fetch-retry-maxtimeout 120000 \
-    && npm config set maxsockets 1 \
-    && npm config set prefer-offline true \
-    && npm config set progress false \
-    && npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm,id=smarteconomat-backend-npm-prod,sharing=locked \
+    npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
-COPY . ./
+FROM base AS deps-dev
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm,id=smarteconomat-backend-npm-dev,sharing=locked \
+    npm ci --ignore-scripts --no-audit --no-fund
+
+FROM deps-dev AS builder
+COPY . .
 RUN npm run build
 
-FROM node:22.2.0-alpine AS production
-
+FROM base AS production
 ARG BUILD_DATE=unknown
 ARG VCS_REF=unknown
 ARG VERSION=1.0.0
-
-WORKDIR /app
-
-COPY --from=builder /app/dist ./dist/
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/package-lock.json ./
-
-RUN npm config set fetch-retries 5 \
-    && npm config set fetch-retry-factor 2 \
-    && npm config set fetch-retry-mintimeout 20000 \
-    && npm config set fetch-retry-maxtimeout 120000 \
-    && npm config set maxsockets 1 \
-    && npm config set prefer-offline true \
-    && npm config set progress false \
-    && npm ci --omit=dev --no-audit --no-fund
-
+ENV NODE_ENV=production ENABLE_SWAGGER=false LOG_LEVEL=info
+LABEL org.opencontainers.image.title="SmartEconomat Backend"
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=deps-prod /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY package.json package-lock.json ./
 COPY --from=builder /app/src/i18n ./dist/i18n
 COPY --from=builder /app/src/seeders/datos-base-economato ./dist/seeders/datos-base-economato
-
-COPY --from=builder /app/scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
-COPY --from=builder /app/scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
-COPY --from=builder /app/scripts/ensure-entity-columns-from-metadata.js ./scripts/ensure-entity-columns-from-metadata.js
-COPY --from=builder /app/scripts/db-reset-runner.js ./scripts/db-reset-runner.js
-COPY --from=builder /app/scripts/seed-runner.js ./scripts/seed-runner.js
-COPY --from=builder /app/scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+COPY scripts/prod-bootstrap-runner.js ./scripts/prod-bootstrap-runner.js
+COPY scripts/prod-bootstrap-guards.js ./scripts/prod-bootstrap-guards.js
+COPY scripts/ensure-entity-columns-from-metadata.js ./scripts/ensure-entity-columns-from-metadata.js
+COPY scripts/db-reset-runner.js ./scripts/db-reset-runner.js
+COPY scripts/seed-runner.js ./scripts/seed-runner.js
+COPY scripts/bootstrap-admin-users-runner.js ./scripts/bootstrap-admin-users-runner.js
+RUN groupadd --system appgroup \
+    && useradd --system --gid appgroup --home-dir /app --no-create-home appuser \
     && mkdir -p /app/uploads \
-    && chown -R appuser:appgroup /app/uploads
-
-LABEL org.opencontainers.image.title="SmartEconomat Backend"
-LABEL org.opencontainers.image.description="NestJS backend runtime image"
-LABEL org.opencontainers.image.version="$VERSION"
-LABEL org.opencontainers.image.revision="$VCS_REF"
-LABEL org.opencontainers.image.created="$BUILD_DATE"
-
+    && chown -R appuser:appgroup /app/uploads /app/dist
 USER appuser
-
 EXPOSE 3000
-
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=60s \
     CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/api/v1 || exit 1
-
-ENTRYPOINT ["node", "scripts/prod-bootstrap-runner.js"]
+ENTRYPOINT ["dumb-init", "--", "node", "scripts/prod-bootstrap-runner.js"]
 CMD ["--", "node", "dist/main.js"]

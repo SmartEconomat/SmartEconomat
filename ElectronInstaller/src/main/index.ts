@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +19,12 @@ import { registerRuntimeIpc } from "./ipc/runtime.ipc";
 import { DebugLogService, parseDebugFlag } from "./services/debug-log.service";
 import { ExternalSupervisorService } from "./services/external-supervisor.service";
 import { LocalDomainSelfHealService } from "./services/local-domain-selfheal.service";
+import {
+  SessionStartupGuard,
+  configureSessionStartupGuard,
+} from "./services/session-startup-guard";
+import { SupervisorLifecycleController } from "./services/supervisor-lifecycle.controller";
+import type { TraySupervisorState } from "@shared/contracts";
 
 function configureWritableElectronPaths(): void {
   if (process.platform !== "win32") {
@@ -49,6 +56,11 @@ function configureWritableElectronPaths(): void {
 configureWritableElectronPaths();
 initApp();
 
+const INSTALLER_SHUTDOWN_SIGNAL = path.join(
+  os.tmpdir(),
+  "smarteconomat-installer-shutdown.signal",
+);
+
 function initApp() {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,7 +71,8 @@ function initApp() {
   let debugWindow: BrowserWindow | null = null;
   let tray: Tray | null = null;
   let isQuitting = false;
-  let traySupervisorState: "healthy" | "recovering" | "degraded" = "degraded";
+  let traySupervisorState: TraySupervisorState = "stabilizing";
+  const supervisorLifecycle = new SupervisorLifecycleController();
 
   let installerIpc: ReturnType<typeof registerInstallerIpc> | null = null;
   let runtimeIpc: ReturnType<typeof registerRuntimeIpc> | null = null;
@@ -71,6 +84,52 @@ function initApp() {
   const launchedInBackground = process.argv.some(
     (argument) => argument === "--background" || argument === "--control-panel",
   );
+  configureSessionStartupGuard(
+    new SessionStartupGuard({
+      lifecycle: supervisorLifecycle,
+      autoStartedAtLogin: app.isPackaged && launchedInBackground,
+    }),
+  );
+
+  function isInstallerShutdownRequested(): boolean {
+    try {
+      return fs.existsSync(INSTALLER_SHUTDOWN_SIGNAL);
+    } catch {
+      return false;
+    }
+  }
+
+  function clearInstallerShutdownSignal(): void {
+    try {
+      if (fs.existsSync(INSTALLER_SHUTDOWN_SIGNAL)) {
+        fs.unlinkSync(INSTALLER_SHUTDOWN_SIGNAL);
+      }
+    } catch {
+      // Ignorar: el instalador puede haber borrado el archivo antes.
+    }
+  }
+
+  function quitForInstallerShutdown(): void {
+    if (isQuitting) {
+      return;
+    }
+    isQuitting = true;
+    clearInstallerShutdownSignal();
+    if (tray) {
+      tray.destroy();
+      tray = null;
+    }
+    bootGuardian?.stop();
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window.isDestroyed()) {
+        window.destroy();
+      }
+    }
+    app.quit();
+    setTimeout(() => {
+      app.exit(0);
+    }, 1200);
+  }
 
   function resolveWindowsIconPath(baseDir: string): string | undefined {
     const candidates = [
@@ -229,14 +288,16 @@ function initApp() {
   }
 
   function buildTrayStateIcon(
-    state: "healthy" | "recovering" | "degraded",
+    state: TraySupervisorState,
   ): ReturnType<typeof nativeImage.createEmpty> {
     const color =
       state === "healthy"
         ? "#188754"
         : state === "recovering"
           ? "#ef8f1a"
-          : "#d83a52";
+          : state === "stabilizing"
+            ? "#5c6bc0"
+            : "#d83a52";
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="7" fill="${color}" /></svg>`;
     return nativeImage.createFromDataURL(
       `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`,
@@ -260,9 +321,11 @@ function initApp() {
     const stateLabel =
       traySupervisorState === "healthy"
         ? "Estado actual: 🟢 Todo correcto"
-        : traySupervisorState === "recovering"
-          ? "Estado actual: 🟡 Recuperando servicios"
-          : "Estado actual: 🔴 Error crítico";
+        : traySupervisorState === "stabilizing"
+          ? "Estado actual: 🔵 Inicializando entorno Docker…"
+          : traySupervisorState === "recovering"
+            ? "Estado actual: 🟡 Recuperando servicios"
+            : "Estado actual: 🔴 Error crítico";
 
     const contextMenu = Menu.buildFromTemplate([
       {
@@ -366,6 +429,11 @@ function initApp() {
         return;
       }
 
+      if (isInstallerShutdownRequested()) {
+        quitForInstallerShutdown();
+        return;
+      }
+
       event.preventDefault();
       mainWindow?.hide();
     });
@@ -437,6 +505,16 @@ function initApp() {
     });
   }
 
+  if (app.isPackaged) {
+    const installerShutdownEarlyPoll = setInterval(() => {
+      if (isInstallerShutdownRequested()) {
+        clearInterval(installerShutdownEarlyPoll);
+        isQuitting = true;
+        app.exit(0);
+      }
+    }, 100);
+  }
+
   if (!hasSingleInstanceLock) {
     app.quit();
   } else {
@@ -457,6 +535,15 @@ function initApp() {
           openAtLogin: true,
           args: ["--background", "--control-panel"],
         });
+
+        const installerShutdownPoll = setInterval(() => {
+          if (isInstallerShutdownRequested()) {
+            quitForInstallerShutdown();
+          }
+          if (isQuitting) {
+            clearInterval(installerShutdownPoll);
+          }
+        }, 200);
       }
 
       Menu.setApplicationMenu(null);
@@ -476,16 +563,6 @@ function initApp() {
           });
         },
       });
-      void localDomainSelfHeal.run().catch((error: unknown) => {
-        const detail = error instanceof Error ? error.message : String(error);
-        debugLogService.publish({
-          type: "warn",
-          source: "main",
-          message: `[SELF-HEAL] Error durante autorreparación local: ${detail}`,
-          timestamp: Date.now(),
-        });
-      });
-
       createTray();
 
       const shouldStartHiddenToTray = app.isPackaged && launchedInBackground;
@@ -494,6 +571,10 @@ function initApp() {
         initialHash: shouldStartHiddenToTray ? "/control" : undefined,
         showOnCreate: !shouldStartHiddenToTray,
       });
+
+      if (runtimeIpc) {
+        runtimeIpc.setLocalDomainSelfHeal(localDomainSelfHeal);
+      }
 
       if (debugLogService.isEnabled()) {
         debugLogService.publish({
@@ -510,6 +591,7 @@ function initApp() {
       }
 
       bootGuardian = new ExternalSupervisorService({
+        lifecycle: supervisorLifecycle,
         onLog: (message) => {
           debugLogService.publish({
             type: "system",

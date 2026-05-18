@@ -1,72 +1,64 @@
-# Dependencies
+# Dependencies (reinstaladas en build)
 node_modules
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs (generados en stage builder)
 dist
-npm-debug.log
-
-# Build output
-.next
-.cache
 build
+coverage
+.nyc_output
+*.tsbuildinfo
 
-# Runtime configuration - PRODUCTION SAFE
+# Runtime / local
 .env
 .env.*
 !.env.prod
+uploads
+uploads_test
+uploads_tests
+**/src/seeders/logs/*
+!**/src/seeders/logs/.gitkeep
+e2e-out.txt
+*.log
 
-# Version control
+# Git / IDE
 .git
 .gitignore
-.gitattributes
-
-# IDE and editors
+.github
 .vscode
 .idea
 .DS_Store
 .editorconfig
-
-# Development utilities
 .husky
-.pre-commit-hooks.yaml
 
-# Documentation
+# Tests y tooling (no necesarios en imagen runtime)
+test
+tests
+**/*.spec.ts
+**/*.test.ts
+**/*.e2e-spec.ts
+jest.config.js
+jest.config.ts
+tools
+coverage-e2e
+
+# Documentación
 *.md
 LICENSE
 CONTRIBUTING.md
 CHANGELOG.md
+typedoc.json
 
-# Testing and development
-test
-tests
-spec
-specs
-**/*.test.ts
-**/*.spec.ts
-**/*.e2e-spec.ts
-jest.config.js
-jest.config.ts
-vitest.config.ts
-vitest.config.js
-coverage
-.nyc_output
-cypress
-cypress.config.js
-.mocharc.json
-
-# Source code (NEEDED for build stage, NOT copied to runtime image by multi-stage)
-# Removed: src, **/*.ts - these are needed for compilation in builder stage
-
-# Package managers
+# Lockfiles alternativos
 pnpm-lock.yaml
 yarn.lock
 
-# OS files
-Thumbs.db
-*.swp
-*.swo
-*~
-
-# Temporary and backup files
+# Temporales
 *.tmp
 *.bak
 *.backup
-*.log
+**/.cache
+**/dist_old

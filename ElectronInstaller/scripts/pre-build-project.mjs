@@ -13,7 +13,7 @@
  * a través del script "build:project" en package.json.
  *
  * Requisitos:
- *   - Node >= 22.2.0
+ *   - Node >= 22.13.0
  *   - npm disponible en PATH
  *   - Backend: ../backend/smart-economat-backend/package.json existente
  *   - Frontend: ../frontend/smart-economat-frontend/package.json existente

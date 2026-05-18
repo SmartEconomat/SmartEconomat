@@ -27,7 +27,7 @@ export interface ProveedorAsociado {
   nombre?: string;
   marca?: string;
   codigoBarras?: string;
-  precioUnitario?: number;
+  precioUnitario?: number | string;
 }
 
 interface ProveedorSelectorProps {
@@ -326,13 +326,15 @@ const ProveedorSelector: React.FC<ProveedorSelectorProps> = ({
                 size="small"
                 name={`precio-${prov.proveedorId}`}
                 value={prov.precioUnitario ?? ''}
-                onChange={(parsed) =>
+                onChange={(parsed, raw) => {
+                  const isEditingDecimal =
+                    raw.endsWith('.') || raw.endsWith(',');
                   handleChangeField(
                     prov.proveedorId,
                     'precioUnitario',
-                    parsed ?? 0
-                  )
-                }
+                    isEditingDecimal ? raw : (parsed ?? '')
+                  );
+                }}
                 disabled={disabled}
                 fullWidth
               />

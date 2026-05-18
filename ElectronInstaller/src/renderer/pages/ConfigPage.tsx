@@ -23,7 +23,6 @@ import type {
   InstallerConfigPayload,
   InstallerFilePickerPayload,
 } from "@shared/contracts";
-import { WizardFooterNav } from "@renderer/components/WizardFooterNav";
 
 interface ConfigPageProps {
   config: InstallerConfigPayload;
@@ -118,15 +117,8 @@ export function ConfigPage({
   const [newInstallConfirmed, setNewInstallConfirmed] = useState(false);
 
   const usernameCollision =
-    config.installMode === "new" &&
     config.adminUsername.trim().toLowerCase() ===
-      config.superAdminUsername.trim().toLowerCase();
-
-  const emailCollision =
-    config.adminEmail?.trim() &&
-    config.superAdminEmail?.trim() &&
-    config.adminEmail.trim().toLowerCase() ===
-      config.superAdminEmail.trim().toLowerCase();
+    config.superAdminUsername.trim().toLowerCase();
 
   const certModeIncomplete =
     config.tlsProvider === "custom" &&
@@ -134,7 +126,6 @@ export function ConfigPage({
       !config.customCertPrivkeyPath?.trim());
 
   const passwordMismatch =
-    config.installMode === "new" &&
     config.useSamePasswordForBoth &&
     config.adminPassword !== config.superAdminPassword;
 
@@ -150,7 +141,6 @@ export function ConfigPage({
   const canContinue =
     !busy &&
     !usernameCollision &&
-    !emailCollision &&
     !certModeIncomplete &&
     !passwordMismatch &&
     !scheduleTimeInvalid &&
@@ -225,9 +215,8 @@ export function ConfigPage({
   function updateInstallMode(
     mode: InstallerConfigPayload["installMode"],
   ): void {
-    setNewInstallConfirmed(false);
-
     const isNew = mode === "new";
+    setNewInstallConfirmed(false);
 
     onChange({
       ...config,
@@ -384,7 +373,7 @@ export function ConfigPage({
           {config.installMode === "new" ? (
             <Alert severity="warning" sx={{ mt: 2 }}>
               <AlertTitle sx={{ fontWeight: 700 }}>
-                ⚠️ Advertencia: posible pérdida de datos
+                Advertencia: posible pérdida de datos
               </AlertTitle>
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Si ya existe una instalación previa en esta ruta, una
@@ -401,17 +390,17 @@ export function ConfigPage({
               <Box component="ul" sx={{ m: 0, pl: 2.5, "& li": { mb: 0.25 } }}>
                 <li>
                   <Typography variant="body2">
-                    ✅ Base de datos (volumen Docker persistente)
+                    Base de datos (volumen Docker persistente)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    ✅ Archivos subidos (volumen Docker persistente)
+                    Archivos subidos (volumen Docker persistente)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    ✅ Backups existentes en la carpeta de backups
+                    Backups existentes en la carpeta de backups
                   </Typography>
                 </li>
               </Box>
@@ -421,18 +410,17 @@ export function ConfigPage({
               <Box component="ul" sx={{ m: 0, pl: 2.5, "& li": { mb: 0.25 } }}>
                 <li>
                   <Typography variant="body2">
-                    🔄 Credenciales de admin/superadmin (se aplicarán las
-                    nuevas)
+                    Credenciales de admin/superadmin (se aplicarán las nuevas)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    🔄 Archivo .env.prod (se regenerará con nuevos secretos)
+                    Archivo .env.prod (se regenerará con nuevos secretos)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    🔄 Certificados TLS (se regenerarán según configuración)
+                    Certificados TLS (se regenerarán según configuración)
                   </Typography>
                 </li>
               </Box>
@@ -482,23 +470,23 @@ export function ConfigPage({
               <Box component="ul" sx={{ m: 0, pl: 2.5, "& li": { mb: 0.25 } }}>
                 <li>
                   <Typography variant="body2">
-                    ✅ Base de datos completa (productos, pedidos, inventario,
+                    Base de datos completa (productos, pedidos, inventario,
                     usuarios...)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    ✅ Archivos subidos (imágenes, documentos)
+                    Archivos subidos (imágenes, documentos)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    ✅ Historial de backups
+                    Historial de backups
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    ✅ Configuración de caché Redis
+                    Configuración de caché Redis
                   </Typography>
                 </li>
               </Box>
@@ -508,18 +496,18 @@ export function ConfigPage({
               <Box component="ul" sx={{ m: 0, pl: 2.5, "& li": { mb: 0.25 } }}>
                 <li>
                   <Typography variant="body2">
-                    🔄 Imágenes Docker (frontend, backend, base de datos)
+                    Imágenes Docker (frontend, backend, base de datos)
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    🔄 Configuración de entorno (.env.prod) — se reutilizan
+                    Configuración de entorno (.env.prod) — se reutilizan
                     secretos previos si existen
                   </Typography>
                 </li>
                 <li>
                   <Typography variant="body2">
-                    🔄 Certificados TLS según la configuración elegida
+                    Certificados TLS según la configuración elegida
                   </Typography>
                 </li>
               </Box>
@@ -639,214 +627,155 @@ export function ConfigPage({
           ) : null}
         </Paper>
 
-        {config.installMode === "new" ? (
-          <Paper
-            variant="outlined"
-            sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 2 }}
+        <Paper
+          variant="outlined"
+          sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 2 }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
+            Usuarios por defecto
+          </Typography>
+
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1.5,
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            }}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-              Usuarios por defecto
-            </Typography>
+            <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, mb: 1.25 }}
+              >
+                Usuario admin
+              </Typography>
+              <Stack spacing={1.25}>
+                <Box>
+                  <FieldLabel label="Usuario admin" />
+                  <TextField
+                    fullWidth
+                    value={config.adminUsername}
+                    onChange={(event) =>
+                      onChange({ ...config, adminUsername: event.target.value })
+                    }
+                  />
+                </Box>
+                <Box>
+                  <FieldLabel label="Contraseña admin" />
+                  <TextField
+                    fullWidth
+                    type={showAdminPassword ? "text" : "password"}
+                    value={config.adminPassword}
+                    onChange={(event) =>
+                      updateAdminPassword(event.target.value)
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            onClick={() =>
+                              setShowAdminPassword((current) => !current)
+                            }
+                          >
+                            {showAdminPassword ? (
+                              <VisibilityOffIcon fontSize="small" />
+                            ) : (
+                              <VisibilityIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Paper>
 
-            <Box
-              sx={{
-                display: "grid",
-                gap: 1.5,
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-              }}
-            >
-              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, mb: 1.25 }}
-                >
-                  Usuario admin
-                </Typography>
-                <Stack spacing={1.25}>
-                  <Box>
-                    <FieldLabel label="Usuario admin" />
-                    <TextField
-                      fullWidth
-                      value={config.adminUsername}
-                      onChange={(event) =>
-                        onChange({
-                          ...config,
-                          adminUsername: event.target.value,
-                        })
-                      }
-                    />
-                  </Box>
-                  <Box>
-                    <FieldLabel label="Contraseña admin" />
-                    <TextField
-                      fullWidth
-                      type={showAdminPassword ? "text" : "password"}
-                      value={config.adminPassword}
-                      onChange={(event) =>
-                        updateAdminPassword(event.target.value)
-                      }
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              edge="end"
-                              onClick={() =>
-                                setShowAdminPassword((current) => !current)
-                              }
-                            >
-                              {showAdminPassword ? (
-                                <VisibilityOffIcon fontSize="small" />
-                              ) : (
-                                <VisibilityIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <FieldLabel
-                      label="Email admin (opcional)"
-                      tooltip="Email para recuperación de contraseña del administrador principal."
-                    />
-                    <TextField
-                      fullWidth
-                      placeholder="admin@ejemplo.com"
-                      value={config.adminEmail ?? ""}
-                      onChange={(event) =>
-                        onChange({
-                          ...config,
-                          adminEmail: event.target.value,
-                        })
-                      }
-                    />
-                  </Box>
-                </Stack>
-              </Paper>
+            <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, mb: 1.25 }}
+              >
+                Usuario superadmin
+              </Typography>
+              <Stack spacing={1.25}>
+                <Box>
+                  <FieldLabel label="Usuario superadmin" />
+                  <TextField
+                    fullWidth
+                    value={config.superAdminUsername}
+                    onChange={(event) =>
+                      onChange({
+                        ...config,
+                        superAdminUsername: event.target.value,
+                      })
+                    }
+                  />
+                </Box>
+                <Box>
+                  <FieldLabel label="Contraseña superadmin" />
+                  <TextField
+                    fullWidth
+                    type={showSuperAdminPassword ? "text" : "password"}
+                    disabled={config.useSamePasswordForBoth}
+                    value={config.superAdminPassword}
+                    onChange={(event) =>
+                      onChange({
+                        ...config,
+                        superAdminPassword: event.target.value,
+                      })
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            onClick={() =>
+                              setShowSuperAdminPassword((current) => !current)
+                            }
+                          >
+                            {showSuperAdminPassword ? (
+                              <VisibilityOffIcon fontSize="small" />
+                            ) : (
+                              <VisibilityIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Paper>
+          </Box>
 
-              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, mb: 1.25 }}
-                >
-                  Usuario superadmin
-                </Typography>
-                <Stack spacing={1.25}>
-                  <Box>
-                    <FieldLabel label="Usuario superadmin" />
-                    <TextField
-                      fullWidth
-                      value={config.superAdminUsername}
-                      onChange={(event) =>
-                        onChange({
-                          ...config,
-                          superAdminUsername: event.target.value,
-                        })
-                      }
-                    />
-                  </Box>
-                  <Box>
-                    <FieldLabel label="Contraseña superadmin" />
-                    <TextField
-                      fullWidth
-                      type={showSuperAdminPassword ? "text" : "password"}
-                      disabled={config.useSamePasswordForBoth}
-                      value={config.superAdminPassword}
-                      onChange={(event) =>
-                        onChange({
-                          ...config,
-                          superAdminPassword: event.target.value,
-                        })
-                      }
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              edge="end"
-                              onClick={() =>
-                                setShowSuperAdminPassword((current) => !current)
-                              }
-                            >
-                              {showSuperAdminPassword ? (
-                                <VisibilityOffIcon fontSize="small" />
-                              ) : (
-                                <VisibilityIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <FieldLabel
-                      label="Email superadmin (opcional)"
-                      tooltip="Email para recuperación de contraseña del super administrador."
-                    />
-                    <TextField
-                      fullWidth
-                      placeholder="superadmin@ejemplo.com"
-                      value={config.superAdminEmail ?? ""}
-                      onChange={(event) =>
-                        onChange({
-                          ...config,
-                          superAdminEmail: event.target.value,
-                        })
-                      }
-                    />
-                  </Box>
-                </Stack>
-              </Paper>
-            </Box>
+          <FormControlLabel
+            sx={{ mt: 1 }}
+            control={
+              <Checkbox
+                checked={config.useSamePasswordForBoth}
+                onChange={(event) => updateSamePassword(event.target.checked)}
+              />
+            }
+            label="Usar la misma contraseña para ambos usuarios"
+          />
 
-            <FormControlLabel
-              sx={{ mt: 1 }}
-              control={
-                <Checkbox
-                  checked={config.useSamePasswordForBoth}
-                  onChange={(event) => updateSamePassword(event.target.checked)}
-                />
-              }
-              label="Usar la misma contraseña para ambos usuarios"
-            />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.5 }}
+          >
+            Estas credenciales se sincronizarán automáticamente con los usuarios
+            que crea la migración inicial de la aplicación.
+          </Typography>
 
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mt: 0.5 }}
-            >
-              Estas credenciales se sincronizarán automáticamente con los
-              usuarios que crea la migración inicial de la aplicación.
-            </Typography>
-
-            {(!config.adminEmail?.trim() ||
-              !config.superAdminEmail?.trim()) && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  <strong>⚠️ Advertencia:</strong> Si no configuras los correos
-                  electrónicos, no será posible recuperar la contraseña por
-                  email. En ese caso, la única alternativa será que otro usuario
-                  con permisos de administrador acceda y establezca una
-                  contraseña temporal.
-                </Typography>
-              </Alert>
-            )}
-
-            {usernameCollision ? (
-              <Alert severity="error" sx={{ mt: 1.5 }}>
-                Los usuarios admin y superadmin deben ser distintos.
-              </Alert>
-            ) : null}
-
-            {emailCollision ? (
-              <Alert severity="error" sx={{ mt: 1.5 }}>
-                Los correos electrónicos de admin y superadmin deben ser
-                distintos si se proporcionan.
-              </Alert>
-            ) : null}
-          </Paper>
-        ) : null}
+          {usernameCollision ? (
+            <Alert severity="error" sx={{ mt: 1.5 }}>
+              Los usuarios admin y superadmin deben ser distintos.
+            </Alert>
+          ) : null}
+        </Paper>
 
         <Paper
           variant="outlined"
@@ -871,9 +800,6 @@ export function ConfigPage({
                 onChange={(event) =>
                   onChange({ ...config, localHost: event.target.value })
                 }
-                slotProps={{
-                  htmlInput: { "aria-label": "Host local" },
-                }}
               />
             </Box>
 
@@ -898,7 +824,7 @@ export function ConfigPage({
             <Box sx={{ gridColumn: { xs: "auto", md: "1 / span 2" } }}>
               <FieldLabel
                 label="TLS"
-                tooltip="Configura TLS para la conexión local. ‘Autofirmado’ genera un certificado auto-firmado para uso local."
+                tooltip="Configura TLS para la conexión local. ‘Autofirmado’ genera un certificado auto-firmado seguro para uso local."
               />
               <TextField
                 fullWidth
@@ -1165,86 +1091,6 @@ export function ConfigPage({
               </Box>
 
               <Box>
-                <FieldLabel label="POSTGRES_USER (opcional)" />
-                <TextField
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="postgres"
-                  value={config.postgresUser ?? ""}
-                  onChange={(event) =>
-                    onChange({
-                      ...config,
-                      postgresUser: event.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <Box>
-                <FieldLabel label="POSTGRES_DB (opcional)" />
-                <TextField
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="smarteconomat"
-                  value={config.postgresDb ?? ""}
-                  onChange={(event) =>
-                    onChange({
-                      ...config,
-                      postgresDb: event.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <Box>
-                <FieldLabel label="JWT_EXPIRATION (opcional)" />
-                <TextField
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="7d"
-                  value={config.jwtExpiration ?? ""}
-                  onChange={(event) =>
-                    onChange({
-                      ...config,
-                      jwtExpiration: event.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <Box>
-                <FieldLabel label="I18N_FALLBACK_LANGUAGE (opcional)" />
-                <TextField
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="es"
-                  value={config.i18nFallbackLanguage ?? ""}
-                  onChange={(event) =>
-                    onChange({
-                      ...config,
-                      i18nFallbackLanguage: event.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <Box sx={{ gridColumn: { md: "1 / -1" } }}>
-                <FieldLabel label="I18N_PATH (opcional)" />
-                <TextField
-                  fullWidth
-                  autoComplete="off"
-                  placeholder="Vacío = resolución por defecto del backend"
-                  value={config.i18nPath ?? ""}
-                  onChange={(event) =>
-                    onChange({
-                      ...config,
-                      i18nPath: event.target.value,
-                    })
-                  }
-                />
-              </Box>
-
-              <Box>
                 <FieldLabel label="REDIS_PASSWORD (opcional)" />
                 <TextField
                   fullWidth
@@ -1313,19 +1159,60 @@ export function ConfigPage({
         </Alert>
       ) : null}
 
-      <WizardFooterNav
-        onBack={onBack}
-        onContinue={onContinue}
-        backDisabled={busy}
-        continueDisabled={!canContinue}
-        continueTooltip={
-          config.installMode === "new" && !newInstallConfirmed
-            ? "Debes marcar el checkbox de confirmación para continuar con la instalación nueva."
-            : certModeIncomplete
-              ? "Debes seleccionar los archivos de certificado TLS para continuar."
-              : ""
-        }
-      />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: "space-between",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: 1.5,
+          mt: 2.25,
+        }}
+      >
+        <Button
+          variant="outlined"
+          disabled={busy}
+          onClick={onBack}
+          sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
+        >
+          Volver
+        </Button>
+        <Tooltip
+          title={
+            config.installMode === "new" && !newInstallConfirmed
+              ? "Debes marcar el checkbox de confirmación para continuar con la instalación nueva."
+              : certModeIncomplete
+                ? "Debes seleccionar los archivos de certificado TLS para continuar."
+                : ""
+          }
+          arrow
+          disableHoverListener={canContinue}
+          disableFocusListener={canContinue}
+          disableTouchListener={canContinue}
+          sx={{ alignSelf: { xs: "stretch", sm: "flex-end" } }}
+        >
+          <Box component="span" sx={{ display: "inline-flex" }}>
+            <Button
+              variant="contained"
+              disabled={!canContinue}
+              onClick={onContinue}
+              sx={{
+                backgroundColor: "primary.main",
+                color: "common.white",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                px: 2.5,
+                "&:hover": {
+                  backgroundColor: "#b90043",
+                },
+              }}
+            >
+              Continuar
+            </Button>
+          </Box>
+        </Tooltip>
+      </Box>
 
       <Typography
         variant="caption"

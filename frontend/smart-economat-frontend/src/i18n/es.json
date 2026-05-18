@@ -2424,6 +2424,7 @@
       "verDetalle": "Ver detalle",
       "editarProveedor": "Editar proveedor",
       "descargarFicha": "Descargar Ficha",
+      "restaurar": "Restaurar",
       "ariaVerDetalle": "Ver detalle de proveedor {{nombre}}"
     },
     "form": {
@@ -2455,6 +2456,9 @@
       "eliminarTitulo": "Eliminar proveedor",
       "eliminarMensaje": "¿Estás seguro de que deseas eliminar el proveedor {{nombre}}? Esta acción no se puede deshacer.",
       "eliminarConfirm": "Sí, eliminar",
+      "restaurarTitulo": "Restaurar proveedor",
+      "restaurarMensaje": "¿Deseas restaurar el proveedor {{nombre}}?",
+      "restaurarConfirm": "Sí, restaurar",
       "guardarCambios": "¿Estás seguro de que deseas guardar los cambios realizados en este proveedor?",
       "crearNuevo": "¿Estás seguro de que deseas añadir este nuevo proveedor al sistema?"
     },
@@ -2462,19 +2466,26 @@
       "eliminado": "Proveedor eliminado correctamente.",
       "actualizado": "Proveedor actualizado correctamente.",
       "creado": "Proveedor creado correctamente.",
-      "creadoNombre": "Proveedor \"{{nombre}}\" creado correctamente."
+      "creadoNombre": "Proveedor \"{{nombre}}\" creado correctamente.",
+      "restaurado": "Proveedor \"{{nombre}}\" restaurado correctamente."
     },
     "errors": {
       "errorCargar": "Error desconocido al cargar proveedores.",
       "errorEliminar": "Error al eliminar el proveedor.",
       "errorGuardar": "Error al guardar el proveedor.",
-      "errorCrear": "Error al crear el proveedor."
+      "errorCrear": "Error al crear el proveedor.",
+      "errorRestaurar": "No se pudo restaurar el proveedor."
     },
     "empty": {
       "sinResultados": "No hay proveedores que coincidan con tu búsqueda",
       "sinProveedores": "No se encontraron proveedores",
+      "sinEliminados": "No hay proveedores eliminados",
+      "sinEliminadosHint": "No hay registros de proveedores eliminados anteriormente.",
       "prueba": "Prueba con otros términos o limpia el filtro.",
       "empieza": "Empieza añadiendo el primer proveedor a tu catálogo."
+    },
+    "status": {
+      "eliminado": "Eliminado"
     },
     "condicionesLabel": "Proveedores y Condiciones",
     "nombreDesconocido": "Proveedor Desconocido",

@@ -13,6 +13,9 @@ Guía de resolución de errores frecuentes encontrados durante el desarrollo y d
 | ENOENT: scandir '/app/dist/i18n/' | Docker Producción | [enoent_scandir_i18n.md](enoent_scandir_i18n.md) |
 | JSON.parse: unexpected character at line 1 | Nginx / Producción | [json_parse_nginx_proxy.md](json_parse_nginx_proxy.md) |
 | Permisos de la carpeta `dist` | Build local / Docker | [solucion_permisos_dist.md](solucion_permisos_dist.md) |
+| Swagger visible en producción | Docker Producción | Ver [docker-backend-architecture.md](../docker-backend-architecture.md) (`ENABLE_SWAGGER=false`) |
+| Build Docker falla en `npm ci` / `glob` | Docker Build | Regenerar `package-lock.json`; ver `overrides` en `package.json` |
+| `npm ENOENT` / `TAR_BAD_ARCHIVE` en build backend | Docker Build | [docker_npm_cache_build.md](docker_npm_cache_build.md) — purgar caché builder |
 
 ---
 

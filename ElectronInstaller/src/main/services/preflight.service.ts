@@ -14,8 +14,10 @@ import {
   resolveWindowsDockerDesktopExePath,
 } from "./docker-desktop-windows-resolve";
 import { OSDetectorService } from "./os-detector.service";
+import { PathResolverService } from "./path-resolver.service";
 import { ProcessRunnerService } from "./process-runner.service";
 import { CertificateService } from "./certificate.service";
+import { WindowsDockerServiceConfigService } from "./windows-docker-service-config.service";
 
 export function evaluateDockerChecks(
   dockerVersion: CommandResult,
@@ -200,11 +202,19 @@ interface PortInspectionResult {
 }
 
 export class PreflightService {
+  private readonly dockerServiceConfig: WindowsDockerServiceConfigService;
+
   constructor(
     private readonly osDetector = new OSDetectorService(),
     private readonly processRunner = new ProcessRunnerService(),
     private readonly certificateService = new CertificateService(),
-  ) {}
+    pathResolver: PathResolverService = new PathResolverService(),
+  ) {
+    this.dockerServiceConfig = new WindowsDockerServiceConfigService(
+      this.processRunner,
+      pathResolver,
+    );
+  }
 
   async run(runtimePath: string): Promise<OperationResult<PreflightReport>> {
     const checks: PreflightCheck[] = [];
@@ -244,6 +254,70 @@ export class PreflightService {
     onProgress?.("Liberando puertos conocidos (80/443) si están ocupados...");
     await this.releaseKnownBusyPorts();
 
+    if (process.platform === "win32") {
+      onProgress?.(
+        "Abriendo el diálogo de Windows para confiar el certificado TLS...",
+      );
+      const trustResult =
+        await this.certificateService.reinstallCertificateToTrustStore(
+          runtimePath,
+          { openManualTrustUi: true },
+        );
+      onProgress?.(trustResult.message);
+    }
+
+    onProgress?.("Reejecutando preflight para validar el estado final...");
+    return this.run(runtimePath);
+  }
+
+  async trustWindowsRootCertificate(
+    runtimePath: string,
+    onProgress?: (line: string) => void,
+  ): Promise<OperationResult<PreflightReport>> {
+    if (process.platform !== "win32") {
+      return {
+        ok: false,
+        message:
+          "La instalación en el almacén de confianza de Windows solo está disponible en Windows.",
+        errorCode: "TLS_TRUST_WINDOWS_ONLY",
+      };
+    }
+
+    onProgress?.("Preparando certificado TLS local si aún no existe...");
+    const ensureCerts = await this.certificateService.ensureLocalCertificates(
+      runtimePath,
+      {
+        overwrite: false,
+        installToTrustStore: false,
+        domain: "smarteconomat.app",
+      },
+    );
+    if (!ensureCerts.ok) {
+      return {
+        ok: false,
+        message: ensureCerts.message,
+        errorCode: ensureCerts.errorCode ?? "TLS_CERTIFICATE_GENERATION_FAILED",
+      };
+    }
+
+    onProgress?.(
+      "Solicitando confirmación en el diálogo de seguridad de Windows...",
+    );
+    const trustResult =
+      await this.certificateService.reinstallCertificateToTrustStore(
+        runtimePath,
+        { openManualTrustUi: true },
+      );
+
+    if (!trustResult.ok) {
+      return {
+        ok: false,
+        message: trustResult.message,
+        errorCode: trustResult.errorCode ?? "TLS_CERTIFICATE_TRUST_FAILED",
+      };
+    }
+
+    onProgress?.(trustResult.message);
     onProgress?.("Reejecutando preflight para validar el estado final...");
     return this.run(runtimePath);
   }
@@ -669,10 +743,11 @@ export class PreflightService {
           : "El certificado autofirmado no está en el almacén de confianza (marcará HTTPS como no seguro).",
         recommendation: isTrusted
           ? undefined
-          : "Este aviso es informativo. El instalador se encargará de confiar el certificado en el siguiente paso.",
-        repairable: false,
-        repairAction: undefined,
-        repairHint: undefined,
+          : "Usa el botón de abajo para abrir el diálogo de seguridad de Windows y aceptar el certificado raíz.",
+        repairable: !isTrusted,
+        repairAction: "trust-certificate",
+        repairHint:
+          "Se abrirá el aviso de Windows «¿Desea instalar este certificado?» o el asistente de importación.",
       },
     ];
   }
@@ -1041,34 +1116,17 @@ export class PreflightService {
   }
 
   private async ensureWindowsDockerServiceRunning(): Promise<void> {
-    const normalResult = await this.processRunner.run({
-      command: "powershell",
-      args: [
-        "-NoProfile",
-        "-Command",
-        [
-          "$service = Get-Service -Name 'com.docker.service' -ErrorAction SilentlyContinue",
-          "if ($null -eq $service) { exit 2 }",
-          "sc.exe config com.docker.service start= auto | Out-Null",
-          "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
-          "Set-Service -Name 'com.docker.service' -StartupType Automatic -ErrorAction Stop",
-          "$service = Get-Service -Name 'com.docker.service'",
-          "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' -ErrorAction Stop }",
-          "$service = Get-Service -Name 'com.docker.service'",
-          "if ($service.Status -eq 'Running') { exit 0 }",
-          "exit 1",
-        ].join("; "),
-      ],
-      timeoutMs: 20_000,
+    const configured = await this.dockerServiceConfig.ensureAutomatic({
+      startIfStopped: true,
     });
 
-    if (normalResult.ok) {
+    if (configured.ok) {
       return;
     }
 
-    const detail = `${normalResult.stderr}\n${normalResult.stdout}\n${normalResult.message}`;
+    const detail = configured.detail;
     if (
-      !/acceso denegado|access is denied|requires elevation|elevaci/i.test(
+      !/acceso denegado|access is denied|requires elevation|elevaci|startmode_manual/i.test(
         detail,
       )
     ) {
@@ -1079,17 +1137,15 @@ export class PreflightService {
   }
 
   private async tryElevatedWindowsDockerServiceRepair(): Promise<void> {
-    const script = [
-      "$ErrorActionPreference = 'Stop'",
-      "sc.exe config com.docker.service start= auto | Out-Null",
-      "sc.exe failure com.docker.service reset= 86400 actions= restart/5000/restart/15000/restart/30000 | Out-Null",
-      "Set-Service -Name 'com.docker.service' -StartupType Automatic",
-      "$service = Get-Service -Name 'com.docker.service'",
-      "if ($service.Status -ne 'Running') { Start-Service -Name 'com.docker.service' }",
-    ].join("; ");
-    const encodedScript = Buffer.from(script, "utf16le").toString("base64");
+    const resolver = new PathResolverService();
+    const scriptPath = path.join(
+      resolver.getInstallerScriptsRoot(),
+      "ops",
+      "ensure-com-docker-service-automatic.ps1",
+    );
+    const safePath = scriptPath.replace(/'/g, "''");
     const elevateCommand = [
-      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','${encodedScript}')`,
+      `$argumentList = @('-NoProfile','-ExecutionPolicy','Bypass','-File','${safePath}','-StartIfStopped')`,
       "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList $argumentList",
       "if ($null -eq $process) { exit 1 }",
       "exit $process.ExitCode",

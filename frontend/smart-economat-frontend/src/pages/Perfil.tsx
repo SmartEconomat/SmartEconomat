@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  MenuItem,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
@@ -129,10 +130,16 @@ const Perfil: React.FC = () => {
   const handleProfileChange = (
     e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
   ) => {
+    const fieldName = e.target.name as string;
+
     setProfileData((prev) => ({
       ...prev,
-      [e.target.name as string]: e.target.value,
+      [fieldName]: e.target.value,
     }));
+
+    if (fieldName === 'idioma' && !isEditingProfile) {
+      setIsEditingProfile(true);
+    }
   };
 
   /**
@@ -365,10 +372,10 @@ const Perfil: React.FC = () => {
                     name="idioma"
                     value={profileData.idioma}
                     onChange={handleProfileChange}
-                    disabled={!isEditingProfile || isSaving}
+                    disabled={isSaving}
                   >
-                    <option value="es">Español</option>
-                    <option value="en">English</option>
+                    <MenuItem value="es">Español</MenuItem>
+                    <MenuItem value="en">English</MenuItem>
                   </Input>
                 </Box>
               </Box>
