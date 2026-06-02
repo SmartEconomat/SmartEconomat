@@ -578,17 +578,17 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
       if (!name) {
         return;
       }
-      setFormData((prev) => ({ ...prev, [name]: code }));
+      updateFormData((prev) => ({ ...prev, [name]: code }));
       setErrors((prev) => ({ ...prev, [name]: '' }));
       setActiveBarcodeField(null);
       if (onBarcodeFetch) {
         const newData = await onBarcodeFetch(code);
         if (newData) {
-          setFormData((prev) => ({ ...prev, ...newData }));
+          updateFormData((prev) => ({ ...prev, ...newData }));
         }
       }
     },
-    [onBarcodeFetch]
+    [onBarcodeFetch, updateFormData]
   );
 
   const renderFieldContent = (field: DynamicField) => {
@@ -888,9 +888,8 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                                   );
                                   setIsOFFSearching(false);
                                   if (results.length === 1) {
-                                    setFormData((prev) => ({
+                                    updateFormData((prev) => ({
                                       ...prev,
-                                      ...results[0],
                                       ...results[0],
                                     }));
                                   } else if (results.length > 1) {
@@ -953,7 +952,7 @@ const DynamicFormModal: React.FC<DynamicFormModalProps> = ({
                     <ListItemButton
                       key={idx}
                       onClick={() => {
-                        setFormData((prev) => ({ ...prev, ...result }));
+                        updateFormData((prev) => ({ ...prev, ...result }));
                         setShowOFFResults(false);
                         setOffResults([]);
                       }}
